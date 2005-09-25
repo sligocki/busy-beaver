@@ -1,0 +1,6 @@
+CFLAGS = -ansi
+
+all:
+	/bin/rm -rf build *.dll
+	./setup_win.py build
+	ln -s build/lib.*/*.dll .
