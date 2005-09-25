@@ -1,12 +1,14 @@
 #include <Python.h>
 
-typedef struct {
+typedef struct
+{
   int w;
   int d;
   int s;
 } TRANSITION;
 
-typedef struct {
+typedef struct
+{
   TRANSITION* t;
 } STATE;
 
