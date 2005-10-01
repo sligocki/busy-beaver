@@ -124,7 +124,7 @@ def BB_run(TTable, num_states, num_symbols, tape_length, max_steps):
   Wrapper for C machine running code.
   """
   import busyBeaverC
-  return busyBeaverC.run(TTable, num_states, num_symbols, tape_length, max_steps)
+  return busyBeaverC.run(TTable, num_states, num_symbols, tape_length, float(max_steps))
 
 def BB_save_machine(machine, results, tape_length, max_steps):
   """
@@ -142,15 +142,17 @@ def BB_save_machine(machine, results, tape_length, max_steps):
   """
 
   global gTextFile, gTextFilename, gDataFile, gDataFilename, gMachine_num
+
   # if first call.
   if not gTextFile:
-    if gTextFilename:
+    if gTextFilename and gTextFilename != "-":
       gTextFile = file(gTextFilename, "w")
     else:
       import sys
       gTextFile = sys.stdout
   if not gDataFile:
-    gDataFile = file(gDataFilename, "wb")
+    if gDataFilename:
+      gDataFile = file(gDataFilename, "wb")
 
   gTextFile.write("%d " % gMachine_num)
   gTextFile.write("%d " % machine.num_states)
@@ -163,28 +165,31 @@ def BB_save_machine(machine, results, tape_length, max_steps):
   gTextFile.write("\n")
   gTextFile.flush()
 
-  pickle.dump((gMachine_num,
-               machine.num_states,
-               machine.num_symbols,
-               tape_length,
-               max_steps,
-               results,
-               machine),
-              gDataFile)
+  if gDataFile:
+    pickle.dump((gMachine_num,
+                 machine.num_states,
+                 machine.num_symbols,
+                 tape_length,
+                 max_steps,
+                 results,
+                 machine),
+                gDataFile)
 
   gMachine_num += 1
 
 # Default test code
 if __name__ == "__main__":
   import getopt, sys
-  usage = "BB_Prover.py [--help] [--states=] [--symbols=] [--tape=] [--steps=]"
+  usage = "BB_Prover.py [--help] [--states=] [--symbols=] [--tape=] [--steps=] [--datafile=]"
   try:
     opts, args = getopt.getopt(sys.argv[1:], "",
                                ["help",
                                 "states=",
                                 "symbols=",
                                 "tape=",
-                                "steps="])
+                                "steps=",
+                                "textfile=",
+                                "datafile="])
   except getopt.GetoptError:
     print usage
     sys.exit(1)
@@ -193,6 +198,9 @@ if __name__ == "__main__":
   symbols = 2
   tape_length = 20003
   max_steps = 10000
+  gTextFilename = None
+  isData = None
+  gDataFilename = None
 
   for opt, arg in opts:
     if opt == "--help":
@@ -206,14 +214,24 @@ if __name__ == "__main__":
       tape_length = int(arg)
     elif opt == "--steps":
       max_steps = float(arg)
+    elif opt == "--textfile":
+      if arg:
+        gTextFilename = arg
+    elif opt == "--datafile":
+      isData = not None
+      if arg:
+        gDataFilename = arg
 
   # The furthest that the machine can travel in n steps is n away from the
   # origin.  It could travel in eighter direction so the tape need not be longer
   # than 2 * max_steps
   tape_length = min(tape_length, 2 * max_steps + 3)
 
-  gTextFilename = "BBP_%d_%d_%d_%d.txt" % \
-                  (states, symbols, tape_length, max_steps)
-  gDataFilename = "BBP_%d_%d_%d_%d.data" % \
-                  (states, symbols, tape_length, max_steps)
+  if not gTextFilename:
+    gTextFilename = "BBP_%d_%d_%d_%d.txt" % \
+                    (states, symbols, tape_length, max_steps)
+
+  if isData and not gDataFilename:
+    gDataFilename = "BBP_%d_%d_%d_%d.data" % \
+                    (states, symbols, tape_length, max_steps)
   BB_Prover(states, symbols, tape_length, max_steps)
