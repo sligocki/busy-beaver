@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 #
-# INSERT DESCRIPTION HERE
+# This is a Busy Beaver machine generator
 #
 
 from BB_Machine import BB_Machine
