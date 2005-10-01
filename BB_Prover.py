@@ -180,7 +180,7 @@ def BB_save_machine(machine, results, tape_length, max_steps):
 # Default test code
 if __name__ == "__main__":
   import getopt, sys
-  usage = "BB_Prover.py [--help] [--states=] [--symbols=] [--tape=] [--steps=] [--datafile=]"
+  usage = "BB_Prover.py [--help] [--states=] [--symbols=] [--tape=] [--steps=] [--textfile=] [--datafile=]"
   try:
     opts, args = getopt.getopt(sys.argv[1:], "",
                                ["help",
@@ -234,4 +234,5 @@ if __name__ == "__main__":
   if isData and not gDataFilename:
     gDataFilename = "BBP_%d_%d_%d_%d.data" % \
                     (states, symbols, tape_length, max_steps)
+
   BB_Prover(states, symbols, tape_length, max_steps)
