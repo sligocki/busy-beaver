@@ -3,6 +3,7 @@ Does IO on Busy Beaver results (BB_IO class).
 """
 
 import cPickle as pickle
+import string
 
 from BB_Machine import BB_Machine 
 
@@ -24,16 +25,15 @@ class BB_IO:
     self.text_output_file = text_output_file
     self.data_output_file = data_output_file
 
-  def writeResult(self, machine_num, num_states, num_symbols, tape_length,
-                  max_steps, results, machine):
+  def writeResult(self, machine_num, machine, tape_length, max_steps, results):
     """
     Writes a result.
     """
     if self.text_output_file:
       self.text_output_file.write("%d " % machine_num)
 
-      self.text_output_file.write("%d " % num_states)
-      self.text_output_file.write("%d " % num_symbols)
+      self.text_output_file.write("%d " % machine.num_states)
+      self.text_output_file.write("%d " % machine.num_symbols)
 
       self.text_output_file.write("%d " % tape_length)
       self.text_output_file.write("%d " % max_steps)
@@ -54,3 +54,36 @@ class BB_IO:
                   results,
                   machine,
                   self.data_output_file)
+
+  def readResult(self, machine_num, machine, tape_length, max_steps, results):
+    """
+    Reads a result.
+    """
+    if self.input_file:
+      cur_line = self.input_file.readline()
+
+      if cur_line:
+        parts = cur_line.split()
+
+        machine_num = int(parts[0])
+
+        machine.num_states  = int(parts[1])
+        machine.num_symbols = int(parts[2])
+
+        tape_length = float(parts[3])
+        max_steps   = float(parts[4])
+
+        result = [1,]
+        index = 5
+        for item in parts[5:]:
+          if item[0] == "[":
+            break
+          else:
+            result.append(item)
+            index += 1
+
+        result = tuple(result)
+
+        machine.setTTable(eval(string.join(parts[index:])))
+
+    return None

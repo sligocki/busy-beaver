@@ -28,6 +28,12 @@ class BB_Machine:
     """
     return self._TTable
 
+  def setTTable(self, table):
+    """
+    Sets the transition table in tuple format.
+    """
+    self._TTable = table
+
   def getNumStatesAvailable(self):
     # self.num_states - 1 because that is the largest state number
     if self.max_state < self.num_states - 1:
