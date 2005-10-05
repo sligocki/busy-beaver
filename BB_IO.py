@@ -25,7 +25,7 @@ class BB_IO:
     self.text_output_file = text_output_file
     self.data_output_file = data_output_file
 
-  def writeResult(self, machine_num, machine, tape_length, max_steps, results):
+  def writeResult(self, machine_num, tape_length, max_steps, results, machine):
     """
     Writes a result.
     """
@@ -55,7 +55,7 @@ class BB_IO:
                   machine,
                   self.data_output_file)
 
-  def readResult(self, machine_num, machine, tape_length, max_steps, results):
+  def readResult(self):
     """
     Reads a result.
     """
@@ -67,23 +67,26 @@ class BB_IO:
 
         machine_num = int(parts[0])
 
-        machine.num_states  = int(parts[1])
-        machine.num_symbols = int(parts[2])
+        num_states  = int(parts[1])
+        num_symbols = int(parts[2])
 
         tape_length = float(parts[3])
         max_steps   = float(parts[4])
 
-        result = [1,]
-        index = 5
-        for item in parts[5:]:
+        results = [int(parts[5]),]
+        index = 6
+        for item in parts[6:]:
           if item[0] == "[":
             break
           else:
-            result.append(item)
+            results.append(item)
             index += 1
 
-        result = tuple(result)
+        results = tuple(results)
 
-        machine.setTTable(eval(string.join(parts[index:])))
+        machine_TTable = eval(string.join(parts[index:]))
+
+        return (machine_num, num_states, num_symbols, tape_length, max_steps,
+                results, machine_TTable)
 
     return None
