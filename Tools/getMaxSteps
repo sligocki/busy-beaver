@@ -1,0 +1,4 @@
+#!/bin/csh -f
+# Sorts all halting machines by number of steps and then number of 
+# symbols and then machine number (preffering smaller numbers).
+getOrdSteps $* | tail --lines=1 | awk '{print $8}'

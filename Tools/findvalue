@@ -1,0 +1,2 @@
+#!/bin/csh -f
+awk '$field == value { print $0; }' field=$1 value=$2 $argv[3-]
