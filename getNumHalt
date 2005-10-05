@@ -1,0 +1,2 @@
+#! /bin/csh -f
+getAllHalt $1 | wc -l
