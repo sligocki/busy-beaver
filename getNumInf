@@ -1,2 +1,0 @@
-#! /bin/csh -f
-getAllInf $1 | wc -l

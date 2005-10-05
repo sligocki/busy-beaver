@@ -1,0 +1,56 @@
+"""
+Does IO on Busy Beaver results (BB_IO class).
+"""
+
+import cPickle as pickle
+
+from BB_Machine import BB_Machine 
+
+class BB_IO:
+  """
+  Reads and writes Busy Beaver results:
+    input_file       - file to read*
+    text_output_file - text file to write*
+    data_output_file - data file to write*
+
+    * if this is 'None' then the user doesn't intend to do this type of
+      operation.
+  """
+  def __init__(self, input_file, text_output_file, data_output_file):
+    """
+    Save file information.
+    """
+    self.input_file       = input_file
+    self.text_output_file = text_output_file
+    self.data_output_file = data_output_file
+
+  def writeResult(self, machine_num, num_states, num_symbols, tape_length,
+                  max_steps, results, machine):
+    """
+    Writes a result.
+    """
+    if self.text_output_file:
+      self.text_output_file.write("%d " % machine_num)
+
+      self.text_output_file.write("%d " % num_states)
+      self.text_output_file.write("%d " % num_symbols)
+
+      self.text_output_file.write("%d " % tape_length)
+      self.text_output_file.write("%d " % max_steps)
+
+      for item in results:
+        self.text_output_file.write("%s " % item)
+
+      self.text_output_file.write("%s " % machine.getTTable());
+      self.text_output_file.write("\n")
+      self.text_output_file.flush()
+      
+    if self.data_output_file:
+      pickle.dump(machine_num,
+                  num_states,
+                  num_symbols,
+                  tape_length,
+                  max_steps,
+                  results,
+                  machine,
+                  self.data_output_file)

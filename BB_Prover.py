@@ -3,19 +3,15 @@
 # This is a Busy Beaver machine generator
 #
 
-from BB_Machine import BB_Machine
 import copy
-import cPickle as pickle
+
+from BB_Machine import BB_Machine
+from BB_IO import BB_IO
 
 # global machine number
 gMachine_num = 0
-# Global variables for text and data output.
-gTextFile = None
-gTextFilename = None
-gDataFile = None
-gDataFilename = None
 
-def BB_Prover(num_states, num_symbols, tape_lenth, max_steps):
+def BB_Prover(num_states, num_symbols, tape_lenth, max_steps, io):
   """
   Stats all distinct BB machines with num_states and num_symbols.
 
@@ -33,9 +29,11 @@ def BB_Prover(num_states, num_symbols, tape_lenth, max_steps):
     1) Number of steps run for
   """
   machine = BB_Machine(num_states, num_symbols)
-  BB_Prover_Recursive(machine, num_states, num_symbols, tape_lenth, max_steps)
+  BB_Prover_Recursive(machine, num_states, num_symbols,
+                      tape_lenth, max_steps, io)
 
-def BB_Prover_Recursive(machine, num_states, num_symbols, tape_length, max_steps):
+def BB_Prover_Recursive(machine, num_states, num_symbols,
+                        tape_length, max_steps, io):
   """
   Stats this BB machine.
 
@@ -91,7 +89,7 @@ def BB_Prover_Recursive(machine, num_states, num_symbols, tape_length, max_steps
     newNumSteps = results[5] + 1
 
     newResults = (0,newNumSyms,newNumSteps)
-    BB_save_machine(machine_new, newResults, tape_length, max_steps)
+    BB_save_machine(machine_new, newResults, tape_length, max_steps, io)
 
     # All other states
     if machine.num_empty_cells > 1:
@@ -102,7 +100,7 @@ def BB_Prover_Recursive(machine, num_states, num_symbols, tape_length, max_steps
             machine_new.AddCell(state_in , symbol_in ,
                                 state_out, symbol_out, direction_out)
             BB_Prover_Recursive(machine_new, num_states, num_symbols,
-                                tape_length, max_steps)
+                                tape_length, max_steps, io)
     return
 
   # -1) Error
@@ -111,12 +109,12 @@ def BB_Prover_Recursive(machine, num_states, num_symbols, tape_length, max_steps
     message = results[2]
     sys.stderr.write("Error %d: %s\n" % (error_number,message))
 
-    BB_save_machine(machine, results, tape_length, max_steps)
+    BB_save_machine(machine, results, tape_length, max_steps, io)
     return
 
   # All other returns
   else:
-    BB_save_machine(machine, results, tape_length, max_steps)
+    BB_save_machine(machine, results, tape_length, max_steps, io)
     return
 
 def BB_run(TTable, num_states, num_symbols, tape_length, max_steps):
@@ -126,54 +124,14 @@ def BB_run(TTable, num_states, num_symbols, tape_length, max_steps):
   import busyBeaverC
   return busyBeaverC.run(TTable, num_states, num_symbols, tape_length, float(max_steps))
 
-def BB_save_machine(machine, results, tape_length, max_steps):
+def BB_save_machine(machine, results, tape_length, max_steps, io):
   """
   Saves a busy beaver machine with the provided data information.
   """
-  # Original Kludgey output.
-  """
-  print "Transition Table:"
-  for state in machine.getTTable():
-    print state
-  print "Exited with condition:", exit_condition
-  print "Number of steps:", steps_run_for,
-  print "Number of non-zero symbols written:", symbols_written
-  print
-  """
+  global gMachine_num
 
-  global gTextFile, gTextFilename, gDataFile, gDataFilename, gMachine_num
-
-  # if first call.
-  if not gTextFile:
-    if gTextFilename and gTextFilename != "-":
-      gTextFile = file(gTextFilename, "w")
-    else:
-      import sys
-      gTextFile = sys.stdout
-  if not gDataFile:
-    if gDataFilename:
-      gDataFile = file(gDataFilename, "wb")
-
-  gTextFile.write("%d " % gMachine_num)
-  gTextFile.write("%d " % machine.num_states)
-  gTextFile.write("%d " % machine.num_symbols)
-  gTextFile.write("%d " % tape_length)
-  gTextFile.write("%d " % max_steps)
-  for item in results:
-    gTextFile.write("%s " % item)
-  gTextFile.write("%s " % machine.getTTable())
-  gTextFile.write("\n")
-  gTextFile.flush()
-
-  if gDataFile:
-    pickle.dump((gMachine_num,
-                 machine.num_states,
-                 machine.num_symbols,
-                 tape_length,
-                 max_steps,
-                 results,
-                 machine),
-                gDataFile)
+  io.writeResult(gMachine_num, machine.num_states, machine.num_symbols,
+                 tape_length, max_steps, results, machine);
 
   gMachine_num += 1
 
@@ -194,13 +152,18 @@ if __name__ == "__main__":
     print usage
     sys.exit(1)
 
+  # variables for text and data output.
+  textFilename = None
+  textFile = None
+
+  isData = None
+  dataFilename = None
+  dataFile = None
+
   states = 2
   symbols = 2
   tape_length = 20003
   max_steps = 10000
-  gTextFilename = None
-  isData = None
-  gDataFilename = None
 
   for opt, arg in opts:
     if opt == "--help":
@@ -216,23 +179,36 @@ if __name__ == "__main__":
       max_steps = float(arg)
     elif opt == "--textfile":
       if arg:
-        gTextFilename = arg
+        textFilename = arg
     elif opt == "--datafile":
       isData = not None
       if arg:
-        gDataFilename = arg
+        dataFilename = arg
 
   # The furthest that the machine can travel in n steps is n away from the
   # origin.  It could travel in eighter direction so the tape need not be longer
   # than 2 * max_steps
   tape_length = min(tape_length, 2 * max_steps + 3)
 
-  if not gTextFilename:
-    gTextFilename = "BBP_%d_%d_%d_%d.txt" % \
+  if not textFilename:
+    textFilename = "BBP_%d_%d_%d_%d.txt" % \
                     (states, symbols, tape_length, max_steps)
 
-  if isData and not gDataFilename:
-    gDataFilename = "BBP_%d_%d_%d_%d.data" % \
+  if not textFile:
+    if textFilename and textFilename != "-":
+      textFile = file(textFilename, "w")
+    else:
+      import sys
+      textFile = sys.stdout
+
+  if isData and not dataFilename:
+    dataFilename = "BBP_%d_%d_%d_%d.data" % \
                     (states, symbols, tape_length, max_steps)
 
-  BB_Prover(states, symbols, tape_length, max_steps)
+  if not dataFile:
+    if dataFilename:
+      dataFile = file(dataFilename, "wb")
+
+  io = BB_IO(None, textFile, dataFile)
+
+  BB_Prover(states, symbols, tape_length, max_steps, io)
