@@ -1,0 +1,4 @@
+#!/bin/csh -f
+# takes an input files or stdin in Busy Beaver Prover format and finds 
+# those with exit condition of 0 (i.e. Halt)
+findvalue 6 4 $*
