@@ -130,8 +130,7 @@ def BB_save_machine(machine, results, tape_length, max_steps, io):
   """
   global gMachine_num
 
-  io.writeResult(gMachine_num, machine.num_states, machine.num_symbols,
-                 tape_length, max_steps, results, machine);
+  io.writeResult(gMachine_num, machine, tape_length, max_steps, results);
 
   gMachine_num += 1
 
