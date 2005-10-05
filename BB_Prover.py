@@ -130,8 +130,7 @@ def BB_save_machine(machine, results, tape_length, max_steps, io):
   """
   global gMachine_num
 
-  io.writeResult(gMachine_num, machine, tape_length, max_steps, results);
-
+  io.writeResult(gMachine_num, tape_length, max_steps, results, machine);
   gMachine_num += 1
 
 # Default test code
