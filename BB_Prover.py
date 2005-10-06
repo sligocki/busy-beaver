@@ -11,7 +11,7 @@ from BB_IO import BB_IO
 # global machine number
 gMachine_num = 0
 
-def BB_Prover(num_states, num_symbols, tape_lenth, max_steps, io):
+def BB_Prover(num_states, num_symbols, tape_lenth, max_steps, io, next):
   """
   Stats all distinct BB machines with num_states and num_symbols.
 
@@ -30,10 +30,10 @@ def BB_Prover(num_states, num_symbols, tape_lenth, max_steps, io):
   """
   machine = BB_Machine(num_states, num_symbols)
   BB_Prover_Recursive(machine, num_states, num_symbols,
-                      tape_lenth, max_steps, io)
+                      tape_lenth, max_steps, io, next)
 
 def BB_Prover_Recursive(machine, num_states, num_symbols,
-                        tape_length, max_steps, io):
+                        tape_length, max_steps, io, next):
   """
   Stats this BB machine.
 
@@ -100,7 +100,7 @@ def BB_Prover_Recursive(machine, num_states, num_symbols,
             machine_new.AddCell(state_in , symbol_in ,
                                 state_out, symbol_out, direction_out)
             BB_Prover_Recursive(machine_new, num_states, num_symbols,
-                                tape_length, max_steps, io)
+                                tape_length, max_steps, io, next)
     return
 
   # -1) Error
@@ -136,16 +136,19 @@ def BB_save_machine(machine, results, tape_length, max_steps, io):
 # Default test code
 if __name__ == "__main__":
   import getopt, sys
-  usage = "BB_Prover.py [--help] [--states=] [--symbols=] [--tape=] [--steps=] [--textfile=] [--datafile=]"
+
+  usage = "BB_Prover.py [--help] [--states=] [--symbols=] [--tape=] [--steps=] [--textfile=] [--datafile=] [--restart=]"
   try:
-    opts, args = getopt.getopt(sys.argv[1:], "",
-                               ["help",
-                                "states=",
-                                "symbols=",
-                                "tape=",
-                                "steps=",
-                                "textfile=",
-                                "datafile="])
+    opts, args = getopt.getopt(sys.argv[1:], "", [
+                                                  "help",
+                                                  "states=",
+                                                  "symbols=",
+                                                  "tape=",
+                                                  "steps=",
+                                                  "textfile=",
+                                                  "datafile=",
+                                                  "restart="
+                                                 ])
   except getopt.GetoptError:
     print usage
     sys.exit(1)
@@ -157,6 +160,10 @@ if __name__ == "__main__":
   isData = None
   dataFilename = None
   dataFile = None
+
+  isRestart = None
+  restartFilename = None
+  restartFile = None
 
   states = 2
   symbols = 2
@@ -182,6 +189,28 @@ if __name__ == "__main__":
       isData = not None
       if arg:
         dataFilename = arg
+    elif opt == "--restart":
+      isRestart = not None
+      if arg:
+        restartFilename = arg
+
+  next = None
+
+  if isRestart:
+    if restartFilename and restartFilename != "-":
+      restartFile = file(restartFilename, "r")
+    else:
+      restartFile = sys.stdin
+
+    input = BB_IO(restartFile, None, None)
+
+    next = input.readResult()
+
+    states  = next[1]
+    symbols = next[2]
+
+    tape_length = next[3]
+    max_steps   = next[4]
 
   # The furthest that the machine can travel in n steps is n away from the
   # origin.  It could travel in eighter direction so the tape need not be longer
@@ -192,21 +221,18 @@ if __name__ == "__main__":
     textFilename = "BBP_%d_%d_%d_%d.txt" % \
                     (states, symbols, tape_length, max_steps)
 
-  if not textFile:
-    if textFilename and textFilename != "-":
-      textFile = file(textFilename, "w")
-    else:
-      import sys
-      textFile = sys.stdout
+  if textFilename and textFilename != "-":
+    textFile = file(textFilename, "w")
+  else:
+    textFile = sys.stdout
 
   if isData and not dataFilename:
     dataFilename = "BBP_%d_%d_%d_%d.data" % \
                     (states, symbols, tape_length, max_steps)
 
-  if not dataFile:
-    if dataFilename:
-      dataFile = file(dataFilename, "wb")
+  if dataFilename:
+    dataFile = file(dataFilename, "wb")
 
-  io = BB_IO(None, textFile, dataFile)
+  io = BB_IO(restartFile, textFile, dataFile)
 
-  BB_Prover(states, symbols, tape_length, max_steps, io)
+  BB_Prover(states, symbols, tape_length, max_steps, io, next)
