@@ -10,8 +10,9 @@ from BB_IO import BB_IO
 
 # global machine number
 gMachine_num = 0
+gNext = None
 
-def BB_Prover(num_states, num_symbols, tape_lenth, max_steps, io, next):
+def BB_Prover(num_states, num_symbols, tape_lenth, max_steps, io):
   """
   Stats all distinct BB machines with num_states and num_symbols.
 
@@ -30,10 +31,10 @@ def BB_Prover(num_states, num_symbols, tape_lenth, max_steps, io, next):
   """
   machine = BB_Machine(num_states, num_symbols)
   BB_Prover_Recursive(machine, num_states, num_symbols,
-                      tape_lenth, max_steps, io, next)
+                      tape_lenth, max_steps, io)
 
 def BB_Prover_Recursive(machine, num_states, num_symbols,
-                        tape_length, max_steps, io, next):
+                        tape_length, max_steps, io):
   """
   Stats this BB machine.
 
@@ -54,11 +55,20 @@ def BB_Prover_Recursive(machine, num_states, num_symbols,
     0) Number of non-zero symbols written
     1) Number of steps run for
   """
-  results = BB_run(machine.getTTable(),
-                   num_states,
-                   num_symbols,
-                   tape_length,
-                   max_steps)
+  global gMachine_num, gNext
+
+  if gNext and machine.getTTable() == gNext[6]:
+    results = gNext[5]
+    save_it = None
+
+    gNext = io.readResult()
+  else:
+    results = BB_run(machine.getTTable(),
+                     num_states,
+                     num_symbols,
+                     tape_length,
+                     max_steps)
+    save_it = not None
 
   exit_condition = results[0]
 
@@ -81,15 +91,24 @@ def BB_Prover_Recursive(machine, num_states, num_symbols,
     machine_new.AddCell(state_in , symbol_in ,
                         -1, 1, 1)
 
-    if results[3] == 0:
-      newNumSyms  = results[4] + 1
+    if gNext and machine_new.getTTable() == gNext[6]:
+      newResults = gNext[5]
+      save_it = None
+
+      gNext = io.readResult()
     else:
-      newNumSyms  = results[4]
+      if results[3] == 0:
+        newNumSyms  = results[4] + 1
+      else:
+        newNumSyms  = results[4]
 
-    newNumSteps = results[5] + 1
+      newNumSteps = results[5] + 1
 
-    newResults = (0,newNumSyms,newNumSteps)
-    BB_save_machine(machine_new, newResults, tape_length, max_steps, io)
+      newResults = (0,newNumSyms,newNumSteps)
+      save_it = not None
+
+    BB_save_machine(machine_new, newResults, tape_length, max_steps, io,
+                    save_it)
 
     # All other states
     if machine.num_empty_cells > 1:
@@ -100,7 +119,7 @@ def BB_Prover_Recursive(machine, num_states, num_symbols,
             machine_new.AddCell(state_in , symbol_in ,
                                 state_out, symbol_out, direction_out)
             BB_Prover_Recursive(machine_new, num_states, num_symbols,
-                                tape_length, max_steps, io, next)
+                                tape_length, max_steps, io)
     return
 
   # -1) Error
@@ -109,12 +128,12 @@ def BB_Prover_Recursive(machine, num_states, num_symbols,
     message = results[2]
     sys.stderr.write("Error %d: %s\n" % (error_number,message))
 
-    BB_save_machine(machine, results, tape_length, max_steps, io)
+    BB_save_machine(machine, results, tape_length, max_steps, io, save_it)
     return
 
   # All other returns
   else:
-    BB_save_machine(machine, results, tape_length, max_steps, io)
+    BB_save_machine(machine, results, tape_length, max_steps, io, save_it)
     return
 
 def BB_run(TTable, num_states, num_symbols, tape_length, max_steps):
@@ -124,13 +143,15 @@ def BB_run(TTable, num_states, num_symbols, tape_length, max_steps):
   import busyBeaverC
   return busyBeaverC.run(TTable, num_states, num_symbols, tape_length, float(max_steps))
 
-def BB_save_machine(machine, results, tape_length, max_steps, io):
+def BB_save_machine(machine, results, tape_length, max_steps, io, save_it):
   """
   Saves a busy beaver machine with the provided data information.
   """
   global gMachine_num
 
-  io.writeResult(gMachine_num, tape_length, max_steps, results, machine);
+  if save_it:
+    io.writeResult(gMachine_num, tape_length, max_steps, results, machine);
+
   gMachine_num += 1
 
 # Default test code
@@ -150,7 +171,7 @@ if __name__ == "__main__":
                                                   "restart="
                                                  ])
   except getopt.GetoptError:
-    print usage
+    sys.stderr.write("%s\n" % usage)
     sys.exit(1)
 
   # variables for text and data output.
@@ -172,7 +193,7 @@ if __name__ == "__main__":
 
   for opt, arg in opts:
     if opt == "--help":
-      print usage
+      sys.stdout.write("%s\n" % usage)
       sys.exit(0)
     elif opt == "--states":
       states = int(arg)
@@ -194,7 +215,7 @@ if __name__ == "__main__":
       if arg:
         restartFilename = arg
 
-  next = None
+  gNext = None
 
   if isRestart:
     if restartFilename and restartFilename != "-":
@@ -204,13 +225,13 @@ if __name__ == "__main__":
 
     input = BB_IO(restartFile, None, None)
 
-    next = input.readResult()
+    gNext = input.readResult()
 
-    states  = next[1]
-    symbols = next[2]
+    states  = gNext[1]
+    symbols = gNext[2]
 
-    tape_length = next[3]
-    max_steps   = next[4]
+    tape_length = gNext[3]
+    max_steps   = gNext[4]
 
   # The furthest that the machine can travel in n steps is n away from the
   # origin.  It could travel in eighter direction so the tape need not be longer
@@ -235,4 +256,4 @@ if __name__ == "__main__":
 
   io = BB_IO(restartFile, textFile, dataFile)
 
-  BB_Prover(states, symbols, tape_length, max_steps, io, next)
+  BB_Prover(states, symbols, tape_length, max_steps, io)
