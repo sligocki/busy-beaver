@@ -2,6 +2,7 @@
 Does IO on Busy Beaver results (BB_IO class).
 """
 
+import sys
 import cPickle as pickle
 import string
 
@@ -47,8 +48,8 @@ class BB_IO:
       
     if self.data_output_file:
       pickle.dump(machine_num,
-                  num_states,
-                  num_symbols,
+                  machine.num_states,
+                  machine.num_symbols,
                   tape_length,
                   max_steps,
                   results,
@@ -70,7 +71,7 @@ class BB_IO:
         num_states  = int(parts[1])
         num_symbols = int(parts[2])
 
-        tape_length = float(parts[3])
+        tape_length = int(parts[3])
         max_steps   = float(parts[4])
 
         results = [int(parts[5]),]
