@@ -120,8 +120,6 @@ def BB_Prover_Recursive(machine, num_states, num_symbols,
                                 state_out, symbol_out, direction_out)
             BB_Prover_Recursive(machine_new, num_states, num_symbols,
                                 tape_length, max_steps, io)
-    return
-
   # -1) Error
   elif exit_condition == -1:
     error_number = results[1]
@@ -129,12 +127,11 @@ def BB_Prover_Recursive(machine, num_states, num_symbols,
     sys.stderr.write("Error %d: %s\n" % (error_number,message))
 
     BB_save_machine(machine, results, tape_length, max_steps, io, save_it)
-    return
-
   # All other returns
   else:
     BB_save_machine(machine, results, tape_length, max_steps, io, save_it)
-    return
+
+  return
 
 def BB_run(TTable, num_states, num_symbols, tape_length, max_steps):
   """
@@ -234,12 +231,12 @@ if __name__ == "__main__":
     max_steps   = gNext[4]
 
   # The furthest that the machine can travel in n steps is n away from the
-  # origin.  It could travel in eighter direction so the tape need not be longer
-  # than 2 * max_steps
+  # origin.  It could travel in either direction so the tape need not be longer
+  # than 2 * max_steps + 3
   tape_length = min(tape_length, 2 * max_steps + 3)
 
   if not textFilename:
-    textFilename = "BBP_%d_%d_%d_%d.txt" % \
+    textFilename = "BBP_%d_%d_%d_%.0f.txt" % \
                     (states, symbols, tape_length, max_steps)
 
   if textFilename and textFilename != "-":
@@ -248,7 +245,7 @@ if __name__ == "__main__":
     textFile = sys.stdout
 
   if isData and not dataFilename:
-    dataFilename = "BBP_%d_%d_%d_%d.data" % \
+    dataFilename = "BBP_%d_%d_%d_%.0f.data" % \
                     (states, symbols, tape_length, max_steps)
 
   if dataFilename:

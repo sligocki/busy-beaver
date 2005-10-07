@@ -37,7 +37,7 @@ class BB_IO:
       self.text_output_file.write("%d " % machine.num_symbols)
 
       self.text_output_file.write("%d " % tape_length)
-      self.text_output_file.write("%d " % max_steps)
+      self.text_output_file.write("%.0f " % max_steps)
 
       for item in results:
         self.text_output_file.write("%s " % item)
