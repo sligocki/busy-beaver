@@ -40,7 +40,12 @@ class BB_IO:
       self.text_output_file.write("%.0f " % max_steps)
 
       for item in results:
-        self.text_output_file.write("%s " % item)
+        if type(item) == int:
+          self.text_output_file.write("%d " % item)
+        elif type(item) == float:
+          self.text_output_file.write("%.0f " % item)
+        else:
+          self.text_output_file.write("%s " % item)
 
       self.text_output_file.write("%s " % machine.getTTable());
       self.text_output_file.write("\n")
