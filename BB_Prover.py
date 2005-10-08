@@ -233,7 +233,7 @@ if __name__ == "__main__":
   # The furthest that the machine can travel in n steps is n away from the
   # origin.  It could travel in either direction so the tape need not be longer
   # than 2 * max_steps + 3
-  tape_length = min(tape_length, 2 * max_steps + 3)
+  tape_length = int(min(tape_length, 2 * max_steps + 3))
 
   if not textFilename:
     textFilename = "BBP_%d_%d_%d_%.0f.txt" % \
