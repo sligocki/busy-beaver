@@ -12,7 +12,7 @@ from BB_IO import BB_IO
 gMachine_num = 0
 gNext = None
 
-def BB_Prover(num_states, num_symbols, tape_lenth, max_steps, io):
+def BB_Prover(num_states, num_symbols, tape_length, max_steps, io):
   """
   Stats all distinct BB machines with num_states and num_symbols.
 
@@ -31,7 +31,7 @@ def BB_Prover(num_states, num_symbols, tape_lenth, max_steps, io):
   """
   machine = BB_Machine(num_states, num_symbols)
   BB_Prover_Recursive(machine, num_states, num_symbols,
-                      tape_lenth, max_steps, io)
+                      tape_length, max_steps, io)
 
 def BB_Prover_Recursive(machine, num_states, num_symbols,
                         tape_length, max_steps, io):
