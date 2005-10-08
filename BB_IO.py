@@ -65,6 +65,9 @@ class BB_IO:
     """
     Reads a result.
     """
+
+    return_value = None
+
     if self.input_file:
       cur_line = self.input_file.readline()
 
@@ -92,7 +95,7 @@ class BB_IO:
 
         machine_TTable = eval(string.join(parts[index:]))
 
-        return (machine_num, num_states, num_symbols, tape_length, max_steps,
-                results, machine_TTable)
+        return_value = (machine_num, num_states, num_symbols,
+                        tape_length, max_steps, results, machine_TTable)
 
-    return None
+    return return_value
