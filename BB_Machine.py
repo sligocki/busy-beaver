@@ -2,6 +2,8 @@
 Contains Busy Beaver BB_Machine class.
 """
 
+import sys
+
 class BB_Machine:
   """
   Class for creating and storing Busy Beaver Machines which may include blank
@@ -30,9 +32,29 @@ class BB_Machine:
 
   def setTTable(self, table):
     """
-    Sets the transition table in tuple format.
+    Sets the transition table in tuple format and updates object to be
+    consistent with transition table
     """
     self._TTable = table
+
+    self.num_states  = len(table)
+    self.num_symbols = len(table[0])
+
+    self.max_state  = -1
+    self.max_symbol = -1
+
+    self.num_empty_cells = 0
+
+    for symbol_list in table:
+      for element in symbol_list:
+        if element[0] > self.max_symbol:
+          self.max_symbol = element[0]
+
+        if element[2] > self.max_state:
+          self.max_state = element[2]
+
+        if element == (-1, 0, -1):
+          self.num_empty_cells += 1
 
   def getNumStatesAvailable(self):
     # self.num_states - 1 because that is the largest state number
