@@ -12,6 +12,20 @@ typedef struct
   TRANSITION* t;
 } STATE;
 
+typedef struct
+{
+  STATE* machine;
+  int*   tape;
+
+  int    symbol;
+
+  int    position;
+  int    max_left;
+  int    max_right;
+
+  int    state;
+} TM;
+
 static PyObject* busyBeaverC_run(PyObject* self,
                                  PyObject* args);
 
@@ -29,11 +43,8 @@ PyMODINIT_FUNC initbusyBeaverC(void)
 static PyObject* busyBeaverC_run(PyObject* self,
                                  PyObject* args)
 {
-  int symbol,curSymbol;
-  int state;
-  int newSymbol;
-  int newDelta;
-  int newState;
+  TM m1;
+  TM m2;
 
   int                numSyms  = 0;
   unsigned long long numSteps = 0;
@@ -54,16 +65,10 @@ static PyObject* busyBeaverC_run(PyObject* self,
 
   PyObject* tapeLengthObj;
   int tapeLength;
-  int tapeStart = 0;
-  int tapeEnd   = 0;
   int tapeMiddle;
-  int tapePosition;
-  int *tape = NULL;
 
   PyObject* maxStepsObj;
   unsigned long long maxSteps;
-
-  int infinite;
 
   if (!PyTuple_CheckExact(args))
   {
@@ -113,72 +118,78 @@ static PyObject* busyBeaverC_run(PyObject* self,
     return Py_BuildValue("(iis)",-1,6,"Out_of_memory_allocating_'machine'");
   }
 
-  for (state = 0; state < numStates; state++)
   {
-    int curSymbol;
-    PyObject* curStateObj;
-
-    curStateObj = PyList_GetItem(machineObj,state);
-    if (!PyList_Check(curStateObj))
+    int iterState;
+    for (iterState = 0; iterState < numStates; iterState++)
     {
-      return Py_BuildValue("(iis)",-1,7,"Unable_to_extract_Turing_machine_transition");
-    }
+      int iterSymbol;
+      PyObject* curStateObj;
 
-    numSymbolsImp = PyList_Size(curStateObj);
-
-    if (numSymbolsImp != numSymbols)
-    {
-      return Py_BuildValue("(iis)",-1,8,"Number_of_symbols_don't_match");
-    }
-
-    machine[state].t = (TRANSITION *)malloc(numSymbols*sizeof(*(machine[state].t)));
-    if (machine[state].t == NULL)
-    {
-      return Py_BuildValue("(iis)",-1,9,"Out_of_memory_allocating_'machine'_state_transition");
-    }
-
-    for (curSymbol = 0; curSymbol < numSymbols; curSymbol++)
-    {
-      PyObject* curTransObj;
-      int i0,i1,i2;
-
-      curTransObj = PyList_GetItem(curStateObj,curSymbol);
-
-      if (!PyTuple_CheckExact(curTransObj))
+      curStateObj = PyList_GetItem(machineObj,iterState);
+      if (!PyList_Check(curStateObj))
       {
-        return Py_BuildValue("(iis)",-1,10,"Unable_to_extract_Turing_machine_transition_3-tuple");
+        return Py_BuildValue("(iis)",-1,7,"Unable_to_extract_Turing_machine_transition");
       }
 
-      if (PyTuple_Size(curTransObj) != 3)
+      numSymbolsImp = PyList_Size(curStateObj);
+
+      if (numSymbolsImp != numSymbols)
       {
-        return Py_BuildValue("(iis)",-1,11,"Turing_machine_transition_was_not_a_3-tuple");
+        return Py_BuildValue("(iis)",-1,8,"Number_of_symbols_don't_match");
       }
 
-      if (!PyArg_ParseTuple(curTransObj,"iii",&i0,&i1,&i2))
+      machine[iterState].t = (TRANSITION *)malloc(numSymbols*sizeof(*(machine[iterState].t)));
+      if (machine[iterState].t == NULL)
       {
-        return Py_BuildValue("(iis)",-1,12,"Unable_to_parse_Turing_machine_transition 3-tuple");
+        return Py_BuildValue("(iis)",-1,9,"Out_of_memory_allocating_'machine'_state_transition");
       }
 
-      if (i0 < -1 || i0 >= numSymbols)
+      for (iterSymbol = 0; iterSymbol < numSymbols; iterSymbol++)
       {
-        return Py_BuildValue("(iis)",-1,13,"Illegal_symbol_in_Turing_machine_transistion_3-tuple");
-      }
+        PyObject* curTransObj;
+        int i0,i1,i2;
 
-      if (i1 < 0 || i1 > 1)
-      {
-        return Py_BuildValue("(iis)",-1,14,"Illegal_direction_in_Turing_machine_transistion_3-tuple");
-      }
+        curTransObj = PyList_GetItem(curStateObj,iterSymbol);
 
-      if (i2 < -1 || i2 >= numStates)
-      {
-        return Py_BuildValue("(iis)",-1,15,"Illegal_state_in_Turing_machine_transistion_3-tuple");
-      }
+        if (!PyTuple_CheckExact(curTransObj))
+        {
+          return Py_BuildValue("(iis)",-1,10,"Unable_to_extract_Turing_machine_transition_3-tuple");
+        }
 
-      machine[state].t[curSymbol].w = i0;
-      machine[state].t[curSymbol].d = 2*i1 - 1;
-      machine[state].t[curSymbol].s = i2;
+        if (PyTuple_Size(curTransObj) != 3)
+        {
+          return Py_BuildValue("(iis)",-1,11,"Turing_machine_transition_was_not_a_3-tuple");
+        }
+
+        if (!PyArg_ParseTuple(curTransObj,"iii",&i0,&i1,&i2))
+        {
+          return Py_BuildValue("(iis)",-1,12,"Unable_to_parse_Turing_machine_transition 3-tuple");
+        }
+
+        if (i0 < -1 || i0 >= numSymbols)
+        {
+          return Py_BuildValue("(iis)",-1,13,"Illegal_symbol_in_Turing_machine_transistion_3-tuple");
+        }
+
+        if (i1 < 0 || i1 > 1)
+        {
+          return Py_BuildValue("(iis)",-1,14,"Illegal_direction_in_Turing_machine_transistion_3-tuple");
+        }
+
+        if (i2 < -1 || i2 >= numStates)
+        {
+          return Py_BuildValue("(iis)",-1,15,"Illegal_state_in_Turing_machine_transistion_3-tuple");
+        }
+
+        machine[iterState].t[iterSymbol].w = i0;
+        machine[iterState].t[iterSymbol].d = 2*i1 - 1;
+        machine[iterState].t[iterSymbol].s = i2;
+      }
     }
   }
+  
+  m1.machine = machine;
+  m2.machine = machine;
 
   tapeLengthObj = PyTuple_GetItem(args,3);
 
@@ -190,16 +201,13 @@ static PyObject* busyBeaverC_run(PyObject* self,
   tapeLength = PyInt_AsLong(tapeLengthObj);
   tapeMiddle = tapeLength / 2;
 
-  tape = (int *)calloc(tapeLength,sizeof(*tape));
+  m1.tape = (int *)calloc(tapeLength,sizeof(*(m1.tape)));
+  m2.tape = (int *)calloc(tapeLength,sizeof(*(m1.tape)));
 
-  if (tape == NULL)
+  if (m1.tape == NULL || m2.tape == NULL)
   {
     return Py_BuildValue("(iis)",-1,17,"Out_of_memory_allocating_'tape'");
   }
-
-  tapeStart    = tapeMiddle;
-  tapeEnd      = tapeMiddle;
-  tapePosition = tapeMiddle;
 
   maxStepsObj = PyTuple_GetItem(args,4);
 
@@ -210,22 +218,34 @@ static PyObject* busyBeaverC_run(PyObject* self,
 
   maxSteps = PyFloat_AsDouble(maxStepsObj);
 
-  state  = 0;
-  symbol = tape[tapePosition];
+  m1.symbol = m1.tape[m1.position];
 
-  newState  = -1;
-  newSymbol = -1;
+  m1.max_left  = tapeMiddle;
+  m1.max_right = tapeMiddle;
+  m1.position  = tapeMiddle;
+
+  m1.state  = 0;
+
+  m2.symbol = m2.tape[m2.position];
+
+  m2.max_left  = tapeMiddle;
+  m2.max_right = tapeMiddle;
+  m2.position  = tapeMiddle;
+
+  m2.state  = 0;
 
   numSyms  = 0;
   numSteps = 0;
 
-  infinite = 0;
+#if 0
   newDelta = 0;
+#endif
 
   for (i = 0; i < maxSteps; i++)
   {
     numSteps++;
 
+#if 0
     symbol = tape[tapePosition];
 
     newSymbol = machine[state].t[symbol].w;
@@ -280,8 +300,10 @@ static PyObject* busyBeaverC_run(PyObject* self,
     }
 
     state = newState;
+#endif
   }
 
+#if 0
   curSymbol = tape[tapePosition];
 
   if (machine != NULL)
@@ -334,6 +356,7 @@ static PyObject* busyBeaverC_run(PyObject* self,
   {
     return Py_BuildValue("(idd)",2,dNumSyms,dNumSteps);
   }
+#endif
 
   return Py_BuildValue("(iis)",-1,19,"Reached_the_end_which_is_impossible,_;-)");
 }
