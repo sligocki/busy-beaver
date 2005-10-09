@@ -9,7 +9,7 @@ from BB_Machine import BB_Machine
 from BB_IO import BB_IO
 
 # global machine number
-gMachine_num = 0
+g_machine_num = 0
 
 def BB_Continue(num_states, num_symbols, tape_lenth, max_steps, io):
   """
@@ -28,16 +28,16 @@ def BB_Continue(num_states, num_symbols, tape_lenth, max_steps, io):
     0) Number of non-zero symbols written
     1) Number of steps run for
   """
-  nextLine = io.readResult()
+  next_line = io.read_result()
 
-  while nextLine:
-    num_states  = int(nextLine[1])
-    num_symbols = int(nextLine[2])
+  while next_line:
+    num_states  = int(next_line[1])
+    num_symbols = int(next_line[2])
 
-    results = nextLine[5]
+    results = next_line[5]
 
     machine = BB_Machine(num_states, num_symbols)
-    machine.setTTable(nextLine[6])
+    machine.set_TTable(next_line[6])
 
     if (results[0] == 0):
       save_it = not None
@@ -46,7 +46,7 @@ def BB_Continue(num_states, num_symbols, tape_lenth, max_steps, io):
       BB_Continue_Recursive(machine, num_states, num_symbols,
                             tape_lenth, max_steps, io)
 
-    nextLine = io.readResult()
+    next_line = io.read_result()
 
 def BB_Continue_Recursive(machine, num_states, num_symbols,
                           tape_length, max_steps, io):
@@ -70,7 +70,7 @@ def BB_Continue_Recursive(machine, num_states, num_symbols,
     0) Number of non-zero symbols written
     1) Number of steps run for
   """
-  results = BB_run(machine.getTTable(),
+  results = BB_run(machine.get_TTable(),
                    num_states,
                    num_symbols,
                    tape_length,
@@ -86,8 +86,8 @@ def BB_Continue_Recursive(machine, num_states, num_symbols,
     # max_state and max_symbol different from num_states and num_symbols.
     # they are restricted to only one greater than the current largest state or
     # symbol.
-    max_state = machine.getNumStatesAvailable()
-    max_symbol = machine.getNumSymbolsAvailable()
+    max_state = machine.get_num_states_available()
+    max_symbol = machine.get_num_symbols_available()
 
     # Halt state
     #   1) Add the halt state
@@ -95,20 +95,20 @@ def BB_Continue_Recursive(machine, num_states, num_symbols,
     #   2) This machine will take one more step and halt
     #   4) Save this machine
     machine_new = copy.deepcopy(machine)
-    machine_new.AddCell(state_in , symbol_in ,
+    machine_new.add_cell(state_in , symbol_in ,
                         -1, 1, 1)
 
     if results[3] == 0:
-      newNumSyms  = results[4] + 1
+      new_num_syms  = results[4] + 1
     else:
-      newNumSyms  = results[4]
+      new_num_syms  = results[4]
 
-    newNumSteps = results[5] + 1
+    new_num_steps = results[5] + 1
 
-    newResults = (0,newNumSyms,newNumSteps)
+    new_results = (0,new_num_syms,new_num_steps)
     save_it = not None
 
-    BB_save_machine(machine_new, newResults, tape_length, max_steps, io,
+    BB_save_machine(machine_new, new_results, tape_length, max_steps, io,
                     save_it)
 
     # All other states
@@ -117,8 +117,8 @@ def BB_Continue_Recursive(machine, num_states, num_symbols,
         for symbol_out in range(max_symbol + 1):
           for direction_out in range(2):
             machine_new = copy.deepcopy(machine)
-            machine_new.AddCell(state_in , symbol_in ,
-                                state_out, symbol_out, direction_out)
+            machine_new.add_cell(state_in , symbol_in ,
+                                 state_out, symbol_out, direction_out)
             BB_Continue_Recursive(machine_new, num_states, num_symbols,
                                   tape_length, max_steps, io)
   # -1) Error
@@ -138,19 +138,20 @@ def BB_run(TTable, num_states, num_symbols, tape_length, max_steps):
   """
   Wrapper for C machine running code.
   """
-  import busyBeaverC
-  return busyBeaverC.run(TTable, num_states, num_symbols, tape_length, float(max_steps))
+  import busy_beaver_C
+  return busy_beaver_C.run(TTable, num_states, num_symbols,
+                           tape_length, float(max_steps))
 
 def BB_save_machine(machine, results, tape_length, max_steps, io, save_it):
   """
   Saves a busy beaver machine with the provided data information.
   """
-  global gMachine_num
+  global g_machine_num
 
   if save_it:
-    io.writeResult(gMachine_num, tape_length, max_steps, results, machine);
+    io.write_result(g_machine_num, tape_length, max_steps, results, machine);
 
-  gMachine_num += 1
+  g_machine_num += 1
 
 # Default test code
 if __name__ == "__main__":
@@ -173,15 +174,15 @@ if __name__ == "__main__":
     sys.exit(1)
 
   # variables for text and data output.
-  textFilename = None
-  textFile = None
+  text_filename = None
+  text_file = None
 
-  isData = None
-  dataFilename = None
-  dataFile = None
+  is_data = None
+  data_filename = None
+  data_file = None
 
-  inFilename = None
-  inFile = None
+  in_filename = None
+  in_file = None
 
   states = 2
   symbols = 2
@@ -202,41 +203,41 @@ if __name__ == "__main__":
       max_steps = float(arg)
     elif opt == "--textfile":
       if arg:
-        textFilename = arg
+        text_filename = arg
     elif opt == "--datafile":
-      isData = not None
+      is_data = not None
       if arg:
-        dataFilename = arg
+        data_filename = arg
     elif opt == "--infile":
       if arg:
-        inFilename = arg
+        in_filename = arg
 
   # The furthest that the machine can travel in n steps is n away from the
   # origin.  It could travel in either direction so the tape need not be longer
   # than 2 * max_steps + 3
   tape_length = int(min(tape_length, 2 * max_steps + 3))
 
-  if inFilename and inFilename != "-":
-    inFile = file(inFilename, "r")
+  if in_filename and in_filename != "-":
+    in_file = file(in_filename, "r")
   else:
-    inFile = sys.stdin
+    in_file = sys.stdin
 
-  if not textFilename:
-    textFilename = "BBP_%d_%d_%d_%.0f.txt" % \
+  if not text_filename:
+    text_filename = "BBP_%d_%d_%d_%.0f.txt" % \
                     (states, symbols, tape_length, max_steps)
 
-  if textFilename and textFilename != "-":
-    textFile = file(textFilename, "w")
+  if text_filename and text_filename != "-":
+    text_file = file(text_filename, "w")
   else:
-    textFile = sys.stdout
+    text_file = sys.stdout
 
-  if isData and not dataFilename:
-    dataFilename = "BBP_%d_%d_%d_%.0f.data" % \
+  if is_data and not data_filename:
+    data_filename = "BBP_%d_%d_%d_%.0f.data" % \
                     (states, symbols, tape_length, max_steps)
 
-  if dataFilename:
-    dataFile = file(dataFilename, "wb")
+  if data_filename:
+    data_file = file(data_filename, "wb")
 
-  io = BB_IO(inFile, textFile, dataFile)
+  io = BB_IO(in_file, text_file, data_file)
 
   BB_Continue(states, symbols, tape_length, max_steps, io)

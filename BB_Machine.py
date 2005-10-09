@@ -24,13 +24,13 @@ class BB_Machine:
     self.max_symbol = 1
     self.num_empty_cells = self.num_states * self.num_symbols - 1
 
-  def getTTable(self):
+  def get_TTable(self):
     """
     Returns the transition table in tuple format.
     """
     return self._TTable
 
-  def setTTable(self, table):
+  def set_TTable(self, table):
     """
     Sets the transition table in tuple format and updates object to be
     consistent with transition table
@@ -56,21 +56,21 @@ class BB_Machine:
         if element == (-1, 0, -1):
           self.num_empty_cells += 1
 
-  def getNumStatesAvailable(self):
+  def get_num_states_available(self):
     # self.num_states - 1 because that is the largest state number
     if self.max_state < self.num_states - 1:
       return self.max_state + 1
     else:
       return self.num_states - 1
 
-  def getNumSymbolsAvailable(self):
+  def get_num_symbols_available(self):
     # self.num_symbol - 1 because that is the largest symbol number
     if self.max_symbol < self.num_symbols - 1:
       return self.max_symbol + 1
     else:
       return self.num_symbols - 1
 
-  def AddCell(self, state_in, symbol_in, state_out, symbol_out, direction_out):
+  def add_cell(self, state_in, symbol_in, state_out, symbol_out, direction_out):
     if self._TTable[state_in][symbol_in][0] == -1:
       self.num_empty_cells -= 1
     self._TTable[state_in][symbol_in] = (symbol_out, direction_out, state_out)

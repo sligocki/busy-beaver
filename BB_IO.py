@@ -26,7 +26,7 @@ class BB_IO:
     self.text_output_file = text_output_file
     self.data_output_file = data_output_file
 
-  def writeResult(self, machine_num, tape_length, max_steps, results, machine):
+  def write_result(self, machine_num, tape_length, max_steps, results, machine):
     """
     Writes a result.
     """
@@ -47,7 +47,7 @@ class BB_IO:
         else:
           self.text_output_file.write("%s " % item)
 
-      self.text_output_file.write("%s " % machine.getTTable());
+      self.text_output_file.write("%s " % machine.get_TTable());
       self.text_output_file.write("\n")
       self.text_output_file.flush()
       
@@ -61,7 +61,7 @@ class BB_IO:
                   machine,
                   self.data_output_file)
 
-  def readResult(self):
+  def read_result(self):
     """
     Reads a result.
     """
