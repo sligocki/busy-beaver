@@ -68,11 +68,8 @@ def BB_Continue_Recursive(machine, num_states, num_symbols,
     0) Number of non-zero symbols written
     1) Number of steps run for
   """
-  results = BB_run(machine.get_TTable(),
-                   num_states,
-                   num_symbols,
-                   tape_length,
-                   max_steps)
+  results = BB_run(machine.get_TTable(), num_states, num_symbols,
+                   tape_length, max_steps)
   save_it = not None
 
   exit_condition = results[0]
@@ -153,7 +150,9 @@ def BB_save_machine(machine, results, tape_length, max_steps, io, save_it):
 
 # Default test code
 if __name__ == "__main__":
-  import getopt, sys
+  import os
+  import sys
+  import getopt
 
   usage = "BB_Continue.py [--help] [--states=] [--symbols=] [--tape=] [--steps=] [--textfile=] [--datafile=] [--infile=]"
   try:
@@ -232,7 +231,11 @@ if __name__ == "__main__":
                     (states, symbols, tape_length, max_steps)
 
   if text_filename and text_filename != "-":
-    text_file = file(text_filename, "w")
+    if os.path.exists(text_filename):
+      sys.stderr.write("Output text file, '%s', exists\n" % (text_filename,));
+      sys.exit(1)
+    else:
+      text_file = file(text_filename, "w")
   else:
     text_file = sys.stdout
 
@@ -241,7 +244,11 @@ if __name__ == "__main__":
                     (states, symbols, tape_length, max_steps)
 
   if data_filename:
-    data_file = file(data_filename, "wb")
+    if os.path.exists(data_filename):
+      sys.stderr.write("Output data file, '%s', exists\n" % (data_filename,));
+      sys.exit(1)
+    else:
+      data_file = file(data_filename, "wb")
 
   io = BB_IO(in_file, text_file, data_file)
 
