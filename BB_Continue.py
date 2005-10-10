@@ -11,7 +11,7 @@ from BB_IO import BB_IO
 # global machine number
 g_machine_num = 0
 
-def BB_Continue(num_states, num_symbols, tape_lenth, max_steps, io):
+def BB_Continue(num_states, num_symbols, tape_lenth, max_steps, next, io):
   """
   Stats all distinct BB machines with num_states and num_symbols.
 
@@ -28,25 +28,23 @@ def BB_Continue(num_states, num_symbols, tape_lenth, max_steps, io):
     0) Number of non-zero symbols written
     1) Number of steps run for
   """
-  next_line = io.read_result()
+  while next:
+    num_states  = int(next[1])
+    num_symbols = int(next[2])
 
-  while next_line:
-    num_states  = int(next_line[1])
-    num_symbols = int(next_line[2])
-
-    results = next_line[5]
+    results = next[5]
 
     machine = BB_Machine(num_states, num_symbols)
-    machine.set_TTable(next_line[6])
+    machine.set_TTable(next[6])
 
-    if (results[0] == 0):
+    if (results[0] == 0 or results[0] == 4):
       save_it = not None
       BB_save_machine(machine, results, tape_length, max_steps, io, save_it)
     else:
       BB_Continue_Recursive(machine, num_states, num_symbols,
                             tape_lenth, max_steps, io)
 
-    next_line = io.read_result()
+    next = io.read_result()
 
 def BB_Continue_Recursive(machine, num_states, num_symbols,
                           tape_length, max_steps, io):
@@ -212,15 +210,22 @@ if __name__ == "__main__":
       if arg:
         in_filename = arg
 
-  # The furthest that the machine can travel in n steps is n away from the
-  # origin.  It could travel in either direction so the tape need not be longer
-  # than 2 * max_steps + 3
-  tape_length = int(min(tape_length, 2 * max_steps + 3))
-
   if in_filename and in_filename != "-":
     in_file = file(in_filename, "r")
   else:
     in_file = sys.stdin
+
+  input = BB_IO(in_file, None, None)
+
+  next = input.read_result()
+
+  states  = next[1]
+  symbols = next[2]
+
+  # The furthest that the machine can travel in n steps is n away from the
+  # origin.  It could travel in either direction so the tape need not be longer
+  # than 2 * max_steps + 3
+  tape_length = int(min(tape_length, 2 * max_steps + 3))
 
   if not text_filename:
     text_filename = "BBP_%d_%d_%d_%.0f.txt" % \
@@ -240,4 +245,4 @@ if __name__ == "__main__":
 
   io = BB_IO(in_file, text_file, data_file)
 
-  BB_Continue(states, symbols, tape_length, max_steps, io)
+  BB_Continue(states, symbols, tape_length, max_steps, next, io)
