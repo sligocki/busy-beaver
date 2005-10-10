@@ -29,7 +29,7 @@ PyMODINIT_FUNC initbusy_beaver_C(void)
 static PyObject* busy_beaver_C_run(PyObject* self,
                                    PyObject* args)
 {
-  int symbol,cur_symbol;
+  int symbol;
   int state;
   int new_symbol;
   int new_delta;
@@ -232,7 +232,8 @@ static PyObject* busy_beaver_C_run(PyObject* self,
     new_delta  = machine[state].t[symbol].d;
     new_state  = machine[state].t[symbol].s;
 
-    if (new_symbol < 0) {
+    if (new_symbol < 0)
+    {
       break;
     }
 
@@ -263,7 +264,8 @@ static PyObject* busy_beaver_C_run(PyObject* self,
     {
       tape_start = tape_position;
 
-      if (symbol == 0 && new_state == state && new_delta == -1) {
+      if (symbol == 0 && new_state == state && new_delta == -1)
+      {
         infinite = 1;
         break;
       }
@@ -273,7 +275,8 @@ static PyObject* busy_beaver_C_run(PyObject* self,
     {
       tape_end = tape_position;
 
-      if (symbol == 0 && new_state == state && new_delta == 1) {
+      if (symbol == 0 && new_state == state && new_delta == 1)
+      {
         infinite = 1;
         break;
       }
@@ -281,8 +284,6 @@ static PyObject* busy_beaver_C_run(PyObject* self,
 
     state = new_state;
   }
-
-  cur_symbol = tape[tape_position];
 
   if (machine != NULL)
   {
@@ -305,10 +306,14 @@ static PyObject* busy_beaver_C_run(PyObject* self,
   d_num_syms  = num_syms;
   d_num_steps = num_steps;
 
-  if (infinite == 1) {
-    if (new_delta == -1) {
+  if (infinite == 1)
+  {
+    if (new_delta == -1)
+    {
       return Py_BuildValue("(iis)",4,0,"Infinite_left");
-    } else {
+    }
+    else
+    {
       return Py_BuildValue("(iis)",4,1,"Infinite_right");
     }
   }
@@ -321,7 +326,7 @@ static PyObject* busy_beaver_C_run(PyObject* self,
     }
     else
     {
-      return Py_BuildValue("(iiiidd)",3,state,symbol,cur_symbol,
+      return Py_BuildValue("(iiiidd)",3,state,symbol,symbol,
                                         d_num_syms,d_num_steps-1);
     }
   }

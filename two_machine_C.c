@@ -15,15 +15,24 @@ typedef struct
 typedef struct
 {
   STATE* machine;
-  int*   tape;
 
-  int    symbol;
+  int* tape;
+  int  tape_length;
 
-  int    position;
-  int    max_left;
-  int    max_right;
+  int symbol;
 
-  int    state;
+  int                total_symbols;
+  unsigned long long total_steps;
+
+  int position;
+  int max_left;
+  int max_right;
+
+  int state;
+
+  int new_symbol;
+  int new_delta;
+  int new_state;
 } TM;
 
 static PyObject* two_machine_C_run(PyObject* self,
@@ -40,17 +49,91 @@ PyMODINIT_FUNC inittwo_machine_C(void)
   (void)Py_InitModule("two_machine_C",two_machine_C_methods);
 }
 
+#define RESULT_MACHINE        0x0003
+#define RESULT_M1             0x0000
+#define RESULT_M2             0x0001
+#define RESULT_BOTH           0x0002
+
+#define RESULT_VALUE          0x001C
+#define RESULT_STEPPED        0x0000
+#define RESULT_UNDEFINED      0x0004
+#define RESULT_HALTED         0x0008
+#define RESULT_NOTAPE         0x000C
+#define RESULT_INFINITE_LEFT  0x0010
+#define RESULT_INFINITE_RIGHT 0x0014
+#define RESULT_INFINITE_DUAL  0x0018
+
+inline int step_TM(TM* m)
+{
+  m->total_steps++;
+
+  m->new_symbol = m->machine[m->state].t[m->symbol].w;
+  m->new_delta  = m->machine[m->state].t[m->symbol].d;
+  m->new_state  = m->machine[m->state].t[m->symbol].s;
+
+  if (m->new_symbol == -1)
+  {
+    return RESULT_UNDEFINED;
+  }
+
+  if (m->symbol == 0 && m->new_symbol != 0) {
+    m->total_symbols++;
+  }
+
+  if (m->symbol != 0 && m->new_symbol == 0)
+  {
+    m->total_symbols--;
+  }
+
+  m->tape[m->position] = m->new_symbol;
+  m->position += m->new_delta;
+
+  if (m->new_state == -1)
+  {
+    return RESULT_HALTED;
+  }
+
+  if (m->position < 1 || m->position >= m->tape_length - 1)
+  {
+    return RESULT_NOTAPE;
+  }
+  
+  if (m->position < m->max_left)
+  {
+    m->max_left = m->position;
+
+    if (m->symbol == 0 && m->new_state == m->state && m->new_delta == -1)
+    {
+      return RESULT_INFINITE_LEFT;
+    }
+  }
+
+  if (m->position > m->max_right)
+  {
+    m->max_right = m->position;
+
+    if (m->symbol == 0 && m->new_state == m->state && m->new_delta == 1)
+    {
+      return RESULT_INFINITE_RIGHT;
+    }
+  }
+
+  m->symbol = m->tape[m->position];
+  m->state = m->new_state;
+
+  return RESULT_STEPPED;
+}
+
 static PyObject* two_machine_C_run(PyObject* self,
                                   PyObject* args)
 {
   TM m1;
   TM m2;
 
-  int                num_syms  = 0;
-  unsigned long long num_steps = 0;
+  int result;
 
-  double d_num_syms;
-  double d_num_steps;
+  double d_total_symbols;
+  double d_total_steps;
 
   unsigned long long i;
   int n_tuple;
@@ -60,11 +143,11 @@ static PyObject* two_machine_C_run(PyObject* self,
 
   PyObject* num_states_obj;
   int num_states,num_states_imp;
+
   PyObject* num_symbols_obj;
   int num_symbols,num_symbols_imp;
 
   PyObject* tape_length_obj;
-  int tape_length;
   int tape_middle;
 
   PyObject* max_steps_obj;
@@ -198,11 +281,13 @@ static PyObject* two_machine_C_run(PyObject* self,
     return Py_BuildValue("(iis)",-1,16,"Unable_to_extract_tape_length");
   }
 
-  tape_length = PyInt_AsLong(tape_length_obj);
-  tape_middle = tape_length / 2;
+  m1.tape_length = PyInt_AsLong(tape_length_obj);
+  m2.tape_length = m1.tape_length;
 
-  m1.tape = (int *)calloc(tape_length,sizeof(*(m1.tape)));
-  m2.tape = (int *)calloc(tape_length,sizeof(*(m1.tape)));
+  tape_middle = m1.tape_length / 2;
+
+  m1.tape = (int *)calloc(m1.tape_length,sizeof(*(m1.tape)));
+  m2.tape = (int *)calloc(m2.tape_length,sizeof(*(m1.tape)));
 
   if (m1.tape == NULL || m2.tape == NULL)
   {
@@ -224,7 +309,11 @@ static PyObject* two_machine_C_run(PyObject* self,
   m1.max_right = tape_middle;
   m1.position  = tape_middle;
 
+  m1.symbol = 0;
   m1.state  = 0;
+
+  m1.total_symbols = 0;
+  m1.total_steps   = 0;
 
   m2.symbol = m2.tape[m2.position];
 
@@ -232,79 +321,85 @@ static PyObject* two_machine_C_run(PyObject* self,
   m2.max_right = tape_middle;
   m2.position  = tape_middle;
 
+  m2.symbol = 0;
   m2.state  = 0;
 
-  num_syms  = 0;
-  num_steps = 0;
+  m2.total_symbols = 0;
+  m2.total_steps   = 0;
 
-#if 0
-  new_delta = 0;
-#endif
-
-  for (i = 0; i < max_steps; i++)
+  for (i = 0; i < max_steps; i += 2)
   {
-    num_steps++;
-
-#if 0
-    symbol = tape[tape_position];
-
-    new_symbol = machine[state].t[symbol].w;
-    new_delta  = machine[state].t[symbol].d;
-    new_state  = machine[state].t[symbol].s;
-
-    if (new_symbol < 0) {
+    result = step_TM(&m1);
+      
+    if (result != RESULT_STEPPED)
+    {
+      result |= RESULT_M1;
       break;
     }
 
-    if (symbol == 0 && new_symbol != 0)
+    result = step_TM(&m1);
+      
+    if (result != RESULT_STEPPED)
     {
-      num_syms++;
-    }
-
-    if (symbol != 0 && new_symbol == 0)
-    {
-      num_syms--;
-    }
-
-    tape[tape_position] = new_symbol;
-    tape_position += new_delta;
-
-    if (new_state == -1)
-    {
+      result |= RESULT_M1;
       break;
     }
 
-    if (tape_position < 1 || tape_position >= tape_length-1)
+    result = step_TM(&m2);
+      
+    if (result != RESULT_STEPPED)
     {
+      result |= RESULT_M2;
       break;
     }
 
-    if (tape_position < tape_start)
+    if (m1.state == m2.state && m1.symbol == m2.symbol)
     {
-      tape_start = tape_position;
+      while (m1.tape[m1.max_left] == 0 && m1.max_left < m1.position)
+      {
+        m1.max_left++;
+      }
 
-      if (symbol == 0 && new_state == state && new_delta == -1) {
-        infinite = 1;
-        break;
+      while (m2.tape[m2.max_left] == 0 && m2.max_left < m2.position)
+      {
+        m2.max_left++;
+      }
+
+      if (m1.position - m1.max_left == m2.position - m2.max_left)
+      {
+        while (m1.tape[m1.max_right] == 0 && m1.max_right > m1.position)
+        {
+          m1.max_right--;
+        }
+
+        while (m2.tape[m2.max_right] == 0 && m2.max_right > m2.position)
+        {
+          m2.max_right--;
+        }
+
+        if (m1.max_right - m1.position == m2.max_right - m2.position)
+        {
+          int p1,p2;
+
+          for (p1 = m1.max_left, p2 = m2.max_left;
+               p1 <= m1.max_right && p2 <= m2.max_right;
+               p1++, p2++)
+          {
+            if (m1.tape[p1] != m2.tape[p2])
+            {
+              break;
+            }
+          }
+
+          if (m1.tape[p1] == m2.tape[p2])
+          {
+            result = RESULT_INFINITE_DUAL | RESULT_BOTH;
+            break;
+          }
+        }
       }
     }
-
-    if (tape_position > tape_end)
-    {
-      tape_end = tape_position;
-
-      if (symbol == 0 && new_state == state && new_delta == 1) {
-        infinite = 1;
-        break;
-      }
-    }
-
-    state = new_state;
-#endif
   }
-
-#if 0
-  cur_symbol = tape[tape_position];
 
   if (machine != NULL)
   {
@@ -318,45 +413,96 @@ static PyObject* two_machine_C_run(PyObject* self,
     machine = NULL;
   }
 
-  if (tape != NULL)
+  if (m1.tape != NULL)
   {
-    free(tape);
-    tape = NULL;
+    free(m1.tape);
+    m1.tape = NULL;
   }
 
-  d_num_syms  = num_syms;
-  d_num_steps = num_steps;
-
-  if (infinite == 1) {
-    if (new_delta == -1) {
-      return Py_BuildValue("(iis)",4,0,"Infinite_left");
-    } else {
-      return Py_BuildValue("(iis)",4,1,"Infinite_right");
-    }
+  if (m2.tape != NULL)
+  {
+    free(m2.tape);
+    m2.tape = NULL;
   }
 
-  if (new_state == -1)
+  if ((result & RESULT_VALUE) == RESULT_INFINITE_DUAL)
   {
-    if (new_symbol >= 0)
-    {
-      return Py_BuildValue("(idd)",0,d_num_syms,d_num_steps);
-    }
-    else
-    {
-      return Py_BuildValue("(iiiidd)",3,state,symbol,cur_symbol,
-                                        d_num_syms,d_num_steps-1);
-    }
-  }
-
-  if (i < max_steps)
-  {
-    return Py_BuildValue("(idd)",1,d_num_syms,d_num_steps);
+    return Py_BuildValue("(iis)",4,2,"Infinite_dual_run");
   }
   else
   {
-    return Py_BuildValue("(idd)",2,d_num_syms,d_num_steps);
-  }
-#endif
+    if ((result & RESULT_MACHINE) == RESULT_M1)
+    {
+      d_total_symbols = m1.total_symbols;
+      d_total_steps   = m1.total_steps;
 
-  return Py_BuildValue("(iis)",-1,19,"Reached_the_end_which_is_impossible,_;-)");
+      switch (result & RESULT_VALUE)
+      {
+        case RESULT_HALTED:
+          return Py_BuildValue("(idd)",0,d_total_symbols,d_total_steps);
+          break;
+
+        case RESULT_NOTAPE:
+          return Py_BuildValue("(idd)",1,d_total_symbols,d_total_steps);
+          break;
+
+        case RESULT_STEPPED:
+          return Py_BuildValue("(idd)",2,d_total_symbols,d_total_steps);
+          break;
+
+        case RESULT_UNDEFINED:
+          return Py_BuildValue("(iiiidd)",3,m1.state,m1.symbol,m1.symbol,
+                                          d_total_symbols,d_total_steps-1);
+          break;
+
+        case RESULT_INFINITE_LEFT:
+          return Py_BuildValue("(iis)",4,0,"Infinite_left");
+          break;
+
+        case RESULT_INFINITE_RIGHT:
+          return Py_BuildValue("(iis)",4,0,"Infinite_right");
+          break;
+      }
+    }
+    else
+    if ((result & RESULT_MACHINE) == RESULT_M2)
+    {
+      d_total_symbols = m2.total_symbols;
+      d_total_steps   = m2.total_steps;
+
+      switch (result & RESULT_VALUE)
+      {
+        case RESULT_HALTED:
+          return Py_BuildValue("(idd)",0,d_total_symbols,d_total_steps);
+          break;
+
+        case RESULT_NOTAPE:
+          return Py_BuildValue("(idd)",1,d_total_symbols,d_total_steps);
+          break;
+
+        case RESULT_STEPPED:
+          return Py_BuildValue("(idd)",2,d_total_symbols,d_total_steps);
+          break;
+
+        case RESULT_UNDEFINED:
+          return Py_BuildValue("(iiiidd)",3,m2.state,m2.symbol,m2.symbol,
+                                          d_total_symbols,d_total_steps-1);
+          break;
+
+        case RESULT_INFINITE_LEFT:
+          return Py_BuildValue("(iis)",4,0,"Infinite_left");
+          break;
+
+        case RESULT_INFINITE_RIGHT:
+          return Py_BuildValue("(iis)",4,0,"Infinite_right");
+          break;
+      }
+    }
+    else
+    {
+      return Py_BuildValue("(iis)",-1,19,"Normal_stop_but_not_machine_specific");
+    }
+  }
+
+  return Py_BuildValue("(iis)",-1,20,"Reached_the_end_which_is_impossible,_;-)");
 }

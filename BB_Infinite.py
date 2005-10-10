@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 #
-# This is a Busy Beaver machine generator
+# This is continues past runs of Busy Beaver machines
 #
 
 import copy
@@ -8,11 +8,7 @@ import copy
 from BB_Machine import BB_Machine
 from BB_IO import BB_IO
 
-# global machine number
-g_machine_num = 0
-g_next = None
-
-def BB_Prover(num_states, num_symbols, tape_length, max_steps, io):
+def BB_Infinite(num_states, num_symbols, tape_lenth, max_steps, next, io):
   """
   Stats all distinct BB machines with num_states and num_symbols.
 
@@ -29,12 +25,25 @@ def BB_Prover(num_states, num_symbols, tape_length, max_steps, io):
     0) Number of non-zero symbols written
     1) Number of steps run for
   """
-  machine = BB_Machine(num_states, num_symbols)
-  BB_Prover_Recursive(machine, num_states, num_symbols,
-                      tape_length, max_steps, io)
+  while next:
+    machine_num = int(next[0])
 
-def BB_Prover_Recursive(machine, num_states, num_symbols,
-                        tape_length, max_steps, io):
+    num_states  = int(next[1])
+    num_symbols = int(next[2])
+
+    results = next[5]
+
+    machine = BB_Machine(num_states, num_symbols)
+    machine.set_TTable(next[6])
+
+    if (results[0] != 0 and results[0] != 4):
+      BB_Infinite_Recursive(machine_num, machine, num_states, num_symbols,
+                            tape_lenth, max_steps, io)
+
+    next = io.read_result()
+
+def BB_Infinite_Recursive(machine_num, machine, num_states, num_symbols,
+                          tape_length, max_steps, io):
   """
   Stats this BB machine.
 
@@ -55,78 +64,36 @@ def BB_Prover_Recursive(machine, num_states, num_symbols,
     0) Number of non-zero symbols written
     1) Number of steps run for
   """
-  global g_machine_num, g_next
-
-  if g_next and machine.get_TTable() == g_next[6]:
-    results = g_next[5]
-    save_it = None
-
-    g_next = io.read_result()
-  else:
-    results = BB_run(machine.get_TTable(), num_states, num_symbols,
-                     tape_length, max_steps)
-    save_it = not None
+  results = BB_run(machine.get_TTable(), num_states, num_symbols,
+                   tape_length, max_steps)
+  save_it = not None
 
   exit_condition = results[0]
 
-  # 3) Reached Undefined Cell
-  if exit_condition == 3:
-    state_in  = results[1]  # Position of undefined cell
-    symbol_in = results[2]
-    # max_state and max_symbol different from num_states and num_symbols.
-    # they are restricted to only one greater than the current largest state or
-    # symbol.
-    max_state = machine.get_num_states_available()
-    max_symbol = machine.get_num_symbols_available()
-
-    # Halt state
-    #   1) Add the halt state
-    #   3) This machine will write one more non-zero symbol
-    #   2) This machine will take one more step and halt
-    #   4) Save this machine
-    machine_new = copy.deepcopy(machine)
-    machine_new.add_cell(state_in , symbol_in ,
-                        -1, 1, 1)
-
-    if g_next and machine_new.get_TTable() == g_next[6]:
-      new_results = g_next[5]
-      save_it = None
-
-      g_next = io.read_result()
-    else:
-      if results[3] == 0:
-        new_num_syms  = results[4] + 1
-      else:
-        new_num_syms  = results[4]
-
-      new_num_steps = results[5] + 1
-
-      new_results = (0,new_num_syms,new_num_steps)
-      save_it = not None
-
-    BB_save_machine(machine_new, new_results, tape_length, max_steps, io,
-                    save_it)
-
-    # All other states
-    if machine.num_empty_cells > 1:
-      for state_out in range(max_state + 1):
-        for symbol_out in range(max_symbol + 1):
-          for direction_out in range(2):
-            machine_new = copy.deepcopy(machine)
-            machine_new.add_cell(state_in , symbol_in ,
-                                 state_out, symbol_out, direction_out)
-            BB_Prover_Recursive(machine_new, num_states, num_symbols,
-                                tape_length, max_steps, io)
-  # -1) Error
-  elif exit_condition == -1:
+  # This shouldn't happen!
+  #   -1) Error
+  if exit_condition == -1:
     error_number = results[1]
-    message = results[2]
-    sys.stderr.write("Error %d: %s\n" % (error_number,message))
+    message      = results[2]
 
-    BB_save_machine(machine, results, tape_length, max_steps, io, save_it)
-  # All other returns
+    sys.stderr.write("Error %d: %s\n" % (error_number,message))
+    BB_save_machine(machine_num, machine, results,
+                    tape_length, max_steps, io, save_it)
+
+  # This shouldn't happen either - right? ;-)
+  #    3) Reached Undefined Cell
+  elif exit_condition == 3:
+    BB_save_machine(machine_num, machine, results,
+                    tape_length, max_steps, io, save_it)
+
+  # All other returns:
+  #    0) Halt
+  #    1) Exceed tape_length
+  #    2) Exceed max_steps
+  #    4) Are in a detected infinite loop
   else:
-    BB_save_machine(machine, results, tape_length, max_steps, io, save_it)
+    BB_save_machine(machine_num, machine, results,
+                    tape_length, max_steps, io, save_it)
 
   return
 
@@ -134,20 +101,17 @@ def BB_run(TTable, num_states, num_symbols, tape_length, max_steps):
   """
   Wrapper for C machine running code.
   """
-  import busy_beaver_C
-  return busy_beaver_C.run(TTable, num_states, num_symbols,
+  import two_machine_C
+  return two_machine_C.run(TTable, num_states, num_symbols,
                            tape_length, float(max_steps))
 
-def BB_save_machine(machine, results, tape_length, max_steps, io, save_it):
+def BB_save_machine(machine_num, machine, results, tape_length, max_steps,
+                    io, save_it):
   """
   Saves a busy beaver machine with the provided data information.
   """
-  global g_machine_num
-
   if save_it:
-    io.write_result(g_machine_num, tape_length, max_steps, results, machine);
-
-  g_machine_num += 1
+    io.write_result(machine_num, tape_length, max_steps, results, machine);
 
 # Default test code
 if __name__ == "__main__":
@@ -155,7 +119,7 @@ if __name__ == "__main__":
   import sys
   import getopt
 
-  usage = "BB_Prover.py [--help] [--states=] [--symbols=] [--tape=] [--steps=] [--textfile=] [--datafile=] [--restart=]"
+  usage = "BB_Infinite.py [--help] [--states=] [--symbols=] [--tape=] [--steps=] [--textfile=] [--datafile=] [--infile=]"
   try:
     opts, args = getopt.getopt(sys.argv[1:], "", [
                                                   "help",
@@ -165,7 +129,7 @@ if __name__ == "__main__":
                                                   "steps=",
                                                   "textfile=",
                                                   "datafile=",
-                                                  "restart="
+                                                  "infile="
                                                  ])
   except getopt.GetoptError:
     sys.stderr.write("%s\n" % usage)
@@ -179,9 +143,8 @@ if __name__ == "__main__":
   data_filename = None
   data_file = None
 
-  is_restart = None
-  restart_filename = None
-  restart_file = None
+  in_filename = None
+  in_file = None
 
   states = 2
   symbols = 2
@@ -207,28 +170,21 @@ if __name__ == "__main__":
       is_data = not None
       if arg:
         data_filename = arg
-    elif opt == "--restart":
-      is_restart = not None
+    elif opt == "--infile":
       if arg:
-        restart_filename = arg
+        in_filename = arg
 
-  g_next = None
+  if in_filename and in_filename != "-":
+    in_file = file(in_filename, "r")
+  else:
+    in_file = sys.stdin
 
-  if is_restart:
-    if restart_filename and restart_filename != "-":
-      restart_file = file(restart_filename, "r")
-    else:
-      restart_file = sys.stdin
+  input = BB_IO(in_file, None, None)
 
-    input = BB_IO(restart_file, None, None)
+  next = input.read_result()
 
-    g_next = input.read_result()
-
-    states  = g_next[1]
-    symbols = g_next[2]
-
-    tape_length = g_next[3]
-    max_steps   = g_next[4]
+  states  = next[1]
+  symbols = next[2]
 
   # The furthest that the machine can travel in n steps is n away from the
   # origin.  It could travel in either direction so the tape need not be longer
@@ -259,6 +215,6 @@ if __name__ == "__main__":
     else:
       data_file = file(data_filename, "wb")
 
-  io = BB_IO(restart_file, text_file, data_file)
+  io = BB_IO(in_file, text_file, data_file)
 
-  BB_Prover(states, symbols, tape_length, max_steps, io)
+  BB_Infinite(states, symbols, tape_length, max_steps, next, io)
