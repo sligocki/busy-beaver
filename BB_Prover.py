@@ -102,7 +102,7 @@ def BB_Prover_Recursive(machine, num_states, num_symbols,
       else:
         new_num_syms  = results[4]
 
-      new_sum_steps = results[5] + 1
+      new_num_steps = results[5] + 1
 
       new_results = (0,new_num_syms,new_num_steps)
       save_it = not None
