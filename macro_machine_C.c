@@ -149,7 +149,9 @@ static PyObject* macro_machine_C_run(PyObject* self,
   int num_symbols,num_symbols_imp;
 
   PyObject* tape_length_obj;
-  int tape_middle;
+
+  PyObject* macro_size_obj;
+  int macro_size;
 
   PyObject* max_steps_obj;
   unsigned long long max_steps;
@@ -161,9 +163,9 @@ static PyObject* macro_machine_C_run(PyObject* self,
 
   n_tuple = PyTuple_Size(args);
 
-  if (n_tuple != 5)
+  if (n_tuple != 6)
   {
-    return Py_BuildValue("(iis)",-1,1,"Expected_a_5-tuple_argument");
+    return Py_BuildValue("(iis)",-1,1,"Expected_a_6-tuple_argument");
   }
 
   machine_obj = PyTuple_GetItem(args,0);
@@ -281,13 +283,20 @@ static PyObject* macro_machine_C_run(PyObject* self,
     return Py_BuildValue("(iis)",-1,16,"Unable_to_extract_tape_length");
   }
 
-  inTM.tape_length = PyInt_AsLong(tape_length_obj);
-  macroTM.tape_length = inTM.tape_length;
-
-  tape_middle = inTM.tape_length / 2;
-
-  inTM.tape = (int *)calloc(inTM.tape_length,sizeof(*(inTM.tape)));
+  macroTM.tape_length = PyInt_AsLong(tape_length_obj);
   macroTM.tape = (int *)calloc(macroTM.tape_length,sizeof(*(macroTM.tape)));
+
+  macro_size_obj = PyTuple_GetItem(args,3);
+
+  if (macro_size_obj == NULL || !PyInt_CheckExact(macro_size_obj))
+  {
+    return Py_BuildValue("(iis)",-1,16,"Unable_to_extract_macro_size");
+  }
+
+  macro_size = PyInt_AsLong(macro_size_obj);
+
+  inTM.tape_length = 2*(macro_size+1) + 1;
+  inTM.tape = (int *)calloc(inTM.tape_length,sizeof(*(inTM.tape)));
 
   if (inTM.tape == NULL || macroTM.tape == NULL)
   {
@@ -305,9 +314,9 @@ static PyObject* macro_machine_C_run(PyObject* self,
 
   inTM.symbol = inTM.tape[inTM.position];
 
-  inTM.max_left  = tape_middle;
-  inTM.max_right = tape_middle;
-  inTM.position  = tape_middle;
+  inTM.max_left  = (inTM.tape_length + 1) / 2;
+  inTM.max_right = (inTM.tape_length + 1) / 2;
+  inTM.position  = (inTM.tape_length + 1) / 2;
 
   inTM.symbol = 0;
   inTM.state  = 0;
@@ -317,9 +326,9 @@ static PyObject* macro_machine_C_run(PyObject* self,
 
   macroTM.symbol = macroTM.tape[macroTM.position];
 
-  macroTM.max_left  = tape_middle;
-  macroTM.max_right = tape_middle;
-  macroTM.position  = tape_middle;
+  macroTM.max_left  = (macroTM.tape_length + 1) / 2;
+  macroTM.max_right = (macroTM.tape_length + 1) / 2;
+  macroTM.position  = (macroTM.tape_length + 1) / 2;
 
   macroTM.symbol = 0;
   macroTM.state  = 0;
@@ -329,22 +338,6 @@ static PyObject* macro_machine_C_run(PyObject* self,
 
   for (i = 0; i < max_steps; i += 2)
   {
-    result = step_TM(&inTM);
-      
-    if (result != RESULT_STEPPED)
-    {
-      result |= RESULT_M1;
-      break;
-    }
-
-    result = step_TM(&inTM);
-      
-    if (result != RESULT_STEPPED)
-    {
-      result |= RESULT_M1;
-      break;
-    }
-
     result = step_TM(&macroTM);
       
     if (result != RESULT_STEPPED)
