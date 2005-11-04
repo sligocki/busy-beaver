@@ -63,6 +63,7 @@ if len(opts) == 0:
           ("--number", "infinite"), ("--number", "unknown"),
           ("--percentage", "halt"), ("--percentage", "infinite"),
           ("--percentage", "unknown")]
+
 for opt, arg in opts:
   lines = lines_complete
 
@@ -120,5 +121,5 @@ for opt, arg in opts:
       print percentage_usage
       sys.exit(1)
     percentage = float(count_lines(lines, FIELD.CONDITION, test)) / \
-          float(count_lines(lines, FIELD.CONDITION, TEST.ALL))
+                 float(count_lines(lines, FIELD.CONDITION, TEST.ALL))
     print "Percent %.7s\t= %f" % (arg, percentage)
