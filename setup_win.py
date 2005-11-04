@@ -17,3 +17,11 @@ setup(name='two_machine_C',
       version='1.0',
       description='Run one TM at two different speeds',
       ext_modules=[module2])
+
+module3 = Extension('macro_machine_C',
+                    sources=['macro_machine_C.c'])
+
+setup(name='macro_machine_C',
+      version='1.0',
+      description='Run one TM using macro steps',
+      ext_modules=[module3])

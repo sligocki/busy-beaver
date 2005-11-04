@@ -35,18 +35,18 @@ typedef struct
   int new_state;
 } TM;
 
-static PyObject* two_machine_C_run(PyObject* self,
+static PyObject* macro_machine_C_run(PyObject* self,
                                    PyObject* args);
 
-static PyMethodDef two_machine_C_methods[] =
+static PyMethodDef macro_machine_C_methods[] =
 {
-  { "run", two_machine_C_run, METH_VARARGS, "Run Turing machine" },
+  { "run", macro_machine_C_run, METH_VARARGS, "Run Turing machine" },
   { NULL , NULL             , 0           , NULL                 }
 };
 
-PyMODINIT_FUNC inittwo_machine_C(void)
+PyMODINIT_FUNC initmacro_machine_C(void)
 {
-  (void)Py_InitModule("two_machine_C",two_machine_C_methods);
+  (void)Py_InitModule("macro_machine_C",macro_machine_C_methods);
 }
 
 #define RESULT_MACHINE        0x0003
@@ -124,11 +124,11 @@ inline int step_TM(TM* m)
   return RESULT_STEPPED;
 }
 
-static PyObject* two_machine_C_run(PyObject* self,
-                                  PyObject* args)
+static PyObject* macro_machine_C_run(PyObject* self,
+                                     PyObject* args)
 {
-  TM m1;
-  TM m2;
+  TM inTM;
+  TM macroTM;
 
   int result;
 
@@ -139,7 +139,8 @@ static PyObject* two_machine_C_run(PyObject* self,
   int n_tuple;
 
   PyObject* machine_obj;
-  STATE* machine = NULL;
+  STATE* inMachine = NULL;
+  STATE* marcoMachine = NULL;
 
   PyObject* num_states_obj;
   int num_states,num_states_imp;
@@ -194,9 +195,9 @@ static PyObject* two_machine_C_run(PyObject* self,
     return Py_BuildValue("(iis)",-1,5,"Number_of_states_do_not_match");
   }
 
-  machine = (STATE *)malloc(num_states*sizeof(*machine));
+  inMachine = (STATE *)malloc(num_states*sizeof(*inMachine));
 
-  if (machine == NULL)
+  if (inMachine == NULL)
   {
     return Py_BuildValue("(iis)",-1,6,"Out_of_memory_allocating_machine");
   }
@@ -221,8 +222,8 @@ static PyObject* two_machine_C_run(PyObject* self,
         return Py_BuildValue("(iis)",-1,8,"Number_of_symbols_do_not_match");
       }
 
-      machine[iter_state].t = (TRANSITION *)malloc(num_symbols*sizeof(*(machine[iter_state].t)));
-      if (machine[iter_state].t == NULL)
+      inMachine[iter_state].t = (TRANSITION *)malloc(num_symbols*sizeof(*(inMachine[iter_state].t)));
+      if (inMachine[iter_state].t == NULL)
       {
         return Py_BuildValue("(iis)",-1,9,"Out_of_memory_allocating_machine_state_transition");
       }
@@ -264,15 +265,14 @@ static PyObject* two_machine_C_run(PyObject* self,
           return Py_BuildValue("(iis)",-1,15,"Illegal_state_in_Turing_machine_transistion_3-tuple");
         }
 
-        machine[iter_state].t[iter_symbol].w = i0;
-        machine[iter_state].t[iter_symbol].d = 2*i1 - 1;
-        machine[iter_state].t[iter_symbol].s = i2;
+        inMachine[iter_state].t[iter_symbol].w = i0;
+        inMachine[iter_state].t[iter_symbol].d = 2*i1 - 1;
+        inMachine[iter_state].t[iter_symbol].s = i2;
       }
     }
   }
   
-  m1.machine = machine;
-  m2.machine = machine;
+  inTM.machine = inMachine;
 
   tape_length_obj = PyTuple_GetItem(args,3);
 
@@ -281,15 +281,15 @@ static PyObject* two_machine_C_run(PyObject* self,
     return Py_BuildValue("(iis)",-1,16,"Unable_to_extract_tape_length");
   }
 
-  m1.tape_length = PyInt_AsLong(tape_length_obj);
-  m2.tape_length = m1.tape_length;
+  inTM.tape_length = PyInt_AsLong(tape_length_obj);
+  macroTM.tape_length = inTM.tape_length;
 
-  tape_middle = m1.tape_length / 2;
+  tape_middle = inTM.tape_length / 2;
 
-  m1.tape = (int *)calloc(m1.tape_length,sizeof(*(m1.tape)));
-  m2.tape = (int *)calloc(m2.tape_length,sizeof(*(m2.tape)));
+  inTM.tape = (int *)calloc(inTM.tape_length,sizeof(*(inTM.tape)));
+  macroTM.tape = (int *)calloc(macroTM.tape_length,sizeof(*(macroTM.tape)));
 
-  if (m1.tape == NULL || m2.tape == NULL)
+  if (inTM.tape == NULL || macroTM.tape == NULL)
   {
     return Py_BuildValue("(iis)",-1,17,"Out_of_memory_allocating_tape");
   }
@@ -303,33 +303,33 @@ static PyObject* two_machine_C_run(PyObject* self,
 
   max_steps = PyFloat_AsDouble(max_steps_obj);
 
-  m1.symbol = m1.tape[m1.position];
+  inTM.symbol = inTM.tape[inTM.position];
 
-  m1.max_left  = tape_middle;
-  m1.max_right = tape_middle;
-  m1.position  = tape_middle;
+  inTM.max_left  = tape_middle;
+  inTM.max_right = tape_middle;
+  inTM.position  = tape_middle;
 
-  m1.symbol = 0;
-  m1.state  = 0;
+  inTM.symbol = 0;
+  inTM.state  = 0;
 
-  m1.total_symbols = 0;
-  m1.total_steps   = 0;
+  inTM.total_symbols = 0;
+  inTM.total_steps   = 0;
 
-  m2.symbol = m2.tape[m2.position];
+  macroTM.symbol = macroTM.tape[macroTM.position];
 
-  m2.max_left  = tape_middle;
-  m2.max_right = tape_middle;
-  m2.position  = tape_middle;
+  macroTM.max_left  = tape_middle;
+  macroTM.max_right = tape_middle;
+  macroTM.position  = tape_middle;
 
-  m2.symbol = 0;
-  m2.state  = 0;
+  macroTM.symbol = 0;
+  macroTM.state  = 0;
 
-  m2.total_symbols = 0;
-  m2.total_steps   = 0;
+  macroTM.total_symbols = 0;
+  macroTM.total_steps   = 0;
 
   for (i = 0; i < max_steps; i += 2)
   {
-    result = step_TM(&m1);
+    result = step_TM(&inTM);
       
     if (result != RESULT_STEPPED)
     {
@@ -337,7 +337,7 @@ static PyObject* two_machine_C_run(PyObject* self,
       break;
     }
 
-    result = step_TM(&m1);
+    result = step_TM(&inTM);
       
     if (result != RESULT_STEPPED)
     {
@@ -345,7 +345,7 @@ static PyObject* two_machine_C_run(PyObject* self,
       break;
     }
 
-    result = step_TM(&m2);
+    result = step_TM(&macroTM);
       
     if (result != RESULT_STEPPED)
     {
@@ -353,45 +353,45 @@ static PyObject* two_machine_C_run(PyObject* self,
       break;
     }
 
-    if (m1.state == m2.state && m1.symbol == m2.symbol)
+    if (inTM.state == macroTM.state && inTM.symbol == macroTM.symbol)
     {
-      while (m1.tape[m1.max_left] == 0 && m1.max_left < m1.position)
+      while (inTM.tape[inTM.max_left] == 0 && inTM.max_left < inTM.position)
       {
-        m1.max_left++;
+        inTM.max_left++;
       }
 
-      while (m2.tape[m2.max_left] == 0 && m2.max_left < m2.position)
+      while (macroTM.tape[macroTM.max_left] == 0 && macroTM.max_left < macroTM.position)
       {
-        m2.max_left++;
+        macroTM.max_left++;
       }
 
-      if (m1.position - m1.max_left == m2.position - m2.max_left)
+      if (inTM.position - inTM.max_left == macroTM.position - macroTM.max_left)
       {
-        while (m1.tape[m1.max_right] == 0 && m1.max_right > m1.position)
+        while (inTM.tape[inTM.max_right] == 0 && inTM.max_right > inTM.position)
         {
-          m1.max_right--;
+          inTM.max_right--;
         }
 
-        while (m2.tape[m2.max_right] == 0 && m2.max_right > m2.position)
+        while (macroTM.tape[macroTM.max_right] == 0 && macroTM.max_right > macroTM.position)
         {
-          m2.max_right--;
+          macroTM.max_right--;
         }
 
-        if (m1.max_right - m1.position == m2.max_right - m2.position)
+        if (inTM.max_right - inTM.position == macroTM.max_right - macroTM.position)
         {
           int p1,p2;
 
-          for (p1 = m1.max_left, p2 = m2.max_left;
-               p1 <= m1.max_right && p2 <= m2.max_right;
+          for (p1 = inTM.max_left, p2 = macroTM.max_left;
+               p1 <= inTM.max_right && p2 <= macroTM.max_right;
                p1++, p2++)
           {
-            if (m1.tape[p1] != m2.tape[p2])
+            if (inTM.tape[p1] != macroTM.tape[p2])
             {
               break;
             }
           }
 
-          if (m1.tape[p1] == m2.tape[p2])
+          if (inTM.tape[p1] == macroTM.tape[p2])
           {
             result = RESULT_INFINITE_DUAL | RESULT_BOTH;
             break;
@@ -401,28 +401,28 @@ static PyObject* two_machine_C_run(PyObject* self,
     }
   }
 
-  if (machine != NULL)
+  if (inMachine != NULL)
   {
     int s;
     for (s = 0; s < num_states; s++)
     {
-      free(machine[s].t);
+      free(inMachine[s].t);
     }
 
-    free(machine);
-    machine = NULL;
+    free(inMachine);
+    inMachine = NULL;
   }
 
-  if (m1.tape != NULL)
+  if (inTM.tape != NULL)
   {
-    free(m1.tape);
-    m1.tape = NULL;
+    free(inTM.tape);
+    inTM.tape = NULL;
   }
 
-  if (m2.tape != NULL)
+  if (macroTM.tape != NULL)
   {
-    free(m2.tape);
-    m2.tape = NULL;
+    free(macroTM.tape);
+    macroTM.tape = NULL;
   }
 
   if ((result & RESULT_VALUE) == RESULT_INFINITE_DUAL)
@@ -433,8 +433,8 @@ static PyObject* two_machine_C_run(PyObject* self,
   {
     if ((result & RESULT_MACHINE) == RESULT_M1)
     {
-      d_total_symbols = m1.total_symbols;
-      d_total_steps   = m1.total_steps;
+      d_total_symbols = inTM.total_symbols;
+      d_total_steps   = inTM.total_steps;
 
       switch (result & RESULT_VALUE)
       {
@@ -451,7 +451,7 @@ static PyObject* two_machine_C_run(PyObject* self,
           break;
 
         case RESULT_UNDEFINED:
-          return Py_BuildValue("(iiiidd)",3,m1.state,m1.symbol,m1.symbol,
+          return Py_BuildValue("(iiiidd)",3,inTM.state,inTM.symbol,inTM.symbol,
                                           d_total_symbols,d_total_steps-1);
           break;
 
@@ -467,8 +467,8 @@ static PyObject* two_machine_C_run(PyObject* self,
     else
     if ((result & RESULT_MACHINE) == RESULT_M2)
     {
-      d_total_symbols = m2.total_symbols;
-      d_total_steps   = m2.total_steps;
+      d_total_symbols = macroTM.total_symbols;
+      d_total_steps   = macroTM.total_steps;
 
       switch (result & RESULT_VALUE)
       {
@@ -485,7 +485,7 @@ static PyObject* two_machine_C_run(PyObject* self,
           break;
 
         case RESULT_UNDEFINED:
-          return Py_BuildValue("(iiiidd)",3,m2.state,m2.symbol,m2.symbol,
+          return Py_BuildValue("(iiiidd)",3,macroTM.state,macroTM.symbol,macroTM.symbol,
                                           d_total_symbols,d_total_steps-1);
           break;
 
