@@ -14,6 +14,9 @@ typedef struct
 
 typedef struct
 {
+  int num_states;
+  int num_symbols;
+
   STATE* machine;
 
   int* tape;
@@ -140,7 +143,7 @@ static PyObject* macro_machine_C_run(PyObject* self,
 
   PyObject* machine_obj;
   STATE* inMachine = NULL;
-  STATE* marcoMachine = NULL;
+  STATE* macroMachine = NULL;
 
   PyObject* num_states_obj;
   int num_states,num_states_imp;
@@ -155,6 +158,8 @@ static PyObject* macro_machine_C_run(PyObject* self,
 
   PyObject* max_steps_obj;
   unsigned long long max_steps;
+
+  int state;
 
   if (!PyTuple_CheckExact(args))
   {
@@ -225,6 +230,7 @@ static PyObject* macro_machine_C_run(PyObject* self,
       }
 
       inMachine[iter_state].t = (TRANSITION *)malloc(num_symbols*sizeof(*(inMachine[iter_state].t)));
+
       if (inMachine[iter_state].t == NULL)
       {
         return Py_BuildValue("(iis)",-1,9,"Out_of_memory_allocating_machine_state_transition");
@@ -274,6 +280,9 @@ static PyObject* macro_machine_C_run(PyObject* self,
     }
   }
   
+  inTM.num_states  = num_states;
+  inTM.num_symbols = num_symbols;
+
   inTM.machine = inMachine;
 
   tape_length_obj = PyTuple_GetItem(args,3);
@@ -297,6 +306,9 @@ static PyObject* macro_machine_C_run(PyObject* self,
 
   inTM.tape_length = 2*(macro_size+1) + 1;
   inTM.tape = (int *)calloc(inTM.tape_length,sizeof(*(inTM.tape)));
+  
+  macroTM.num_states = num_states;
+  macroTM.num_symbols = pow(num_symbols,2*macro_size + 1);
 
   if (inTM.tape == NULL || macroTM.tape == NULL)
   {
@@ -312,25 +324,84 @@ static PyObject* macro_machine_C_run(PyObject* self,
 
   max_steps = PyFloat_AsDouble(max_steps_obj);
 
-  inTM.symbol = inTM.tape[inTM.position];
+  macroMachine = (STATE *)malloc(macroTM.num_states*sizeof(*macroMachine));
 
-  inTM.max_left  = (inTM.tape_length + 1) / 2;
-  inTM.max_right = (inTM.tape_length + 1) / 2;
-  inTM.position  = (inTM.tape_length + 1) / 2;
+  if (macroMachine == NULL)
+  {
+    return Py_BuildValue("(iis)",-1,6,"Out_of_memory_allocating_machine");
+  }
 
-  inTM.symbol = 0;
-  inTM.state  = 0;
+  for (state = 0; state < inTM.num_states; state++)
+  {
+    int symbol;
 
-  inTM.total_symbols = 0;
-  inTM.total_steps   = 0;
+    macroMachine[state].t = (TRANSITION *)malloc(macroTM.num_symbols*sizeof(*(macroMachine[state].t)));
 
-  macroTM.symbol = macroTM.tape[macroTM.position];
+    if (macroMachine[state].t == NULL)
+    {
+      return Py_BuildValue("(iis)",-1,9,"Out_of_memory_allocating_machine_state_transition");
+    }
+
+    for (symbol = 0; symbol < macroTM.num_symbols; symbol++)
+    {
+      int remain_symbol;
+      int fill;
+      int start;
+      int step;
+      int out_symbol;
+
+      inTM.tape[0                 ] = 0;
+      inTM.tape[inTM.tape_length-1] = 0;
+
+      remain_symbol = symbol;
+      for (fill = 1; fill < inTM.tape_length - 1; fill++)
+      {
+        int in_symbol;
+
+        in_symbol = remain_symbol % num_symbols;
+        remain_symbol = remain_symbol / num_symbols;
+
+        inTM.tape[fill] = in_symbol;
+      }
+
+      inTM.max_left  = (inTM.tape_length + 1) / 2;
+      inTM.max_right = (inTM.tape_length + 1) / 2;
+      inTM.position  = (inTM.tape_length + 1) / 2;
+
+      inTM.total_symbols = 0;
+      inTM.total_steps   = 0;
+
+      inTM.state  = state;
+      inTM.symbol = inTM.tape[inTM.position];
+
+      start = inTM.position;
+
+      for (step = 0; step < macro_size; step++)
+      {
+        result = step_TM(&inTM);
+
+        if (result != RESULT_STEPPED)
+        {
+        }
+      }
+
+      out_symbol = 0;
+      for (fill = inTM.tape_length - 2; fill >= 0; fill--)
+      {
+        out_symbol = num_symbols*out_symbol | inTM.tape[fill];
+      }
+
+      macroMachine[state].t[symbol].w = out_symbol;
+      macroMachine[state].t[symbol].d = inTM.position - start;
+      macroMachine[state].t[symbol].s = inTM.state;
+    }
+  }
 
   macroTM.max_left  = (macroTM.tape_length + 1) / 2;
   macroTM.max_right = (macroTM.tape_length + 1) / 2;
   macroTM.position  = (macroTM.tape_length + 1) / 2;
 
-  macroTM.symbol = 0;
+  macroTM.symbol = macroTM.tape[macroTM.position];
   macroTM.state  = 0;
 
   macroTM.total_symbols = 0;
