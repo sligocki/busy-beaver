@@ -303,25 +303,21 @@ static PyObject* two_machine_C_run(PyObject* self,
 
   max_steps = PyFloat_AsDouble(max_steps_obj);
 
-  m1.symbol = m1.tape[m1.position];
-
   m1.max_left  = tape_middle;
   m1.max_right = tape_middle;
   m1.position  = tape_middle;
 
-  m1.symbol = 0;
+  m1.symbol = m1.tape[m1.position];
   m1.state  = 0;
 
   m1.total_symbols = 0;
   m1.total_steps   = 0;
 
-  m2.symbol = m2.tape[m2.position];
-
   m2.max_left  = tape_middle;
   m2.max_right = tape_middle;
   m2.position  = tape_middle;
 
-  m2.symbol = 0;
+  m2.symbol = m2.tape[m2.position];
   m2.state  = 0;
 
   m2.total_symbols = 0;
