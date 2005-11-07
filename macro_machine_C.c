@@ -127,6 +127,99 @@ inline int step_TM(TM* m)
   return RESULT_STEPPED;
 }
 
+inline int get_macro_symbol(TM* m, int size)
+{
+  int i;
+  int symbol = 0;
+
+  for (i = m->position - size; i <= m->position + size; i++)
+  {
+    symbol = m->num_symbols*symbol + m->tape[i];
+  }
+
+  return symbol;
+}
+
+inline void put_macro_symbol(int symbol, TM* m, int size)
+{
+  int i;
+
+  for (i = m->position - size; i <= m->position + size; i++)
+  {
+    int in_symbol;
+
+    in_symbol = symbol % m->num_symbols;
+    symbol = symbol / m->num_symbols;
+
+    m->tape[i] = in_symbol;
+  }
+}
+
+inline int step_macro_TM(TM* m, int size)
+{
+  int single_symbol;
+
+  single_symbol = m->tape[m->position];
+
+  m->total_steps += size;
+
+  m->new_symbol = m->machine[m->state].t[m->symbol].w;
+  m->new_delta  = m->machine[m->state].t[m->symbol].d;
+  m->new_state  = m->machine[m->state].t[m->symbol].s;
+
+  if (m->new_symbol == -1)
+  {
+    return RESULT_UNDEFINED;
+  }
+
+  if (m->symbol == 0 && m->new_symbol != 0) {
+    m->total_symbols++;
+  }
+
+  if (m->symbol != 0 && m->new_symbol == 0)
+  {
+    m->total_symbols--;
+  }
+
+  put_macro_symbol(m->new_symbol,m,size);
+  m->position += m->new_delta;
+
+  if (m->new_state == -1)
+  {
+    return RESULT_HALTED;
+  }
+
+  if (m->position < 1 || m->position >= m->tape_length - 1)
+  {
+    return RESULT_NOTAPE;
+  }
+  
+  if (m->position < m->max_left)
+  {
+    m->max_left = m->position;
+
+    if (single_symbol == 0 && m->new_state == m->state && m->new_delta < 0)
+    {
+      return RESULT_INFINITE_LEFT;
+    }
+  }
+
+  if (m->position > m->max_right)
+  {
+    m->max_right = m->position;
+
+    if (single_symbol == 0 && m->new_state == m->state && m->new_delta > 0)
+    {
+      return RESULT_INFINITE_RIGHT;
+    }
+  }
+
+  m->symbol = get_macro_symbol(m,size);
+  m->state = m->new_state;
+
+  return RESULT_STEPPED;
+}
+
 static PyObject* macro_machine_C_run(PyObject* self,
                                      PyObject* args)
 {
@@ -344,29 +437,17 @@ static PyObject* macro_machine_C_run(PyObject* self,
 
     for (symbol = 0; symbol < macroTM.num_symbols; symbol++)
     {
-      int remain_symbol;
-      int fill;
       int start;
       int step;
-      int out_symbol;
 
       inTM.tape[0                 ] = 0;
       inTM.tape[inTM.tape_length-1] = 0;
 
-      remain_symbol = symbol;
-      for (fill = 1; fill < inTM.tape_length - 1; fill++)
-      {
-        int in_symbol;
-
-        in_symbol = remain_symbol % num_symbols;
-        remain_symbol = remain_symbol / num_symbols;
-
-        inTM.tape[fill] = in_symbol;
-      }
+      inTM.position  = (inTM.tape_length + 1) / 2;
+      put_macro_symbol(symbol,&inTM,macro_size);
 
       inTM.max_left  = (inTM.tape_length + 1) / 2;
       inTM.max_right = (inTM.tape_length + 1) / 2;
-      inTM.position  = (inTM.tape_length + 1) / 2;
 
       inTM.total_symbols = 0;
       inTM.total_steps   = 0;
@@ -385,83 +466,34 @@ static PyObject* macro_machine_C_run(PyObject* self,
         }
       }
 
-      out_symbol = 0;
-      for (fill = inTM.tape_length - 2; fill >= 0; fill--)
-      {
-        out_symbol = num_symbols*out_symbol | inTM.tape[fill];
-      }
-
-      macroMachine[state].t[symbol].w = out_symbol;
       macroMachine[state].t[symbol].d = inTM.position - start;
+
+      inTM.position = start;
+      macroMachine[state].t[symbol].w = get_macro_symbol(&inTM,macro_size);
+
       macroMachine[state].t[symbol].s = inTM.state;
     }
   }
+
+  macroTM.machine = macroMachine;
 
   macroTM.max_left  = (macroTM.tape_length + 1) / 2;
   macroTM.max_right = (macroTM.tape_length + 1) / 2;
   macroTM.position  = (macroTM.tape_length + 1) / 2;
 
-  macroTM.symbol = macroTM.tape[macroTM.position];
+  macroTM.symbol = get_macro_symbol(&macroTM,macro_size);
   macroTM.state  = 0;
 
   macroTM.total_symbols = 0;
   macroTM.total_steps   = 0;
 
-  for (i = 0; i < max_steps; i += 2)
+  for (i = 0; i < max_steps; i += macro_size)
   {
-    result = step_TM(&macroTM);
+    result = step_macro_TM(&macroTM,macro_size);
       
     if (result != RESULT_STEPPED)
     {
-      result |= RESULT_M2;
       break;
-    }
-
-    if (inTM.state == macroTM.state && inTM.symbol == macroTM.symbol)
-    {
-      while (inTM.tape[inTM.max_left] == 0 && inTM.max_left < inTM.position)
-      {
-        inTM.max_left++;
-      }
-
-      while (macroTM.tape[macroTM.max_left] == 0 && macroTM.max_left < macroTM.position)
-      {
-        macroTM.max_left++;
-      }
-
-      if (inTM.position - inTM.max_left == macroTM.position - macroTM.max_left)
-      {
-        while (inTM.tape[inTM.max_right] == 0 && inTM.max_right > inTM.position)
-        {
-          inTM.max_right--;
-        }
-
-        while (macroTM.tape[macroTM.max_right] == 0 && macroTM.max_right > macroTM.position)
-        {
-          macroTM.max_right--;
-        }
-
-        if (inTM.max_right - inTM.position == macroTM.max_right - macroTM.position)
-        {
-          int p1,p2;
-
-          for (p1 = inTM.max_left, p2 = macroTM.max_left;
-               p1 <= inTM.max_right && p2 <= macroTM.max_right;
-               p1++, p2++)
-          {
-            if (inTM.tape[p1] != macroTM.tape[p2])
-            {
-              break;
-            }
-          }
-
-          if (inTM.tape[p1] == macroTM.tape[p2])
-          {
-            result = RESULT_INFINITE_DUAL | RESULT_BOTH;
-            break;
-          }
-        }
-      }
     }
   }
 
@@ -483,89 +515,54 @@ static PyObject* macro_machine_C_run(PyObject* self,
     inTM.tape = NULL;
   }
 
+  if (macroMachine != NULL)
+  {
+    int s;
+    for (s = 0; s < num_states; s++)
+    {
+      free(macroMachine[s].t);
+    }
+
+    free(macroMachine);
+    macroMachine = NULL;
+  }
+
   if (macroTM.tape != NULL)
   {
     free(macroTM.tape);
     macroTM.tape = NULL;
   }
 
-  if ((result & RESULT_VALUE) == RESULT_INFINITE_DUAL)
+  d_total_symbols = macroTM.total_symbols;
+  d_total_steps   = macroTM.total_steps;
+
+  switch (result & RESULT_VALUE)
   {
-    return Py_BuildValue("(iis)",4,2,"Infinite_dual_run");
-  }
-  else
-  {
-    if ((result & RESULT_MACHINE) == RESULT_M1)
-    {
-      d_total_symbols = inTM.total_symbols;
-      d_total_steps   = inTM.total_steps;
+    case RESULT_HALTED:
+      return Py_BuildValue("(idd)",0,d_total_symbols,d_total_steps);
+      break;
 
-      switch (result & RESULT_VALUE)
-      {
-        case RESULT_HALTED:
-          return Py_BuildValue("(idd)",0,d_total_symbols,d_total_steps);
-          break;
+    case RESULT_NOTAPE:
+      return Py_BuildValue("(idd)",1,d_total_symbols,d_total_steps);
+      break;
 
-        case RESULT_NOTAPE:
-          return Py_BuildValue("(idd)",1,d_total_symbols,d_total_steps);
-          break;
+    case RESULT_STEPPED:
+      return Py_BuildValue("(idd)",2,d_total_symbols,d_total_steps);
+      break;
 
-        case RESULT_STEPPED:
-          return Py_BuildValue("(idd)",2,d_total_symbols,d_total_steps);
-          break;
+    case RESULT_UNDEFINED:
+      return Py_BuildValue("(iiiidd)",3,
+                                      macroTM.state,macroTM.symbol,macroTM.symbol,
+                                      d_total_symbols,d_total_steps-1);
+      break;
 
-        case RESULT_UNDEFINED:
-          return Py_BuildValue("(iiiidd)",3,inTM.state,inTM.symbol,inTM.symbol,
-                                          d_total_symbols,d_total_steps-1);
-          break;
+    case RESULT_INFINITE_LEFT:
+      return Py_BuildValue("(iis)",4,0,"Infinite_left");
+      break;
 
-        case RESULT_INFINITE_LEFT:
-          return Py_BuildValue("(iis)",4,0,"Infinite_left");
-          break;
-
-        case RESULT_INFINITE_RIGHT:
-          return Py_BuildValue("(iis)",4,0,"Infinite_right");
-          break;
-      }
-    }
-    else
-    if ((result & RESULT_MACHINE) == RESULT_M2)
-    {
-      d_total_symbols = macroTM.total_symbols;
-      d_total_steps   = macroTM.total_steps;
-
-      switch (result & RESULT_VALUE)
-      {
-        case RESULT_HALTED:
-          return Py_BuildValue("(idd)",0,d_total_symbols,d_total_steps);
-          break;
-
-        case RESULT_NOTAPE:
-          return Py_BuildValue("(idd)",1,d_total_symbols,d_total_steps);
-          break;
-
-        case RESULT_STEPPED:
-          return Py_BuildValue("(idd)",2,d_total_symbols,d_total_steps);
-          break;
-
-        case RESULT_UNDEFINED:
-          return Py_BuildValue("(iiiidd)",3,macroTM.state,macroTM.symbol,macroTM.symbol,
-                                          d_total_symbols,d_total_steps-1);
-          break;
-
-        case RESULT_INFINITE_LEFT:
-          return Py_BuildValue("(iis)",4,0,"Infinite_left");
-          break;
-
-        case RESULT_INFINITE_RIGHT:
-          return Py_BuildValue("(iis)",4,0,"Infinite_right");
-          break;
-      }
-    }
-    else
-    {
-      return Py_BuildValue("(iis)",-1,19,"Normal_stop_but_not_machine_specific");
-    }
+    case RESULT_INFINITE_RIGHT:
+      return Py_BuildValue("(iis)",4,0,"Infinite_right");
+      break;
   }
 
   return Py_BuildValue("(iis)",-1,20,"Reached_the_end_which_is_impossible,_;-)");
