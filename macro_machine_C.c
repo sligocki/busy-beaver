@@ -66,6 +66,25 @@ PyMODINIT_FUNC initmacro_machine_C(void)
 #define RESULT_INFINITE_RIGHT 0x0014
 #define RESULT_INFINITE_DUAL  0x0018
 
+inline void print_TM(TM* m)
+{
+  int state,symbol;
+
+  fprintf(stderr,"machine, (%d %4d)\n",
+          m->num_states,m->num_symbols);
+  for (state = 0; state < m->num_states; state++)
+  {
+    fprintf(stderr,"  State: %d\n",state);
+    for (symbol = 0; symbol < m->num_symbols; symbol++)
+    {
+      fprintf(stderr,"    Symbol: %4d -> ",symbol);
+      fprintf(stderr,"%4d ",m->machine[state].t[symbol].w);
+      fprintf(stderr,"%2d ",m->machine[state].t[symbol].d);
+      fprintf(stderr,"%d\n",m->machine[state].t[symbol].s);
+    }
+  }
+}
+
 inline int step_TM(TM* m)
 {
   m->total_steps++;
@@ -101,6 +120,7 @@ inline int step_TM(TM* m)
     return RESULT_NOTAPE;
   }
   
+#if 0
   if (m->position < m->max_left)
   {
     m->max_left = m->position;
@@ -120,11 +140,35 @@ inline int step_TM(TM* m)
       return RESULT_INFINITE_RIGHT;
     }
   }
+#endif
 
   m->symbol = m->tape[m->position];
   m->state = m->new_state;
 
   return RESULT_STEPPED;
+}
+
+inline void print_macro_TM(TM* m, int size)
+{
+  int state,symbol;
+
+  fprintf(stderr,"Macro machine, (%d %4d %d)\n",
+          m->num_states,m->num_symbols,size);
+  for (state = 0; state < m->num_states; state++)
+  {
+    fprintf(stderr,"  State: %d\n",state);
+    for (symbol = 0; symbol < m->num_symbols; symbol++)
+    {
+      fprintf(stderr,"    Symbol: %4d -> ",symbol);
+      fprintf(stderr,"%4d ",m->machine[state].t[symbol].w);
+      fprintf(stderr,"%2d ",m->machine[state].t[symbol].d);
+      fprintf(stderr,"%d\n",m->machine[state].t[symbol].s);
+    }
+  }
+}
+
+inline void print_macro_state(TM* m, int size)
+{
 }
 
 inline int get_macro_symbol(TM* m, int size)
@@ -388,7 +432,7 @@ static PyObject* macro_machine_C_run(PyObject* self,
   macroTM.tape_length = PyInt_AsLong(tape_length_obj);
   macroTM.tape = (int *)calloc(macroTM.tape_length,sizeof(*(macroTM.tape)));
 
-  macro_size_obj = PyTuple_GetItem(args,3);
+  macro_size_obj = PyTuple_GetItem(args,4);
 
   if (macro_size_obj == NULL || !PyInt_CheckExact(macro_size_obj))
   {
@@ -397,7 +441,7 @@ static PyObject* macro_machine_C_run(PyObject* self,
 
   macro_size = PyInt_AsLong(macro_size_obj);
 
-  inTM.tape_length = 2*(macro_size+1) + 1;
+  inTM.tape_length = 2*(macro_size+2) + 1;
   inTM.tape = (int *)calloc(inTM.tape_length,sizeof(*(inTM.tape)));
   
   macroTM.num_states = num_states;
@@ -408,7 +452,7 @@ static PyObject* macro_machine_C_run(PyObject* self,
     return Py_BuildValue("(iis)",-1,17,"Out_of_memory_allocating_tape");
   }
 
-  max_steps_obj = PyTuple_GetItem(args,4);
+  max_steps_obj = PyTuple_GetItem(args,5);
 
   if (max_steps_obj == NULL || !PyFloat_CheckExact(max_steps_obj))
   {
@@ -439,15 +483,24 @@ static PyObject* macro_machine_C_run(PyObject* self,
     {
       int start;
       int step;
+      int k;
 
       inTM.tape[0                 ] = 0;
+      inTM.tape[1                 ] = 0;
+      inTM.tape[inTM.tape_length-2] = 0;
       inTM.tape[inTM.tape_length-1] = 0;
 
-      inTM.position  = (inTM.tape_length + 1) / 2;
+      inTM.position  = (inTM.tape_length - 1) / 2;
       put_macro_symbol(symbol,&inTM,macro_size);
+fprintf(stderr,"Initial tape %d %d:  ",state,symbol);
+for (k = 0; k < inTM.tape_length; k++)
+{
+fprintf(stderr,"%d",inTM.tape[k]);
+}
+fprintf(stderr,"\n");
 
-      inTM.max_left  = (inTM.tape_length + 1) / 2;
-      inTM.max_right = (inTM.tape_length + 1) / 2;
+      inTM.max_left  = (inTM.tape_length - 1) / 2;
+      inTM.max_right = (inTM.tape_length - 1) / 2;
 
       inTM.total_symbols = 0;
       inTM.total_steps   = 0;
@@ -457,29 +510,50 @@ static PyObject* macro_machine_C_run(PyObject* self,
 
       start = inTM.position;
 
-      for (step = 0; step < macro_size; step++)
+      for (step = 0; step <= macro_size; step++)
       {
         result = step_TM(&inTM);
+fprintf(stderr,"        tape %d %d:  ",inTM.state,inTM.symbol);
+for (k = 0; k < inTM.tape_length; k++)
+{
+fprintf(stderr,"%d",inTM.tape[k]);
+}
+fprintf(stderr,"\n");
 
         if (result != RESULT_STEPPED)
         {
+          if (result != RESULT_UNDEFINED)
+          {
+            fprintf(stderr,"Unexpected TM result: %d\n",result);
+          }
+
+          break;
         }
       }
 
-      macroMachine[state].t[symbol].d = inTM.position - start;
+      if (result == RESULT_STEPPED)
+      {
+        macroMachine[state].t[symbol].d = inTM.position - start;
 
-      inTM.position = start;
-      macroMachine[state].t[symbol].w = get_macro_symbol(&inTM,macro_size);
+        inTM.position = start;
+        macroMachine[state].t[symbol].w = get_macro_symbol(&inTM,macro_size);
 
-      macroMachine[state].t[symbol].s = inTM.state;
+        macroMachine[state].t[symbol].s = inTM.state;
+      }
+      else
+      {
+        macroMachine[state].t[symbol].d = -1;
+        macroMachine[state].t[symbol].w = -1;
+        macroMachine[state].t[symbol].s = -1;
+      }
     }
   }
 
   macroTM.machine = macroMachine;
 
-  macroTM.max_left  = (macroTM.tape_length + 1) / 2;
-  macroTM.max_right = (macroTM.tape_length + 1) / 2;
-  macroTM.position  = (macroTM.tape_length + 1) / 2;
+  macroTM.max_left  = (macroTM.tape_length - 1) / 2;
+  macroTM.max_right = (macroTM.tape_length - 1) / 2;
+  macroTM.position  = (macroTM.tape_length - 1) / 2;
 
   macroTM.symbol = get_macro_symbol(&macroTM,macro_size);
   macroTM.state  = 0;
@@ -487,10 +561,30 @@ static PyObject* macro_machine_C_run(PyObject* self,
   macroTM.total_symbols = 0;
   macroTM.total_steps   = 0;
 
-  for (i = 0; i < max_steps; i += macro_size)
+  print_TM(&inTM);
+
+  print_macro_TM(&macroTM,macro_size);
+  print_macro_state(&macroTM,macro_size);
+
+  for (i = 0; i < max_steps; i += (macro_size+1))
   {
+    int k;
     result = step_macro_TM(&macroTM,macro_size);
+if (macroTM.position >= (macroTM.tape_length-1)/2 - 10 &&
+    macroTM.position <= (macroTM.tape_length-1)/2 + 10 &&
+    i < 100)
+{
+int ii = i;
+fprintf(stderr,"%4d    tape %d %d:  ",ii,macroTM.state,macroTM.symbol);
+for (k = (macroTM.tape_length-1)/2 - 10; k <= (macroTM.tape_length-1)/2 + 10; k++)
+{
+fprintf(stderr,"%d",macroTM.tape[k]);
+}
+fprintf(stderr,"\n");
+}
       
+    print_macro_state(&macroTM,macro_size);
+
     if (result != RESULT_STEPPED)
     {
       break;
