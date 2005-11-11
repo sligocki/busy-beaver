@@ -80,7 +80,7 @@ inline void print_TM(TM* m)
       fprintf(stderr,"    Symbol: %4d -> ",symbol);
       fprintf(stderr,"%4d ",m->machine[state].t[symbol].w);
       fprintf(stderr,"%2d ",m->machine[state].t[symbol].d);
-      fprintf(stderr,"%d\n",m->machine[state].t[symbol].s);
+      fprintf(stderr,"%2d\n",m->machine[state].t[symbol].s);
     }
   }
 }
@@ -162,7 +162,7 @@ inline void print_macro_TM(TM* m, int size)
       fprintf(stderr,"    Symbol: %4d -> ",symbol);
       fprintf(stderr,"%4d ",m->machine[state].t[symbol].w);
       fprintf(stderr,"%2d ",m->machine[state].t[symbol].d);
-      fprintf(stderr,"%d\n",m->machine[state].t[symbol].s);
+      fprintf(stderr,"%2d\n",m->machine[state].t[symbol].s);
     }
   }
 }
@@ -171,20 +171,26 @@ inline void print_macro_state(TM* m, int size)
 {
 }
 
-inline int get_macro_symbol(TM* m, int size)
+inline int get_macro_symbol(TM* m, int orig_num_symbols, int size)
 {
   int i;
   int symbol = 0;
 
+#if 0
+fprintf(stderr,"  Get symbol: %d %d -> ",m->position,size);
+#endif
   for (i = m->position - size; i <= m->position + size; i++)
   {
-    symbol = m->num_symbols*symbol + m->tape[i];
+    symbol = orig_num_symbols*symbol + m->tape[i];
   }
+#if 0
+fprintf(stderr,"%d\n",symbol);
+#endif
 
   return symbol;
 }
 
-inline void put_macro_symbol(int symbol, TM* m, int size)
+inline void put_macro_symbol(int symbol, TM* m, int orig_num_symbols, int size)
 {
   int i;
 
@@ -192,14 +198,14 @@ inline void put_macro_symbol(int symbol, TM* m, int size)
   {
     int in_symbol;
 
-    in_symbol = symbol % m->num_symbols;
-    symbol = symbol / m->num_symbols;
+    in_symbol = symbol % orig_num_symbols;
+    symbol = symbol / orig_num_symbols;
 
     m->tape[i] = in_symbol;
   }
 }
 
-inline int step_macro_TM(TM* m, int size)
+inline int step_macro_TM(TM* m, int orig_num_symbols, int size)
 {
   int single_symbol;
 
@@ -225,7 +231,7 @@ inline int step_macro_TM(TM* m, int size)
     m->total_symbols--;
   }
 
-  put_macro_symbol(m->new_symbol,m,size);
+  put_macro_symbol(m->new_symbol,m,orig_num_symbols,size);
   m->position += m->new_delta;
 
   if (m->new_state == -1)
@@ -258,7 +264,7 @@ inline int step_macro_TM(TM* m, int size)
     }
   }
 
-  m->symbol = get_macro_symbol(m,size);
+  m->symbol = get_macro_symbol(m,orig_num_symbols,size);
   m->state = m->new_state;
 
   return RESULT_STEPPED;
@@ -331,6 +337,15 @@ static PyObject* macro_machine_C_run(PyObject* self,
   }
 
   num_symbols = PyInt_AsLong(num_symbols_obj);
+
+  macro_size_obj = PyTuple_GetItem(args,3);
+
+  if (macro_size_obj == NULL || !PyInt_CheckExact(macro_size_obj))
+  {
+    return Py_BuildValue("(iis)",-1,16,"Unable_to_extract_macro_size");
+  }
+
+  macro_size = PyInt_AsLong(macro_size_obj);
 
   num_states_imp = PyList_Size(machine_obj);
 
@@ -422,7 +437,7 @@ static PyObject* macro_machine_C_run(PyObject* self,
 
   inTM.machine = inMachine;
 
-  tape_length_obj = PyTuple_GetItem(args,3);
+  tape_length_obj = PyTuple_GetItem(args,4);
 
   if (tape_length_obj == NULL || !PyInt_CheckExact(tape_length_obj))
   {
@@ -431,15 +446,6 @@ static PyObject* macro_machine_C_run(PyObject* self,
 
   macroTM.tape_length = PyInt_AsLong(tape_length_obj);
   macroTM.tape = (int *)calloc(macroTM.tape_length,sizeof(*(macroTM.tape)));
-
-  macro_size_obj = PyTuple_GetItem(args,4);
-
-  if (macro_size_obj == NULL || !PyInt_CheckExact(macro_size_obj))
-  {
-    return Py_BuildValue("(iis)",-1,16,"Unable_to_extract_macro_size");
-  }
-
-  macro_size = PyInt_AsLong(macro_size_obj);
 
   inTM.tape_length = 2*(macro_size+2) + 1;
   inTM.tape = (int *)calloc(inTM.tape_length,sizeof(*(inTM.tape)));
@@ -491,8 +497,8 @@ static PyObject* macro_machine_C_run(PyObject* self,
       inTM.tape[inTM.tape_length-1] = 0;
 
       inTM.position  = (inTM.tape_length - 1) / 2;
-      put_macro_symbol(symbol,&inTM,macro_size);
-fprintf(stderr,"Initial tape %d %d:  ",state,symbol);
+      put_macro_symbol(symbol,&inTM,inTM.num_symbols,macro_size);
+fprintf(stderr,"Initial tape %d %d %5d:  ",state,symbol,inTM.position);
 for (k = 0; k < inTM.tape_length; k++)
 {
 fprintf(stderr,"%d",inTM.tape[k]);
@@ -513,7 +519,7 @@ fprintf(stderr,"\n");
       for (step = 0; step <= macro_size; step++)
       {
         result = step_TM(&inTM);
-fprintf(stderr,"        tape %d %d:  ",inTM.state,inTM.symbol);
+fprintf(stderr,"  %4d  tape %d %d %5d:  ",step,inTM.state,inTM.symbol,inTM.position);
 for (k = 0; k < inTM.tape_length; k++)
 {
 fprintf(stderr,"%d",inTM.tape[k]);
@@ -536,7 +542,9 @@ fprintf(stderr,"\n");
         macroMachine[state].t[symbol].d = inTM.position - start;
 
         inTM.position = start;
-        macroMachine[state].t[symbol].w = get_macro_symbol(&inTM,macro_size);
+        macroMachine[state].t[symbol].w = get_macro_symbol(&inTM,
+                                                           inTM.num_symbols,
+                                                           macro_size);
 
         macroMachine[state].t[symbol].s = inTM.state;
       }
@@ -555,7 +563,7 @@ fprintf(stderr,"\n");
   macroTM.max_right = (macroTM.tape_length - 1) / 2;
   macroTM.position  = (macroTM.tape_length - 1) / 2;
 
-  macroTM.symbol = get_macro_symbol(&macroTM,macro_size);
+  macroTM.symbol = get_macro_symbol(&macroTM,inTM.num_symbols,macro_size);
   macroTM.state  = 0;
 
   macroTM.total_symbols = 0;
@@ -566,16 +574,26 @@ fprintf(stderr,"\n");
   print_macro_TM(&macroTM,macro_size);
   print_macro_state(&macroTM,macro_size);
 
+{
+int k;
+fprintf(stderr,"Initial tape %d %d %5d:  ",macroTM.state,macroTM.symbol,macroTM.position);
+for (k = (macroTM.tape_length-1)/2 - 10; k <= (macroTM.tape_length-1)/2 + 10; k++)
+{
+fprintf(stderr,"%d",macroTM.tape[k]);
+}
+fprintf(stderr,"\n");
+}
+
   for (i = 0; i < max_steps; i += (macro_size+1))
   {
     int k;
-    result = step_macro_TM(&macroTM,macro_size);
+    result = step_macro_TM(&macroTM,inTM.num_symbols,macro_size);
 if (macroTM.position >= (macroTM.tape_length-1)/2 - 10 &&
     macroTM.position <= (macroTM.tape_length-1)/2 + 10 &&
     i < 100)
 {
 int ii = i;
-fprintf(stderr,"%4d    tape %d %d:  ",ii,macroTM.state,macroTM.symbol);
+fprintf(stderr,"  %4d  tape %d %d %5d:  ",ii,macroTM.state,macroTM.symbol,macroTM.position);
 for (k = (macroTM.tape_length-1)/2 - 10; k <= (macroTM.tape_length-1)/2 + 10; k++)
 {
 fprintf(stderr,"%d",macroTM.tape[k]);

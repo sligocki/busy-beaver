@@ -8,7 +8,8 @@ import copy
 from BB_Machine import BB_Machine
 from BB_IO import BB_IO
 
-def BB_Macro(num_states, num_symbols, tape_lenth, max_steps, next, io):
+def BB_Macro(num_states, num_symbols, macro_size, tape_length,
+             max_steps, next, io):
   """
   Stats all distinct BB machines with num_states and num_symbols.
 
@@ -37,13 +38,15 @@ def BB_Macro(num_states, num_symbols, tape_lenth, max_steps, next, io):
     machine.set_TTable(next[6])
 
     if (results[0] != 0 and results[0] != 4):
-      BB_Macro_Recursive(machine_num, machine, num_states, num_symbols,
-                         tape_lenth, max_steps, io)
+      BB_Macro_Recursive(machine_num,
+                         machine, num_states, num_symbols, macro_size,
+                         tape_length, max_steps, results, io)
 
     next = io.read_result()
 
-def BB_Macro_Recursive(machine_num, machine, num_states, num_symbols,
-                       tape_length, max_steps, io):
+def BB_Macro_Recursive(machine_num,
+                       machine, num_states, num_symbols, macro_size,
+                       tape_length, max_steps, old_results, io):
   """
   Stats this BB machine.
 
@@ -64,7 +67,7 @@ def BB_Macro_Recursive(machine_num, machine, num_states, num_symbols,
     0) Number of non-zero symbols written
     1) Number of steps run for
   """
-  results = BB_run(machine.get_TTable(), num_states, num_symbols,
+  results = BB_run(machine.get_TTable(), num_states, num_symbols, macro_size,
                    tape_length, max_steps)
   save_it = not None
 
@@ -92,12 +95,17 @@ def BB_Macro_Recursive(machine_num, machine, num_states, num_symbols,
   #    2) Exceed max_steps
   #    4) Are in a detected infinite loop
   else:
-    BB_save_machine(machine_num, machine, results,
-                    tape_length, max_steps, io, save_it)
+    if (results[0] == 0 and results[0] == 4):
+      BB_save_machine(machine_num, machine, results,
+                      tape_length, max_steps, io, save_it)
+    else:
+      BB_save_machine(machine_num, machine, old_results,
+                      tape_length, max_steps, io, save_it)
 
   return
 
-def BB_run(TTable, num_states, num_symbols, tape_length, max_steps):
+def BB_run(TTable, num_states, num_symbols, macro_size,
+           tape_length, max_steps):
   """
   Wrapper for C machine running code.
   """
@@ -105,8 +113,8 @@ def BB_run(TTable, num_states, num_symbols, tape_length, max_steps):
   import macro_machine_C
 
   sys.stderr.write("TM: %s\n" % TTable)
-  return macro_machine_C.run(TTable, num_states, num_symbols,
-                             tape_length, 1, float(max_steps))
+  return macro_machine_C.run(TTable, num_states, num_symbols, macro_size,
+                             tape_length, float(max_steps))
 
 def BB_save_machine(machine_num, machine, results, tape_length, max_steps,
                     io, save_it):
@@ -122,7 +130,7 @@ if __name__ == "__main__":
   import sys
   import getopt
 
-  usage = "BB_Macro.py [--help] [--states=] [--symbols=] [--tape=] [--steps=] [--textfile=] [--datafile=] [--infile=]"
+  usage = "BB_Macro.py [--help] [--states=] [--symbols=] [--tape=] [--steps=] [--textfile=] [--datafile=] [--infile=] [--size=]"
   try:
     opts, args = getopt.getopt(sys.argv[1:], "", [
                                                   "help",
@@ -132,7 +140,8 @@ if __name__ == "__main__":
                                                   "steps=",
                                                   "textfile=",
                                                   "datafile=",
-                                                  "infile="
+                                                  "infile=",
+                                                  "size="
                                                  ])
   except getopt.GetoptError:
     sys.stderr.write("%s\n" % usage)
@@ -153,6 +162,8 @@ if __name__ == "__main__":
   symbols = 2
   tape_length = 20003
   max_steps = 10000
+
+  macro_size = 1
 
   for opt, arg in opts:
     if opt == "--help":
@@ -176,6 +187,8 @@ if __name__ == "__main__":
     elif opt == "--infile":
       if arg:
         in_filename = arg
+    elif opt == "--size":
+      macro_size = int(arg)
 
   if in_filename and in_filename != "-":
     in_file = file(in_filename, "r")
@@ -220,4 +233,4 @@ if __name__ == "__main__":
 
   io = BB_IO(in_file, text_file, data_file)
 
-  BB_Macro(states, symbols, tape_length, max_steps, next, io)
+  BB_Macro(states, symbols, macro_size, tape_length, max_steps, next, io)
