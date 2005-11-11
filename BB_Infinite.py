@@ -38,12 +38,12 @@ def BB_Infinite(num_states, num_symbols, tape_lenth, max_steps, next, io):
 
     if (results[0] != 0 and results[0] != 4):
       BB_Infinite_Recursive(machine_num, machine, num_states, num_symbols,
-                            tape_lenth, max_steps, io)
+                            tape_lenth, max_steps, results, io)
 
     next = io.read_result()
 
 def BB_Infinite_Recursive(machine_num, machine, num_states, num_symbols,
-                          tape_length, max_steps, io):
+                          tape_length, max_steps, old_results, io):
   """
   Stats this BB machine.
 
@@ -92,8 +92,12 @@ def BB_Infinite_Recursive(machine_num, machine, num_states, num_symbols,
   #    2) Exceed max_steps
   #    4) Are in a detected infinite loop
   else:
-    BB_save_machine(machine_num, machine, results,
-                    tape_length, max_steps, io, save_it)
+    if (results[0] == 0 and results[0] == 4):
+      BB_save_machine(machine_num, machine, results,
+                      tape_length, max_steps, io, save_it)
+    else:
+      BB_save_machine(machine_num, machine, old_results,
+                      tape_length, max_steps, io, save_it)
 
   return
 
