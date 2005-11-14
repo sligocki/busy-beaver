@@ -92,7 +92,7 @@ def BB_Infinite_Recursive(machine_num, machine, num_states, num_symbols,
   #    2) Exceed max_steps
   #    4) Are in a detected infinite loop
   else:
-    if (results[0] == 0 and results[0] == 4):
+    if (results[0] == 0 or results[0] == 4):
       BB_save_machine(machine_num, machine, results,
                       tape_length, max_steps, io, save_it)
     else:
