@@ -95,7 +95,7 @@ def BB_Macro_Recursive(machine_num,
   #    2) Exceed max_steps
   #    4) Are in a detected infinite loop
   else:
-    if (results[0] == 0 and results[0] == 4):
+    if (results[0] == 0 or results[0] == 4):
       BB_save_machine(machine_num, machine, results,
                       tape_length, max_steps, io, save_it)
     else:
@@ -112,7 +112,6 @@ def BB_run(TTable, num_states, num_symbols, macro_size,
   import sys
   import macro_machine_C
 
-  sys.stderr.write("TM: %s\n" % TTable)
   return macro_machine_C.run(TTable, num_states, num_symbols, macro_size,
                              tape_length, float(max_steps))
 

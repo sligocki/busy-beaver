@@ -120,28 +120,6 @@ inline int step_TM(TM* m)
     return RESULT_NOTAPE;
   }
   
-#if 0
-  if (m->position < m->max_left)
-  {
-    m->max_left = m->position;
-
-    if (m->symbol == 0 && m->new_state == m->state && m->new_delta == -1)
-    {
-      return RESULT_INFINITE_LEFT;
-    }
-  }
-
-  if (m->position > m->max_right)
-  {
-    m->max_right = m->position;
-
-    if (m->symbol == 0 && m->new_state == m->state && m->new_delta == 1)
-    {
-      return RESULT_INFINITE_RIGHT;
-    }
-  }
-#endif
-
   m->symbol = m->tape[m->position];
   m->state = m->new_state;
 
@@ -176,16 +154,10 @@ inline int get_macro_symbol(TM* m, int orig_num_symbols, int size)
   int i;
   int symbol = 0;
 
-#if 0
-fprintf(stderr,"  Get symbol: %d %d -> ",m->position,size);
-#endif
-  for (i = m->position - size; i <= m->position + size; i++)
+  for (i = m->position + size; i >= m->position - size; i--)
   {
     symbol = orig_num_symbols*symbol + m->tape[i];
   }
-#if 0
-fprintf(stderr,"%d\n",symbol);
-#endif
 
   return symbol;
 }
@@ -207,10 +179,6 @@ inline void put_macro_symbol(int symbol, TM* m, int orig_num_symbols, int size)
 
 inline int step_macro_TM(TM* m, int orig_num_symbols, int size)
 {
-  int single_symbol;
-
-  single_symbol = m->tape[m->position];
-
   m->total_steps += size;
 
   m->new_symbol = m->machine[m->state].t[m->symbol].w;
@@ -239,16 +207,18 @@ inline int step_macro_TM(TM* m, int orig_num_symbols, int size)
     return RESULT_HALTED;
   }
 
-  if (m->position < 1 || m->position >= m->tape_length - 1)
+  if (m->position < size || m->position >= m->tape_length - size)
   {
     return RESULT_NOTAPE;
   }
   
+  m->new_symbol = get_macro_symbol(m,orig_num_symbols,size);
+
   if (m->position < m->max_left)
   {
     m->max_left = m->position;
 
-    if (single_symbol == 0 && m->new_state == m->state && m->new_delta < 0)
+    if (m->new_symbol == m->symbol && m->new_state == m->state && m->new_delta < 0)
     {
       return RESULT_INFINITE_LEFT;
     }
@@ -258,13 +228,13 @@ inline int step_macro_TM(TM* m, int orig_num_symbols, int size)
   {
     m->max_right = m->position;
 
-    if (single_symbol == 0 && m->new_state == m->state && m->new_delta > 0)
+    if (m->new_symbol == m->symbol && m->new_state == m->state && m->new_delta > 0)
     {
       return RESULT_INFINITE_RIGHT;
     }
   }
 
-  m->symbol = get_macro_symbol(m,orig_num_symbols,size);
+  m->symbol = m->new_symbol;
   m->state = m->new_state;
 
   return RESULT_STEPPED;
@@ -489,7 +459,6 @@ static PyObject* macro_machine_C_run(PyObject* self,
     {
       int start;
       int step;
-      int k;
 
       inTM.tape[0                 ] = 0;
       inTM.tape[1                 ] = 0;
@@ -498,12 +467,6 @@ static PyObject* macro_machine_C_run(PyObject* self,
 
       inTM.position  = (inTM.tape_length - 1) / 2;
       put_macro_symbol(symbol,&inTM,inTM.num_symbols,macro_size);
-fprintf(stderr,"Initial tape %d %d %5d:  ",state,symbol,inTM.position);
-for (k = 0; k < inTM.tape_length; k++)
-{
-fprintf(stderr,"%d",inTM.tape[k]);
-}
-fprintf(stderr,"\n");
 
       inTM.max_left  = (inTM.tape_length - 1) / 2;
       inTM.max_right = (inTM.tape_length - 1) / 2;
@@ -519,12 +482,6 @@ fprintf(stderr,"\n");
       for (step = 0; step <= macro_size; step++)
       {
         result = step_TM(&inTM);
-fprintf(stderr,"  %4d  tape %d %d %5d:  ",step,inTM.state,inTM.symbol,inTM.position);
-for (k = 0; k < inTM.tape_length; k++)
-{
-fprintf(stderr,"%d",inTM.tape[k]);
-}
-fprintf(stderr,"\n");
 
         if (result != RESULT_STEPPED)
         {
@@ -569,39 +526,9 @@ fprintf(stderr,"\n");
   macroTM.total_symbols = 0;
   macroTM.total_steps   = 0;
 
-  print_TM(&inTM);
-
-  print_macro_TM(&macroTM,macro_size);
-  print_macro_state(&macroTM,macro_size);
-
-{
-int k;
-fprintf(stderr,"Initial tape %d %d %5d:  ",macroTM.state,macroTM.symbol,macroTM.position);
-for (k = (macroTM.tape_length-1)/2 - 10; k <= (macroTM.tape_length-1)/2 + 10; k++)
-{
-fprintf(stderr,"%d",macroTM.tape[k]);
-}
-fprintf(stderr,"\n");
-}
-
   for (i = 0; i < max_steps; i += (macro_size+1))
   {
-    int k;
     result = step_macro_TM(&macroTM,inTM.num_symbols,macro_size);
-if (macroTM.position >= (macroTM.tape_length-1)/2 - 10 &&
-    macroTM.position <= (macroTM.tape_length-1)/2 + 10 &&
-    i < 100)
-{
-int ii = i;
-fprintf(stderr,"  %4d  tape %d %d %5d:  ",ii,macroTM.state,macroTM.symbol,macroTM.position);
-for (k = (macroTM.tape_length-1)/2 - 10; k <= (macroTM.tape_length-1)/2 + 10; k++)
-{
-fprintf(stderr,"%d",macroTM.tape[k]);
-}
-fprintf(stderr,"\n");
-}
-      
-    print_macro_state(&macroTM,macro_size);
 
     if (result != RESULT_STEPPED)
     {
