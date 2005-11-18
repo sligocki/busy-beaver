@@ -44,7 +44,7 @@ typedef struct macro_transition MACRO_TRANSITION;
 
 struct macro_transition
 {
-  int index;
+  int symbol;
 
   int w;
   int d;
@@ -82,4 +82,6 @@ typedef struct
   int new_symbol;
   int new_delta;
   int new_state;
+
+  int size;
 } MACRO_TM;
