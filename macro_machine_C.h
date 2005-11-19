@@ -44,9 +44,9 @@ typedef struct macro_transition MACRO_TRANSITION;
 
 struct macro_transition
 {
-  int symbol;
+  unsigned long long symbol;
 
-  int w;
+  unsigned long long w;
   int d;
   int s;
 
@@ -61,14 +61,14 @@ typedef struct
 typedef struct
 {
   int num_states;
-  int num_symbols;
+  unsigned long long num_symbols;
 
   MACRO_STATE* machine;
 
   int* tape;
   int  tape_length;
 
-  int symbol;
+  unsigned long long symbol;
 
   int                total_symbols;
   unsigned long long total_steps;
@@ -79,7 +79,7 @@ typedef struct
 
   int state;
 
-  int new_symbol;
+  unsigned long long new_symbol;
   int new_delta;
   int new_state;
 
