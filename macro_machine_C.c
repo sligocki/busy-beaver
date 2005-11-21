@@ -88,46 +88,58 @@ inline int step_TM(TM* m)
   return RESULT_STEPPED;
 }
 
-inline unsigned long long get_macro_symbol(int* tape, int position, int orig_num_symbols, int size)
+inline void get_macro_symbol(int* symbol, int* tape, int position, int size)
 {
   int i;
-  unsigned long long symbol = 0;
-
-  for (i = position+size; i >= position-size; i--)
+  for (i = 0; i < 2*size+1; i++)
   {
-    symbol = orig_num_symbols*symbol + tape[i];
-  }
-
-  return symbol;
-}
-
-inline void put_macro_symbol(unsigned long long symbol, int* tape, int position, int orig_num_symbols, int size)
-{
-  int i;
-
-  for (i = position-size; i <= position+size; i++)
-  {
-    int in_symbol;
-
-    in_symbol = symbol % orig_num_symbols;
-    symbol = symbol / orig_num_symbols;
-
-    tape[i] = in_symbol;
+    symbol[i] = tape[i + position-size];
   }
 }
 
-inline MACRO_TRANSITION* hash_lookup(MACRO_TM* m, int state, unsigned long long symbol)
+inline void put_macro_symbol(int* symbol, int* tape, int position, int size)
+{
+  int i;
+  for (i = 0; i < 2*size+1; i++)
+  {
+    tape[i + position-size] = symbol[i];
+  }
+}
+
+inline int equal_symbol(int* symbol1, int* symbol2, int size)
+{
+  int i;
+  int equal = 1;
+
+  for (i = 0; i < 2*size+1; i++)
+  {
+    if (symbol1[i] != symbol2[i])
+    {
+      equal = 0;
+      break;
+    }
+  }
+
+  return equal;
+}
+
+inline MACRO_TRANSITION* hash_lookup(MACRO_TM* m, int state, int* symbol, int orig_num_symbols)
 {
   int hash_index;
+  int i;
   MACRO_TRANSITION* trans;
 
-  hash_index = symbol % PRIME_HASH_NUMBER;
+  hash_index = 0;
+  for (i = 0; i < 2*m->size+1; i++)
+  {
+    hash_index = (hash_index*orig_num_symbols + symbol[i]) % PRIME_HASH_NUMBER;
+  }
 
   trans = m->machine[state].t[hash_index];
 
   while (trans != NULL)
   {
-    if (trans->symbol == symbol)
+    if (equal_symbol(trans->symbol,symbol,m->size))
     {
       break;
     }
@@ -138,8 +150,9 @@ inline MACRO_TRANSITION* hash_lookup(MACRO_TM* m, int state, unsigned long long 
   return trans;
 }
 
-inline MACRO_TRANSITION* hash_add(MACRO_TM* m, int state, unsigned long long symbol, TM* baseTM)
+inline MACRO_TRANSITION* hash_add(MACRO_TM* m, int state, int* symbol, TM* baseTM)
 {
+  int i;
   int hash_index;
   MACRO_TRANSITION* trans;
 
@@ -148,11 +161,21 @@ inline MACRO_TRANSITION* hash_add(MACRO_TM* m, int state, unsigned long long sym
 
   int result;
 
-  hash_index = symbol % PRIME_HASH_NUMBER;
+  hash_index = 0;
+  for (i = 0; i < 2*m->size+1; i++)
+  {
+    hash_index = (hash_index*baseTM->num_symbols + symbol[i]) % PRIME_HASH_NUMBER;
+  }
 
   trans = (MACRO_TRANSITION *)malloc(sizeof(*trans));
 
-  trans->symbol = symbol;
+  trans->symbol = (int *)malloc((2*m->size+1) * sizeof(*(trans->symbol)));
+  for (i = 0; i < 2*m->size+1; i++)
+  {
+    trans->symbol[i] = symbol[i];
+  }
+
+  trans->w = (int *)malloc((2*m->size+1) * sizeof(*(trans->w)));
 
   trans->next = m->machine[state].t[hash_index];
   m->machine[state].t[hash_index] = trans;
@@ -163,7 +186,7 @@ inline MACRO_TRANSITION* hash_add(MACRO_TM* m, int state, unsigned long long sym
   baseTM->tape[baseTM->tape_length-1] = 0;
 
   baseTM->position  = (baseTM->tape_length-1) / 2;
-  put_macro_symbol(symbol,baseTM->tape,baseTM->position,baseTM->num_symbols,m->size);
+  put_macro_symbol(symbol,baseTM->tape,baseTM->position,m->size);
 
   baseTM->max_left  = (baseTM->tape_length-1) / 2;
   baseTM->max_right = (baseTM->tape_length-1) / 2;
@@ -184,7 +207,7 @@ inline MACRO_TRANSITION* hash_add(MACRO_TM* m, int state, unsigned long long sym
     {
       if (result != RESULT_UNDEFINED)
       {
-        fprintf(stderr,"Unexpected TM result: %d, symbol %Ld\n",result,symbol);
+        fprintf(stderr,"Unexpected TM result: %d\n",result);
         print_TM(baseTM);
       }
 
@@ -194,17 +217,18 @@ inline MACRO_TRANSITION* hash_add(MACRO_TM* m, int state, unsigned long long sym
 
   if (result == RESULT_STEPPED)
   {
-
-    trans->w = get_macro_symbol(baseTM->tape,
-                                start,
-                                baseTM->num_symbols,
-                                m->size);
+    get_macro_symbol(trans->w, baseTM->tape, start, m->size);
     trans->d = baseTM->position-start;
     trans->s = baseTM->state;
   }
   else
   {
-    trans->w = -1;
+    int i;
+    for (i = 0; i < 2*m->size+1; i++)
+    {
+      trans->w[i] = -1;
+    }
+
     trans->d = -1;
     trans->s = -1;
   }
@@ -212,55 +236,29 @@ inline MACRO_TRANSITION* hash_add(MACRO_TM* m, int state, unsigned long long sym
   return trans;
 }
 
-inline void print_macro_TM(MACRO_TM* m, int size)
-{
-  int state;
-  unsigned long long symbol;
-
-  fprintf(stderr,"Macro machine, (%d %4Ld %d)\n",
-          m->num_states,m->num_symbols,size);
-  for (state = 0; state < m->num_states; state++)
-  {
-    fprintf(stderr,"  State: %d\n",state);
-    for (symbol = 0; symbol < m->num_symbols; symbol++)
-    {
-      MACRO_TRANSITION* trans;
-      trans = hash_lookup(m,state,symbol);
-
-      fprintf(stderr,"    Symbol: %4Ld -> ",symbol);
-
-      if (trans != NULL)
-      {
-        fprintf(stderr,"%4Ld " ,trans->w);
-        fprintf(stderr,"%2d " ,trans->d);
-        fprintf(stderr,"%2d\n",trans->s);
-      }
-      else
-      {
-        fprintf(stderr,"undefined\n");
-      }
-    }
-  }
-}
-
 inline int step_macro_TM(MACRO_TM* m, TM* baseTM)
 {
+  int i;
   MACRO_TRANSITION* trans;
 
   m->total_steps += m->size;
 
-  trans = hash_lookup(m,m->state,m->symbol);
+  trans = hash_lookup(m,m->state,m->symbol,baseTM->num_symbols);
 
   if (trans == NULL)
   {
     trans = hash_add(m,m->state,m->symbol,baseTM);
   }
 
-  m->new_symbol = trans->w;
+  for (i = 0; i < 2*m->size+1; i++)
+  {
+    m->new_symbol[i] = trans->w[i];
+  }
+
   m->new_delta  = trans->d;
   m->new_state  = trans->s;
 
-  if (m->new_symbol == -1)
+  if (m->new_symbol[0] == -1)
   {
     return RESULT_UNDEFINED;
   }
@@ -274,7 +272,7 @@ inline int step_macro_TM(MACRO_TM* m, TM* baseTM)
     m->total_symbols--;
   }
 
-  put_macro_symbol(m->new_symbol,m->tape,m->position,baseTM->num_symbols,m->size);
+  put_macro_symbol(m->new_symbol,m->tape,m->position,m->size);
   m->position += m->new_delta;
 
   if (m->new_state == -1)
@@ -287,13 +285,13 @@ inline int step_macro_TM(MACRO_TM* m, TM* baseTM)
     return RESULT_NOTAPE;
   }
   
-  m->new_symbol = get_macro_symbol(m->tape,m->position,baseTM->num_symbols,m->size);
+  get_macro_symbol(m->new_symbol,m->tape,m->position,m->size);
 
   if (m->position < m->max_left)
   {
     m->max_left = m->position;
 
-    if (m->new_symbol == m->symbol && m->new_state == m->state && m->new_delta < 0)
+    if (equal_symbol(m->new_symbol,m->symbol,m->size) && m->new_state == m->state && m->new_delta < 0)
     {
       return RESULT_INFINITE_LEFT;
     }
@@ -303,13 +301,17 @@ inline int step_macro_TM(MACRO_TM* m, TM* baseTM)
   {
     m->max_right = m->position;
 
-    if (m->new_symbol == m->symbol && m->new_state == m->state && m->new_delta > 0)
+    if (equal_symbol(m->new_symbol,m->symbol,m->size) && m->new_state == m->state && m->new_delta > 0)
     {
       return RESULT_INFINITE_RIGHT;
     }
   }
 
-  m->symbol = m->new_symbol;
+  for (i = 0; i < 2*m->size+1; i++)
+  {
+    m->symbol[i] = m->new_symbol[i];
+  }
+
   m->state = m->new_state;
 
   return RESULT_STEPPED;
@@ -530,13 +532,16 @@ static PyObject* macro_machine_C_run(PyObject* self,
     }
   }
 
+  macroTM.symbol     = (int *)malloc((2*macro_size+1)*sizeof(*(macroTM.symbol)));
+  macroTM.new_symbol = (int *)malloc((2*macro_size+1)*sizeof(*(macroTM.new_symbol)));
+
   macroTM.machine = macroMachine;
 
   macroTM.max_left  = (macroTM.tape_length-1) / 2;
   macroTM.max_right = (macroTM.tape_length-1) / 2;
   macroTM.position  = (macroTM.tape_length-1) / 2;
 
-  macroTM.symbol = get_macro_symbol(macroTM.tape,macroTM.position,inTM.num_symbols,macro_size);
+  get_macro_symbol(macroTM.symbol,macroTM.tape,macroTM.position,macro_size);
   macroTM.state  = 0;
 
   macroTM.total_symbols = 0;
@@ -586,7 +591,11 @@ static PyObject* macro_machine_C_run(PyObject* self,
         while (t != NULL)
         {
           nt = t->next;
+
+          free(t->symbol);
+          free(t->w);
           free(t);
+
           t = nt;
         }
       }
@@ -602,6 +611,18 @@ static PyObject* macro_machine_C_run(PyObject* self,
   {
     free(macroTM.tape);
     macroTM.tape = NULL;
+  }
+
+  if (macroTM.symbol != NULL)
+  {
+    free(macroTM.symbol);
+    macroTM.symbol = NULL;
+  }
+
+  if (macroTM.new_symbol != NULL)
+  {
+    free(macroTM.new_symbol);
+    macroTM.new_symbol = NULL;
   }
 
   d_total_symbols = macroTM.total_symbols;
