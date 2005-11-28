@@ -111,19 +111,20 @@ def BB_run(TTable, num_states, num_symbols,
   """
   import sys
 
-  machine_info = [[0,0]]*num_symbols
+  symbol_written = [0]*num_symbols
+  undefined_transition = [0]*num_symbols
 
   for state in xrange(num_states):
     for symbol in xrange(num_symbols):
       new_symbol = TTable[state][symbol][0]
       if (new_symbol == -1):
-        machine_info[symbol][1] += 1
+        undefined_transition[symbol] = 1
       else:
-        machine_info[new_symbol][0] += 1
+        symbol_written[new_symbol] = 1
 
   result = (4,3,"Infinite_no_halt")
   for symbol in xrange(num_symbols):
-    if (machine_info[0] > 0 and machine_info[1] > 0):
+    if (symbol_written[symbol] and undefined_transition[symbol]):
       result = (1,0,0)
       break
 
