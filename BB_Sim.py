@@ -385,7 +385,9 @@ class Busy_Beaver:
           if position > position_end:
             position_end = position
 
-        if position > middle - print_width and position < middle + print_width - 1:
+        if position > middle - print_width - 2 and position < middle + print_width +1:
+          just_on = True
+
           cur_step = total_steps + i
 
           sys.stdout.write("%10d: " % int(cur_step+1))
@@ -406,8 +408,12 @@ class Busy_Beaver:
           sys.stdout.write(" %1d\n" % new_state)
 
           sys.stdout.flush()
+        else:
+          if just_on:
+            sys.stdout.write("       ...\n")
+            sys.stdout.flush()
 
-          # time.sleep(1.0)
+            just_on = False
 
         if position < 1 or position >= self.tape_length-1:
           break
