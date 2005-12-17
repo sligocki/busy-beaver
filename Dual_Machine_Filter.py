@@ -2,8 +2,8 @@
 #
 # Dual_Machine_Filter.py
 #
-# This is runs Turing machines that did not halt at two different speeds and
-# detects of they exactly.
+# This runs Turing machines that did not halt at two different speeds and
+# detects whether they match exactly (i.e. detects repeating).
 #
 
 import copy

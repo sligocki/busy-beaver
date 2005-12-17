@@ -2,8 +2,8 @@
 #
 # Continue.py
 #
-# This is extends past runs of Busy Beaver Turing machines.  This will
-# probably be merged with "Generate.py".
+# This continues incomplete runs of "Generate.py".  
+# This will probably be merged with "Generate.py".
 #
 
 import copy
