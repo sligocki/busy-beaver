@@ -35,18 +35,18 @@ typedef struct
   int new_state;
 } TM;
 
-static PyObject* two_machine_C_run(PyObject* self,
-                                   PyObject* args);
+static PyObject* Dual_Machine_Run(PyObject* self,
+                                  PyObject* args);
 
-static PyMethodDef two_machine_C_methods[] =
+static PyMethodDef Dual_Machine_Methods[] =
 {
-  { "run", two_machine_C_run, METH_VARARGS, "Run Turing machine" },
-  { NULL , NULL             , 0           , NULL                 }
+  { "run", Dual_Machine_Run, METH_VARARGS, "Run Turing machine" },
+  { NULL , NULL            , 0           , NULL                 }
 };
 
-PyMODINIT_FUNC inittwo_machine_C(void)
+PyMODINIT_FUNC initDual_Machine(void)
 {
-  (void)Py_InitModule("two_machine_C",two_machine_C_methods);
+  (void)Py_InitModule("Dual_Machine",Dual_Machine_Methods);
 }
 
 #define RESULT_MACHINE        0x0003
@@ -124,7 +124,7 @@ inline int step_TM(TM* m)
   return RESULT_STEPPED;
 }
 
-static PyObject* two_machine_C_run(PyObject* self,
+static PyObject* Dual_Machine_Run(PyObject* self,
                                   PyObject* args)
 {
   TM m1;

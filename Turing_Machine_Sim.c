@@ -12,22 +12,22 @@ typedef struct
   TRANSITION* t;
 } STATE;
 
-static PyObject* busy_beaver_C_run(PyObject* self,
-                                   PyObject* args);
+static PyObject* Turing_Machine_Sim_run(PyObject* self,
+                                        PyObject* args);
 
-static PyMethodDef busy_beaver_C_methods[] =
+static PyMethodDef Turing_Machine_Sim_Methods[] =
 {
-  { "run", busy_beaver_C_run, METH_VARARGS, "Run Turing machine" },
-  { NULL , NULL             , 0           , NULL                 }
+  { "run", Turing_Machine_Sim_run, METH_VARARGS, "Run Turing machine" },
+  { NULL , NULL                  , 0           , NULL                 }
 };
 
-PyMODINIT_FUNC initbusy_beaver_C(void)
+PyMODINIT_FUNC initTuring_Machine_Sim(void)
 {
-  (void)Py_InitModule("busy_beaver_C",busy_beaver_C_methods);
+  (void)Py_InitModule("Turing_Machine_Sim",Turing_Machine_Sim_Methods);
 }
 
-static PyObject* busy_beaver_C_run(PyObject* self,
-                                   PyObject* args)
+static PyObject* Turing_Machine_Sim_run(PyObject* self,
+                                        PyObject* args)
 {
   int symbol;
   int state;

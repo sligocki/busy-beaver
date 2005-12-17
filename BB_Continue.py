@@ -133,9 +133,9 @@ def BB_run(TTable, num_states, num_symbols, tape_length, max_steps):
   """
   Wrapper for C machine running code.
   """
-  import busy_beaver_C
-  return busy_beaver_C.run(TTable, num_states, num_symbols,
-                           tape_length, float(max_steps))
+  import Turing_Machine_Sim
+  return Turing_Machine_Sim.run(TTable, num_states, num_symbols,
+                                tape_length, float(max_steps))
 
 def BB_save_machine(machine, results, tape_length, max_steps, io, save_it):
   """
