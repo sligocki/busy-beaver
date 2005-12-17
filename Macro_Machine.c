@@ -1,17 +1,17 @@
-#include "macro_machine_C.h"
+#include "Macro_Machine.h"
 
-static PyObject* macro_machine_C_run(PyObject* self,
+static PyObject* Macro_Machine_Run(PyObject* self,
                                    PyObject* args);
 
-static PyMethodDef macro_machine_C_methods[] =
+static PyMethodDef Macro_Machine_Methods[] =
 {
-  { "run", macro_machine_C_run, METH_VARARGS, "Run Turing machine" },
+  { "run", Macro_Machine_Run, METH_VARARGS, "Run Turing machine" },
   { NULL , NULL             , 0           , NULL                 }
 };
 
-PyMODINIT_FUNC initmacro_machine_C(void)
+PyMODINIT_FUNC initMacro_Machine(void)
 {
-  (void)Py_InitModule("macro_machine_C",macro_machine_C_methods);
+  (void)Py_InitModule("Macro_Machine",Macro_Machine_Methods);
 }
 
 #define RESULT_MACHINE        0x0003
@@ -317,8 +317,8 @@ inline int step_macro_TM(MACRO_TM* m, TM* baseTM)
   return RESULT_STEPPED;
 }
 
-static PyObject* macro_machine_C_run(PyObject* self,
-                                     PyObject* args)
+static PyObject* Macro_Machine_Run(PyObject* self,
+                                   PyObject* args)
 {
   TM inTM;
   MACRO_TM macroTM;

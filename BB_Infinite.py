@@ -105,9 +105,9 @@ def BB_run(TTable, num_states, num_symbols, tape_length, max_steps):
   """
   Wrapper for C machine running code.
   """
-  import two_machine_C
-  return two_machine_C.run(TTable, num_states, num_symbols,
-                           tape_length, float(max_steps))
+  import Dual_Machine
+  return Dual_Machine.run(TTable, num_states, num_symbols,
+                          tape_length, float(max_steps))
 
 def BB_save_machine(machine_num, machine, results, tape_length, max_steps,
                     io, save_it):

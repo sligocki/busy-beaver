@@ -17,7 +17,7 @@ import getopt
 
 import pdb
 
-import busy_beaver_C
+import Turing_Machine_Sim
 
 class Invalid_Turing_Machine_State:
   """
@@ -296,8 +296,8 @@ class Busy_Beaver:
     """
 
     start_time = time.time()
-    result = busy_beaver_C.run(self.contents,self.nstates,self.nsymbols,
-                               self.tape_length,check)
+    result = Turing_Machine_Sim.run(self.contents,self.nstates,self.nsymbols,
+                                    self.tape_length,check)
     end_time = time.time()
 
     exit_cond = int(result[0])

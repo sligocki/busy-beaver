@@ -110,10 +110,10 @@ def BB_run(TTable, num_states, num_symbols, macro_size,
   Wrapper for C machine running code.
   """
   import sys
-  import macro_machine_C
+  import Macro_Machine
 
-  return macro_machine_C.run(TTable, num_states, num_symbols, macro_size,
-                             tape_length, float(max_steps))
+  return Macro_Machine.run(TTable, num_states, num_symbols, macro_size,
+                           tape_length, float(max_steps))
 
 def BB_save_machine(machine_num, machine, results, tape_length, max_steps,
                     io, save_it):
