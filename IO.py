@@ -1,14 +1,14 @@
 """
-Does IO on Busy Beaver results (BB_IO class).
+Does IO of Busy Beaver results (IO class).
 """
 
 import sys
 import cPickle as pickle
 import string
 
-from BB_Machine import BB_Machine 
+from Turing_Machine import Turing_Machine 
 
-class BB_IO:
+class IO:
   """
   Reads and writes Busy Beaver results:
     input_file       - file to read*

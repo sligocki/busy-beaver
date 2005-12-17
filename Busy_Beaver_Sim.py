@@ -1,11 +1,9 @@
 #! /usr/bin/env python
 #
-# BB_Sim.py
+# Busy_Beaver_Sim.py
 #
-# This module contains the Busy_Beaver class, which is a
-# Turing machine simulator used to discover "busy beaver" Turing
-# machines, which are defined as those which print a maximum number
-# of 1's before stopping, starting from an empty tape.
+# This module contains the Busy_Beaver class, which runs a Turing machine
+# simulator (either in C or Python) with an initially blank tape.
 #
 
 import sys
@@ -460,7 +458,7 @@ class Busy_Beaver:
 
 if __name__ == "__main__":
   def usage():
-    print "Usage  busy_beaver.py [-b] [-h] [-v] [-w width] [--brief] [--help] [--visual] [--width=width] [filename]"
+    print "Usage  Busy_Beaver_Sim.py [-b] [-h] [-v] [-w width] [--brief] [--help] [--visual] [--width=width] [filename]"
     sys.stdout.flush()
 
   bb = Busy_Beaver(5, 2, 10000000)

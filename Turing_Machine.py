@@ -1,10 +1,10 @@
 """
-Contains Busy Beaver BB_Machine class.
+Contains Busy Beaver Turing_Machine class.
 """
 
 import sys
 
-class BB_Machine:
+class Turing_Machine:
   """
   Class for creating and storing Busy Beaver Machines which may include blank
   or to-be-completed cells in their transition tables.
