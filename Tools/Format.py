@@ -26,8 +26,5 @@ class tests_container:
     self.IS_OVER_STEPS = lambda x: x == 2
     self.IS_ERROR      = lambda x: x == -1
 
-    self.MAX = lambda value, best_value: value > best_value
-    
-
 FIELD = fields_container()
 TEST = tests_container()

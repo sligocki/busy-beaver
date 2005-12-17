@@ -15,8 +15,7 @@ def best_from_lines(lines, field, test, default):
   for line in lines:
     fields = line.split()
     field_value = field.type(fields[field.num])
-    if test(value=field_value, best_value=best_value):
-      best_value = field_value
+    best_value = test(field_value, best_value)
   return best_value
   
 def filter_lines(lines, field, test):
@@ -82,7 +81,7 @@ for opt, arg in opts:
       print max_usage
       sys.exit(1)
     lines = filter_lines(lines, FIELD.CONDITION, TEST.IS_HALT)
-    print "Max %.11s\t= %d" % (arg, best_from_lines(lines, field, TEST.MAX, 0))
+    print "Max %.11s\t= %d" % (arg, best_from_lines(lines, field, max, 0))
 
   elif opt == "--number":
     if arg == "total":
