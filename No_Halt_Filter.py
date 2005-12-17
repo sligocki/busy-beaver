@@ -1,15 +1,18 @@
 #! /usr/bin/env python
 #
-# This is continues past runs of Busy Beaver machines
+# No_Halt_Filter.py
+#
+# This detects some cases where it is the current transition table can
+# never be extended to include a halt.
 #
 
 import copy
 
-from BB_Machine import BB_Machine
-from BB_IO import BB_IO
+from Turing_Machine import Turing_Machine
+from IO import IO
 
-def BB_Nohalt(num_states, num_symbols, tape_length,
-              max_steps, next, io):
+def No_Halt_Run(num_states, num_symbols, tape_length,
+                max_steps, next, io):
   """
   Stats all distinct BB machines with num_states and num_symbols.
 
@@ -34,19 +37,19 @@ def BB_Nohalt(num_states, num_symbols, tape_length,
 
     results = next[5]
 
-    machine = BB_Machine(num_states, num_symbols)
+    machine = Turing_Machine(num_states, num_symbols)
     machine.set_TTable(next[6])
 
     if (results[0] != 0 and results[0] != 4):
-      BB_Nohalt_Recursive(machine_num,
-                          machine, num_states, num_symbols,
-                          tape_length, max_steps, results, io)
+      No_Halt_Recursive(machine_num,
+                        machine, num_states, num_symbols,
+                        tape_length, max_steps, results, io)
 
     next = io.read_result()
 
-def BB_Nohalt_Recursive(machine_num,
-                        machine, num_states, num_symbols,
-                        tape_length, max_steps, old_results, io):
+def No_Halt_Recursive(machine_num,
+                      machine, num_states, num_symbols,
+                      tape_length, max_steps, old_results, io):
   """
   Stats this BB machine.
 
@@ -67,7 +70,7 @@ def BB_Nohalt_Recursive(machine_num,
     0) Number of non-zero symbols written
     1) Number of steps run for
   """
-  results = BB_run(machine.get_TTable(), num_states, num_symbols,
+  results = run(machine.get_TTable(), num_states, num_symbols,
                    tape_length, max_steps)
   save_it = not None
 
@@ -80,13 +83,13 @@ def BB_Nohalt_Recursive(machine_num,
     message      = results[2]
 
     sys.stderr.write("Error %d: %s\n" % (error_number,message))
-    BB_save_machine(machine_num, machine, results,
+    save_machine(machine_num, machine, results,
                     tape_length, max_steps, io, save_it)
 
   # This shouldn't happen either - right? ;-)
   #    3) Reached Undefined Cell
   elif exit_condition == 3:
-    BB_save_machine(machine_num, machine, results,
+    save_machine(machine_num, machine, results,
                     tape_length, max_steps, io, save_it)
 
   # All other returns:
@@ -96,15 +99,15 @@ def BB_Nohalt_Recursive(machine_num,
   #    4) Are in a detected infinite loop
   else:
     if (results[0] == 0 or results[0] == 4):
-      BB_save_machine(machine_num, machine, results,
+      save_machine(machine_num, machine, results,
                       tape_length, max_steps, io, save_it)
     else:
-      BB_save_machine(machine_num, machine, old_results,
+      save_machine(machine_num, machine, old_results,
                       tape_length, max_steps, io, save_it)
 
   return
 
-def BB_run(TTable, num_states, num_symbols,
+def run(TTable, num_states, num_symbols,
            tape_length, max_steps):
   """
   Wrapper for C machine running code.
@@ -130,7 +133,7 @@ def BB_run(TTable, num_states, num_symbols,
 
   return result
 
-def BB_save_machine(machine_num, machine, results, tape_length, max_steps,
+def save_machine(machine_num, machine, results, tape_length, max_steps,
                     io, save_it):
   """
   Saves a busy beaver machine with the provided data information.
@@ -144,7 +147,7 @@ if __name__ == "__main__":
   import sys
   import getopt
 
-  usage = "BB_Nohalt.py [--help] [--tape=] [--steps=] [--textfile=] [--datafile=] [--infile=]"
+  usage = "No_Halt_Filter.py [--help] [--tape=] [--steps=] [--textfile=] [--datafile=] [--infile=]"
   try:
     opts, args = getopt.getopt(sys.argv[1:], "", [
                                                   "help",
@@ -196,7 +199,7 @@ if __name__ == "__main__":
   else:
     in_file = sys.stdin
 
-  input = BB_IO(in_file, None, None)
+  input = IO(in_file, None, None)
 
   next = input.read_result()
 
@@ -232,6 +235,6 @@ if __name__ == "__main__":
     else:
       data_file = file(data_filename, "wb")
 
-  io = BB_IO(in_file, text_file, data_file)
+  io = IO(in_file, text_file, data_file)
 
-  BB_Nohalt(states, symbols, tape_length, max_steps, next, io)
+  No_Halt_Run(states, symbols, tape_length, max_steps, next, io)

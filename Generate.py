@@ -1,18 +1,20 @@
 #! /usr/bin/env python
 #
-# This is a Busy Beaver machine generator
+# Generate.py
+#
+# This is a Busy Beaver Turing machine generator.
 #
 
 import copy
 
-from BB_Machine import BB_Machine
-from BB_IO import BB_IO
+from Turing_Machine import Turing_Machine
+from IO import IO
 
 # global machine number
 g_machine_num = 0
 g_next = None
 
-def BB_Prover(num_states, num_symbols, tape_length, max_steps, io):
+def Generate(num_states, num_symbols, tape_length, max_steps, io):
   """
   Stats all distinct BB machines with num_states and num_symbols.
 
@@ -29,12 +31,12 @@ def BB_Prover(num_states, num_symbols, tape_length, max_steps, io):
     0) Number of non-zero symbols written
     1) Number of steps run for
   """
-  machine = BB_Machine(num_states, num_symbols)
-  BB_Prover_Recursive(machine, num_states, num_symbols,
-                      tape_length, max_steps, io)
+  machine = Turing_Machine(num_states, num_symbols)
+  Generate_Recursive(machine, num_states, num_symbols,
+                     tape_length, max_steps, io)
 
-def BB_Prover_Recursive(machine, num_states, num_symbols,
-                        tape_length, max_steps, io):
+def Generate_Recursive(machine, num_states, num_symbols,
+                       tape_length, max_steps, io):
   """
   Stats this BB machine.
 
@@ -63,8 +65,8 @@ def BB_Prover_Recursive(machine, num_states, num_symbols,
 
     g_next = io.read_result()
   else:
-    results = BB_run(machine.get_TTable(), num_states, num_symbols,
-                     tape_length, max_steps)
+    results = run(machine.get_TTable(), num_states, num_symbols,
+                  tape_length, max_steps)
     save_it = not None
 
   exit_condition = results[0]
@@ -104,8 +106,8 @@ def BB_Prover_Recursive(machine, num_states, num_symbols,
       new_results = (0,new_num_syms,new_num_steps)
       save_it = not None
 
-    BB_save_machine(machine_new, new_results, tape_length, max_steps, io,
-                    save_it)
+    save_machine(machine_new, new_results, tape_length, max_steps, io,
+                 save_it)
 
     # All other states
     if machine.num_empty_cells > 1:
@@ -115,22 +117,22 @@ def BB_Prover_Recursive(machine, num_states, num_symbols,
             machine_new = copy.deepcopy(machine)
             machine_new.add_cell(state_in , symbol_in ,
                                  state_out, symbol_out, direction_out)
-            BB_Prover_Recursive(machine_new, num_states, num_symbols,
-                                tape_length, max_steps, io)
+            Generate_Recursive(machine_new, num_states, num_symbols,
+                               tape_length, max_steps, io)
   # -1) Error
   elif exit_condition == -1:
     error_number = results[1]
     message = results[2]
     sys.stderr.write("Error %d: %s\n" % (error_number,message))
 
-    BB_save_machine(machine, results, tape_length, max_steps, io, save_it)
+    save_machine(machine, results, tape_length, max_steps, io, save_it)
   # All other returns
   else:
-    BB_save_machine(machine, results, tape_length, max_steps, io, save_it)
+    save_machine(machine, results, tape_length, max_steps, io, save_it)
 
   return
 
-def BB_run(TTable, num_states, num_symbols, tape_length, max_steps):
+def run(TTable, num_states, num_symbols, tape_length, max_steps):
   """
   Wrapper for C machine running code.
   """
@@ -138,7 +140,7 @@ def BB_run(TTable, num_states, num_symbols, tape_length, max_steps):
   return Turing_Machine_Sim.run(TTable, num_states, num_symbols,
                                 tape_length, float(max_steps))
 
-def BB_save_machine(machine, results, tape_length, max_steps, io, save_it):
+def save_machine(machine, results, tape_length, max_steps, io, save_it):
   """
   Saves a busy beaver machine with the provided data information.
   """
@@ -155,7 +157,7 @@ if __name__ == "__main__":
   import sys
   import getopt
 
-  usage = "BB_Prover.py [--help] [--states=] [--symbols=] [--tape=] [--steps=] [--textfile=] [--datafile=] [--restart=]"
+  usage = "Generate.py [--help] [--states=] [--symbols=] [--tape=] [--steps=] [--textfile=] [--datafile=] [--restart=]"
   try:
     opts, args = getopt.getopt(sys.argv[1:], "", [
                                                   "help",
@@ -220,7 +222,7 @@ if __name__ == "__main__":
     else:
       restart_file = sys.stdin
 
-    input = BB_IO(restart_file, None, None)
+    input = IO(restart_file, None, None)
 
     g_next = input.read_result()
 
@@ -259,6 +261,6 @@ if __name__ == "__main__":
     else:
       data_file = file(data_filename, "wb")
 
-  io = BB_IO(restart_file, text_file, data_file)
+  io = IO(restart_file, text_file, data_file)
 
-  BB_Prover(states, symbols, tape_length, max_steps, io)
+  Generate(states, symbols, tape_length, max_steps, io)
