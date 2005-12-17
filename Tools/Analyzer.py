@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-from BB_Format import FIELD, TEST
+from Format import FIELD, TEST
 
 def count_lines(lines, field, test):
   count = 0
@@ -32,7 +32,7 @@ def filter_lines(lines, field, test):
 # Main Program
 import getopt, sys
 
-usage = "BB_Analyzer.py [--help] [--max=] [--number=] [--percentage=] data-filename"
+usage = "Analyzer.py [--help] [--max=] [--number=] [--percentage=] data-filename"
 
 # Get arguments
 try:
