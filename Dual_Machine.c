@@ -1,39 +1,6 @@
 #include <Python.h>
 
-typedef struct
-{
-  int w;
-  int d;
-  int s;
-} TRANSITION;
-
-typedef struct
-{
-  TRANSITION* t;
-} STATE;
-
-typedef struct
-{
-  STATE* machine;
-
-  int* tape;
-  int  tape_length;
-
-  int symbol;
-
-  int                total_symbols;
-  unsigned long long total_steps;
-
-  int position;
-  int max_left;
-  int max_right;
-
-  int state;
-
-  int new_symbol;
-  int new_delta;
-  int new_state;
-} TM;
+#include "Turing_Machine.h"
 
 static PyObject* Dual_Machine_Run(PyObject* self,
                                   PyObject* args);
@@ -62,6 +29,7 @@ PyMODINIT_FUNC initDual_Machine(void)
 #define RESULT_INFINITE_LEFT  0x0010
 #define RESULT_INFINITE_RIGHT 0x0014
 #define RESULT_INFINITE_DUAL  0x0018
+#define RESULT_INVALID        0x001C
 
 inline int step_TM(TM* m)
 {
@@ -322,6 +290,8 @@ static PyObject* Dual_Machine_Run(PyObject* self,
 
   m2.total_symbols = 0;
   m2.total_steps   = 0;
+
+  result = RESULT_INVALID;
 
   for (i = 0; i < max_steps; i += 2)
   {
