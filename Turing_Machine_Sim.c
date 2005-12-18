@@ -1,16 +1,6 @@
 #include <Python.h>
 
-typedef struct
-{
-  int w;
-  int d;
-  int s;
-} TRANSITION;
-
-typedef struct
-{
-  TRANSITION* t;
-} STATE;
+#include "Turing_Machine.h"
 
 static PyObject* Turing_Machine_Sim_run(PyObject* self,
                                         PyObject* args);

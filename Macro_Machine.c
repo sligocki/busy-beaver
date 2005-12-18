@@ -1,3 +1,6 @@
+#include <Python.h>
+
+#include "Turing_Machine.h"
 #include "Macro_Machine.h"
 
 static PyObject* Macro_Machine_Run(PyObject* self,
@@ -27,6 +30,7 @@ PyMODINIT_FUNC initMacro_Machine(void)
 #define RESULT_INFINITE_LEFT  0x0010
 #define RESULT_INFINITE_RIGHT 0x0014
 #define RESULT_INFINITE_DUAL  0x0018
+#define RESULT_INVALID        0x001C
 
 inline void print_TM(TM* m)
 {
@@ -198,6 +202,8 @@ inline MACRO_TRANSITION* hash_add(MACRO_TM* m, int state, int* symbol, TM* baseT
   baseTM->symbol = baseTM->tape[baseTM->position];
 
   start = baseTM->position;
+
+  result = RESULT_INVALID;
 
   for (step = 0; step <= m->size; step++)
   {
@@ -546,6 +552,8 @@ static PyObject* Macro_Machine_Run(PyObject* self,
 
   macroTM.total_symbols = 0;
   macroTM.total_steps   = 0;
+
+  result = RESULT_INVALID;
 
   for (i = 0; i < max_steps; i += (macro_size+1))
   {
