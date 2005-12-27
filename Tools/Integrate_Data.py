@@ -1,8 +1,7 @@
 #! /usr/bin/env python
 from Format import FIELD, TEST
 
-
-import sys
+import sys, os
 
 usage = "Integrate_Data.py input_filename halt_filename infinite_filename unknown_filename error_filename"
 
@@ -11,6 +10,9 @@ halt_file     = file(sys.argv[2], "a")
 infinite_file = file(sys.argv[3], "a")
 unknown_file  = file(sys.argv[4], "w")
 error_file    = file(sys.argv[5], "a")
+
+input_filename = sys.argv[1]
+error_filename = sys.argv[5]
 
 for line in input_file:
   # Split each line by white charactor separation into fields
@@ -33,6 +35,6 @@ unknown_file.close()
 
 if error_file.tell() == 0:
   error_file.close()
-  rm(error_file)
+  os.remove(error_filename)
 
-rm(input_file)
+os.remove(input_filename)
