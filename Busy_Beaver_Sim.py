@@ -509,5 +509,4 @@ if __name__ == "__main__":
 
   sys.stdout.flush()
 
-  bb.save("bb.out")
-
+#  bb.save("bb.out")

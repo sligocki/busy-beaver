@@ -34,10 +34,10 @@ class IO:
       self.output_file.write("%d " % machine.num_symbols)
 
       self.output_file.write("%d " % tape_length)
-      self.output_file.write("%.0f " % max_steps)
+      self.output_file.write("%d " % max_steps)
 
       for item in results:
-        if type(item) == int:
+        if type(item) in [int, long]:
           self.output_file.write("%d " % item)
         elif type(item) == float:
           self.output_file.write("%.0f " % item)
@@ -67,7 +67,7 @@ class IO:
         num_symbols = int(parts[2])
 
         tape_length = int(parts[3])
-        max_steps   = float(parts[4])
+        max_steps   = int(parts[4])
 
         results = [int(parts[5]),]
         index = 6
