@@ -29,8 +29,13 @@ was_error = False
 for line in input_file:
   # Split each line by white charactor separation into fields.
   fields = line.split()
-  # The condition field describes whether the program halts, is provably infinite, unknown or error
-  condition = FIELD.CONDITION.type(fields)
+  # The condition field describes whether the program halts, is provably
+  # infinite, unknown or error
+  try:
+    condition = FIELD.CONDITION.type(fields[FIELD.CONDITION.num])
+  except TypeError, e:
+    print line
+    raise TypeError, e
   # 'line' halts.
   if TEST.IS_HALT(condition):
     halt_file.write(line)
