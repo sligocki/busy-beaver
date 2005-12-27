@@ -3,7 +3,6 @@ Does IO of Busy Beaver results (IO class).
 """
 
 import sys
-import cPickle as pickle
 import string
 
 from Turing_Machine import Turing_Machine 
@@ -11,56 +10,44 @@ from Turing_Machine import Turing_Machine
 class IO:
   """
   Reads and writes Busy Beaver results:
-    input_file       - file to read*
-    text_output_file - text file to write*
-    data_output_file - data file to write*
+    input_file  - file to read*
+    output_file - text file to write*
 
     * if this is 'None' then the user doesn't intend to do this type of
       operation.
   """
-  def __init__(self, input_file, text_output_file, data_output_file):
+  def __init__(self, input_file, output_file):
     """
     Save file information.
     """
-    self.input_file       = input_file
-    self.text_output_file = text_output_file
-    self.data_output_file = data_output_file
+    self.input_file  = input_file
+    self.output_file = output_file
 
   def write_result(self, machine_num, tape_length, max_steps, results, machine):
     """
     Writes a result.
     """
-    if self.text_output_file:
-      self.text_output_file.write("%d " % machine_num)
+    if self.output_file:
+      self.output_file.write("%d " % machine_num)
 
-      self.text_output_file.write("%d " % machine.num_states)
-      self.text_output_file.write("%d " % machine.num_symbols)
+      self.output_file.write("%d " % machine.num_states)
+      self.output_file.write("%d " % machine.num_symbols)
 
-      self.text_output_file.write("%d " % tape_length)
-      self.text_output_file.write("%.0f " % max_steps)
+      self.output_file.write("%d " % tape_length)
+      self.output_file.write("%.0f " % max_steps)
 
       for item in results:
         if type(item) == int:
-          self.text_output_file.write("%d " % item)
+          self.output_file.write("%d " % item)
         elif type(item) == float:
-          self.text_output_file.write("%.0f " % item)
+          self.output_file.write("%.0f " % item)
         else:
-          self.text_output_file.write("%s " % item)
+          self.output_file.write("%s " % item)
 
-      self.text_output_file.write("%s " % machine.get_TTable());
-      self.text_output_file.write("\n")
-      self.text_output_file.flush()
+      self.output_file.write("%s " % machine.get_TTable());
+      self.output_file.write("\n")
+      self.output_file.flush()
       
-    if self.data_output_file:
-      pickle.dump(machine_num,
-                  machine.num_states,
-                  machine.num_symbols,
-                  tape_length,
-                  max_steps,
-                  results,
-                  machine,
-                  self.data_output_file)
-
   def read_result(self):
     """
     Reads a result.
