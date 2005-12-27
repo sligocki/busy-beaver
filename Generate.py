@@ -15,6 +15,18 @@ from IO import IO
 g_machine_num = 0
 g_next = None
 
+class Turing_Machine_Runtime_Error:
+  """
+  This exception class is raised if an error occurs while running/simulating a
+  turing machine (currently done in c-code).
+  """
+
+  def __init__(self, value=None):
+    self.value = value
+
+  def __repr__(self):
+    return `self.value`
+
 def Generate(num_states, num_symbols, tape_length, max_steps, io):
   """
   Stats all distinct BB machines with num_states and num_symbols.
@@ -25,7 +37,6 @@ def Generate(num_states, num_symbols, tape_length, max_steps, io):
     0) Halt
     1) Exceed tape_length
     2) Exceed max_steps
-    4) Are in a detected infinite loop
 
   It then categorizes all distict machines as one of these above 3 along with
   important information such as:
@@ -47,75 +58,85 @@ def Generate_Recursive(machine, num_states, num_symbols,
     1) Exceeds tape_length
     2) Exceeds max_steps
     3) Reaches an undefined cell of the transition table
-    4) Is in a detected infinite loop
 
   If it reaches an undefined cell it recursively calls this function with
-  each of the possible entrees to that cell so that it can find ever distinct
+  each of the possible entrees to that cell so that it can find every distinct
   machine which comes from the input machine
-
-  Otherwise it saves the input machine with the reason that it ended and
-  important information such as:
-    0) Number of non-zero symbols written
-    1) Number of steps run for
   """
   global g_machine_num, g_next
 
   if g_next and machine.get_TTable() == g_next[6]:
     results = g_next[5]
-    save_it = None
+    save_it = False
 
     g_next = io.read_result()
   else:
+    # results = (exit_condition, )
+    #  error) (-1, error#, error_string)
+    #  halt)  (0, #sym, #steps)
+    #  tape)  (1, #sym, #steps)
+    #  steps) (2, #sym, #steps)
+    #  undef) (3, cur_state, cur_sym, #sym, #stpes)
     results = run(machine.get_TTable(), num_states, num_symbols,
                   tape_length, max_steps)
-    save_it = not None
+    save_it = True
 
   exit_condition = results[0]
 
   # 3) Reached Undefined Cell
   if exit_condition == 3:
-    state_in  = results[1]  # Position of undefined cell
+    # Position of undefined cell in transition table
+    state_in  = results[1]
     symbol_in = results[2]
-    # max_state and max_symbol different from num_states and num_symbols.
-    # they are restricted to only one greater than the current largest state or
-    # symbol.
-    max_state = machine.get_num_states_available()
-    max_symbol = machine.get_num_symbols_available()
+    # Info for interpolating what would happen if undefined state was halt.
+    # They are returned as floats, so we convert them to ints.
+    num_symb_written = int(round(results[4]))
+    num_steps_taken = int(round(results[5]))
 
-    # Halt state
+    # If undefined cell is Halt.
     #   1) Add the halt state
-    #   3) This machine will write one more non-zero symbol
-    #   2) This machine will take one more step and halt
-    #   4) Save this machine
     machine_new = copy.deepcopy(machine)
     machine_new.add_cell(state_in , symbol_in ,
                         -1, 1, 1)
 
     if g_next and machine_new.get_TTable() == g_next[6]:
       new_results = g_next[5]
-      save_it = None
+      save_it = False
 
       g_next = io.read_result()
     else:
-      if results[3] == 0:
-        new_num_syms  = results[4] + 1
-      else:
-        new_num_syms  = results[4]
+      # 2) This machine will write one more non-zero symbol if current symbol
+      # is not non-zero (I.e. is zero)
+      if symbol_in == 0:
+        num_symb_written += 1
 
-      new_num_steps = results[5] + 1
+      # 3) This machine will take one more step to halt state
+      num_steps_taken += 1
 
-      new_results = (0,new_num_syms,new_num_steps)
-      save_it = not None
+      new_results = (0, num_symb_written, num_steps_taken)
+      save_it = True
 
+    #   4) Save this machine
     save_machine(machine_new, new_results, tape_length, max_steps, io,
                  save_it)
 
-    # All other states
+    # 'max_state' and 'max_symbol' are the state and symbol numbers for the
+    # smallest state/symbol not yet written (i.e. available to add to TTable).
+    max_state = machine.get_num_states_available()
+    max_symbol = machine.get_num_symbols_available()
+
+    # If undefined cell is not Halt
+    # If this is the last undefined cell, then it must be a halt, so only try
+    # other values for cell if this is not the last undefined cell.
     if machine.num_empty_cells > 1:
+      # 'state_out' in [0, 1, ... max_state] == range(max_state + 1)
       for state_out in range(max_state + 1):
         for symbol_out in range(max_symbol + 1):
           for direction_out in range(2):
             machine_new = copy.deepcopy(machine)
+            # 'state_in' and 'symbol_in' specify cell in transition table.
+            # 'state_out', 'symbol_out', and 'direction_out' specify value to
+            # put in that cell.
             machine_new.add_cell(state_in , symbol_in ,
                                  state_out, symbol_out, direction_out)
             Generate_Recursive(machine_new, num_states, num_symbols,
@@ -124,9 +145,9 @@ def Generate_Recursive(machine, num_states, num_symbols,
   elif exit_condition == -1:
     error_number = results[1]
     message = results[2]
-    sys.stderr.write("Error %d: %s\n" % (error_number,message))
-
+    sys.stderr.write("Error %d: %s\n" % (error_number, message))
     save_machine(machine, results, tape_length, max_steps, io, save_it)
+    raise Turing_Machine_Runtime_Error, "Error encountered while running a turing machine"
   # All other returns
   else:
     save_machine(machine, results, tape_length, max_steps, io, save_it)
@@ -137,9 +158,12 @@ def run(TTable, num_states, num_symbols, tape_length, max_steps):
   """
   Wrapper for C machine running code.
   """
+  # We must convert max_steps to float because it could be larger than a C int
+  # max(int) == 2,147,483,647
   import Turing_Machine_Sim
   return Turing_Machine_Sim.run(TTable, num_states, num_symbols,
                                 tape_length, float(max_steps))
+
 
 def save_machine(machine, results, tape_length, max_steps, io, save_it):
   """
@@ -152,13 +176,11 @@ def save_machine(machine, results, tape_length, max_steps, io, save_it):
 
   g_machine_num += 1
 
-# Default test code
+# Command line interpretter code
 if __name__ == "__main__":
-  import os
-  import sys
-  import getopt
+  import os, sys, getopt
 
-  usage = "Generate.py [--help] [--states=] [--symbols=] [--tape=] [--steps=] [--textfile=] [--datafile=] [--restart=]"
+  usage = "Generate.py --states= --symbols= [--help] [--tape=] [--steps=] [--outfile=] [--restart=]"
   try:
     opts, args = getopt.getopt(sys.argv[1:], "", [
                                                   "help",
@@ -166,28 +188,24 @@ if __name__ == "__main__":
                                                   "symbols=",
                                                   "tape=",
                                                   "steps=",
-                                                  "textfile=",
-                                                  "datafile=",
-                                                  "restart="
+                                                  "outfile=",
+                                                  "restart=",
+                                                  "infile="   # infile is never used but is automatically passed by Tools/update script so it must be accepted.
                                                  ])
   except getopt.GetoptError:
     sys.stderr.write("%s\n" % usage)
     sys.exit(1)
 
-  # variables for text and data output.
-  text_filename = None
-  text_file = None
-
-  is_data = None
-  data_filename = None
-  data_file = None
+  out_filename = None
+  out_file = None
 
   is_restart = None
   restart_filename = None
   restart_file = None
 
-  states = 2
-  symbols = 2
+  # 'states' and 'symbols' are required variables so they have no default.
+  states = None
+  symbols = None
   tape_length = 20003
   max_steps = 10000
 
@@ -202,30 +220,25 @@ if __name__ == "__main__":
     elif opt == "--tape":
       tape_length = int(arg)
     elif opt == "--steps":
-      max_steps = float(arg)
-    elif opt == "--textfile":
+      max_steps = int(arg)
+    elif opt == "--outfile":
       if arg:
-        text_filename = arg
-    elif opt == "--datafile":
-      is_data = not None
-      if arg:
-        data_filename = arg
+        out_filename = arg
     elif opt == "--restart":
-      is_restart = not None
+      is_restart = True
       if arg:
         restart_filename = arg
 
-  g_next = None
-
   if is_restart:
+    # If restart input not from stdin.
     if restart_filename and restart_filename != "-":
       restart_file = file(restart_filename, "r")
     else:
       restart_file = sys.stdin
 
-    input = IO(restart_file, None, None)
-
-    g_next = input.read_result()
+    temp_input = IO(restart_file, None)
+    g_next = temp_input.read_result()
+    del temp_input
 
     states  = g_next[1]
     symbols = g_next[2]
@@ -233,35 +246,31 @@ if __name__ == "__main__":
     tape_length = g_next[3]
     max_steps   = g_next[4]
 
-  # The furthest that the machine can travel in n steps is n away from the
+  # The furthest that the machine can travel in n steps is n+1 away from the
   # origin.  It could travel in either direction so the tape need not be longer
   # than 2 * max_steps + 3
   tape_length = int(min(tape_length, 2 * max_steps + 3))
 
-  if not text_filename:
-    text_filename = "BBP_%d_%d_%d_%.0f.txt" % \
+  if not states or not symbols:
+    sys.stderr.write(usage)
+    sys.exit(1)
+
+  # Default output filename.  (E.g. 2.2.20003.10000.out)
+  if not out_filename:
+    out_filename = "%d.%d.%d.%d.out" % \
                     (states, symbols, tape_length, max_steps)
 
-  if text_filename and text_filename != "-":
-    if os.path.exists(text_filename):
-      sys.stderr.write("Output text file, '%s', exists\n" % (text_filename,));
+  # If not outputing to stdout.
+  if out_filename != "-":
+    if os.path.exists(out_filename):
+      sys.stderr.write("Output text file, '%s', exists\n" % (out_filename,));
       sys.exit(1)
     else:
-      text_file = file(text_filename, "w")
+      out_file = file(out_filename, "w")
   else:
-    text_file = sys.stdout
+    out_file = sys.stdout
 
-  if is_data and not data_filename:
-    data_filename = "BBP_%d_%d_%d_%.0f.data" % \
-                    (states, symbols, tape_length, max_steps)
-
-  if data_filename:
-    if os.path.exists(data_filename):
-      sys.stderr.write("Output data file, '%s', exists\n" % (data_filename,));
-      sys.exit(1)
-    else:
-      data_file = file(data_filename, "wb")
-
-  io = IO(restart_file, text_file, data_file)
+  # If not restarting 'restart_file' == None, so no input will be created
+  io = IO(restart_file, out_file)
 
   Generate(states, symbols, tape_length, max_steps, io)
