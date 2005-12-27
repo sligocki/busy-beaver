@@ -1,0 +1,54 @@
+#!/bin/csh -f
+
+# Check for enough arguments
+set argc="$#argv"
+if ("$argc" < 2) then
+  echo "Usage:  update basename command"
+  exit 1
+endif
+
+# Make sure the "basename" doesn't end in ".py" - simple consistency check
+set basename="$argv[1]"
+if ("$basename:e" == "py") then
+  echo "No basename given"
+  exit 1
+endif
+
+# Find log file (if it exists) and set the current log number
+set logfile="$basename.log"
+if (-e "$logfile" && ! -z "logfile") then
+  set log_number=`tail -1 "$logfile" | awk '{print $1 + 1;}'`
+else
+  set log_number=1
+endif
+
+# Get the current date and command
+set date=`\date`
+set command="$argv[2-] --infile=$basename.unknown --outfile=$basename.out --log_number=$log_number"
+
+# Run the command
+echo "Running: $command"
+$command
+
+# Check for failure
+if ("$status" != 0) then
+  echo "Command failed"
+  exit 1
+endif
+
+# Log the running of the command
+echo "$log_number | $date | $command" >> "$basename.log"
+
+# Integrate the output data into the existing database
+Integrate_Data.py "$basename.out"                                           \
+                  "$basename.halt" "$basename.infinite" "$basename.unknown" \
+                  "$basename.error"
+
+# Check for failure
+if ("$status" != 0) then
+  echo "Integration failed"
+  exit 1
+endif
+
+# Exit successfully
+exit 0
