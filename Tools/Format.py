@@ -24,6 +24,9 @@ class tests_container:
     self.IS_UNKNOWN    = lambda x: x in [1, 2]
     self.IS_OVER_TAPE  = lambda x: x == 1
     self.IS_OVER_STEPS = lambda x: x == 2
+    # Note, these should never actually appear in program outputs at time of
+    # writing (Dec 26, 2005).
+    self.IS_UNDEFINED  = lambda x: x == 3
     self.IS_ERROR      = lambda x: x == -1
 
 FIELD = fields_container()
