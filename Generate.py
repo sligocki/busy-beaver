@@ -90,8 +90,8 @@ def Generate_Recursive(machine, num_states, num_symbols,
     symbol_in = results[2]
     # Info for interpolating what would happen if undefined state was halt.
     # They are returned as floats, so we convert them to ints.
-    num_symb_written = int(round(results[4]))
-    num_steps_taken = int(round(results[5]))
+    num_symb_written = int(round(results[3]))
+    num_steps_taken = int(round(results[4]))
 
     # If undefined cell is Halt.
     #   1) Add the halt state
