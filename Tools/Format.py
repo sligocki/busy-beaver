@@ -12,9 +12,11 @@ class fields_container:
     self.TAPE_LENGTH = field_data(3, int)
     self.MAX_STEPS   = field_data(4, int)
     self.CONDITION   = field_data(5, int)
-    # Note, these last 2 are only valid if condition is halt
+    # If Condition is halt or unknown:
     self.SYMBOLS     = field_data(6, float)
     self.STEPS       = field_data(7, float)
+    # If Condition is infinte:
+    self.INF_TYPE    = field_data(6, int)
 
 class tests_container:
   def __init__(self):
