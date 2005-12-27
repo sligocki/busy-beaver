@@ -3,7 +3,7 @@
 from distutils.core import setup, Extension
 
 module1 = Extension('Turing_Machine_Sim',
-                    sources=['Turing_Machine_Sim.c'])
+                    sources=['Turing_Machine_Sim.c','Turing_Machine.c'])
 
 setup(name='Turing_Machine_Sim',
       version='1.0',
@@ -11,7 +11,7 @@ setup(name='Turing_Machine_Sim',
       ext_modules=[module1])
 
 module2 = Extension('Dual_Machine',
-                    sources=['Dual_Machine.c'])
+                    sources=['Dual_Machine.c','Turing_Machine.c'])
 
 setup(name='Dual_Machine',
       version='1.0',
@@ -19,7 +19,7 @@ setup(name='Dual_Machine',
       ext_modules=[module2])
 
 module3 = Extension('Macro_Machine',
-                    sources=['Macro_Machine.c'])
+                    sources=['Macro_Machine.c','Turing_Machine.c'])
 
 setup(name='Macro_Machine',
       version='1.0',

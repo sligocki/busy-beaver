@@ -1,3 +1,18 @@
+#define RESULT_MACHINE        0x0003
+#define RESULT_M1             0x0000
+#define RESULT_M2             0x0001
+#define RESULT_BOTH           0x0002
+
+#define RESULT_VALUE          0x001C
+#define RESULT_STEPPED        0x0000
+#define RESULT_UNDEFINED      0x0004
+#define RESULT_HALTED         0x0008
+#define RESULT_NOTAPE         0x000C
+#define RESULT_INFINITE_LEFT  0x0010
+#define RESULT_INFINITE_RIGHT 0x0014
+#define RESULT_INFINITE_DUAL  0x0018
+#define RESULT_INVALID        0x001C
+
 typedef struct
 {
   int w;
@@ -35,3 +50,7 @@ typedef struct
   int new_delta;
   int new_state;
 } TM;
+
+extern inline int  step_TM (TM* m);
+extern inline void print_TM(TM* m);
+extern inline void free_TM (TM* m);
