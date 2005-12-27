@@ -57,22 +57,31 @@ class Turing_Machine:
           self.num_empty_cells += 1
 
   def get_num_states_available(self):
-    # self.num_states - 1 because that is the largest state number
-    if self.max_state < self.num_states - 1:
+    # Returns state num of largest state available.
+    # This will be the max(states_reached) + 1 unless we're already
+    # Note: self.num_states - 1 is the largest possible state number.
+    largest = self.num_states - 1
+    if self.max_state < largest:
       return self.max_state + 1
     else:
-      return self.num_states - 1
+      return largest
 
   def get_num_symbols_available(self):
-    # self.num_symbol - 1 because that is the largest symbol number
-    if self.max_symbol < self.num_symbols - 1:
+    # Returns state num of largest state available.
+    # This will be the max(states_reached) + 1 unless we're already
+    # Note: self.num_symbols - 1 is the largest possible symbol number.
+    largest = self.num_symbols - 1
+    if self.max_symbol < largest:
       return self.max_symbol + 1
     else:
-      return self.num_symbols - 1
+      return largest
 
   def add_cell(self, state_in, symbol_in, state_out, symbol_out, direction_out):
+    # If this cell was empty, decriment num_empty_cells
     if self._TTable[state_in][symbol_in][0] == -1:
       self.num_empty_cells -= 1
+    # Actually add the cell information.
     self._TTable[state_in][symbol_in] = (symbol_out, direction_out, state_out)
+    # Update max value information.
     self.max_state = max(self.max_state, state_out)
     self.max_symbol = max(self.max_symbol, symbol_out)
