@@ -16,82 +16,6 @@ PyMODINIT_FUNC initDual_Machine(void)
   (void)Py_InitModule("Dual_Machine",Dual_Machine_Methods);
 }
 
-#define RESULT_MACHINE        0x0003
-#define RESULT_M1             0x0000
-#define RESULT_M2             0x0001
-#define RESULT_BOTH           0x0002
-
-#define RESULT_VALUE          0x001C
-#define RESULT_STEPPED        0x0000
-#define RESULT_UNDEFINED      0x0004
-#define RESULT_HALTED         0x0008
-#define RESULT_NOTAPE         0x000C
-#define RESULT_INFINITE_LEFT  0x0010
-#define RESULT_INFINITE_RIGHT 0x0014
-#define RESULT_INFINITE_DUAL  0x0018
-#define RESULT_INVALID        0x001C
-
-inline int step_TM(TM* m)
-{
-  m->total_steps++;
-
-  m->new_symbol = m->machine[m->state].t[m->symbol].w;
-  m->new_delta  = m->machine[m->state].t[m->symbol].d;
-  m->new_state  = m->machine[m->state].t[m->symbol].s;
-
-  if (m->new_symbol == -1)
-  {
-    return RESULT_UNDEFINED;
-  }
-
-  if (m->symbol == 0 && m->new_symbol != 0) {
-    m->total_symbols++;
-  }
-
-  if (m->symbol != 0 && m->new_symbol == 0)
-  {
-    m->total_symbols--;
-  }
-
-  m->tape[m->position] = m->new_symbol;
-  m->position += m->new_delta;
-
-  if (m->new_state == -1)
-  {
-    return RESULT_HALTED;
-  }
-
-  if (m->position < 1 || m->position >= m->tape_length - 1)
-  {
-    return RESULT_NOTAPE;
-  }
-  
-  if (m->position < m->max_left)
-  {
-    m->max_left = m->position;
-
-    if (m->symbol == 0 && m->new_state == m->state && m->new_delta == -1)
-    {
-      return RESULT_INFINITE_LEFT;
-    }
-  }
-
-  if (m->position > m->max_right)
-  {
-    m->max_right = m->position;
-
-    if (m->symbol == 0 && m->new_state == m->state && m->new_delta == 1)
-    {
-      return RESULT_INFINITE_RIGHT;
-    }
-  }
-
-  m->symbol = m->tape[m->position];
-  m->state = m->new_state;
-
-  return RESULT_STEPPED;
-}
-
 static PyObject* Dual_Machine_Run(PyObject* self,
                                   PyObject* args)
 {
@@ -107,13 +31,12 @@ static PyObject* Dual_Machine_Run(PyObject* self,
   int n_tuple;
 
   PyObject* machine_obj;
-  STATE* machine = NULL;
 
   PyObject* num_states_obj;
-  int num_states,num_states_imp;
+  int num_states_imp;
 
   PyObject* num_symbols_obj;
-  int num_symbols,num_symbols_imp;
+  int num_symbols_imp;
 
   PyObject* tape_length_obj;
   int tape_middle;
@@ -145,7 +68,8 @@ static PyObject* Dual_Machine_Run(PyObject* self,
     return Py_BuildValue("(iis)",-1,3,"Unable_to_extract_#_of_states");
   }
 
-  num_states = PyInt_AsLong(num_states_obj);
+  m1.num_states = PyInt_AsLong(num_states_obj);
+  m2.num_states = m1.num_states;
 
   num_symbols_obj = PyTuple_GetItem(args,2);
   if (num_symbols_obj == NULL || !PyInt_CheckExact(num_symbols_obj))
@@ -153,25 +77,31 @@ static PyObject* Dual_Machine_Run(PyObject* self,
     return Py_BuildValue("(iis)",-1,4,"Unable_to_extract_#_of_symbols");
   }
 
-  num_symbols = PyInt_AsLong(num_symbols_obj);
+  m1.num_symbols = PyInt_AsLong(num_symbols_obj);
+  m2.num_symbols = m1.num_symbols;
 
   num_states_imp = PyList_Size(machine_obj);
 
-  if (num_states_imp != num_states)
+  if (num_states_imp != m1.num_states)
   {
     return Py_BuildValue("(iis)",-1,5,"Number_of_states_do_not_match");
   }
 
-  machine = (STATE *)malloc(num_states*sizeof(*machine));
+  m1.machine = (STATE *)malloc(m1.num_states*sizeof(*m1.machine));
+  if (m1.machine == NULL)
+  {
+    return Py_BuildValue("(iis)",-1,6,"Out_of_memory_allocating_machine");
+  }
 
-  if (machine == NULL)
+  m2.machine = (STATE *)malloc(m2.num_states*sizeof(*m2.machine));
+  if (m2.machine == NULL)
   {
     return Py_BuildValue("(iis)",-1,6,"Out_of_memory_allocating_machine");
   }
 
   {
     int iter_state;
-    for (iter_state = 0; iter_state < num_states; iter_state++)
+    for (iter_state = 0; iter_state < m1.num_states; iter_state++)
     {
       int iter_symbol;
       PyObject* cur_state_obj;
@@ -184,18 +114,24 @@ static PyObject* Dual_Machine_Run(PyObject* self,
 
       num_symbols_imp = PyList_Size(cur_state_obj);
 
-      if (num_symbols_imp != num_symbols)
+      if (num_symbols_imp != m1.num_symbols)
       {
         return Py_BuildValue("(iis)",-1,8,"Number_of_symbols_do_not_match");
       }
 
-      machine[iter_state].t = (TRANSITION *)malloc(num_symbols*sizeof(*(machine[iter_state].t)));
-      if (machine[iter_state].t == NULL)
+      m1.machine[iter_state].t = (TRANSITION *)malloc(m1.num_symbols*sizeof(*(m1.machine[iter_state].t)));
+      if (m1.machine[iter_state].t == NULL)
       {
         return Py_BuildValue("(iis)",-1,9,"Out_of_memory_allocating_machine_state_transition");
       }
 
-      for (iter_symbol = 0; iter_symbol < num_symbols; iter_symbol++)
+      m2.machine[iter_state].t = (TRANSITION *)malloc(m2.num_symbols*sizeof(*(m2.machine[iter_state].t)));
+      if (m2.machine[iter_state].t == NULL)
+      {
+        return Py_BuildValue("(iis)",-1,9,"Out_of_memory_allocating_machine_state_transition");
+      }
+
+      for (iter_symbol = 0; iter_symbol < m1.num_symbols; iter_symbol++)
       {
         PyObject* cur_trans_obj;
         int i0,i1,i2;
@@ -217,7 +153,7 @@ static PyObject* Dual_Machine_Run(PyObject* self,
           return Py_BuildValue("(iis)",-1,12,"Unable_to_parse_Turing_machine_transition 3-tuple");
         }
 
-        if (i0 < -1 || i0 >= num_symbols)
+        if (i0 < -1 || i0 >= m1.num_symbols)
         {
           return Py_BuildValue("(iis)",-1,13,"Illegal_symbol_in_Turing_machine_transistion_3-tuple");
         }
@@ -227,21 +163,22 @@ static PyObject* Dual_Machine_Run(PyObject* self,
           return Py_BuildValue("(iis)",-1,14,"Illegal_direction_in_Turing_machine_transistion_3-tuple");
         }
 
-        if (i2 < -1 || i2 >= num_states)
+        if (i2 < -1 || i2 >= m1.num_states)
         {
           return Py_BuildValue("(iis)",-1,15,"Illegal_state_in_Turing_machine_transistion_3-tuple");
         }
 
-        machine[iter_state].t[iter_symbol].w = i0;
-        machine[iter_state].t[iter_symbol].d = 2*i1 - 1;
-        machine[iter_state].t[iter_symbol].s = i2;
+        m1.machine[iter_state].t[iter_symbol].w = i0;
+        m1.machine[iter_state].t[iter_symbol].d = 2*i1 - 1;
+        m1.machine[iter_state].t[iter_symbol].s = i2;
+
+        m2.machine[iter_state].t[iter_symbol].w = i0;
+        m2.machine[iter_state].t[iter_symbol].d = 2*i1 - 1;
+        m2.machine[iter_state].t[iter_symbol].s = i2;
       }
     }
   }
   
-  m1.machine = machine;
-  m2.machine = machine;
-
   tape_length_obj = PyTuple_GetItem(args,3);
 
   if (tape_length_obj == NULL || !PyInt_CheckExact(tape_length_obj))
@@ -367,29 +304,8 @@ static PyObject* Dual_Machine_Run(PyObject* self,
     }
   }
 
-  if (machine != NULL)
-  {
-    int s;
-    for (s = 0; s < num_states; s++)
-    {
-      free(machine[s].t);
-    }
-
-    free(machine);
-    machine = NULL;
-  }
-
-  if (m1.tape != NULL)
-  {
-    free(m1.tape);
-    m1.tape = NULL;
-  }
-
-  if (m2.tape != NULL)
-  {
-    free(m2.tape);
-    m2.tape = NULL;
-  }
+  free_TM(&m1);
+  free_TM(&m2);
 
   if ((result & RESULT_VALUE) == RESULT_INFINITE_DUAL)
   {
@@ -417,16 +333,12 @@ static PyObject* Dual_Machine_Run(PyObject* self,
           break;
 
         case RESULT_UNDEFINED:
-          return Py_BuildValue("(iiiidd)",3,m1.state,m1.symbol,m1.symbol,
-                                          d_total_symbols,d_total_steps-1);
+          return Py_BuildValue("(iiidd)",3,m1.state,m1.symbol,
+                                         d_total_symbols,d_total_steps);
           break;
 
-        case RESULT_INFINITE_LEFT:
-          return Py_BuildValue("(iis)",4,0,"Infinite_left");
-          break;
-
-        case RESULT_INFINITE_RIGHT:
-          return Py_BuildValue("(iis)",4,0,"Infinite_right");
+        default:
+          return Py_BuildValue("(iis)",-1,19,"Unexpected_result_for_fast_Turing_machine");
           break;
       }
     }
@@ -451,16 +363,12 @@ static PyObject* Dual_Machine_Run(PyObject* self,
           break;
 
         case RESULT_UNDEFINED:
-          return Py_BuildValue("(iiiidd)",3,m2.state,m2.symbol,m2.symbol,
-                                          d_total_symbols,d_total_steps-1);
+          return Py_BuildValue("(iiidd)",3,m2.state,m2.symbol,
+                                         d_total_symbols,d_total_steps);
           break;
 
-        case RESULT_INFINITE_LEFT:
-          return Py_BuildValue("(iis)",4,0,"Infinite_left");
-          break;
-
-        case RESULT_INFINITE_RIGHT:
-          return Py_BuildValue("(iis)",4,0,"Infinite_right");
+        default:
+          return Py_BuildValue("(iis)",-1,19,"Unexpected_result_for_slow_Turing_machine");
           break;
       }
     }

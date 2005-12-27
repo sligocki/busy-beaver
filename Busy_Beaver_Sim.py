@@ -497,9 +497,9 @@ if __name__ == "__main__":
     bb.print_contents()
 
   if visual:
-    bb.run_visual(10000000.0,print_width,brief)
+    bb.run_visual(10000000000.0,print_width,brief)
   else:
-    bb.run(10000000.0,brief)
+    bb.run(10000000000.0,brief)
 
   if brief:
     print bb.nstates,bb.nsymbols,bb.num_syms,bb.num_steps

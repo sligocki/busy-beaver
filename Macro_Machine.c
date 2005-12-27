@@ -17,81 +17,6 @@ PyMODINIT_FUNC initMacro_Machine(void)
   (void)Py_InitModule("Macro_Machine",Macro_Machine_Methods);
 }
 
-#define RESULT_MACHINE        0x0003
-#define RESULT_M1             0x0000
-#define RESULT_M2             0x0001
-#define RESULT_BOTH           0x0002
-
-#define RESULT_VALUE          0x001C
-#define RESULT_STEPPED        0x0000
-#define RESULT_UNDEFINED      0x0004
-#define RESULT_HALTED         0x0008
-#define RESULT_NOTAPE         0x000C
-#define RESULT_INFINITE_LEFT  0x0010
-#define RESULT_INFINITE_RIGHT 0x0014
-#define RESULT_INFINITE_DUAL  0x0018
-#define RESULT_INVALID        0x001C
-
-inline void print_TM(TM* m)
-{
-  int state,symbol;
-
-  fprintf(stderr,"machine, (%d %4d)\n",
-          m->num_states,m->num_symbols);
-  for (state = 0; state < m->num_states; state++)
-  {
-    fprintf(stderr,"  State: %d\n",state);
-    for (symbol = 0; symbol < m->num_symbols; symbol++)
-    {
-      fprintf(stderr,"    Symbol: %4d -> ",symbol);
-      fprintf(stderr,"%4d ",m->machine[state].t[symbol].w);
-      fprintf(stderr,"%2d ",m->machine[state].t[symbol].d);
-      fprintf(stderr,"%2d\n",m->machine[state].t[symbol].s);
-    }
-  }
-}
-
-inline int step_TM(TM* m)
-{
-  m->total_steps++;
-
-  m->new_symbol = m->machine[m->state].t[m->symbol].w;
-  m->new_delta  = m->machine[m->state].t[m->symbol].d;
-  m->new_state  = m->machine[m->state].t[m->symbol].s;
-
-  if (m->new_symbol == -1)
-  {
-    return RESULT_UNDEFINED;
-  }
-
-  if (m->symbol == 0 && m->new_symbol != 0) {
-    m->total_symbols++;
-  }
-
-  if (m->symbol != 0 && m->new_symbol == 0)
-  {
-    m->total_symbols--;
-  }
-
-  m->tape[m->position] = m->new_symbol;
-  m->position += m->new_delta;
-
-  if (m->new_state == -1)
-  {
-    return RESULT_HALTED;
-  }
-
-  if (m->position < 1 || m->position >= m->tape_length-1)
-  {
-    return RESULT_NOTAPE;
-  }
-  
-  m->symbol = m->tape[m->position];
-  m->state = m->new_state;
-
-  return RESULT_STEPPED;
-}
-
 inline void get_macro_symbol(int* symbol, int* tape, int position, int size)
 {
   int i;
@@ -247,8 +172,6 @@ inline int step_macro_TM(MACRO_TM* m, TM* baseTM)
   int i;
   MACRO_TRANSITION* trans;
 
-  m->total_steps += m->size;
-
   trans = hash_lookup(m,m->state,m->symbol,baseTM->num_symbols);
 
   if (trans == NULL)
@@ -268,6 +191,8 @@ inline int step_macro_TM(MACRO_TM* m, TM* baseTM)
   {
     return RESULT_UNDEFINED;
   }
+
+  m->total_steps += m->size;
 
   if (m->symbol == 0 && m->new_symbol != 0) {
     m->total_symbols++;
@@ -323,6 +248,62 @@ inline int step_macro_TM(MACRO_TM* m, TM* baseTM)
   return RESULT_STEPPED;
 }
 
+inline void free_macro_TM(MACRO_TM* m)
+{
+  if (m != NULL)
+  {
+    if (m->machine != NULL)
+    {
+      int s,i;
+
+      for (s = 0; s < m->num_states; s++)
+      {
+        for (i = 0; i < PRIME_HASH_NUMBER; i++)
+        {
+          MACRO_TRANSITION* t;
+          MACRO_TRANSITION* nt;
+
+          t = m->machine[s].t[i];
+
+          while (t != NULL)
+          {
+            nt = t->next;
+
+            free(t->symbol);
+            free(t->w);
+            free(t);
+
+            t = nt;
+          }
+        }
+
+        free(m->machine[s].t);
+      }
+
+      free(m->machine);
+      m->machine = NULL;
+    }
+
+    if (m->tape != NULL)
+    {
+      free(m->tape);
+      m->tape = NULL;
+    }
+
+    if (m->symbol != NULL)
+    {
+      free(m->symbol);
+      m->symbol = NULL;
+    }
+
+    if (m->new_symbol != NULL)
+    {
+      free(m->new_symbol);
+      m->new_symbol = NULL;
+    }
+  }
+}
+
 static PyObject* Macro_Machine_Run(PyObject* self,
                                    PyObject* args)
 {
@@ -338,11 +319,9 @@ static PyObject* Macro_Machine_Run(PyObject* self,
   int n_tuple;
 
   PyObject* machine_obj;
-  STATE* inMachine = NULL;
-  MACRO_STATE* macroMachine = NULL;
 
   PyObject* num_states_obj;
-  int num_states,num_states_imp;
+  int num_states_imp;
 
   PyObject* num_symbols_obj;
   int num_symbols,num_symbols_imp;
@@ -381,7 +360,7 @@ static PyObject* Macro_Machine_Run(PyObject* self,
     return Py_BuildValue("(iis)",-1,3,"Unable_to_extract_#_of_states");
   }
 
-  num_states = PyInt_AsLong(num_states_obj);
+  inTM.num_states = PyInt_AsLong(num_states_obj);
 
   num_symbols_obj = PyTuple_GetItem(args,2);
   if (num_symbols_obj == NULL || !PyInt_CheckExact(num_symbols_obj))
@@ -403,21 +382,21 @@ static PyObject* Macro_Machine_Run(PyObject* self,
 
   num_states_imp = PyList_Size(machine_obj);
 
-  if (num_states_imp != num_states)
+  if (num_states_imp != inTM.num_states)
   {
     return Py_BuildValue("(iis)",-1,5,"Number_of_states_do_not_match");
   }
 
-  inMachine = (STATE *)malloc(num_states*sizeof(*inMachine));
+  inTM.machine = (STATE *)malloc(inTM.num_states*sizeof(*inTM.machine));
 
-  if (inMachine == NULL)
+  if (inTM.machine == NULL)
   {
     return Py_BuildValue("(iis)",-1,6,"Out_of_memory_allocating_machine");
   }
 
   {
     int iter_state;
-    for (iter_state = 0; iter_state < num_states; iter_state++)
+    for (iter_state = 0; iter_state < inTM.num_states; iter_state++)
     {
       int iter_symbol;
       PyObject* cur_state_obj;
@@ -435,9 +414,9 @@ static PyObject* Macro_Machine_Run(PyObject* self,
         return Py_BuildValue("(iis)",-1,8,"Number_of_symbols_do_not_match");
       }
 
-      inMachine[iter_state].t = (TRANSITION *)malloc(num_symbols*sizeof(*(inMachine[iter_state].t)));
+      inTM.machine[iter_state].t = (TRANSITION *)malloc(num_symbols*sizeof(*(inTM.machine[iter_state].t)));
 
-      if (inMachine[iter_state].t == NULL)
+      if (inTM.machine[iter_state].t == NULL)
       {
         return Py_BuildValue("(iis)",-1,9,"Out_of_memory_allocating_machine_state_transition");
       }
@@ -474,23 +453,18 @@ static PyObject* Macro_Machine_Run(PyObject* self,
           return Py_BuildValue("(iis)",-1,14,"Illegal_direction_in_Turing_machine_transistion_3-tuple");
         }
 
-        if (i2 < -1 || i2 >= num_states)
+        if (i2 < -1 || i2 >= inTM.num_states)
         {
           return Py_BuildValue("(iis)",-1,15,"Illegal_state_in_Turing_machine_transistion_3-tuple");
         }
 
-        inMachine[iter_state].t[iter_symbol].w = i0;
-        inMachine[iter_state].t[iter_symbol].d = 2*i1-1;
-        inMachine[iter_state].t[iter_symbol].s = i2;
+        inTM.machine[iter_state].t[iter_symbol].w = i0;
+        inTM.machine[iter_state].t[iter_symbol].d = 2*i1-1;
+        inTM.machine[iter_state].t[iter_symbol].s = i2;
       }
     }
   }
   
-  inTM.num_states  = num_states;
-  inTM.num_symbols = num_symbols;
-
-  inTM.machine = inMachine;
-
   tape_length_obj = PyTuple_GetItem(args,4);
 
   if (tape_length_obj == NULL || !PyInt_CheckExact(tape_length_obj))
@@ -504,7 +478,7 @@ static PyObject* Macro_Machine_Run(PyObject* self,
   inTM.tape_length = 2*(macro_size+2)+1;
   inTM.tape = (int *)calloc(inTM.tape_length,sizeof(*(inTM.tape)));
   
-  macroTM.num_states = num_states;
+  macroTM.num_states  = inTM.num_states;
   macroTM.num_symbols = pow(num_symbols,2*macro_size+1);
 
   if (inTM.tape == NULL || macroTM.tape == NULL)
@@ -521,18 +495,18 @@ static PyObject* Macro_Machine_Run(PyObject* self,
 
   max_steps = PyFloat_AsDouble(max_steps_obj);
 
-  macroMachine = (MACRO_STATE *)malloc(macroTM.num_states*sizeof(*macroMachine));
+  macroTM.machine = (MACRO_STATE *)malloc(macroTM.num_states*sizeof(*macroTM.machine));
 
-  if (macroMachine == NULL)
+  if (macroTM.machine == NULL)
   {
     return Py_BuildValue("(iis)",-1,6,"Out_of_memory_allocating_machine");
   }
 
   for (state = 0; state < inTM.num_states; state++)
   {
-    macroMachine[state].t = (MACRO_TRANSITION **)calloc(PRIME_HASH_NUMBER,sizeof(*(macroMachine[state].t)));
+    macroTM.machine[state].t = (MACRO_TRANSITION **)calloc(PRIME_HASH_NUMBER,sizeof(*(macroTM.machine[state].t)));
 
-    if (macroMachine[state].t == NULL)
+    if (macroTM.machine[state].t == NULL)
     {
       return Py_BuildValue("(iis)",-1,9,"Out_of_memory_allocating_machine_state_transition");
     }
@@ -540,8 +514,6 @@ static PyObject* Macro_Machine_Run(PyObject* self,
 
   macroTM.symbol     = (int *)malloc((2*macro_size+1)*sizeof(*(macroTM.symbol)));
   macroTM.new_symbol = (int *)malloc((2*macro_size+1)*sizeof(*(macroTM.new_symbol)));
-
-  macroTM.machine = macroMachine;
 
   macroTM.max_left  = (macroTM.tape_length-1) / 2;
   macroTM.max_right = (macroTM.tape_length-1) / 2;
@@ -565,73 +537,8 @@ static PyObject* Macro_Machine_Run(PyObject* self,
     }
   }
 
-  if (inMachine != NULL)
-  {
-    int s;
-    for (s = 0; s < inTM.num_states; s++)
-    {
-      free(inMachine[s].t);
-    }
-
-    free(inMachine);
-    inMachine = NULL;
-  }
-
-  if (inTM.tape != NULL)
-  {
-    free(inTM.tape);
-    inTM.tape = NULL;
-  }
-
-  if (macroMachine != NULL)
-  {
-    int s,i;
-
-    for (s = 0; s < macroTM.num_states; s++)
-    {
-      for (i = 0; i < PRIME_HASH_NUMBER; i++)
-      {
-        MACRO_TRANSITION* t;
-        MACRO_TRANSITION* nt;
-
-        t = macroMachine[s].t[i];
-
-        while (t != NULL)
-        {
-          nt = t->next;
-
-          free(t->symbol);
-          free(t->w);
-          free(t);
-
-          t = nt;
-        }
-      }
-
-      free(macroMachine[s].t);
-    }
-
-    free(macroMachine);
-    macroMachine = NULL;
-  }
-
-  if (macroTM.tape != NULL)
-  {
-    free(macroTM.tape);
-    macroTM.tape = NULL;
-  }
-
-  if (macroTM.symbol != NULL)
-  {
-    free(macroTM.symbol);
-    macroTM.symbol = NULL;
-  }
-
-  if (macroTM.new_symbol != NULL)
-  {
-    free(macroTM.new_symbol);
-    macroTM.new_symbol = NULL;
-  }
+  free_TM(&inTM);
+  free_macro_TM(&macroTM);
 
   d_total_symbols = macroTM.total_symbols;
   d_total_steps   = macroTM.total_steps;
@@ -651,9 +558,9 @@ static PyObject* Macro_Machine_Run(PyObject* self,
       break;
 
     case RESULT_UNDEFINED:
-      return Py_BuildValue("(iiiidd)",3,
-                                      macroTM.state,macroTM.symbol,macroTM.symbol,
-                                      d_total_symbols,d_total_steps-1);
+      return Py_BuildValue("(iiidd)",3,
+                                     macroTM.state,macroTM.symbol,
+                                     d_total_symbols,d_total_steps);
       break;
 
     case RESULT_INFINITE_LEFT:
