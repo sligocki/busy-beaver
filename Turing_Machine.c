@@ -37,6 +37,16 @@ inline int step_TM(TM* m)
   {
     return RESULT_NOTAPE;
   }
+
+  if (m->position < m->max_left)
+  {
+    m->max_left = m->position;
+  }
+  
+  if (m->position > m->max_right)
+  {
+    m->max_right = m->position;
+  }
   
   m->symbol = m->tape[m->position];
   m->state = m->new_state;
