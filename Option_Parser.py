@@ -120,7 +120,7 @@ def Option_Parser(argv, opts, help_flag = True, no_mult = True,
   usage = argv[0]
   # However we wish to strip off the directory structure and have only the
   # command name.
-  usage = usage.rsplit("/", 1)[-1]
+  usage = usage.split("/")[-1]
   opts_format2 = []
   if help_flag:
     usage +=  " [--help]"
