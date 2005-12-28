@@ -90,9 +90,6 @@ inline MACRO_TRANSITION* hash_add(MACRO_TM* m, int state, int* symbol, TM* baseT
 
   int result;
 
-  double d_total_symbols;
-  double d_total_steps;
-
   *error_value = NULL;
 
   hash_index = 0;
@@ -152,9 +149,10 @@ inline MACRO_TRANSITION* hash_add(MACRO_TM* m, int state, int* symbol, TM* baseT
       free(trans);
       trans = NULL;
 
-      d_total_symbols = m->total_symbols;
-      d_total_steps   = m->total_steps + step;
-      *error_value = Py_BuildValue("(idd)",0,d_total_symbols,d_total_steps);
+      *error_value = Py_BuildValue("(iNN)",
+                       0,
+                       PyLong_FromUnsignedLongLong(m->total_symbols),
+                       PyLong_FromUnsignedLongLong(m->total_steps + step));
       break;
 
     case RESULT_NOTAPE:
@@ -178,11 +176,10 @@ inline MACRO_TRANSITION* hash_add(MACRO_TM* m, int state, int* symbol, TM* baseT
       free(trans);
       trans = NULL;
 
-      d_total_symbols = m->total_symbols;
-      d_total_steps   = m->total_steps + step;
-      *error_value = Py_BuildValue("(iiidd)",3,
-                                             baseTM->state,baseTM->symbol,
-                                             d_total_symbols,d_total_steps);
+      *error_value = Py_BuildValue("(iiiNN)",3,
+                       3,baseTM->state,baseTM->symbol,
+                       PyLong_FromUnsignedLongLong(m->total_symbols),
+                       PyLong_FromUnsignedLongLong(m->total_steps + step));
       break;
 
     default:
@@ -339,9 +336,6 @@ static PyObject* Macro_Machine_Run(PyObject* self,
 
   int result;
 
-  double d_total_symbols;
-  double d_total_steps;
-
   unsigned long long i;
   int n_tuple;
 
@@ -494,12 +488,25 @@ static PyObject* Macro_Machine_Run(PyObject* self,
   
   tape_length_obj = PyTuple_GetItem(args,4);
 
-  if (tape_length_obj == NULL || !PyInt_CheckExact(tape_length_obj))
+  if (tape_length_obj == NULL)
   {
     return Py_BuildValue("(iis)",-1,17,"Unable_to_extract_tape_length");
   }
 
-  macroTM.tape_length = PyInt_AsLong(tape_length_obj);
+  if (PyInt_CheckExact(tape_length_obj))
+  {
+    macroTM.tape_length = PyInt_AsLong(tape_length_obj);
+  }
+  else
+  if (PyLong_CheckExact(tape_length_obj))
+  {
+    macroTM.tape_length = PyLong_AsUnsignedLongLong(tape_length_obj);
+  }
+  else
+  {
+    return Py_BuildValue("(iis)",-1,17,"Unable_to_extract_tape_length");
+  }
+
   macroTM.tape = (int *)calloc(macroTM.tape_length,sizeof(*(macroTM.tape)));
 
   inTM.tape_length = 2*(macroTM.size+1)+1;
@@ -515,12 +522,24 @@ static PyObject* Macro_Machine_Run(PyObject* self,
 
   max_steps_obj = PyTuple_GetItem(args,5);
 
-  if (max_steps_obj == NULL || !PyFloat_CheckExact(max_steps_obj))
+  if (max_steps_obj == NULL)
   {
     return Py_BuildValue("(iis)",-1,19,"Unable_to_extract_maximum_#_of_steps");
   }
 
-  max_steps = PyFloat_AsDouble(max_steps_obj);
+  if (PyInt_CheckExact(max_steps_obj))
+  {
+    max_steps = PyInt_AsLong(max_steps_obj);
+  }
+  else
+  if (PyLong_CheckExact(max_steps_obj))
+  {
+    max_steps = PyLong_AsUnsignedLongLong(max_steps_obj);
+  }
+  else
+  {
+    return Py_BuildValue("(iis)",-1,19,"Unable_to_extract_maximum_#_of_steps");
+  }
 
   macroTM.machine = (MACRO_STATE *)malloc(macroTM.num_states*sizeof(*macroTM.machine));
 
@@ -568,18 +587,22 @@ static PyObject* Macro_Machine_Run(PyObject* self,
   free_TM(&inTM);
   free_macro_TM(&macroTM);
 
-  d_total_symbols = macroTM.total_symbols;
-  d_total_steps   = macroTM.total_steps;
-
   switch (result & RESULT_VALUE)
   {
     case RESULT_NOTAPE:
-      return Py_BuildValue("(idd)",1,d_total_symbols,d_total_steps);
+      return Py_BuildValue("(iNN)",
+                           1,
+                           PyLong_FromUnsignedLongLong(macroTM.total_symbols),
+                           PyLong_FromUnsignedLongLong(macroTM.total_steps));
       break;
 
     case RESULT_STEPPED:
-      return Py_BuildValue("(idd)",2,d_total_symbols,d_total_steps);
+      return Py_BuildValue("(iNN)",
+                           2,
+                           PyLong_FromUnsignedLongLong(macroTM.total_symbols),
+                           PyLong_FromUnsignedLongLong(macroTM.total_steps));
       break;
+
 
     case RESULT_INFINITE_LEFT:
       return Py_BuildValue("(iiis)",4,0,macroTM.size,"Macro_infinite_left");

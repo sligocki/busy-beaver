@@ -37,7 +37,7 @@ typedef struct
 
   int symbol;
 
-  int                total_symbols;
+  unsigned long long total_symbols;
   unsigned long long total_steps;
 
   int position;
