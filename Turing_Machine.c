@@ -48,7 +48,7 @@ inline void print_TM(TM* m)
 {
   int state,symbol;
 
-  fprintf(stderr,"machine, (%d %4d)\n",
+  fprintf(stderr,"Machine, (%d %4d)\n",
           m->num_states,m->num_symbols);
   for (state = 0; state < m->num_states; state++)
   {
