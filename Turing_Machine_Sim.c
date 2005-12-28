@@ -23,9 +23,6 @@ static PyObject* Turing_Machine_Sim_run(PyObject* self,
 
   int result;
 
-  double d_total_symbols;
-  double d_total_steps;
-
   unsigned long long i;
   int n_tuple;
 
@@ -163,14 +160,24 @@ static PyObject* Turing_Machine_Sim_run(PyObject* self,
 
   tape_length_obj = PyTuple_GetItem(args,3);
 
-  if (tape_length_obj == NULL || !PyInt_CheckExact(tape_length_obj))
+  if (tape_length_obj == NULL)
   {
     return Py_BuildValue("(iis)",-1,16,"Unable_to_extract_tape_length");
   }
 
-  tape_length_obj = PyTuple_GetItem(args,3);
-
-  tm.tape_length = PyInt_AsLong(tape_length_obj);
+  if (PyInt_CheckExact(tape_length_obj))
+  {
+    tm.tape_length = PyInt_AsLong(tape_length_obj);
+  }
+  else
+  if (PyLong_CheckExact(tape_length_obj))
+  {
+    tm.tape_length = PyLong_AsUnsignedLongLong(tape_length_obj);
+  }
+  else
+  {
+    return Py_BuildValue("(iis)",-1,16,"Unable_to_extract_tape_length");
+  }
 
   tape_middle = tm.tape_length / 2;
 
@@ -183,12 +190,24 @@ static PyObject* Turing_Machine_Sim_run(PyObject* self,
 
   max_steps_obj = PyTuple_GetItem(args,4);
 
-  if (max_steps_obj == NULL || !PyFloat_CheckExact(max_steps_obj))
+  if (max_steps_obj == NULL)
   {
     return Py_BuildValue("(iis)",-1,18,"Unable_to_extract_maximum_#_of_steps");
   }
 
-  max_steps = PyFloat_AsDouble(max_steps_obj);
+  if (PyInt_CheckExact(max_steps_obj))
+  {
+    max_steps = PyInt_AsLong(max_steps_obj);
+  }
+  else
+  if (PyLong_CheckExact(max_steps_obj))
+  {
+    max_steps = PyLong_AsUnsignedLongLong(max_steps_obj);
+  }
+  else
+  {
+    return Py_BuildValue("(iis)",-1,18,"Unable_to_extract_maximum_#_of_steps");
+  }
 
   tm.max_left  = tape_middle;
   tm.max_right = tape_middle;
@@ -214,26 +233,34 @@ static PyObject* Turing_Machine_Sim_run(PyObject* self,
 
   free_TM(&tm);
 
-  d_total_symbols = tm.total_symbols;
-  d_total_steps   = tm.total_steps;
-
   switch (result & RESULT_VALUE)
   {
     case RESULT_HALTED:
-      return Py_BuildValue("(idd)",0,d_total_symbols,d_total_steps);
+      return Py_BuildValue("(iNN)",
+                           0,
+                           PyLong_FromUnsignedLongLong(tm.total_symbols),
+                           PyLong_FromUnsignedLongLong(tm.total_steps));
       break;
 
     case RESULT_NOTAPE:
-      return Py_BuildValue("(idd)",1,d_total_symbols,d_total_steps);
+      return Py_BuildValue("(iNN)",
+                           1,
+                           PyLong_FromUnsignedLongLong(tm.total_symbols),
+                           PyLong_FromUnsignedLongLong(tm.total_steps));
       break;
 
     case RESULT_STEPPED:
-      return Py_BuildValue("(idd)",2,d_total_symbols,d_total_steps);
+      return Py_BuildValue("(iNN)",
+                           2,
+                           PyLong_FromUnsignedLongLong(tm.total_symbols),
+                           PyLong_FromUnsignedLongLong(tm.total_steps));
       break;
 
     case RESULT_UNDEFINED:
-      return Py_BuildValue("(iiidd)",3,tm.state,tm.symbol,
-                                     d_total_symbols,d_total_steps);
+      return Py_BuildValue("(iiiNN)",
+                           3,tm.state,tm.symbol,
+                           PyLong_FromUnsignedLongLong(tm.total_symbols),
+                           PyLong_FromUnsignedLongLong(tm.total_steps));
       break;
 
     default:
