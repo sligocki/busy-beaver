@@ -110,7 +110,7 @@ def run(TTable, num_states, num_symbols, tape_length, max_steps):
   """
   import Dual_Machine
   return Dual_Machine.run(TTable, num_states, num_symbols,
-                          tape_length, float(max_steps))
+                          tape_length, max_steps)
 
 def save_machine(machine_num, machine, results, tape_length, max_steps,
                  io, save_it):
@@ -122,106 +122,16 @@ def save_machine(machine_num, machine, results, tape_length, max_steps,
 
 # Default test code
 if __name__ == "__main__":
-  import os
   import sys
-  import getopt
+  from Option_Parser import Filter_Option_Parser as Option_Parser
 
-  usage = "Dual_Machine_Filter.py [--help] [--states=] [--symbols=] [--tape=] [--steps=] [--textfile=] [--datafile=] [--infile=]"
-  try:
-    opts, args = getopt.getopt(sys.argv[1:], "", [
-                                                  "help",
-                                                  "states=",
-                                                  "symbols=",
-                                                  "tape=",
-                                                  "steps=",
-                                                  "textfile=",
-                                                  "datafile=",
-                                                  "infile="
-                                                 ])
-  except getopt.GetoptError:
-    sys.stderr.write("%s\n" % usage)
-    sys.exit(1)
+  opts, args = Option_Parser(sys.argv, [])
+  # Unpack all the values that will be used by Dual_Machine_Filter
+  states = opts["states"]; symbols = opts["symbols"]
+  tape_length = opts["tape"]; max_steps = opts["steps"]
+  in_file = opts["infile"]; out_file = opts["outfile"]
 
-  # variables for text and data output.
-  text_filename = None
-  text_file = None
-
-  is_data = None
-  data_filename = None
-  data_file = None
-
-  in_filename = None
-  in_file = None
-
-  states = 2
-  symbols = 2
-  tape_length = 20003
-  max_steps = 10000
-
-  for opt, arg in opts:
-    if opt == "--help":
-      sys.stdout.write("%s\n" % usage)
-      sys.exit(0)
-    elif opt == "--states":
-      states = int(arg)
-    elif opt == "--symbols":
-      symbols = int(arg)
-    elif opt == "--tape":
-      tape_length = int(arg)
-    elif opt == "--steps":
-      max_steps = float(arg)
-    elif opt == "--textfile":
-      if arg:
-        text_filename = arg
-    elif opt == "--datafile":
-      is_data = not None
-      if arg:
-        data_filename = arg
-    elif opt == "--infile":
-      if arg:
-        in_filename = arg
-
-  if in_filename and in_filename != "-":
-    in_file = file(in_filename, "r")
-  else:
-    in_file = sys.stdin
-
-  input = IO(in_file, None, None)
-
-  next = input.read_result()
-
-  states  = next[1]
-  symbols = next[2]
-
-  # The furthest that the machine can travel in n steps is n away from the
-  # origin.  It could travel in either direction so the tape need not be longer
-  # than 2 * max_steps + 3
-  tape_length = int(min(tape_length, 2 * max_steps + 3))
-
-  if not text_filename:
-    text_filename = "BBP_%d_%d_%d_%.0f.txt" % \
-                    (states, symbols, tape_length, max_steps)
-
-  if text_filename and text_filename != "-":
-    if os.path.exists(text_filename):
-      sys.stderr.write("Output text file, '%s', exists\n" % (text_filename,));
-      sys.exit(1)
-    else:
-      text_file = file(text_filename, "w")
-  else:
-    text_file = sys.stdout
-
-  if is_data and not data_filename:
-    data_filename = "BBP_%d_%d_%d_%.0f.data" % \
-                    (states, symbols, tape_length, max_steps)
-
-  if data_filename:
-    if os.path.exists(data_filename):
-      sys.stderr.write("Output data file, '%s', exists\n" % (data_filename,));
-      sys.exit(1)
-    else:
-      data_file = file(data_filename, "wb")
-
-  io = IO(in_file, text_file, data_file)
+  io = IO(in_file, out_file)
+  next = io.read_result()
 
   Dual_Machine_Run(states, symbols, tape_length, max_steps, next, io)
