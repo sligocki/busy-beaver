@@ -368,15 +368,15 @@ static PyObject* Dual_Machine_Run(PyObject* self,
           break;
 
         default:
-          return Py_BuildValue("(iis)",-1,19,"Unexpected_result_for_slow_Turing_machine");
+          return Py_BuildValue("(iis)",-1,20,"Unexpected_result_for_slow_Turing_machine");
           break;
       }
     }
     else
     {
-      return Py_BuildValue("(iis)",-1,19,"Normal_stop_but_not_machine_specific");
+      return Py_BuildValue("(iis)",-1,21,"Normal_stop_but_not_machine_specific");
     }
   }
 
-  return Py_BuildValue("(iis)",-1,20,"Reached_the_end_which_is_impossible,_;-)");
+  return Py_BuildValue("(iis)",-1,22,"Reached_the_end_which_is_impossible,_;-)");
 }

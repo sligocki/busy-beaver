@@ -20,18 +20,18 @@ PyMODINIT_FUNC initMacro_Machine(void)
 inline void get_macro_symbol(int* symbol, int* tape, int position, int size)
 {
   int i;
-  for (i = 0; i < 2*size+1; i++)
+  for (i = 0; i < 2*size-1; i++)
   {
-    symbol[i] = tape[i + position-size];
+    symbol[i] = tape[i-size+1 + position];
   }
 }
 
 inline void put_macro_symbol(int* symbol, int* tape, int position, int size)
 {
   int i;
-  for (i = 0; i < 2*size+1; i++)
+  for (i = 0; i < 2*size-1; i++)
   {
-    tape[i + position-size] = symbol[i];
+    tape[i-size+1 + position] = symbol[i];
   }
 }
 
@@ -40,7 +40,7 @@ inline int equal_symbol(int* symbol1, int* symbol2, int size)
   int i;
   int equal = 1;
 
-  for (i = 0; i < 2*size+1; i++)
+  for (i = 0; i < 2*size-1; i++)
   {
     if (symbol1[i] != symbol2[i])
     {
@@ -59,7 +59,7 @@ inline MACRO_TRANSITION* hash_lookup(MACRO_TM* m, int state, int* symbol, int or
   MACRO_TRANSITION* trans;
 
   hash_index = 0;
-  for (i = 0; i < 2*m->size+1; i++)
+  for (i = 0; i < 2*m->size-1; i++)
   {
     hash_index = (hash_index*orig_num_symbols + symbol[i]) % PRIME_HASH_NUMBER;
   }
@@ -79,7 +79,7 @@ inline MACRO_TRANSITION* hash_lookup(MACRO_TM* m, int state, int* symbol, int or
   return trans;
 }
 
-inline MACRO_TRANSITION* hash_add(MACRO_TM* m, int state, int* symbol, TM* baseTM)
+inline MACRO_TRANSITION* hash_add(MACRO_TM* m, int state, int* symbol, TM* baseTM, PyObject** error_value)
 {
   int i;
   int hash_index;
@@ -90,21 +90,26 @@ inline MACRO_TRANSITION* hash_add(MACRO_TM* m, int state, int* symbol, TM* baseT
 
   int result;
 
+  double d_total_symbols;
+  double d_total_steps;
+
+  *error_value = NULL;
+
   hash_index = 0;
-  for (i = 0; i < 2*m->size+1; i++)
+  for (i = 0; i < 2*m->size-1; i++)
   {
     hash_index = (hash_index*baseTM->num_symbols + symbol[i]) % PRIME_HASH_NUMBER;
   }
 
   trans = (MACRO_TRANSITION *)malloc(sizeof(*trans));
 
-  trans->symbol = (int *)malloc((2*m->size+1) * sizeof(*(trans->symbol)));
-  for (i = 0; i < 2*m->size+1; i++)
+  trans->symbol = (int *)malloc((2*m->size-1) * sizeof(*(trans->symbol)));
+  for (i = 0; i < 2*m->size-1; i++)
   {
     trans->symbol[i] = symbol[i];
   }
 
-  trans->w = (int *)malloc((2*m->size+1) * sizeof(*(trans->w)));
+  trans->w = (int *)malloc((2*m->size-1) * sizeof(*(trans->w)));
 
   trans->next = m->machine[state].t[hash_index];
   m->machine[state].t[hash_index] = trans;
@@ -114,7 +119,7 @@ inline MACRO_TRANSITION* hash_add(MACRO_TM* m, int state, int* symbol, TM* baseT
   baseTM->tape[baseTM->tape_length-2] = 0;
   baseTM->tape[baseTM->tape_length-1] = 0;
 
-  baseTM->position  = (baseTM->tape_length-1) / 2;
+  baseTM->position = (baseTM->tape_length-1) / 2;
   put_macro_symbol(symbol,baseTM->tape,baseTM->position,m->size);
 
   baseTM->max_left  = (baseTM->tape_length-1) / 2;
@@ -130,44 +135,69 @@ inline MACRO_TRANSITION* hash_add(MACRO_TM* m, int state, int* symbol, TM* baseT
 
   result = RESULT_INVALID;
 
-  for (step = 0; step <= m->size; step++)
+  for (step = 0; step < m->size; step++)
   {
     result = step_TM(baseTM);
 
     if (result != RESULT_STEPPED)
     {
-      if (result != RESULT_UNDEFINED)
-      {
-        fprintf(stderr,"Unexpected TM result: %d\n",result);
-        print_TM(baseTM);
-      }
-
       break;
     }
   }
 
-  if (result == RESULT_STEPPED)
+  switch (result & RESULT_VALUE)
   {
-    get_macro_symbol(trans->w, baseTM->tape, start, m->size);
-    trans->d = baseTM->position-start;
-    trans->s = baseTM->state;
-  }
-  else
-  {
-    int i;
-    for (i = 0; i < 2*m->size+1; i++)
-    {
-      trans->w[i] = -1;
-    }
+    case RESULT_HALTED:
+      free(trans->w);
+      free(trans);
+      trans = NULL;
 
-    trans->d = -1;
-    trans->s = -1;
+      d_total_symbols = m->total_symbols;
+      d_total_steps   = m->total_steps + step;
+      *error_value = Py_BuildValue("(idd)",0,d_total_symbols,d_total_steps);
+      break;
+
+    case RESULT_NOTAPE:
+      free(trans->w);
+      free(trans);
+      trans = NULL;
+
+      *error_value = Py_BuildValue("(iis)",-1,24,"Ran_out_of_tape");
+      break;
+
+    case RESULT_STEPPED:
+      get_macro_symbol(trans->w, baseTM->tape, start, m->size);
+      trans->d = baseTM->position-start;
+      trans->s = baseTM->state;
+
+      *error_value = NULL;
+      break;
+
+    case RESULT_UNDEFINED:
+      free(trans->w);
+      free(trans);
+      trans = NULL;
+
+      d_total_symbols = m->total_symbols;
+      d_total_steps   = m->total_steps + step;
+      *error_value = Py_BuildValue("(iiidd)",3,
+                                             baseTM->state,baseTM->symbol,
+                                             d_total_symbols,d_total_steps);
+      break;
+
+    default:
+      free(trans->w);
+      free(trans);
+      trans = NULL;
+
+      *error_value = Py_BuildValue("(iis)",-1,25,"Unexpected_result_for_Turing_machine");
+      break;
   }
 
   return trans;
 }
 
-inline int step_macro_TM(MACRO_TM* m, TM* baseTM)
+inline int step_macro_TM(MACRO_TM* m, TM* baseTM, PyObject** error_value)
 {
   int i;
   MACRO_TRANSITION* trans;
@@ -176,10 +206,16 @@ inline int step_macro_TM(MACRO_TM* m, TM* baseTM)
 
   if (trans == NULL)
   {
-    trans = hash_add(m,m->state,m->symbol,baseTM);
+    *error_value = NULL;
+    trans = hash_add(m,m->state,m->symbol,baseTM,error_value);
   }
 
-  for (i = 0; i < 2*m->size+1; i++)
+  if (trans == NULL)
+  {
+    return RESULT_INVALID;
+  }
+
+  for (i = 0; i < 2*m->size-1; i++)
   {
     m->new_symbol[i] = trans->w[i];
   }
@@ -193,15 +229,6 @@ inline int step_macro_TM(MACRO_TM* m, TM* baseTM)
   }
 
   m->total_steps += m->size;
-
-  if (m->symbol == 0 && m->new_symbol != 0) {
-    m->total_symbols++;
-  }
-
-  if (m->symbol != 0 && m->new_symbol == 0)
-  {
-    m->total_symbols--;
-  }
 
   put_macro_symbol(m->new_symbol,m->tape,m->position,m->size);
   m->position += m->new_delta;
@@ -238,7 +265,7 @@ inline int step_macro_TM(MACRO_TM* m, TM* baseTM)
     }
   }
 
-  for (i = 0; i < 2*m->size+1; i++)
+  for (i = 0; i < 2*m->size-1; i++)
   {
     m->symbol[i] = m->new_symbol[i];
   }
@@ -329,10 +356,11 @@ static PyObject* Macro_Machine_Run(PyObject* self,
   PyObject* tape_length_obj;
 
   PyObject* macro_size_obj;
-  int macro_size;
 
   PyObject* max_steps_obj;
   unsigned long long max_steps;
+
+  PyObject* error_value;
 
   int state;
 
@@ -374,24 +402,23 @@ static PyObject* Macro_Machine_Run(PyObject* self,
 
   if (macro_size_obj == NULL || !PyInt_CheckExact(macro_size_obj))
   {
-    return Py_BuildValue("(iis)",-1,16,"Unable_to_extract_macro_size");
+    return Py_BuildValue("(iis)",-1,5,"Unable_to_extract_macro_size");
   }
 
-  macro_size = PyInt_AsLong(macro_size_obj);
-  macroTM.size = macro_size;
+  macroTM.size = PyInt_AsLong(macro_size_obj);
 
   num_states_imp = PyList_Size(machine_obj);
 
   if (num_states_imp != inTM.num_states)
   {
-    return Py_BuildValue("(iis)",-1,5,"Number_of_states_do_not_match");
+    return Py_BuildValue("(iis)",-1,6,"Number_of_states_do_not_match");
   }
 
   inTM.machine = (STATE *)malloc(inTM.num_states*sizeof(*inTM.machine));
 
   if (inTM.machine == NULL)
   {
-    return Py_BuildValue("(iis)",-1,6,"Out_of_memory_allocating_machine");
+    return Py_BuildValue("(iis)",-1,7,"Out_of_memory_allocating_machine");
   }
 
   {
@@ -404,21 +431,21 @@ static PyObject* Macro_Machine_Run(PyObject* self,
       cur_state_obj = PyList_GetItem(machine_obj,iter_state);
       if (!PyList_Check(cur_state_obj))
       {
-        return Py_BuildValue("(iis)",-1,7,"Unable_to_extract_Turing_machine_transition");
+        return Py_BuildValue("(iis)",-1,8,"Unable_to_extract_Turing_machine_transition");
       }
 
       num_symbols_imp = PyList_Size(cur_state_obj);
 
       if (num_symbols_imp != num_symbols)
       {
-        return Py_BuildValue("(iis)",-1,8,"Number_of_symbols_do_not_match");
+        return Py_BuildValue("(iis)",-1,9,"Number_of_symbols_do_not_match");
       }
 
       inTM.machine[iter_state].t = (TRANSITION *)malloc(num_symbols*sizeof(*(inTM.machine[iter_state].t)));
 
       if (inTM.machine[iter_state].t == NULL)
       {
-        return Py_BuildValue("(iis)",-1,9,"Out_of_memory_allocating_machine_state_transition");
+        return Py_BuildValue("(iis)",-1,10,"Out_of_memory_allocating_machine_state_transition");
       }
 
       for (iter_symbol = 0; iter_symbol < num_symbols; iter_symbol++)
@@ -430,32 +457,32 @@ static PyObject* Macro_Machine_Run(PyObject* self,
 
         if (!PyTuple_CheckExact(cur_trans_obj))
         {
-          return Py_BuildValue("(iis)",-1,10,"Unable_to_extract_Turing_machine_transition_3-tuple");
+          return Py_BuildValue("(iis)",-1,11,"Unable_to_extract_Turing_machine_transition_3-tuple");
         }
 
         if (PyTuple_Size(cur_trans_obj) != 3)
         {
-          return Py_BuildValue("(iis)",-1,11,"Turing_machine_transition_was_not_a_3-tuple");
+          return Py_BuildValue("(iis)",-1,12,"Turing_machine_transition_was_not_a_3-tuple");
         }
 
         if (!PyArg_ParseTuple(cur_trans_obj,"iii",&i0,&i1,&i2))
         {
-          return Py_BuildValue("(iis)",-1,12,"Unable_to_parse_Turing_machine_transition 3-tuple");
+          return Py_BuildValue("(iis)",-1,13,"Unable_to_parse_Turing_machine_transition 3-tuple");
         }
 
         if (i0 < -1 || i0 >= num_symbols)
         {
-          return Py_BuildValue("(iis)",-1,13,"Illegal_symbol_in_Turing_machine_transistion_3-tuple");
+          return Py_BuildValue("(iis)",-1,14,"Illegal_symbol_in_Turing_machine_transistion_3-tuple");
         }
 
         if (i1 < 0 || i1 > 1)
         {
-          return Py_BuildValue("(iis)",-1,14,"Illegal_direction_in_Turing_machine_transistion_3-tuple");
+          return Py_BuildValue("(iis)",-1,15,"Illegal_direction_in_Turing_machine_transistion_3-tuple");
         }
 
         if (i2 < -1 || i2 >= inTM.num_states)
         {
-          return Py_BuildValue("(iis)",-1,15,"Illegal_state_in_Turing_machine_transistion_3-tuple");
+          return Py_BuildValue("(iis)",-1,16,"Illegal_state_in_Turing_machine_transistion_3-tuple");
         }
 
         inTM.machine[iter_state].t[iter_symbol].w = i0;
@@ -469,28 +496,28 @@ static PyObject* Macro_Machine_Run(PyObject* self,
 
   if (tape_length_obj == NULL || !PyInt_CheckExact(tape_length_obj))
   {
-    return Py_BuildValue("(iis)",-1,16,"Unable_to_extract_tape_length");
+    return Py_BuildValue("(iis)",-1,17,"Unable_to_extract_tape_length");
   }
 
   macroTM.tape_length = PyInt_AsLong(tape_length_obj);
   macroTM.tape = (int *)calloc(macroTM.tape_length,sizeof(*(macroTM.tape)));
 
-  inTM.tape_length = 2*(macro_size+2)+1;
+  inTM.tape_length = 2*(macroTM.size+1)+1;
   inTM.tape = (int *)calloc(inTM.tape_length,sizeof(*(inTM.tape)));
   
   macroTM.num_states  = inTM.num_states;
-  macroTM.num_symbols = pow(num_symbols,2*macro_size+1);
+  macroTM.num_symbols = pow(num_symbols,2*macroTM.size-1);
 
   if (inTM.tape == NULL || macroTM.tape == NULL)
   {
-    return Py_BuildValue("(iis)",-1,17,"Out_of_memory_allocating_tape");
+    return Py_BuildValue("(iis)",-1,18,"Out_of_memory_allocating_tape");
   }
 
   max_steps_obj = PyTuple_GetItem(args,5);
 
   if (max_steps_obj == NULL || !PyFloat_CheckExact(max_steps_obj))
   {
-    return Py_BuildValue("(iis)",-1,18,"Unable_to_extract_maximum_#_of_steps");
+    return Py_BuildValue("(iis)",-1,19,"Unable_to_extract_maximum_#_of_steps");
   }
 
   max_steps = PyFloat_AsDouble(max_steps_obj);
@@ -499,7 +526,7 @@ static PyObject* Macro_Machine_Run(PyObject* self,
 
   if (macroTM.machine == NULL)
   {
-    return Py_BuildValue("(iis)",-1,6,"Out_of_memory_allocating_machine");
+    return Py_BuildValue("(iis)",-1,20,"Out_of_memory_allocating_machine");
   }
 
   for (state = 0; state < inTM.num_states; state++)
@@ -508,28 +535,29 @@ static PyObject* Macro_Machine_Run(PyObject* self,
 
     if (macroTM.machine[state].t == NULL)
     {
-      return Py_BuildValue("(iis)",-1,9,"Out_of_memory_allocating_machine_state_transition");
+      return Py_BuildValue("(iis)",-1,21,"Out_of_memory_allocating_machine_state_transition");
     }
   }
 
-  macroTM.symbol     = (int *)malloc((2*macro_size+1)*sizeof(*(macroTM.symbol)));
-  macroTM.new_symbol = (int *)malloc((2*macro_size+1)*sizeof(*(macroTM.new_symbol)));
+  macroTM.symbol     = (int *)malloc((2*macroTM.size-1)*sizeof(*(macroTM.symbol)));
+  macroTM.new_symbol = (int *)malloc((2*macroTM.size-1)*sizeof(*(macroTM.new_symbol)));
 
   macroTM.max_left  = (macroTM.tape_length-1) / 2;
   macroTM.max_right = (macroTM.tape_length-1) / 2;
   macroTM.position  = (macroTM.tape_length-1) / 2;
 
-  get_macro_symbol(macroTM.symbol,macroTM.tape,macroTM.position,macro_size);
+  get_macro_symbol(macroTM.symbol,macroTM.tape,macroTM.position,macroTM.size);
   macroTM.state  = 0;
 
-  macroTM.total_symbols = 0;
-  macroTM.total_steps   = 0;
+  macroTM.total_symbols = -1;
+  macroTM.total_steps   =  0;
 
   result = RESULT_INVALID;
+  error_value = NULL;
 
-  for (i = 0; i < max_steps; i += (macro_size+1))
+  for (i = 0; i < max_steps; i += macroTM.size)
   {
-    result = step_macro_TM(&macroTM,&inTM);
+    result = step_macro_TM(&macroTM,&inTM,&error_value);
 
     if (result != RESULT_STEPPED)
     {
@@ -545,10 +573,6 @@ static PyObject* Macro_Machine_Run(PyObject* self,
 
   switch (result & RESULT_VALUE)
   {
-    case RESULT_HALTED:
-      return Py_BuildValue("(idd)",0,d_total_symbols,d_total_steps);
-      break;
-
     case RESULT_NOTAPE:
       return Py_BuildValue("(idd)",1,d_total_symbols,d_total_steps);
       break;
@@ -557,20 +581,29 @@ static PyObject* Macro_Machine_Run(PyObject* self,
       return Py_BuildValue("(idd)",2,d_total_symbols,d_total_steps);
       break;
 
-    case RESULT_UNDEFINED:
-      return Py_BuildValue("(iiidd)",3,
-                                     macroTM.state,macroTM.symbol,
-                                     d_total_symbols,d_total_steps);
-      break;
-
     case RESULT_INFINITE_LEFT:
-      return Py_BuildValue("(iis)",4,0,"Infinite_left");
+      return Py_BuildValue("(iiis)",4,0,macroTM.size,"Macro_infinite_left");
       break;
 
     case RESULT_INFINITE_RIGHT:
-      return Py_BuildValue("(iis)",4,0,"Infinite_right");
+      return Py_BuildValue("(iiis)",4,1,macroTM.size,"Macro_infinite_right");
+      break;
+
+    case RESULT_INVALID:
+      if (error_value == NULL)
+      {
+        return Py_BuildValue("(iis)",-1,22,"Unexpected_result_for_Turing_machine");
+      }
+      else
+      {
+        return error_value;
+      }
+      break;
+
+    default:
+      return Py_BuildValue("(iis)",-1,22,"Unexpected_result_for_Turing_machine");
       break;
   }
 
-  return Py_BuildValue("(iis)",-1,20,"Reached_the_end_which_is_impossible,_;-)");
+  return Py_BuildValue("(iis)",-1,23,"Reached_the_end_which_is_impossible,_;-)");
 }
