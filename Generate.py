@@ -178,58 +178,18 @@ def save_machine(machine, results, tape_length, max_steps, io, save_it):
 
 # Command line interpretter code
 if __name__ == "__main__":
-  import os, sys, getopt
+  import sys
+  from Option_Parser import Generator_Option_Parser as Option_Parser
 
-  usage = "Generate.py --states= --symbols= [--help] [--tape=] [--steps=] [--outfile=] [--restart=]"
-  try:
-    opts, args = getopt.getopt(sys.argv[1:], "", [
-                                                  "help",
-                                                  "states=",
-                                                  "symbols=",
-                                                  "tape=",
-                                                  "steps=",
-                                                  "outfile=",
-                                                  "restart=",
-                                                  "infile="   # infile is never used but is automatically passed by Tools/update script so it must be accepted.
-                                                 ])
-  except getopt.GetoptError:
-    sys.stderr.write("%s\n" % usage)
-    sys.exit(1)
+  # Generate.py may be sent an infile param but it should be ignored
+  opts, args = Option_Parser(sys.argv, [("restart", str, None, False)],
+                             ignore_infile = True)
+  # Unpack all the values that will be used by Generate.py
+  states = opts["states"]; symbols = opts["symbols"]
+  tape_length = opts["tape"]; max_steps = opts["steps"]
+  out_file = opts["outfile"]; restart_filename = opts["restart"]
 
-  out_filename = None
-  out_file = None
-
-  is_restart = None
-  restart_filename = None
-  restart_file = None
-
-  # 'states' and 'symbols' are required variables so they have no default.
-  states = None
-  symbols = None
-  tape_length = 20003
-  max_steps = 10000
-
-  for opt, arg in opts:
-    if opt == "--help":
-      sys.stdout.write("%s\n" % usage)
-      sys.exit(0)
-    elif opt == "--states":
-      states = int(arg)
-    elif opt == "--symbols":
-      symbols = int(arg)
-    elif opt == "--tape":
-      tape_length = int(arg)
-    elif opt == "--steps":
-      max_steps = int(arg)
-    elif opt == "--outfile":
-      if arg:
-        out_filename = arg
-    elif opt == "--restart":
-      is_restart = True
-      if arg:
-        restart_filename = arg
-
-  if is_restart:
+  if restart_filename is not None:
     # If restart input not from stdin.
     if restart_filename and restart_filename != "-":
       restart_file = file(restart_filename, "r")
@@ -246,31 +206,8 @@ if __name__ == "__main__":
     tape_length = g_next[3]
     max_steps   = g_next[4]
 
-  # The furthest that the machine can travel in n steps is n+1 away from the
-  # origin.  It could travel in either direction so the tape need not be longer
-  # than 2 * max_steps + 3
-  tape_length = int(min(tape_length, 2 * max_steps + 3))
-
-  if not states or not symbols:
-    sys.stderr.write(usage)
-    sys.exit(1)
-
-  # Default output filename.  (E.g. 2.2.20003.10000.out)
-  if not out_filename:
-    out_filename = "%d.%d.%d.%d.out" % \
-                    (states, symbols, tape_length, max_steps)
-
-  # If not outputing to stdout.
-  if out_filename != "-":
-    if os.path.exists(out_filename):
-      sys.stderr.write("Output text file, '%s', exists\n" % (out_filename,));
-      sys.exit(1)
-    else:
-      out_file = file(out_filename, "w")
+    io = IO(restart_file, out_file)
   else:
-    out_file = sys.stdout
-
-  # If not restarting 'restart_file' == None, so no input will be created
-  io = IO(restart_file, out_file)
+    io = IO(None, out_file)
 
   Generate(states, symbols, tape_length, max_steps, io)
