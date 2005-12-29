@@ -23,7 +23,8 @@ class IO:
     self.input_file  = input_file
     self.output_file = output_file
 
-  def write_result(self, machine_num, tape_length, max_steps, results, machine):
+  def write_result(self, machine_num, tape_length, max_steps, results,
+                   machine, old_results = []):
     """
     Writes a result.
     """
@@ -45,9 +46,18 @@ class IO:
           self.output_file.write("%s " % item)
 
       self.output_file.write("%s " % machine.get_TTable());
+      
+      for item in old_results:
+        if type(item) in [int, long]:
+          self.output_file.write("%d " % item)
+        elif type(item) == float:
+          self.output_file.write("%.0f " % item)
+        else:
+          self.output_file.write("%s " % item)
+
       self.output_file.write("\n")
       self.output_file.flush()
-      
+
   def read_result(self):
     """
     Reads a result.
@@ -69,7 +79,7 @@ class IO:
         tape_length = int(parts[3])
         max_steps   = int(parts[4])
 
-        results = [int(parts[5]),]
+        results = [int(parts[5])]
         index = 6
         for item in parts[6:]:
           if item[0] == "[":
@@ -77,12 +87,22 @@ class IO:
           else:
             results.append(item)
             index += 1
-
         results = tuple(results)
 
-        machine_TTable = eval(string.join(parts[index:]))
+        machine_TTable = [parts[index]]
+        for item in parts[index:]:
+          if len(item) >= 2 and item[-2:] == "]]":
+            machine_TTable.append(item)
+            index += 1
+            break
+          else:
+            machine_TTable.append(item)
+            index += 1
+        machine_TTable = eval(string.join(machine_TTable))
 
-        return_value = (machine_num, num_states, num_symbols,
-                        tape_length, max_steps, results, machine_TTable)
+        old_results = list(parts[index:])
+
+        return_value = (machine_num, num_states, num_symbols, tape_length,
+                        max_steps, results, machine_TTable, old_results)
 
     return return_value

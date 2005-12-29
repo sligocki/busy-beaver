@@ -69,6 +69,7 @@ def Generate_Recursive(machine, num_states, num_symbols,
   #  tape)  (1, #sym, #steps)
   #  steps) (2, #sym, #steps)
   #  undef) (3, cur_state, cur_sym, #sym, #stpes)
+  #  inf)   (4, inf#, ..., inf_message)
   results = run(machine.get_TTable(), num_states, num_symbols,
                 tape_length, max_steps)
 

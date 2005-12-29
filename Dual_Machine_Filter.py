@@ -131,5 +131,5 @@ if __name__ == "__main__":
   io = IO(opts["infile"]), opts["outfile"])
   next = io.read_result()
 
-  Dual_Machine_Run(opts["states"], opts["symbols"],
-                   opts["tape"], opts["steps"], next, io)
+  Dual_Machine_Run(opts["states"], opts["symbols"], opts["tape"],
+                   opts["steps"], next, io)
