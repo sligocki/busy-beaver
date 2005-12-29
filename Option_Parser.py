@@ -141,9 +141,9 @@ def Option_Parser(argv, opts, help_flag = True, no_mult = True,
       opts_format2.append(opt)
       if opt not in ignore_opts:
         if is_required:
-          usage += " --%s"
+          usage += " --%s" % opt
         else:
-          usage += " [--%s]"
+          usage += " [--%s]" % opt
 
   try:
     # Takes options with trailing equal sign.
