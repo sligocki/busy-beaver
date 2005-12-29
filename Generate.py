@@ -13,7 +13,6 @@ from IO import IO
 
 # global machine number
 g_machine_num = 0
-g_next = None
 
 class Turing_Machine_Runtime_Error:
   """
@@ -63,23 +62,15 @@ def Generate_Recursive(machine, num_states, num_symbols,
   each of the possible entrees to that cell so that it can find every distinct
   machine which comes from the input machine
   """
-  global g_machine_num, g_next
 
-  if g_next and machine.get_TTable() == g_next[6]:
-    results = g_next[5]
-    save_it = False
-
-    g_next = io.read_result()
-  else:
-    # results = (exit_condition, )
-    #  error) (-1, error#, error_string)
-    #  halt)  (0, #sym, #steps)
-    #  tape)  (1, #sym, #steps)
-    #  steps) (2, #sym, #steps)
-    #  undef) (3, cur_state, cur_sym, #sym, #stpes)
-    results = run(machine.get_TTable(), num_states, num_symbols,
-                  tape_length, max_steps)
-    save_it = True
+  # results = (exit_condition, )
+  #  error) (-1, error#, error_string)
+  #  halt)  (0, #sym, #steps)
+  #  tape)  (1, #sym, #steps)
+  #  steps) (2, #sym, #steps)
+  #  undef) (3, cur_state, cur_sym, #sym, #stpes)
+  results = run(machine.get_TTable(), num_states, num_symbols,
+                tape_length, max_steps)
 
   exit_condition = results[0]
 
@@ -88,10 +79,8 @@ def Generate_Recursive(machine, num_states, num_symbols,
     # Position of undefined cell in transition table
     state_in  = results[1]
     symbol_in = results[2]
-    # Info for interpolating what would happen if undefined state was halt.
-    # They are returned as floats, so we convert them to ints.
-    num_symb_written = int(round(results[3]))
-    num_steps_taken = int(round(results[4]))
+    num_symb_written = results[3]
+    num_steps_taken = results[4]
 
     # If undefined cell is Halt.
     #   1) Add the halt state
@@ -99,26 +88,18 @@ def Generate_Recursive(machine, num_states, num_symbols,
     machine_new.add_cell(state_in , symbol_in ,
                         -1, 1, 1)
 
-    if g_next and machine_new.get_TTable() == g_next[6]:
-      new_results = g_next[5]
-      save_it = False
+    #   2) This machine will write one more non-zero symbol if current symbol
+    # is not non-zero (I.e. is zero)
+    if symbol_in == 0:
+      num_symb_written += 1
 
-      g_next = io.read_result()
-    else:
-      # 2) This machine will write one more non-zero symbol if current symbol
-      # is not non-zero (I.e. is zero)
-      if symbol_in == 0:
-        num_symb_written += 1
+    #   3) This machine will take one more step to halt state
+    num_steps_taken += 1
 
-      # 3) This machine will take one more step to halt state
-      num_steps_taken += 1
-
-      new_results = (0, num_symb_written, num_steps_taken)
-      save_it = True
+    new_results = (0, num_symb_written, num_steps_taken)
 
     #   4) Save this machine
-    save_machine(machine_new, new_results, tape_length, max_steps, io,
-                 save_it)
+    save_machine(machine_new, new_results, tape_length, max_steps, io)
 
     # 'max_state' and 'max_symbol' are the state and symbol numbers for the
     # smallest state/symbol not yet written (i.e. available to add to TTable).
@@ -146,11 +127,11 @@ def Generate_Recursive(machine, num_states, num_symbols,
     error_number = results[1]
     message = results[2]
     sys.stderr.write("Error %d: %s\n" % (error_number, message))
-    save_machine(machine, results, tape_length, max_steps, io, save_it)
+    save_machine(machine, results, tape_length, max_steps, io)
     raise Turing_Machine_Runtime_Error, "Error encountered while running a turing machine"
   # All other returns
   else:
-    save_machine(machine, results, tape_length, max_steps, io, save_it)
+    save_machine(machine, results, tape_length, max_steps, io)
 
   return
 
@@ -158,56 +139,28 @@ def run(TTable, num_states, num_symbols, tape_length, max_steps):
   """
   Wrapper for C machine running code.
   """
-  # We must convert max_steps to float because it could be larger than a C int
-  # max(int) == 2,147,483,647
   import Turing_Machine_Sim
   return Turing_Machine_Sim.run(TTable, num_states, num_symbols,
-                                tape_length, float(max_steps))
+                                tape_length, max_steps)
 
 
-def save_machine(machine, results, tape_length, max_steps, io, save_it):
+def save_machine(machine, results, tape_length, max_steps, io):
   """
-  Saves a busy beaver machine with the provided data information.
+  Saves a busy beaver machine with the provided information.
   """
   global g_machine_num
-
-  if save_it:
-    io.write_result(g_machine_num, tape_length, max_steps, results, machine);
-
+  io.write_result(g_machine_num, tape_length, max_steps, results, machine);
   g_machine_num += 1
 
 # Command line interpretter code
 if __name__ == "__main__":
   import sys
-  from Option_Parser import Generator_Option_Parser as Option_Parser
+  from Option_Parser import Generator_Option_Parser
 
+  # Get command line options.
   # Generate.py may be sent an infile param but it should be ignored
-  opts, args = Option_Parser(sys.argv, [("restart", str, None, False)],
-                             ignore_infile = True)
-  # Unpack all the values that will be used by Generate.py
-  states = opts["states"]; symbols = opts["symbols"]
-  tape_length = opts["tape"]; max_steps = opts["steps"]
-  out_file = opts["outfile"]; restart_filename = opts["restart"]
+  opts, args = Generator_Option_Parser(sys.argv, [], ignore_infile = True)
 
-  if restart_filename is not None:
-    # If restart input not from stdin.
-    if restart_filename and restart_filename != "-":
-      restart_file = file(restart_filename, "r")
-    else:
-      restart_file = sys.stdin
+  io = IO(None, opts["outfile"])
 
-    temp_input = IO(restart_file, None)
-    g_next = temp_input.read_result()
-    del temp_input
-
-    states  = g_next[1]
-    symbols = g_next[2]
-
-    tape_length = g_next[3]
-    max_steps   = g_next[4]
-
-    io = IO(restart_file, out_file)
-  else:
-    io = IO(None, out_file)
-
-  Generate(states, symbols, tape_length, max_steps, io)
+  Generate(opts["states"], opts["symbols"], opts["tape"], opts["steps"], io)

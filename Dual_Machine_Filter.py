@@ -123,15 +123,13 @@ def save_machine(machine_num, machine, results, tape_length, max_steps,
 # Default test code
 if __name__ == "__main__":
   import sys
-  from Option_Parser import Filter_Option_Parser as Option_Parser
+  from Option_Parser import Filter_Option_Parser
 
-  opts, args = Option_Parser(sys.argv, [])
-  # Unpack all the values that will be used by Dual_Machine_Filter
-  states = opts["states"]; symbols = opts["symbols"]
-  tape_length = opts["tape"]; max_steps = opts["steps"]
-  in_file = opts["infile"]; out_file = opts["outfile"]
+  # Get command line options.
+  opts, args = Filter_Option_Parser(sys.argv, [])
 
-  io = IO(in_file, out_file)
+  io = IO(opts["infile"]), opts["outfile"])
   next = io.read_result()
 
-  Dual_Machine_Run(states, symbols, tape_length, max_steps, next, io)
+  Dual_Machine_Run(opts["states"], opts["symbols"],
+                   opts["tape"], opts["steps"], next, io)
