@@ -2,14 +2,14 @@ import os, sys, getopt
 
 def Generator_Option_Parser(argv, extra_opt, ignore_infile = True):
   """
-  extra_opt = list of (opt, type_func, default_val, is_required)
+  extra_opt = list of (opt, type_func, default_val, is_required, has_val)
   """
-  opts = [("states", int, None, True, True),
-          ("symbols", int, None, True, True),
-          ("tape", int, 10000, False, True),
-          ("steps", int, 10000, False, True),
-          ("infile", str, None, False, True),
-          ("outfile", str, None, False, True)] + extra_opt
+  opts = [("states" , int, None , True , True),
+          ("symbols", int, None , True , True),
+          ("tape"   , int, 10000, False, True),
+          ("steps"  , int, 10000, False, True),
+          ("infile" , str, None , False, True),
+          ("outfile", str, None , False, True)] + extra_opt
   ignore_opts = []
   if ignore_infile:
     ignore_opts.append("infile")
@@ -55,25 +55,25 @@ def Read_Atributes(input_file):
 
 def Filter_Option_Parser(argv, extra_opt, ignore_outfile = False):
   """
-  extra_opt = list of (opt, type_func, default_val, is_required)
+  extra_opt = list of (opt, type_func, default_val, is_required, has_val)
   """
-  opts = [("tape", int, None, False, True),
-          ("steps", int, None, False, True),
-          ("infile", str, None, True, True),
+  opts = [("tape"   , int, None, False, True),
+          ("steps"  , int, None, False, True),
+          ("infile" , str, None, True , True),
           ("outfile", str, None, False, True)] + extra_opt
   ignore_opts = []
-  if ignore_infile:
+  if ignore_outfile:
     ignore_opts.append("outfile")
   opts, args = Option_Parser(argv, opts, help_flag = True, no_mult = True,
                              ignore_opts = ignore_opts)
 
   if not opts["infile"] or opts["infile"] == "-":
-    sys.stderr.write("Filter_Option_Parser -- input from sdtin currently not available\n")
+    sys.stderr.write("Filter_Option_Parser -- input from stdin currently not available\n")
     sys.exit(1)
   else:
     opts["infile"] = file(opts["infile"], "r")
 
-  if not default_outfilename:
+  if not ignore_outfile:
     opts["states"], opts["symbols"], tape, steps = Read_Atributes(opts["infile"])
     # Tape length and max num steps default to those from the input file, but
     # can be changed by command line options.
@@ -82,13 +82,12 @@ def Filter_Option_Parser(argv, extra_opt, ignore_outfile = False):
     if not opts["steps"]:
       opts["steps"] = steps
 
-  # The furthest that the machine can travel in n steps is n+1 away from the
-  # origin.  It could travel in either direction so the tape need not be longer
-  # than 2 * max_steps + 3
-  if opts["tape"] > 2 * opts["steps"] + 3:
-    opts["tape"] = 2 * opts["steps"] + 3
+    # The furthest that the machine can travel in n steps is n+1 away from the
+    # origin.  It could travel in either direction so the tape need not be longer
+    # than 2 * max_steps + 3
+    if opts["tape"] > 2 * opts["steps"] + 3:
+      opts["tape"] = 2 * opts["steps"] + 3
 
-  if not ignore_outfile:
     if not opts["outfile"]:
       # Default output filename is based off of parameters.
       opts["outfile"] = "%d.%d.%d.%d.out" % (opts["states"], opts["symbols"],
