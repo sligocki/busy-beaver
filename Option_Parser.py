@@ -57,7 +57,7 @@ def Read_Atributes(input_file):
   input_file.seek(0)
   return line[1:5]
 
-def Filter_Option_Parser(argv, extra_opt):
+def Filter_Option_Parser(argv, extra_opt, default_outfilename = False):
   """
   extra_opt = list of (opt, type_func, default_val, is_required)
   """
@@ -73,13 +73,15 @@ def Filter_Option_Parser(argv, extra_opt):
     sys.exit(1)
   else:
     opts["infile"] = file(opts["infile"], "r")
-  opts["states"], opts["symbols"], tape, steps = Read_Atributes(opts["infile"])
-  # Tape length and max num steps default to those from the input file, but
-  # can be changed by command line options.
-  if not opts["tape"]:
-    opts["tape"] = tape
-  if not opts["steps"]:
-    opts["steps"] = steps
+
+  if not default_outfilename:
+    opts["states"], opts["symbols"], tape, steps = Read_Atributes(opts["infile"])
+    # Tape length and max num steps default to those from the input file, but
+    # can be changed by command line options.
+    if not opts["tape"]:
+      opts["tape"] = tape
+    if not opts["steps"]:
+      opts["steps"] = steps
 
   # The furthest that the machine can travel in n steps is n+1 away from the
   # origin.  It could travel in either direction so the tape need not be longer
@@ -89,7 +91,10 @@ def Filter_Option_Parser(argv, extra_opt):
 
   # Default output filename is based off of parameters.
   if not opts["outfile"]:
-    opts["outfile"] = "%d.%d.%d.%d.out" % (opts["states"], opts["symbols"],
+    if default_outfilename:
+      opts["outfile"] = default_outfilename
+    else:
+      opts["outfile"] = "%d.%d.%d.%d.out" % (opts["states"], opts["symbols"],
                                              opts["tape"], opts["steps"])
   if opts["outfile"] == "-":
     opts["outfile"] = sys.stdout
