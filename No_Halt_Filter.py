@@ -143,98 +143,14 @@ def save_machine(machine_num, machine, results, tape_length, max_steps,
 
 # Default test code
 if __name__ == "__main__":
-  import os
   import sys
-  import getopt
+  from Option_Parser import Filter_Option_Parser
 
-  usage = "No_Halt_Filter.py [--help] [--tape=] [--steps=] [--textfile=] [--datafile=] [--infile=]"
-  try:
-    opts, args = getopt.getopt(sys.argv[1:], "", [
-                                                  "help",
-                                                  "tape=",
-                                                  "steps=",
-                                                  "textfile=",
-                                                  "datafile=",
-                                                  "infile="
-                                                 ])
-  except getopt.GetoptError:
-    sys.stderr.write("%s\n" % usage)
-    sys.exit(1)
+  # Get command line options.
+  opts, args = Filter_Option_Parser(sys.argv, [])
 
-  # variables for text and data output.
-  text_filename = None
-  text_file = None
+  io = IO(opts["infile"], opts["outfile"])
+  next = io.read_result()
 
-  is_data = None
-  data_filename = None
-  data_file = None
-
-  in_filename = None
-  in_file = None
-
-  tape_length = 20003
-  max_steps = 10000
-
-  for opt, arg in opts:
-    if opt == "--help":
-      sys.stdout.write("%s\n" % usage)
-      sys.exit(0)
-    elif opt == "--tape":
-      tape_length = int(arg)
-    elif opt == "--steps":
-      max_steps = float(arg)
-    elif opt == "--textfile":
-      if arg:
-        text_filename = arg
-    elif opt == "--datafile":
-      is_data = not None
-      if arg:
-        data_filename = arg
-    elif opt == "--infile":
-      if arg:
-        in_filename = arg
-
-  if in_filename and in_filename != "-":
-    in_file = file(in_filename, "r")
-  else:
-    in_file = sys.stdin
-
-  input = IO(in_file, None, None)
-
-  next = input.read_result()
-
-  states  = next[1]
-  symbols = next[2]
-
-  # The furthest that the machine can travel in n steps is n away from the
-  # origin.  It could travel in either direction so the tape need not be longer
-  # than 2 * max_steps + 3
-  tape_length = int(min(tape_length, 2 * max_steps + 3))
-
-  if not text_filename:
-    text_filename = "BBP_%d_%d_%d_%.0f.txt" % \
-                    (states, symbols, tape_length, max_steps)
-
-  if text_filename and text_filename != "-":
-    if os.path.exists(text_filename):
-      sys.stderr.write("Output text file, '%s', exists\n" % (text_filename,));
-      sys.exit(1)
-    else:
-      text_file = file(text_filename, "w")
-  else:
-    text_file = sys.stdout
-
-  if is_data and not data_filename:
-    data_filename = "BBP_%d_%d_%d_%.0f.data" % \
-                    (states, symbols, tape_length, max_steps)
-
-  if data_filename:
-    if os.path.exists(data_filename):
-      sys.stderr.write("Output data file, '%s', exists\n" % (data_filename,));
-      sys.exit(1)
-    else:
-      data_file = file(data_filename, "wb")
-
-  io = IO(in_file, text_file, data_file)
-
-  No_Halt_Run(states, symbols, tape_length, max_steps, next, io)
+  No_Halt_Run(opts["states"], opts["symbols"], opts["tape"], opts["steps"],
+              next, io)

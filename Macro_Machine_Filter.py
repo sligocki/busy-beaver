@@ -131,7 +131,7 @@ if __name__ == "__main__":
   from Options_Parser import Filter_Option_Parser
 
   # Get command line options.
-  opts, args = Filter_Option_Parser(sys.argv, [("size", int, None, True)])
+  opts, args = Filter_Option_Parser(sys.argv, [("size", int, None, True, True)])
 
   io = IO(opts["infile"]), opts["outfile"])
   next = io.read_result()
