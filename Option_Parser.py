@@ -1,19 +1,15 @@
 import os, sys, getopt
 
-#Generate.py = BB_CL_Interpretter(sys.argv, [("restart", str, None, False)])
-#Dual_Machine_Filter.py = BB_CL_Interpretter(sys.argv, [])
-#Macro_Machine_Filter.py = BB_CL_Interpretter(sys.argv, [("size", int, None, True)])
-
 def Generator_Option_Parser(argv, extra_opt, ignore_infile = True):
   """
   extra_opt = list of (opt, type_func, default_val, is_required)
   """
-  opts = [("states", int, None, True),
-          ("symbols", int, None, True),
-          ("tape", int, 10000, False),
-          ("steps", int, 10000, False),
-          ("infile", str, None, False),
-          ("outfile", str, None, False)] + extra_opt
+  opts = [("states", int, None, True, True),
+          ("symbols", int, None, True, True),
+          ("tape", int, 10000, False, True),
+          ("steps", int, 10000, False, True),
+          ("infile", str, None, False, True),
+          ("outfile", str, None, False, True)] + extra_opt
   ignore_opts = []
   if ignore_infile:
     ignore_opts.append("infile")
@@ -29,7 +25,7 @@ def Generator_Option_Parser(argv, extra_opt, ignore_infile = True):
   # Default output filename is based off of parameters.
   if not opts["outfile"]:
     opts["outfile"] = "%d.%d.%d.%d.out" % (opts["states"], opts["symbols"],
-                                             opts["tape"], opts["steps"])
+                                           opts["tape"], opts["steps"])
   if opts["outfile"] == "-":
     opts["outfile"] = sys.stdout
   else:
@@ -61,10 +57,10 @@ def Filter_Option_Parser(argv, extra_opt, default_outfilename = False):
   """
   extra_opt = list of (opt, type_func, default_val, is_required)
   """
-  opts = [("tape", int, None, False),
-          ("steps", int, None, False),
-          ("infile", str, None, True),
-          ("outfile", str, None, False)] + extra_opt
+  opts = [("tape", int, None, False, True),
+          ("steps", int, None, False, True),
+          ("infile", str, None, True, True),
+          ("outfile", str, None, False, True)] + extra_opt
   opts, args = Option_Parser(argv, opts, help_flag = True, no_mult = True,
                              ignore_opts = [])
 
@@ -131,15 +127,23 @@ def Option_Parser(argv, opts, help_flag = True, no_mult = True,
     usage +=  " [--help]"
     opts_format2.append("help")
 
-  for opt, type_func, default_val, is_required in opts:
-    opts_format2.append("%s=" % opt)
-    if opt not in ignore_opts:
-      if is_required:
-        usage += " --%s=" % opt
-      elif default_val != None:
-        usage += " [--%s=%s]" % (opt, repr(default_val))
-      else:
-        usage += " [--%s=]" % opt
+  for opt, type_func, default_val, is_required, has_val in opts:
+    if has_val:
+      opts_format2.append("%s=" % opt)
+      if opt not in ignore_opts:
+        if is_required:
+          usage += " --%s=" % opt
+        elif default_val != None:
+          usage += " [--%s=%s]" % (opt, repr(default_val))
+        else:
+          usage += " [--%s=]" % opt
+    else:
+      opts_format2.append(opt)
+      if opt not in ignore_opts:
+        if is_required:
+          usage += " --%s"
+        else:
+          usage += " [--%s]"
 
   try:
     # Takes options with trailing equal sign.
@@ -160,9 +164,12 @@ def Option_Parser(argv, opts, help_flag = True, no_mult = True,
       sys.exit(1)
     else:
       result[opt] = val
-  for opt, type_func, default_val, is_required in opts:
+  for opt, type_func, default_val, is_required, has_val in opts:
     if result.has_key(opt):
-      result[opt] = type_func(result[opt])
+      if has_val:
+        result[opt] = type_func(result[opt])
+      else:
+        result[opt] = result[opt] == ""
     elif is_required:
       sys.stderr.write("Option (%s) required.\n%s\n" % (opt, usage))
       sys.exit(1)
