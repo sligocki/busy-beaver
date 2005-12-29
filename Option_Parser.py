@@ -53,7 +53,7 @@ def Read_Atributes(input_file):
   input_file.seek(0)
   return line[1:5]
 
-def Filter_Option_Parser(argv, extra_opt, default_outfilename = False):
+def Filter_Option_Parser(argv, extra_opt, ignore_outfile = False):
   """
   extra_opt = list of (opt, type_func, default_val, is_required)
   """
@@ -61,8 +61,11 @@ def Filter_Option_Parser(argv, extra_opt, default_outfilename = False):
           ("steps", int, None, False, True),
           ("infile", str, None, True, True),
           ("outfile", str, None, False, True)] + extra_opt
+  ignore_opts = []
+  if ignore_infile:
+    ignore_opts.append("outfile")
   opts, args = Option_Parser(argv, opts, help_flag = True, no_mult = True,
-                             ignore_opts = [])
+                             ignore_opts = ignore_opts)
 
   if not opts["infile"] or opts["infile"] == "-":
     sys.stderr.write("Filter_Option_Parser -- input from sdtin currently not available\n")
@@ -85,23 +88,21 @@ def Filter_Option_Parser(argv, extra_opt, default_outfilename = False):
   if opts["tape"] > 2 * opts["steps"] + 3:
     opts["tape"] = 2 * opts["steps"] + 3
 
-  # Default output filename is based off of parameters.
-  if not opts["outfile"]:
-    if default_outfilename:
-      opts["outfile"] = default_outfilename
-    else:
+  if not ignore_outfile:
+    if not opts["outfile"]:
+      # Default output filename is based off of parameters.
       opts["outfile"] = "%d.%d.%d.%d.out" % (opts["states"], opts["symbols"],
                                              opts["tape"], opts["steps"])
-  if opts["outfile"] == "-":
-    opts["outfile"] = sys.stdout
-  else:
-    if os.path.exists(opts["outfile"]):
-      sys.stderr.write("Output text file, '%s', exists\n" % opts["outfile"]);
-      sys.exit(1)
+    if opts["outfile"] == "-":
+      opts["outfile"] = sys.stdout
     else:
-      # This double use of opts["outfile"] is odd and possibly a bad idea,
-      # but I don't think that the filename will ever be needed.
-      opts["outfile"] = file(opts["outfile"], "w")
+      if os.path.exists(opts["outfile"]):
+        sys.stderr.write("Output text file, '%s', exists\n" % opts["outfile"]);
+        sys.exit(1)
+      else:
+        # This double use of opts["outfile"] is odd and possibly a bad idea,
+        # but I don't think that the filename will ever be needed.
+        opts["outfile"] = file(opts["outfile"], "w")
 
   return opts, args
 
