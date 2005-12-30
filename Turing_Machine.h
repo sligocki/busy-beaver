@@ -3,7 +3,7 @@
 #define RESULT_M2             0x0001
 #define RESULT_BOTH           0x0002
 
-#define RESULT_VALUE          0x001C
+#define RESULT_VALUE          0x003C
 #define RESULT_STEPPED        0x0000
 #define RESULT_UNDEFINED      0x0004
 #define RESULT_HALTED         0x0008
@@ -11,7 +11,8 @@
 #define RESULT_INFINITE_LEFT  0x0010
 #define RESULT_INFINITE_RIGHT 0x0014
 #define RESULT_INFINITE_DUAL  0x0018
-#define RESULT_INVALID        0x001C
+#define RESULT_INFINITE_TREE  0x001C
+#define RESULT_INVALID        0x0020
 
 typedef struct
 {
@@ -33,16 +34,16 @@ typedef struct
   STATE* machine;
 
   int* tape;
-  int  tape_length;
+  unsigned long long tape_length;
 
   int symbol;
 
   unsigned long long total_symbols;
   unsigned long long total_steps;
 
-  int position;
-  int max_left;
-  int max_right;
+  unsigned long long position;
+  unsigned long long max_left;
+  unsigned long long max_right;
 
   int state;
 
