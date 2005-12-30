@@ -79,9 +79,25 @@ def run(machine, num_states, num_symbols, tape_length, max_steps):
   from Tree_Classify import Tree_Classify
   from Tree_Prove import Tree_Prove
 
-  result = Tree_Identify(machine.get_TTable(), num_states, num_symbols, tape_length, max_steps)
-  result = Tree_Classify(machine, result)
-  return Tree_Prove(machine, result)
+  identify = Tree_Identify(machine.get_TTable(), num_states, num_symbols, tape_length, max_steps)
+  if identify and identify[0] != -1:
+    classify = Tree_Classify(machine, identify)
+    if classify:
+      prove = Tree_Prove(machine, classify)
+      if prove:
+        return prove
+      else:
+        raise ValueError, "Tree_Classify returned an incorrect classification.\n%s" % repr(classify)
+    else:
+      # Prob want to call Tree_Identify again to find new repeating pattern?
+  elif identify[0] == -1:
+    # Return Error.
+    return identify
+  else: # if not identify
+    # Return Inconclusive.
+    # If I return a tuple with 1 or 2 as the first value it will consider this
+    # machine to still be unnclassified.
+    return (1,)
 
 def save_machine(machine_num, machine, results, tape_length, max_steps,
                  io, old_results = []):
