@@ -90,14 +90,14 @@ def run(machine, num_states, num_symbols, tape_length, max_steps):
         raise ValueError, "Tree_Classify returned an incorrect classification.\n%s" % repr(classify)
     else:
       # Prob want to call Tree_Identify again to find new repeating pattern?
-  elif identify[0] == -1:
-    # Return Error.
-    return identify
-  else: # if not identify
+  elif not identify:
     # Return Inconclusive.
     # If I return a tuple with 1 or 2 as the first value it will consider this
     # machine to still be unnclassified.
     return (1,)
+  else: # if identify[0] == -1:
+    # Return Error.
+    return identify
 
 def save_machine(machine_num, machine, results, tape_length, max_steps,
                  io, old_results = []):
