@@ -8,7 +8,7 @@ static PyObject* Dual_Machine(PyObject* self,
 static PyMethodDef Dual_Machine_Methods[] =
 {
   { "Dual_Machine", Dual_Machine, METH_VARARGS, "Run Turing machine" },
-  { NULL          , NULL            , 0           , NULL                 }
+  { NULL          , NULL        , 0           , NULL                 }
 };
 
 PyMODINIT_FUNC initDual_Machine(void)
