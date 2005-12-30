@@ -2,13 +2,13 @@
 
 #include "Turing_Machine.h"
 
-static PyObject* Turing_Machine_Sim_run(PyObject* self,
-                                        PyObject* args);
+static PyObject* Turing_Machine_Sim(PyObject* self,
+                                    PyObject* args);
 
 static PyMethodDef Turing_Machine_Sim_Methods[] =
 {
-  { "run", Turing_Machine_Sim_run, METH_VARARGS, "Run Turing machine" },
-  { NULL , NULL                  , 0           , NULL                 }
+  { "Turing_Machine_Sim", Turing_Machine_Sim, METH_VARARGS, "Run Turing machine" },
+  { NULL                , NULL              , 0           , NULL                 }
 };
 
 PyMODINIT_FUNC initTuring_Machine_Sim(void)
@@ -16,8 +16,8 @@ PyMODINIT_FUNC initTuring_Machine_Sim(void)
   (void)Py_InitModule("Turing_Machine_Sim",Turing_Machine_Sim_Methods);
 }
 
-static PyObject* Turing_Machine_Sim_run(PyObject* self,
-                                        PyObject* args)
+static PyObject* Turing_Machine_Sim(PyObject* self,
+                                    PyObject* args)
 {
   TM tm;
 

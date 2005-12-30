@@ -79,9 +79,9 @@ def run(TTable, num_states, num_symbols, macro_size,
   Wrapper for C machine running code.
   """
   import sys
-  import Macro_Machine
-  return Macro_Machine.run(TTable, num_states, num_symbols, macro_size,
-                           tape_length, max_steps)
+  from Macro_Machine import Macro_Machine
+  return Macro_Machine(TTable, num_states, num_symbols, macro_size,
+                       tape_length, max_steps)
 
 def save_machine(machine_num, machine, results, tape_length, max_steps, io,
                  old_results = []):

@@ -128,9 +128,9 @@ def run(TTable, num_states, num_symbols, tape_length, max_steps):
   """
   Wrapper for C machine running code.
   """
-  import Turing_Machine_Sim
-  return Turing_Machine_Sim.run(TTable, num_states, num_symbols,
-                                tape_length, max_steps)
+  from Turing_Machine_Sim import Turing_Machine_Sim
+  return Turing_Machine_Sim(TTable, num_states, num_symbols,
+                            tape_length, max_steps)
 
 
 def save_machine(machine, results, tape_length, max_steps, io):
