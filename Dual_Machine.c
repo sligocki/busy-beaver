@@ -262,11 +262,11 @@ static PyObject* Dual_Machine(PyObject* self,
       break;
     }
 
-    result = step_TM(&m1);
+    result = step_TM(&m2);
       
     if (result != RESULT_STEPPED)
     {
-      result |= RESULT_M1;
+      result |= RESULT_M2;
       break;
     }
 
