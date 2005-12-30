@@ -37,7 +37,8 @@ if ("$status" != 0) then
 endif
 
 # Log the running of the command
-echo "$log_number | $date | $command" >> "$basename.log"
+echo "$log_number" | awk '{printf("%6d",$1);}' >> "$basename.log"
+echo " | $date | $command"                     >> "$basename.log"
 
 # Integrate the output data into the existing database
 Integrate_Data.py "$basename.out"                                           \
