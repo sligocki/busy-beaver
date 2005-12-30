@@ -4,12 +4,13 @@ def Generator_Option_Parser(argv, extra_opt, ignore_infile = True):
   """
   extra_opt = list of (opt, type_func, default_val, is_required, has_val)
   """
-  opts = [("states" , int, None , True , True),
-          ("symbols", int, None , True , True),
-          ("tape"   , int, 10000, False, True),
-          ("steps"  , int, 10000, False, True),
-          ("infile" , str, None , False, True),
-          ("outfile", str, None , False, True)] + extra_opt
+  opts = [("states"    , int, None , True , True),
+          ("symbols"   , int, None , True , True),
+          ("tape"      , int, 10000, False, True),
+          ("steps"     , int, 10000, False, True),
+          ("infile"    , str, None , False, True),
+          ("outfile"   , str, None , False, True),
+          ("log_number", int, None , False, True)] + extra_opt
   ignore_opts = []
   if ignore_infile:
     ignore_opts.append("infile")
@@ -57,10 +58,11 @@ def Filter_Option_Parser(argv, extra_opt, ignore_outfile = False):
   """
   extra_opt = list of (opt, type_func, default_val, is_required, has_val)
   """
-  opts = [("tape"   , int, None, False, True),
-          ("steps"  , int, None, False, True),
-          ("infile" , str, None, True , True),
-          ("outfile", str, None, False, True)] + extra_opt
+  opts = [("tape"      , int, None, False, True),
+          ("steps"     , int, None, False, True),
+          ("infile"    , str, None, True , True),
+          ("outfile"   , str, None, False, True),
+          ("log_number", int, None, False, True)] + extra_opt
   ignore_opts = []
   if ignore_outfile:
     ignore_opts.append("outfile")

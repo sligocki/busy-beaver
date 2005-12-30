@@ -8,23 +8,11 @@
 
 import copy
 
-from Turing_Machine import Turing_Machine
+from Turing_Machine import Turing_Machine, Turing_Machine_Runtime_Error
 from IO import IO
 
 # global machine number
 g_machine_num = 0
-
-class Turing_Machine_Runtime_Error:
-  """
-  This exception class is raised if an error occurs while running/simulating a
-  turing machine (currently done in c-code).
-  """
-
-  def __init__(self, value=None):
-    self.value = value
-
-  def __repr__(self):
-    return `self.value`
 
 def Generate(num_states, num_symbols, tape_length, max_steps, io):
   """
@@ -162,6 +150,6 @@ if __name__ == "__main__":
   # Generate.py may be sent an infile param but it should be ignored
   opts, args = Generator_Option_Parser(sys.argv, [], ignore_infile = True)
 
-  io = IO(None, opts["outfile"])
+  io = IO(None, opts["outfile"], opts["log_number"])
 
   Generate(opts["states"], opts["symbols"], opts["tape"], opts["steps"], io)

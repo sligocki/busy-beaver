@@ -6,13 +6,11 @@
 # never be extended to include a halt.
 #
 
-import copy
-
-from Turing_Machine import Turing_Machine
+from Turing_Machine import Turing_Machine, Turing_Machine_Runtime_Error, \
+                           Filter_Unexpected_Return
 from IO import IO
 
-def No_Halt_Run(num_states, num_symbols, tape_length,
-                max_steps, next, io):
+def No_Halt_Run(num_states, num_symbols, tape_length, max_steps, next, io):
   """
   Stats all distinct BB machines with num_states and num_symbols.
 
@@ -30,10 +28,10 @@ def No_Halt_Run(num_states, num_symbols, tape_length,
     1) Number of steps run for
   """
   while next:
-    machine_num = int(next[0])
+    machine_num = next[0]
 
-    num_states  = int(next[1])
-    num_symbols = int(next[2])
+    num_states  = next[1]
+    num_symbols = next[2]
 
     results = next[5]
 
@@ -47,8 +45,7 @@ def No_Halt_Run(num_states, num_symbols, tape_length,
 
     next = io.read_result()
 
-def No_Halt_Recursive(machine_num,
-                      machine, num_states, num_symbols,
+def No_Halt_Recursive(machine_num, machine, num_states, num_symbols,
                       tape_length, max_steps, old_results, io):
   """
   Stats this BB machine.
@@ -71,26 +68,27 @@ def No_Halt_Recursive(machine_num,
     1) Number of steps run for
   """
   results = run(machine.get_TTable(), num_states, num_symbols,
-                   tape_length, max_steps)
-  save_it = not None
+                tape_length, max_steps)
 
   exit_condition = results[0]
 
-  # This shouldn't happen!
   #   -1) Error
   if exit_condition == -1:
     error_number = results[1]
     message      = results[2]
+    sys.stderr.write("Error %d: %s\n" % (error_number, message))
+    save_machine(machine_num, machine, results, tape_length, max_steps, io,
+                 old_results)
+    raise Turing_Machine_Runtime_Error, "Error encountered while running a turing machine"
 
-    sys.stderr.write("Error %d: %s\n" % (error_number,message))
-    save_machine(machine_num, machine, results,
-                    tape_length, max_steps, io, save_it)
-
-  # This shouldn't happen either - right? ;-)
   #    3) Reached Undefined Cell
+  # Should not occur because Filters should only be run on Generate.py results.
   elif exit_condition == 3:
-    save_machine(machine_num, machine, results,
-                    tape_length, max_steps, io, save_it)
+    sys.stderr.write("Machine (%d) reached undefined cell: %s" %
+                     (machine_num, result))
+    save_machine(machine_num, machine, results, tape_length, max_steps, io,
+                 old_results)
+    raise Filter_Unexpected_Return, "Machine reached undefined cell in filter."
 
   # All other returns:
   #    0) Halt
@@ -98,19 +96,20 @@ def No_Halt_Recursive(machine_num,
   #    2) Exceed max_steps
   #    4) Are in a detected infinite loop
   else:
+    # If classified (Halt or Infinite)
     if (results[0] == 0 or results[0] == 4):
-      save_machine(machine_num, machine, results,
-                      tape_length, max_steps, io, save_it)
+      save_machine(machine_num, machine, results, tape_length, max_steps, io,
+                   old_results)
+    # If still unclassified
     else:
-      save_machine(machine_num, machine, old_results,
-                      tape_length, max_steps, io, save_it)
+      save_machine(machine_num, machine, old_results, tape_length, max_steps,
+                   io)
 
   return
 
-def run(TTable, num_states, num_symbols,
-           tape_length, max_steps):
+def run(TTable, num_states, num_symbols, tape_length, max_steps):
   """
-  Wrapper for C machine running code.
+  Checks No_Halt condition.
   """
   import sys
 
@@ -134,12 +133,12 @@ def run(TTable, num_states, num_symbols,
   return result
 
 def save_machine(machine_num, machine, results, tape_length, max_steps,
-                    io, save_it):
+                    io, old_results = []):
   """
   Saves a busy beaver machine with the provided data information.
   """
-  if save_it:
-    io.write_result(machine_num, tape_length, max_steps, results, machine);
+  io.write_result(machine_num, tape_length, max_steps, results, machine,
+                  old_results);
 
 # Default test code
 if __name__ == "__main__":
@@ -149,7 +148,7 @@ if __name__ == "__main__":
   # Get command line options.
   opts, args = Filter_Option_Parser(sys.argv, [])
 
-  io = IO(opts["infile"], opts["outfile"])
+  io = IO(opts["infile"], opts["outfile"], opts["log_number"])
   next = io.read_result()
 
   No_Halt_Run(opts["states"], opts["symbols"], opts["tape"], opts["steps"],
