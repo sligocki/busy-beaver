@@ -3,13 +3,13 @@
 #include "Turing_Machine.h"
 #include "Macro_Machine.h"
 
-static PyObject* Macro_Machine_Run(PyObject* self,
-                                   PyObject* args);
+static PyObject* Macro_Machine(PyObject* self,
+                               PyObject* args);
 
 static PyMethodDef Macro_Machine_Methods[] =
 {
-  { "run", Macro_Machine_Run, METH_VARARGS, "Run Turing machine" },
-  { NULL , NULL             , 0           , NULL                 }
+  { "Macro_Machine", Macro_Machine, METH_VARARGS, "Run Turing machine" },
+  { NULL           , NULL         , 0           , NULL                 }
 };
 
 PyMODINIT_FUNC initMacro_Machine(void)
@@ -328,8 +328,8 @@ inline void free_macro_TM(MACRO_TM* m)
   }
 }
 
-static PyObject* Macro_Machine_Run(PyObject* self,
-                                   PyObject* args)
+static PyObject* Macro_Machine(PyObject* self,
+                               PyObject* args)
 {
   TM inTM;
   MACRO_TM macroTM;

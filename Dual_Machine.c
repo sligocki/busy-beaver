@@ -2,13 +2,13 @@
 
 #include "Turing_Machine.h"
 
-static PyObject* Dual_Machine_Run(PyObject* self,
-                                  PyObject* args);
+static PyObject* Dual_Machine(PyObject* self,
+                              PyObject* args);
 
 static PyMethodDef Dual_Machine_Methods[] =
 {
-  { "run", Dual_Machine_Run, METH_VARARGS, "Run Turing machine" },
-  { NULL , NULL            , 0           , NULL                 }
+  { "Dual_Machine", Dual_Machine, METH_VARARGS, "Run Turing machine" },
+  { NULL          , NULL            , 0           , NULL                 }
 };
 
 PyMODINIT_FUNC initDual_Machine(void)
@@ -16,8 +16,8 @@ PyMODINIT_FUNC initDual_Machine(void)
   (void)Py_InitModule("Dual_Machine",Dual_Machine_Methods);
 }
 
-static PyObject* Dual_Machine_Run(PyObject* self,
-                                  PyObject* args)
+static PyObject* Dual_Machine(PyObject* self,
+                              PyObject* args)
 {
   TM m1;
   TM m2;

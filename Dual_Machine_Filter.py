@@ -75,9 +75,9 @@ def run(TTable, num_states, num_symbols, tape_length, max_steps):
   """
   Wrapper for C machine running code.
   """
-  import Dual_Machine
-  return Dual_Machine.run(TTable, num_states, num_symbols,
-                          tape_length, max_steps)
+  from Dual_Machine import Dual_Machine
+  return Dual_Machine(TTable, num_states, num_symbols,
+                      tape_length, max_steps)
 
 def save_machine(machine_num, machine, results, tape_length, max_steps,
                  io, old_results = []):
