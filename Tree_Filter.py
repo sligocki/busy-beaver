@@ -33,7 +33,7 @@ def Tree_Filter(num_states, num_symbols, tape_lenth, max_steps, next, io):
 def Examine_Machine(machine_num, machine, num_states, num_symbols,
                     tape_length, max_steps, old_results, io):
   """Examine specific tree and attempt to classify as tree."""
-  results = run(machine.get_TTable(), num_states, num_symbols,
+  results = run(machine, num_states, num_symbols,
                 tape_length, max_steps)
 
   exit_condition = results[0]
@@ -73,15 +73,15 @@ def Examine_Machine(machine_num, machine, num_states, num_symbols,
 
   return
 
-def run(TTable, num_states, num_symbols, tape_length, max_steps):
+def run(machine, num_states, num_symbols, tape_length, max_steps):
   """Wrapper for three step tree checking code."""
   from Tree_Identify import Tree_Identify
   from Tree_Classify import Tree_Classify
   from Tree_Prove import Tree_Prove
 
-  result = Tree_Identify(TTable, num_states, num_symbols, tape_length, max_steps)
-  result = Tree_Classify(result)
-  return Tree_Prove(result)
+  result = Tree_Identify(machine.get_TTable(), num_states, num_symbols, tape_length, max_steps)
+  result = Tree_Classify(machine, result)
+  return Tree_Prove(machine, result)
 
 def save_machine(machine_num, machine, results, tape_length, max_steps,
                  io, old_results = []):
