@@ -127,13 +127,12 @@ def run(machine, tape_length, num_steps, silent=False):
   Start the tape and run it until it halts.
   If 'silent' is 1, don't print out anything during the run.
   """
-  import Turing_Machine_Sim
-
+  from Turing_Machine_Sim import Turing_Machine_Sim
 
   start_time = time.time()
-  result = Turing_Machine_Sim.run(machine.get_TTable(),
-                                  machine.num_states,machine.num_symbols,
-                                  tape_length,num_steps)
+  result = Turing_Machine_Sim(machine.get_TTable(),
+                              machine.num_states,machine.num_symbols,
+                              tape_length,num_steps)
   end_time = time.time()
 
   exit_cond = int(result[0])
