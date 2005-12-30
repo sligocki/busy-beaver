@@ -16,6 +16,60 @@ PyMODINIT_FUNC initTree_Identify(void)
   (void)Py_InitModule("Tree_Identify",Tree_Identify_Methods);
 }
 
+inline int find_pattern(TM*                 m_large,
+                        unsigned long long  left_size,
+                        unsigned long long  small_middle_size,
+                        unsigned long long  large_middle_size,
+                        unsigned long long* repeat_size,
+                        unsigned long long* adjustment)
+{
+  unsigned long long cur_size;
+  int* middle_start;
+  int* previous;
+  int* current;
+  int repeat;
+
+  *repeat_size = -1;
+  *adjustment = 0;
+
+  middle_start = m_large->tape + m_large->max_left + left_size;
+
+  repeat = 0;
+  for (cur_size = 1; cur_size <= small_middle_size; cur_size++)
+  {
+    unsigned long long scan;
+
+    previous = middle_start;
+    current = middle_start + cur_size;
+
+    repeat = 1;
+    for (scan = cur_size; scan < large_middle_size; scan++)
+    {
+      if (*previous != *current)
+      {
+        repeat = 0;
+        break;
+      }
+
+      previous++;
+      current++;
+    }
+
+    if (repeat == 1)
+    {
+      break;
+    }
+  }
+
+  if (repeat == 1)
+  {
+    *repeat_size = cur_size;
+    *adjustment = large_middle_size % cur_size;
+  }
+
+  return repeat;
+}
+
 static PyObject* Tree_Identify(PyObject* self,
                                PyObject* args)
 {
@@ -24,7 +78,7 @@ static PyObject* Tree_Identify(PyObject* self,
 
   int result;
 
-  unsigned long long i;
+  unsigned long long step;
   int n_tuple;
 
   PyObject* machine_obj;
@@ -40,6 +94,13 @@ static PyObject* Tree_Identify(PyObject* self,
 
   PyObject* max_steps_obj;
   unsigned long long max_steps;
+
+  unsigned long long left_pattern_start,left_pattern_end;
+
+  unsigned long long middle_pattern_start,middle_pattern_end;
+  unsigned long long repeat_size;
+
+  unsigned long long right_pattern_start,right_pattern_end;
 
   if (!PyTuple_CheckExact(args))
   {
@@ -252,7 +313,17 @@ static PyObject* Tree_Identify(PyObject* self,
 
   result = RESULT_INVALID;
 
-  for (i = 0; i < max_steps; i += 2)
+  left_pattern_start   = tape_middle;
+  left_pattern_end     = tape_middle;
+
+  middle_pattern_start = tape_middle;
+  middle_pattern_end   = tape_middle;
+  repeat_size = -1;
+
+  right_pattern_start  = tape_middle;
+  right_pattern_end    = tape_middle;
+
+  for (step = 0; step < max_steps; step += 2)
   {
     result = step_TM(&m1);
       
@@ -262,11 +333,11 @@ static PyObject* Tree_Identify(PyObject* self,
       break;
     }
 
-    result = step_TM(&m1);
+    result = step_TM(&m2);
       
     if (result != RESULT_STEPPED)
     {
-      result |= RESULT_M1;
+      result |= RESULT_M2;
       break;
     }
 
@@ -292,6 +363,10 @@ static PyObject* Tree_Identify(PyObject* self,
 
       if (m1.position - m1.max_left == m2.position - m2.max_left)
       {
+        unsigned long long scan_m1,scan_m2;
+        unsigned long long left_start,left_end;
+        unsigned long long right_start,right_end;
+
         while (m1.tape[m1.max_right] == 0 && m1.max_right > m1.position)
         {
           m1.max_right--;
@@ -302,23 +377,70 @@ static PyObject* Tree_Identify(PyObject* self,
           m2.max_right--;
         }
 
-        if (m1.max_right - m1.position == m2.max_right - m2.position)
-        {
-          int p1,p2;
+        scan_m1 = m1.max_left;
+        scan_m2 = m2.max_left;
 
-          for (p1 = m1.max_left, p2 = m2.max_left;
-               p1 <= m1.max_right && p2 <= m2.max_right;
-               p1++, p2++)
+        while (scan_m1 < m1.max_right)
+        {
+          if (m1.tape[scan_m1] != m2.tape[scan_m2])
           {
-            if (m1.tape[p1] != m2.tape[p2])
-            {
-              break;
-            }
+            break;
           }
 
-          if (m1.tape[p1] == m2.tape[p2])
+          scan_m1++;
+          scan_m2++;
+        }
+
+        left_start = m1.max_left;
+        left_end   = scan_m1 - 1;
+
+        scan_m1 = m1.max_right;
+        scan_m2 = m2.max_right;
+
+        while (scan_m1 > m1.position)
+        {
+          if (m1.tape[scan_m1] != m2.tape[scan_m2])
           {
-            result = RESULT_INFINITE_DUAL | RESULT_BOTH;
+            break;
+          }
+
+          scan_m1--;
+          scan_m2--;
+        }
+
+        right_start = scan_m1 + 1;
+        right_end   = m1.max_right;
+
+        if (right_start <= left_end)
+        {
+          unsigned long long left_size;
+          unsigned long long small_middle_size;
+          unsigned long long right_size;
+
+          unsigned long long large_middle_size;
+
+          unsigned long long adjustment;
+
+          left_size = right_start - left_start;
+          small_middle_size = left_end - right_start + 1;
+          right_size = right_end - left_end;
+
+          large_middle_size = m2.max_right - m2.max_left + 1 - 
+                              (left_size + right_size);
+
+          if (find_pattern(&m2,left_size,small_middle_size,large_middle_size,
+                           &repeat_size,&adjustment) == 1)
+          {
+            left_pattern_start = left_start;
+            left_pattern_end   = right_start - 1;
+
+            middle_pattern_start = right_start;
+            middle_pattern_end   = left_end - adjustment;
+
+            right_pattern_start = left_end - adjustment + 1;
+            right_pattern_end   = right_end;
+
+            result = RESULT_INFINITE_TREE | RESULT_BOTH;
             break;
           }
         }
@@ -326,95 +448,62 @@ static PyObject* Tree_Identify(PyObject* self,
     }
   }
 
-  free_TM(&m1);
-  free_TM(&m2);
-
-  if ((result & RESULT_VALUE) == RESULT_INFINITE_DUAL)
+  if ((result & RESULT_VALUE) == RESULT_INFINITE_TREE)
   {
-    return Py_BuildValue("(iis)",4,2,"Infinite_dual_run");
+    PyObject* left_list;
+    PyObject* middle_list;
+    PyObject* right_list;
+
+    int left_size;
+    int right_size;
+    int middle_size;
+
+    int i;
+
+    int cur_step;
+
+    left_size = left_pattern_end - left_pattern_start + 1;
+    left_list = PyList_New(left_size);
+
+    for (i = 0; i < left_size; i++)
+    {
+      PyList_SetItem(left_list,i,
+                     Py_BuildValue("i",m1.tape[m1.max_left + i]));
+    }
+
+    middle_size = repeat_size;
+    middle_list = PyList_New(middle_size);
+
+    for (i = 0; i < middle_size; i++)
+    {
+      PyList_SetItem(middle_list,i,
+                     Py_BuildValue("i",m1.tape[m1.max_left + left_size + i]));
+    }
+
+    right_size = right_pattern_end - right_pattern_start + 1;
+    right_list = PyList_New(right_size);
+
+    for (i = 0; i < right_size; i++)
+    {
+      PyList_SetItem(right_list,i,
+                     Py_BuildValue("i",m1.tape[m1.max_right - right_size + 1 + i]));
+    }
+
+    cur_step = step+2;
+
+    free_TM(&m1);
+    free_TM(&m2);
+
+    return Py_BuildValue("(NNN[ii])",left_list,middle_list,right_list,
+                                     cur_step/2,cur_step);
   }
   else
   {
-    if ((result & RESULT_MACHINE) == RESULT_M1)
-    {
-      switch (result & RESULT_VALUE)
-      {
-        case RESULT_HALTED:
-          return Py_BuildValue("(iNN)",
-                               0,
-                               PyLong_FromUnsignedLongLong(m1.total_symbols),
-                               PyLong_FromUnsignedLongLong(m1.total_steps));
-          break;
+    free_TM(&m1);
+    free_TM(&m2);
 
-        case RESULT_NOTAPE:
-          return Py_BuildValue("(iNN)",
-                               1,
-                               PyLong_FromUnsignedLongLong(m1.total_symbols),
-                               PyLong_FromUnsignedLongLong(m1.total_steps));
-          break;
-
-        case RESULT_STEPPED:
-          return Py_BuildValue("(iNN)",
-                               2,
-                               PyLong_FromUnsignedLongLong(m1.total_symbols),
-                               PyLong_FromUnsignedLongLong(m1.total_steps));
-          break;
-
-        case RESULT_UNDEFINED:
-          return Py_BuildValue("(iiiNN)",
-                               3,m1.state,m1.symbol,
-                               PyLong_FromUnsignedLongLong(m1.total_symbols),
-                               PyLong_FromUnsignedLongLong(m1.total_steps));
-          break;
-
-        default:
-          return Py_BuildValue("(iis)",-1,19,"Unexpected_result_for_fast_Turing_machine");
-          break;
-      }
-    }
-    else
-    if ((result & RESULT_MACHINE) == RESULT_M2)
-    {
-      switch (result & RESULT_VALUE)
-      {
-        case RESULT_HALTED:
-          return Py_BuildValue("(iNN)",
-                               0,
-                               PyLong_FromUnsignedLongLong(m2.total_symbols),
-                               PyLong_FromUnsignedLongLong(m2.total_steps));
-          break;
-
-        case RESULT_NOTAPE:
-          return Py_BuildValue("(iNN)",
-                               1,
-                               PyLong_FromUnsignedLongLong(m2.total_symbols),
-                               PyLong_FromUnsignedLongLong(m2.total_steps));
-          break;
-
-        case RESULT_STEPPED:
-          return Py_BuildValue("(iNN)",
-                               2,
-                               PyLong_FromUnsignedLongLong(m2.total_symbols),
-                               PyLong_FromUnsignedLongLong(m2.total_steps));
-          break;
-
-        case RESULT_UNDEFINED:
-          return Py_BuildValue("(iiiNN)",
-                               3,m2.state,m2.symbol,
-                               PyLong_FromUnsignedLongLong(m2.total_symbols),
-                               PyLong_FromUnsignedLongLong(m2.total_steps));
-          break;
-
-        default:
-          return Py_BuildValue("(iis)",-1,20,"Unexpected_result_for_slow_Turing_machine");
-          break;
-      }
-    }
-    else
-    {
-      return Py_BuildValue("(iis)",-1,21,"Normal_stop_but_not_machine_specific");
-    }
+    return Py_BuildValue("()");
   }
 
-  return Py_BuildValue("(iis)",-1,22,"Reached_the_end_which_is_impossible,_;-)");
+  return Py_BuildValue("(iis)",-1,19,"Reached_the_end_which_is_impossible,_;-)");
 }

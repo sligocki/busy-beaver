@@ -28,3 +28,12 @@ setup(name='Macro_Machine',
       version='1.0',
       description='Run one TM using macro steps',
       ext_modules=[module3])
+
+module4 = Extension('Tree_Identify',
+                    sources=['Tree_Identify.c','Turing_Machine.c'],
+                    extra_compile_args=['-pedantic-errors','-Wno-long-long'])
+
+setup(name='Tree_Identify',
+      version='1.0',
+      description='Identify a possible infinite tree',
+      ext_modules=[module4])
