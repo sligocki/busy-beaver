@@ -11,22 +11,6 @@ from Turing_Machine import Turing_Machine, Turing_Machine_Runtime_Error, \
 from IO import IO
 
 def No_Halt_Run(num_states, num_symbols, tape_length, max_steps, next, io):
-  """
-  Stats all distinct BB machines with num_states and num_symbols.
-
-  Runs through all distinct busy beaver machines with num_states and
-  num_symbols until they:
-   -1) Generate an internal error
-    0) Halt
-    1) Exceed tape_length
-    2) Exceed max_steps
-    4) Are in a detected infinite loop
-
-  It then categorizes all distict machines as one of these above 3 along with
-  important information such as:
-    0) Number of non-zero symbols written
-    1) Number of steps run for
-  """
   while next:
     machine_num = next[0]
 
@@ -47,26 +31,6 @@ def No_Halt_Run(num_states, num_symbols, tape_length, max_steps, next, io):
 
 def No_Halt_Recursive(machine_num, machine, num_states, num_symbols,
                       tape_length, max_steps, old_results, io):
-  """
-  Stats this BB machine.
-
-  Runs this machine until it:
-   -1) Generates an internal error
-    0) Halts
-    1) Exceeds tape_length
-    2) Exceeds max_steps
-    3) Reaches an undefined cell of the transition table
-    4) Is in a detected infinite loop
-
-  If it reaches an undefined cell it recursively calls this function with
-  each of the possible entrees to that cell so that it can find ever distinct
-  machine which comes from the input machine
-
-  Otherwise it saves the input machine with the reason that it ended and
-  important information such as:
-    0) Number of non-zero symbols written
-    1) Number of steps run for
-  """
   results = run(machine.get_TTable(), num_states, num_symbols,
                 tape_length, max_steps)
 

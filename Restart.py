@@ -8,61 +8,20 @@
 
 import copy
 
-from Turing_Machine import Turing_Machine
+from Turing_Machine import Turing_Machine, Turing_Machine_Runtime_Error
 from IO import IO
 
 # global machine number
 g_machine_num = 0
 g_next = None
 
-class Turing_Machine_Runtime_Error:
-  """
-  This exception class is raised if an error occurs while running/simulating a
-  turing machine (currently done in c-code).
-  """
-
-  def __init__(self, value=None):
-    self.value = value
-
-  def __repr__(self):
-    return `self.value`
-
 def Generate(num_states, num_symbols, tape_length, max_steps, io):
-  """
-  Stats all distinct BB machines with num_states and num_symbols.
-
-  Runs through all distinct busy beaver machines with num_states and
-  num_symbols until they:
-   -1) Generate an internal error
-    0) Halt
-    1) Exceed tape_length
-    2) Exceed max_steps
-
-  It then categorizes all distict machines as one of these above 3 along with
-  important information such as:
-    0) Number of non-zero symbols written
-    1) Number of steps run for
-  """
   machine = Turing_Machine(num_states, num_symbols)
   Generate_Recursive(machine, num_states, num_symbols,
                      tape_length, max_steps, io)
 
 def Generate_Recursive(machine, num_states, num_symbols,
                        tape_length, max_steps, io):
-  """
-  Stats this BB machine.
-
-  Runs this machine until it:
-   -1) Generates an internal error
-    0) Halts
-    1) Exceeds tape_length
-    2) Exceeds max_steps
-    3) Reaches an undefined cell of the transition table
-
-  If it reaches an undefined cell it recursively calls this function with
-  each of the possible entrees to that cell so that it can find every distinct
-  machine which comes from the input machine
-  """
   global g_machine_num
 
   if g_next and machine.get_TTable() == g_next[6]:
