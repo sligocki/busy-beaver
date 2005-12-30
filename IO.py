@@ -16,12 +16,13 @@ class IO:
     * if this is 'None' then the user doesn't intend to do this type of
       operation.
   """
-  def __init__(self, input_file, output_file):
+  def __init__(self, input_file, output_file, log_number = None):
     """
     Save file information.
     """
     self.input_file  = input_file
     self.output_file = output_file
+    self.log_number = log_number
 
   def write_result(self, machine_num, tape_length, max_steps, results,
                    machine, old_results = []):
@@ -45,15 +46,18 @@ class IO:
         else:
           self.output_file.write("%s " % item)
 
-      self.output_file.write("%s " % machine.get_TTable());
+      self.output_file.write("%s " % machine.get_TTable())
+
+      if self.log_number is not None and old_results:
+        self.output_file.write("%d " % self.log_number)
       
-      for item in old_results:
-        if type(item) in [int, long]:
-          self.output_file.write("%d " % item)
-        elif type(item) == float:
-          self.output_file.write("%.0f " % item)
-        else:
-          self.output_file.write("%s " % item)
+        for item in old_results:
+          if type(item) in [int, long]:
+            self.output_file.write("%d " % item)
+          elif type(item) == float:
+            self.output_file.write("%.0f " % item)
+          else:
+            self.output_file.write("%s " % item)
 
       self.output_file.write("\n")
       self.output_file.flush()
@@ -89,20 +93,24 @@ class IO:
             index += 1
         results = tuple(results)
 
-        machine_TTable = [parts[index]]
+        machine_TTable = []
         for item in parts[index:]:
+          machine_TTable.append(item)
+          index += 1
           if len(item) >= 2 and item[-2:] == "]]":
-            machine_TTable.append(item)
-            index += 1
             break
-          else:
-            machine_TTable.append(item)
-            index += 1
         machine_TTable = eval(string.join(machine_TTable))
+
+        try:
+          log_number = int(parts[index])
+        except:
+          log_number = None
+        index += 1
 
         old_results = list(parts[index:])
 
         return_value = (machine_num, num_states, num_symbols, tape_length,
-                        max_steps, results, machine_TTable, old_results)
+                        max_steps, results, machine_TTable, log_number,
+                        old_results)
 
     return return_value

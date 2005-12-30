@@ -4,6 +4,30 @@ Contains Busy Beaver Turing_Machine class.
 
 import sys
 
+class Turing_Machine_Runtime_Error:
+  """
+  This exception class is raised if an error occurs while running/simulating a
+  turing machine (currently done in c-code).
+  """
+
+  def __init__(self, value=None):
+    self.value = value
+
+  def __repr__(self):
+    return `self.value`
+
+class Filter_Unexpected_Return:
+  """
+  This exception class is raised if an unexpected value is returned from a
+  filter.  This will generaly mean that an undefined cell was found.
+  """
+
+  def __init__(self, value=None):
+    self.value = value
+
+  def __repr__(self):
+    return `self.value`
+
 class Turing_Machine:
   """
   Class for creating and storing Busy Beaver Machines which may include blank
