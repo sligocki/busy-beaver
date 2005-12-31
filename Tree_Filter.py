@@ -34,7 +34,7 @@ def Examine_Machine(machine_num, machine, num_states, num_symbols,
                     tape_length, max_steps, old_results, io):
   """Examine specific tree and attempt to classify as tree."""
   results = run(machine, num_states, num_symbols,
-                tape_length, max_steps)
+                tape_length, max_steps, machine_num)
 
   exit_condition = results[0]
 
@@ -73,27 +73,39 @@ def Examine_Machine(machine_num, machine, num_states, num_symbols,
 
   return
 
-def run(machine, num_states, num_symbols, tape_length, max_steps):
+def run(machine, num_states, num_symbols, tape_length, max_steps, machine_num):
   """Wrapper for three step tree checking code."""
   from Tree_Identify import Tree_Identify
   from Tree_Classify import Tree_Classify
   from Tree_Prove import Tree_Prove
 
+  print "run", machine_num
   identify = Tree_Identify(machine.get_TTable(), num_states, num_symbols, tape_length, max_steps)
+  print "identify", identify
   if identify and identify[0] != -1:
     classify = Tree_Classify(machine, identify)
+    print "classify", classify
     if classify:
       prove = Tree_Prove(machine, classify)
+      print "prove", prove
       if prove:
         return prove
       else:
+        # Tree_Prove rejected machine.
+        # This means that the description passed by Tree_Classify did not work
+        # for a general number of middle pieces.  If Tree_Classify is running
+        # correctly this means that the machine performed like a tree for one
+        # repetition, but not for all repititions, so it may halt.
         raise ValueError, "Tree_Classify returned an incorrect classification.\n%s" % repr(classify)
     else:
+      # Tree_Classify rejected machine.
+      # This means that the last 2 step_numbers passed by Tree_Identify were
+      # not consecutive "repeats" of a tree repetition.  If Tree_Identify is
+      # running correctly that means that it detected some similar patern.
       # Prob want to call Tree_Identify again to find new repeating pattern?
   elif not identify:
-    # Return Inconclusive.
-    # If I return a tuple with 1 or 2 as the first value it will consider this
-    # machine to still be unnclassified.
+    # Tree_Identify rejected machine.
+    # This means no tree-type patterns were discovered (but some might exist?)
     return (1,)
   else: # if identify[0] == -1:
     # Return Error.
