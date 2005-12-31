@@ -48,6 +48,16 @@ class Turing_Machine:
     self.max_symbol = 1
     self.num_empty_cells = self.num_states * self.num_symbols - 1
 
+  def __repr__(self):
+    return "Turing_Machine(%s)" % repr(self._TTable)
+  def __str__(self):
+    string = ""
+    for state in self._TTable:
+      for symbol in state:
+        string += "%-12s" % str(symbol)
+      string += "\n"
+    return string
+
   def get_TTable(self):
     """
     Returns the transition table in tuple format.
