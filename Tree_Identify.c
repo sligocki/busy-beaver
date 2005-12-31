@@ -97,6 +97,9 @@ static PyObject* Tree_Identify(PyObject* self,
   PyObject* max_steps_obj;
   unsigned long long max_steps;
 
+  unsigned long long left_start,left_end;
+  unsigned long long right_start,right_end;
+
   unsigned long long left_pattern_start,left_pattern_end;
 
   unsigned long long middle_pattern_start,middle_pattern_end;
@@ -318,6 +321,12 @@ static PyObject* Tree_Identify(PyObject* self,
 
   result = RESULT_INVALID;
 
+  left_start  = tape_middle;
+  left_end    = tape_middle;
+
+  right_start = tape_middle;
+  right_end   = tape_middle;
+
   left_pattern_start   = tape_middle;
   left_pattern_end     = tape_middle;
 
@@ -372,8 +381,6 @@ static PyObject* Tree_Identify(PyObject* self,
       if (m1.position - m1.max_left == m2.position - m2.max_left)
       {
         unsigned long long scan_m1,scan_m2;
-        unsigned long long left_start,left_end;
-        unsigned long long right_start,right_end;
 
         while (m1.tape[m1.max_right] == 0 && m1.max_right > m1.position)
         {
@@ -491,8 +498,7 @@ static PyObject* Tree_Identify(PyObject* self,
         if (m1.position - m1.max_left == m2.position - m2.max_left)
         {
           unsigned long long scan_m1,scan_m2;
-          unsigned long long left_start,left_end;
-          unsigned long long right_start,right_end;
+          int matched;
 
           while (m1.tape[m1.max_right] == 0 && m1.max_right > m1.position)
           {
@@ -504,65 +510,57 @@ static PyObject* Tree_Identify(PyObject* self,
             m2.max_right--;
           }
 
-          scan_m1 = m1.max_left;
-          scan_m2 = m2.max_left;
+          matched = 1;
 
-          while (scan_m1 < m1.max_right)
+          for (scan_m1 = left_start, scan_m2 = m2.max_left;
+               scan_m1 <= left_end && matched == 1;
+               scan_m1++, scan_m2++)
           {
             if (m1.tape[scan_m1] != m2.tape[scan_m2])
             {
-              break;
+              matched = 0;
             }
-
-            scan_m1++;
-            scan_m2++;
           }
 
-          left_start = m1.max_left;
-          left_end   = scan_m1 - 1;
-
-          scan_m1 = m1.max_right;
-          scan_m2 = m2.max_right;
-
-          while (scan_m1 > m1.position)
+          for (scan_m1 = right_end, scan_m2 = m2.max_right;
+               scan_m1 >= right_start && matched == 1;
+               scan_m1--, scan_m2--)
           {
             if (m1.tape[scan_m1] != m2.tape[scan_m2])
             {
+              matched = 0;
               break;
             }
-
-            scan_m1--;
-            scan_m2--;
           }
 
-          right_start = scan_m1 + 1;
-          right_end   = m1.max_right;
-
-          if (right_start <= left_end)
+          if (matched == 1)
           {
-            unsigned long long left_size;
-            unsigned long long small_middle_size;
-            unsigned long long right_size;
-
-            unsigned long long large_middle_size;
-
-            unsigned long long adjustment;
-
-            left_size = right_start - left_start;
-            small_middle_size = left_end - right_start + 1;
-            right_size = right_end - left_end;
-
-            large_middle_size = m2.max_right - m2.max_left + 1 - 
-                                (left_size + right_size);
-
-            if (find_pattern(&m2,left_size,small_middle_size,large_middle_size,
-                             &repeat_size,&adjustment) == 1)
+            if (right_start <= left_end)
             {
-              result = RESULT_INFINITE_TREE | RESULT_BOTH;
+              unsigned long long left_size;
+              unsigned long long small_middle_size;
+              unsigned long long right_size;
 
-              steps_saved[cycles] = step;
+              unsigned long long large_middle_size;
 
-              break;
+              unsigned long long adjustment;
+
+              left_size = right_start - left_start;
+              small_middle_size = left_end - right_start + 1;
+              right_size = right_end - left_end;
+
+              large_middle_size = m2.max_right - m2.max_left + 1 - 
+                                  (left_size + right_size);
+
+              if (find_pattern(&m2,left_size,small_middle_size,large_middle_size,
+                               &repeat_size,&adjustment) == 1)
+              {
+                result = RESULT_INFINITE_TREE | RESULT_BOTH;
+
+                steps_saved[cycles] = step;
+
+                break;
+              }
             }
           }
         }
