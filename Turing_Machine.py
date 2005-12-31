@@ -48,8 +48,6 @@ class Turing_Machine:
     self.max_symbol = 1
     self.num_empty_cells = self.num_states * self.num_symbols - 1
 
-    self.add_cell = self.set_cell
-
   def get_TTable(self):
     """
     Returns the transition table in tuple format.
@@ -103,8 +101,10 @@ class Turing_Machine:
       return largest
 
   def get_cell(self, state_in, symbol_in):
-    return _TTable[state_in][symbol_in]
+    return self._TTable[state_in][symbol_in]
 
+  def add_cell(self, *args):
+    return self.set_cell(*args)
   def set_cell(self, state_in, symbol_in, state_out, symbol_out, direction_out):
     # If this cell was empty, decriment num_empty_cells
     if self._TTable[state_in][symbol_in][0] == -1:
