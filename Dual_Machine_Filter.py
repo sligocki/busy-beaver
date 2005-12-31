@@ -85,7 +85,7 @@ def save_machine(machine_num, machine, results, tape_length, max_steps,
   Saves a busy beaver machine with the provided data information.
   """
   io.write_result(machine_num, tape_length, max_steps, results, machine,
-                  old_results);
+                  old_results = old_results);
 
 # Default test code
 if __name__ == "__main__":
