@@ -1,0 +1,45 @@
+#!/bin/csh
+
+# Check for enough arguments
+set argc="$#argv"
+if ("$argc" < 2) then
+  echo "Usage:  rewind basename command_number"
+  exit 1
+endif
+
+# Save the basename and command number
+set basename=$1
+set command_number=$2
+
+# Check for a log file
+set logfile="$basename.log"
+if (! -e "$logfile") then
+  echo "Logfile not found"
+  exit 1
+endif
+
+# Check for the command number given
+grep -q "^ *$command_number" "$logfile"
+if ("$status" != 0) then
+  echo "Logfile does not contain command number $command_number"
+  exit 1
+endif
+
+\mv -f "$basename.halt"     "$basename.halt.save"
+\mv -f "$basename.infinite" "$basename.infinite.save"
+\cp -f "$basename.unknown"  "$basename.unknown.save"
+
+rewind.py "$command_number"                              \
+          "$basename.halt.save"     "$basename.halt"     \
+          "$basename.infinite.save" "$basename.infinite" \
+          "$basename.unknown"
+
+awk '{ print $0; if ($1 == command_number) exit; }' \
+    command_number=$command_number "$logfile" >! "/tmp/rewind$$"
+\mv -f "$logfile"      "$logfile.save"
+\mv -f "/tmp/rewind$$" "$logfile"
+
+sort +0n -1 "$basename.unknown" >! "/tmp/rewind$$"
+\mv -f "/tmp/rewind$$" "$basename.unknown"
+
+exit 0
