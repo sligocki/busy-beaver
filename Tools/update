@@ -37,19 +37,26 @@ if ("$status" != 0) then
   exit 1
 endif
 
-# Log the running of the command
-echo "$log_number" | awk '{printf("%6d",$1);}' >> "$basename.log"
-echo " | $date | $command"                     >> "$basename.log"
-
-# Integrate the output data into the existing database
-Integrate_Data.py "$basename.out"                                           \
-                  "$basename.halt" "$basename.infinite" "$basename.unknown" \
-                  "$basename.error"
-
-# Check for failure
+# Check for any change
+cmp -s "$basename.unknown" "$basename.out"
 if ("$status" != 0) then
-  echo "Integration failed"
-  exit 1
+  # Log the running of the command
+  echo "$log_number" | awk '{printf("%6d",$1);}' >> "$basename.log"
+  echo " | $date | $command"                     >> "$basename.log"
+
+  # Integrate the output data into the existing database
+  Integrate_Data.py "$basename.out"                                           \
+                    "$basename.halt" "$basename.infinite" "$basename.unknown" \
+                    "$basename.error"
+
+  # Check for failure
+  if ("$status" != 0) then
+    echo "Integration failed"
+    exit 1
+  endif
+else
+  rm -f "$basename.out"
+  echo "No change"
 endif
 
 # Exit successfully
