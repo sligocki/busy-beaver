@@ -25,10 +25,13 @@ class IO:
     self.log_number = log_number
 
   def write_result(self, machine_num, tape_length, max_steps, results,
-                   machine, old_results = []):
+                   machine, log_number = None, old_results = []):
     """
     Writes a result.
     """
+    if log_number is None:
+      log_number = self.log_number
+
     if self.output_file:
       self.output_file.write("%d " % machine_num)
 
