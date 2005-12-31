@@ -1,0 +1,51 @@
+#!/bin/csh
+
+# Check for enough arguments
+set argc="$#argv"
+if ("$argc" < 1) then
+  echo "Usage:  rerun logfile"
+  exit 1
+endif
+
+# Save the log file name
+set logfile=$1
+
+# Get the integrate coomand from the log file
+set integrate=`head -1 "$logfile"`
+
+# Start with the second line of the log file
+set line=2
+
+# Get each command run (in order)
+set total=`cat "$logfile" | wc -l`
+while ($line <= $total)
+  # Get the command for the log file
+  set command=`head -$line "$logfile"     \
+               | tail -1                  \
+               | awk 'BEGIN {FS = "|"}    \
+                            {print $3;}'`
+  # Run the command
+  echo "Running: $command"
+  $command
+
+  # Check for failure
+  if ("$status" != 0) then
+    echo "Command failed"
+    exit 1
+  endif
+
+  # Integrate the output data into the existing database
+  $integrate
+
+  # Check for failure
+  if ("$status" != 0) then
+    echo "Integration failed"
+    exit 1
+  endif
+ 
+  # Move onto the next line
+  @ line++
+end
+
+# Exit successfully
+exit 0
