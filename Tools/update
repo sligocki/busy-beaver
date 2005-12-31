@@ -20,6 +20,7 @@ if (-e "$logfile" && ! -z "logfile") then
   set log_number=`tail -1 "$logfile" | awk '{print $1 + 1;}'`
 else
   set log_number=1
+  echo "Integrate_Data.py $basename.out $basename.halt $basename.infinite $basename.unknown $basename.error" >> "$logfile"
 endif
 
 # Get the current date and command
