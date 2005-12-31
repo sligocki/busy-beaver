@@ -2,6 +2,8 @@
 
 #include "Turing_Machine.h"
 
+#define STEPS_SAVED   5
+
 static PyObject* Tree_Identify(PyObject* self,
                                PyObject* args);
 
@@ -101,6 +103,9 @@ static PyObject* Tree_Identify(PyObject* self,
   unsigned long long repeat_size;
 
   unsigned long long right_pattern_start,right_pattern_end;
+
+  int steps_saved[STEPS_SAVED];
+  int cycles;
 
   if (!PyTuple_CheckExact(args))
   {
@@ -323,9 +328,11 @@ static PyObject* Tree_Identify(PyObject* self,
   right_pattern_start  = tape_middle;
   right_pattern_end    = tape_middle;
 
-  for (step = 0; step < max_steps; step += 2)
+  step = 0;
+  while (step < max_steps)
   {
     result = step_TM(&m1);
+    step++;
       
     if (result != RESULT_STEPPED)
     {
@@ -334,6 +341,7 @@ static PyObject* Tree_Identify(PyObject* self,
     }
 
     result = step_TM(&m2);
+    step++;
       
     if (result != RESULT_STEPPED)
     {
@@ -441,6 +449,10 @@ static PyObject* Tree_Identify(PyObject* self,
             right_pattern_end   = right_end;
 
             result = RESULT_INFINITE_TREE | RESULT_BOTH;
+
+            steps_saved[0] = step/2;
+            steps_saved[1] = step;
+
             break;
           }
         }
@@ -448,19 +460,130 @@ static PyObject* Tree_Identify(PyObject* self,
     }
   }
 
+  cycles = 2;
+
+  while (((result & RESULT_VALUE) == RESULT_INFINITE_TREE) &&
+         cycles < STEPS_SAVED)
+  {
+    while (step < max_steps)
+    {
+      result = step_TM(&m2);
+      step++;
+        
+      if (result != RESULT_STEPPED)
+      {
+        result |= RESULT_M2;
+        break;
+      }
+
+      if (m1.state == m2.state && m1.symbol == m2.symbol)
+      {
+        while (m1.tape[m1.max_left] == 0 && m1.max_left < m1.position)
+        {
+          m1.max_left++;
+        }
+
+        while (m2.tape[m2.max_left] == 0 && m2.max_left < m2.position)
+        {
+          m2.max_left++;
+        }
+
+        if (m1.position - m1.max_left == m2.position - m2.max_left)
+        {
+          unsigned long long scan_m1,scan_m2;
+          unsigned long long left_start,left_end;
+          unsigned long long right_start,right_end;
+
+          while (m1.tape[m1.max_right] == 0 && m1.max_right > m1.position)
+          {
+            m1.max_right--;
+          }
+
+          while (m2.tape[m2.max_right] == 0 && m2.max_right > m2.position)
+          {
+            m2.max_right--;
+          }
+
+          scan_m1 = m1.max_left;
+          scan_m2 = m2.max_left;
+
+          while (scan_m1 < m1.max_right)
+          {
+            if (m1.tape[scan_m1] != m2.tape[scan_m2])
+            {
+              break;
+            }
+
+            scan_m1++;
+            scan_m2++;
+          }
+
+          left_start = m1.max_left;
+          left_end   = scan_m1 - 1;
+
+          scan_m1 = m1.max_right;
+          scan_m2 = m2.max_right;
+
+          while (scan_m1 > m1.position)
+          {
+            if (m1.tape[scan_m1] != m2.tape[scan_m2])
+            {
+              break;
+            }
+
+            scan_m1--;
+            scan_m2--;
+          }
+
+          right_start = scan_m1 + 1;
+          right_end   = m1.max_right;
+
+          if (right_start <= left_end)
+          {
+            unsigned long long left_size;
+            unsigned long long small_middle_size;
+            unsigned long long right_size;
+
+            unsigned long long large_middle_size;
+
+            unsigned long long adjustment;
+
+            left_size = right_start - left_start;
+            small_middle_size = left_end - right_start + 1;
+            right_size = right_end - left_end;
+
+            large_middle_size = m2.max_right - m2.max_left + 1 - 
+                                (left_size + right_size);
+
+            if (find_pattern(&m2,left_size,small_middle_size,large_middle_size,
+                             &repeat_size,&adjustment) == 1)
+            {
+              result = RESULT_INFINITE_TREE | RESULT_BOTH;
+
+              steps_saved[cycles] = step;
+
+              break;
+            }
+          }
+        }
+      }
+    }
+
+    cycles++;
+  }
+
   if ((result & RESULT_VALUE) == RESULT_INFINITE_TREE)
   {
     PyObject* left_list;
     PyObject* middle_list;
     PyObject* right_list;
+    PyObject* step_list;
 
     int left_size;
     int right_size;
     int middle_size;
 
     int i;
-
-    int cur_step;
 
     left_size = left_pattern_end - left_pattern_start + 1;
     left_list = PyList_New(left_size);
@@ -489,13 +612,17 @@ static PyObject* Tree_Identify(PyObject* self,
                      Py_BuildValue("i",m1.tape[m1.max_right - right_size + 1 + i]));
     }
 
-    cur_step = step+2;
+    step_list = PyList_New(STEPS_SAVED);
+
+    for (i = 0; i < STEPS_SAVED; i++)
+    {
+      PyList_SetItem(step_list,i,Py_BuildValue("i",steps_saved[i]));
+    }
 
     free_TM(&m1);
     free_TM(&m2);
 
-    return Py_BuildValue("(NNN[ii])",left_list,middle_list,right_list,
-                                     cur_step/2,cur_step);
+    return Py_BuildValue("(NNNN)",left_list,middle_list,right_list,step_list);
   }
   else
   {
