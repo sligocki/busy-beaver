@@ -543,6 +543,7 @@ static PyObject* Tree_Identify(PyObject* self,
 
               unsigned long long large_middle_size;
 
+              unsigned long long cur_repeat_size;
               unsigned long long adjustment;
 
               left_size = right_start - left_start;
@@ -553,13 +554,16 @@ static PyObject* Tree_Identify(PyObject* self,
                                   (left_size + right_size);
 
               if (find_pattern(&m2,left_size,small_middle_size,large_middle_size,
-                               &repeat_size,&adjustment) == 1)
+                               &cur_repeat_size,&adjustment) == 1)
               {
-                result = RESULT_INFINITE_TREE | RESULT_BOTH;
+                if (cur_repeat_size == repeat_size)
+                {
+                  result = RESULT_INFINITE_TREE | RESULT_BOTH;
 
-                steps_saved[cycles] = step;
+                  steps_saved[cycles] = step;
 
-                break;
+                  break;
+                }
               }
             }
           }
