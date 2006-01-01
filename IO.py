@@ -51,8 +51,8 @@ class IO:
 
       self.output_file.write("%s " % machine.get_TTable())
 
-      if self.log_number is not None and old_results:
-        self.output_file.write("%d " % self.log_number)
+      if log_number is not None and old_results:
+        self.output_file.write("%d " % log_number)
       
         for item in old_results:
           if type(item) in [int, long]:
