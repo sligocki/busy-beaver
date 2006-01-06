@@ -23,6 +23,11 @@ inline void get_macro_symbol(int* symbol, int* tape, int position, int size)
   for (i = 0; i < 2*size-1; i++)
   {
     symbol[i] = tape[i-size+1 + position];
+    if (symbol[i] < 0 || symbol[i] > 10)
+    {
+      fprintf(stderr,"--- Getting bad data: %d %d %d, %d...\n",i,size,position,i-size+1 + position);
+      abort();
+    }
   }
 }
 
@@ -31,6 +36,11 @@ inline void put_macro_symbol(int* symbol, int* tape, int position, int size)
   int i;
   for (i = 0; i < 2*size-1; i++)
   {
+    if (symbol[i] < 0 || symbol[i] > 10)
+    {
+      fprintf(stderr,"--- Putting bad data: %d %d %d, %d...\n",i,size,position,i-size+1 + position);
+      abort();
+    }
     tape[i-size+1 + position] = symbol[i];
   }
 }
@@ -345,7 +355,7 @@ static PyObject* Macro_Machine(PyObject* self,
   int num_states_imp;
 
   PyObject* num_symbols_obj;
-  int num_symbols,num_symbols_imp;
+  int num_symbols_imp;
 
   PyObject* tape_length_obj;
 
@@ -390,7 +400,7 @@ static PyObject* Macro_Machine(PyObject* self,
     return Py_BuildValue("(iis)",-1,4,"Unable_to_extract_#_of_symbols");
   }
 
-  num_symbols = PyInt_AsLong(num_symbols_obj);
+  inTM.num_symbols = PyInt_AsLong(num_symbols_obj);
 
   macro_size_obj = PyTuple_GetItem(args,3);
 
@@ -435,19 +445,19 @@ static PyObject* Macro_Machine(PyObject* self,
 
       num_symbols_imp = PyList_Size(cur_state_obj);
 
-      if (num_symbols_imp != num_symbols)
+      if (num_symbols_imp != inTM.num_symbols)
       {
         return Py_BuildValue("(iis)",-1,10,"Number_of_symbols_do_not_match");
       }
 
-      inTM.machine[iter_state].t = (TRANSITION *)malloc(num_symbols*sizeof(*(inTM.machine[iter_state].t)));
+      inTM.machine[iter_state].t = (TRANSITION *)malloc(inTM.num_symbols*sizeof(*(inTM.machine[iter_state].t)));
 
       if (inTM.machine[iter_state].t == NULL)
       {
         return Py_BuildValue("(iis)",-1,11,"Out_of_memory_allocating_machine_state_transition");
       }
 
-      for (iter_symbol = 0; iter_symbol < num_symbols; iter_symbol++)
+      for (iter_symbol = 0; iter_symbol < inTM.num_symbols; iter_symbol++)
       {
         PyObject* cur_trans_obj;
         int i0,i1,i2;
@@ -469,7 +479,7 @@ static PyObject* Macro_Machine(PyObject* self,
           return Py_BuildValue("(iis)",-1,14,"Unable_to_parse_Turing_machine_transition 3-tuple");
         }
 
-        if (i0 < -1 || i0 >= num_symbols)
+        if (i0 < -1 || i0 >= inTM.num_symbols)
         {
           return Py_BuildValue("(iis)",-1,15,"Illegal_symbol_in_Turing_machine_transistion_3-tuple");
         }
@@ -518,7 +528,7 @@ static PyObject* Macro_Machine(PyObject* self,
   inTM.tape = (int *)calloc(inTM.tape_length,sizeof(*(inTM.tape)));
   
   macroTM.num_states  = inTM.num_states;
-  macroTM.num_symbols = pow(num_symbols,2*macroTM.size-1);
+  macroTM.num_symbols = pow(inTM.num_symbols,2*macroTM.size-1);
 
   if (inTM.tape == NULL || macroTM.tape == NULL)
   {
