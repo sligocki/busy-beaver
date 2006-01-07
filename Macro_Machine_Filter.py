@@ -18,6 +18,9 @@ def Macro_Machine_Run(num_states, num_symbols, macro_size, tape_length,
     num_states  = next[1]
     num_symbols = next[2]
 
+    old_tape_length = next[3]
+    old_max_steps   = next[4]
+
     results = next[5]
 
     machine = Turing_Machine(num_states, num_symbols)
@@ -26,13 +29,15 @@ def Macro_Machine_Run(num_states, num_symbols, macro_size, tape_length,
     if (results[0] != 0 and results[0] != 4):
       Macro_Machine_Recursive(machine_num,
                               machine, num_states, num_symbols, macro_size,
-                              tape_length, max_steps, results, io)
+                              tape_length, max_steps, results,
+                              old_tape_length, old_max_steps, io)
 
     next = io.read_result()
 
 def Macro_Machine_Recursive(machine_num,
                             machine, num_states, num_symbols, macro_size,
-                            tape_length, max_steps, old_results, io):
+                            tape_length, max_steps,
+                            old_results, old_tape_length, old_max_steps, io):
   results = run(machine.get_TTable(), num_states, num_symbols, macro_size,
                    tape_length, max_steps)
 
@@ -43,8 +48,8 @@ def Macro_Machine_Recursive(machine_num,
     error_number = results[1]
     message      = results[2]
     sys.stderr.write("Error %d: %s\n" % (error_number, message))
-    save_machine(machine_num, machine, results, tape_length, max_steps, io,
-                 old_results)
+    save_machine(machine_num, machine, results,
+                 old_tape_length, old_ax_steps, io, old_results)
     raise Turing_Machine_Runtime_Error, "Error encountered while running a turing machine"
 
   #    3) Reached Undefined Cell
@@ -52,8 +57,8 @@ def Macro_Machine_Recursive(machine_num,
   elif exit_condition == 3:
     sys.stderr.write("Machine (%d) reached undefined cell: %s" %
                      (machine_num, result))
-    save_machine(machine_num, machine, results, tape_length, max_steps, io,
-                 old_results)
+    save_machine(machine_num, machine, results,
+                 old_tape_length, old_max_steps, io, old_results)
     raise Filter_Unexpected_Return, "Machine reached undefined cell in filter."
 
   # All other returns:
@@ -64,12 +69,12 @@ def Macro_Machine_Recursive(machine_num,
   else:
     # If classified (Halt or Infinite)
     if (results[0] == 0 or results[0] == 4):
-      save_machine(machine_num, machine, results, tape_length, max_steps, io,
-                   old_results)
+      save_machine(machine_num, machine, results,
+                   old_tape_length, old_max_steps, io, old_results)
     # If still unclassified
     else:
-      save_machine(machine_num, machine, old_results, tape_length, max_steps,
-                   io)
+      save_machine(machine_num, machine, old_results,
+                   old_tape_length, old_max_steps, io)
 
   return
 
