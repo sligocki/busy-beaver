@@ -10,7 +10,7 @@ from Turing_Machine import Turing_Machine, Turing_Machine_Runtime_Error, \
                            Filter_Unexpected_Return
 from IO import IO
 
-def Tree_Filter(num_states, num_symbols, tape_lenth, max_steps, next, io):
+def Tree_Filter(num_states, num_symbols, tape_length, max_steps, next, io):
   """Iterate through all machines in input and attempt to classify as trees."""
   while next:
     machine_num = next[0]
@@ -26,7 +26,7 @@ def Tree_Filter(num_states, num_symbols, tape_lenth, max_steps, next, io):
     # If this machine has not been shown to halt or proven infinite.
     if (results[0] != 0 and results[0] != 4):
       Examine_Machine(machine_num, machine, num_states, num_symbols,
-                      tape_lenth, max_steps, results, io)
+                      tape_length, max_steps, results, io)
 
     next = io.read_result()
 
