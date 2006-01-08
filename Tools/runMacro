@@ -1,0 +1,37 @@
+#!/bin/csh -f
+set steps=1000
+set tape=1000
+
+set size=1
+set stop=10000
+
+set argc=$#argv
+if ("$argc" >= 1) then
+  set base="$1"
+else
+  echo "Usage:  runMacro basename [tape [steps [size [stop]]]]"
+endif
+if ("$argc" >= 2) then
+  set tape="$2"
+endif
+if ("$argc" >= 3) then
+  set steps="$3"
+endif
+if ("$argc" >= 4) then
+  set size="$4"
+endif
+if ("$argc" >= 4) then
+  set stop="$5"
+endif
+
+wc -l "$base".{halt,infinite,unknown}
+echo ""
+while ("$size" <= "$stop")
+  echo $size
+  set cur_steps=`expr $steps \* $size`
+  set cur_tape=`expr $tape \* $size`
+  update "$base" Macro_Machine_Filter.py --tape=$cur_tape --steps=$cur_steps --size=$size
+  wc -l "$base".{halt,infinite,unknown}
+  echo ""
+  @ size++
+end
