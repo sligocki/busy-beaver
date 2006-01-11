@@ -24,14 +24,14 @@ if ("$argc" >= 4) then
   set stop="$5"
 endif
 
-wc -l "$base".{halt,infinite,unknown}
+wc -l "$base".unknown
 echo ""
 while ("$size" <= "$stop")
   echo $size
   set cur_steps=`expr $steps \* $size`
   set cur_tape=`expr $tape \* $size`
   update "$base" Macro_Machine_Filter.py --tape=$cur_tape --steps=$cur_steps --size=$size
-  wc -l "$base".{halt,infinite,unknown}
+  wc -l "$base".unknown
   echo ""
   @ size++
 end
