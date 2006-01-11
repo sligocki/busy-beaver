@@ -58,9 +58,12 @@ infinite_file.close()
 unknown_file.close()
 error_file.close()
 
+# Remove input file so that it is not accidentally re-integrated
+os.remove(input_filename)
+
 # If error file is empty remove it.
 if not was_error:
   os.remove(error_filename)
-
-# Remove input file so that it is not accidentally re-integrated
-os.remove(input_filename)
+  sys.exit(0)
+else:
+  sys.exit(1)
