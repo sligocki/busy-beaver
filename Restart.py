@@ -22,7 +22,7 @@ def Generate(num_states, num_symbols, tape_length, max_steps, io):
 
 def Generate_Recursive(machine, num_states, num_symbols,
                        tape_length, max_steps, io):
-  global g_machine_num
+  global g_machine_num, g_next
 
   if g_next and machine.get_TTable() == g_next[6]:
     results = g_next[5]
@@ -137,7 +137,7 @@ if __name__ == "__main__":
   opts, args = Filter_Option_Parser(sys.argv, [])
 
   io = IO(opts["infile"], opts["outfile"])
-  next = io.read_result()
+  g_next = io.read_result()
 
   Generate(opts["states"], opts["symbols"],
-           opts["tape"], opts["steps"], next, io)
+           opts["tape"], opts["steps"], io)
