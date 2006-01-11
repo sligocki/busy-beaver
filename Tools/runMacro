@@ -9,7 +9,7 @@ set argc=$#argv
 if ("$argc" >= 1) then
   set base="$1"
 else
-  echo "Usage:  runMacro basename [tape [steps [size [stop]]]]"
+  echo "Usage:  runMacro basename [tape [steps [start_size [stop_size]]]]"
 endif
 if ("$argc" >= 2) then
   set tape="$2"
@@ -32,6 +32,11 @@ while ("$size" <= "$stop")
   set cur_tape=`expr $tape \* $size`
   update "$base" Macro_Machine_Filter.py --tape=$cur_tape --steps=$cur_steps --size=$size
   wc -l "$base".unknown
+  if (-e "$base".error) then
+    echo "Error encountered..."
+    exit 1
+  endif
   echo ""
   @ size++
 end
+exit 0
