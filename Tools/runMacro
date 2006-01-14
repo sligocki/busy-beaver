@@ -20,7 +20,7 @@ endif
 if ("$argc" >= 4) then
   set size="$4"
 endif
-if ("$argc" >= 4) then
+if ("$argc" >= 5) then
   set stop="$5"
 endif
 
