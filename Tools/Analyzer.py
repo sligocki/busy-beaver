@@ -1,124 +1,62 @@
 #! /usr/bin/env python
-from Format import FIELD, TEST
+from Format_New import FIELD
 
-def count_lines(lines, field, test):
-  count = 0
+def get_max(lines):
+  max_steps = max_symbols = 0
+  num_lines = 0
   for line in lines:
-    fields = line.split()
-    field_value = field.type(fields[field.num])
-    if test(field_value):
-      count += 1
-  return count
+    max_steps = max(max_steps, FIELD.STEPS(line))
+    max_symbols = max(max_symbols, FIELD.SYMBOLS(line))
+    num_lines += 1
+  return max_steps, max_symbols, num_lines
 
-def best_from_lines(lines, field, test, default):
-  best_value = default
+def count_lines(lines):
+  num_lines = 0
   for line in lines:
-    fields = line.split()
-    field_value = field.type(fields[field.num])
-    best_value = test(field_value, best_value)
-  return best_value
-  
-def filter_lines(lines, field, test):
-  new_lines = []
-  for line in lines:
-    fields = line.split()
-    field_value = field.type(fields[field.num])
-    if test(field_value):
-      new_lines.append(line)
-  return new_lines
+    num_lines += 1
+  return num_lines
 
+if __name__ == "__main__":
+  import sys
 
-# Main Program
-import getopt, sys
+  usage = "Analyzer.py basename"
 
-usage = "Analyzer.py [--help] [--max=] [--number=] [--percentage=] data-filename"
-
-# Get arguments
-try:
-  opts, args = getopt.getopt(sys.argv[1:], "",
-                             ["help",
-                              "max=",
-                              "number=",
-                              "percentage="])
-except getopt.GetoptError:
-  print usage
-  sys.exit(1)
-
-try:
-  data_file = file(args[0], "r")
-  lines_complete = [line for line in data_file]
-except IndexError:
-  print "No data file provided"
-  print usage
-  sys.exit(1)  
-except IOError:
-  print "No such file: '%s'" % args[0]
-  print usage
-  sys.exit(1)
-
-if len(opts) == 0:
-  opts = [("--max", "steps"), ("--max", "symbols"),
-          ("--number", "total"), ("--number", "halt"),
-          ("--number", "infinite"), ("--number", "unknown"),
-          ("--percentage", "halt"), ("--percentage", "infinite"),
-          ("--percentage", "unknown")]
-
-for opt, arg in opts:
-  lines = lines_complete
-
-  if opt == "--help":
+  # Load command line args
+  try:
+    basename = sys.argv[1]
+  except IndexError:
     print usage
-    sys.exit(0)
+    sys.exit(1)
 
-  elif opt == "--max":
-    if arg == "steps":
-      field = FIELD.STEPS
-    elif arg == "symbols":
-      field = FIELD.SYMBOLS
-    else:
-      print "--max=%s invalid" % arg
-      max_usage = "--max=[steps|symbols]"
-      print max_usage
-      sys.exit(1)
-    lines = filter_lines(lines, FIELD.CONDITION, TEST.IS_HALT)
-    print "Max %.11s\t= %d" % (arg, best_from_lines(lines, field, max, 0))
+  # Open BB data files
+  try:
+    halt_file = file(basename + ".halt", "r")
+    infinite_file = file(basename + ".infinite", "r")
+    unknown_file = file(basename + ".unknown", "r")
+  except IOError:
+    print usage
+    print "Error: basename (%s) not valid." % basename
+    sys.exit(1)
 
-  elif opt == "--number":
-    if arg == "total":
-      test = TEST.ALL
-    elif arg == "halt":
-      test = TEST.IS_HALT
-    elif arg == "infinite":
-      test = TEST.IS_INFINITE
-    elif arg == "unknown":
-      test = TEST.IS_UNKNOWN
-    elif arg == "over_tape":
-      test = TEST.IS_OVER_TAPE
-    elif arg == "over_steps":
-      test = TEST.IS_OVER_STEPS
-    else:
-      print "--number=%s invalid" % arg
-      number_usage = "--number=[total|halt|infinite|unknown|over_tape|over_steps]"
-      print number_usage
-      sys.exit(1)
-    print "Number %.8s\t= %d" % (arg, count_lines(lines, FIELD.CONDITION, test))
+  # Get Stats
+  # Get max stats for halting machines
+  max_steps, max_symbols, num_halt = get_max(halt_file)
+  # Get number of machines in each category
+  num_infinite = count_lines(infinite_file)
+  num_unknown = count_lines(unknown_file)
+  num_total = num_halt + num_infinite + num_unknown
+  # Derive percentages in each category
+  percent_halt = float(num_halt) / num_total
+  percent_infinite = float(num_infinite) / num_total
+  percent_unknown = float(num_unknown) / num_total
 
-  elif opt == "--percentage":
-    if arg == "halt":
-      test = TEST.IS_HALT
-    elif arg == "infinite":
-      test = TEST.IS_INFINITE
-    elif arg == "unknown":
-      test = TEST.IS_UNKNOWN
-    elif arg == "over_tape":
-      test = TEST.IS_OVER_TAPE
-    elif arg == "over_steps":
-      test = TEST.IS_OVER_STEPS
-    else:
-      print "--percentage=%s invalid" % arg
-      percentage_usage = "--percentage=[halt|infinite|unknown|over_tape|over_steps]"
-      print percentage_usage
-      sys.exit(1)
-    percentage = float(count_lines(lines, FIELD.CONDITION, test)) / \
-                 float(count_lines(lines, FIELD.CONDITION, TEST.ALL))
-    print "Percent %.7s\t= %f" % (arg, percentage)
+  print basename
+  print "Max Steps        =", max_steps
+  print "Max Symbols      =", max_symbols
+  print "Number Total     =", num_total
+  print "Number Halt      =", num_halt
+  print "Number Infinite  =", num_infinite
+  print "Number Unknown   =", num_unknown
+  print "Percent Halt     =", percent_halt
+  print "Percent Infinite =", percent_infinite
+  print "Percent Unknown  =", percent_unknown
