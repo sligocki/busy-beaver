@@ -33,7 +33,17 @@ class Turing_Machine:
   Class for creating and storing Busy Beaver Machines which may include blank
   or to-be-completed cells in their transition tables.
   """
-  def __init__(self, num_states, num_symbols):
+  def __init__(self, *args):
+    # Turing_Machine(ttable)
+    if len(args) == 1:
+      self.set_TTable(*args)
+    # Turing_Machine(num_states, num_symbols)
+    elif len(args) == 2:
+      self.empty_init(*args)
+    else:
+      raise ValueError, "Turing_Machine(args) - Takes 1 or 2 args"
+
+  def empty_init(self, num_states, num_symbols):
     """
     Creates a machine with all but the first cell empty.
     """
