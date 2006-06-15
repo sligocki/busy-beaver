@@ -271,8 +271,10 @@ def run_visual(machine, tape_length, num_steps, print_width=80, silent=False):
       break
 
     if num_syms > max_syms:
-      nt += num_syms - max_syms
+#      nt += num_syms - max_syms
       max_syms = num_syms
+
+    t += 1
 
   if state != -1:
     num_syms  = 0
