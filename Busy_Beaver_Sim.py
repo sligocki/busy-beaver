@@ -326,6 +326,7 @@ if __name__ == "__main__":
     machine = load_old(infile)
   else:
     machine = load(infile)
+  infile.close()
 
   if not brief:
     print_machine(machine)
