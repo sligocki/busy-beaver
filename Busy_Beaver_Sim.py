@@ -17,14 +17,9 @@ def load(file):
   """
   import string
 
-  machine = Turing_Machine(1,1)
+  first_line = file.readline()
 
-  data = file.read()
-  data = data.splitlines()
-
-  cur_line = data[0]
-
-  parts = cur_line.split()
+  parts = first_line.split()
 
   start_index = 0
   start_found = False
@@ -51,9 +46,7 @@ def load(file):
     sys.stderr.write("Turing machine not found in input file\n")
     sys.exit(1)
 
-  machine.set_TTable(TTable)
-
-  return machine
+  return Turing_Machine(TTable)
 
 
 def load_old(file):
