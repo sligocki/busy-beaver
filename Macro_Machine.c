@@ -207,6 +207,7 @@ inline MACRO_TRANSITION* hash_add(MACRO_TM* m, int state, int* symbol, TM* baseT
 inline int step_macro_TM(MACRO_TM* m, TM* baseTM, PyObject** error_value)
 {
   int i;
+  int old_position;
   MACRO_TRANSITION* trans;
 
   trans = hash_lookup(m,m->state,m->symbol,baseTM->num_symbols);
@@ -238,6 +239,8 @@ inline int step_macro_TM(MACRO_TM* m, TM* baseTM, PyObject** error_value)
   m->total_steps += m->size;
 
   put_macro_symbol(m->new_symbol,m->tape,m->position,m->size);
+
+  old_position = m->position;
   m->position += m->new_delta;
 
   if (m->new_state == -1)
@@ -252,24 +255,30 @@ inline int step_macro_TM(MACRO_TM* m, TM* baseTM, PyObject** error_value)
   
   get_macro_symbol(m->new_symbol,m->tape,m->position,m->size);
 
+  if (old_position == m->max_left && \
+      m->new_delta < 0            && \
+      m->new_state == m->state    && \
+      equal_symbol(m->new_symbol,m->symbol,m->size))
+  {
+    return RESULT_INFINITE_LEFT;
+  }
+
+  if (old_position == m->max_right && \
+      m->new_delta > 0             && \
+      m->new_state == m->state     && \
+      equal_symbol(m->new_symbol,m->symbol,m->size))
+  {
+    return RESULT_INFINITE_RIGHT;
+  }
+
   if (m->position < m->max_left)
   {
     m->max_left = m->position;
-
-    if (equal_symbol(m->new_symbol,m->symbol,m->size) && m->new_state == m->state && m->new_delta < 0)
-    {
-      return RESULT_INFINITE_LEFT;
-    }
   }
 
   if (m->position > m->max_right)
   {
     m->max_right = m->position;
-
-    if (equal_symbol(m->new_symbol,m->symbol,m->size) && m->new_state == m->state && m->new_delta > 0)
-    {
-      return RESULT_INFINITE_RIGHT;
-    }
   }
 
   for (i = 0; i < 2*m->size-1; i++)
