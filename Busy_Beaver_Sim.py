@@ -11,15 +11,18 @@ import time
 
 from Turing_Machine import Turing_Machine
 
-def load(file):
+def load(infile, num = 1):
   """
   Load the contents of the Turing machine from a file.
   """
   import string
 
-  first_line = file.readline()
+  while num > 1:
+    infile.readline()
+    num -= 1
+  line = infile.readline()
 
-  parts = first_line.split()
+  parts = line.split()
 
   start_index = 0
   start_found = False
@@ -302,7 +305,8 @@ if __name__ == "__main__":
                                     [("brief" , None, None, False, False),
                                      ("visual", None, None, False, False),
                                      ("width" , int , 80  , False, True ),
-                                     ("old"   , None, None, False, False)],
+                                     ("old"   , None, None, False, False),
+                                     ("num"   , int , 1   , False, True )],
                                     True)
 
   infile = opts["infile"]
@@ -311,6 +315,7 @@ if __name__ == "__main__":
   visual = opts["visual"]
   width  = opts["width"]
   old    = opts["old"]
+  num    = opts["num"]
 
   if opts["tape"] == None:
     tape = 10000000
@@ -325,7 +330,7 @@ if __name__ == "__main__":
   if old:
     machine = load_old(infile)
   else:
-    machine = load(infile)
+    machine = load(infile, num)
   infile.close()
 
   if not brief:
