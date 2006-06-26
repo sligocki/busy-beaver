@@ -10,6 +10,7 @@ if ("$argc" >= 1) then
   set base="$1"
 else
   echo "Usage:  runMacro basename [tape [steps [start_size [stop_size]]]]"
+  exit 1
 endif
 if ("$argc" >= 2) then
   set tape="$2"
