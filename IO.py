@@ -117,3 +117,16 @@ class IO:
                         old_results)
 
     return return_value
+
+def load_TTable(infile, line_num = 1):
+  """Load a transition table from a file w/ optional line number."""
+  while line_num > 1:
+    infile.readline()
+    line_num -= 1
+  line = infile.readline()
+  start = line.find("[[")
+  end = line.find("]]", start) + len("]]")
+  if start != -1 and end != -1:
+    return eval(line[start:end])
+  else:
+    raise Error, "Turing Machine not found in input file\n"
