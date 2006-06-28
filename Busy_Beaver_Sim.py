@@ -184,7 +184,7 @@ def run_visual(machine, tape_length, num_steps, print_width=80, silent=False):
 
   TTable = machine.get_TTable()
 
-  half_width = (print_width - 15) / 2
+  half_width = (print_width - 18) / 2
 
   t = 0
   nt = 1
@@ -240,7 +240,8 @@ def run_visual(machine, tape_length, num_steps, print_width=80, silent=False):
             else:
               sys.stdout.write(".")
 
-        sys.stdout.write(" %2d\n" % new_state)
+        sys.stdout.write(" %2d"   % new_state)
+        sys.stdout.write(" %2d\n" % tape[position])
 
         sys.stdout.flush()
       else:
