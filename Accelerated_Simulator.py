@@ -15,7 +15,9 @@ class TM_Infinity(TM_Finish): pass
 class TM_Halt(TM_Finish): pass
 
 def reverse(in_list):
-  return list(reversed(in_list))
+  reversed_in_list = list(in_list)
+  reversed_in_list.reverse()
+  return reversed_in_list
 
 class Simulator:
   """The accelerated TM simulator."""
@@ -141,7 +143,8 @@ class Config:
         stack.pop(); stack.pop()
         seq_write.rep += 1
       if seq_write.rep == 1:
-        for symbol in reversed(seq_write.seq):
+        reverse_seq_write = reverse(seq_write.seq)
+        for symbol in reverse_seq_write:
           self._push(not self.dir, symbol)
       else:
         stack.push(seq_write)
