@@ -1,5 +1,6 @@
 #! /usr/bin/env python
 
+import string
 
 num_states = int(raw_input("Num States? "))
 num_symbols = int(raw_input("Num Symbols? "))
