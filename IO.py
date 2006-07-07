@@ -118,6 +118,13 @@ class IO:
 
     return return_value
 
+def load_TTable_filename(filename, line_num = 1):
+  """Load a transition table from a filename w/ optional line number."""
+  infile = open(filename, "r")
+  TTable = load_TTable(infile, line_num)
+  infile.close()
+  return TTable
+
 def load_TTable(infile, line_num = 1):
   """Load a transition table from a file w/ optional line number."""
   while line_num > 1:
