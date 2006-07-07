@@ -11,19 +11,23 @@ format = """symbol-dir-state (e.g. 2RA or 210)
             dir must be R, r, 1 for right or L, l, 0 for left
             state must be letter A-G or integer 0-9 less than num_states (Halt = H or - or Z)"""
 
+temp = ""
 TTable = [None] * num_states
 for state in range(num_states):
   TTable[state] = [None] * num_symbols
   for symbol in range(num_symbols):
     have_input = False
     while not have_input:
-      temp = raw_input("State %d, Symbol %d: " % (state, symbol))
+      if not temp:
+        temp = raw_input("State %d, Symbol %d: " % (state, symbol))
+        temp = temp.strip()
       # Get Symbol
       try:
         next_symbol = int(temp[0])
       except ValueError:
         print "Bad Symbol input, please enter state information in this form:"
         print format
+        temp = ""
         continue
       # Get Dir
       if   temp[1] in "Rr1": next_dir = 1
@@ -31,6 +35,7 @@ for state in range(num_states):
       else:
         print "Bad Direction input, please enter state information in this form:"
         print format
+        temp = ""
         continue
       # Get State
       if temp[2] in "HhZz-": next_state = -1
@@ -40,9 +45,11 @@ for state in range(num_states):
       else:
         print "Bad State input, please enter state information in this form:"
         print format
+        temp = ""
         continue
       TTable[state][symbol] = (next_symbol, next_dir, next_state)
       have_input = True
+      temp = temp[3:].strip()
 
 filename = "Machines/%dx%d-%s.bb" % (num_states, num_symbols, name)
 table_file = open(filename, "w")
