@@ -1,0 +1,6 @@
+#!/usr/bin/bash
+if [ -n "$2" ]; then 
+  Busy_Beaver_Sim.py --infile=$1 --num=$2
+else
+  Busy_Beaver_Sim.py --infile=$1
+fi
