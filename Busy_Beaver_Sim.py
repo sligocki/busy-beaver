@@ -140,8 +140,11 @@ def run(machine, tape_length, num_steps, silent=False):
     num_steps = int(result[2])
 
     if not silent:
+      if exit_cond == 0:
+        print "Halted"
+      else:
+        print "Did not halt"
       print
-
       if (start_time == end_time):
         print "Steps/second: infinite, ;-)"
       else:
@@ -158,7 +161,7 @@ def run(machine, tape_length, num_steps, silent=False):
   return (num_syms, num_steps)
 
 
-def run_visual(machine, tape_length, num_steps, print_width=80, silent=False):
+def run_visual(machine, tape_length, num_steps, print_width=79, silent=False):
   """
   Start the tape and run it until it halts with visual output.
   """
@@ -185,6 +188,8 @@ def run_visual(machine, tape_length, num_steps, print_width=80, silent=False):
   TTable = machine.get_TTable()
 
   half_width = (print_width - 18) / 2
+  if half_width < 1:
+    half_width = 1
 
   t = 0
   nt = 1
@@ -220,36 +225,37 @@ def run_visual(machine, tape_length, num_steps, print_width=80, silent=False):
         if position > position_end:
           position_end = position
 
-      if position > middle - half_width - 2 and position < middle + half_width +1:
-        just_on = True
+      if not silent:
+        if position > middle - half_width - 2 and position < middle + half_width +1:
+          just_on = True
 
-        cur_step = total_steps + i
+          cur_step = total_steps + i
 
-        sys.stdout.write("%10d: " % int(cur_step+1))
+          sys.stdout.write("%10d: " % int(cur_step+1))
 
-        for j in xrange(2*half_width):
-          value = tape[middle+(j-half_width)]
-          if value != 0:
-            if position == middle+(j-half_width):
-              sys.stdout.write("%1c" % int(value+64))
+          for j in xrange(2*half_width):
+            value = tape[middle+(j-half_width)]
+            if value != 0:
+              if position == middle+(j-half_width):
+                sys.stdout.write("%1c" % int(value+64))
+              else:
+                sys.stdout.write("%1c" % int(value+96))
             else:
-              sys.stdout.write("%1c" % int(value+96))
-          else:
-            if position == middle+(j-half_width):
-              sys.stdout.write(":")
-            else:
-              sys.stdout.write(".")
+              if position == middle+(j-half_width):
+                sys.stdout.write(":")
+              else:
+                sys.stdout.write(".")
 
-        sys.stdout.write(" %2d"   % new_state)
-        sys.stdout.write(" %2d\n" % tape[position])
+          sys.stdout.write(" %2d"   % new_state)
+          sys.stdout.write(" %2d\n" % tape[position])
 
-        sys.stdout.flush()
-      else:
-        if just_on:
-          sys.stdout.write("       ...\n")
           sys.stdout.flush()
+        else:
+          if just_on:
+            sys.stdout.write("       ...\n")
+            sys.stdout.flush()
 
-          just_on = False
+            just_on = False
 
       if position < 1 or position >= tape_length-1:
         break
@@ -282,22 +288,17 @@ def run_visual(machine, tape_length, num_steps, print_width=80, silent=False):
 
   end_time = time.time()
 
-  if not silent:
-    print
-    print
-    print "Steps/second: ",num_steps / (end_time - start_time)
-    print
-    print "Range on tape: ",position_start - middle, \
-                       "to",position_end   - middle
+  print
+  print
+  print "Steps/second: ", num_steps / (end_time - start_time)
+  print
+  print "Range on tape: ", position_start - middle, \
+                     "to", position_end   - middle
 
-    sys.stdout.flush()
+  sys.stdout.flush()
 
   return (num_syms, num_steps)
 
-
-#
-# Simulate a Turing machine on a tape that is initially blank
-#
 
 if __name__ == "__main__":
   from Option_Parser import Filter_Option_Parser
@@ -305,7 +306,7 @@ if __name__ == "__main__":
   opts, args = Filter_Option_Parser(sys.argv,
                                     [("brief" , None, None, False, False),
                                      ("visual", None, None, False, False),
-                                     ("width" , int , 80  , False, True ),
+                                     ("width" , int , 79  , False, True ),
                                      ("old"   , None, None, False, False),
                                      ("num"   , int , 1   , False, True )],
                                     True)
@@ -324,7 +325,7 @@ if __name__ == "__main__":
     tape = opts["tape"]
 
   if opts["steps"] == None:
-    steps = 10000000
+    steps = 1000000000
   else:
     steps = opts["steps"]
 
@@ -339,14 +340,15 @@ if __name__ == "__main__":
 
   if visual:
     num_syms, num_steps = run_visual(machine,tape,steps,width,brief)
+    print
+    print "Number of 'not 0's printed: %u, steps: %u" % (num_syms,num_steps)
   else:
     num_syms, num_steps = run(machine,tape,steps,brief)
-
-  if brief:
-    print machine.num_states,machine.num_symbols,num_syms,num_steps
-  else:
-    print
-    print "Number of 'not O's printed: %u, steps: %u" % (num_syms,num_steps)
+    if brief:
+      print machine.num_states,machine.num_symbols,num_syms,num_steps
+    else:
+      print
+      print "Number of 'not 0's printed: %u, steps: %u" % (num_syms,num_steps)
 
   sys.stdout.flush()
   sys.exit(0)
