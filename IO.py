@@ -136,4 +136,4 @@ def load_TTable(infile, line_num = 1):
   if start != -1 and end != -1:
     return eval(line[start:end])
   else:
-    raise Error, "Turing Machine not found in input file\n"
+    raise Exception, "Turing Machine not found in input file\n"
