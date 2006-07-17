@@ -7,6 +7,8 @@ import string
 
 from Turing_Machine import Turing_Machine 
 
+class IO_Error(Exception): pass
+
 class IO:
   """
   Reads and writes Busy Beaver results:
@@ -26,18 +28,21 @@ class IO:
 
   def write_result(self, machine_num, tape_length, max_steps, results,
                    machine, log_number = None, old_results = []):
+    if log_number is None:
+      log_number = self.log_number
+    write_result_raw(machine_num, machine.num_states, machine.num_symbols,
+                     tape_length, max_steps, results, machine.get_TTable(),
+                     log_number, old_results)
+
+  def write_result_raw(self, machine_num, num_states, num_symbols, tape_length,
+                       max_steps, results, machine_TTable, log_number, old_results):
     """
     Writes a result.
     """
-    if log_number is None:
-      log_number = self.log_number
-
     if self.output_file:
       self.output_file.write("%d " % machine_num)
-
-      self.output_file.write("%d " % machine.num_states)
-      self.output_file.write("%d " % machine.num_symbols)
-
+      self.output_file.write("%d " % num_states)
+      self.output_file.write("%d " % num_symbols)
       self.output_file.write("%d " % tape_length)
       self.output_file.write("%d " % max_steps)
 
@@ -49,7 +54,7 @@ class IO:
         else:
           self.output_file.write("%s " % item)
 
-      self.output_file.write("%s " % machine.get_TTable())
+      self.output_file.write("%s " % machine_TTable)
 
       if log_number is not None and old_results:
         self.output_file.write("%d " % log_number)
@@ -127,6 +132,8 @@ def load_TTable_filename(filename, line_num = 1):
 
 def load_TTable(infile, line_num = 1):
   """Load a transition table from a file w/ optional line number."""
+  if line_num < 1:
+    raise IO_Error, "load_TTable - line_num must be >= 1"
   while line_num > 1:
     infile.readline()
     line_num -= 1
@@ -136,4 +143,4 @@ def load_TTable(infile, line_num = 1):
   if start != -1 and end != -1:
     return eval(line[start:end])
   else:
-    raise Exception, "Turing Machine not found in input file\n"
+    raise IO_Error, "Turing Machine not found in input file"

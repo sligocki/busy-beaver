@@ -1,6 +1,6 @@
 #!/usr/bin/bash
 if [ -n "$2" ]; then 
-  Busy_Beaver_Sim.py --visual --infile=$1 --num=$2 | more
+  Busy_Beaver_Sim.py --visual --infile=$1 --num=$2 | less
 else
-  Busy_Beaver_Sim.py --visual --infile=$1 | more
+  Busy_Beaver_Sim.py --visual --infile=$1 | less
 fi
