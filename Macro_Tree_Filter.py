@@ -5,6 +5,8 @@
 import IO, Macro_Simulator
 from Macro_Simulator import HALT_STATE, INF
 
+max_step2inf = 0
+
 # Return Conditions
 ERROR = -1
 HALT = 0
@@ -25,7 +27,9 @@ def run(TTable, macro_size, level, steps, progress):
     return HALT, sim.tape.get_nonzeros(), sim.cur_step_num
   elif sim.state == INF:
     if progress:
-      print "Infinite", sim.cur_step_num
+      global max_step2inf
+      max_step2inf = max(max_step2inf, sim.cur_step_num)
+      print "\t\tInfinite", sim.cur_step_num, max_step2inf
     return INFINITE, 3, macro_size, "Macro_Tree_Filter"
   else:
     if progress:
