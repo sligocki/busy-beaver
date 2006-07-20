@@ -30,7 +30,7 @@ class IO:
                    machine, log_number = None, old_results = []):
     if log_number is None:
       log_number = self.log_number
-    write_result_raw(machine_num, machine.num_states, machine.num_symbols,
+    self.write_result_raw(machine_num, machine.num_states, machine.num_symbols,
                      tape_length, max_steps, results, machine.get_TTable(),
                      log_number, old_results)
 

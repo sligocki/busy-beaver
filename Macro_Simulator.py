@@ -231,7 +231,7 @@ class Automated_Proof_Maker:
     if self.proven_transitions.has_key(stripped_config):
       trans = self.applies(self.proven_transitions[stripped_config], full_config)
       if trans:
-        if not self.recursive:
+        if not self.recursive or isinstance(trans[-1], (int, long)) or len(trans[-1].terms()) == 0:
           self.past_configs = {}
         return trans
       return False
