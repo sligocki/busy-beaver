@@ -1,0 +1,38 @@
+#!/bin/csh -f
+set steps=1000
+
+set size=1
+set stop=10000
+
+set argc=$#argv
+if ("$argc" >= 1) then
+  set base="$1"
+else
+  echo "Usage:  runTreeFilter basename [steps [start_size [stop_size]]]"
+  exit 1
+endif
+if ("$argc" >= 2) then
+  set steps="$2"
+endif
+if ("$argc" >= 3) then
+  set size="$3"
+endif
+if ("$argc" >= 4) then
+  set stop="$4"
+endif
+
+wc -l "$base".unknown
+echo ""
+while ("$size" <= "$stop")
+  echo $size
+  set cur_steps=`expr $steps \* $size`
+  update "$base" Macro_Tree_Filter.py --steps=$cur_steps --size=$size
+  wc -l "$base".unknown
+  if (-e "$base".error) then
+    echo "Error encountered..."
+    exit 1
+  endif
+  echo ""
+  @ size++
+end
+exit 0
