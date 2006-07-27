@@ -1,0 +1,12 @@
+%% Format: Marxen2
+Name  = e
+ones  = 33299939444
+steps = 645170016895723065091
+ones  > 3.3*10^10
+steps > 6.4*10^20
+A: B1R C1L
+B: A0L D0L
+C: A1L Z1R
+D: B1L E1R
+E: D0R F0R
+F: D0R D0L
