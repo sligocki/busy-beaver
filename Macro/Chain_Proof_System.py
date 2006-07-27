@@ -3,10 +3,12 @@ Proof System which observes and attempts to prove paterns in computation.
 """
 
 import sys
-
 import Chain_Simulator, Turing_Machine, Chain_Tape
-from Numbers.Algebraic_Expression import Algebraic_Unknown, Algebraic_Expression
 from Chain_Tape import Stack
+
+parent_dir = sys.path[0][:sys.path[0].rfind("/")] # pwd path with last directory removed
+sys.path.insert(1, parent_dir)
+from Numbers.Algebraic_Expression import Algebraic_Unknown, Algebraic_Expression
 
 DEBUG = False
 
@@ -95,6 +97,7 @@ class Proof_System:
     gen_sim.state = old_state
     gen_sim.dir = gen_tape.dir
     gen_sim.step_num = Algebraic_Expression([], 0)
+    gen_sim.num_loops = 0
     gen_sim.op_state = Turing_Machine.RUNNING
 
     if DEBUG:

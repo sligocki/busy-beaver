@@ -12,6 +12,8 @@ CHAIN_MOVE = "Chain_Move"
 
 
 class Simulator:
+  def __init__(self):
+    self.init_stats()
   def init(self, machine):
     self.machine = machine
     self.tape = Chain_Tape.Chain_Tape()
@@ -22,24 +24,39 @@ class Simulator:
     self.step_num = 0
     # Operation state (e.g. running, halted, proven-infinite, ...)
     self.op_state = Turing_Machine.RUNNING
+    self.init_stats()
+  def init_stats(self):
+    self.num_loops = 0
+    self.num_macro_moves = 0
+    self.steps_from_macro = 0
+    self.num_chain_moves = 0
+    self.steps_from_chain = 0
+    self.num_rule_moves = 0
+    self.steps_from_rule = 0
   def run(self, steps):
     self.seek(self.step_num + steps)
   def seek(self, cutoff):
     while self.step_num < cutoff and self.op_state is Turing_Machine.RUNNING:
       self.step()
+  def loop_run(self, loops):
+    for i in xrange(loops):
+      self.step()
   def step(self):
     """Perform an atomic transition or chain step."""
     if self.op_state is not Turing_Machine.RUNNING:
       return
+    self.num_loops += 1
     if self.proof:
       cond, new_tape, num_steps = self.proof.log(self.tape, self.state, self.step_num)
       if cond is Turing_Machine.INF_REPEAT:
-        op_state = Turing_Machine.INF_REPEAT
-        inf_reason = PROOF_SYSTEM
+        self.op_state = Turing_Machine.INF_REPEAT
+        self.inf_reason = PROOF_SYSTEM
         return
       elif cond is Turing_Machine.RUNNING:
         self.tape = new_tape
         self.step_num += num_steps
+        self.num_rule_moves += 1
+        self.steps_from_rule += num_steps
         return
     # Get current symbol
     cur_symbol = self.tape.get_top_symbol()
@@ -61,6 +78,8 @@ class Simulator:
         return
       # Don't need to change state or direction
       self.step_num += num_steps*num_reps
+      self.num_chain_moves += 1
+      self.steps_from_chain += num_steps*num_reps
       pass
     else:
       # Apply simple move
@@ -68,27 +87,45 @@ class Simulator:
       self.state = next_state
       self.dir = next_dir
       self.step_num += num_steps
+      self.num_macro_moves += 1
+      self.steps_from_macro += num_steps
       if self.op_state is Turing_Machine.INF_REPEAT:
         self.inf_reason = REPEAT_IN_PLACE
   def get_nonzeros(self):
     return self.tape.get_nonzeros(self.machine.eval_symbol,
                                   self.machine.eval_state(self.state))
   def print_self(self):
+    x = math.floor(math.log10(self.step_num + 1)) + 1
     print
-    print "Total Steps: ", with_power(self.step_num)
+    print "         Steps:                       Times Applied:"
+    print template("Total:", self.step_num, x, self.num_loops)
+    #print "Single Steps:", with_power(self.mtt.num_single_steps)
+    print template("Macro:", self.steps_from_macro, x, self.num_macro_moves) #, "Macro transitions defined:", len(self.mtt.macro_TTable)
+    print template("Chain:", self.steps_from_chain, x, self.num_chain_moves)
+    if self.proof:
+      print template("Rule:", self.steps_from_rule, x, self.num_rule_moves)
+      print "Rules proved:", len(self.proof.proven_transitions)
     print "Time:", time.clock()
-    print self.state, self.tape, self.get_nonzeros()
+    print self.state, self.tape
+    print "Num Nonzeros:", with_power(self.get_nonzeros())
+
+def template(s, m, x, n):
+  title = "%-8s" % s
+  try:
+    log_m = "10^%-6.1f" % math.log10(m)
+  except:
+    log_m = "         "
+  m_str = "%-20s" % (("%%%dd" % x) % m)
+  if len(m_str) > 20:
+    m_str = " "*20
+  n_str = "%12d" % n
+  return title+" "+log_m+" "+m_str+" "+n_str
 
 def with_power(value):
-  if value is Chain_Tape.INF:
-    r = "10^Inf  "
-  elif value == 0:
-    r = "10^-Inf "
-  else:
-    try:
-      r = "10^%-4.1f " % math.log10(value)
-    except:
-      r = "        "
+  try:
+    r = "10^%-6.1f " % math.log10(value)
+  except:
+    r = "        "
   value = str(value)
   if len(value) < 60:
     r += str(value)
