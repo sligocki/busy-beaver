@@ -13,8 +13,8 @@ class Turing_Machine:
   """Abstract base for all specific Turing Machines
 
   Derived classes should define:
-    Function: get_transition
-    Constants: init_symbol, init_state, and init_dir"""
+    Function: get_transition, eval_symbol, eval_state
+    Constants: init_symbol, init_state, and init_dir, num_states, num_symbols"""
   def get_transition(self, symbol_in, state_in, dir_in):
     # Returns triple (condition, transition, stats)
     # Condition

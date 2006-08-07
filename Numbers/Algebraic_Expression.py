@@ -77,6 +77,8 @@ class Expression(Number):
     else:
       return expr_prod(self, other)
   def __truediv__(self, other):
+    if other == 1:
+      return self
     if is_scalar(other):
       new_terms = tuple([Term(t.vars, t.coef/other) for t in self.terms])
       return Expression(new_terms, self.const/other)

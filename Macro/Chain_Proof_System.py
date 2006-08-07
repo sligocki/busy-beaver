@@ -2,7 +2,7 @@
 Proof System which observes and attempts to prove paterns in computation.
 """
 
-import sys
+import sys, copy
 import Chain_Simulator, Turing_Machine, Chain_Tape
 from Chain_Tape import Stack
 
@@ -47,7 +47,7 @@ class Proof_System:
     if self.proven_transitions.has_key(stripped_config):
       trans = self.applies(self.proven_transitions[stripped_config], full_config)
       if trans:
-        if not self.recursive:
+        if not self.recursive and self.past_configs is not None:
           self.past_configs = {}
         return trans
       return False, None, None
@@ -57,8 +57,11 @@ class Proof_System:
       if self.past_configs.has_key(stripped_config):
         rule = self.compare(self.past_configs[stripped_config], full_config)
         if rule:
+          # Remember rule
           self.proven_transitions[stripped_config] = rule
+          # Clear our memory (couldn't use it anyway)
           self.past_configs = {}
+          # Try to apply transition
           trans = self.applies(rule, full_config)
           if trans:
             return trans

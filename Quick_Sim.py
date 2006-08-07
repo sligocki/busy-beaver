@@ -40,7 +40,7 @@ def run(TTable, block_size=None, back=True):
     print "Turing Machine Halted!"
     print "Steps:   ", sim.step_num
     print "Nonzeros:", sim.get_nonzeros()
-  elif sim.op_state is Turing_Machine.INF:
+  elif sim.op_state is Turing_Machine.INF_REPEAT:
     print
     print "Turing Machine proven Infinite!"
     print "Reason:", sim.inf_reason
@@ -57,9 +57,15 @@ if "-b" in sys.argv:
 else:
   back = True
 
-ttable = IO.load_TTable_filename(sys.argv[1])
 if len(sys.argv) >= 3:
-  block_size = int(sys.argv[2])
+  line = int(sys.argv[2])
+else:
+  line = 1
+
+ttable = IO.load_TTable_filename(sys.argv[1], line)
+
+if len(sys.argv) >= 4:
+  block_size = int(sys.argv[3])
 else:
   block_size = None
 
