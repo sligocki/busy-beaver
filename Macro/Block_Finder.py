@@ -30,7 +30,7 @@ def block_finder(machine, limit=1000):
     #print sim.tape
     sys.stdout.flush()
   tape = uncompress_tape(sim.tape.tape)
-  min_compr = len(tape)
+  min_compr = len(tape) + 1 # Worse than no compression 
   for block_size in range(1, len(tape)//2):
     compr_size = compression_efficiency(tape, block_size)
     if compr_size < min_compr:
@@ -39,7 +39,7 @@ def block_finder(machine, limit=1000):
   if DEBUG:
     print "Optimal base block size:", opt_size
     sys.stdout.flush()
-  # Then try a couple different multiples of this base size to find best speed
+  ## Then try a couple different multiples of this base size to find best speed
   max_chain_factor = 0
   opt_mult = 0
   mult = 1
