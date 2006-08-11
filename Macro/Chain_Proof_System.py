@@ -20,7 +20,7 @@ def stripped_info(block):
 
 class Proof_System:
   """Stores past information and runs automated proof finders when it finds patterns."""
-  def __init__(self, machine, recursive=True):
+  def __init__(self, machine, recursive=False):
     self.machine = machine
     self.recursive = recursive
     # Hash of general forms of past configs

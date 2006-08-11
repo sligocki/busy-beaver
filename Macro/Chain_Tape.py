@@ -30,6 +30,9 @@ class Repeated_Symbol:
     self.num = number_of_repetitions
   def __repr__(self):
     return "%s^%s" % (str(self.symbol), str(self.num))
+  def __eq__(self, other):
+    return isinstance(other, Repeated_Symbol) and \
+           self.symbol == other.symbol and self.num == other.num
   def copy(self):
     return Repeated_Symbol(self.symbol, self.num)
 

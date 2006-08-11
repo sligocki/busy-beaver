@@ -39,7 +39,7 @@ def run(TTable, block_size, level, steps, progress):
       max_step2inf = max(max_step2inf, sim.step_num)
       max_loop2inf = max(max_loop2inf, sim.num_loops)
       print "\t\tInfinite", block_size, (sim.step_num, max_step2inf), (sim.num_loops, max_loop2inf)
-    return INFINITE, 4, block_size, "Macro_Tree_Filter"
+    return INFINITE, 4, block_size, "Macro_Tree_Filter2"
   elif sim.op_state is Turing_Machine.HALT:
     if progress:
       print "\t\t\tHalted", sim.get_nonzeros(), sim.step_num
