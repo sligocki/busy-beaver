@@ -5,7 +5,7 @@ import Chain_Simulator, Turing_Machine
 
 DEBUG = False
 
-def block_finder(machine, limit=1000):
+def block_finder(machine, limit=100):
   """Tries to find the optimal block-size for macromachines"""
   ## First find the minimum efficient tape compression size
   sim = Chain_Simulator.Simulator()
@@ -20,17 +20,18 @@ def block_finder(machine, limit=1000):
     if l > max_length:
       max_length = l
       worst_time = sim.step_num
-    if sim.op_state is not Turing_Machine.RUNNING:
-      return sim.op_state, sim.step_num
-  # Analyze this time to see which block size provides greatest compression
-  sim.init(machine)
-  sim.seek(worst_time)
+      worst_tape = uncompress_tape(sim.tape.tape)
+    # If it has stopped running then this is a good block size!
+    if sim.op_state != Turing_Machine.RUNNING:
+      return 1
   if DEBUG:
     print "Least compression at time:", worst_time
-    #print sim.tape
+    #print worst_tape
     sys.stdout.flush()
-  tape = uncompress_tape(sim.tape.tape)
-  min_compr = len(tape) + 1 # Worse than no compression 
+  # Analyze this time to see which block size provides greatest compression
+  tape = worst_tape
+  min_compr = len(tape) + 1 # Worse than no compression
+  opt_size = 1
   for block_size in range(1, len(tape)//2):
     compr_size = compression_efficiency(tape, block_size)
     if compr_size < min_compr:
@@ -43,12 +44,14 @@ def block_finder(machine, limit=1000):
   max_chain_factor = 0
   opt_mult = 0
   mult = 1
-  while mult <= 2*opt_mult + 2:
+  while mult <= opt_mult + 2:
     block_machine = Turing_Machine.Block_Macro_Machine(machine, mult*opt_size)
     back_machine = Turing_Machine.Backsymbol_Macro_Machine(block_machine)
     sim.init(back_machine)
     sim.proof = None # Level 2 machine
     sim.loop_run(limit)
+    if sim.op_state != Turing_Machine.RUNNING:
+      return mult*opt_size
     chain_factor = sim.steps_from_chain / sim.steps_from_macro
     #print mult, chain_factor
     # Note that we preffer smaller multiples

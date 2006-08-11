@@ -45,9 +45,9 @@ if ("$status" != 0) then
   echo " | $date | $command"                     >> "$basename.log"
 
   # Integrate the output data into the existing database
-  Integrate_Data.py "$basename.out"                                           \
-                    "$basename.halt" "$basename.infinite" "$basename.unknown" \
-                    "$basename.error"
+  Tools/Integrate_Data.py "$basename.out"                                     \
+                          "$basename.halt" "$basename.infinite"               \
+                          "$basename.unknown" "$basename.error"
 
   # Check for failure
   if ("$status" != 0) then

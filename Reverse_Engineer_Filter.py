@@ -35,13 +35,15 @@ def get_stats(TTable):
   return halts, to_state, to_symbol
 
 def cannot_reach_halt((halt_state, halt_symbol), to_state, to_symbol):
+  # If no transitions go to halt_state -> never halt
+  # NOTE!  There is one exception (A0 -> Halt) but this is trivial
+  if len(to_state[halt_state]) == 0:
+    return True
   # Our method only works when we know that the symbol it will halt from must
   #   be written by the TM (not there initially).
   if halt_symbol == 0:
     return False
-  # If no transitions go to halt_state or write the halt_symbol, never halt
-  if len(to_state[halt_state]) == 0:
-    return True
+  # If no transitions write the halt_symbol -> never halt
   if len(to_symbol[halt_symbol]) == 0:
     return True
   # Test whether all transitions to halt_state are in the same direction as

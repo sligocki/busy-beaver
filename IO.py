@@ -92,6 +92,7 @@ class IO:
         max_steps   = int(parts[4])
 
         results = [int(parts[5])]
+
         index = 6
         for item in parts[6:]:
           if item[0] == "[":
