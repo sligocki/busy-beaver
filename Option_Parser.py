@@ -73,6 +73,7 @@ def Filter_Option_Parser(argv, extra_opt, ignore_outfile = False):
     sys.stderr.write("Filter_Option_Parser -- input from stdin currently not available\n")
     sys.exit(1)
   else:
+    opts["infilename"] = opts["infile"]
     opts["infile"] = file(opts["infile"], "r")
 
   if not ignore_outfile:
@@ -95,6 +96,7 @@ def Filter_Option_Parser(argv, extra_opt, ignore_outfile = False):
       opts["outfile"] = "%d.%d.%d.%d.out" % (opts["states"], opts["symbols"],
                                              opts["tape"], opts["steps"])
     if opts["outfile"] == "-":
+      opts["outfilename"] = "-"
       opts["outfile"] = sys.stdout
     else:
       if os.path.exists(opts["outfile"]):
@@ -103,6 +105,7 @@ def Filter_Option_Parser(argv, extra_opt, ignore_outfile = False):
       else:
         # This double use of opts["outfile"] is odd and possibly a bad idea,
         # but I don't think that the filename will ever be needed.
+        opts["outfilename"] = opts["outfile"]
         opts["outfile"] = file(opts["outfile"], "w")
 
   return opts, args
