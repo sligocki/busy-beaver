@@ -4,10 +4,10 @@ Abstract Turing Machine model with basic NxM TM and Macro-Machine derivatives
 
 RIGHT = 1
 # Return Conditions:
-RUNNING    = "Running"   # Machine still running normally
-HALT       = "Halt"      # Machine halts in or directly after move
-INF_REPEAT = "Inf_Repeat"  # Machine proven not to halt within move
-UNDEFINED  = "Undefined" # Machine encountered undefined transition
+RUNNING    = "Running"    # Machine still running normally
+HALT       = "Halt"       # Machine halts in or directly after move
+INF_REPEAT = "Inf_Repeat" # Machine proven not to halt within move
+UNDEFINED  = "Undefined"  # Machine encountered undefined transition
 
 class Turing_Machine:
   """Abstract base for all specific Turing Machines
@@ -104,7 +104,8 @@ class Block_Macro_Machine(Turing_Machine):
       num_steps += num_steps_out
       num_macro_steps += 1
       if cond[0] is UNDEFINED:
-        return cond, trans, num_steps
+        # return cond, trans, num_steps
+        return (UNDEFINED, pos), (tuple(tape), state, dir), num_steps
       tape[pos] = symbol_out
       state = state_out
       dir = dir_out
@@ -161,6 +162,7 @@ class Backsymbol_Macro_Machine(Turing_Machine):
       tape = [macro_symbol_in, back_macro_symbol]
       pos = 0
     # Simulate Machine
+    trans = (None, None, None)
     while 0 <= pos < 2:
       symbol = tape[pos]
       cond, (symbol_out, state_out, dir_out), num_steps_out = \
@@ -168,7 +170,8 @@ class Backsymbol_Macro_Machine(Turing_Machine):
       num_steps += num_steps_out
       num_macro_steps += 1
       if cond[0] is UNDEFINED:
-        return cond, trans, num_steps
+        # return cond, trans, num_steps
+        return (UNDEFINED, pos), trans, num_steps
       tape[pos] = symbol_out
       state = state_out
       dir = dir_out
