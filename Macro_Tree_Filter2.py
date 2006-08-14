@@ -44,6 +44,8 @@ def run(TTable, block_size, level, steps, progress):
     if progress:
       print "\t\t\tHalted", sim.get_nonzeros(), sim.step_num
     return HALT, sim.get_nonzeros(), sim.step_num
+  elif sim.op_state is Turing_Machine.UNDEFINED:
+    return UNDEF_CELL, sim.get_nonzeros(), sim.step_num
   else:
     raise Exception, "unexpected op_state"
 
@@ -76,7 +78,9 @@ if __name__ == "__main__":
       # We do not expect to find halting machines with this filter.
       # However, finding them is not a problem, but user should know.
       if results[0] is HALT:
-        sys.stderr.write("Macro_Tree_Filter encountered halting machine!\nNumber: %d in file: %s" % (next[0], opts["infile"]))
+        sys.stderr.write("Number: %d in file: %s - halted!\n" % (next[0], opts["infilename"]))
+      if results[0] is UNDEF_CELL:
+        sys.stderr.write("Number: %d in file: %s - undefined cell!\n" % (next[0], opts["infilename"]))
       old_results = next[5]
       io.write_result_raw(*(next[0:5]+(results, TTable, log_number, old_results)))
 
