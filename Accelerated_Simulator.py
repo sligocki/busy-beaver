@@ -259,7 +259,7 @@ class Stack:
     return "["+reduce((lambda x, y: x+", "+y.repr(dir)), l[1:], l[0].repr(dir))+"]"
 
 if __name__ == "__main__":
-  import IO, sys, time, math
+  import IO, sys, time, math, os
 
   infile = file(sys.argv[1], "r")
   if len(sys.argv) > 2: line = int(sys.argv[2])
@@ -274,6 +274,7 @@ if __name__ == "__main__":
   for key in sim.macro.keys():
     print key, ":", sim.macro[key]
   print
+  sys.stdout.flush()
 
   running = True; extent = 1
   try:
@@ -281,13 +282,15 @@ if __name__ == "__main__":
       sim.run(extent)
       # Print Tape and data.
       print "10^%d" % round(math.log(sim.step_num, 10)),
-      print sim.step_num, num_macro, num_steps, time.clock()
+      print sim.step_num, num_macro, num_steps, time.clock(), os.times()
       print sim.config, sim.config.get_nonzeros()
       print
+      sys.stdout.flush()
       #extent += 1
       extent *= 10
   except (TM_Finish, Error, KeyboardInterrupt), e:
     print sys.exc_type, e
     print "10^%d" % round(math.log(sim.step_num, 10)),
-    print sim.step_num, num_macro, num_steps, time.clock()
+    print sim.step_num, num_macro, num_steps, time.clock(), os.times()
     print sim.config, sim.config.get_nonzeros()
+    sys.stdout.flush()
