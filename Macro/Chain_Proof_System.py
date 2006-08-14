@@ -8,8 +8,7 @@ from Chain_Tape import Stack
 
 parent_dir = sys.path[0][:sys.path[0].rfind("/")] # pwd path with last directory removed
 sys.path.insert(1, parent_dir)
-# from Numbers.Algebraic_Expression import Algebraic_Unknown, Algebraic_Expression
-from Algebraic_Expression import Algebraic_Unknown, Algebraic_Expression
+from Numbers.Algebraic_Expression import Algebraic_Unknown, Algebraic_Expression
 
 DEBUG = False
 
