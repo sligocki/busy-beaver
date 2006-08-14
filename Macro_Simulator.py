@@ -508,6 +508,7 @@ class Macro_Simulator:
       self.num_steps_from_macro += this_num_steps
       return
   def print_self(self):
+    import sys
     print
     print "Total Steps: ", with_power(self.cur_step_num)
     print "Single Steps:", with_power(self.mtt.num_single_steps)
@@ -517,6 +518,7 @@ class Macro_Simulator:
       print "Meta Steps:  ", with_power(self.num_steps_from_meta), self.num_meta_steps, "Meta transitions proved:", len(self.apm.proven_transitions)
     print "Time:", time.clock()
     print self.state, self.tape, self.tape.get_nonzeros()
+    sys.stdout.flush()
 
 def with_power(value):
   if value is INF:
