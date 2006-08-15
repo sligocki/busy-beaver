@@ -105,7 +105,7 @@ class Block_Macro_Machine(Turing_Machine):
       num_macro_steps += 1
       if cond[0] is UNDEFINED:
         # return cond, trans, num_steps
-        return (UNDEFINED, pos), (tuple(tape), state, dir), num_steps
+        return (UNDEFINED, pos)+cond[1:], (tuple(tape), state, dir), num_steps
       tape[pos] = symbol_out
       state = state_out
       dir = dir_out
@@ -162,7 +162,6 @@ class Backsymbol_Macro_Machine(Turing_Machine):
       tape = [macro_symbol_in, back_macro_symbol]
       pos = 0
     # Simulate Machine
-    trans = (None, None, None)
     while 0 <= pos < 2:
       symbol = tape[pos]
       cond, (symbol_out, state_out, dir_out), num_steps_out = \
@@ -171,7 +170,8 @@ class Backsymbol_Macro_Machine(Turing_Machine):
       num_macro_steps += 1
       if cond[0] is UNDEFINED:
         # return cond, trans, num_steps
-        return (UNDEFINED, pos), trans, num_steps
+        trans = backsymbol_get_trans(tape, state, dir)
+        return (UNDEFINED, pos)+cond[1:], trans, num_steps
       tape[pos] = symbol_out
       state = state_out
       dir = dir_out
