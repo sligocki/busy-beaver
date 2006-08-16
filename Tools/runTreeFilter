@@ -25,8 +25,7 @@ wc -l "$base".unknown
 echo ""
 while ("$size" <= "$stop")
   echo $size
-  set cur_steps=`expr $steps \* $size`
-  update "$base" Macro_Tree_Filter.py --steps=$cur_steps --size=$size
+  update "$base" Macro_Tree_Filter2.py --steps=$steps --size=$size --progress
   wc -l "$base".unknown
   if (-e "$base".error) then
     echo "Error encountered..."

@@ -33,7 +33,7 @@ for line in input_file:
   # infinite, unknown or error
   condition = FIELD.CONDITION.type(fields[FIELD.CONDITION.num])
   # 'line' halts.
-  if TEST.IS_HALT(condition):
+  if TEST.IS_HALT(condition) or TEST.IS_UNDEFINED(condition):
     halt_file.write(line)
   # 'line' is proven infinite.
   elif TEST.IS_INFINITE(condition):
