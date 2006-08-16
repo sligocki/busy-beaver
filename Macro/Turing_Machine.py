@@ -42,10 +42,11 @@ class Simple_Machine(Turing_Machine):
     trans = symbol_out, state_out, dir_out
     # Historical signaling of undefined cell in transition table: (-1, 0, -1)
     if symbol_out == -1:
-      return (UNDEFINED, symbol_in, state_in), trans, 0
+      # Treat an undefined cell as a halt, except note that it was undefined.
+      return (UNDEFINED, (symbol_in, state_in)), (1, -1, 1), 0
     # Historical signaling of final cell (transition to halt): (1, 1, -1)
     elif state_out == -1:
-      return (HALT, 1), trans, 1
+      return (HALT,), trans, 1
     # Otherwise, the transition is normal
     else:
       return (RUNNING,), trans, 1
@@ -104,9 +105,6 @@ class Block_Macro_Machine(Turing_Machine):
             self.base_machine.get_transition(symbol, state, dir)
       num_steps += num_steps_out
       num_macro_steps += 1
-      if cond[0] is UNDEFINED:
-        # return cond, trans, num_steps
-        return (UNDEFINED, pos)+cond[1:], (tuple(tape), state, dir), num_steps
       tape[pos] = symbol_out
       state = state_out
       dir = dir_out
@@ -114,8 +112,8 @@ class Block_Macro_Machine(Turing_Machine):
         pos += 1
       else:
         pos -= 1
-      if cond[0] in (INF_REPEAT, HALT):
-        return (cond[0], pos)+cond[1:], (tuple(tape), state, dir), num_steps
+      if cond[0] != RUNNING:
+        return cond+(pos,), (tuple(tape), state, dir), num_steps
       if num_macro_steps > self.max_steps:
         return (INF_REPEAT, pos), (tuple(tape), state, dir), num_steps
     return (RUNNING,), (tuple(tape), state, dir), num_steps
@@ -169,10 +167,6 @@ class Backsymbol_Macro_Machine(Turing_Machine):
             self.base_machine.get_transition(symbol, state, dir)
       num_steps += num_steps_out
       num_macro_steps += 1
-      if cond[0] is UNDEFINED:
-        # return cond, trans, num_steps
-        trans = backsymbol_get_trans(tape, state, dir)
-        return (UNDEFINED, pos)+cond[1:], trans, num_steps
       tape[pos] = symbol_out
       state = state_out
       dir = dir_out
@@ -180,9 +174,9 @@ class Backsymbol_Macro_Machine(Turing_Machine):
         pos += 1
       else:
         pos -= 1
-      if cond[0] in (INF_REPEAT, HALT):
+      if cond[0] != RUNNING:
         trans = backsymbol_get_trans(tape, state, dir)
-        return (cond[0], pos)+cond[1:], trans, num_steps
+        return cond+(pos,), trans, num_steps
       if num_macro_steps > self.max_steps:
         trans = backsymbol_get_trans(tape, state, dir)
         return (INF_REPEAT, pos), trans, num_steps
