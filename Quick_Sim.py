@@ -28,23 +28,23 @@ def run(TTable, block_size=None, back=True):
     sim.init(m2)
   extent = 1
   try:
-    while sim.op_state is Turing_Machine.RUNNING:
+    while sim.op_state == Turing_Machine.RUNNING:
       sim.print_self()
       sim.seek(extent)
       extent *= 10
   finally:
     sim.print_self()
 
-  if sim.op_state is Turing_Machine.HALT:
+  if sim.op_state == Turing_Machine.HALT:
     print
     print "Turing Machine Halted!"
     print "Steps:   ", sim.step_num
     print "Nonzeros:", sim.get_nonzeros()
-  elif sim.op_state is Turing_Machine.INF_REPEAT:
+  elif sim.op_state == Turing_Machine.INF_REPEAT:
     print
     print "Turing Machine proven Infinite!"
     print "Reason:", sim.inf_reason
-  elif sim.op_state is Turing_Machine.UNDEFINED:
+  elif sim.op_state == Turing_Machine.UNDEFINED:
     print
     print "Turing Machine reached Undefined transition!"
     print "State: ", sim.state

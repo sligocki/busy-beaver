@@ -29,22 +29,24 @@ def run(TTable, block_size, level, steps, progress):
   sim = Chain_Simulator.Simulator()
   sim.init(m3)
   sim.loop_run(steps)
-  if sim.op_state is Turing_Machine.RUNNING:
+  if sim.op_state == Turing_Machine.RUNNING:
     if progress:
       print "Unknown", block_size, sim.step_num, sim.num_loops
     return MAX_STEPS, sim.get_nonzeros(), sim.step_num
-  elif sim.op_state is Turing_Machine.INF_REPEAT:
+  elif sim.op_state == Turing_Machine.INF_REPEAT:
     if progress:
       global max_step2inf, max_loop2inf
       max_step2inf = max(max_step2inf, sim.step_num)
       max_loop2inf = max(max_loop2inf, sim.num_loops)
       print "\t\tInfinite", block_size, (sim.step_num, max_step2inf), (sim.num_loops, max_loop2inf)
     return INFINITE, 4, block_size, "Macro_Tree_Filter2"
-  elif sim.op_state is Turing_Machine.HALT:
+  elif sim.op_state == Turing_Machine.HALT:
     if progress:
       print "\t\t\tHalted", sim.get_nonzeros(), sim.step_num
     return HALT, sim.get_nonzeros(), sim.step_num
-  elif sim.op_state is Turing_Machine.UNDEFINED:
+  elif sim.op_state == Turing_Machine.UNDEFINED:
+    if progress:
+      print "\t\t\tUndefined", sim.get_nonzeros(), sim.step_num
     return UNDEF_CELL, sim.get_nonzeros(), sim.step_num
   else:
     raise Exception, "unexpected op_state"
@@ -77,9 +79,9 @@ if __name__ == "__main__":
     else:
       # We do not expect to find halting machines with this filter.
       # However, finding them is not a problem, but user should know.
-      if results[0] is HALT:
+      if results[0] == HALT:
         sys.stderr.write("Number: %d in file: %s - halted!\n" % (next[0], opts["infilename"]))
-      if results[0] is UNDEF_CELL:
+      if results[0] == UNDEF_CELL:
         sys.stderr.write("Number: %d in file: %s - undefined cell!\n" % (next[0], opts["infilename"]))
       old_results = next[5]
       io.write_result_raw(*(next[0:5]+(results, TTable, log_number, old_results)))

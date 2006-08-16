@@ -36,23 +36,23 @@ class Simulator:
   def run(self, steps):
     self.seek(self.step_num + steps)
   def seek(self, cutoff):
-    while self.step_num < cutoff and self.op_state is Turing_Machine.RUNNING:
+    while self.step_num < cutoff and self.op_state == Turing_Machine.RUNNING:
       self.step()
   def loop_run(self, loops):
     for i in xrange(loops):
       self.step()
   def step(self):
     """Perform an atomic transition or chain step."""
-    if self.op_state is not Turing_Machine.RUNNING:
+    if self.op_state != Turing_Machine.RUNNING:
       return
     self.num_loops += 1
     if self.proof:
       cond, new_tape, num_steps = self.proof.log(self.tape, self.state, self.step_num)
-      if cond is Turing_Machine.INF_REPEAT:
+      if cond == Turing_Machine.INF_REPEAT:
         self.op_state = Turing_Machine.INF_REPEAT
         self.inf_reason = PROOF_SYSTEM
         return
-      elif cond is Turing_Machine.RUNNING:
+      elif cond == Turing_Machine.RUNNING:
         self.tape = new_tape
         self.step_num += num_steps
         self.num_rule_moves += 1
@@ -65,11 +65,9 @@ class Simulator:
           self.machine.get_transition(cur_symbol, self.state, self.dir)
    # Test condition
     self.op_state = cond[0]
-    if self.op_state is Turing_Machine.UNDEFINED:
-      return
     # Apply transition
     if next_state == self.state and next_dir == self.dir and \
-       self.op_state is Turing_Machine.RUNNING:
+       self.op_state == Turing_Machine.RUNNING:
       # Apply chain move
       num_reps = self.tape.apply_chain_move(symbol2write)
       if num_reps == Chain_Tape.INF:
@@ -89,7 +87,7 @@ class Simulator:
       self.step_num += num_steps
       self.num_macro_moves += 1
       self.steps_from_macro += num_steps
-      if self.op_state is Turing_Machine.INF_REPEAT:
+      if self.op_state == Turing_Machine.INF_REPEAT:
         self.inf_reason = REPEAT_IN_PLACE
   def get_nonzeros(self):
     return self.tape.get_nonzeros(self.machine.eval_symbol,
