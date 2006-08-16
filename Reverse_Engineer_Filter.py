@@ -30,32 +30,43 @@ def get_stats(TTable):
       if cell[2] == HALT_STATE:
         halts.append((state, symbol))
       else:
-        to_state[cell[2]].append(cell)
-        to_symbol[cell[0]].append(cell)
+        to_state[cell[2]].append(((state, symbol), cell))
+        to_symbol[cell[0]].append(((state, symbol), cell))
   return halts, to_state, to_symbol
 
 def cannot_reach_halt((halt_state, halt_symbol), to_state, to_symbol):
+  """True means it is imposible to reach the halt state.
+     False is inconclusive."""
+  # Internal function has access to arguments of this function.
+  def same_direction():
+    """Test whether all transitions to halt_state are in the same direction as
+       all the transitions writing halt_symbol."""
+    addr, cell = to_state[halt_state][0]
+    prehalt_dir = cell[1]
+    for addr, cell in to_state[halt_state]:
+      if cell[1] != prehalt_dir:
+        return False
+    for addr, cell in to_symbol[halt_symbol]:
+      if cell[1] != prehalt_dir:
+        return False
+    # If all trans in the same direction, then we cannot reach this halt.
+    return True
+
   # If no transitions go to halt_state -> never halt (Unless A0 -> Halt)
-  if len(to_state[halt_state]) == 0 and halt_state, halt_symbol != 0, 0:
+  if len(to_state[halt_state]) == 0 and (halt_state, halt_symbol) != (0, 0):
     return True
-  # Our method only works when we know that the symbol it will halt from must
-  #   be written by the TM (not there initially).
-  if halt_symbol == 0:
-    return False
-  # If no transitions write the halt_symbol -> never halt
-  if len(to_symbol[halt_symbol]) == 0:
-    return True
-  # Test whether all transitions to halt_state are in the same direction as
-  #   all the transitions writing halt_symbol.
-  prehalt_dir = to_state[halt_state][0][1]
-  for cell in to_state[halt_state]:
-    if cell[1] != prehalt_dir:
-      return False
-  for cell in to_symbol[halt_symbol]:
-    if cell[1] != prehalt_dir:
-      return False
-  # If all trans in the same direction, then we cannot reach this halt.
-  return True
+  # Method 1 requires that we write the symbol that we halt on.
+  if halt_symbol != 0:
+    # If no transitions write the halt_symbol -> never halt (Assumes symbol != 0)
+    if len(to_symbol[halt_symbol]) == 0:
+      return True
+    # If all transitions to halt_state and from halt_symbol are the same
+    #   direction and we must write the symbol we halt on we cannot halt.
+    if same_direction():
+      return True
+  # TODO: backtracking prover (needs a backtracking distance)
+  # If none of the methods work, we cannot prove it will not halt.
+  return False
 
 def test(TTable):
   # Get initial stat info
