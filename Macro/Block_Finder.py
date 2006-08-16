@@ -5,7 +5,7 @@ import Chain_Simulator, Turing_Machine
 
 DEBUG = False
 
-def block_finder(machine, limit=100):
+def block_finder(machine, limit=1000):
   """Tries to find the optimal block-size for macromachines"""
   ## First find the minimum efficient tape compression size
   sim = Chain_Simulator.Simulator()
@@ -42,7 +42,7 @@ def block_finder(machine, limit=100):
     sys.stdout.flush()
   ## Then try a couple different multiples of this base size to find best speed
   max_chain_factor = 0
-  opt_mult = 0
+  opt_mult = 1
   mult = 1
   while mult <= opt_mult + 2:
     block_machine = Turing_Machine.Block_Macro_Machine(machine, mult*opt_size)
