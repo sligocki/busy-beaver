@@ -55,6 +55,7 @@ class Block_Macro_Machine(Turing_Machine):
   MAX_TTABLE_CELLS = 100000
   DUMMY_OFFSET_STATE = "Dummy_Offset_State"
   def __init__(self, base_machine, block_size, offset=None):
+    assert block_size > 0
     self.block_size = block_size
     self.base_machine = base_machine
     self.num_states = base_machine.num_states
