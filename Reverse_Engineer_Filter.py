@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 #
 # Filters out machines whose halt states obviously cannot be reached based
-# on reverse engineering.
+# on reverse engineering/backtracking.
 
 from __future__ import division
 import IO
@@ -35,9 +35,8 @@ def get_stats(TTable):
   return halts, to_state, to_symbol
 
 def cannot_reach_halt((halt_state, halt_symbol), to_state, to_symbol):
-  # If no transitions go to halt_state -> never halt
-  # NOTE!  There is one exception (A0 -> Halt) but this is trivial
-  if len(to_state[halt_state]) == 0:
+  # If no transitions go to halt_state -> never halt (Unless A0 -> Halt)
+  if len(to_state[halt_state]) == 0 and halt_state, halt_symbol != 0, 0:
     return True
   # Our method only works when we know that the symbol it will halt from must
   #   be written by the TM (not there initially).
