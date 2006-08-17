@@ -9,7 +9,7 @@ length = int(sys.argv[2])
 sample_size = int(sys.argv[3])
 outfilename = infilename + ".sample"
 
-# If your sample is to large this algorithm could take forever ...
+# If your sample is too large this algorithm could take forever...
 # This algorithm is only meant for much smaller samples.
 assert sample_size <= length // 2
 
