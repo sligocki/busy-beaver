@@ -101,15 +101,18 @@ if __name__ == "__main__":
   from Option_Parser import Filter_Option_Parser
   # Get command line options.
   opts, args = Filter_Option_Parser(sys.argv, [("backsteps" , int, None, True, True),
-                                               ("limit",     int, 1000, False, True)])
+                                               ("limit",     int, None, False, True)])
 
+  limit = opts["limit"]
+  if limit is None:
+    limit = opts["backsteps"]
   log_number = opts["log_number"]
   io = IO.IO(opts["infile"], opts["outfile"], log_number)
   next = io.read_result()
   while next:
     TTable = next[6]
     # Run the simulator/filter on this machine
-    results = test(TTable, opts["backsteps"], opts["limit"])
+    results = test(TTable, opts["backsteps"], limit)
     # Deal with result
     if results:
       next = apply_results(results, next, log_number)
