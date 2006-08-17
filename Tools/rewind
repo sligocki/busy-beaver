@@ -25,21 +25,43 @@ if ("$status" != 0) then
   exit 1
 endif
 
-\mv -f "$basename.halt"         "$basename.halt.save"
-\mv -f "$basename.infinite"     "$basename.infinite.save"
-\mv -f "$basename.unknown"      "$basename.unknown.save"
-\cp -f "$basename.unknown.save" "$basename.unknown"
+if (-e "$basename.halt") then
+  \mv -f "$basename.halt" "$basename.halt.save"
+else
+  touch "basename.halt.save"
+endif
 
-rewind.py "$command_number"                              \
-          "$basename.halt.save"     "$basename.halt"     \
-          "$basename.infinite.save" "$basename.infinite" \
+if (-e "$basename.infinite") then
+  \mv -f "$basename.infinite" "$basename.infinite.save"
+else
+  touch "basename.infinite.save"
+endif
+
+if (-e "$basename.undecided") then
+  \mv -f "$basename.undecided" "$basename.undecided.save"
+else
+  touch "basename.undecided.save"
+endif
+
+if (-e "$basename.unknown") then
+  \mv -f "$basename.unknown" "$basename.unknown.save"
+  \cp -f "$basename.unknown.save" "$basename.unknown"
+else
+  touch "$basename.unknown"
+endif
+
+rewind.py "$command_number"                                \
+          "$basename.halt.save"      "$basename.halt"      \
+          "$basename.infinite.save"  "$basename.infinite"  \
+          "$basename.undecided.save" "$basename.undecided" \
           "$basename.unknown"
 
 if ($status != 0) then
   echo "Rewind failed - restoring files"
-  \mv -f "$basename.halt.save"     "$basename.halt"
-  \mv -f "$basename.infinite.save" "$basename.infinite"
-  \mv -f "$basename.unknown.save"  "$basename.unknown"
+  \mv -f "$basename.halt.save"      "$basename.halt"
+  \mv -f "$basename.infinite.save"  "$basename.infinite"
+  \mv -f "$basename.undecided.save" "$basename.undecided"
+  \mv -f "$basename.unknown.save"   "$basename.unknown"
   exit 1
 endif
 
