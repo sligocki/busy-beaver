@@ -64,7 +64,6 @@ def cannot_reach_halt((halt_state, halt_symbol), to_state, to_symbol):
     #   direction and we must write the symbol we halt on we cannot halt.
     if same_direction():
       return True
-  # TODO: backtracking prover (needs a backtracking distance)
   # If none of the methods work, we cannot prove it will not halt.
   return False
 
