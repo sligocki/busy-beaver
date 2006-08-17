@@ -82,16 +82,18 @@ def run(TTable, num_states, num_symbols, tape_length, max_steps):
   """
   import sys
 
-  symbol_written = [0]*num_symbols
-  undefined_transition = [0]*num_symbols
+  symbol_written = [False]*num_symbols
+  undefined_transition = [False]*num_symbols
+  # Symbol 0 is there from the start
+  symbol_written[0] = True
 
   for state in xrange(num_states):
     for symbol in xrange(num_symbols):
       new_symbol = TTable[state][symbol][0]
       if (new_symbol == -1):
-        undefined_transition[symbol] = 1
+        undefined_transition[symbol] = True
       else:
-        symbol_written[new_symbol] = 1
+        symbol_written[new_symbol] = True
 
   result = (4,3,"Infinite_no_halt")
   for symbol in xrange(num_symbols):
