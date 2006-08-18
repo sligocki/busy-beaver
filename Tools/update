@@ -37,6 +37,11 @@ if ("$status" != 0) then
   exit 1
 endif
 
+# Save the initial output file
+if ("$argv[2]" == "Generate.py") then
+  cp -f "$basename.out" "$basename.all"
+endif
+
 # Check for any change
 cmp -s "$basename.unknown" "$basename.out"
 if ("$status" != 0) then
