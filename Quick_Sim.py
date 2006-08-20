@@ -47,8 +47,8 @@ def run(TTable, block_size=None, back=True):
   elif sim.op_state == Turing_Machine.UNDEFINED:
     print
     print "Turing Machine reached Undefined transition!"
-    print "State: ", sim.state
-    print "Symbol:", sim.tape.get_top_symbol()
+    print "State: ", sim.op_details[0][1]
+    print "Symbol:", sim.op_details[0][0]
     print "Steps:   ", sim.step_num
     print "Nonzeros:", sim.get_nonzeros()
 

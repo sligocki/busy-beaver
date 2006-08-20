@@ -24,6 +24,7 @@ class Simulator:
     self.step_num = 0
     # Operation state (e.g. running, halted, proven-infinite, ...)
     self.op_state = Turing_Machine.RUNNING
+    self.op_details = ()
     self.init_stats()
   def init_stats(self):
     self.num_loops = 0
@@ -65,6 +66,7 @@ class Simulator:
           self.machine.get_transition(cur_symbol, self.state, self.dir)
    # Test condition
     self.op_state = cond[0]
+    self.op_details = cond[1:]
     # Apply transition
     if next_state == self.state and next_dir == self.dir and \
        self.op_state == Turing_Machine.RUNNING:

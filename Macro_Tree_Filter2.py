@@ -47,7 +47,8 @@ def run(TTable, block_size, level, steps, progress):
   elif sim.op_state == Turing_Machine.UNDEFINED:
     if progress:
       print "\t\t\tUndefined", sim.get_nonzeros(), sim.step_num
-    return UNDEF_CELL, sim.get_nonzeros(), sim.step_num
+    # sim.op_details[0][0 & 1] stores the symbol and state that we halted on
+    return UNDEF_CELL, sim.op_details[0][0], sim.op_details[0][1], sim.get_nonzeros(), sim.step_num
   else:
     raise Exception, "unexpected op_state"
 
