@@ -1,5 +1,3 @@
-from __future__ import division
-
 import string, operator
 from Number import Number, Rational
 
@@ -76,12 +74,20 @@ class Expression(Number):
         return Expression(new_terms, self.const*other)
     else:
       return expr_prod(self, other)
+  def __div__(self, other):
+    if other == 1:
+      return self
+    if is_scalar(other):
+      new_terms = tuple([Term(t.vars, t.coef.__div__(other)) for t in self.terms])
+      return Expression(new_terms, self.const.__div__(other))
+    else:
+      return NotImplemented
   def __truediv__(self, other):
     if other == 1:
       return self
     if is_scalar(other):
-      new_terms = tuple([Term(t.vars, t.coef/other) for t in self.terms])
-      return Expression(new_terms, self.const/other)
+      new_terms = tuple([Term(t.vars, t.coef.__truediv__(other)) for t in self.terms])
+      return Expression(new_terms, self.const.__truediv__(other))
     else:
       return NotImplemented
   def substitute(self, subs):
