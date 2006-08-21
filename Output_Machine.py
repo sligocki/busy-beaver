@@ -15,7 +15,7 @@ def display_ttable(table):
   for row in table:
     for cell in row:
       if cell[2] == -1:
-        s += "1RH "
+        s += "%c%cH " % (symbols[cell[0]], dirs[cell[1]])
       else:
         s += "%c%c%c " % (symbols[cell[0]], dirs[cell[1]], states[cell[2]])
     s += " "
