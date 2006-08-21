@@ -95,7 +95,7 @@ class Simulator:
     return self.tape.get_nonzeros(self.machine.eval_symbol,
                                   self.machine.eval_state(self.state))
   def print_self(self):
-    x = math.floor(math.log10(self.step_num + 1)) + 1
+    x = int(math.log10(self.step_num + 1)) + 1
     print
     print "         Steps:                       Times Applied:"
     print template("Total:", self.step_num, x, self.num_loops)
