@@ -35,7 +35,8 @@ class IO:
                      log_number, old_results)
 
   def write_result_raw(self, machine_num, num_states, num_symbols, tape_length,
-                       max_steps, results, machine_TTable, log_number, old_results):
+                       max_steps, results, machine_TTable, log_number = None,
+                       old_results = []):
     """
     Writes a result.
     """
