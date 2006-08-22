@@ -26,12 +26,13 @@ def run(TTable, block_size=None, back=True):
     sim.init(m3)
   else:
     sim.init(m2)
+  sim.proof = None
   extent = 1
   try:
     while sim.op_state == Turing_Machine.RUNNING:
       sim.print_self()
       #sim.step()
-      #while len(sim.tape.tape[0]) > 1 and sim.op_state == Turing_Machine.RUNNING:
+      #while len(sim.tape.tape[1]) > 1 and sim.op_state == Turing_Machine.RUNNING:
       #  sim.step()
       sim.seek(extent)
       extent *= 10
