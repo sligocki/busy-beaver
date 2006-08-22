@@ -49,7 +49,7 @@ def block_finder(machine, limit=1000):
     back_machine = Turing_Machine.Backsymbol_Macro_Machine(block_machine)
     sim.init(back_machine)
     sim.proof = None # Level 2 machine
-    sim.loop_run(limit)
+    sim.loop_seek(limit)
     if sim.op_state != Turing_Machine.RUNNING:
       return mult*opt_size
     chain_factor = sim.steps_from_chain / sim.steps_from_macro

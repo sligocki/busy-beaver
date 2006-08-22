@@ -14,11 +14,11 @@ CHAIN_MOVE = "Chain_Move"
 class Simulator:
   def __init__(self):
     self.init_stats()
-  def init(self, machine):
+  def init(self, machine, recursive=False):
     self.machine = machine
     self.tape = Chain_Tape.Chain_Tape()
     self.tape.init(machine.init_symbol, machine.init_dir)
-    self.proof = Chain_Proof_System.Proof_System(self.machine, False)
+    self.proof = Chain_Proof_System.Proof_System(self.machine, recursive)
     self.state = machine.init_state
     self.dir = machine.init_dir
     self.step_num = 0
@@ -40,7 +40,14 @@ class Simulator:
     while self.step_num < cutoff and self.op_state == Turing_Machine.RUNNING:
       self.step()
   def loop_run(self, loops):
-    for i in xrange(loops):
+    self.loop_seek(self.num_loops + loops)
+  def loop_seek(self, cutoff):
+    while self.num_loops < cutoff and self.op_state == Turing_Machine.RUNNING:
+      self.step()
+  def true_loop_run(self, loops):
+    self.true_loop_seek(self.num_loops + self.machine.num_loops + self.proof.num_loops + loops)
+  def true_loop_seek(self, cutoff):
+    while self.num_loops + self.machine.num_loops + self.proof.num_loops < cutoff and self.op_state == Turing_Machine.RUNNING:
       self.step()
   def step(self):
     """Perform an atomic transition or chain step."""
@@ -48,17 +55,20 @@ class Simulator:
       return
     self.num_loops += 1
     if self.proof:
-      cond, new_tape, num_steps = self.proof.log(self.tape, self.state, self.step_num)
-      if cond == Turing_Machine.INF_REPEAT:
-        self.op_state = Turing_Machine.INF_REPEAT
-        self.inf_reason = PROOF_SYSTEM
-        return
-      elif cond == Turing_Machine.RUNNING:
-        self.tape = new_tape
-        self.step_num += num_steps
-        self.num_rule_moves += 1
-        self.steps_from_rule += num_steps
-        return
+      #if self.proof.num_loops > self.num_loops:
+      #  self.proof.prev_configs = {}
+      #else:
+        cond, new_tape, num_steps = self.proof.log(self.tape, self.state, self.step_num)
+        if cond == Turing_Machine.INF_REPEAT:
+          self.op_state = Turing_Machine.INF_REPEAT
+          self.inf_reason = PROOF_SYSTEM
+          return
+        elif cond == Turing_Machine.RUNNING:
+          self.tape = new_tape
+          self.step_num += num_steps
+          self.num_rule_moves += 1
+          self.steps_from_rule += num_steps
+          return
     # Get current symbol
     cur_symbol = self.tape.get_top_symbol()
     # Get transition
@@ -104,7 +114,13 @@ class Simulator:
     print template("Chain:", self.steps_from_chain, x, self.num_chain_moves)
     if self.proof:
       print template("Rule:", self.steps_from_rule, x, self.num_rule_moves)
-      print "Rules proved:", len(self.proof.proven_transitions)
+      print "Rules proven:", len(self.proof.proven_transitions)
+      print "Loops through prover:", self.proof.num_loops
+    m = self.machine
+    print "Loops through macro machine"
+    while isinstance(m, Turing_Machine.Macro_Machine):
+      print "", m.num_loops
+      m = m.base_machine
     print "Time:", time.clock()
     print self.state, self.tape
     print "Num Nonzeros:", with_power(self.get_nonzeros())
