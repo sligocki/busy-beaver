@@ -51,7 +51,9 @@ class Simple_Machine(Turing_Machine):
     else:
       return (RUNNING,), trans, 1
 
-class Block_Macro_Machine(Turing_Machine):
+class Macro_Machine(Turing_Machine): pass
+
+class Block_Macro_Machine(Macro_Machine):
   """A derivative Turing Machine which simulates another machine clumping k-symbols together into a block-symbol"""
   MAX_TTABLE_CELLS = 100000
   DUMMY_OFFSET_STATE = "Dummy_Offset_State"
@@ -75,6 +77,8 @@ class Block_Macro_Machine(Turing_Machine):
     # #positions * #states * #macro_symbols
     self.max_steps = block_size * self.num_states * self.num_symbols
     self.max_cells = Block_Macro_Machine.MAX_TTABLE_CELLS
+    # Stat info
+    self.num_loops = 0
   def eval_symbol(self, macro_symbol):
     return sum(map(self.base_machine.eval_symbol, macro_symbol))
   def eval_state(self, state):
@@ -105,6 +109,7 @@ class Block_Macro_Machine(Turing_Machine):
             self.base_machine.get_transition(symbol, state, dir)
       num_steps += num_steps_out
       num_macro_steps += 1
+      self.num_loops += 1
       tape[pos] = symbol_out
       state = state_out
       dir = dir_out
@@ -123,7 +128,7 @@ def backsymbol_get_trans(tape, state, dir):
   return_symbol = tape[1 - dir]
   return return_symbol, (state, backsymbol), dir
 
-class Backsymbol_Macro_Machine(Turing_Machine):
+class Backsymbol_Macro_Machine(Macro_Machine):
   MAX_TTABLE_CELLS = 100000
   def __init__(self, base_machine):
     self.base_machine = base_machine
@@ -139,6 +144,8 @@ class Backsymbol_Macro_Machine(Turing_Machine):
     # #positions * #states * #symbols_in_front * #symbols_behind
     self.max_steps = 2 * self.num_states * self.num_symbols**2
     self.max_cells = Backsymbol_Macro_Machine.MAX_TTABLE_CELLS
+    # Stats
+    self.num_loops = 0
   def eval_symbol(self, symbol):
     return self.base_machine.eval_symbol(symbol)
   def eval_state(self, (base_state, backsymbol)):
@@ -167,6 +174,7 @@ class Backsymbol_Macro_Machine(Turing_Machine):
             self.base_machine.get_transition(symbol, state, dir)
       num_steps += num_steps_out
       num_macro_steps += 1
+      self.num_loops += 1
       tape[pos] = symbol_out
       state = state_out
       dir = dir_out
