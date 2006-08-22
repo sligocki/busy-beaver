@@ -4,7 +4,6 @@ Proof System which observes and attempts to prove paterns in computation.
 
 import sys, copy
 import Chain_Simulator, Turing_Machine, Chain_Tape
-from Chain_Tape import Stack
 
 parent_dir = sys.path[0][:sys.path[0].rfind("/")] # pwd path with last directory removed
 sys.path.insert(1, parent_dir)
@@ -27,6 +26,8 @@ class Proof_System:
     self.past_configs = {}
     # Hash of general forms of proven meta-transitions
     self.proven_transitions = {}
+    # Stat
+    self.num_loops = 0
   def print_rules(self):
     for (state, a, b, c), (init_tape, diff_tape, num_steps) in self.proven_transitions.items():
       print
@@ -121,6 +122,7 @@ class Proof_System:
         # TODO: A more sophisticated system might try to not make this block fixed sized.  For now we just fail.
         return False
       gen_sim.step()
+      self.num_loops += 1
       if DEBUG and show:
         gen_sim.print_self()
         raw_input()
@@ -231,7 +233,7 @@ class Proof_System:
         if return_block.num is not Chain_Tape.INF:
           return_block.num += num_reps * diff_block.num
       #raise Exception, return_tape.tape
-      return_tape.tape[dir] = Stack([x for x in return_tape.tape[dir] if x.num != 0])
+      return_tape.tape[dir] = [x for x in return_tape.tape[dir] if x.num != 0]
     ## Return the pertinent info
     return Turing_Machine.RUNNING, return_tape, diff_steps
 
