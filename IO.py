@@ -140,6 +140,9 @@ def load_TTable(infile, line_num = 1):
     infile.readline()
     line_num -= 1
   line = infile.readline()
+  return get_TTable_line(line)
+
+def get_TTable_line(line):
   start = line.find("[[")
   end = line.find("]]", start) + len("]]")
   if start != -1 and end != -1:

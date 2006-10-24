@@ -4,9 +4,13 @@
 
 import sys, random
 
-infilename = sys.argv[1]
-length = int(sys.argv[2])
-sample_size = int(sys.argv[3])
+try:
+  infilename = sys.argv[1]
+  length = int(sys.argv[2])
+  sample_size = int(sys.argv[3])
+except:
+  print "Random_Sample.py filename in_lines out_lines"
+  sys.exit(1)
 outfilename = infilename + ".sample"
 
 # If your sample is too large this algorithm could take forever...
@@ -14,13 +18,8 @@ outfilename = infilename + ".sample"
 assert sample_size <= length // 2
 
 # Select random machines
-sample_nums = set()
-while len(sample_nums) < sample_size:
-  sample_nums.add( random.randrange(1, length+1) )
-sample_nums = list(sample_nums)
+sample_nums = random.sample(xrange(1, length+1), sample_size).sort()
 
-# Find and sort out these machines
-sample_nums.sort()
 infile = open(infilename, "r")
 outfile = open(outfilename, "w")
 last = 0
