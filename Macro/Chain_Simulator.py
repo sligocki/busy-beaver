@@ -55,26 +55,23 @@ class Simulator:
       return
     self.num_loops += 1
     if self.proof:
-      #if self.proof.num_loops > self.num_loops:
-      #  self.proof.prev_configs = {}
-      #else:
-        cond, new_tape, num_steps = self.proof.log(self.tape, self.state, self.step_num)
-        if cond == Turing_Machine.INF_REPEAT:
-          self.op_state = Turing_Machine.INF_REPEAT
-          self.inf_reason = PROOF_SYSTEM
-          return
-        elif cond == Turing_Machine.RUNNING:
-          self.tape = new_tape
-          self.step_num += num_steps
-          self.num_rule_moves += 1
-          self.steps_from_rule += num_steps
-          return
+      cond, new_tape, num_steps = self.proof.log(self.tape, self.state, self.step_num)
+      if cond == Turing_Machine.INF_REPEAT:
+        self.op_state = Turing_Machine.INF_REPEAT
+        self.inf_reason = PROOF_SYSTEM
+        return
+      elif cond == Turing_Machine.RUNNING:
+        self.tape = new_tape
+        self.step_num += num_steps
+        self.num_rule_moves += 1
+        self.steps_from_rule += num_steps
+        return
     # Get current symbol
     cur_symbol = self.tape.get_top_symbol()
     # Get transition
     cond, (symbol2write, next_state, next_dir), num_steps = \
           self.machine.get_transition(cur_symbol, self.state, self.dir)
-   # Test condition
+    # Test condition
     self.op_state = cond[0]
     self.op_details = cond[1:]
     # Apply transition
@@ -90,7 +87,6 @@ class Simulator:
       self.step_num += num_steps*num_reps
       self.num_chain_moves += 1
       self.steps_from_chain += num_steps*num_reps
-      pass
     else:
       # Apply simple move
       self.tape.apply_single_move(symbol2write, next_dir)
