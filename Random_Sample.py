@@ -18,7 +18,8 @@ outfilename = infilename + ".sample"
 assert sample_size <= length // 2
 
 # Select random machines
-sample_nums = random.sample(xrange(1, length+1), sample_size).sort()
+sample_nums = random.sample(xrange(1, length+1), sample_size)
+sample_nums.sort()
 
 infile = open(infilename, "r")
 outfile = open(outfilename, "w")
