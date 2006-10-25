@@ -26,7 +26,7 @@ def run(TTable, block_size=None, back=True):
     sim.init(m3)
   else:
     sim.init(m2)
-  sim.proof = None
+  #sim.proof = None
   extent = 1
   try:
     while sim.op_state == Turing_Machine.RUNNING:
