@@ -11,18 +11,26 @@ import time
 
 from Turing_Machine import Turing_Machine
 
-def load(infile, num = 1):
+def load(infile, num = 1, log_number = None):
   """
   Load the contents of the Turing machine from a file.
   """
   import string
 
-  while num > 1:
-    infile.readline()
-    num -= 1
-  line = infile.readline()
+  if log_number == None:
+    while num > 1:
+      infile.readline()
+      num -= 1
 
-  parts = line.split()
+    line = infile.readline()
+    parts = line.split()
+  else:
+    line = infile.readline()
+    parts = line.split()
+
+    while line != "" and int(parts[0]) != log_number:
+      line = infile.readline()
+      parts = line.split()
 
   start_index = 0
   start_found = False
@@ -48,7 +56,6 @@ def load(infile, num = 1):
   else:
     sys.stderr.write("Turing machine not found in input file\n")
     sys.exit(1)
-
   return Turing_Machine(TTable)
 
 
@@ -311,13 +318,14 @@ if __name__ == "__main__":
                                      ("num"   , int , 1   , False, True )],
                                     True)
 
-  infile = opts["infile"]
+  infile     = opts["infile"]
+  log_number = opts["log_number"]
 
-  brief  = opts["brief"]
-  visual = opts["visual"]
-  width  = opts["width"]
-  old    = opts["old"]
-  num    = opts["num"]
+  brief      = opts["brief"]
+  visual     = opts["visual"]
+  width      = opts["width"]
+  old        = opts["old"]
+  num        = opts["num"]
 
   if opts["tape"] == None:
     tape = 10000000
@@ -332,7 +340,7 @@ if __name__ == "__main__":
   if old:
     machine = load_old(infile)
   else:
-    machine = load(infile, num)
+    machine = load(infile,num,log_number)
   infile.close()
 
   if not brief:
