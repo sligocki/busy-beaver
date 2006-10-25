@@ -11,16 +11,16 @@ import time
 
 from Turing_Machine import Turing_Machine
 
-def load(infile, num = 1, log_number = None):
+def load(infile, line_num = 1, machine_num = None):
   """
   Load the contents of the Turing machine from a file.
   """
   import string
 
-  if log_number == None:
-    while num > 1:
+  if machine_num == None:
+    while line_num > 1:
       infile.readline()
-      num -= 1
+      line_num -= 1
 
     line = infile.readline()
     parts = line.split()
@@ -28,7 +28,7 @@ def load(infile, num = 1, log_number = None):
     line = infile.readline()
     parts = line.split()
 
-    while line != "" and int(parts[0]) != log_number:
+    while line != "" and int(parts[0]) != machine_num:
       line = infile.readline()
       parts = line.split()
 
@@ -311,21 +311,22 @@ if __name__ == "__main__":
   from Option_Parser import Filter_Option_Parser
 
   opts, args = Filter_Option_Parser(sys.argv,
-                                    [("brief" , None, None, False, False),
-                                     ("visual", None, None, False, False),
-                                     ("width" , int , 79  , False, True ),
-                                     ("old"   , None, None, False, False),
-                                     ("num"   , int , 1   , False, True )],
+                                    [("brief"      , None, None, False, False),
+                                     ("visual"     , None, None, False, False),
+                                     ("width"      , int , 79  , False, True ),
+                                     ("old"        , None, None, False, False),
+                                     ("line_num"   , int , 1   , False, True ),
+                                     ("machine_num", int , None, False, True )],
                                     True)
 
-  infile     = opts["infile"]
-  log_number = opts["log_number"]
+  infile      = opts["infile"]
 
-  brief      = opts["brief"]
-  visual     = opts["visual"]
-  width      = opts["width"]
-  old        = opts["old"]
-  num        = opts["num"]
+  brief       = opts["brief"]
+  visual      = opts["visual"]
+  width       = opts["width"]
+  old         = opts["old"]
+  line_num    = opts["line_num"]
+  machine_num = opts["machine_num"]
 
   if opts["tape"] == None:
     tape = 10000000
@@ -340,7 +341,7 @@ if __name__ == "__main__":
   if old:
     machine = load_old(infile)
   else:
-    machine = load(infile,num,log_number)
+    machine = load(infile,line_num,machine_num)
   infile.close()
 
   if not brief:
