@@ -90,10 +90,14 @@ def test_from_file(filename, line, cutoff, block_size, offset):
 # Main
 if __name__ == "__main__":
   import sys
-  filename = sys.argv[1]
-  line = int(sys.argv[2])
-  cutoff = int(sys.argv[3])
-  block_size = int(sys.argv[4])
-  offset = int(sys.argv[5])
+  try:
+    filename = sys.argv[1]
+    line = int(sys.argv[2])
+    cutoff = int(sys.argv[3])
+    block_size = int(sys.argv[4])
+    offset = int(sys.argv[5])
+  except:
+    print "Simple_CTL.py filename line_num cutoff block_size offset"
+    sys.exit(1)
   VERBOSE = True
   test_from_file(filename, line, cutoff, block_size, offset)
