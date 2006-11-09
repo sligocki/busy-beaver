@@ -90,6 +90,7 @@ class Block_Macro_Machine(Macro_Machine):
       self.trans_table[args] = self.eval_trans(args)
     return self.trans_table[args]
   def eval_trans(self, (macro_symbol_in, macro_state_in, macro_dir_in)):
+    import Chain_Simulator
     # Set up machine
     num_steps = num_macro_steps = 0
     tape = list(macro_symbol_in)
@@ -103,7 +104,7 @@ class Block_Macro_Machine(Macro_Machine):
     if state == Block_Macro_Machine.DUMMY_OFFSET_STATE:
       state, pos = self.save
     # Simulate Machine
-    while 0 <= pos < self.block_size:
+    while 0 <= pos < self.block_size and Chain_Simulator.times_up == False:
       symbol = tape[pos]
       cond, (symbol_out, state_out, dir_out), num_steps_out = \
             self.base_machine.get_transition(symbol, state, dir)

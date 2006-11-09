@@ -17,7 +17,7 @@ UNKNOWN = (OVER_TAPE, MAX_STEPS)
 UNDEF_CELL = 3
 INFINITE = 4
 
-def run(TTable, block_size, level, steps, progress):
+def run(TTable, block_size, level, steps, timeout, progress):
   # Get and initialize a new simulator object
   m1 = Turing_Machine.Simple_Machine(TTable)
   if not block_size:
@@ -28,6 +28,7 @@ def run(TTable, block_size, level, steps, progress):
 
   sim = Chain_Simulator.Simulator()
   sim.init(m3)
+  sim.set_time_out(timeout)
   sim.loop_run(steps)
   if sim.op_state == Turing_Machine.RUNNING:
     if progress:
@@ -57,8 +58,9 @@ if __name__ == "__main__":
   from Option_Parser import Filter_Option_Parser
 
   # Get command line options.
-  opts, args = Filter_Option_Parser(sys.argv, [("size" , int, None, False, True),
-                                               ("level", int,    3, False, True),
+  opts, args = Filter_Option_Parser(sys.argv, [("size"    ,  int, None, False, True),
+                                               ("level"   ,  int,    3, False, True),
+                                               ("timeout" ,  int,    0, False, True),
                                                ("progress", None, None, False, False)])
 
   log_number = opts["log_number"]
@@ -71,7 +73,7 @@ if __name__ == "__main__":
       print next[0], # Machine Number
     TTable = next[6]
     # Run the simulator/filter on this machine
-    results = run(TTable, opts["size"], opts["level"], opts["steps"], progress)
+    results = run(TTable, opts["size"], opts["level"], opts["steps"], opts["timeout"], progress)
 
     # If we could not decide anything, leave the old result alone.
     if results[0] in UNKNOWN:
