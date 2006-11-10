@@ -11,6 +11,8 @@ PROOF_SYSTEM = "Proof_System"
 REPEAT_IN_PLACE = "Repeat_in_Place"
 CHAIN_MOVE = "Chain_Move"
 
+times_up = False
+
 class Simulator:
   def __init__(self):
     self.init_stats()
