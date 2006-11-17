@@ -79,6 +79,6 @@ if __name__ == "__main__":
 
   filename = "Machines/%dx%d-%s.bb" % (num_states, num_symbols, name)
   table_file = open(filename, "w")
-  table_file.write(`TTable`)
+  table_file.write(`TTable`+'\n')
   table_file.close()
   print "Successfully wrote %s" % filename
