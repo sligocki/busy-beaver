@@ -13,7 +13,7 @@ class CTL_Table(dict):
       self[key] = (set(), set())
     return dict.__getitem__(self, key)
 
-def simple_CTL(machine, config):
+def CTL(machine, config):
   """Runs the CTL on a machine given an advaced tape config"""
   # Initialize the table with the current configuration
   new_table = CTL_Table()
@@ -74,7 +74,7 @@ def test_CTL(ttable, cutoff, block_size=1, offset=None):
   for d in range(2):
     tape[d] = [block.symbol for block in sim.tape.tape[d] if block.num != "Inf"]
   config = GenContainer(state=sim.state, dir=sim.dir, tape=tape)
-  return simple_CTL(m, config)
+  return CTL(m, config)
 
 def test_from_file(filename, line, cutoff, block_size, offset):
   ttable = IO.load_TTable_filename(filename, line)
@@ -97,7 +97,7 @@ if __name__ == "__main__":
     block_size = int(sys.argv[4])
     offset = int(sys.argv[5])
   except:
-    print "Simple_CTL.py filename line_num cutoff block_size offset"
+    print "CTL1.py filename line_num cutoff block_size offset"
     sys.exit(1)
   VERBOSE = True
   test_from_file(filename, line, cutoff, block_size, offset)

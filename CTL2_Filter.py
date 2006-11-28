@@ -1,8 +1,7 @@
 #! /usr/bin/env python
 #
-# Tree Filter which uses the Macro Machine Simulator
 
-from Simple_CTL import test_CTL
+from CTL2 import test_CTL
 import IO
 import sys
 from Option_Parser import Filter_Option_Parser
@@ -29,7 +28,7 @@ offset = opts["offset"]   # Offset for block size to resolve parity errors
 io = IO.IO(opts["infile"], opts["outfile"], log_number)
 next = io.read_result()
 
-results = (INFINITE, 5, cutoff, block_size, offset)
+results = (INFINITE, 7, cutoff, block_size, offset, "CTL_A*_B")
 
 while next:
   ttable = next[6]
