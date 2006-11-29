@@ -30,7 +30,8 @@ def CTL(machine, config):
   table = None
   while table != new_table:
     if VERBOSE:
-      print new_table
+      for term in new_table:
+        print term,":",new_table[term]
       print
     table, new_table = new_table, CTL_Table()
     for state, dir in table:
@@ -95,7 +96,9 @@ def test_CTL(ttable, cutoff, block_size=1, offset=None):
 def test_from_file(filename, line, cutoff, block_size, offset):
   ttable = IO.load_TTable_filename(filename, line)
   if VERBOSE:
-    print ttable
+    for term in ttable:
+      print term
+    print
   if test_CTL(ttable, cutoff, block_size, offset):
     if VERBOSE:
       print "Success :)"
