@@ -140,6 +140,9 @@ def run(machine, tape_length, num_steps, silent=False):
 
   exit_cond = int(result[0])
 
+  num_syms  = 0
+  num_steps = 0
+
   if exit_cond < 0:
     print "Error: %s" % result[2]
   elif exit_cond <= 2:
@@ -157,7 +160,13 @@ def run(machine, tape_length, num_steps, silent=False):
       else:
         print "Steps/second: ",num_steps / (end_time - start_time)
   elif exit_cond == 3:
-    print "Invalid state found"
+    bad_state  = int(result[1])
+    bad_symbol = int(result[2])
+
+    num_syms  = int(result[3])
+    num_steps = int(result[4])
+
+    print "Invalid TM table entry reached - state: %d, symbol: %d" % (bad_state,bad_symbol)
   elif exit_cond == 4:
     print "Infinite result: %s" % result[2]
   else:
