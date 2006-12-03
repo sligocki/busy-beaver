@@ -25,7 +25,7 @@ infile = open(infilename, "r")
 outfile = open(outfilename, "w")
 last = 0
 for num, i in zip(sample_nums, range(len(sample_nums))):
-  print num, i+1, "of", sample_size
+  #print num, i+1, "of", sample_size
   for j in range(num - last):
     line = infile.readline()
   outfile.write(line)
