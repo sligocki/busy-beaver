@@ -70,6 +70,7 @@ def CTL(machine, config):
   return True
 
 class GenContainer:
+  """Generic Container class"""
   def __init__(self, **args):
     for atr in args:
       self.__dict__[atr] = args[atr]
@@ -83,6 +84,11 @@ def test_CTL(ttable, cutoff, block_size=1, offset=None):
   sim.init(m)
   sim.proof = None
   sim.seek(cutoff)
+  if sim.op_state != Turing_Machine.RUNNING:
+    return False
+  if VERBOSE:
+    print sim.state, sim.tape
+    print
   tape = [None, None]
   for d in range(2):
     # Pass all symbols from this side of tape except for inf 0s
