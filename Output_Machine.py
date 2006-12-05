@@ -34,7 +34,7 @@ else:
 
 for line in infile:
   parts = line.split()
-  #ones = int(parts[6])
-  #steps = int(parts[7])
+  ones = int(parts[6])
+  steps = int(parts[7])
   table = get_ttable(line)
-  print display_ttable(table)#, ones, "", steps
+  print display_ttable(table), "# ",ones, "", steps
