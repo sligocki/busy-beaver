@@ -32,6 +32,7 @@ if __name__ == "__main__":
   try:
     halt_file = file(basename + ".halt", "r")
     infinite_file = file(basename + ".infinite", "r")
+    undecided_file = file(basename + ".undecided", "r")
     unknown_file = file(basename + ".unknown", "r")
   except IOError:
     print usage
@@ -43,20 +44,27 @@ if __name__ == "__main__":
   max_steps, max_symbols, num_halt = get_max(halt_file)
   # Get number of machines in each category
   num_infinite = count_lines(infinite_file)
+  num_undecided = count_lines(undecided_file)
   num_unknown = count_lines(unknown_file)
-  num_total = num_halt + num_infinite + num_unknown
+  num_total = num_halt + num_infinite + num_undecided + num_unknown
   # Derive percentages in each category
   percent_halt = float(num_halt) / num_total
   percent_infinite = float(num_infinite) / num_total
+  percent_undecided = float(num_undecided) / num_total
   percent_unknown = float(num_unknown) / num_total
 
   print basename
-  print "Max Steps        =", max_steps
-  print "Max Symbols      =", max_symbols
-  print "Number Total     =", num_total
-  print "Number Halt      =", num_halt
-  print "Number Infinite  =", num_infinite
-  print "Number Unknown   =", num_unknown
-  print "Percent Halt     =", percent_halt
-  print "Percent Infinite =", percent_infinite
-  print "Percent Unknown  =", percent_unknown
+  print ""
+  print "Max Steps         =", max_steps
+  print "Max Symbols       =", max_symbols
+  print ""
+  print "Number Total      =", num_total
+  print "Number Halt       =", num_halt
+  print "Number Infinite   =", num_infinite
+  print "Number Undecided  =", num_undecided
+  print "Number Unknown    =", num_unknown
+  print ""
+  print "Percent Halt      =", percent_halt
+  print "Percent Infinite  =", percent_infinite
+  print "Percent Undecided =", percent_undecided
+  print "Percent Unknown   =", percent_unknown
