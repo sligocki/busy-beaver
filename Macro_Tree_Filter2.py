@@ -9,13 +9,14 @@ max_step2inf = 0
 max_loop2inf = 0
 
 # Return Conditions
-ERROR = -1
-HALT = 0
-OVER_TAPE = 1
-MAX_STEPS = 2
-UNKNOWN = (OVER_TAPE, MAX_STEPS)
-UNDEF_CELL = 3
-INFINITE = 4
+ERROR      = -1
+HALT       =  0
+OVER_TAPE  =  1
+MAX_STEPS  =  2
+UNDEF_CELL =  3
+INFINITE   =  4
+TIME_OUT   =  5
+UNKNOWN    = (OVER_TAPE, MAX_STEPS, TIME_OUT)
 
 def run(TTable, block_size, level, steps, timeout, progress):
   # Get and initialize a new simulator object
@@ -32,24 +33,28 @@ def run(TTable, block_size, level, steps, timeout, progress):
   sim.loop_run(steps)
   if sim.op_state == Turing_Machine.RUNNING:
     if progress:
-      print "Unknown", block_size, sim.step_num, sim.num_loops
+      print "\tUnknown", block_size, sim.step_num, sim.num_loops
     return MAX_STEPS, sim.get_nonzeros(), sim.step_num
   elif sim.op_state == Turing_Machine.INF_REPEAT:
     if progress:
       global max_step2inf, max_loop2inf
       max_step2inf = max(max_step2inf, sim.step_num)
       max_loop2inf = max(max_loop2inf, sim.num_loops)
-      print "\t\tInfinite", block_size, (sim.step_num, max_step2inf), (sim.num_loops, max_loop2inf)
+      print "\tInfinite", block_size, (sim.step_num, max_step2inf), (sim.num_loops, max_loop2inf)
     return INFINITE, 4, block_size, "Macro_Tree_Filter2"
   elif sim.op_state == Turing_Machine.HALT:
     if progress:
-      print "\t\t\tHalted", sim.get_nonzeros(), sim.step_num
+      print "\tHalted", sim.get_nonzeros(), sim.step_num
     return HALT, sim.get_nonzeros(), sim.step_num
   elif sim.op_state == Turing_Machine.UNDEFINED:
     if progress:
-      print "\t\t\tUndefined", sim.get_nonzeros(), sim.step_num
+      print "\tUndefined", sim.get_nonzeros(), sim.step_num
     # sim.op_details[0][0 & 1] stores the symbol and state that we halted on
     return UNDEF_CELL, sim.op_details[0][0], sim.op_details[0][1], sim.get_nonzeros(), sim.step_num
+  elif sim.op_state == Turing_Machine.TIME_OUT:
+    if progress:
+      print "\tTimeout", block_size, sim.step_num, sim.num_loops
+    return TIME_OUT, sim.get_nonzeros(), sim.step_num
   else:
     raise Exception, "unexpected op_state"
 
