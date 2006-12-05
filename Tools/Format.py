@@ -13,8 +13,8 @@ class fields_container:
     self.MAX_STEPS   = field_data(4, int)
     self.CONDITION   = field_data(5, int)
     # If Condition is halt or unknown:
-    self.SYMBOLS     = field_data(6, float)
-    self.STEPS       = field_data(7, float)
+    self.SYMBOLS     = field_data(6, int)
+    self.STEPS       = field_data(7, int)
     # If Condition is infinte:
     self.INF_TYPE    = field_data(6, int)
 
