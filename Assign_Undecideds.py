@@ -12,9 +12,9 @@ HALT_TRANS = (1, 1, -1)
 
 # Get command line options.
 opts, args = Filter_Option_Parser(sys.argv,
-                  [("next-machine-num", int, None, True, True)])
+                  [("next_machine_num", int, None, True, True)])
 
-new_M_num = opts["next-machine-num"]
+new_M_num = opts["next_machine_num"]
 io = IO.IO(opts["infile"], opts["outfile"])
 next = io.read_result()
 
