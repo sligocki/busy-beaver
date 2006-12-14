@@ -46,21 +46,21 @@ class Simulator:
   def run(self, steps):
     self.seek(self.step_num + steps)
   def seek(self, cutoff):
-    import copy
-    temp = copy.deepcopy(self.tape.tape[0])
-    temp.reverse()
-    if self.dir == 0:
-      sys.stdout.write("%35s < %c(%d) %-35s\n" % (temp,self.state[0]+65,self.state[1],self.tape.tape[1]))
-    else:
-      sys.stdout.write("%35s (%d)%c > %-35s\n" % (temp,self.state[1],self.state[0]+65,self.tape.tape[1]))
+    # import copy
+    # temp = copy.deepcopy(self.tape.tape[0])
+    # temp.reverse()
+    # if self.dir == 0:
+    #   sys.stdout.write("%35s < %c(%d) %-35s\n" % (temp,self.state[0]+65,self.state[1],self.tape.tape[1]))
+    # else:
+    #   sys.stdout.write("%35s (%d)%c > %-35s\n" % (temp,self.state[1],self.state[0]+65,self.tape.tape[1]))
     while self.step_num < cutoff and self.op_state == Turing_Machine.RUNNING:
       self.step()
-      temp = copy.deepcopy(self.tape.tape[0])
-      temp.reverse()
-      if self.dir == 0:
-        sys.stdout.write("%35s < %c(%d) %-35s\n" % (temp,self.state[0]+65,self.state[1],self.tape.tape[1]))
-      else:
-        sys.stdout.write("%35s (%d)%c > %-35s\n" % (temp,self.state[1],self.state[0]+65,self.tape.tape[1]))
+      # temp = copy.deepcopy(self.tape.tape[0])
+      # temp.reverse()
+      # if self.dir == 0:
+      #   sys.stdout.write("%35s < %c(%d) %-35s\n" % (temp,self.state[0]+65,self.state[1],self.tape.tape[1]))
+      # else:
+      #   sys.stdout.write("%35s (%d)%c > %-35s\n" % (temp,self.state[1],self.state[0]+65,self.tape.tape[1]))
   def loop_run(self, loops):
     self.loop_seek(self.num_loops + loops)
   def loop_seek(self, cutoff):
