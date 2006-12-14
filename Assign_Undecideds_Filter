@@ -1,0 +1,109 @@
+#!/bin/csh -f
+
+# Parse the expected options
+echo $argv | grep -q -e '--infile' 
+set infileflag=$status
+set infile=`echo $argv | sed -e 's/.*--infile=//' -e 's/ .*$//'`
+
+echo $argv | grep -q -e '--outfile' 
+set outfileflag=$status
+set outfile=`echo $argv | sed -e 's/.*--outfile=//' -e 's/ .*$//'`
+
+echo $argv | grep -q -e '--log_number' 
+set lognumflag=$status
+set lognum=`echo $argv | sed -e 's/.*--log_number=//' -e 's/ .*$//'`
+
+echo $argv | grep -q -e '--next_machine_number' 
+set nextmachnumflag=$status
+set nextmachnum=`echo $argv | sed -e 's/.*--next_machine_number=//' -e 's/ .*$//'`
+
+# Check for all required options
+if ("$infileflag" != 0 || "$outfileflag" != 0 || "$lognumflag" != 0 || "$nextmachnumflag" != 0) then
+  echo "Usage:  Assign_Undecideds_Filter --infile= --outfile= --log_number= --next_machine_number="
+  exit 1
+endif
+
+# Get basename and date
+set basename=$infile:r.undecided
+set date=`\date`
+
+# If there are no undecided TMs, exit so the "update" will report "No change"
+set num=`cat $basename | wc -l`
+if ("$num" == 0) then
+  cp -f $basename:r.unknown $basename:r.out
+  /bin/rm -f $basename.*
+  exit 0
+endif
+
+# Clean up old files
+/bin/rm -f $basename.*
+
+# Setup initial subproblem
+/bin/cp -f $basename $basename.unknown
+/bin/cp -f $basename:r.log $basename.log
+
+# Convert undecided TMs to new TMs
+update $basename Assign_Undecideds.py --next_machine_num=$nextmachnum
+
+# Check to see if this succeeded
+if ("$status" != 0) then
+  echo "Initial update failed"
+  /bin/rm -f $basename.*
+  exit 1
+endif
+
+# Run all the filters up to this time on the new TMs
+
+# Start with the second filter (the first is "Generate.py")
+set filternum=2
+wc -l $basename.unknown
+
+# Loop over all filters
+while ($filternum < $lognum)
+  # If there are no more unknown TMs, stop looping
+  set num=`cat $basename.unknown | wc -l`
+  if ("$num" == 0) then
+    break
+  endif
+
+  # Run the current filter on the new, unknown TMs
+  echo ""
+  echo $filternum
+  cp -f $basename:r.log $basename.log
+  set curline=`grep "^ *$filternum " $basename.log \
+  | sed -e 's/.*|//g'                              \
+        -e 's/--infile=[^ ]* //g'                  \
+        -e 's/--infile=[^ ]*$//g'                  \
+        -e 's/--outfile=[^ ]* //g'                 \
+        -e 's/--outfile=[^ ]*$//g'                 \
+        -e 's/--log_number=[^ ]* //g'              \
+        -e 's/--log_number=[^ ]*$//g'`
+  set curcommand=`echo $curline | sed -e 's/ .*$//g'`
+
+  # Skip any "Assign_Undecideds_Filter" in the list to avoid recursion
+  if ("$curcommand" == "Assign_Undecideds_Filter") then
+    echo "Skipping command: $curline"
+  else
+    # Runt the filter on the subproblem
+    update $basename $curline
+    if ("$status" != 0) then
+      echo "Filter $filternum update failed"
+      /bin/rm -f $basename.*
+      exit 1
+    endif
+  endif
+  wc -l $basename.unknown
+  @ filternum++
+end
+
+echo ""
+wc -l $basename.*
+
+# Generate the ".out" file containing the results from the subproblem (and all
+# the original unknown macines)
+cat $basename:r.unknown $basename.halt $basename.infinite $basename.undecided $basename.unknown \
+> $basename:r.out
+
+# Clean up subproblem files
+/bin/rm -f $basename $basename.*
+exit 0
