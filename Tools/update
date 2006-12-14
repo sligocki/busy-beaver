@@ -50,10 +50,10 @@ if ("$status" != 0) then
   echo " | $date | $command"                     >> "$basename.log"
 
   # Integrate the output data into the existing database
-  Tools/Integrate_Data.py "$basename.out"                                     \
-                          "$basename.halt" "$basename.infinite"               \
-                          "$basename.unknown" "$basename.error"               \
-                          "$basename.undecided"
+  Integrate_Data.py "$basename.out"                                     \
+                    "$basename.halt" "$basename.infinite"               \
+                    "$basename.unknown" "$basename.error"               \
+                    "$basename.undecided"
 
   # Check for failure
   if ("$status" != 0) then
