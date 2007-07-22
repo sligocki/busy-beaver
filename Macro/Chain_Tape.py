@@ -5,8 +5,19 @@ Combined with the k-block macro machine, this is very powerful compression.
 Combined with an automated prover, this can prove Xmas Trees.
 """
 
+class Infinity(object):
+  """An identifier of infinity, only to be used for comparison purposes. A single object class."""
+  def __cmp__(self, other):
+    if isinstance(other, Infinity):
+      return 0  # Inf == Inf
+    else:
+      return 1  # Inf > (anything other than Inf)
+  def __repr__(self):
+    return "Infinity()"
+  def __str__(self):
+    return "Inf"
 # Serves as numerical infinity
-INF = "Inf"
+INF = Infinity()
 
 # Useful Tool
 def reverse(in_list):
