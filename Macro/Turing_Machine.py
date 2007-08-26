@@ -8,7 +8,6 @@ RUNNING    = "Running"    # Machine still running normally
 HALT       = "Halt"       # Machine halts in or directly after move
 INF_REPEAT = "Inf_Repeat" # Machine proven not to halt within move
 UNDEFINED  = "Undefined"  # Machine encountered undefined transition
-TIME_OUT   = "Timeout"    # Machine ran out of time within a move
 
 class Turing_Machine:
   """Abstract base for all specific Turing Machines
@@ -123,8 +122,6 @@ class Block_Macro_Machine(Macro_Machine):
         return cond+(pos,), (tuple(tape), state, dir), num_steps
       if num_macro_steps > self.max_steps:
         return (INF_REPEAT, pos), (tuple(tape), state, dir), num_steps
-      if Chain_Simulator.times_up == True:
-        return (TIME_OUT, pos), (tuple(tape), state, dir), num_steps
     return (RUNNING,), (tuple(tape), state, dir), num_steps
 
 def backsymbol_get_trans(tape, state, dir):
@@ -193,9 +190,6 @@ class Backsymbol_Macro_Machine(Macro_Machine):
       if num_macro_steps > self.max_steps:
         trans = backsymbol_get_trans(tape, state, dir)
         return (INF_REPEAT, pos), trans, num_steps
-      if Chain_Simulator.times_up == True:
-        trans = backsymbol_get_trans(tape, state, dir)
-        return (TIME_OUT, pos), trans, num_steps
     # If we just ran off of the tape, we are still running
     trans = backsymbol_get_trans(tape, state, dir)
     return (RUNNING,), trans, num_steps
