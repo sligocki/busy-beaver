@@ -3,16 +3,12 @@ Turing Machine Simulator with considerable accelleration due to tape compression
 """
 
 import Turing_Machine, Chain_Tape, Chain_Proof_System
-import sys
 import time, math
-import signal
 
 # Infinite Reasons
 PROOF_SYSTEM = "Proof_System"
 REPEAT_IN_PLACE = "Repeat_in_Place"
 CHAIN_MOVE = "Chain_Move"
-
-times_up = False
 
 class Simulator:
   def __init__(self):
@@ -28,7 +24,6 @@ class Simulator:
     # Operation state (e.g. running, halted, proven-infinite, ...)
     self.op_state = Turing_Machine.RUNNING
     self.op_details = ()
-    self.time_out = 0
     self.init_stats()
   def init_stats(self):
     self.num_loops = 0
@@ -38,44 +33,25 @@ class Simulator:
     self.steps_from_chain = 0
     self.num_rule_moves = 0
     self.steps_from_rule = 0
-  def set_time_out(self, time_out):
-    self.time_out = time_out
-  def handle_time_out(self, signum, frame):
-    global times_up
-    times_up = True
+
   def run(self, steps):
     self.seek(self.step_num + steps)
   def seek(self, cutoff):
-    # import copy
-    # temp = copy.deepcopy(self.tape.tape[0])
-    # temp.reverse()
-    # if self.dir == 0:
-    #   sys.stdout.write("%35s < %c(%d) %-35s\n" % (temp,self.state[0]+65,self.state[1],self.tape.tape[1]))
-    # else:
-    #   sys.stdout.write("%35s (%d)%c > %-35s\n" % (temp,self.state[1],self.state[0]+65,self.tape.tape[1]))
     while self.step_num < cutoff and self.op_state == Turing_Machine.RUNNING:
       self.step()
-      # temp = copy.deepcopy(self.tape.tape[0])
-      # temp.reverse()
-      # if self.dir == 0:
-      #   sys.stdout.write("%35s < %c(%d) %-35s\n" % (temp,self.state[0]+65,self.state[1],self.tape.tape[1]))
-      # else:
-      #   sys.stdout.write("%35s (%d)%c > %-35s\n" % (temp,self.state[1],self.state[0]+65,self.tape.tape[1]))
+
   def loop_run(self, loops):
     self.loop_seek(self.num_loops + loops)
   def loop_seek(self, cutoff):
-    global times_up
-    if self.time_out > 0:
-      signal.signal(signal.SIGALRM,self.handle_time_out)
-      signal.alarm(self.time_out)
-    times_up = False
-    while self.num_loops < cutoff and self.op_state == Turing_Machine.RUNNING and times_up == False:
+   while self.num_loops < cutoff and self.op_state == Turing_Machine.RUNNING:
       self.step()
+
   def true_loop_run(self, loops):
     self.true_loop_seek(self.num_loops + self.machine.num_loops + self.proof.num_loops + loops)
   def true_loop_seek(self, cutoff):
     while self.num_loops + self.machine.num_loops + self.proof.num_loops < cutoff and self.op_state == Turing_Machine.RUNNING:
       self.step()
+
   def step(self):
     """Perform an atomic transition or chain step."""
     if self.op_state != Turing_Machine.RUNNING:
