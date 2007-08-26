@@ -52,18 +52,21 @@ def run(TTable, block_size=None, back=True, prover=True, rec=False):
     print "Nonzeros:", sim.get_nonzeros()
 
 # Main script
+# Backsymbol (default on)
 if "-b" in sys.argv:
   sys.argv.remove("-b")
   back = False
 else:
   back = True
 
+# Prover (default on)
 if "-p" in sys.argv:
   sys.argv.remove("-p")
   prover = False
 else:
   prover = True
 
+# Recursive Prover (default off)
 if "-r" in sys.argv:
   sys.argv.remove("-r")
   recursive = True
