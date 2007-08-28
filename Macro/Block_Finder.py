@@ -14,6 +14,7 @@ def block_finder(machine, limit=1000):
   # Run sim to find when the tape is least compressed with macro size 1
   max_length = len(sim.tape.tape[0]) + len(sim.tape.tape[1])
   worst_time = 0
+  worst_tape = uncompress_tape(sim.tape.tape)
   for i in range(limit):
     sim.step()
     l = len(sim.tape.tape[0]) + len(sim.tape.tape[1])
