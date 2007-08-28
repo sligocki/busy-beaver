@@ -6,6 +6,13 @@ import IO
 
 from Macro.Chain_Tape import INF
 
+TIMEOUT = "Timeout"
+OVERSTEPS = "Over steps"
+HALT = "Halt"
+INFINITE = "Infinite repeat"
+UNDEFINED = "Undefined Transition"
+
+
 def signal2exception(exc):
   """Creates a custom signal handler that immediately raises a chosen exception"""
   def catchException(*args):
@@ -15,14 +22,13 @@ class AlarmException(Exception):
   """An exception to be tied to a timer running out."""
   pass
 # Attach the alarm signal to the alarm exception.
-signal.signal(signal.SIGALRM, signal2exception(AlarmException)
+signal.signal(signal.SIGALRM, signal2exception(AlarmException))
 
 def run(TTable, steps=INF, time=None, block_size=None, back=True, prover=True, rec=False):
   # Construct Machine (Backsymbol-k-Block-Macro-Machine)
   m = Turing_Machine.Simple_Machine(TTable)
   # If no explicit block-size given, use inteligent software to find one
   if not block_size:
-    Block_Finder.DEBUG = True
     block_size = Block_Finder.block_finder(m)
   # Do not create a 1-Block Macro-Machine (just use base machine)
   if block_size != 1:
@@ -57,37 +63,50 @@ def run(TTable, steps=INF, time=None, block_size=None, back=True, prover=True, r
     return UNDEFINED, (sim.op_details[0][1], sim.op_details[0][0], sim.step_num, sim.get_nonzeros())
 
 # Main script
-# Backsymbol (default on)
-if "-b" in sys.argv:
-  sys.argv.remove("-b")
-  back = False
-else:
-  back = True
+if __name__ == "__main__":
+  # Backsymbol (default on)
+  if "-b" in sys.argv:
+    sys.argv.remove("-b")
+    back = False
+  else:
+    back = True
 
-# Prover (default on)
-if "-p" in sys.argv:
-  sys.argv.remove("-p")
-  prover = False
-else:
-  prover = True
+  # Prover (default on)
+  if "-p" in sys.argv:
+    sys.argv.remove("-p")
+    prover = False
+  else:
+    prover = True
 
-# Recursive Prover (default off)
-if "-r" in sys.argv:
-  sys.argv.remove("-r")
-  recursive = True
-else:
-  recursive = False
+  # Recursive Prover (default off)
+  if "-r" in sys.argv:
+    sys.argv.remove("-r")
+    recursive = True
+  else:
+    recursive = False
 
-if len(sys.argv) >= 3:
-  line = int(sys.argv[2])
-else:
-  line = 1
+  if len(sys.argv) >= 3:
+    line = int(sys.argv[2])
+  else:
+    line = 1
 
-ttable = IO.load_TTable_filename(sys.argv[1], line)
+  ttable = IO.load_TTable_filename(sys.argv[1], line)
 
-if len(sys.argv) >= 4:
-  block_size = int(sys.argv[3])
-else:
-  block_size = None
+  if len(sys.argv) >= 4:
+    block_size = int(sys.argv[3])
+  else:
+    block_size = None
 
-run(ttable, steps, time, block_size, back, prover, recursive)
+  if len(sys.argv) >= 5:
+    steps = int(sys.argv[4])
+    if steps == 0:
+      steps = INF
+  else:
+    steps = INF
+
+  if len(sys.argv) >= 6:
+    time = int(sys.argv[5])
+  else:
+    time = None
+
+  print run(ttable, steps, time, block_size, back, prover, recursive)
