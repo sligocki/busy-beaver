@@ -5,6 +5,16 @@
 # Simulated annealing - general class.
 #
 
+def separate(result):
+  extra = None
+
+  if isinstance(result,tuple):
+    if len(result) > 1:
+      extra = result[1:]
+    result = result[0]
+
+  return (result,extra)
+
 #
 # A class do the simulated annealing.
 #
@@ -36,14 +46,15 @@ class SA:
     import math
 
     config0 = self.object.initConfig()
-    energy0 = self.object.energyFunc(config0)
+    (energy0,extra0) = separate(self.object.energyFunc(config0))
 
-    print energy0
+    print energy0,extra0
     print ''
     sys.stdout.flush()
 
     configMin = config0
     energyMin = energy0
+    extraMin = extra0
 
     initT = self.initT
     T = initT
@@ -55,15 +66,17 @@ class SA:
 
     while T > self.miniT:
       config1 = self.object.nextConfig(config0)
-      energy1 = self.object.energyFunc(config1)
+      (energy1,extra1) = separate(self.object.energyFunc(config1))
 
       if energy1 < energyMin:
         configMin = config1
         energyMin = energy1
+        extraMin  = extra1
 
       if self.approve(energy0,energy1,T):
         config0 = config1
         energy0 = energy1
+        extra0  = extra1
 
       count += 1
       totalCount += 1
@@ -71,7 +84,7 @@ class SA:
       energyTotal += energy0
 
       if totalCount % self.report == 0:
-        print totalCount,T,energyTotal/self.report,energyMin
+        print totalCount,T,energyTotal/self.report,energyMin,extraMin
         sys.stdout.flush()
 
         energyTotal = 0
@@ -87,10 +100,10 @@ class SA:
         count = 0
 
     print ''
-    print energyMin
+    print energyMin,extraMin
     sys.stdout.flush()
 
-    return (configMin,energyMin)
+    return (configMin,energyMin,extraMin)
 
   #
   # The approval function.
@@ -148,4 +161,4 @@ if __name__ == "__main__":
   object = testObject(length)
   sa = SA(50.0,50.0/(length*10000.0),0.1,object,3*length,length);
 
-  (bestConfig,bestEnergy) = sa.run()
+  (bestConfig,bestEnergy,bestExtra) = sa.run()
