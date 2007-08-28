@@ -5,7 +5,7 @@
 #
 
 class TMObject:
-  def __init__(self,numStates,numSymbols,stepLimit,tapeLimit,seed):
+  def __init__(self,numStates,numSymbols,stepLimit,timeLimit,seed):
     import random
 
     self.random = random
@@ -15,7 +15,7 @@ class TMObject:
     self.numSymbols = numSymbols
 
     self.stepLimit = stepLimit
-    self.tapeLimit = tapeLimit
+    self.timeLimit = timeLimit
 
   def initConfig(self):
     print "# of states  = ",self.numStates
@@ -34,42 +34,34 @@ class TMObject:
     return newTM
 
   def energyFunc(self,curTM):
-    from Turing_Machine_Sim import Turing_Machine_Sim
-    import sys,math
+    from Macro.Chain_Tape import INF
+    import Macro_Simulator
 
     transTM = [curTM[i*self.numSymbols:(i+1)*self.numSymbols] \
                  for i in xrange(self.numStates)]
 
-    result = Turing_Machine_Sim(transTM,self.numStates,self.numSymbols, \
-                                self.tapeLimit,self.stepLimit)
+    # print transTM
 
-    exitCond = int(result[0])
+    result = Macro_Simulator.run(transTM,INF,self.timeLimit)
 
-    if exitCond < 0:
+    exitCond = result[0]
+
+    if exitCond == Macro_Simulator.OVERSTEPS or \
+       exitCond == Macro_Simulator.INFINITE  or \
+       exitCond == Macro_Simulator.TIMEOUT:
+      numSymbols = 0 
+      numSteps   = 0 
+
+    elif exitCond == Macro_Simulator.HALT:
+      numSymbols = result[1][1] 
+      numSteps   = result[1][0] 
+
+    elif exitCond == Macro_Simulator.UNDEFINED:
       print "TM sim error: %s" % result[2]
       sys.exit(1)
 
-    elif exitCond <= 2:
-      if exitCond == 0:
-        numSymbols = int(result[1])
-        numSteps   = int(result[2])
-      else:
-        numSymbols = 0
-        numSteps   = 0
-
-    elif exitCond == 3:
-      badState  = int(result[1])
-      badSymbol = int(result[2])
-
-      print "TM sim invalid table entry - state: %d, symbol: %d" % (badState,badSymbol)
-      sys.exit(1)
-
-    elif exitCond == 4:
-      print "TM sim result: %s" % result[2]
-      sys.exit(1)
-
     else:
-      print "Unknown TM sim exit code: %d" % exitCond
+      print "Unknown TM sim exit code: %s" % exitCond
       sys.exit(1)
 
     return (-math.log(numSteps+1),numSymbols,numSteps)
@@ -104,7 +96,7 @@ class TMObject:
     return newTM
 
 def usage():
-  print "Usage:  BBAnnealRegular.py [--help] [--T0=] [--Tf=] [--iter=] [--reset=] [--seed=] [--freq=] [--steps=] [--tape=] [--states=] [--symbols=]"
+  print "Usage:  BBAnnealAccel.py [--help] [--T0=] [--Tf=] [--iter=] [--reset=] [--seed=] [--freq=] [--steps=] [--time=] [--states=] [--symbols=]"
 
 if __name__ == "__main__":
   import time,getopt,sys,math
@@ -124,7 +116,7 @@ if __name__ == "__main__":
   statFreq = 100000
 
   stepLimit = 10000
-  tapeLimit = 40000
+  timeLimit = 60
 
   try:
     opts, args = getopt.getopt(sys.argv[1:],"", \
@@ -137,7 +129,7 @@ if __name__ == "__main__":
                                 "seed=",        \
                                 "freq=",        \
                                 "steps=",       \
-                                "tape=",        \
+                                "time=",        \
                                 "states=",      \
                                 "symbols="      \
                                ]                \
@@ -164,22 +156,22 @@ if __name__ == "__main__":
       statFreq = long(arg)
     if opt == "--steps":
       stepLimit = int(arg)
-    if opt == "--tape":
-      tapeLimit = int(arg)
+    if opt == "--time":
+      timeLimit = int(arg)
     if opt == "--states":
       numStates = int(arg)
     if opt == "--symbols":
       numSymbols = int(arg)
 
-  print "BBAnnealRegular.py --T0=%f --Tf=%f --iter=%d --reset=%d --seed=%s --freq=%d --steps=%d --tape=%d --states=%d --symbols=%d" % \
-        (T0,Tf,iter,reset,seed,statFreq,stepLimit,tapeLimit,numStates,numSymbols)
+  print "BBAnnealAccel.py --T0=%f --Tf=%f --iter=%d --reset=%d --seed=%s --freq=%d --steps=%d --time=%d --states=%d --symbols=%d" % \
+        (T0,Tf,iter,reset,seed,statFreq,stepLimit,timeLimit,numStates,numSymbols)
   print
 
   a = 1.0/reset * (math.exp(math.pow(T0/Tf,reset/float(iter))) - math.e)
   print "a = ",a
   print
 
-  tmObj = TMObject(numStates,numSymbols,stepLimit,tapeLimit,seed)
+  tmObj = TMObject(numStates,numSymbols,stepLimit,timeLimit,seed)
   makeTMs = SA.SA(T0,Tf,a,tmObj,reset,statFreq,seed)
 
   (bestTM,bestEnergy,bestExtra) = makeTMs.run()

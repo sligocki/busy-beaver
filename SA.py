@@ -22,11 +22,11 @@ class SA:
   #
   # Initialize the run
   #
-  def __init__(self,initT,miniT,coolingRate,object,reset,report):
+  def __init__(self,initT,miniT,coolingRate,object,reset,report,seed):
     import random
 
     self.random = random
-    self.random.seed()
+    self.random.seed(seed)
 
     self.initT = initT
     self.miniT = miniT
@@ -154,11 +154,11 @@ class testObject:
     return nextConfig
 
 if __name__ == "__main__":
-  import sys
+  import sys,time
 
   length = int(sys.argv[1])
 
   object = testObject(length)
-  sa = SA(50.0,50.0/(length*10000.0),0.1,object,3*length,length);
+  sa = SA(50.0,50.0/(length*10000.0),0.1,object,3*length,length,time.time());
 
   (bestConfig,bestEnergy,bestExtra) = sa.run()
