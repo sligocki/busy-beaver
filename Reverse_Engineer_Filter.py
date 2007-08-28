@@ -11,19 +11,13 @@ INFINITE = 4
 REVERSE_ENG = 3
 HALT_STATE = -1
 
-def init_array(val, num):
-  temp = [None] * num
-  for i in range(num):
-    temp[i] = val[:]
-  return temp
-
 def get_stats(TTable):
   """Finds all halt transitions and other statistical info"""
   num_states = len(TTable)
   num_symbols = len(TTable[0])
   halts = []
-  to_state = init_array([], num_states)
-  to_symbol = init_array([], num_symbols)
+  to_state =  [ [] for i in range(num_states) ]  # List of transitions to this state
+  to_symbol = [ [] for i in range(num_symbols) ] # List of transitions which write this symbol
   for state in range(num_states):
     for symbol in range(num_symbols):
       cell = TTable[state][symbol]

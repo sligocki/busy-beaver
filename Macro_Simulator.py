@@ -2,7 +2,7 @@
 
 import sys, signal
 from Macro import Turing_Machine, Chain_Simulator, Block_Finder
-import IO
+import IO, Reverse_Engineer_Filter
 
 from Macro.Chain_Tape import INF
 
@@ -24,7 +24,13 @@ class AlarmException(Exception):
 # Attach the alarm signal to the alarm exception.
 signal.signal(signal.SIGALRM, signal2exception(AlarmException))
 
+
 def run(TTable, steps=INF, time=None, block_size=None, back=True, prover=True, rec=False):
+  """Run the Accelerated Turing Machine Simulator, running a few simple filters first and using intelligent blockfinding."""
+  res = Reverse_Engineer_Filter.test(TTable)
+  if res:
+    return INFINITE, ("Reverse_Engineered",)
+  
   # Construct Machine (Backsymbol-k-Block-Macro-Machine)
   m = Turing_Machine.Simple_Machine(TTable)
   # If no explicit block-size given, use inteligent software to find one
