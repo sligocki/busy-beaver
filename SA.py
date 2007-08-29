@@ -1,11 +1,12 @@
 #! /usr/bin/env python
-#
-# SA.py
-#
-# Simulated annealing - general class.
-#
+"""
+SA.py
+
+Simulated annealing - general class.
+"""
 
 def separate(result):
+  """If tuple, break into 2 peices, result[0] and result[1:]."""
   extra = None
 
   if isinstance(result,tuple):
@@ -15,14 +16,12 @@ def separate(result):
 
   return (result,extra)
 
-#
-# A class do the simulated annealing.
-#
-class SA:
-  #
-  # Initialize the run
-  #
-  def __init__(self,initT,miniT,coolingRate,object,reset,report,seed):
+class SA(object):
+  """Simulated Annealing class"""
+
+  def __init__(self,initT,miniT,coolingRate,obj,reset,report,seed):
+    """Initialize Simulated annealing on object obj with initial temperature initT, 
+       minimum temperature miniT, ..."""
     import random
 
     self.random = random
@@ -33,23 +32,21 @@ class SA:
 
     self.coolingRate = coolingRate
 
-    self.object = object
+    self.obj = obj
 
     self.reset = reset
     self.report = report
 
-  #
-  # Make a run
-  #
   def run(self):
+    """Run Simulated Annealing algorithm."""
     import sys
     import math
 
-    config0 = self.object.initConfig()
-    (energy0,extra0) = separate(self.object.energyFunc(config0))
+    config0 = self.obj.initConfig()
+    (energy0,extra0) = separate(self.obj.energyFunc(config0))
 
     print energy0,extra0
-    print ''
+    print
     sys.stdout.flush()
 
     configMin = config0
@@ -65,8 +62,8 @@ class SA:
     energyTotal = 0
 
     while T > self.miniT:
-      config1 = self.object.nextConfig(config0)
-      (energy1,extra1) = separate(self.object.energyFunc(config1))
+      config1 = self.obj.nextConfig(config0)
+      (energy1,extra1) = separate(self.obj.energyFunc(config1))
 
       if energy1 < energyMin:
         configMin = config1
@@ -92,28 +89,27 @@ class SA:
       T = initT / math.log(math.e + self.coolingRate * count)
 
       if count == self.reset:
-        print ''
+        print
         print configMin
-        print ''
+        print
         sys.stdout.flush()
         initT = T
         count = 0
 
-    print ''
+    print
     print energyMin,extraMin
     sys.stdout.flush()
 
     return (configMin,energyMin,extraMin)
 
-  #
-  # The approval function.
-  #
   def approve(self,energy0,energy1,T):
+    """The approval function.
+       Stocastically approves of the transition from energy0 to energy1 based on temperature T."""
     import math
 
     delta = energy1 - energy0
 
-    if (delta/T > 700):
+    if (delta/T > 700): # Protects against overloading math.exp function.
       threshold = 0.0
     else:
       threshold = 1 / (1 + math.exp(delta/T))
@@ -126,7 +122,7 @@ class SA:
 #
 # An example "object" class to test the SA class
 #
-class testObject:
+class testObject(object):
   #
   # Remember the object length
   #
@@ -136,7 +132,7 @@ class testObject:
   def initConfig(self):
     import random
 
-    return [random.randint(0,1) for i in xrange(0,self.length)]
+    return [random.randrange(2) for i in xrange(self.length)]
 
   def energyFunc(self,config):
     return sum(config)
@@ -147,9 +143,9 @@ class testObject:
 
     nextConfig = copy.deepcopy(curConfig)
 
-    index = random.randint(0,self.length-1)
+    index = random.randrange(self.length)
 
-    nextConfig[index] = random.randint(0,1)
+    nextConfig[index] = random.randrange(2)
 
     return nextConfig
 
@@ -158,7 +154,7 @@ if __name__ == "__main__":
 
   length = int(sys.argv[1])
 
-  object = testObject(length)
-  sa = SA(50.0,50.0/(length*10000.0),0.1,object,3*length,length,time.time());
+  obj = testObject(length)
+  sa = SA(50.0,50.0/(length*10000.0),0.1,obj,3*length,length,time.time());
 
   (bestConfig,bestEnergy,bestExtra) = sa.run()
