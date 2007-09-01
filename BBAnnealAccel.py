@@ -1,8 +1,8 @@
 #! /usr/bin/env python
-#
-# A Busy Beaver finder using Simulated Annealing optimization and regular TM
-# simulation.
-#
+"""
+A Busy Beaver finder using Simulated Annealing optimization and accelerated 
+TM simulation.
+"""
 
 class TMObject:
   def __init__(self,numStates,numSymbols,stepLimit,timeLimit,seed):
@@ -25,11 +25,11 @@ class TMObject:
     newTM = [None] * self.numSymbols * self.numStates
 
     for i in xrange(self.numSymbols * self.numStates):
-      digit = self.random.randrange(self.numSymbols)
+      symb = self.random.randrange(self.numSymbols)
       dir   = self.random.randrange(2)
       state = self.random.randrange(-1,self.numStates)
 
-      newTM[i] = (digit,dir,state)
+      newTM[i] = (symb,dir,state)
 
     return newTM
 
@@ -67,21 +67,21 @@ class TMObject:
     return (-math.log(numSteps+1),numSymbols,numSteps)
 
   def nextConfig(self,curTM):
+    """Mutate a single element of one transition."""
     newTM = curTM[:]
 
+    # Choose the transition
     i = self.random.randrange(len(newTM))
-    delta = int(2*self.random.randrange(2) - 1)
+    delta = self.random.choice((-1, 1))
 
-    (digit,dir,state) = newTM[i]
+    (symb,dir,state) = newTM[i]
 
+    # Choose the element of the transition (i.e. symbol, direction or state)
     j = self.random.randrange(3)
 
     if j == 0:
-      digit += delta
-      if digit < 0:
-        digit += numSymbols
-      elif digit >= numSymbols:
-        digit -= numSymbols
+      symb += delta
+      symb %= numSymbols
     elif j == 1:
       dir = 1 - dir
     else:
@@ -91,7 +91,7 @@ class TMObject:
       elif state >= numStates:
         state -= (numStates+1)
 
-    newTM[i] = (digit, dir, state)
+    newTM[i] = (symb, dir, state)
 
     return newTM
 

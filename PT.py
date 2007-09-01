@@ -3,7 +3,7 @@ import random, math
 from copy import deepcopy
 
 def PT(B, neigh, f, C, steps):
-  """Runs parallel tempering with temperatures 1/B
+  """Runs parallel tempering with temperatures [1/b for b in B]
      to maximize f where neigh(s) returns a random neighbor to state s
      given initial configs C"""
   #swaps = 0
