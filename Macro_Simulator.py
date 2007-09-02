@@ -13,25 +13,27 @@ INFINITE = "Infinite repeat"
 UNDEFINED = "Undefined Transition"
 
 
-def signal2exception(exc):
+def signal2exception(excep):
   """Creates a custom signal handler that immediately raises a chosen exception"""
   def catchException(*args):
-    raise exc, args
+    raise excep, args
   return catchException
 class AlarmException(Exception):
   """An exception to be tied to a timer running out."""
   pass
 # Attach the alarm signal to the alarm exception.
+#   so signal.alarm will cause a catchable exception.
 signal.signal(signal.SIGALRM, signal2exception(AlarmException))
 
 
 def run(TTable, steps=INF, time=None, block_size=None, back=True, prover=True, rec=False):
   """Run the Accelerated Turing Machine Simulator, running a few simple filters first and using intelligent blockfinding."""
+  ## Test for quickly for infinite machine
   res = Reverse_Engineer_Filter.test(TTable)
   if res:
     return INFINITE, ("Reverse_Engineered",)
   
-  # Construct Machine (Backsymbol-k-Block-Macro-Machine)
+  ## Construct the Macro Turing Machine (Backsymbol-k-Block-Macro-Machine)
   m = Turing_Machine.Simple_Machine(TTable)
   # If no explicit block-size given, use inteligent software to find one
   if not block_size:
@@ -42,23 +44,25 @@ def run(TTable, steps=INF, time=None, block_size=None, back=True, prover=True, r
   if back:
     m = Turing_Machine.Backsymbol_Macro_Machine(m)
 
-  global sim
+  ## Set up the simulator
+  #global sim # Useful for Debugging
   sim = Chain_Simulator.Simulator()
   sim.init(m, rec)
   if not prover:
     sim.proof = None
   
+  ## Run the simulator (Possably with a timer
   if time:
-    # Set timer
-    signal.alarm(time)
+    signal.alarm(time)  # Set timer
     try:
       sim.seek(steps)
-    except AlarmException:
+    except AlarmException: # Catch Timer
       return TIMEOUT, (time, sim.step_num)
     signal.alarm(0) # Turn off timer
   else:
     sim.seek(steps)
-
+  
+  ## Resolve end conditions and return relevent info.
   if sim.op_state == Turing_Machine.RUNNING:
     return OVERSTEPS, (sim.step_num,)
   elif sim.op_state == Turing_Machine.HALT:
@@ -67,6 +71,21 @@ def run(TTable, steps=INF, time=None, block_size=None, back=True, prover=True, r
     return INFINITE, (sim.inf_reason,)
   elif sim.op_state == Turing_Machine.UNDEFINED:
     return UNDEFINED, (sim.op_details[0][1], sim.op_details[0][0], sim.step_num, sim.get_nonzeros())
+
+def memoize(func, max_size=10000):
+  """Returns the memoized version of a non-recursive function "func".
+     Saves up to "max_size" inputs before wiping memory."""
+  memory = {}
+  def func_memo(*args):
+    if args not in memory:
+      # If we don't remember it, learn it.
+      if len(memory) >= max_size:
+        # Dump memory first if it's getting to big.
+        memory.clear()
+      memory[args] = func(*args)
+    return memory[args]
+# Memoized version of run ... won't work yet because lists are not hashable.
+run_memo = memoize(run)
 
 # Main script
 if __name__ == "__main__":
