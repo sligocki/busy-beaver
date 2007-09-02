@@ -74,7 +74,7 @@ class TMObject:
 
     return (-math.log(numSteps+1),numSymbols,numSteps)
 
-  def nextConfig(self,curTM):
+  def nextConfig(self,curTM,T):
     newTM = curTM[:]
 
     i = self.random.randrange(len(newTM))

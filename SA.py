@@ -62,7 +62,7 @@ class SA(object):
     energyTotal = 0
 
     while T > self.miniT:
-      config1 = self.obj.nextConfig(config0)
+      config1 = self.obj.nextConfig(config0,T)
       (energy1,extra1) = separate(self.obj.energyFunc(config1))
 
       if energy1 < energyMin:
@@ -137,7 +137,7 @@ class testObject(object):
   def energyFunc(self,config):
     return sum(config)
 
-  def nextConfig(self,curConfig):
+  def nextConfig(self,curConfig,T):
     import random
     import copy
 
