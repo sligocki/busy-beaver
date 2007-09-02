@@ -17,7 +17,7 @@ class TM_Object:
     self.step_limit = step_limit
     self.time_limit = time_limit
 
-  def init_Config(self):
+  def init_config(self):
     print "# of states  = ",self.num_states
     print "# of symbols = ",self.num_symbols
     print ""
@@ -33,7 +33,7 @@ class TM_Object:
 
     return new_TM
 
-  def energy_Func(self,cur_TM):
+  def energy_func(self,cur_TM):
     from Macro.Chain_Tape import INF
     import Macro_Simulator
 
