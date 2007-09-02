@@ -2,15 +2,15 @@ from __future__ import division
 import random, math, sys
 from copy import deepcopy
 
-def PT(B, neigh, E, C, steps, verbose=False):
+def PT(B, neigh, E, C, steps, print_freq=0):
   """Runs parallel tempering with temperatures [1/b for b in B]
      to minimize E where neigh(s) returns a random neighbor to state s
      given initial configs C"""
   swaps = 0
   assert len(B) == len(C)
   n = len(C)
-  for i in range(steps):
-    if verbose and (i % 1000) == 0:
+  for i in xrange(steps):
+    if print_freq != 0 and (i % print_freq) == 0:
       print "Steps", i
       print "Swaps", swaps
       for c in C:
@@ -29,7 +29,7 @@ def PT(B, neigh, E, C, steps, verbose=False):
       swaps += 1
       C[k], C[k+1] = C[k+1], C[k]
 
-  if verbose:
+  if print_freq != 0:
     print "Steps", steps
     print "Swaps", swaps
     print "Swaps / Step", swaps / steps

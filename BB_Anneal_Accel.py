@@ -36,6 +36,7 @@ class TM_Object:
   def energy_func(self,cur_TM):
     from Macro.Chain_Tape import INF
     import Macro_Simulator
+    import math
 
     trans_TM = [cur_TM[i*self.num_symbols:(i+1)*self.num_symbols] \
                  for i in xrange(self.num_states)]
@@ -81,15 +82,15 @@ class TM_Object:
 
     if j == 0:
       symb += delta
-      symb %= num_symbols
+      symb %= self.num_symbols
     elif j == 1:
       dir = 1 - dir
     else:
       state += delta
       if state < -1:
-        state += (num_states+1)
-      elif state >= num_states:
-        state -= (num_states+1)
+        state += (self.num_states+1)
+      elif state >= self.num_states:
+        state -= (self.num_states+1)
 
     new_TM[i] = (symb, dir, state)
 
