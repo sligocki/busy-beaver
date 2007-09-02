@@ -1,0 +1,111 @@
+#! /usr/bin/env python
+"""
+A generalized Rupert problem computation using Simulated Annealing optimization.
+"""
+
+class Cube_Object:
+  def __init__(self,m,n,seed):
+    import random
+
+    self.random = random
+    self.random.seed(seed)
+
+    self.m = m
+    self.n = n
+
+  def init_config(self):
+    identity = [[(1 if i == j else 0) for j in xrange(0,n)] for i in xrange(0,n)]
+
+    return identity
+
+  def energy_func(self,cur_matrix):
+    max_sum = 0
+
+    for i in xrange(0,self.n):
+      sum = 0
+
+      for j in xrange(0,self.m):
+        sum += abs(cur_matrix[i][j])
+
+      if sum > max_sum:
+        max_sum = sum
+
+    return max_sum
+
+  def next_config(self,cur_matrix,T):
+    """Mutate a single element of one transition."""
+    new_matrix = cur_matrix[:]
+
+    return new_matrix
+
+def usage():
+  print "Usage:  Cube_Cube_Anneal.py [--help] [--T0=] [--Tf=] [--iter=] [--reset=] [--seed=] [--freq=] [--m=] [--n=]"
+
+if __name__ == "__main__":
+  import time,getopt,sys,math
+  import SA
+
+  m = 2
+  n = 3
+
+  T0   = 1.0
+  Tf   = 0.5
+
+  iter  = 1000000000
+  reset =    1000000
+
+  seed = long(time.time())
+
+  stat_freq = 100000
+
+  try:
+    opts, args = getopt.getopt(sys.argv[1:],"", \
+                               [                \
+                                "help",         \
+                                "T0=",          \
+                                "Tf=",          \
+                                "iter=",        \
+                                "reset=",       \
+                                "seed=",        \
+                                "freq=",        \
+                                "m=",           \
+                                "n=",           \
+                               ]                \
+                              )
+  except getopt.GetoptError:
+    usage()
+    sys.exit(1)
+
+  for opt, arg in opts:
+    if opt == "--help":
+      usage()
+      sys.exit()
+    if opt == "--T0":
+      T0 = float(arg)
+    if opt == "--Tf":
+      Tf = float(arg)
+    if opt == "--iter":
+      iter = long(arg)
+    if opt == "--reset":
+      reset = long(arg)
+    if opt == "--seed":
+      seed = long(arg)
+    if opt == "--freq":
+      stat_freq = long(arg)
+    if opt == "--m":
+      m = int(arg)
+    if opt == "--n":
+      n = int(arg)
+
+  print "BB_Anneal_Accel.py --T0=%f --Tf=%f --iter=%d --reset=%d --seed=%s --freq=%d --m=%d --n=%d" % \
+        (T0,Tf,iter,reset,seed,stat_freq,m,n)
+  print
+
+  a = 1.0/reset * (math.exp(math.pow(T0/Tf,reset/float(iter))) - math.e)
+  print "a = ",a
+  print
+
+  cube_obj = Cube_Object(m,n,seed)
+  make_cubes = SA.SA(T0,Tf,a,cube_obj,reset,stat_freq,seed)
+
+  (best_cube,best_energy,best_extra) = make_cubes.run()
