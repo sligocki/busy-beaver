@@ -4,7 +4,7 @@
 # simulation.
 #
 
-class TMObject:
+class TM_Object:
   def __init__(self,num_states,num_symbols,step_limit,tape_limit,seed):
     import random
 
@@ -179,7 +179,7 @@ if __name__ == "__main__":
   print "a = ",a
   print
 
-  tm_obj = TMObject(num_states,num_symbols,step_limit,tape_limit,seed)
+  tm_obj = TM_Object(num_states,num_symbols,step_limit,tape_limit,seed)
   make_TMs = SA.SA(T0,Tf,a,tm_obj,reset,stat_freq,seed)
 
   (best_TM,best_energy,best_extra) = make_TMs.run()
