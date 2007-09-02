@@ -171,7 +171,7 @@ if __name__ == "__main__":
   print "a = ",a
   print
 
-  tm_obj = TMObject(num_states,num_symbols,step_limit,time_limit,seed)
+  tm_obj = TM_Object(num_states,num_symbols,step_limit,time_limit,seed)
   make_TMs = SA.SA(T0,Tf,a,tm_obj,reset,stat_freq,seed)
 
   (best_TM,best_energy,best_extra) = make_TMs.run()
