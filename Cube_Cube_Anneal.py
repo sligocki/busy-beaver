@@ -4,7 +4,7 @@ A generalized Rupert problem computation using Simulated Annealing optimization.
 """
 
 class Cube_Object:
-  def __init__(self,m,n,seed):
+  def __init__(self,m,n,sigma,seed):
     import random
 
     self.random = random
@@ -12,6 +12,8 @@ class Cube_Object:
 
     self.m = m
     self.n = n
+
+    self.sigma = sigma
 
   def init_config(self):
     identity = [[(1 if i == j else 0) for j in xrange(0,n)] for i in xrange(0,n)]
@@ -30,11 +32,35 @@ class Cube_Object:
       if sum > max_sum:
         max_sum = sum
 
-    return max_sum
+    # print cur_matrix
+    # print max_sum
+    # print ""
+
+    return (max_sum,1.0/max_sum)
 
   def next_config(self,cur_matrix,T):
     """Mutate a single element of one transition."""
-    new_matrix = cur_matrix[:]
+    import copy
+    import math
+
+    new_matrix = copy.deepcopy(cur_matrix)
+
+    ai = self.random.randrange(0,self.n)
+    aj = self.random.randrange(0,self.n)
+
+    if ai != aj:
+      t = self.random.gauss(0.0,self.sigma*T)
+
+      ct = math.cos(t)
+      st = math.sin(t)
+
+      for i in xrange(0,self.n):
+        new_matrix[i][ai] =  ct * cur_matrix[i][ai] + st * cur_matrix[i][aj]
+        new_matrix[i][aj] = -st * cur_matrix[i][ai] + ct * cur_matrix[i][aj]
+
+      # print cur_matrix
+      # print new_matrix
+      # print ""
 
     return new_matrix
 
@@ -97,7 +123,7 @@ if __name__ == "__main__":
     if opt == "--n":
       n = int(arg)
 
-  print "BB_Anneal_Accel.py --T0=%f --Tf=%f --iter=%d --reset=%d --seed=%s --freq=%d --m=%d --n=%d" % \
+  print "Cube_Cube_Anneal.py --T0=%f --Tf=%f --iter=%d --reset=%d --seed=%s --freq=%d --m=%d --n=%d" % \
         (T0,Tf,iter,reset,seed,stat_freq,m,n)
   print
 
@@ -105,7 +131,7 @@ if __name__ == "__main__":
   print "a = ",a
   print
 
-  cube_obj = Cube_Object(m,n,seed)
+  cube_obj = Cube_Object(m,n,1.0,seed)
   make_cubes = SA.SA(T0,Tf,a,cube_obj,reset,stat_freq,seed)
 
   (best_cube,best_energy,best_extra) = make_cubes.run()
