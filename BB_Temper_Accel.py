@@ -7,13 +7,20 @@ import time, getopt, sys
 def optimize(Ti, Tf, pt_loops, n, seed, print_freq, steps, time, states, symbols):
   """Temperatures Ti to Tf spaced so that 1/T are uniform.
      "loops" iterations through PT alg, with n replicas. ..."""
+  import math
+
   # Inverse temperatures
-  Bi = 1/Ti; Bf = 1/Tf
-  B = [Bi + (Bf - Bi)*k/(n-1) for k in range(n)]
+  # Bi = 1/Ti; Bf = 1/Tf
+  # B = [Bi + (Bf - Bi)*k/(n-1) for k in range(n)]
+
+  LTi = math.log(Ti)
+  LTf = math.log(Tf)
+  LT = [LTi + (LTf - LTi)*k/(num-1) for k in range(num)]
+  B = [1.0/math.exp(LT[k]) for k in range(num)]
   
   obj = TM_Object(states, symbols, steps, time, seed)
   C = [obj.init_config() for i in range(n)]
-  energy_func = lambda tm: obj.energy_func(tm)[0]
+  energy_func = lambda tm: obj.energy_func(tm)
   return PT(B, obj.next_config, energy_func, C, pt_loops, print_freq)
 
 
@@ -35,7 +42,7 @@ if __name__ == "__main__":
   freq = 100000
 
   steps = 1000000
-  time  = 60  # Seconds
+  time  = 30  # Seconds
 
   try:
     opts, args = getopt.getopt(sys.argv[1:],"", \

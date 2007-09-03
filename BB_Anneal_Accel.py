@@ -18,9 +18,9 @@ class TM_Object:
     self.time_limit = time_limit
 
   def init_config(self):
-    print "# of states  = ",self.num_states
-    print "# of symbols = ",self.num_symbols
-    print ""
+    # print "# of states  = ",self.num_states
+    # print "# of symbols = ",self.num_symbols
+    # print ""
 
     new_TM = [None] * self.num_symbols * self.num_states
 
@@ -117,7 +117,7 @@ if __name__ == "__main__":
   stat_freq = 100000
 
   step_limit = 10000
-  time_limit = 60
+  time_limit = 30
 
   try:
     opts, args = getopt.getopt(sys.argv[1:],"", \
