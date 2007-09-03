@@ -23,6 +23,8 @@ def PT(B, neigh, E, C, steps, print_freq=0):
   """Runs parallel tempering with temperatures [1/b for b in B]
      to minimize E where neigh(s) returns a random neighbor to state s
      given initial configs C"""
+  import time
+
   swaps = 0
   assert len(B) == len(C)
   n = len(C)
@@ -36,17 +38,22 @@ def PT(B, neigh, E, C, steps, print_freq=0):
       if C[k][1] < best[1]:
         best = C[k]
 
+  start_time = time.time()
+
   for i in xrange(steps):
     if print_freq != 0 and (i % print_freq) == 0:
+      end_time = time.time()
       print "Steps", i
       print "Swaps", swaps
       for c in C:
         print "%13.6e" % c[1],
+      print "(%.3f)" % (end_time - start_time)
       print
       print
       print best[1:],best[0]
       print
       sys.stdout.flush()
+      start_time = time.time()
     # Parallel Phase
     for k in range(n):
       new_state = neigh(C[k][0], 1/B[k])
