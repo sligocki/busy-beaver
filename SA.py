@@ -41,6 +41,7 @@ class SA(object):
     """Run Simulated Annealing algorithm."""
     import sys
     import math
+    import time
 
     config0 = self.obj.init_config()
     (energy0,extra0) = separate(self.obj.energy_func(config0))
@@ -60,6 +61,8 @@ class SA(object):
     total_count = 0
 
     energy_total = 0
+
+    start_time = time.time()
 
     while T > self.mini_T:
       config1 = self.obj.next_config(config0,T)
@@ -81,10 +84,12 @@ class SA(object):
       energy_total += energy0
 
       if total_count % self.report == 0:
-        print total_count,T,energy_total/self.report,energy_min,extra_min
+        end_time = time.time()
+        print total_count,T,energy_total/self.report,energy_min,extra_min,"(%.3f)" % (end_time - start_time)
         sys.stdout.flush()
 
         energy_total = 0
+        start_time = time.time()
 
       T = init_T / math.log(math.e + self.cooling_rate * count)
 
