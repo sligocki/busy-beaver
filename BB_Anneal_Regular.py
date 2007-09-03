@@ -18,9 +18,9 @@ class TM_Object:
     self.tape_limit = tape_limit
 
   def init_config(self):
-    print "# of states  = ",self.num_states
-    print "# of symbols = ",self.num_symbols
-    print ""
+    # print "# of states  = ",self.num_states
+    # print "# of symbols = ",self.num_symbols
+    # print ""
 
     new_TM = [None] * self.num_symbols * self.num_states
 

@@ -7,13 +7,20 @@ import time, getopt, sys
 def optimize(Ti, Tf, pt_loops, num, seed, print_freq, m, n, sigma):
   """Temperatures Ti to Tf spaced so that 1/T are uniform.
      "loops" iterations through PT alg, with n replicas. ..."""
+  import math
+
   # Inverse temperatures
-  Bi = 1/Ti; Bf = 1/Tf
-  B = [Bi + (Bf - Bi)*k/(num-1) for k in range(num)]
+  # Bi = 1/Ti; Bf = 1/Tf
+  # B = [Bi + (Bf - Bi)*k/(num-1) for k in range(num)]
+
+  LTi = math.log(Ti)
+  LTf = math.log(Tf)
+  LT = [LTi + (LTf - LTi)*k/(num-1) for k in range(num)]
+  B = [1.0/math.exp(LT[k]) for k in range(num)]
   
   obj = Cube_Object(m, n, sigma, seed)
   C = [obj.init_config() for i in range(num)]
-  energy_func = lambda tm: obj.energy_func(tm)[0]
+  energy_func = lambda cube: obj.energy_func(cube)
   return PT(B, obj.next_config, energy_func, C, pt_loops, print_freq)
 
 
