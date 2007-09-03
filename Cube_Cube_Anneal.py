@@ -16,7 +16,7 @@ class Cube_Object:
     self.sigma = sigma
 
   def init_config(self):
-    identity = [[(1 if i == j else 0) for j in xrange(0,n)] for i in xrange(0,n)]
+    identity = [[(1 if i == j else 0) for j in xrange(0,self.n)] for i in xrange(0,self.n)]
 
     return identity
 
