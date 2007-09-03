@@ -2,6 +2,12 @@ from __future__ import division
 import random, math, sys
 from copy import deepcopy
 
+def safe_exp(x):
+  if x > 0:
+    return 1
+  else:
+    return math.exp(x)
+
 def PT(B, neigh, E, C, steps, print_freq=0):
   """Runs parallel tempering with temperatures [1/b for b in B]
      to minimize E where neigh(s) returns a random neighbor to state s
@@ -14,18 +20,18 @@ def PT(B, neigh, E, C, steps, print_freq=0):
       print "Steps", i
       print "Swaps", swaps
       for c in C:
-        print "%.1f" % E(c),
+        print "%13.6e" % E(c),
       print
       print
       sys.stdout.flush()
     # Parallel Phase
     for k in range(n):
       new_state = neigh(C[k], 1/B[k])
-      if random.random() < math.exp( B[k]*(E(C[k]) - E(new_state)) ):
+      if random.random() < safe_exp( B[k]*(E(C[k]) - E(new_state)) ):
         C[k] = new_state
     # Swapping Phase
     k = random.randrange(n-1)
-    if random.random() < math.exp( (B[k] - B[k+1])*(E(C[k]) - E(C[k+1]))):
+    if random.random() < safe_exp( (B[k] - B[k+1])*(E(C[k]) - E(C[k+1]))):
       swaps += 1
       C[k], C[k+1] = C[k+1], C[k]
 
