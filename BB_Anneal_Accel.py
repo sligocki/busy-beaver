@@ -65,7 +65,7 @@ class TM_Object:
       print "Unknown TM sim exit code: %s" % exit_cond
       sys.exit(1)
 
-    return (-math.log(num_steps+1),num_symbols,num_steps)
+    return (-math.log(math.log(num_steps+1)+1),num_symbols,num_steps)
 
   def next_config(self,cur_TM,T):
     """Mutate a single element of one transition."""
