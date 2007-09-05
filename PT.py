@@ -49,7 +49,6 @@ def PT(B, neigh, E, C, steps, print_freq=0):
         print "%13.6e" % c[1],
       print "(%.3f)" % (end_time - start_time)
       print
-      print
       print best[1:],best[0]
       print
       sys.stdout.flush()
@@ -75,7 +74,6 @@ def PT(B, neigh, E, C, steps, print_freq=0):
     print "Swaps / Step", swaps / steps
     for c in C:
       print "%f" % c[1],
-    print
     print
     print best[1:],best[0]
     print
