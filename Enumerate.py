@@ -9,149 +9,138 @@
 #
 
 import copy
+import cPickle as pickle
 
 from Turing_Machine import Turing_Machine, Turing_Machine_Runtime_Error
 from IO import IO
+import Macro_Simulator
 
-# global machine number
-g_machine_num = 0
+class Stack(list):
+  def push(self, item):
+    return self.append(item)
 
-def Enumerate(num_states, num_symbols, tape_length, max_steps, io):
-  """
-  Stats all distinct BB machines with num_states and num_symbols.
+class Enumerator(object):
+  """Holds enumeration state information for checkpointing."""
+  def __init__(self, num_states, num_symbols, max_steps, max_time, io, 
+                     save_freq=100000, checkpoint_filename="checkpoint"):
+    self.num_states = num_states
+    self.num_symbols = num_symbols
+    self.max_steps = max_steps
+    self.max_time = max_time
+    self.io = io
+    self.save_freq = save_freq
+    self.checkpoint_filename = checkpoint_filename
+    
+    self.stack = Stack()
+    self.tm_num = 0
+    
+    self.num_halt = self.num_infinite = self.num_unresolved = 0
+    self.best_steps = self.best_score = 0
+  
+  def enum(self):
+    """Enumerate all num_states*num_symbols TMs in Tree-Normal Form"""
+    blank_tm = Turing_Machine(self.num_states, self.num_symbols)
+    self.stack.push(blank_tm)
+    self.continue_enum()
 
-  Runs through all distinct busy beaver machines with num_states and
-  num_symbols until they:
-   -1) Generate an internal error
-    0) Halt
-    1) Exceed tape_length
-    2) Exceed max_steps
-
-  It then categorizes all distict machines as one of these above 3 along with
-  important information such as:
-    0) Number of non-zero symbols written
-    1) Number of steps run for
-  """
-  machine = Turing_Machine(num_states, num_symbols)
-  Enumerate_Recursive(machine, num_states, num_symbols,
-                     tape_length, max_steps, io)
-
-def Enumerate_Recursive(machine, num_states, num_symbols,
-                       tape_length, max_steps, io):
-  """
-  Stats this BB machine.
-
-  Runs this machine until it:
-   -1) Generates an internal error
-    0) Halts
-    1) Exceeds tape_length
-    2) Exceeds max_steps
-    3) Reaches an undefined cell of the transition table
-
-  If it reaches an undefined cell it recursively calls this function with
-  each of the possible entrees to that cell so that it can find every distinct
-  machine which comes from the input machine
-  """
-
-  # results = (exit_condition, )
-  #  error) (-1, error#, error_string)
-  #  halt)  (0, #sym, #steps)
-  #  tape)  (1, #sym, #steps)
-  #  steps) (2, #sym, #steps)
-  #  undef) (3, cur_state, cur_sym, #sym, #stpes)
-  #  inf)   (4, inf#, ..., inf_message)
-  results = run(machine.get_TTable(), num_states, num_symbols,
-                tape_length, max_steps)
-
-  exit_condition = results[0]
-
-  # 3) Reached Undefined Cell
-  if exit_condition == 3:
-    # Position of undefined cell in transition table
-    state_in  = results[1]
-    symbol_in = results[2]
-    num_symb_written = results[3]
-    num_steps_taken = results[4]
-
-    # If undefined cell is Halt.
-    #   1) Add the halt state
-    machine_new = copy.deepcopy(machine)
-    machine_new.add_cell(state_in , symbol_in ,
-                        -1, 1, 1)
-
-    #   2) This machine will write one more non-zero symbol if current symbol
-    # is not non-zero (I.e. is zero)
-    if symbol_in == 0:
-      num_symb_written += 1
-
-    #   3) This machine will take one more step to halt state
-    num_steps_taken += 1
-
-    new_results = (0, num_symb_written, num_steps_taken)
-
-    #   4) Save this machine
-    save_machine(machine_new, new_results, tape_length, max_steps, io)
-
+  def continue_enum(self):
+    i = 0
+    while len(self.stack) > 0:
+      if (i % self.save_freq) == 0:
+        self.save()
+      # While we have machines to run, pop one off the stack ...
+      cur_tm = self.stack.pop()
+      # ... and run it
+      cond, info = self.run(cur_tm)
+      
+      # If it hits an undefined transition ...
+      if cond == Macro_Simulator.UNDEFINED:
+        on_state, on_symbol, steps, score = info
+        # ... push all the possible non-halting transitions onto the stack ...
+        self.add_transitions(cur_tm, on_state, on_symbol)
+        # ... and make this tm the halting one (mutates cur_tm)
+        self.add_halt_trans(cur_tm, on_state, on_symbol, steps, score)
+      # Otherwise record defined result
+      elif cond == Macro_Simulator.HALT:
+        steps, score = info
+        self.add_halt(cur_tm, steps, score)
+      elif cond == Macro_Simulator.INFINITE:
+        reason, = info
+        self.add_infinite(cur_tm, reason)
+      elif cond == Macro_Simulator.OVERSTEPS:
+        steps, = info
+        self.add_unresolved(Macro_Simulator.OVERSTEPS, steps)
+      elif cond == Macro_Simulator.TIMEOUT:
+        time, steps = info
+        self.add_unresolved(Macro_Simulator.TIMEOUT, steps, time)
+      else:
+        raise Exception, "Enumerator.enum() - unexpected condition (%r)" % cond
+  
+  def save(self):
+    print self.num_halt, self.num_infinite, self.num_unresolved
+    print self.best_steps, self.best_score
+    #f = file(self.checkpoint_filename, "wb")
+    #pickle.dump(self, f)
+  
+  def run(self, tm):
+    return Macro_Simulator.run(tm.get_TTable(), self.max_steps, self.max_time)
+  
+  def add_transitions(self, old_tm, state_in, symbol_in):
+    """Push Turing Machines with each possible transition at this state and symbol"""
     # 'max_state' and 'max_symbol' are the state and symbol numbers for the
     # smallest state/symbol not yet written (i.e. available to add to TTable).
-    max_state = machine.get_num_states_available()
-    max_symbol = machine.get_num_symbols_available()
-
-    # If undefined cell is not Halt
+    max_state  = old_tm.get_num_states_available()
+    max_symbol = old_tm.get_num_symbols_available()
     # If this is the last undefined cell, then it must be a halt, so only try
     # other values for cell if this is not the last undefined cell.
-    if machine.num_empty_cells > 1:
+    if old_tm.num_empty_cells > 1:
       # 'state_out' in [0, 1, ... max_state] == range(max_state + 1)
       for state_out in range(max_state + 1):
         for symbol_out in range(max_symbol + 1):
           for direction_out in range(2):
-            machine_new = copy.deepcopy(machine)
-            # 'state_in' and 'symbol_in' specify cell in transition table.
-            # 'state_out', 'symbol_out', and 'direction_out' specify value to
-            # put in that cell.
-            machine_new.add_cell(state_in , symbol_in ,
-                                 state_out, symbol_out, direction_out)
-            Enumerate_Recursive(machine_new, num_states, num_symbols,
-                               tape_length, max_steps, io)
-  # -1) Error
-  elif exit_condition == -1:
-    error_number = results[1]
-    message = results[2]
-    sys.stderr.write("Error %d: %s\n" % (error_number, message))
-    save_machine(machine, results, tape_length, max_steps, io)
-    raise Turing_Machine_Runtime_Error, "Error encountered while running a turing machine"
-  # All other returns
-  else:
-    save_machine(machine, results, tape_length, max_steps, io)
+            new_tm = copy.deepcopy(old_tm)
+            new_tm.add_cell(state_in , symbol_in ,
+                            state_out, symbol_out, direction_out)
+            self.stack.push(new_tm)
+  def add_halt_trans(self, tm, on_state, on_symbol, steps, score):
+    #   1) Add the halt state
+    tm.add_cell(on_state, on_symbol, -1, 1, 1)
+    #   2) This machine  *may* write one more symbol
+    if on_symbol == 0:
+      score += 1
+    #   3) Save this machine
+    self.add_halt(tm, steps, score)
+  
+  def add_halt(self, tm, steps, score):
+    self.num_halt += 1
+    if steps > self.best_steps or score > self.best_score:
+      ## Magic nums: the '-1' is for tape size (not used) .. the '0' is for halting.
+      self.io.write_result(self.tm_num, -1, self.max_steps, (0, score, steps), tm)
+      self.best_steps = max(self.best_steps, steps)
+      self.best_score = max(self.best_score, score)
+    self.tm_num += 1
+  def add_infinite(self, tm, reason):
+    self.num_infinite += 1
+    self.tm_num += 1
+  def add_unresolved(self, tm, steps, time=None):
+    self.num_unresolved += 1
+    self.tm_num += 1
 
-  return
-
-def run(TTable, num_states, num_symbols, tape_length, max_steps):
-  """
-  Wrapper for C machine running code.
-  """
-  from Turing_Machine_Sim import Turing_Machine_Sim
-  return Turing_Machine_Sim(TTable, num_states, num_symbols,
-                            tape_length, max_steps)
-
-
-def save_machine(machine, results, tape_length, max_steps, io):
-  """
-  Saves a busy beaver machine with the provided information.
-  """
-  global g_machine_num
-  io.write_result(g_machine_num, tape_length, max_steps, results, machine);
-  g_machine_num += 1
 
 # Command line interpretter code
 if __name__ == "__main__":
   import sys
   from Option_Parser import Generator_Option_Parser
-
+  
   # Get command line options.
   # Enumerate.py may be sent an infile param but it should be ignored
-  opts, args = Generator_Option_Parser(sys.argv, [], ignore_infile = True)
-
+  opts, args = Generator_Option_Parser(sys.argv, 
+          [("time",      int,     15, False, True), 
+           ("save_freq", int, 100000, False, True)], ignore_infile=True)
+  
   io = IO(None, opts["outfile"], opts["log_number"])
+  
+  enumerator = Enumerator(opts["states"], opts["symbols"], opts["steps"], 
+                          opts["time"], io, opts["save_freq"])
+  enumerator.enum()
 
-  Enumerate(opts["states"], opts["symbols"], opts["tape"], opts["steps"], io)
