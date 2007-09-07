@@ -85,7 +85,9 @@ def run(TTable, steps=INF, time=None, block_size=None, back=True, prover=True, r
   elif sim.op_state == Turing_Machine.INF_REPEAT:
     return INFINITE, (sim.inf_reason,)
   elif sim.op_state == Turing_Machine.UNDEFINED:
-    return UNDEFINED, (sim.op_details[0][1], sim.op_details[0][0], sim.step_num, sim.get_nonzeros())
+    on_symbol, on_state = sim.op_details[0][:2]
+    return UNDEFINED, (on_state, on_symbol, 
+                       sim.step_num, sim.get_nonzeros())
 
 def memoize(func, max_size=10000):
   """Returns the memoized version of a non-recursive function "func".
