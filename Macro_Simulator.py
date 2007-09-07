@@ -3,6 +3,7 @@
 import sys, signal
 from Macro import Turing_Machine, Chain_Simulator, Block_Finder
 import IO, Reverse_Engineer_Filter
+import math
 
 from Macro.Chain_Tape import INF
 
@@ -28,6 +29,7 @@ signal.signal(signal.SIGALRM, signal2exception(AlarmException))
 
 def run(TTable, steps=INF, time=None, block_size=None, back=True, prover=True, rec=False):
   """Run the Accelerated Turing Machine Simulator, running a few simple filters first and using intelligent blockfinding."""
+
   ## Test for quickly for infinite machine
   res = Reverse_Engineer_Filter.test(TTable)
   if res:
@@ -35,9 +37,21 @@ def run(TTable, steps=INF, time=None, block_size=None, back=True, prover=True, r
   
   ## Construct the Macro Turing Machine (Backsymbol-k-Block-Macro-Machine)
   m = Turing_Machine.Simple_Machine(TTable)
-  # If no explicit block-size given, use inteligent software to find one
-  if not block_size:
-    block_size = Block_Finder.block_finder(m)
+
+  try:
+    ## Set the timer (if non-zero time)
+    if time:
+      signal.alarm(int(math.ceil(time/10.0)))  # Set timer
+
+    # If no explicit block-size given, use inteligent software to find one
+    if not block_size:
+      block_size = Block_Finder.block_finder(m)
+
+    if time:
+      signal.alarm(0)  # Turn off timer
+  except AlarmException: # Catch Timer (unexcepted)
+    block_size = 1
+    
   # Do not create a 1-Block Macro-Machine (just use base machine)
   if block_size != 1:
     m = Turing_Machine.Block_Macro_Machine(m, block_size)
@@ -50,18 +64,19 @@ def run(TTable, steps=INF, time=None, block_size=None, back=True, prover=True, r
   sim.init(m, rec)
   if not prover:
     sim.proof = None
-  
-  ## Run the simulator (Possably with a timer
-  if time:
-    signal.alarm(time)  # Set timer
-    try:
-      sim.seek(steps)
-    except AlarmException: # Catch Timer
-      return TIMEOUT, (time, sim.step_num)
-    signal.alarm(0) # Turn off timer
-  else:
+
+  try:
+    if time:
+      signal.alarm(time)  # Set timer
+
+    ## Run the simulator
     sim.seek(steps)
-  
+
+    if time:
+      signal.alarm(0)  # Turn off timer
+  except AlarmException: # Catch Timer
+    return TIMEOUT, (time, sim.step_num)
+
   ## Resolve end conditions and return relevent info.
   if sim.op_state == Turing_Machine.RUNNING:
     return OVERSTEPS, (sim.step_num,)
@@ -132,6 +147,6 @@ if __name__ == "__main__":
   if len(sys.argv) >= 6:
     time = int(sys.argv[5])
   else:
-    time = None
+    time = 15
 
   print run(ttable, steps, time, block_size, back, prover, recursive)
