@@ -48,6 +48,7 @@ class Enumerator(object):
     while len(self.stack) > 0:
       if (i % self.save_freq) == 0:
         self.save()
+      i += 1
       # While we have machines to run, pop one off the stack ...
       cur_tm = self.stack.pop()
       # ... and run it
