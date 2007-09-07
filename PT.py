@@ -1,6 +1,7 @@
 from __future__ import division
 import random, math, sys
 from copy import deepcopy
+import time
 
 def safe_exp(x):
   if x > 0:
@@ -23,15 +24,23 @@ def PT(B, neigh, E, C, steps, print_freq=0):
   """Runs parallel tempering with temperatures [1/b for b in B]
      to minimize E where neigh(s) returns a random neighbor to state s
      given initial configs C"""
-  import time
-
   swaps = 0
   assert len(B) == len(C)
   n = len(C)
 
+  sum   = [0.0] * n
+  sum2  = [0.0] * n
+  count = [0] * n
+
+  swapCount = [0] * n
+
   for k in xrange(n):
     (energy,extra) = separate(E(C[k]))
-    C[k] = (C[k],energy) + extra
+    if isinstance(extra,tuple):
+      C[k] = (C[k],energy) + extra
+    else:
+      C[k] = (C[k],energy,extra)
+
     if k == 0:
       best = C[k]
     else:
@@ -45,8 +54,14 @@ def PT(B, neigh, E, C, steps, print_freq=0):
       end_time = time.time()
       print "Steps", i
       print "Swaps", swaps
-      for c in C:
-        print "%13.6e" % c[1],
+      for k in xrange(n):
+        if count[k] != 0:
+          mean = sum[k]/count[k]
+          sd   = math.sqrt(sum2[k]/count[k] - mean*mean)
+        else:
+          mean = 0.0
+          sd   = 0.0
+        print "%13.6e (%13.6e %13.6e %10d %10d)" % (C[k][1],mean,sd,count[k],swapCount[k]),
       print "(%.3f)" % (end_time - start_time)
       print
       print best[1:],best[0]
@@ -54,17 +69,29 @@ def PT(B, neigh, E, C, steps, print_freq=0):
       sys.stdout.flush()
       start_time = time.time()
     # Parallel Phase
-    for k in range(n):
+    for k in xrange(n):
       new_state = neigh(C[k][0], 1/B[k])
       (new_energy,new_extra) = separate(E(new_state))
-      new_state = (new_state, new_energy) + new_extra
-      if random.random() < safe_exp( B[k]*(C[k][1] - new_state[1])):
+
+      if isinstance(new_extra,tuple):
+        new_state = (new_state,new_energy) + new_extra
+      else:
+        new_state = (new_state,new_energy,new_extra)
+
+      dE = new_state[1] - C[k][1]
+      if random.random() < safe_exp(-B[k]*dE):
+        sum[k]   += dE
+        sum2[k]  += dE*dE
+        count[k] += 1
+
         C[k] = new_state
+
         if C[k][1] < best[1]:
           best = C[k]
     # Swapping Phase
     k = random.randrange(n-1)
     if random.random() < safe_exp( (B[k] - B[k+1])*(C[k][1] - C[k+1][1])):
+      swapCount[k] += 1
       swaps += 1
       C[k], C[k+1] = C[k+1], C[k]
 
@@ -72,8 +99,14 @@ def PT(B, neigh, E, C, steps, print_freq=0):
     print "Steps", steps
     print "Swaps", swaps
     print "Swaps / Step", swaps / steps
-    for c in C:
-      print "%f" % c[1],
+    for k in xrange(n):
+      if count[k] != 0:
+        mean = sum[k]/count[k]
+        sd   = math.sqrt(sum2[k]/count[k] - mean*mean)
+      else:
+        mean = 0.0
+        sd   = 0.0
+      print "%13.6e (%13.6e %13.6e %10d %10d)" % (C[k][1],mean,sd,count[k],swapCount[k]),
     print
     print best[1:],best[0]
     print
