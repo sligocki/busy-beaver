@@ -115,7 +115,7 @@ class Enumerator(object):
     self.num_halt += 1
     if steps > self.best_steps or score > self.best_score:
       ## Magic nums: the '-1' is for tape size (not used) .. the '0' is for halting.
-      self.io.write_result(self.tm_num, -1, self.max_steps, (0, score, steps), tm)
+      self.io.write_result(self.tm_num, -1, -1, (0, score, steps), tm)
       self.best_steps = max(self.best_steps, steps)
       self.best_score = max(self.best_score, score)
     self.tm_num += 1
