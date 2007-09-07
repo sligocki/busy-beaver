@@ -137,10 +137,10 @@ if __name__ == "__main__":
   opts, args = Generator_Option_Parser(sys.argv, 
           [("time",      int,     15, False, True), 
            ("save_freq", int, 100000, False, True)], ignore_infile=True)
-  
+  steps = (opts["steps"] if opts["steps"] > 0 else Macro_Simulator.INF)
   io = IO(None, opts["outfile"], opts["log_number"])
   
-  enumerator = Enumerator(opts["states"], opts["symbols"], opts["steps"], 
+  enumerator = Enumerator(opts["states"], opts["symbols"], steps, 
                           opts["time"], io, opts["save_freq"])
   enumerator.enum()
 
