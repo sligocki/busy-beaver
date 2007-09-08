@@ -32,6 +32,7 @@ def PT(B, neigh, E, C, steps, print_freq=0):
   sum2  = [0.0] * n
   count = [0] * n
 
+  acceptCount = [0] * n
   swapCount = [0] * n
 
   for k in xrange(n):
@@ -61,13 +62,14 @@ def PT(B, neigh, E, C, steps, print_freq=0):
         else:
           mean = 0.0
           sd   = 0.0
-        print "%13.6e (%13.6e %13.6e %10d %10d)" % (C[k][1],mean,sd,count[k],swapCount[k]),
+        print "%13.6e (%13.6e %13.6e %10d %10d)" % (C[k][1],mean,sd,acceptCount[k],swapCount[k]),
       print "(%.3f)" % (end_time - start_time)
       print
       print best[1:],best[0]
       print
       sys.stdout.flush()
       start_time = time.time()
+
     # Parallel Phase
     for k in xrange(n):
       new_state = neigh(C[k][0], 1/B[k])
@@ -82,18 +84,21 @@ def PT(B, neigh, E, C, steps, print_freq=0):
       if random.random() < safe_exp(-B[k]*dE):
         sum[k]   += dE
         sum2[k]  += dE*dE
-        count[k] += 1
+        acceptCount[k] += 1
 
         C[k] = new_state
 
         if C[k][1] < best[1]:
           best = C[k]
+
+      count[k] += 1
+
     # Swapping Phase
     k = random.randrange(n-1)
     if random.random() < safe_exp( (B[k] - B[k+1])*(C[k][1] - C[k+1][1])):
-      swapCount[k] += 1
-      swaps += 1
       C[k], C[k+1] = C[k+1], C[k]
+      swaps += 1
+      swapCount[k] += 1
 
   if print_freq != 0:
     print "Steps", steps
@@ -106,7 +111,7 @@ def PT(B, neigh, E, C, steps, print_freq=0):
       else:
         mean = 0.0
         sd   = 0.0
-      print "%13.6e (%13.6e %13.6e %10d %10d)" % (C[k][1],mean,sd,count[k],swapCount[k]),
+      print "%13.6e (%13.6e %13.6e %10d %10d)" % (C[k][1],mean,sd,acceptCount[k],swapCount[k]),
     print
     print best[1:],best[0]
     print
