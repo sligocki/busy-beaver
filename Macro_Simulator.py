@@ -27,7 +27,7 @@ class AlarmException(Exception):
 signal.signal(signal.SIGALRM, signal2exception(AlarmException))
 
 
-def run(TTable, steps=INF, time=None, block_size=None, back=True, prover=True, rec=False):
+def run(TTable, steps=INF, runtime=None, block_size=None, back=True, prover=True, rec=False):
   """Run the Accelerated Turing Machine Simulator, running a few simple filters first and using intelligent blockfinding."""
 
   ## Test for quickly for infinite machine
@@ -39,15 +39,15 @@ def run(TTable, steps=INF, time=None, block_size=None, back=True, prover=True, r
   m = Turing_Machine.Simple_Machine(TTable)
 
   try:
-    ## Set the timer (if non-zero time)
-    if time:
-      signal.alarm(int(math.ceil(time/10.0)))  # Set timer
+    ## Set the timer (if non-zero runtime)
+    if runtime:
+      signal.alarm(int(math.ceil(runtime/10.0)))  # Set timer
 
     # If no explicit block-size given, use inteligent software to find one
     if not block_size:
       block_size = Block_Finder.block_finder(m)
 
-    if time:
+    if runtime:
       signal.alarm(0)  # Turn off timer
   except AlarmException: # Catch Timer (unexcepted)
     block_size = 1
@@ -66,16 +66,16 @@ def run(TTable, steps=INF, time=None, block_size=None, back=True, prover=True, r
     sim.proof = None
 
   try:
-    if time:
-      signal.alarm(time)  # Set timer
+    if runtime:
+      signal.alarm(runtime)  # Set timer
 
     ## Run the simulator
     sim.seek(steps)
 
-    if time:
+    if runtime:
       signal.alarm(0)  # Turn off timer
   except AlarmException: # Catch Timer
-    return TIMEOUT, (time, sim.step_num)
+    return TIMEOUT, (runtime, sim.step_num)
 
   ## Resolve end conditions and return relevent info.
   if sim.op_state == Turing_Machine.RUNNING:
@@ -147,8 +147,8 @@ if __name__ == "__main__":
     steps = INF
 
   if len(sys.argv) >= 6:
-    time = int(sys.argv[5])
+    runtime = int(sys.argv[5])
   else:
-    time = 15
+    runtime = 15
 
-  print run(ttable, steps, time, block_size, back, prover, recursive)
+  print run(ttable, steps, runtime, block_size, back, prover, recursive)
