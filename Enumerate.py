@@ -10,6 +10,9 @@
 
 import copy
 import cPickle as pickle
+import sys
+import random
+import time
 
 from Turing_Machine import Turing_Machine, Turing_Machine_Runtime_Error
 from IO import IO
@@ -19,9 +22,15 @@ class Stack(list):
   def push(self, item):
     return self.append(item)
 
+  def pop(self, rand):
+    i = rand.randrange(0,len(self))
+    v = self[i]
+    del self[i]
+    return v
+
 class Enumerator(object):
   """Holds enumeration state information for checkpointing."""
-  def __init__(self, num_states, num_symbols, max_steps, max_time, io, 
+  def __init__(self, num_states, num_symbols, max_steps, max_time, io, seed,
                      save_freq=100000, checkpoint_filename="checkpoint"):
     self.num_states = num_states
     self.num_symbols = num_symbols
@@ -31,6 +40,8 @@ class Enumerator(object):
     self.save_freq = save_freq
     self.checkpoint_filename = checkpoint_filename
     
+    self.random = random
+    self.random.seed(seed)
     self.stack = Stack()
     self.tm_num = 0
     
@@ -45,12 +56,13 @@ class Enumerator(object):
 
   def continue_enum(self):
     i = 0
+    self.start_time = time.time()
     while len(self.stack) > 0:
       if (i % self.save_freq) == 0:
         self.save()
       i += 1
       # While we have machines to run, pop one off the stack ...
-      cur_tm = self.stack.pop()
+      cur_tm = self.stack.pop(self.random)
       # ... and run it
       cond, info = self.run(cur_tm)
       
@@ -72,14 +84,16 @@ class Enumerator(object):
         steps, = info
         self.add_unresolved(Macro_Simulator.OVERSTEPS, steps)
       elif cond == Macro_Simulator.TIMEOUT:
-        time, steps = info
-        self.add_unresolved(Macro_Simulator.TIMEOUT, steps, time)
+        runtime, steps = info
+        self.add_unresolved(Macro_Simulator.TIMEOUT, steps, runtime)
       else:
         raise Exception, "Enumerator.enum() - unexpected condition (%r)" % cond
   
   def save(self):
-    print self.num_halt, self.num_infinite, self.num_unresolved
-    print self.best_steps, self.best_score
+    self.end_time = time.time()
+    print self.num_halt+self.num_infinite+self.num_unresolved, "-", self.num_halt, self.num_infinite, self.num_unresolved, "(%d)" % len(self.stack), "-", self.best_steps, self.best_score, "(%.2f)" % (self.end_time - self.start_time)
+    self.start_time = time.time()
+    sys.stdout.flush()
     #f = file(self.checkpoint_filename, "wb")
     #pickle.dump(self, f)
   
@@ -123,25 +137,33 @@ class Enumerator(object):
   def add_infinite(self, tm, reason):
     self.num_infinite += 1
     self.tm_num += 1
-  def add_unresolved(self, tm, steps, time=None):
+  def add_unresolved(self, tm, steps, runtime=None):
     self.num_unresolved += 1
     self.tm_num += 1
 
-
 # Command line interpretter code
 if __name__ == "__main__":
-  import sys
   from Option_Parser import Generator_Option_Parser
   
   # Get command line options.
   # Enumerate.py may be sent an infile param but it should be ignored
   opts, args = Generator_Option_Parser(sys.argv, 
-          [("time",      int,     15, False, True), 
-           ("save_freq", int, 100000, False, True)], ignore_infile=True)
+          [("time",       int,                15, False, True), 
+           ("save_freq",  int,            100000, False, True),
+           ("seed"     , long, long(time.time()), False, True)],
+           ignore_infile=True)
   steps = (opts["steps"] if opts["steps"] > 0 else Macro_Simulator.INF)
   io = IO(None, opts["outfile"], opts["log_number"])
+
+  print "Enumerate.py --steps=%s --time=%s --save_freq=%s --seed=%s --outfile=%s --states=%s --symbols=%s" % \
+        (opts["steps"],opts["time"],opts["save_freq"],opts["seed"],opts["outfilename"],opts["states"],opts["symbols"]),
+  sys.stdout.flush()
+
+  if opts["log_number"] != None:
+    print "--log_number=%s" % (opts["log_number"])
+  else:
+    print ""
   
   enumerator = Enumerator(opts["states"], opts["symbols"], steps, 
-                          opts["time"], io, opts["save_freq"])
+                          opts["time"], io, opts["seed"], opts["save_freq"])
   enumerator.enum()
-
