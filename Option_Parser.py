@@ -28,6 +28,7 @@ def Generator_Option_Parser(argv, extra_opt, ignore_infile = True):
     opts["outfile"] = "%d.%d.%d.%d.out" % (opts["states"], opts["symbols"],
                                            opts["tape"], opts["steps"])
   if opts["outfile"] == "-":
+    opts["outfilename"] = "-"
     opts["outfile"] = sys.stdout
   else:
     if os.path.exists(opts["outfile"]):
@@ -36,6 +37,7 @@ def Generator_Option_Parser(argv, extra_opt, ignore_infile = True):
     else:
       # This double use of opts["outfile"] is odd and possibly a bad idea,
       # but I don't think that the filename will ever be needed.
+      opts["outfilename"] = opts["outfile"]
       opts["outfile"] = file(opts["outfile"], "w")
 
   if not ignore_infile:
