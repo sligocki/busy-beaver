@@ -8,13 +8,10 @@
 # that take the longest to halt.
 #
 
-import copy
+import copy, sys, time
 import cPickle as pickle
-import sys
-import random
-import time
 
-from Turing_Machine import Turing_Machine, Turing_Machine_Runtime_Error
+from Turing_Machine import Turing_Machine
 from IO import IO
 import Macro_Simulator
 
@@ -22,10 +19,17 @@ class Stack(list):
   def push(self, item):
     return self.append(item)
 
+class DefaultDict(dict):
+  def __init__(self, default):
+    self.default = default
+  def __getitem__(self, item):
+    return self.get(item, self.default)
+
 class Enumerator(object):
   """Holds enumeration state information for checkpointing."""
   def __init__(self, num_states, num_symbols, max_steps, max_time, io, seed,
                      save_freq=100000, checkpoint_filename="checkpoint"):
+    import random
     self.num_states = num_states
     self.num_symbols = num_symbols
     self.max_steps = max_steps
@@ -41,6 +45,21 @@ class Enumerator(object):
     
     self.num_halt = self.num_infinite = self.num_unresolved = 0
     self.best_steps = self.best_score = 0
+    self.inf_type = DefaultDict(0)
+    self.num_over_time = self.num_over_steps = 0
+  
+  def __getstate__(self):
+    d = self.__dict__.copy()
+    del d["io"], d["random"]
+    d["random_state"] = self.random.getstate()
+    return d
+  
+  def __setstate__(self, d):
+    import random
+    random.setstate(d["random_state"])
+    del d["random_state"]
+    self.__dict__ = d
+    self.random = random
   
   def enum(self):
     """Enumerate all num_states*num_symbols TMs in Tree-Normal Form"""
@@ -85,11 +104,13 @@ class Enumerator(object):
   
   def save(self):
     self.end_time = time.time()
-    print self.num_halt+self.num_infinite+self.num_unresolved, "-", self.num_halt, self.num_infinite, self.num_unresolved, "-", self.best_steps, self.best_score, "(%.2f)" % (self.end_time - self.start_time)
+    print self.num_halt+self.num_infinite+self.num_unresolved, "-", 
+    print self.num_halt, self.num_infinite, self.num_unresolved, "-", 
+    print self.best_steps, self.best_score, "(%.2f)" % (self.end_time - self.start_time)
     self.start_time = time.time()
     sys.stdout.flush()
-    #f = file(self.checkpoint_filename, "wb")
-    #pickle.dump(self, f)
+    f = file(self.checkpoint_filename, "wb")
+    pickle.dump(self, f)
   
   def run(self, tm):
     return Macro_Simulator.run(tm.get_TTable(), self.max_steps, self.max_time)
@@ -137,9 +158,14 @@ class Enumerator(object):
     self.tm_num += 1
   def add_infinite(self, tm, reason):
     self.num_infinite += 1
+    self.inf_type[reason] += 1
     self.tm_num += 1
   def add_unresolved(self, tm, steps, runtime=None):
     self.num_unresolved += 1
+    if runtime == None:
+      self.num_over_steps
+    else:
+      self.num_over_time
     self.tm_num += 1
 
 # Command line interpretter code
@@ -149,10 +175,12 @@ if __name__ == "__main__":
   # Get command line options.
   # Enumerate.py may be sent an infile param but it should be ignored
   opts, args = Generator_Option_Parser(sys.argv, 
-          [("time",       int,                15, False, True), 
-           ("save_freq",  int,            100000, False, True),
-           ("seed"     , long, long(time.time()), False, True)],
-           ignore_infile=True)
+          [("time",       int,           15, False, True), 
+           ("save_freq",  int,       100000, False, True),
+           ("seed",      long,  time.time(), False, True),
+           ("checkpoint", str, "checkpoint", False, True)],
+          ignore_infile=True)
+  
   steps = (opts["steps"] if opts["steps"] > 0 else Macro_Simulator.INF)
   io = IO(None, opts["outfile"], opts["log_number"])
 
