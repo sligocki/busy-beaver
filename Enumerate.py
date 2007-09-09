@@ -184,8 +184,8 @@ if __name__ == "__main__":
   steps = (opts["steps"] if opts["steps"] > 0 else Macro_Simulator.INF)
   io = IO(None, opts["outfile"], opts["log_number"])
 
-  print "Enumerate.py --steps=%s --time=%s --save_freq=%s --seed=%s --outfile=%s --states=%s --symbols=%s" % \
-        (opts["steps"],opts["time"],opts["save_freq"],opts["seed"],opts["outfilename"],opts["states"],opts["symbols"]),
+  print "Enumerate.py --steps=%s --time=%s --save_freq=%s --seed=%s --outfile=%s --checkpoint=%s --states=%s --symbols=%s" % \
+        (opts["steps"],opts["time"],opts["save_freq"],opts["seed"],opts["outfilename"],opts["checkpoint"],opts["states"],opts["symbols"])
   sys.stdout.flush()
 
   if opts["log_number"] != None:
@@ -194,5 +194,6 @@ if __name__ == "__main__":
     print ""
   
   enumerator = Enumerator(opts["states"], opts["symbols"], steps, 
-                          opts["time"], io, opts["seed"], opts["save_freq"])
+                          opts["time"], io, opts["seed"], opts["save_freq"],
+                          opts["checkpoint"])
   enumerator.enum()
