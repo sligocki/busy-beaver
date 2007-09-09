@@ -22,12 +22,6 @@ class Stack(list):
   def push(self, item):
     return self.append(item)
 
-  def pop(self, rand):
-    i = rand.randrange(0,len(self))
-    v = self[i]
-    del self[i]
-    return v
-
 class Enumerator(object):
   """Holds enumeration state information for checkpointing."""
   def __init__(self, num_states, num_symbols, max_steps, max_time, io, seed,
@@ -62,7 +56,7 @@ class Enumerator(object):
         self.save()
       i += 1
       # While we have machines to run, pop one off the stack ...
-      cur_tm = self.stack.pop(self.random)
+      cur_tm = self.stack.pop()
       # ... and run it
       cond, info = self.run(cur_tm)
       
@@ -109,14 +103,21 @@ class Enumerator(object):
     # If this is the last undefined cell, then it must be a halt, so only try
     # other values for cell if this is not the last undefined cell.
     if old_tm.num_empty_cells > 1:
-      # 'state_out' in [0, 1, ... max_state] == range(max_state + 1)
-      for state_out in range(max_state + 1):
-        for symbol_out in range(max_symbol + 1):
-          for direction_out in range(2):
+      # 'state_out' in [0, 1, ... max_state] == xrange(max_state + 1)
+      new_tms = []
+      for state_out in xrange(max_state + 1):
+        for symbol_out in xrange(max_symbol + 1):
+          for direction_out in xrange(2):
             new_tm = copy.deepcopy(old_tm)
             new_tm.add_cell(state_in , symbol_in ,
                             state_out, symbol_out, direction_out)
-            self.stack.push(new_tm)
+            new_tms.append(new_tm)
+
+      self.random.shuffle(new_tms)
+
+      # Push the (randomize) list of TMs onto the stack
+      self.stack.extend(new_tms)
+
   def add_halt_trans(self, tm, on_state, on_symbol, steps, score):
     #   1) Add the halt state
     tm.add_cell(on_state, on_symbol, -1, 1, 1)
