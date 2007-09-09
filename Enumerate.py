@@ -85,7 +85,7 @@ class Enumerator(object):
   
   def save(self):
     self.end_time = time.time()
-    print self.num_halt+self.num_infinite+self.num_unresolved, "-", self.num_halt, self.num_infinite, self.num_unresolved, "(%d)" % len(self.stack), "-", self.best_steps, self.best_score, "(%.2f)" % (self.end_time - self.start_time)
+    print self.num_halt+self.num_infinite+self.num_unresolved, "-", self.num_halt, self.num_infinite, self.num_unresolved, "-", self.best_steps, self.best_score, "(%.2f)" % (self.end_time - self.start_time)
     self.start_time = time.time()
     sys.stdout.flush()
     #f = file(self.checkpoint_filename, "wb")
