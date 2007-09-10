@@ -1,4 +1,4 @@
-#!/usr/bin/bash
+#! /usr/bin/env bash
 if [ -n "$2" ]; then 
   Busy_Beaver_Sim.py --infile=$1 --line_num=$2
 else
