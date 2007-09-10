@@ -34,7 +34,11 @@ else:
 
 for line in infile:
   parts = line.split()
-  ones = int(parts[6])
-  steps = int(parts[7])
   table = get_ttable(line)
-  print display_ttable(table), "# ",ones, "", steps
+  try:
+    ones = int(parts[6])
+    steps = int(parts[7])
+    print display_ttable(table), "# ",ones, "", steps
+  except:
+    print display_ttable(table)
+
