@@ -108,6 +108,7 @@ def run(machine, num_states, num_symbols, tape_length, max_steps, machine_num):
       # not consecutive "repeats" of a tree repetition.  If Tree_Identify is
       # running correctly that means that it detected some similar patern.
       # Prob want to call Tree_Identify again to find new repeating pattern?
+      raise ValueError
   elif not identify:
     # Tree_Identify rejected machine.
     # This means no tree-type patterns were discovered (but some might exist?)
