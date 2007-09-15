@@ -5,11 +5,13 @@ def is_scalar(value):
   return isinstance(value, (int, long, Rational))
 
 class Variable:
+  """A distinct variable in an algebraic expression"""
   num_vars = 0
   def __init__(self):
     self.id = Variable.num_vars
     Variable.num_vars += 1
   def __repr__(self):
+    # Variables are initially printed as letters and thereafter as <x#>
     if self.id <= 25:
       return "%c" % (self.id + 97)
     else:
@@ -20,6 +22,7 @@ class Variable:
     return hash(self.id)
 
 class Var_Power:
+  """A variable raised to some power (eg: a^3)"""
   def __init__(self, variable, power):
     self.var = variable
     self.pow = power
@@ -34,6 +37,7 @@ class Var_Power:
         return val**self.pow
 
 class Term:
+  """A term in a (multi-variable) polynomial (eg: 4 x^3 * y^2)"""
   def __init__(self, var_powers, coeficient):
     self.vars = var_powers # Always assumed to be a non-empty tuple
     self.coef = coeficient
@@ -49,6 +53,7 @@ class Term:
     return reduce(operator.mul, [vp.substitute(subs) for vp in self.vars]) * self.coef
 
 class Expression(Number):
+  """An algebraic expression, i.e. a multi-variable polynomial."""
   def __init__(self, terms, constant):
     self.terms = terms
     self.const = constant
@@ -81,6 +86,7 @@ class Expression(Number):
       new_terms = tuple([Term(t.vars, t.coef.__div__(other)) for t in self.terms])
       return Expression(new_terms, self.const.__div__(other))
     else:
+      ### TODO: We could (actually) devide, say (8x+8) / (x+1) = 8 !
       return NotImplemented
   def __truediv__(self, other):
     if other == 1:
@@ -89,10 +95,24 @@ class Expression(Number):
       new_terms = tuple([Term(t.vars, t.coef.__truediv__(other)) for t in self.terms])
       return Expression(new_terms, self.const.__truediv__(other))
     else:
+      ### TODO: We could (actually) devide, say (8x+8) / (x+1) = 8 !
+      return NotImplemented
+  def __floordiv__(self, other):
+    if other == 1:
+      return self
+    else:
+      ### TODO: We could (actually) devide, say (8x+8) // 8 = (x+1) !
       return NotImplemented
   def substitute(self, subs):
     return sum([t.substitute(subs) for t in self.terms]) + self.const
   # Temporary methods
+  def __eq__(self, other):
+    if is_scalar(other):
+      return (len(self.terms) == 0 and self.const == other)
+    else:
+      return NotImplemented
+  def __cmp__(self, other):
+    return cmp(self.const, other)
   def unknown(self):
     """Returns the single variable in this expression if it exists."""
     if len(self.terms) == 1 and len(self.terms[0].vars) == 1:
@@ -101,27 +121,30 @@ class Expression(Number):
       raise Exception, "This expression does not have exactly 1 variable!"
 
 def term_sum(terms1, terms2):
+  """Add 2 lists of terms"""
   new_terms = []
   i = j = 0
   while i < len(terms1) and j < len(terms2):
     t1, t2 = terms1[i], terms2[j]
     c = compare_terms(t1, t2)
-    if c == 0:
+    if c == 0:  # if t1 == t2
       if t1.coef + t2.coef != 0:
         new_terms.append(Term(t1.vars, t1.coef + t2.coef))
       i += 1
       j += 1
-    elif c < 0:
+    elif c < 0: # if t1 < t2
       new_terms.append(t1)
       i += 1
-    else:
+    else:       # if t1 > t2
       new_terms.append(t2)
       j += 1
+  # Append the rest of the terms in the only remaining list
   new_terms.extend(terms1[i:])
   new_terms.extend(terms2[j:])
   return new_terms
 
 def compare_terms(t1, t2):
+  """Compare 2 Terms in an arbitrary, but consistent manner."""
   vars1 = t1.vars
   vars2 = t2.vars
   # Shorter terms preceed longer terms
@@ -171,6 +194,7 @@ def vars_prod(vars1, vars2):
   return new_vars
 
 def new_variable(v=None):
+  """Produce an expression containing only a new variable (or an already defined variable as an argument)."""
   if v is None:
     v = Variable()
   vp = Var_Power(v, 1)
