@@ -1,9 +1,9 @@
 #! /usr/bin/env python
 
-import sys, signal
+import sys, signal, math, copy
+
 from Macro import Turing_Machine, Chain_Simulator, Block_Finder
-import IO, Reverse_Engineer_Filter
-import math
+import IO, Reverse_Engineer_Filter, CTL1, CTL2
 
 from Macro.Chain_Tape import INF
 
@@ -27,12 +27,32 @@ class AlarmException(Exception):
 signal.signal(signal.SIGALRM, signal2exception(AlarmException))
 
 
-def run(TTable, steps=INF, runtime=None, block_size=None, back=True, prover=True, rec=False):
+class GenContainer:
+  """Generic Container class"""
+  def __init__(self, **args):
+    for atr in args:
+      self.__dict__[atr] = args[atr]
+
+
+def setup_CTL(m, cutoff):
+  sim = Chain_Simulator.Simulator()
+  sim.init(m)
+  sim.proof = None
+  sim.seek(cutoff)
+  if sim.op_state != Turing_Machine.RUNNING:
+    return False
+  tape = [None, None]
+  for d in range(2):
+    tape[d] = [block.symbol for block in sim.tape.tape[d] if block.num != "Inf"]
+  config = GenContainer(state=sim.state, dir=sim.dir, tape=tape)
+  return config
+
+
+def run(TTable, steps=INF, runtime=None, block_size=None, back=True, prover=True, rec=False, cutoff=200):
   """Run the Accelerated Turing Machine Simulator, running a few simple filters first and using intelligent blockfinding."""
 
   ## Test for quickly for infinite machine
-  res = Reverse_Engineer_Filter.test(TTable)
-  if res:
+  if Reverse_Engineer_Filter.test(TTable):
     return INFINITE, ("Reverse_Engineered",)
   
   ## Construct the Macro Turing Machine (Backsymbol-k-Block-Macro-Machine)
@@ -57,6 +77,18 @@ def run(TTable, steps=INF, runtime=None, block_size=None, back=True, prover=True
     m = Turing_Machine.Block_Macro_Machine(m, block_size)
   if back:
     m = Turing_Machine.Backsymbol_Macro_Machine(m)
+
+  CTL_config = setup_CTL(m, cutoff)
+
+  # Run CTL filters unless machine halted
+  if CTL_config:
+    CTL_config_copy = copy.deepcopy(CTL_config)
+    if CTL1.CTL(m, CTL_config_copy):
+      return INFINITE, ("CTL_A*",)
+
+    CTL_config_copy = copy.deepcopy(CTL_config)
+    if CTL2.CTL(m, CTL_config_copy):
+      return INFINITE, ("CTL_A*_B",)
 
   ## Set up the simulator
   #global sim # Useful for Debugging
