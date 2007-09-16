@@ -29,7 +29,7 @@ def run(TTable, block_size, level, steps, timeout, progress):
 
   sim = Chain_Simulator.Simulator()
   sim.init(m3)
-  sim.set_time_out(timeout)
+  # sim.set_time_out(timeout)
   sim.loop_run(steps)
   if sim.op_state == Turing_Machine.RUNNING:
     if progress:
