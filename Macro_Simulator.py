@@ -82,13 +82,26 @@ def run(TTable, steps=INF, runtime=None, block_size=None, back=True, prover=True
 
   # Run CTL filters unless machine halted
   if CTL_config:
-    CTL_config_copy = copy.deepcopy(CTL_config)
-    if CTL1.CTL(m, CTL_config_copy):
-      return INFINITE, ("CTL_A*",)
+    try:
+      signal.alarm(int(math.ceil(runtime/10.0)))
 
-    CTL_config_copy = copy.deepcopy(CTL_config)
-    if CTL2.CTL(m, CTL_config_copy):
-      return INFINITE, ("CTL_A*_B",)
+      CTL_config_copy = copy.deepcopy(CTL_config)
+      if CTL1.CTL(m, CTL_config_copy):
+        if runtime:
+          signal.alarm(0)  # Turn off timer
+        return INFINITE, ("CTL_A*",)
+
+      CTL_config_copy = copy.deepcopy(CTL_config)
+      if CTL2.CTL(m, CTL_config_copy):
+        if runtime:
+          signal.alarm(0)  # Turn off timer
+        return INFINITE, ("CTL_A*_B",)
+
+      if runtime:
+        signal.alarm(0)  # Turn off timer
+
+    except AlarmException:
+      pass
 
   ## Set up the simulator
   #global sim # Useful for Debugging
