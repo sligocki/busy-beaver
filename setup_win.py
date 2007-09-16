@@ -41,3 +41,11 @@ setup(name='Tree_Identify',
       version='1.0',
       description='Identify a possible infinite tree',
       ext_modules=[module5])
+
+module6 = Extension('signalPlus',
+                    sources=['signalPlusModule.c'])
+
+setup(name='signalPlus',
+      version='1.0',
+      description='Signal module plus ualarm',
+      ext_modules=[module6])
