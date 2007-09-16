@@ -11,6 +11,7 @@
 #endif
 
 #include <signal.h>
+#include <sys/time.h>
 
 #ifndef SIG_ERR
 #define SIG_ERR ((PyOS_sighandler_t)(-1))
@@ -148,14 +149,24 @@ signalPlus_alarm(PyObject *self, PyObject *args)
 	double t;
 	if (!PyArg_ParseTuple(args, "d:alarm", &t))
 		return NULL;
-	/* alarm() returns the number of seconds remaining */
 
-  unsigned int t_usec_set  = (unsigned int)(t * 1000000.0 + 0.5);
-  unsigned int interval = 0;
+  int isecs = (int)t;
 
-  unsigned int t_usec_left = ualarm(t_usec_set,interval);
+  double frac = t - isecs;
+  int ifrac = frac*1000000.0;
 
-  t = t_usec_left / (double)1000000.0;
+  struct itimerval t_set,t_get;
+
+  t_set.it_interval.tv_sec  = 0;
+  t_set.it_interval.tv_usec = 0;
+
+  t_set.it_value.tv_sec  = isecs;
+  t_set.it_value.tv_usec = ifrac;
+
+  setitimer(ITIMER_REAL,&t_set,&t_get);
+
+  t = t_get.it_value.tv_sec +
+      t_get.it_value.tv_usec / (double)1000000.0;
 
 	return PyFloat_FromDouble(t);
 }
