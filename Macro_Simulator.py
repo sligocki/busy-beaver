@@ -2,7 +2,8 @@
 
 import sys, math, copy
 
-import signalPlus
+import signal, signalPlus
+
 from Macro import Turing_Machine, Chain_Simulator, Block_Finder
 import IO, Reverse_Engineer_Filter, CTL1, CTL2
 
@@ -25,7 +26,7 @@ class AlarmException(Exception):
   pass
 # Attach the alarm signal to the alarm exception.
 #   so signalPlus.alarm will cause a catchable exception.
-signalPlus.signal(signalPlus.SIGALRM, signal2exception(AlarmException))
+signal.signal(signal.SIGALRM, signal2exception(AlarmException))
 
 
 class GenContainer:
