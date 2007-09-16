@@ -3,10 +3,12 @@
 A generalized Rupert problem computation using Simulated Annealing optimization.
 """
 
+import random, copy, math, time, getopt, sys
+
+import SA
+
 class Cube_Object:
   def __init__(self,m,n,sigma,seed):
-    import random
-
     self.random = random
     self.random.seed(seed)
 
@@ -40,9 +42,6 @@ class Cube_Object:
 
   def next_config(self,cur_matrix,T):
     """Mutate a single element of one transition."""
-    import copy
-    import math
-
     new_matrix = copy.deepcopy(cur_matrix)
 
     ai = self.random.randrange(0,self.n)
@@ -68,9 +67,6 @@ def usage():
   print "Usage:  Cube_Cube_Anneal.py [--help] [--T0=] [--Tf=] [--iter=] [--reset=] [--seed=] [--freq=] [--m=] [--n=]"
 
 if __name__ == "__main__":
-  import time,getopt,sys,math
-  import SA
-
   m = 2
   n = 3
 
