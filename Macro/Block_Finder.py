@@ -24,6 +24,8 @@ def block_finder(machine, limit=1000):
       worst_tape = uncompress_tape(sim.tape.tape)
     # If it has stopped running then this is a good block size!
     if sim.op_state != Turing_Machine.RUNNING:
+      if DEBUG:
+        print "Halted, returning base block size: 1"
       return 1
   if DEBUG:
     print "Least compression at time:", worst_time
