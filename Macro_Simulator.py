@@ -1,7 +1,8 @@
 #! /usr/bin/env python
 
-import sys, signal, math, copy
+import sys, math, copy
 
+import signalPlus
 from Macro import Turing_Machine, Chain_Simulator, Block_Finder
 import IO, Reverse_Engineer_Filter, CTL1, CTL2
 
@@ -23,8 +24,8 @@ class AlarmException(Exception):
   """An exception to be tied to a timer running out."""
   pass
 # Attach the alarm signal to the alarm exception.
-#   so signal.alarm will cause a catchable exception.
-signal.signal(signal.SIGALRM, signal2exception(AlarmException))
+#   so signalPlus.alarm will cause a catchable exception.
+signalPlus.signal(signalPlus.SIGALRM, signal2exception(AlarmException))
 
 
 class GenContainer:
@@ -61,14 +62,14 @@ def run(TTable, steps=INF, runtime=None, block_size=None, back=True, prover=True
   try:
     ## Set the timer (if non-zero runtime)
     if runtime:
-      signal.alarm(int(math.ceil(runtime/10.0)))  # Set timer
+      signalPlus.alarm(runtime/10.0)  # Set timer
 
     # If no explicit block-size given, use inteligent software to find one
     if not block_size:
       block_size = Block_Finder.block_finder(m)
 
     if runtime:
-      signal.alarm(0)  # Turn off timer
+      signalPlus.alarm(0)  # Turn off timer
   except AlarmException: # Catch Timer (unexcepted)
     block_size = 1
     
@@ -83,22 +84,22 @@ def run(TTable, steps=INF, runtime=None, block_size=None, back=True, prover=True
   # Run CTL filters unless machine halted
   if CTL_config:
     try:
-      signal.alarm(int(math.ceil(runtime/10.0)))
+      signalPlus.alarm(runtime/10.0)
 
       CTL_config_copy = copy.deepcopy(CTL_config)
       if CTL1.CTL(m, CTL_config_copy):
         if runtime:
-          signal.alarm(0)  # Turn off timer
+          signalPlus.alarm(0)  # Turn off timer
         return INFINITE, ("CTL_A*",)
 
       CTL_config_copy = copy.deepcopy(CTL_config)
       if CTL2.CTL(m, CTL_config_copy):
         if runtime:
-          signal.alarm(0)  # Turn off timer
+          signalPlus.alarm(0)  # Turn off timer
         return INFINITE, ("CTL_A*_B",)
 
       if runtime:
-        signal.alarm(0)  # Turn off timer
+        signalPlus.alarm(0)  # Turn off timer
 
     except AlarmException:
       pass
@@ -112,13 +113,13 @@ def run(TTable, steps=INF, runtime=None, block_size=None, back=True, prover=True
 
   try:
     if runtime:
-      signal.alarm(runtime)  # Set timer
+      signalPlus.alarm(runtime)  # Set timer
 
     ## Run the simulator
     sim.seek(steps)
 
     if runtime:
-      signal.alarm(0)  # Turn off timer
+      signalPlus.alarm(0)  # Turn off timer
   except AlarmException: # Catch Timer
     return TIMEOUT, (runtime, sim.step_num)
 
