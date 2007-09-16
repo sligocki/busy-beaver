@@ -58,7 +58,7 @@ class Simulator:
       return
     self.num_loops += 1
     if self.proof:
-      cond, new_tape, num_steps = self.proof.log(self.tape, self.state, self.step_num)
+      cond, new_tape, num_steps = self.proof.log(self.tape, self.state, self.step_num, self.num_loops-1)
       if cond == Turing_Machine.INF_REPEAT:
         self.op_state = Turing_Machine.INF_REPEAT
         self.inf_reason = PROOF_SYSTEM
@@ -104,7 +104,7 @@ class Simulator:
     return self.tape.get_nonzeros(self.machine.eval_symbol,
                                   self.machine.eval_state(self.state))
   def print_self(self):
-    x = int(math.log10(self.step_num + 1)) + 1
+    x = len(repr(self.step_num)) + 1
     print
     print "         Steps:                       Times Applied:"
     print template("Total:", self.step_num, x, self.num_loops)
@@ -130,7 +130,8 @@ def template(s, m, x, n):
     log_m = "10^%-6.1f" % math.log10(m)
   except:
     log_m = "         "
-  m_str = "%-20s" % (("%%%dd" % x) % m)
+  m_str = "%-20s" % (("%%%dr" % x) % m)
+    
   if len(m_str) > 20:
     m_str = " "*20
   n_str = "%12d" % n

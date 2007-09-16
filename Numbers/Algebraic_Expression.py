@@ -62,9 +62,9 @@ class Expression(Number):
       return repr(self.const)
     r = string.join([repr(t) for t in self.terms], " + ")
     if self.const == 0:
-      return r
+      return "("+r+")"
     else:
-      return r+" + "+repr(self.const)
+      return "("+r+" + "+repr(self.const)+")"
   def __add__(self, other):
     if is_scalar(other):
       return Expression(self.terms, self.const + other)
