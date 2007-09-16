@@ -1,5 +1,7 @@
 #! /usr/bin/env python
 
+import math
+
 from PT import PT
 from BB_Anneal_Accel import TM_Object
 import time, getopt, sys
@@ -7,7 +9,6 @@ import time, getopt, sys
 def optimize(Ti, Tf, pt_loops, n, seed, print_freq, steps, time, states, symbols):
   """Temperatures Ti to Tf spaced so that 1/T are uniform.
      "loops" iterations through PT alg, with n replicas. ..."""
-  import math
 
   # Inverse temperatures
   # Bi = 1/Ti; Bf = 1/Tf

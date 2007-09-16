@@ -1,13 +1,13 @@
 #! /usr/bin/env python
 
+import time, getopt, sys, math
+
 from PT import PT
 from Cube_Cube_Anneal import Cube_Object
-import time, getopt, sys
 
 def optimize(Ti, Tf, pt_loops, num, seed, print_freq, m, n, sigma):
   """Temperatures Ti to Tf spaced so that 1/T are uniform.
      "loops" iterations through PT alg, with n replicas. ..."""
-  import math
 
   # Inverse temperatures
   # Bi = 1/Ti; Bf = 1/Tf

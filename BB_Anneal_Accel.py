@@ -4,10 +4,14 @@ A Busy Beaver finder using Simulated Annealing optimization and accelerated
 TM simulation.
 """
 
+import getopt, sys, time, random, math
+
+import SA
+from Macro.Chain_Tape import INF
+import Macro_Simulator
+
 class TM_Object:
   def __init__(self,num_states,num_symbols,step_limit,time_limit,seed):
-    import random
-
     self.random = random
     self.random.seed(seed)
 
@@ -34,10 +38,6 @@ class TM_Object:
     return new_TM
 
   def energy_func(self,cur_TM):
-    from Macro.Chain_Tape import INF
-    import Macro_Simulator
-    import math
-
     trans_TM = [cur_TM[i*self.num_symbols:(i+1)*self.num_symbols] \
                  for i in xrange(self.num_states)]
 
@@ -100,9 +100,6 @@ def usage():
   print "Usage:  BB_Anneal_Accel.py [--help] [--T0=] [--Tf=] [--iter=] [--reset=] [--seed=] [--freq=] [--steps=] [--time=] [--states=] [--symbols=]"
 
 if __name__ == "__main__":
-  import time,getopt,sys,math
-  import SA
-
   num_states  = 5
   num_symbols = 2
 
