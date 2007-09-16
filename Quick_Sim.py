@@ -23,6 +23,7 @@ def run(TTable, block_size=None, back=True, prover=True, rec=False):
   if not prover:
     sim.proof = None
   extent = 1
+  #raw_input("Ready?")
   try:
     while sim.op_state == Turing_Machine.RUNNING:
       sim.print_self()
@@ -73,6 +74,13 @@ if "-r" in sys.argv:
 else:
   recursive = False
 
+# Verbose Prover (default off)
+if "-v" in sys.argv:
+  sys.argv.remove("-v")
+  Chain_Simulator.Chain_Proof_System.DEBUG = True
+else:
+  Chain_Simulator.Chain_Proof_System.DEBUG = False
+
 if len(sys.argv) >= 3:
   line = int(sys.argv[2])
 else:
@@ -86,3 +94,4 @@ else:
   block_size = None
 
 run(ttable, block_size, back, prover, recursive)
+
