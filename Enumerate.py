@@ -28,7 +28,8 @@ class DefaultDict(dict):
 class Enumerator(object):
   """Holds enumeration state information for checkpointing."""
   def __init__(self, num_states, num_symbols, max_steps, max_time, io, seed,
-                     save_freq=100000, checkpoint_filename="checkpoint"):
+                     save_freq=100000, checkpoint_filename="checkpoint",
+                     save_unk=False):
     import random
     self.num_states = num_states
     self.num_symbols = num_symbols
@@ -37,6 +38,7 @@ class Enumerator(object):
     self.io = io
     self.save_freq = save_freq
     self.checkpoint_filename = checkpoint_filename
+    self.save_unk = save_unk
     
     self.random = random
     self.random.seed(seed)
@@ -96,21 +98,29 @@ class Enumerator(object):
       elif cond == Macro_Simulator.OVERSTEPS:
         steps, = info
         self.add_unresolved(Macro_Simulator.OVERSTEPS, steps)
+        if (self.save_unk):
+          self.io.write_result(self.tm_num, -1, -1, (2, -1, -1), cur_tm)
       elif cond == Macro_Simulator.TIMEOUT:
         runtime, steps = info
         self.add_unresolved(Macro_Simulator.TIMEOUT, steps, runtime)
+        if (self.save_unk):
+          self.io.write_result(self.tm_num, -1, -1, (2, -1, -1), cur_tm)
       else:
         raise Exception, "Enumerator.enum() - unexpected condition (%r)" % cond
   
   def save(self):
     self.end_time = time.time()
+
     print self.num_halt+self.num_infinite+self.num_unresolved, "-", 
     print self.num_halt, self.num_infinite, self.num_unresolved, "-", 
     print self.best_steps, self.best_score, "(%.2f)" % (self.end_time - self.start_time)
-    self.start_time = time.time()
     sys.stdout.flush()
+
+    self.start_time = time.time()
+
     f = file(self.checkpoint_filename, "wb")
     pickle.dump(self, f)
+    f.close()
   
   def run(self, tm):
     return Macro_Simulator.run(tm.get_TTable(), self.max_steps, self.max_time)
@@ -175,17 +185,22 @@ if __name__ == "__main__":
   # Get command line options.
   # Enumerate.py may be sent an infile param but it should be ignored
   opts, args = Generator_Option_Parser(sys.argv, 
-          [("time",       int,                15, False, True), 
-           ("save_freq",  int,            100000, False, True),
-           ("seed",      long, long(time.time()), False, True),
-           ("checkpoint", str,      "checkpoint", False, True)],
+          [("time",        int,                15, False, True), 
+           ("save_freq",   int,            100000, False, True),
+           ("seed",       long, long(time.time()), False, True),
+           ("checkpoint",  str,      "checkpoint", False, True),
+           ("save_unk"  , None,             False, False, False)],
           ignore_infile=True)
   
   steps = (opts["steps"] if opts["steps"] > 0 else Macro_Simulator.INF)
   io = IO(None, opts["outfile"], opts["log_number"])
 
-  print "Enumerate.py --steps=%s --time=%s --save_freq=%s --seed=%s --outfile=%s --checkpoint=%s --states=%s --symbols=%s" % \
-        (opts["steps"],opts["time"],opts["save_freq"],opts["seed"],opts["outfilename"],opts["checkpoint"],opts["states"],opts["symbols"])
+  save_unk_str = ""
+  if opts["save_unk"]:
+    save_unk_str = " --save_unk"
+
+  print "Enumerate.py --steps=%s --time=%s --save_freq=%s --seed=%s --outfile=%s --checkpoint=%s%s --states=%s --symbols=%s" % \
+        (opts["steps"],opts["time"],opts["save_freq"],opts["seed"],opts["outfilename"],opts["checkpoint"],save_unk_str,opts["states"],opts["symbols"])
   sys.stdout.flush()
 
   if opts["log_number"] != None:
@@ -195,5 +210,5 @@ if __name__ == "__main__":
   
   enumerator = Enumerator(opts["states"], opts["symbols"], steps, 
                           opts["time"], io, opts["seed"], opts["save_freq"],
-                          opts["checkpoint"])
+                          opts["checkpoint"],opts["save_unk"])
   enumerator.enum()
