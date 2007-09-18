@@ -1,4 +1,12 @@
 #! /usr/bin/env python
+#
+# Count the number of distinct TM represented by machines in tree-normal-form (TNF)
+# With the restriction that A0->1RB and Halt=!RH.
+#
+# Note that for the space of Q-state, S-symbol TMs, there are 
+#   (QS-1) * (2QS)^(QS-2) with such restrictions. Thus, if we run this count 
+#   over a completed TNF set of machines, we should get this value.
+#
 
 def fact2(n, m=0):
   """Computes n!/m! = n*(n-1)*...*(m+1)"""

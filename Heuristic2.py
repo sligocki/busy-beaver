@@ -1,10 +1,8 @@
 #! /usr/bin/env python
 #
-# Busy_Beaver_Count.py
+# Heuristic2.py
 #
-# This module contains the Busy_Beaver class, which runs a Turing machine
-# simulator (either in C or Python) with an initially blank tape and reports
-# back information about steps versus non-zero tape size.
+# Collects data on tape used vs. steps taken and fits curves to the data.
 #
 
 import sys
