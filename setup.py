@@ -38,14 +38,14 @@ setup(name='Macro_Machine',
       description='Run one TM using macro steps',
       ext_modules=[module4])
 
-module5 = Extension('Tree_Identify',
-                    sources=['Tree_Identify.c','Turing_Machine.c'],
-                    extra_compile_args=['-pedantic-errors','-Wno-long-long'])
-
-setup(name='Tree_Identify',
-      version='1.0',
-      description='Identify a possible infinite tree',
-      ext_modules=[module5])
+#module5 = Extension('Tree_Identify',
+#                    sources=['Tree_Identify.c','Turing_Machine.c'],
+#                    extra_compile_args=['-pedantic-errors','-Wno-long-long'])
+#
+#setup(name='Tree_Identify',
+#      version='1.0',
+#      description='Identify a possible infinite tree',
+#      ext_modules=[module5])
 
 module6 = Extension('signalPlus',
                     sources=['signalPlusModule.c'],
