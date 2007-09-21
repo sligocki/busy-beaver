@@ -5,6 +5,8 @@ Turing Machine Simulator with considerable accelleration due to tape compression
 import Turing_Machine, Chain_Tape, Chain_Proof_System
 import time, math
 
+DEBUG = False
+
 # Infinite Reasons
 PROOF_SYSTEM = "Proof_System"
 REPEAT_IN_PLACE = "Repeat_in_Place"
@@ -64,10 +66,12 @@ class Simulator:
         self.inf_reason = PROOF_SYSTEM
         return
       elif cond == Turing_Machine.RUNNING:
+        if DEBUG: self.print_self()
         self.tape = new_tape
         self.step_num += num_steps
         self.num_rule_moves += 1
         self.steps_from_rule += num_steps
+        if DEBUG: self.print_self()
         return
     # Get current symbol
     cur_symbol = self.tape.get_top_symbol()
