@@ -257,14 +257,18 @@ class Proof_System:
               print "Fail 1 %s \t %s \t %s" % (init_block, diff_block, new_block)
             return False, 1
           delta_value[x] = diff_block.num
+          # We can't deal with non-constant deltas ... yet.
+          #if isinstance(delta_value[x], Algebraic_Expression):
+          #  return False, 4
           # If this block's repetitions will be depleted during this transition,
           #   count the number of repetitions that it can allow while staying
           #   above the minimum requirement.
-          if diff_block.num < 0:
-            if diff_block.num != -1:
+          if delta_value[x] < 0:
+            if delta_value[x] != -1:
               bad_delta = True
             try:
-              num_reps = min(num_reps, init_value[x] // -delta_value[x])
+              # As long as init_value[x] >= 0 we can apply proof
+              num_reps = min(num_reps, (init_value[x] // -delta_value[x])  + 1)
             except TypeError:
               if DEBUG:
                 print "Fail 2 %s \t %s \t %s" % (num_reps, init_value[x], -delta_value[x])
