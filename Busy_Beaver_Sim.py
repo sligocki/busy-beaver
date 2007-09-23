@@ -6,8 +6,7 @@
 # simulator (either in C or Python) with an initially blank tape.
 #
 
-import sys
-import time
+import sys, time, string
 
 from Turing_Machine import Turing_Machine
 
@@ -15,7 +14,6 @@ def load(infile, line_num = 1, machine_num = None):
   """
   Load the contents of the Turing machine from a file.
   """
-  import string
 
   if machine_num == None:
     while line_num > 1:
@@ -247,18 +245,21 @@ def run_visual(machine, tape_length, num_steps, print_width=79, silent=False):
 
           cur_step = total_steps + i
 
-          sys.stdout.write("%10d: " % int(cur_step+1))
+          sys.stdout.write("%10d: " % int(cur_step+1))  # Step number
 
           for j in xrange(2*half_width):
             value = tape[middle+(j-half_width)]
+            assert 0 <= value <= 9
+            assert 0 <= new_state <= 5
             if value != 0:
               if position == middle+(j-half_width):
-                sys.stdout.write("%1c" % int(value+64))
+                # If this is the current possition ...
+                sys.stdout.write("\033[1;37;%dm%d\033[0m" % (41+new_state, value))
               else:
-                sys.stdout.write("%1c" % int(value+96))
+                sys.stdout.write("%d" % value)
             else:
               if position == middle+(j-half_width):
-                sys.stdout.write(":")
+                sys.stdout.write("\033[1;37;%dm.\033[0m" % (41+new_state))
               else:
                 sys.stdout.write(".")
 
