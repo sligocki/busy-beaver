@@ -23,7 +23,7 @@ def run(TTable, block_size=None, back=True, prover=True, rec=False):
   if not prover:
     sim.proof = None
   extent = 1
-  raw_input("Ready?")
+  #raw_input("Ready?")
   try:
     while sim.op_state == Turing_Machine.RUNNING:
       sim.print_self()
