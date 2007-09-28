@@ -121,6 +121,7 @@ def Option_Parser(argv, opts, help_flag = True, no_mult = True,
     type_func = function to convert string to correct type (e.g. int, float, str, etc.)
     default_val = value to default to if option not supplied.
     is_required = is this option required?
+    has_val = does this option have a value
   help_flag = do you want --help to print usage message?
   no_mult = should multiple settings of an option cause an error?
   """
