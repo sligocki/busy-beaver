@@ -8,12 +8,27 @@
 # that take the longest to halt.
 #
 
-import copy, sys, time
+import copy, sys, time, math
 import cPickle as pickle
 
 from Turing_Machine import Turing_Machine
 from IO import IO
 import Macro_Simulator
+
+def long_to_eng_str(number,left,right):
+  expo = int(math.log(abs(number))/math.log(10))
+  number_str = str(int(number / 10**(expo-right)))
+
+  if number < 0:
+    return "-%s.%se+%d" % (number_str[1     :1+left      ],
+                           number_str[1+left:1+left+right],
+                           expo)
+  elif number == 0:
+    return "0.%se+00" % ("0" * right)
+  else:
+    return "%s.%se+%d" % (number_str[0     :0+left      ],
+                          number_str[0+left:0+left+right],
+                          expo)
 
 class Stack(list):
   def push(self, item):
@@ -113,7 +128,9 @@ class Enumerator(object):
 
     print self.num_halt+self.num_infinite+self.num_unresolved, "-", 
     print self.num_halt, self.num_infinite, self.num_unresolved, "-", 
-    print self.best_steps, self.best_score, "(%.2f)" % (self.end_time - self.start_time)
+    print long_to_eng_str(self.best_steps,1,3),
+    print long_to_eng_str(self.best_score,1,3),
+    print "(%.2f)" % (self.end_time - self.start_time)
     sys.stdout.flush()
 
     self.start_time = time.time()
@@ -188,7 +205,7 @@ if __name__ == "__main__":
           [("time",        int,                15, False, True), 
            ("save_freq",   int,            100000, False, True),
            ("seed",       long, long(time.time()), False, True),
-           ("checkpoint",  str,      "checkpoint", False, True),
+           ("checkpoint",  str,              None, False, True),
            ("save_unk"  , None,             False, False, False)],
           ignore_infile=True)
   
@@ -198,6 +215,9 @@ if __name__ == "__main__":
   save_unk_str = ""
   if opts["save_unk"]:
     save_unk_str = " --save_unk"
+
+  if opts["checkpoint"] == None:
+    opts["checkpoint"] = opts["outfilename"] + ".check"
 
   print "Enumerate.py --steps=%s --time=%s --save_freq=%s --seed=%s --outfile=%s --checkpoint=%s%s --states=%s --symbols=%s" % \
         (opts["steps"],opts["time"],opts["save_freq"],opts["seed"],opts["outfilename"],opts["checkpoint"],save_unk_str,opts["states"],opts["symbols"])
