@@ -38,7 +38,7 @@ if __name__ == "__main__":
   loops = 1000000000
   num = 12
 
-  seed = long(time.time())
+  seed = long(1000*time.time())
 
   freq = 100000
 

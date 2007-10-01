@@ -109,7 +109,7 @@ if __name__ == "__main__":
   iter  = 1000000000
   reset =    1000000
 
-  seed = long(time.time())
+  seed = long(1000*time.time())
 
   stat_freq = 100000
 
