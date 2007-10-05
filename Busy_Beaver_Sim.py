@@ -175,11 +175,13 @@ def run(machine, tape_length, num_steps, silent=False):
   return (num_syms, num_steps)
 
 
+# White, Red, Blue, Green, Magenta, Cyan, Brown/Yellow
+color = [49, 41, 44, 42, 45, 46, 43]
 def run_visual(machine, tape_length, num_steps, print_width=79, silent=False):
   """
   Start the tape and run it until it halts with visual output.
   """
-
+  
   start_time = time.time()
 
   num_syms = 0
@@ -196,8 +198,6 @@ def run_visual(machine, tape_length, num_steps, print_width=79, silent=False):
 
   max_syms = 0
   total_steps = 0
-
-  print
 
   TTable = machine.get_TTable()
 
@@ -245,25 +245,19 @@ def run_visual(machine, tape_length, num_steps, print_width=79, silent=False):
 
           cur_step = total_steps + i
 
-          sys.stdout.write("%10d: " % int(cur_step+1))  # Step number
+          sys.stdout.write("\033[0m%10d: " % int(cur_step+1))  # Step number
 
           for j in xrange(2*half_width):
             value = tape[middle+(j-half_width)]
-            assert 0 <= value <= 9
-            assert -1 <= new_state <= 5
-            if value != 0:
-              if position == middle+(j-half_width):
-                # If this is the current possition ...
-                sys.stdout.write("\033[1;37;%dm%d\033[0m" % (41+new_state, value))
-              else:
-                sys.stdout.write("%d" % value)
+            assert 0 <= value <= 6
+            assert -1 <= new_state <= 25
+            if position == middle+(j-half_width):
+              # If this is the current possition ...
+              sys.stdout.write("\033[1;%dm%c" % (color[value], chr(65+new_state)))
             else:
-              if position == middle+(j-half_width):
-                sys.stdout.write("\033[1;37;%dm.\033[0m" % (41+new_state))
-              else:
-                sys.stdout.write(".")
+              sys.stdout.write("\033[%dm " % (color[value]))
 
-          sys.stdout.write(" %2d"   % new_state)
+          sys.stdout.write("\033[0m %2d"   % new_state)
           sys.stdout.write(" %2d\n" % tape[position])
 
           sys.stdout.flush()
