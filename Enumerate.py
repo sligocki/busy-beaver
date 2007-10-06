@@ -203,7 +203,7 @@ if __name__ == "__main__":
   # Get command line options.
   # Enumerate.py may be sent an infile param but it should be ignored
   opts, args = Generator_Option_Parser(sys.argv, 
-          [("time",        int,                     15, False, True), 
+          [("time",      float,                     15, False, True), 
            ("save_freq",   int,                 100000, False, True),
            ("seed",       long, long(1000*time.time()), False, True),
            ("checkpoint",  str,                   None, False, True),
