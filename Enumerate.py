@@ -16,19 +16,20 @@ from IO import IO
 import Macro_Simulator
 
 def long_to_eng_str(number,left,right):
-  expo = int(math.log(abs(number))/math.log(10))
-  number_str = str(int(number / 10**(expo-right)))
+  if number != 0:
+    expo = int(math.log(abs(number))/math.log(10))
+    number_str = str(int(number / 10**(expo-right)))
 
-  if number < 0:
-    return "-%s.%se+%d" % (number_str[1     :1+left      ],
-                           number_str[1+left:1+left+right],
-                           expo)
-  elif number == 0:
+    if number < 0:
+      return "-%s.%se+%d" % (number_str[1     :1+left      ],
+                             number_str[1+left:1+left+right],
+                             expo)
+    else:
+      return "%s.%se+%d" % (number_str[0     :0+left      ],
+                            number_str[0+left:0+left+right],
+                            expo)
+  else number == 0:
     return "0.%se+00" % ("0" * right)
-  else:
-    return "%s.%se+%d" % (number_str[0     :0+left      ],
-                          number_str[0+left:0+left+right],
-                          expo)
 
 class Stack(list):
   def push(self, item):
