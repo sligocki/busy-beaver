@@ -18,7 +18,7 @@ INFINITE   =  4
 TIME_OUT   =  5
 UNKNOWN    = (OVER_TAPE, MAX_STEPS, TIME_OUT)
 
-def run(TTable, block_size, level, steps, timeout, progress):
+def run(TTable, block_size, level, steps, timeout, recursive, progress):
   # Get and initialize a new simulator object
   m1 = Turing_Machine.Simple_Machine(TTable)
   if not block_size:
@@ -28,7 +28,7 @@ def run(TTable, block_size, level, steps, timeout, progress):
   m3 = Turing_Machine.Backsymbol_Macro_Machine(m2)
 
   sim = Chain_Simulator.Simulator()
-  sim.init(m3)
+  sim.init(m3, recursive)
   # sim.set_time_out(timeout)
   sim.loop_run(steps)
   if sim.op_state == Turing_Machine.RUNNING:
@@ -63,10 +63,11 @@ if __name__ == "__main__":
   from Option_Parser import Filter_Option_Parser
 
   # Get command line options.
-  opts, args = Filter_Option_Parser(sys.argv, [("size"    ,  int, None, False, True),
-                                               ("level"   ,  int,    3, False, True),
-                                               ("timeout" ,  int,    0, False, True),
-                                               ("progress", None, None, False, False)])
+  opts, args = Filter_Option_Parser(sys.argv, [("size"     ,  int, None, False, True),
+                                               ("level"    ,  int,    3, False, True),
+                                               ("timeout"  ,  int,    0, False, True),
+                                               ("recursive", None, None, False, False),
+                                               ("progress" , None, None, False, False)])
 
   log_number = opts["log_number"]
   progress = opts["progress"]
@@ -78,7 +79,8 @@ if __name__ == "__main__":
       print next[0], # Machine Number
     TTable = next[6]
     # Run the simulator/filter on this machine
-    results = run(TTable, opts["size"], opts["level"], opts["steps"], opts["timeout"], progress)
+    results = run(TTable, opts["size"], opts["level"], opts["steps"], 
+                  opts["timeout"], opts["recursive"], progress)
 
     # If we could not decide anything, leave the old result alone.
     if results[0] in UNKNOWN:
