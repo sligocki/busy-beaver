@@ -4,7 +4,7 @@ import sys
 from Macro import Turing_Machine, Chain_Simulator, Block_Finder
 import IO
 
-def run(TTable, block_size=None, back=True, prover=True, rec=False):
+def run(TTable, block_size=None, back=True, prover=True, rec=False, verbose=True):
   # Construct Machine (Backsymbol-k-Block-Macro-Machine)
   m = Turing_Machine.Simple_Machine(TTable)
   # If no explicit block-size given, use inteligent software to find one
@@ -26,7 +26,7 @@ def run(TTable, block_size=None, back=True, prover=True, rec=False):
   #raw_input("Ready?")
   try:
     while sim.op_state == Turing_Machine.RUNNING:
-      sim.print_self()
+      if verbose: sim.print_self()
       sim.seek(extent)
       extent *= 10
   finally:
@@ -72,11 +72,20 @@ else:
   recursive = False
 
 # Verbose Prover (default off)
-if "-v" in sys.argv:
-  sys.argv.remove("-v")
+if "-vp" in sys.argv:
+  sys.argv.remove("-vp")
   Chain_Simulator.Chain_Proof_System.DEBUG = True
 else:
   Chain_Simulator.Chain_Proof_System.DEBUG = False
+
+# Verbose Simulator (default off)
+if "-vs" in sys.argv:
+  sys.argv.remove("-vs")
+  Chain_Simulator.DEBUG = True
+  verbose = False
+else:
+  Chain_Simulator.DEBUG = False
+  verbose = True
 
 if len(sys.argv) >= 3:
   line = int(sys.argv[2])
@@ -90,5 +99,5 @@ if len(sys.argv) >= 4:
 else:
   block_size = None
 
-run(ttable, block_size, back, prover, recursive)
+run(ttable, block_size, back, prover, recursive, verbose)
 

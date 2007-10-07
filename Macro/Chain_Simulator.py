@@ -66,12 +66,17 @@ class Simulator:
         self.inf_reason = PROOF_SYSTEM
         return
       elif cond == Turing_Machine.RUNNING:
-        if DEBUG: self.print_self()
+        if DEBUG:
+          print
+          print self.step_num, self.num_loops - 1
+          print self.state, self.tape
         self.tape = new_tape
         self.step_num += num_steps
         self.num_rule_moves += 1
         self.steps_from_rule += num_steps
-        if DEBUG: self.print_self()
+        if DEBUG:
+          print self.state, self.tape
+          print self.step_num, self.num_loops
         return
     # Get current symbol
     cur_symbol = self.tape.get_top_symbol()
