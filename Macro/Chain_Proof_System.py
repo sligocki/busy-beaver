@@ -245,6 +245,7 @@ class Proof_System:
     init_value = {}
     delta_value = {}
     bad_delta = False  # bad_delta == True  iff there is a negative delta != -1
+    has_variable = False
     for dir in range(2):
       for init_block, diff_block, new_block in zip(initial_tape.tape[dir], diff_tape.tape[dir], new_tape.tape[dir]):
         # The constant term in init_block.num represents the minimum required value.
@@ -257,9 +258,10 @@ class Proof_System:
               print "Fail 1 %s \t %s \t %s" % (init_block, diff_block, new_block)
             return False, 1
           delta_value[x] = diff_block.num
-          # We can't deal with non-constant deltas ... yet.
-          #if isinstance(delta_value[x], Algebraic_Expression):
-          #  return False, 4
+          # We can't apply non-constant deltas ... yet.
+          # But, if all transitions are possitive, it is infinite.
+          if isinstance(delta_value[x], Algebraic_Expression):
+            has_variable = True
           # If this block's repetitions will be depleted during this transition,
           #   count the number of repetitions that it can allow while staying
           #   above the minimum requirement.
@@ -278,6 +280,9 @@ class Proof_System:
       if DEBUG:
         print "Meta transition repeats forever", diff_tape
       return True, ((Turing_Machine.INF_REPEAT, None, None), bad_delta)
+    # We can't apply recursive transitions ... yet.
+    if has_variable:
+      return False, 4
     # If we cannot even apply this transition once, we're done.
     if num_reps <= 0:
       if DEBUG:
