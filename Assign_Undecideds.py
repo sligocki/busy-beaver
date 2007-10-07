@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 #
-# Tree Filter which uses the Macro Machine Simulator
+# Continues enumeration of machines which reach undefined states after being
+# enumerated (sya during a simulation filter).
 
 import IO
 import sys, copy
