@@ -138,7 +138,7 @@ def save_machine(machine, results, tape_length, max_steps, io):
   Saves a busy beaver machine with the provided information.
   """
   global g_machine_num
-  io.write_result(g_machine_num, tape_length, max_steps, results, machine);
+  io.write_result(g_machine_num, tape_length, max_steps, results, machine)
   g_machine_num += 1
 
 # Command line interpretter code
