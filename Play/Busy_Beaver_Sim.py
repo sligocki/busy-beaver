@@ -211,7 +211,7 @@ def run_visual(machine, tape_length, num_steps, print_width=80, silent=False):
         num_syms += 1
 
       if (value != 0 and new_value == 0):
-        num_syms -= 1;
+        num_syms -= 1
 
       tape[position] = new_value
 

@@ -160,6 +160,6 @@ if __name__ == "__main__":
   length = int(sys.argv[1])
 
   obj = test_object(length)
-  sa = SA(50.0,50.0/(length*10000.0),0.1,obj,3*length,length,time.time());
+  sa = SA(50.0,50.0/(length*10000.0),0.1,obj,3*length,length,time.time())
 
   (best_config,best_energy,best_extra) = sa.run()

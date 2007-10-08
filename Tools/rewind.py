@@ -7,27 +7,27 @@ from Turing_Machine import Turing_Machine
 
 usage = "rewind.py command_number save_halt_filename halt_filename save_infinite_filename infinite_filename save_undecided_filename undecided_filename unknown_filename"
 
-command_number = int(sys.argv[1]);
+command_number = int(sys.argv[1])
 
-save_halt_filename = sys.argv[2];
+save_halt_filename = sys.argv[2]
 save_halt_file = file(save_halt_filename, "r")
 
-halt_filename = sys.argv[3];
+halt_filename = sys.argv[3]
 halt_file = file(halt_filename, "w")
 
-save_infinite_filename = sys.argv[4];
+save_infinite_filename = sys.argv[4]
 save_infinite_file = file(save_infinite_filename, "r")
 
-infinite_filename = sys.argv[5];
+infinite_filename = sys.argv[5]
 infinite_file = file(infinite_filename, "w")
 
-save_undecided_filename = sys.argv[6];
+save_undecided_filename = sys.argv[6]
 save_undecided_file = file(save_undecided_filename, "r")
 
-undecided_filename = sys.argv[7];
+undecided_filename = sys.argv[7]
 undecided_file = file(undecided_filename, "w")
 
-unknown_filename = sys.argv[8];
+unknown_filename = sys.argv[8]
 unknown_file = file(unknown_filename, "a")
 
 unknownIO = IO(None,unknown_file)

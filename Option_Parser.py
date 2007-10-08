@@ -32,7 +32,7 @@ def Generator_Option_Parser(argv, extra_opt, ignore_infile = True):
     opts["outfile"] = sys.stdout
   else:
     if os.path.exists(opts["outfile"]):
-      sys.stderr.write("Output text file, '%s', exists\n" % opts["outfile"]);
+      sys.stderr.write("Output text file, '%s', exists\n" % opts["outfile"])
       sys.exit(1)
     else:
       # This double use of opts["outfile"] is odd and possibly a bad idea,
@@ -102,7 +102,7 @@ def Filter_Option_Parser(argv, extra_opt, ignore_outfile = False):
       opts["outfile"] = sys.stdout
     else:
       if os.path.exists(opts["outfile"]):
-        sys.stderr.write("Output text file, '%s', exists\n" % opts["outfile"]);
+        sys.stderr.write("Output text file, '%s', exists\n" % opts["outfile"])
         sys.exit(1)
       else:
         # This double use of opts["outfile"] is odd and possibly a bad idea,

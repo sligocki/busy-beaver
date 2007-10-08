@@ -192,7 +192,7 @@ class Config:
           for symbol in seq:
             self._push(dir, symbol)
         new_seq = reverse(item.seq)
-        new_seq.pop(-1);
+        new_seq.pop(-1)
         for symbol in new_seq:
           self._push(dir, symbol)
   def _push(self, dir, symbol):
