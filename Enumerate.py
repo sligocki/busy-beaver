@@ -28,7 +28,7 @@ def long_to_eng_str(number,left,right):
       return "%s.%se+%d" % (number_str[0     :0+left      ],
                             number_str[0+left:0+left+right],
                             expo)
-  else number == 0:
+  else:
     return "0.%se+00" % ("0" * right)
 
 class Stack(list):
