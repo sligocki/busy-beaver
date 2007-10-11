@@ -266,7 +266,7 @@ class Enumerator(object):
 # Command line interpretter code
 if __name__ == "__main__":
   if mpi.rank == 0:
-    from Option_Parser import Generator_Option_Parser
+    from Option_Parser_Parallel import Generator_Option_Parser
     
     # Get command line options.
     # Enumerate_Parallel.py may be sent an infile param but it should be ignored
