@@ -1,11 +1,15 @@
 #! /usr/bin/env python
 #
-# Enumerate_Parallel.py
+# Enumerate_Parallel_MW_New.py
 #
 # This is a Busy Beaver Turing machine enumerator that runs in parallel (using
 # pyMPI).  It enumerates a representative set of all Busy Beavers for given
 # of states and symbols, runs the accelerated simulator, and records all
 # results.
+#
+# It uses a "manager/worker" model for work distributions with only one
+# manager.  This is an attempt to make this work better when there are 100's
+# to 1000's of processors but it didn't help much.
 #
 
 import copy, sys, time, math, random, os
@@ -269,7 +273,7 @@ if __name__ == "__main__":
     from Option_Parser_Parallel import Generator_Option_Parser
     
     # Get command line options.
-    # Enumerate_Parallel.py may be sent an infile param but it should be ignored
+    # Enumerate_Parallel_MW_New.py may be sent an infile param but it should be ignored
     opts, args = Generator_Option_Parser(sys.argv, 
             [("time",      float,                     15, False, True), 
              ("save_freq",   int,                 100000, False, True),
@@ -288,7 +292,7 @@ if __name__ == "__main__":
     if opts["checkpoint"] == None:
       opts["checkpoint"] = opts["outfilename"] + ".check"
 
-    print "Enumerate_Parallel.py --steps=%s --time=%s --save_freq=%s --seed=%s --outfile=%s --checkpoint=%s%s --states=%s --symbols=%s" % \
+    print "Enumerate_Parallel_MW_New.py --steps=%s --time=%s --save_freq=%s --seed=%s --outfile=%s --checkpoint=%s%s --states=%s --symbols=%s" % \
           (opts["steps"],opts["time"],opts["save_freq"],opts["seed"],opts["outfilename"],opts["checkpoint"],save_unk_str,opts["states"],opts["symbols"])
     sys.stdout.flush()
 
