@@ -18,13 +18,14 @@ class IO:
     * if this is 'None' then the user doesn't intend to do this type of
       operation.
   """
-  def __init__(self, input_file, output_file, log_number = None):
+  def __init__(self, input_file, output_file, log_number = None, compressed = False):
     """
     Save file information.
     """
     self.input_file  = input_file
     self.output_file = output_file
-    self.log_number = log_number
+    self.log_number  = log_number
+    self.compressed  = compressed
 
   def write_result(self, machine_num, tape_length, max_steps, results,
                    machine, log_number = None, old_results = []):
@@ -69,7 +70,8 @@ class IO:
             self.output_file.write("%s " % item)
 
       self.output_file.write("\n")
-      self.output_file.flush()
+      if not self.compressed:
+        self.output_file.flush()
 
   def read_result(self):
     """
