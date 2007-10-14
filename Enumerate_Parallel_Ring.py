@@ -41,6 +41,7 @@ class Stack(list):
     self.me    = mpi.rank
     self.right = (self.me + 1) % mpi.procs
     self.left  = (self.me - 1) % mpi.procs
+    self.send  = False
     
   def pop(self):
     if len(self) == 0:
@@ -60,45 +61,76 @@ class Stack(list):
   def getItems(self):
     stime = time.time()
 
-    # print "  worker %d: sending message to %d..." % (mpi.rank,self.right)
-    # sys.stdout.flush()
     mpi.send(self.me,self.right)
 
-    # print "  worker %d: sent message to %d..." % (mpi.rank,self.right)
-    # sys.stdout.flush()
-    msg,status = mpi.recv(self.right)
+    requestRecv = mpi.irecv()
+    while True:
+      (ready,status) = getattr(requestRecv,"test")
+      if ready:
+        if status[0] == self.right:
+          msg = getattr(requestRecv,"message")
 
-    # print "  worker %d: received  message from %d (%d)..." % (mpi.rank,status.source,len(msg))
-    # sys.stdout.flush()
+          etime = time.time()
+          self.ttime += etime - stime
 
-    etime = time.time()
-    self.ttime += etime - stime
+          if msg == 0:
+            mpi.send(0,self.left)
+            list.append(self, 0)
+            return
+          else:
+            list.extend(self, msg)
 
-    list.extend(self, msg)
+          break
+        elif status[0] == self.left:
+          who = getattr(requestRecv,"message")
+          if who == self.me:
+            mpi.send(0,self.left)
+            list.append(self, 0)
+            return
+          else:
+            if who == self.left:
+              self.send = True
+
+            mpi.send(who,self.right)
+            requestRecv = mpi.irecv()
+        else:
+          print "  worker %d: unexcepted message from %d..." % (mpi.rank,status[0])
+          sys.stdout.flush()
+          mpi.abort()
 
   def sendItems(self):
     stime = time.time()
 
-    # print "  worker %d: looking for a message from %d..." % (mpi.rank,self.left)
-    # sys.stdout.flush()
-    request = mpi.irecv(self.left)
-
-    if mpi.test(request):
-      # print "  worker %d: found a message from %d..." % (mpi.rank,self.left)
-      # sys.stdout.flush()
-
+    if self.send:
       part = len(self) / 2
+
       mpi.send(self[0:part],self.left)
       del self[0:part]
 
-      # print "  worker %d: sent a message to %d..." % (mpi.rank,self.left)
-      # sys.stdout.flush()
-    else:
-      mpi.cancel(request)
+      self.send = False
+
+    requestRecv = mpi.irecv(self.left)
+
+    (ready,status) = getattr(requestRecv,"test")
+    while ready:
+      if status[0] == self.left:
+        who = getattr(requestRecv,"message")
+
+        if who == self.left:
+          part = len(self) / 2
+
+          mpi.send(self[0:part],self.left)
+          del self[0:part]
+      else:
+        print "  worker %d: unexcepted message from %d..." % (mpi.rank,status[0])
+        sys.stdout.flush()
+        mpi.abort()
+
+      requestRecv = mpi.irecv(self.left)
+      (ready,status) = getattr(requestRecv,"test")
 
     etime = time.time()
     self.ttime += etime - stime
-    
 
 class DefaultDict(dict):
   def __init__(self, default):
@@ -153,29 +185,23 @@ class Enumerator(object):
     stime = time.time()
     i = 0
     self.start_time = time.time()
-    while 1:
-      # print "  worker %d - save..." % mpi.rank
-      # sys.stdout.flush()
+    while True:
       if (i % self.save_freq) == 0:
         etime = time.time()
-        print "  worker %d - %d machines - %f (%f) - %6.2f..." % (mpi.rank,i,etime-stime,self.stack.ttime,100.0*self.stack.ttime/(etime-stime))
         self.save()
       i += 1
       # While we have machines to run, pop one off the stack ...
-      # print "  worker %d - pop..." % mpi.rank
-      # sys.stdout.flush()
       cur_tm = self.stack.pop()
       if cur_tm == 0:
         etime = time.time()
         print "  stopped %d - %f (%f)..." % (mpi.rank,etime-stime,self.stack.ttime)
+        sys.stdout.flush()
         sys.exit(0)
       # ... and run it
       cond, info = self.run(cur_tm)
       
       # If it hits an undefined transition ...
       if cond == Macro_Simulator.UNDEFINED:
-        # print "  worker %d - undefined..." % mpi.rank
-        # sys.stdout.flush()
         on_state, on_symbol, steps, score = info
         # ... push all the possible non-halting transitions onto the stack ...
         self.add_transitions(cur_tm, on_state, on_symbol)
@@ -183,26 +209,18 @@ class Enumerator(object):
         self.add_halt_trans(cur_tm, on_state, on_symbol, steps, score)
       # Otherwise record defined result
       elif cond == Macro_Simulator.HALT:
-        # print "  worker %d - halt..." % mpi.rank
-        # sys.stdout.flush()
         steps, score = info
         self.add_halt(cur_tm, steps, score)
         self.stack.extend([])
       elif cond == Macro_Simulator.INFINITE:
-        # print "  worker %d - infinite..." % mpi.rank
-        # sys.stdout.flush()
         reason, = info
         self.add_infinite(cur_tm, reason)
         self.stack.extend([])
       elif cond == Macro_Simulator.OVERSTEPS:
-        # print "  worker %d - oversteps..." % mpi.rank
-        # sys.stdout.flush()
         steps, = info
         self.add_unresolved(cur_tm, cond, steps)
         self.stack.extend([])
       elif cond == Macro_Simulator.TIMEOUT:
-        # print "  worker %d - timeout..." % mpi.rank
-        # sys.stdout.flush()
         runtime, steps = info
         self.add_unresolved(cur_tm, cond, steps, runtime)
         self.stack.extend([])
