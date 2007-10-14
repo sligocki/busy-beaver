@@ -12,7 +12,7 @@
 # to 1000's of processors.
 #
 
-import copy, sys, time, math, random, os
+import copy, sys, time, math, random, os, bz2
 import cPickle as pickle
 import mpi
 
@@ -366,18 +366,18 @@ if __name__ == "__main__":
     save_unk    = params[9]
 
   if outfilename == "-":
-    outfile = sys.stdoua
+    outfile = sys.stdout
   else:
     outfilename = outfilename + ".%05d" % rank
     if os.path.exists(outfilename):
       sys.stderr.write("Output test file, '%s', exists\n" % outfilename)
       sys.exit(1)
-    outfile = file(outfilename, "w")
+    outfile = bz2.BZ2File(outfilename, "w")
     
   print "Worker: " + str(rank) + " (" + str(nprocs) + ")..."
   sys.stdout.flush()
 
-  io = IO(None, outfile, log_number)
+  io = IO(None, outfile, log_number, True)
 
   enumerator = Enumerator(states, symbols, steps, 
                           timeout, io, seed, save_freq,
