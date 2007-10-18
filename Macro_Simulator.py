@@ -71,6 +71,7 @@ def run(TTable, steps=INF, runtime=None, block_size=None, back=True, prover=True
 
     if runtime:
       signalPlus.alarm(0)  # Turn off timer
+
   except AlarmException: # Catch Timer (unexcepted)
     block_size = 1
     
@@ -85,7 +86,8 @@ def run(TTable, steps=INF, runtime=None, block_size=None, back=True, prover=True
   # Run CTL filters unless machine halted
   if CTL_config:
     try:
-      signalPlus.alarm(runtime/10.0)
+      if runtime:
+        signalPlus.alarm(runtime/10.0)
 
       CTL_config_copy = copy.deepcopy(CTL_config)
       if CTL1.CTL(m, CTL_config_copy):
@@ -121,6 +123,7 @@ def run(TTable, steps=INF, runtime=None, block_size=None, back=True, prover=True
 
     if runtime:
       signalPlus.alarm(0)  # Turn off timer
+
   except AlarmException: # Catch Timer
     return TIMEOUT, (runtime, sim.step_num)
 
