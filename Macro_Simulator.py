@@ -146,6 +146,8 @@ def run(TTable, steps=INF, runtime=None, block_size=None, back=True, prover=True
     except AlarmException: # Catch Timer (unexpected!)
       signalPlus.alarm(0)  # Turn off timer and try again
 
+    sys.stderr.write("Weird (%d): %s\n" % (do_over,TTable))
+
   signalPlus.alarm(0)  # Turn off timer
   return TIMEOUT, (runtime, -1)
 
