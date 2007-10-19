@@ -146,6 +146,9 @@ def run(TTable, steps=INF, runtime=None, block_size=None, back=True, prover=True
     except AlarmException: # Catch Timer (unexpected!)
       signalPlus.alarm(0)  # Turn off timer and try again
 
+  signalPlus.alarm(0)  # Turn off timer
+  return TIMEOUT, (runtime, -1)
+
 def memoize(func, max_size=10000):
   """Returns the memoized version of a non-recursive function "func".
      Saves up to "max_size" inputs before wiping memory."""
