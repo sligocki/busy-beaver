@@ -16,17 +16,16 @@ INFINITE = "Infinite repeat"
 UNDEFINED = "Undefined Transition"
 
 
-def signal2exception(excep):
-  """Creates a custom signal handler that immediately raises a chosen exception"""
-  def catchException(*args):
-    raise excep, args
-  return catchException
 class AlarmException(Exception):
   """An exception to be tied to a timer running out."""
   pass
+
+def AlarmHandler(signum, frame):
+  raise AlarmException, "Timeout!"
+
 # Attach the alarm signal to the alarm exception.
 #   so signalPlus.alarm will cause a catchable exception.
-signal.signal(signal.SIGALRM, signal2exception(AlarmException))
+signal.signal(signal.SIGALRM, AlarmHandler)
 
 
 class GenContainer:
@@ -53,91 +52,99 @@ def setup_CTL(m, cutoff):
 def run(TTable, steps=INF, runtime=None, block_size=None, back=True, prover=True, rec=False, cutoff=200):
   """Run the Accelerated Turing Machine Simulator, running a few simple filters first and using intelligent blockfinding."""
 
-  ## Test for quickly for infinite machine
-  if Reverse_Engineer_Filter.test(TTable):
-    return INFINITE, ("Reverse_Engineered",)
-  
-  ## Construct the Macro Turing Machine (Backsymbol-k-Block-Macro-Machine)
-  m = Turing_Machine.Simple_Machine(TTable)
-
-  try:
-    ## Set the timer (if non-zero runtime)
-    if runtime:
-      signalPlus.alarm(runtime/10.0)  # Set timer
-
-    # If no explicit block-size given, use inteligent software to find one
-    if not block_size:
-      block_size = Block_Finder.block_finder(m)
-
-    if runtime:
-      signalPlus.alarm(0)  # Turn off timer
-
-  except AlarmException: # Catch Timer (unexcepted)
-    block_size = 1
-    
-  # Do not create a 1-Block Macro-Machine (just use base machine)
-  if block_size != 1:
-    m = Turing_Machine.Block_Macro_Machine(m, block_size)
-  if back:
-    m = Turing_Machine.Backsymbol_Macro_Machine(m)
-
-  CTL_config = setup_CTL(m, cutoff)
-
-  # Run CTL filters unless machine halted
-  if CTL_config:
+  for do_over in xrange(0,4):
     try:
-      if runtime:
-        signalPlus.alarm(runtime/10.0)
+      ## Test for quickly for infinite machine
+      if Reverse_Engineer_Filter.test(TTable):
+        return INFINITE, ("Reverse_Engineered",)
+      
+      ## Construct the Macro Turing Machine (Backsymbol-k-Block-Macro-Machine)
+      m = Turing_Machine.Simple_Machine(TTable)
 
-      CTL_config_copy = copy.deepcopy(CTL_config)
-      if CTL1.CTL(m, CTL_config_copy):
+      try:
+        ## Set the timer (if non-zero runtime)
         if runtime:
-          signalPlus.alarm(0)  # Turn off timer
-        return INFINITE, ("CTL_A*",)
+          signalPlus.alarm(runtime/10.0)  # Set timer
 
-      CTL_config_copy = copy.deepcopy(CTL_config)
-      if CTL2.CTL(m, CTL_config_copy):
-        if runtime:
-          signalPlus.alarm(0)  # Turn off timer
-        return INFINITE, ("CTL_A*_B",)
+        # If no explicit block-size given, use inteligent software to find one
+        if not block_size:
+          block_size = Block_Finder.block_finder(m)
 
-      if runtime:
         signalPlus.alarm(0)  # Turn off timer
 
-    except AlarmException:
-      pass
-
-  ## Set up the simulator
-  #global sim # Useful for Debugging
-  sim = Chain_Simulator.Simulator()
-  sim.init(m, rec)
-  if not prover:
-    sim.proof = None
-
-  try:
-    if runtime:
-      signalPlus.alarm(runtime)  # Set timer
-
-    ## Run the simulator
-    sim.seek(steps)
-
-    if runtime:
+      except AlarmException: # Catch Timer (unexcepted)
+        signalPlus.alarm(0)  # Turn off timer
+        block_size = 1
+        
       signalPlus.alarm(0)  # Turn off timer
 
-  except AlarmException: # Catch Timer
-    return TIMEOUT, (runtime, sim.step_num)
+      # Do not create a 1-Block Macro-Machine (just use base machine)
+      if block_size != 1:
+        m = Turing_Machine.Block_Macro_Machine(m, block_size)
+      if back:
+        m = Turing_Machine.Backsymbol_Macro_Machine(m)
 
-  ## Resolve end conditions and return relevent info.
-  if sim.op_state == Turing_Machine.RUNNING:
-    return OVERSTEPS, (sim.step_num,)
-  elif sim.op_state == Turing_Machine.HALT:
-    return HALT, (sim.step_num, sim.get_nonzeros())
-  elif sim.op_state == Turing_Machine.INF_REPEAT:
-    return INFINITE, (sim.inf_reason,)
-  elif sim.op_state == Turing_Machine.UNDEFINED:
-    on_symbol, on_state = sim.op_details[0][:2]
-    return UNDEFINED, (on_state, on_symbol, 
-                       sim.step_num, sim.get_nonzeros())
+      CTL_config = setup_CTL(m, cutoff)
+
+      # Run CTL filters unless machine halted
+      if CTL_config:
+        try:
+          if runtime:
+            signalPlus.alarm(runtime/10.0)
+
+          CTL_config_copy = copy.deepcopy(CTL_config)
+          if CTL1.CTL(m, CTL_config_copy):
+            signalPlus.alarm(0)  # Turn off timer
+            return INFINITE, ("CTL_A*",)
+
+          CTL_config_copy = copy.deepcopy(CTL_config)
+          if CTL2.CTL(m, CTL_config_copy):
+            signalPlus.alarm(0)  # Turn off timer
+            return INFINITE, ("CTL_A*_B",)
+
+          signalPlus.alarm(0)  # Turn off timer
+
+        except AlarmException:
+          signalPlus.alarm(0)  # Turn off timer
+
+      signalPlus.alarm(0)  # Turn off timer
+
+      ## Set up the simulator
+      #global sim # Useful for Debugging
+      sim = Chain_Simulator.Simulator()
+      sim.init(m, rec)
+      if not prover:
+        sim.proof = None
+
+      try:
+        if runtime:
+          signalPlus.alarm(runtime)  # Set timer
+
+        ## Run the simulator
+        sim.seek(steps)
+
+        signalPlus.alarm(0)  # Turn off timer
+
+      except AlarmException: # Catch Timer
+        signalPlus.alarm(0)  # Turn off timer
+        return TIMEOUT, (runtime, sim.step_num)
+
+      signalPlus.alarm(0)  # Turn off timer
+
+      ## Resolve end conditions and return relevent info.
+      if sim.op_state == Turing_Machine.RUNNING:
+        return OVERSTEPS, (sim.step_num,)
+      elif sim.op_state == Turing_Machine.HALT:
+        return HALT, (sim.step_num, sim.get_nonzeros())
+      elif sim.op_state == Turing_Machine.INF_REPEAT:
+        return INFINITE, (sim.inf_reason,)
+      elif sim.op_state == Turing_Machine.UNDEFINED:
+        on_symbol, on_state = sim.op_details[0][:2]
+        return UNDEFINED, (on_state, on_symbol, 
+                           sim.step_num, sim.get_nonzeros())
+
+    except AlarmException: # Catch Timer (unexpected!)
+      signalPlus.alarm(0)  # Turn off timer and try again
 
 def memoize(func, max_size=10000):
   """Returns the memoized version of a non-recursive function "func".
