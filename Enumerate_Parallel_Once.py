@@ -516,4 +516,7 @@ if __name__ == "__main__":
 
     enumerator.enum()
 
+  print "Worker: " + str(rank) + " (" + str(nprocs) + ") - done..."
+  sys.stdout.flush()
+
   outfile.close()
