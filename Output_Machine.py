@@ -1,6 +1,22 @@
 #! /usr/bin/env python
 
-import string
+import string, math
+
+def long_to_eng_str(number,left,right):
+  if number != 0:
+    expo = int(math.log(abs(number))/math.log(10))
+    number_str = str(int(number / 10**(expo-right)))
+
+    if number < 0:
+      return "-%s.%se+%d" % (number_str[1     :1+left      ],
+                             number_str[1+left:1+left+right],
+                             expo)
+    else:
+      return "%s.%se+%d" % (number_str[0     :0+left      ],
+                            number_str[0+left:0+left+right],
+                            expo)
+  else:
+    return "0.%se+00" % ("0" * right)
 
 def get_ttable(string):
   start = string.find("[[")
@@ -38,7 +54,6 @@ for line in infile:
   try:
     ones = int(parts[6])
     steps = int(parts[7])
-    print display_ttable(table), "# ",ones, "", steps
+    print display_ttable(table), "# ",ones, "", steps, "", long_to_eng_str(ones,1,3), "", long_to_eng_str(steps,1,3)
   except:
     print display_ttable(table)
-
