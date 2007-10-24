@@ -312,7 +312,7 @@ if __name__ == "__main__":
     
     runmore.enum()
   else:
-    params = mpi.bcast();
+    params = mpi.bcast()
 
     states      = params[0]
     symbols     = params[1]

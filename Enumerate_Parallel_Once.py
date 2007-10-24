@@ -473,7 +473,7 @@ if __name__ == "__main__":
     
     enumerator.enum()
   else:
-    params = mpi.bcast();
+    params = mpi.bcast()
 
     states      = params[0]
     symbols     = params[1]

@@ -352,7 +352,7 @@ if __name__ == "__main__":
 
     mpi.bcast((states,symbols,steps,timeout,outfilename,log_number,seed,save_freq,checkpoint,save_unk))
   else:
-    params = mpi.bcast();
+    params = mpi.bcast()
 
     states      = params[0]
     symbols     = params[1]
