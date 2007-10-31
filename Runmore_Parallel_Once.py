@@ -189,6 +189,10 @@ class Runmore(object):
 
       self.random.shuffle(new_tms)
 
+      # Stack format is silly - match new_tms to silly format
+      for i in xrange(len(new_tms)):
+        new_tms[i] = (None, None, None, None, None, None, new_tms[i].get_TTable(), None, [])
+
       # Push the (randomize) list of TMs onto the stack
       self.stack.extend(new_tms)
     else:
