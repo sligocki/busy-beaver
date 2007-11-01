@@ -277,7 +277,7 @@ class Enumerator_Startup(object):
       if (i % self.save_freq) == 0:
         self.save()
       i += 1
-      if len(self.stack) >= mpi.procs*15:
+      if len(self.stack) >= mpi.procs*10:
         return self.stack
       # While we have machines to run, pop one off the stack ...
       cur_tm = self.stack.pop(0)
@@ -321,9 +321,9 @@ class Enumerator_Startup(object):
 
     self.start_time = time.time()
 
-    f = file(self.checkpoint_filename, "wb")
-    pickle.dump(self, f)
-    f.close()
+    # f = file(self.checkpoint_filename, "wb")
+    # pickle.dump(self, f)
+    # f.close()
   
   def run(self, tm):
     return Macro_Simulator.run(tm.get_TTable(), self.max_steps, self.max_time)
@@ -453,20 +453,20 @@ if __name__ == "__main__":
                                     timeout, io, seed, save_freq,
                                     checkpoint, save_unk)
 
-    init_stack = enumerator.enum()
+    full_stack = enumerator.enum()
     random.seed(seed)
-    random.shuffle(init_stack)
+    random.shuffle(full_stack)
 
-    print "Worker: " + str(rank) + " (" + str(nprocs) + ") - " + str(len(init_stack)) + "..."
+    print "Worker: " + str(rank) + " (" + str(nprocs) + ") - " + str(len(full_stack)) + "..."
     sys.stdout.flush()
     
-    mpi.bcast(init_stack)
+    init_stack = mpi.scatter(full_stack)
 
     enumerator = Enumerator(states, symbols, steps, 
                             timeout, io, seed, save_freq,
                             checkpoint, save_unk)
 
-    enumerator.stack.extend(init_stack[(nprocs-1)*15:])
+    enumerator.stack = init_stack[:]
 
     print "Worker: " + str(rank) + " (" + str(nprocs) + ") - " + str(len(init_stack)) + " (" + str(len(enumerator.stack)) + ")..."
     sys.stdout.flush()
@@ -508,8 +508,10 @@ if __name__ == "__main__":
                             timeout, io, seed, save_freq,
                             checkpoint, save_unk)
 
-    init_stack = mpi.bcast()
-    enumerator.stack.extend(init_stack[(mpi.rank-1)*15:mpi.rank*15])
+    all = []
+    init_stack = mpi.scatter(all)
+
+    enumerator.stack = init_stack[:]
 
     print "Worker: " + str(rank) + " (" + str(nprocs) + ") - " + str(len(init_stack)) + " (" + str(len(enumerator.stack)) + ")..."
     sys.stdout.flush()
