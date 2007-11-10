@@ -42,8 +42,10 @@ def Generator_Option_Parser(argv, extra_opt, ignore_infile = True):
 
   if not ignore_infile:
     if not opts["infile"] or opts["infile"] == "-":
+      opts["infilename"] = "-"
       opts["infile"] = sys.stdin
     else:
+      opts["infilename"] = opts["infile"]
       opts["infile"] = file(opts["infile"], "r")
     
 
