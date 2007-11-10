@@ -239,10 +239,7 @@ class Enumerator(object):
   def add_halt_trans(self, tm, on_state, on_symbol, steps, score):
     #   1) Add the halt state
     tm.add_cell(on_state, on_symbol, -1, 1, 1)
-    #   2) This machine  *may* write one more symbol
-    if on_symbol == 0:
-      score += 1
-    #   3) Save this machine
+    #   2) Save this machine
     self.add_halt(tm, steps, score)
   
   def add_halt(self, tm, steps, score):
