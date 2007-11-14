@@ -7,9 +7,10 @@
 # of states and symbols, runs the accelerated simulator, and records all
 # results.
 #
-# It uses a "ring" to communicate between processes and pass around work.
-# Hopefully this will have less communication bottlenecks when there are 100's
-# to 1000's of processors.
+# This code generates an initial seed population using one processor and a
+# breath first search.  When this population is large enough, it distributes
+# it evenly to all the processors and then they all run until they are done
+# with their work or time runs out - no further load balancing.
 #
 
 import copy, sys, time, math, random, os, bz2
