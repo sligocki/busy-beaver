@@ -1,17 +1,16 @@
 #! /usr/bin/env python
 #
-# Runmore_Parallel_Once.py
+# Runlonger_Parallel_Once.py
 #
 # This is a Busy Beaver Turing machine program that runs in parallel (using
 # pyMPI).  It enumerates a representative set of all Busy Beavers for given
 # of states and symbols, runs the accelerated simulator, and records all
 # results.
 #
-# This code runs one processor to read a ".unknown" file that contains the
-# current unknown TMs.  These TMs are then distributed evenly to all the
-# processors and simulated for a longer time.  There is no load balancing
-# except the balancing of the initial files.  The initial phase can be very
-# slow.
+# This code runs each processor on a separate ".unknown.new" file that
+# contains the current unknown TMs for that processor.  This TMs are then
+# simulated for a longer time.  There is no load balancing except the
+# balancing of the initial files.
 #
 
 import copy, sys, time, math, random, os, bz2
@@ -56,7 +55,7 @@ class DefaultDict(dict):
   def __getitem__(self, item):
     return self.get(item, self.default)
 
-class Runmore(object):
+class Runlonger(object):
   """Holds enumeration state information for checkpointing."""
   def __init__(self, num_states, num_symbols, max_steps, max_time, io, seed,
                      save_freq=100000, save_unk=False):
@@ -142,7 +141,7 @@ class Runmore(object):
         self.add_unresolved(cur_tm, cond, steps, runtime)
         self.stack.extend([])
       else:
-        raise Exception, "Runmore.enum() - unexpected condition (%r)" % cond
+        raise Exception, "Runlonger.enum() - unexpected condition (%r)" % cond
 
     etime = time.time()
     print "  done %d (%d) - %f..." % (mpi.rank,len(self.stack),etime-stime)
@@ -252,7 +251,7 @@ if __name__ == "__main__":
     if opts["save_unk"]:
       save_unk_str = " --save_unk"
 
-    print "Runmore_Parallel_Once.py --infile=%s --steps=%s --time=%s --save_freq=%s --seed=%s --outfile=%s%s --states=%s --symbols=%s" % \
+    print "Runlonger_Parallel_Once.py --infile=%s --steps=%s --time=%s --save_freq=%s --seed=%s --outfile=%s%s --states=%s --symbols=%s" % \
           (opts["infilename"],opts["steps"],opts["time"],opts["save_freq"],opts["seed"],opts["outfilename"],save_unk_str,opts["states"],opts["symbols"])
     sys.stdout.flush()
 
@@ -303,7 +302,7 @@ if __name__ == "__main__":
     print "Worker: " + str(rank) + " (" + str(nprocs) + ") - " + str(count) + "..."
     sys.stdout.flush()
 
-    runmore = Runmore(states, symbols, steps, 
+    runmore = Runlonger(states, symbols, steps, 
                       timeout, io, seed, save_freq, save_unk)
 
     init_stack = mpi.scatter(all)
@@ -342,7 +341,7 @@ if __name__ == "__main__":
 
     io = IO(None, outfile, log_number, False)
 
-    runmore = Runmore(states, symbols, steps, 
+    runmore = Runlonger(states, symbols, steps, 
                       timeout, io, seed, save_freq, save_unk)
 
     all = []
