@@ -87,6 +87,12 @@ else:
   Chain_Simulator.DEBUG = False
   verbose = True
 
+# Brief Simulator output (default off)
+if "-br" in sys.argv:
+  sys.argv.remove("-br")
+  Chain_Simulator.DEBUG = False
+  verbose = False
+
 if len(sys.argv) >= 3:
   line = int(sys.argv[2])
 else:
