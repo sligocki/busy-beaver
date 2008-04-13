@@ -57,7 +57,7 @@ if __name__ == "__main__":
       have_input = False
       while not have_input:
         if not parts:
-          temp = raw_input("State %d, Symbol %d: " % (state, symbol))
+          temp = raw_input("State %c, Symbol %d: " % (state+ord("A"), symbol))
           temp = temp.strip().upper()
           parts = temp.split()
         if len(parts[0]) != 3:
