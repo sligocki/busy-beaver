@@ -3,6 +3,7 @@
 import string, math
 
 def long_to_eng_str(number,left,right):
+  """Represent a Long in scientific notation."""
   if number != 0:
     expo = int(math.log(abs(number))/math.log(10))
     number_str = str(int(number / 10**(expo-right)))
@@ -19,11 +20,13 @@ def long_to_eng_str(number,left,right):
     return "0.%se+00" % ("0" * right)
 
 def get_ttable(string):
+  """Load ttable from a string."""
   start = string.find("[[")
   end = string.rfind("]]") + len("]]")
   return eval(string[start:end])
 
 def display_ttable(table):
+  """Pretty print the ttable."""
   symbols = string.digits
   dirs = "LR"
   states = string.ascii_uppercase[:7]
@@ -49,8 +52,8 @@ else:
   infile = open(filename, "r")
 
 for line in infile:
-  parts = line.split()
   table = get_ttable(line)
+  parts = line.split()
   try:
     ones = int(parts[6])
     steps = int(parts[7])
