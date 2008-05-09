@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 #
 # Count the number of distinct TM represented by machines in tree-normal-form (TNF)
-# With the restriction that A0->1RB and Halt=!RH.
+# With the restriction that A0->1RB and Halt=1RH.
 #
 # Note that for the space of Q-state, S-symbol TMs, there are 
 #   (QS-1) * (2QS)^(QS-2) with such restrictions. Thus, if we run this count 
@@ -57,7 +57,9 @@ for filename in sys.argv[1:]:
   subtotal = 0
   next = io.read_result()
   while next:
-    n = count(next[6])
+    ttable = next[6]
+    n = count(ttable)
+    #print n, subtotal
     subtotal += n
     next = io.read_result()
   infile.close()
@@ -65,3 +67,4 @@ for filename in sys.argv[1:]:
   sys.stdout.flush()
   total += subtotal
 print "Total", total
+
