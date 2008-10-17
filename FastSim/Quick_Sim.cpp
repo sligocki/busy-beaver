@@ -1,14 +1,11 @@
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
-#include <iostream>
-
+#include "Define.h"
 #include "TTable.h"
-
 #include "Turing_Machine.h"
 #include "Simple_Turing_Machine.h"
-
 #include "Block_Finder.h"
+#include "Macro_Turing_Machine.h"
+#include "Backsymbol_Turing_Machine.h"
+#include "Chain_Simulator.h"
 
 void usage()
 {
@@ -98,7 +95,6 @@ main(int argc, char** argv)
     fprintf(stderr,"Unable to parse TM from '%s'\n",filename);
   }
 
-#if 0
   Turing_Machine* machine = new Simple_Turing_Machine(ttable);
 
   if (block_size == 0)
@@ -118,10 +114,10 @@ main(int argc, char** argv)
     machine = new Backsymbol_Turing_Machine(*machine);
   }
 
-  Chain_Simulator sim(*machine, recursive, proof);
+  Chain_Simulator sim(*machine, recursive, prover);
 
   Integer extent = 1;
-  while (sim.cur_state() == Turing_Machine::RUNNING)
+  while (sim.run_state() == Turing_Machine::RUNNING)
   {
     if (verbose)
     {
@@ -134,20 +130,20 @@ main(int argc, char** argv)
 
   sim.print();
 
-  if (sim.cur_state() == Turing_Machine::HALT)
+  if (sim.run_state() == Turing_Machine::HALT)
   {
     cout << "Turing machine halted:"           << endl;
     cout << "  Steps:   " << sim.num_steps()   << endl;
     cout << "  Nonzero: " << sim.num_nonzero() << endl;
   }
   else
-  if (sim.cur_state() == Turing_Machine::INFINITE)
+  if (sim.run_state() == Turing_Machine::INFINITE)
   {
     cout << "Turing machine proven infinite:" << endl;
     cout << "  Reason: " << sim.inf_reason()  << endl;
   }
   else
-  if (sim.cur_state() == Turing_Machine::UNDEFINED)
+  if (sim.run_state() == Turing_Machine::UNDEFINED)
   {
     cout << "Turing machine reached an undefined transition:" << endl;
     cout << "  State:   " << sim.cur_state()                  << endl;
@@ -159,5 +155,4 @@ main(int argc, char** argv)
   {
     cout << "Unknown Turing machine state!" << endl;
   }
-#endif
 }

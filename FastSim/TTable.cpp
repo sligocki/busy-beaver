@@ -56,4 +56,5 @@ void TTable::define(const int                        & a_num_states,
 
 bool TTable::read(FILE* a_file)
 {
+  Error("Not implemented...");
 }

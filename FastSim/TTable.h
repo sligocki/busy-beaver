@@ -1,12 +1,6 @@
 #ifndef _TTABLE_H_
 #define _TTABLE_H_
 
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
-#include <vector>
-using namespace std;
-
 #include "Define.h"
 
 class TTable
