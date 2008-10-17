@@ -1,12 +1,7 @@
 #ifndef _BLOCK_FINDER_H_
 #define _BLOCK_FINDER_H_
 
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
-#include <iostream>
-using namespace std;
-
+#include "Define.h"
 #include "Turing_Machine.h"
 
 class Block_Finder

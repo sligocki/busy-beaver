@@ -1,12 +1,7 @@
 #ifndef _SIMPLE_TURING_MACHINE_H_
 #define _SIMPLE_TURING_MACHINE_H_
 
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
-#include <iostream>
-using namespace std;
-
+#include "Define.h"
 #include "TTable.h"
 #include "Turing_Machine.h"
 

@@ -2,8 +2,10 @@
 
 Turing_Machine::Turing_Machine()
 {
+  Error("Not implemented...");
 }
 
 Turing_Machine::~Turing_Machine()
 {
+  Error("Not implemented...");
 }
