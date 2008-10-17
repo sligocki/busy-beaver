@@ -25,4 +25,9 @@ clean:
 
 # DO NOT DELETE
 
-Quick_Sim.o: TTable.h Turing_Machine.h Simple_Turing_Machine.h Block_Finder.h
+Quick_Sim.o: TTable.h Define.h Turing_Machine.h Simple_Turing_Machine.h
+Quick_Sim.o: Block_Finder.h
+TTable.o: TTable.h Define.h
+Turing_Machine.o: Turing_Machine.h
+Simple_Turing_Machine.o: Simple_Turing_Machine.h TTable.h Define.h
+Block_Finder.o: Block_Finder.h Turing_Machine.h
