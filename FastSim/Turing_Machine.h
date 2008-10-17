@@ -12,7 +12,7 @@ class Turing_Machine
   public:
     Turing_Machine();
 
-    ~Turing_Machine();
+    virtual ~Turing_Machine();
 };
 
 #endif

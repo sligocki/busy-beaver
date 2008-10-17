@@ -7,12 +7,7 @@
 #include <vector>
 using namespace std;
 
-typedef struct
-{
-  int new_state;
-  int new_symbol;
-  int direction;
-} TRANSITION;
+#include "Define.h"
 
 class TTable
 {
@@ -29,12 +24,12 @@ class TTable
 
     bool read(FILE* a_file);
 
-    bool m_is_defined;
-
     int m_num_states;
     int m_num_symbols;
 
     TRANSITION** m_transitions;
+
+    bool m_is_defined;
 };
 
 #endif
