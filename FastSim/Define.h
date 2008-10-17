@@ -21,7 +21,4 @@ typedef struct
   int direction;
 } TRANSITION;
 
-extern void Warning(const char* const a_warning);
-extern void Error(const char* const a_error);
-
 #endif
