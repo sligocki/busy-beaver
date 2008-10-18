@@ -21,7 +21,7 @@ class TTable
     int m_num_states;
     int m_num_symbols;
 
-    TRANSITION** m_transitions;
+    vector<vector<TRANSITION> > m_transitions;
 
     bool m_is_defined;
 };
