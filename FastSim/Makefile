@@ -4,12 +4,22 @@ LDFLAGS = -g -O2
 LIBS = -lm
 
 exe1 = Quick_Sim
-src1 = Quick_Sim.cpp TTable.cpp Turing_Machine.cpp Simple_Turing_Machine.cpp   \
-       Block_Finder.cpp Macro_Turing_Machine.cpp Backsymbol_Turing_Machine.cpp \
-       Chain_Simulator.cpp Exception.cpp
-obj1 = Quick_Sim.o   TTable.o   Turing_Machine.o   Simple_Turing_Machine.o     \
-       Block_Finder.o   Macro_Turing_Machine.o   Backsymbol_Turing_Machine.o   \
-       Chain_Simulator.o   Exception.o
+src1 = Quick_Sim.cpp                 \
+       TTable.cpp                    \
+       Simple_Turing_Machine.cpp     \
+       Block_Finder.cpp              \
+       Macro_Turing_Machine.cpp      \
+       Backsymbol_Turing_Machine.cpp \
+       Chain_Simulator.cpp           \
+       Exception.cpp
+obj1 = Quick_Sim.o                   \
+       TTable.o                      \
+       Simple_Turing_Machine.o       \
+       Block_Finder.o                \
+       Macro_Turing_Machine.o        \
+       Backsymbol_Turing_Machine.o   \
+       Chain_Simulator.o             \
+       Exception.o
 
 all: $(exe1)
 
@@ -31,7 +41,6 @@ Quick_Sim.o: Define.h Exception.h TTable.h Turing_Machine.h
 Quick_Sim.o: Simple_Turing_Machine.h Block_Finder.h Macro_Turing_Machine.h
 Quick_Sim.o: Backsymbol_Turing_Machine.h Chain_Simulator.h
 TTable.o: TTable.h Define.h Exception.h
-Turing_Machine.o: Turing_Machine.h Define.h Exception.h
 Simple_Turing_Machine.o: Simple_Turing_Machine.h Define.h Exception.h
 Simple_Turing_Machine.o: TTable.h Turing_Machine.h
 Block_Finder.o: Block_Finder.h Define.h Exception.h Turing_Machine.h
