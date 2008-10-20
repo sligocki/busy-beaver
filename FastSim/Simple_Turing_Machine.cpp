@@ -2,10 +2,13 @@
 
 Simple_Turing_Machine::Simple_Turing_Machine(const TTable& a_ttable)
 {
-  Error("Not implemented...");
+  m_ttable = a_ttable;
+
+  m_init_state  = 0;
+  m_init_symbol = 0;
+  m_init_dir    = 1;
 }
 
 Simple_Turing_Machine::~Simple_Turing_Machine()
 {
-  Error("Not implemented...");
 }

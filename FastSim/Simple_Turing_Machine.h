@@ -11,6 +11,8 @@ class Simple_Turing_Machine: public Turing_Machine
     Simple_Turing_Machine(const TTable& a_ttable);
 
     virtual ~Simple_Turing_Machine();
+
+    TTable m_ttable;
 };
 
 #endif

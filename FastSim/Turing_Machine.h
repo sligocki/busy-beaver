@@ -8,9 +8,28 @@ class Turing_Machine
   public:
     enum run_state {RUNNING, HALT, INFINITE, UNDEFINED};
 
-    Turing_Machine();
+    Turing_Machine()
+    {
+    };
 
-    virtual ~Turing_Machine();
+    virtual ~Turing_Machine()
+    {
+    };
+
+    virtual bool eval_symbol(const int& a_symbol) = 0;
+
+    virtual bool eval_state(const int& a_state) = 0;
+
+    virtual void get_transition(const int& a_state_in,
+                                const int& a_symbol_in,
+                                const int& a_dir_in) = 0;
+
+    int m_num_states;
+    int m_num_symbols;
+
+    int m_init_state;
+    int m_init_symbol;
+    int m_init_dir;
 };
 
 #endif
