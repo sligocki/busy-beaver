@@ -16,13 +16,22 @@ class Turing_Machine
     {
     };
 
-    virtual bool eval_symbol(const int& a_symbol) = 0;
+    virtual bool eval_symbol(const int& a_symbol)
+    {
+      return (a_symbol != m_init_symbol);
+    };
 
-    virtual bool eval_state(const int& a_state) = 0;
+    virtual bool eval_state(const int& a_state)
+    {
+      return false;
+    };
 
     virtual void get_transition(const int& a_state_in,
                                 const int& a_symbol_in,
-                                const int& a_dir_in) = 0;
+                                const int& a_dir_in)
+    {
+      Error("Not implemented...");
+    };
 
     int m_num_states;
     int m_num_symbols;

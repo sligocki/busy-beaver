@@ -9,7 +9,7 @@
 
 void usage()
 {
-  fprintf(stderr,"Usage: QuickSim [-b] [-p] [-r] [-br] [-bs block_size] [TMfile]\n");
+  fprintf(stderr,"Usage: QuickSim [-b] [-m] [-p] [-r] [-br] [-bs block_size] [TMfile]\n");
 }
 
 main(int argc, char** argv)
@@ -22,6 +22,7 @@ main(int argc, char** argv)
   int block_size = 0;
 
   bool back      = true;
+  bool macro     = true;
   bool prover    = true;
   bool recursive = false;
   bool verbose   = true;
@@ -33,6 +34,12 @@ main(int argc, char** argv)
     if (strcmp(argv[argIndex],"-b") == 0)
     {
       back = false;
+      continue;
+    }
+
+    if (strcmp(argv[argIndex],"-m") == 0)
+    {
+      macro = false;
       continue;
     }
 
@@ -97,16 +104,19 @@ main(int argc, char** argv)
 
   Turing_Machine* machine = new Simple_Turing_Machine(ttable);
 
-  if (block_size == 0)
+  if (macro)
   {
-    Block_Finder block_finder(*machine);
+    if (block_size == 0)
+    {
+      Block_Finder block_finder(*machine);
 
-    block_size = block_finder.find_block();
-  }
+      block_size = block_finder.find_block();
+    }
 
-  if (block_size > 1)
-  {
-    machine = new Macro_Turing_Machine(*machine, block_size);
+    if (block_size > 1)
+    {
+      machine = new Macro_Turing_Machine(*machine, block_size);
+    }
   }
 
   if (back)
