@@ -16,8 +16,8 @@ typedef int Integer;
 
 typedef struct
 {
-  int new_state;
-  int new_symbol;
+  int state;
+  int symbol;
   int direction;
 } TRANSITION;
 

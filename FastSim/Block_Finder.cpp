@@ -10,6 +10,6 @@ Block_Finder::~Block_Finder()
 
 int Block_Finder::find_block()
 {
-  Warning("find_block() not implemented");
+  Warning("Not implemented...");
   return 1;
 }
