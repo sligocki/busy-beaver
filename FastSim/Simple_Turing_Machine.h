@@ -12,8 +12,8 @@ class Simple_Turing_Machine: public Turing_Machine
 
     virtual ~Simple_Turing_Machine();
 
-    virtual RUN_STATE get_transition(TRANSITION&       trans_out,
-                                     const TRANSITION& trans_in);
+    virtual RUN_STATE get_transition(TRANSITION&       a_trans_out,
+                                     const TRANSITION& a_trans_in);
 
     TTable m_ttable;
 };

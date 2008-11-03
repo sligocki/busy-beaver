@@ -16,9 +16,9 @@ typedef int Integer;
 
 typedef struct
 {
-  int state;
-  int symbol;
-  int direction;
+  int m_state;
+  int m_symbol;
+  int m_dir;
 } TRANSITION;
 
 #endif

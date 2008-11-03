@@ -77,7 +77,7 @@ bool TTable::read(FILE* a_file)
       SKIP_WHITESPACE(cur_char,a_file);
 
       ungetc(cur_char,a_file);
-      if (fscanf(a_file,"%d",&(cur_transition.state)) != 1)
+      if (fscanf(a_file,"%d",&(cur_transition.m_state)) != 1)
       {
         Error("Unable to read new state for transition");
       }
@@ -92,7 +92,7 @@ bool TTable::read(FILE* a_file)
       SKIP_WHITESPACE(cur_char,a_file);
 
       ungetc(cur_char,a_file);
-      if (fscanf(a_file,"%d",&(cur_transition.symbol)) != 1)
+      if (fscanf(a_file,"%d",&(cur_transition.m_symbol)) != 1)
       {
         Error("Unable to read new symbol for transition");
       }
@@ -107,7 +107,7 @@ bool TTable::read(FILE* a_file)
       SKIP_WHITESPACE(cur_char,a_file);
 
       ungetc(cur_char,a_file);
-      if (fscanf(a_file,"%d",&(cur_transition.direction)) != 1)
+      if (fscanf(a_file,"%d",&(cur_transition.m_dir)) != 1)
       {
         Error("Unable to read direction for transition");
       }
