@@ -3,6 +3,8 @@
 
 #include "Define.h"
 #include "Turing_Machine.h"
+#include "Tape.h"
+#include "Proof_System.h"
 
 class Chain_Simulator
 {
@@ -15,7 +17,7 @@ class Chain_Simulator
 
     void seek(const Integer& a_extent);
 
-    Turing_Machine::run_state run_state();
+    RUN_STATE run_state();
 
     Integer num_steps();
 
@@ -27,6 +29,26 @@ class Chain_Simulator
     int cur_symbol();
 
     void print();
+
+    Integer m_num_loops;
+
+    Integer m_num_macro_moves;
+    Integer m_steps_from_macro;
+
+    Integer m_num_chain_moves;
+    Integer m_steps_from_chain;
+
+    Integer m_num_rule_moves;
+    Integer m_steps_from_rule;
+
+    Turing_Machine m_machine;
+    TRANSITION     m_trans;
+    Tape           m_tape;
+
+    Integer   m_step_num;
+    RUN_STATE m_op_state;
+
+    Proof_System m_proof;
 };
 
 #endif

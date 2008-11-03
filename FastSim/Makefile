@@ -11,6 +11,8 @@ src1 = Quick_Sim.cpp                 \
        Macro_Turing_Machine.cpp      \
        Backsymbol_Turing_Machine.cpp \
        Chain_Simulator.cpp           \
+       Tape.cpp                      \
+       Proof_System.cpp              \
        Exception.cpp
 obj1 = Quick_Sim.o                   \
        TTable.o                      \
@@ -19,6 +21,8 @@ obj1 = Quick_Sim.o                   \
        Macro_Turing_Machine.o        \
        Backsymbol_Turing_Machine.o   \
        Chain_Simulator.o             \
+       Tape.o                        \
+       Proof_System.o                \
        Exception.o
 
 all: $(exe1)
@@ -39,7 +43,8 @@ clean:
 
 Quick_Sim.o: Define.h Exception.h TTable.h Turing_Machine.h
 Quick_Sim.o: Simple_Turing_Machine.h Block_Finder.h Macro_Turing_Machine.h
-Quick_Sim.o: Backsymbol_Turing_Machine.h Chain_Simulator.h
+Quick_Sim.o: Backsymbol_Turing_Machine.h Chain_Simulator.h Tape.h
+Quick_Sim.o: Proof_System.h
 TTable.o: TTable.h Define.h Exception.h
 Simple_Turing_Machine.o: Simple_Turing_Machine.h Define.h Exception.h
 Simple_Turing_Machine.o: TTable.h Turing_Machine.h
@@ -49,4 +54,7 @@ Macro_Turing_Machine.o: Turing_Machine.h
 Backsymbol_Turing_Machine.o: Backsymbol_Turing_Machine.h Define.h Exception.h
 Backsymbol_Turing_Machine.o: TTable.h Turing_Machine.h
 Chain_Simulator.o: Chain_Simulator.h Define.h Exception.h Turing_Machine.h
+Chain_Simulator.o: Tape.h Proof_System.h
+Tape.o: Tape.h Define.h Exception.h
+Proof_System.o: Proof_System.h Define.h Exception.h Turing_Machine.h
 Exception.o: Exception.h Define.h

@@ -3,11 +3,11 @@
 
 #include "Define.h"
 
+enum RUN_STATE {RUNNING, HALTED, INFINITE, UNDEFINED};
+
 class Turing_Machine
 {
   public:
-    enum run_state {RUNNING, HALT, INFINITE, UNDEFINED};
-
     Turing_Machine()
     {
     };
@@ -16,19 +16,25 @@ class Turing_Machine
     {
     };
 
-    virtual bool eval_symbol(const int& a_symbol)
+    virtual int eval_symbol(const int& a_symbol)
     {
-      return (a_symbol != m_init_symbol);
+      if (a_symbol != m_init_trans.symbol)
+      {
+        return 1;
+      }
+      else
+      {
+        return 0;
+      }
     };
 
-    virtual bool eval_state(const int& a_state)
+    virtual int eval_state(const int& a_state)
     {
-      return false;
+      return 0;
     };
 
-    virtual void get_transition(const int& a_state_in,
-                                const int& a_symbol_in,
-                                const int& a_dir_in)
+    virtual RUN_STATE get_transition(TRANSITION&       trans_out,
+                                     const TRANSITION& trans_in)
     {
       Error("Not implemented...");
     };
@@ -36,9 +42,7 @@ class Turing_Machine
     int m_num_states;
     int m_num_symbols;
 
-    int m_init_state;
-    int m_init_symbol;
-    int m_init_dir;
+    TRANSITION m_init_trans;
 };
 
 #endif
