@@ -5,9 +5,11 @@
 
 typedef struct
 {
-  int     symbol;
-  Integer number;
+  int     m_symbol;
+  Integer m_number;
 } REPEATED_SYMBOL;
+
+#define INFINITY -1
 
 class Tape
 {
@@ -27,7 +29,16 @@ class Tape
     void apply_single_move(const int& a_new_symbol,
                            const int& a_dir);
 
-    void apply_chain_move(const int& a_new_symbol);
+    Integer apply_chain_move(const int& a_new_symbol);
+
+    int m_init_symbol;
+    int m_dir;
+
+    vector<REPEATED_SYMBOL> m_tape[2];
+
+    Integer m_displace;
+
+    bool m_is_defined;
 };
 
 #endif

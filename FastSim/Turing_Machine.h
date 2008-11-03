@@ -18,7 +18,7 @@ class Turing_Machine
 
     virtual int eval_symbol(const int& a_symbol)
     {
-      if (a_symbol != m_init_trans.symbol)
+      if (a_symbol != m_init_trans.m_symbol)
       {
         return 1;
       }
