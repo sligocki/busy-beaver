@@ -15,37 +15,37 @@ class Chain_Simulator
 
     virtual ~Chain_Simulator();
 
-    void seek(const Integer& a_extent);
+    void seek(const INTEGER& a_extent);
 
     RUN_STATE run_state();
 
-    Integer num_steps();
+    INTEGER num_steps();
 
-    Integer num_nonzero();
+    INTEGER num_nonzero();
 
     char* inf_reason();
 
-    int cur_state();
-    int cur_symbol();
+    STATE  cur_state();
+    SYMBOL cur_symbol();
 
     void print();
 
-    Integer m_num_loops;
+    INTEGER m_num_loops;
 
-    Integer m_num_macro_moves;
-    Integer m_steps_from_macro;
+    INTEGER m_num_macro_moves;
+    INTEGER m_steps_from_macro;
 
-    Integer m_num_chain_moves;
-    Integer m_steps_from_chain;
+    INTEGER m_num_chain_moves;
+    INTEGER m_steps_from_chain;
 
-    Integer m_num_rule_moves;
-    Integer m_steps_from_rule;
+    INTEGER m_num_rule_moves;
+    INTEGER m_steps_from_rule;
 
     Turing_Machine m_machine;
     TRANSITION     m_trans;
     Tape           m_tape;
 
-    Integer   m_step_num;
+    INTEGER   m_step_num;
     RUN_STATE m_op_state;
 
     Proof_System m_proof;

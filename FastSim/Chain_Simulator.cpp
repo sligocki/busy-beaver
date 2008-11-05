@@ -33,7 +33,7 @@ Chain_Simulator::~Chain_Simulator()
   Error("Not implemented...");
 }
 
-void Chain_Simulator::seek(const Integer& a_extent)
+void Chain_Simulator::seek(const INTEGER& a_extent)
 {
   Error("Not implemented...");
 }
@@ -43,12 +43,12 @@ RUN_STATE Chain_Simulator::run_state()
   Error("Not implemented...");
 }
 
-Integer Chain_Simulator::num_steps()
+INTEGER Chain_Simulator::num_steps()
 {
   Error("Not implemented...");
 }
 
-Integer Chain_Simulator::num_nonzero()
+INTEGER Chain_Simulator::num_nonzero()
 {
   Error("Not implemented...");
 }
@@ -58,12 +58,12 @@ char* Chain_Simulator::inf_reason()
   Error("Not implemented...");
 }
 
-int Chain_Simulator::cur_state()
+STATE Chain_Simulator::cur_state()
 {
   Error("Not implemented...");
 }
 
-int Chain_Simulator::cur_symbol()
+SYMBOL Chain_Simulator::cur_symbol()
 {
   Error("Not implemented...");
 }
