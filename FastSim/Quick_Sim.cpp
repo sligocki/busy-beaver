@@ -126,7 +126,7 @@ main(int argc, char** argv)
 
   Chain_Simulator sim(*machine, recursive, prover);
 
-  Integer extent = 1;
+  INTEGER extent = 1;
   while (sim.run_state() == RUNNING)
   {
     if (verbose)

@@ -16,7 +16,7 @@ class Turing_Machine
     {
     };
 
-    virtual int eval_symbol(const int& a_symbol)
+    virtual int eval_symbol(const SYMBOL& a_symbol)
     {
       if (a_symbol != m_init_trans.m_symbol)
       {
@@ -28,7 +28,7 @@ class Turing_Machine
       }
     };
 
-    virtual int eval_state(const int& a_state)
+    virtual int eval_state(const STATE& a_state)
     {
       return 0;
     };

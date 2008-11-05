@@ -12,13 +12,16 @@ using namespace std;
 
 #include "Exception.h"
 
-typedef int Integer;
+typedef int INTEGER;
+
+typedef int STATE;
+typedef int SYMBOL;
 
 typedef struct
 {
-  int m_state;
-  int m_symbol;
-  int m_dir;
+  STATE  m_state;
+  SYMBOL m_symbol;
+  int    m_dir;
 } TRANSITION;
 
 #endif

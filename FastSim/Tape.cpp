@@ -27,9 +27,9 @@ void Tape::define(const TRANSITION& a_init_trans)
   m_is_defined = true;
 }
 
-Integer Tape::get_nonzeros(const Integer& a_state_value)
+INTEGER Tape::get_nonzeros(const INTEGER& a_state_value)
 {
-  Integer num;
+  INTEGER num;
 
   num = a_state_value;
 
@@ -54,13 +54,13 @@ REPEATED_SYMBOL Tape::get_top_block()
   return m_tape[m_dir][0];
 }
 
-int Tape::get_top_symbol()
+SYMBOL Tape::get_top_symbol()
 {
   return m_tape[m_dir][0].m_symbol;
 }
 
-void Tape::apply_single_move(const int& a_new_symbol,
-                             const int& a_dir)
+void Tape::apply_single_move(const SYMBOL& a_new_symbol,
+                             const int&    a_dir)
 {
   {
     vector<REPEATED_SYMBOL>& stack = m_tape[m_dir];
@@ -108,9 +108,9 @@ void Tape::apply_single_move(const int& a_new_symbol,
   }
 }
 
-Integer Tape::apply_chain_move(const int& a_new_symbol)
+INTEGER Tape::apply_chain_move(const SYMBOL& a_new_symbol)
 {
-  Integer num;
+  INTEGER num;
 
   vector<REPEATED_SYMBOL>& stack_dir = m_tape[m_dir];
   num = stack_dir[0].m_number;

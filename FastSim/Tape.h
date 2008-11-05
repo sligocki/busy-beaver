@@ -5,8 +5,8 @@
 
 typedef struct
 {
-  int     m_symbol;
-  Integer m_number;
+  SYMBOL  m_symbol;
+  INTEGER m_number;
 } REPEATED_SYMBOL;
 
 #define INFINITY -1
@@ -20,23 +20,23 @@ class Tape
 
     void define(const TRANSITION& a_init_trans);
 
-    Integer get_nonzeros(const Integer& a_state_value);
+    INTEGER get_nonzeros(const INTEGER& a_state_value);
 
     REPEATED_SYMBOL get_top_block();
 
-    int get_top_symbol();
+    SYMBOL get_top_symbol();
 
-    void apply_single_move(const int& a_new_symbol,
-                           const int& a_dir);
+    void apply_single_move(const SYMBOL& a_new_symbol,
+                           const int&    a_dir);
 
-    Integer apply_chain_move(const int& a_new_symbol);
+    INTEGER apply_chain_move(const SYMBOL& a_new_symbol);
 
-    int m_init_symbol;
-    int m_dir;
+    SYMBOL m_init_symbol;
+    int    m_dir;
 
     vector<REPEATED_SYMBOL> m_tape[2];
 
-    Integer m_displace;
+    INTEGER m_displace;
 
     bool m_is_defined;
 };
