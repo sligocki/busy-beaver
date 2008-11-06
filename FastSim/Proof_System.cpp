@@ -2,18 +2,21 @@
 
 Proof_System::Proof_System()
 {
-  Error("Not implemented...");
+  m_is_defined = false;
 }
 
 Proof_System::~Proof_System()
 {
-  Error("Not implemented...");
+  m_is_defined = false;
 }
 
 void Proof_System::define(const Turing_Machine& a_machine,
                           const bool&           a_recursive)
 {
-  Error("Not implemented...");
+  m_machine   = a_machine;
+  m_recursive = a_recursive;
+
+  m_is_defined = true;
 }
 
 bool Proof_System::log()

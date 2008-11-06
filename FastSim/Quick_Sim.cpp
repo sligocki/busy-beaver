@@ -127,7 +127,7 @@ main(int argc, char** argv)
   Chain_Simulator sim(*machine, recursive, prover);
 
   INTEGER extent = 1;
-  while (sim.run_state() == RUNNING)
+  while (sim.m_op_state == RUNNING)
   {
     if (verbose)
     {
@@ -140,25 +140,25 @@ main(int argc, char** argv)
 
   sim.print();
 
-  if (sim.run_state() == HALTED)
+  if (sim.m_op_state == HALTED)
   {
     cout << "Turing machine halted:"           << endl;
-    cout << "  Steps:   " << sim.num_steps()   << endl;
+    cout << "  Steps:   " << sim.m_step_num    << endl;
     cout << "  Nonzero: " << sim.num_nonzero() << endl;
   }
   else
-  if (sim.run_state() == INFINITE)
+  if (sim.m_op_state == INFINITE)
   {
     cout << "Turing machine proven infinite:" << endl;
-    cout << "  Reason: " << sim.inf_reason()  << endl;
+    cout << "  Reason: " << sim.m_inf_reason  << endl;
   }
   else
-  if (sim.run_state() == UNDEFINED)
+  if (sim.m_op_state == UNDEFINED)
   {
     cout << "Turing machine reached an undefined transition:" << endl;
-    cout << "  State:   " << sim.cur_state()                  << endl;
-    cout << "  Symbol:  " << sim.cur_symbol()                 << endl;
-    cout << "  Steps:   " << sim.num_steps()                  << endl;
+    cout << "  State:   " << sim.m_trans.m_state              << endl;
+    cout << "  Symbol:  " << sim.m_trans.m_symbol             << endl;
+    cout << "  Steps:   " << sim.m_step_num                   << endl;
     cout << "  Nonzero: " << sim.num_nonzero()                << endl;
   }
   else
