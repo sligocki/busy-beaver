@@ -17,18 +17,11 @@ class Chain_Simulator
 
     void seek(const INTEGER& a_extent);
 
-    RUN_STATE run_state();
-
-    INTEGER num_steps();
-
     INTEGER num_nonzero();
 
-    char* inf_reason();
-
-    STATE  cur_state();
-    SYMBOL cur_symbol();
-
     void print();
+
+    char* m_inf_reason;
 
     INTEGER m_num_loops;
 

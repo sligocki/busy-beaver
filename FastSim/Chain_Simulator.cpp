@@ -30,20 +30,9 @@ Chain_Simulator::Chain_Simulator(const Turing_Machine& a_machine,
 
 Chain_Simulator::~Chain_Simulator()
 {
-  Error("Not implemented...");
 }
 
 void Chain_Simulator::seek(const INTEGER& a_extent)
-{
-  Error("Not implemented...");
-}
-
-RUN_STATE Chain_Simulator::run_state()
-{
-  Error("Not implemented...");
-}
-
-INTEGER Chain_Simulator::num_steps()
 {
   Error("Not implemented...");
 }
@@ -53,22 +42,16 @@ INTEGER Chain_Simulator::num_nonzero()
   Error("Not implemented...");
 }
 
-char* Chain_Simulator::inf_reason()
-{
-  Error("Not implemented...");
-}
-
-STATE Chain_Simulator::cur_state()
-{
-  Error("Not implemented...");
-}
-
-SYMBOL Chain_Simulator::cur_symbol()
-{
-  Error("Not implemented...");
-}
-
 void Chain_Simulator::print()
 {
-  Error("Not implemented...");
+  cout << "Total: " << m_step_num << ", " << m_num_loops << endl;
+  cout << "Macro: " << m_steps_from_macro << ", " << m_num_macro_moves << endl;
+  cout << "Chain: " << m_steps_from_chain << ", " << m_num_chain_moves << endl;
+
+  if (m_proof.m_is_defined)
+  {
+    cout << "Rule:  " << m_steps_from_rule << ", " << m_num_rule_moves << endl;
+  }
+
+  cout << endl;
 }
