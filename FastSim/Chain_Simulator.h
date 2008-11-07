@@ -15,13 +15,15 @@ class Chain_Simulator
 
     virtual ~Chain_Simulator();
 
-    void seek(const INTEGER& a_extent);
+    void seek(const INTEGER& a_cutoff);
+
+    void step();
 
     INTEGER num_nonzero();
 
     void print();
 
-    char* m_inf_reason;
+    const char* m_inf_reason;
 
     INTEGER m_num_loops;
 

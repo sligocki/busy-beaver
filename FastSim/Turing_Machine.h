@@ -33,8 +33,11 @@ class Turing_Machine
       return 0;
     };
 
-    virtual RUN_STATE get_transition(TRANSITION&       trans_out,
-                                     const TRANSITION& trans_in)
+    virtual void get_transition(RUN_STATE&        a_run_state,
+                                TRANSITION&       a_trans_out,
+                                INTEGER&          a_num_steps,
+                                const SYMBOL&     a_cur_symbol,
+                                const TRANSITION& a_trans_in)
     {
       Error("Not implemented...");
     };
