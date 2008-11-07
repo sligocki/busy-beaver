@@ -26,8 +26,7 @@ class Tape
 
     SYMBOL get_top_symbol();
 
-    void apply_single_move(const SYMBOL& a_new_symbol,
-                           const int&    a_dir);
+    void apply_single_move(const TRANSITION& a_trans);
 
     INTEGER apply_chain_move(const SYMBOL& a_new_symbol);
 

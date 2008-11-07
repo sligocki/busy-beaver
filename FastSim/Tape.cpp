@@ -59,8 +59,7 @@ SYMBOL Tape::get_top_symbol()
   return m_tape[m_dir][0].m_symbol;
 }
 
-void Tape::apply_single_move(const SYMBOL& a_new_symbol,
-                             const int&    a_dir)
+void Tape::apply_single_move(const TRANSITION& a_trans)
 {
   {
     vector<REPEATED_SYMBOL>& stack = m_tape[m_dir];
@@ -77,9 +76,9 @@ void Tape::apply_single_move(const SYMBOL& a_new_symbol,
   }
 
   {
-    vector<REPEATED_SYMBOL>& stack = m_tape[1 - a_dir];
+    vector<REPEATED_SYMBOL>& stack = m_tape[1 - a_trans.m_dir];
     REPEATED_SYMBOL& top = stack[0];
-    if (top.m_symbol == a_new_symbol)
+    if (top.m_symbol == a_trans.m_symbol)
     {
       if (top.m_number != INFINITY)
       {
@@ -89,14 +88,14 @@ void Tape::apply_single_move(const SYMBOL& a_new_symbol,
     else
     {
       REPEATED_SYMBOL new_repeat;
-      new_repeat.m_symbol = a_new_symbol;
+      new_repeat.m_symbol = a_trans.m_symbol;
       new_repeat.m_number = 1;
 
       stack.insert(stack.begin(),new_repeat);
     }
   }
 
-  m_dir = a_dir;
+  m_dir = a_trans.m_dir;
 
   if (m_dir == 0)
   {
