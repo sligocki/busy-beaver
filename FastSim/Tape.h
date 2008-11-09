@@ -2,6 +2,7 @@
 #define _TAPE_H_
 
 #include "Define.h"
+#include "Turing_Machine.h"
 
 typedef struct
 {
@@ -20,7 +21,8 @@ class Tape
 
     void define(const TRANSITION & a_init_trans);
 
-    INTEGER get_nonzeros(const INTEGER & a_state_value);
+    INTEGER num_nonzero(shared_ptr<Turing_Machine> a_machine,
+                        const STATE              & a_state);
 
     REPEATED_SYMBOL get_top_block();
 
@@ -39,5 +41,8 @@ class Tape
 
     bool m_is_defined;
 };
+
+ostream& operator<<(ostream    & a_ostream,
+                    const Tape & a_tape);
 
 #endif

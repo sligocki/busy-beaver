@@ -21,7 +21,7 @@ class Chain_Simulator
 
     INTEGER num_nonzero();
 
-    void print();
+    void print(ostream & a_out) const;
 
     const char* m_inf_reason;
 
@@ -46,5 +46,8 @@ class Chain_Simulator
 
     Proof_System m_proof;
 };
+
+ostream& operator<<(ostream               & a_ostream,
+                    const Chain_Simulator & a_sim);
 
 #endif

@@ -116,19 +116,29 @@ void Chain_Simulator::step()
 
 INTEGER Chain_Simulator::num_nonzero()
 {
-  Error("Not implemented...");
+  return m_tape.num_nonzero(m_machine,m_trans.m_state);
 }
 
-void Chain_Simulator::print()
+void Chain_Simulator::print(ostream & a_out) const
 {
-  cout << "Total: " << m_step_num << ", " << m_num_loops << endl;
-  cout << "Macro: " << m_steps_from_macro << ", " << m_num_macro_moves << endl;
-  cout << "Chain: " << m_steps_from_chain << ", " << m_num_chain_moves << endl;
+  a_out << "Total: " << m_step_num << ", " << m_num_loops << endl;
+  a_out << "Macro: " << m_steps_from_macro << ", " << m_num_macro_moves << endl;
+  a_out << "Chain: " << m_steps_from_chain << ", " << m_num_chain_moves << endl;
 
   if (m_proof.m_is_defined)
   {
-    cout << "Rule:  " << m_steps_from_rule << ", " << m_num_rule_moves << endl;
+    a_out << "Rule:  " << m_steps_from_rule << ", " << m_num_rule_moves << endl;
   }
 
-  cout << endl;
+  a_out << m_tape;
+
+  a_out << endl;
+}
+
+ostream& operator<<(ostream               & a_ostream,
+                    const Chain_Simulator & a_sim)
+{
+  a_sim.print(a_ostream);
+
+  return a_ostream;
 }

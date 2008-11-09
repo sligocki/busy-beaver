@@ -27,11 +27,12 @@ void Tape::define(const TRANSITION & a_init_trans)
   m_is_defined = true;
 }
 
-INTEGER Tape::get_nonzeros(const INTEGER & a_state_value)
+INTEGER Tape::num_nonzero(shared_ptr<Turing_Machine> a_machine,
+                          const STATE              & a_state)
 {
   INTEGER num;
 
-  num = a_state_value;
+  num = a_machine->eval_state(a_state);
 
   for (int dir = 0; dir < 2; dir++)
   {
@@ -39,9 +40,12 @@ INTEGER Tape::get_nonzeros(const INTEGER & a_state_value)
 
     for (int i = 0; i < n; i++)
     {
-      if (m_tape[dir][i].m_number != INFINITY)
+      const SYMBOL  & symbol = m_tape[dir][i].m_symbol;
+      const INTEGER & number = m_tape[dir][i].m_number;
+
+      if (symbol != m_init_symbol && number != INFINITY)
       {
-        num += m_tape[dir][i].m_number;
+        num += a_machine->eval_symbol(symbol) * number;
       }
     }
   }
@@ -147,4 +151,42 @@ INTEGER Tape::apply_chain_move(const SYMBOL & a_new_symbol)
   }
 
   return num;
+}
+
+ostream& operator<<(ostream    & a_ostream,
+                    const Tape & a_tape)
+{
+  for (int i = a_tape.m_tape[0].size()-1; i >= 0; i--)
+  {
+    a_ostream << "(" << a_tape.m_tape[0][i].m_symbol << ",";
+    if (a_tape.m_tape[0][i].m_number != INFINITY)
+    {
+      a_ostream << a_tape.m_tape[0][i].m_number;
+    }
+    else
+    {
+      a_ostream << "inf";
+    }
+    a_ostream << ")";
+  }
+
+  a_ostream << " ";
+
+  for (int i = 0; i < a_tape.m_tape[1].size(); i++)
+  {
+    a_ostream << "(" << a_tape.m_tape[1][i].m_symbol << ",";
+    if (a_tape.m_tape[1][i].m_number != INFINITY)
+    {
+      a_ostream << a_tape.m_tape[1][i].m_number;
+    }
+    else
+    {
+      a_ostream << "inf";
+    }
+    a_ostream << ")";
+  }
+
+  a_ostream << endl;
+
+  return a_ostream;
 }
