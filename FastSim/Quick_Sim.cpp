@@ -135,14 +135,14 @@ main(int argc, char** argv)
   {
     if (verbose)
     {
-      sim.print();
+      cout << sim;
     }
 
     sim.seek(extent);
     extent *= 10;
   }
 
-  sim.print();
+  cout << sim;
 
   if (sim.m_op_state == HALTED)
   {
@@ -169,4 +169,6 @@ main(int argc, char** argv)
   {
     cout << "Unknown Turing machine state!" << endl;
   }
+
+  cout << endl;
 }

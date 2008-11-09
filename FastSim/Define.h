@@ -16,7 +16,7 @@ using namespace boost;
 
 #include "Exception.h"
 
-typedef int INTEGER;
+typedef long long INTEGER;
 
 typedef int STATE;
 typedef int SYMBOL;
