@@ -1,8 +1,8 @@
 #include "Chain_Simulator.h"
 
-Chain_Simulator::Chain_Simulator(const Turing_Machine& a_machine,
-                                 const bool          & a_recursive,
-                                 const bool          & a_prover)
+Chain_Simulator::Chain_Simulator(shared_ptr<Turing_Machine> a_machine,
+                                 const bool               & a_recursive,
+                                 const bool               & a_prover)
 {
   m_inf_reason = NULL;
 
@@ -18,8 +18,8 @@ Chain_Simulator::Chain_Simulator(const Turing_Machine& a_machine,
   m_steps_from_rule = 0;
 
   m_machine = a_machine;
-  m_trans   = m_machine.m_init_trans;
-  m_tape.define(m_machine.m_init_trans);
+  m_trans   = m_machine->m_init_trans;
+  m_tape.define(m_machine->m_init_trans);
 
   m_step_num = 0;
   m_op_state = RUNNING;
@@ -34,7 +34,7 @@ Chain_Simulator::~Chain_Simulator()
 {
 }
 
-void Chain_Simulator::seek(const INTEGER& a_cutoff)
+void Chain_Simulator::seek(const INTEGER & a_cutoff)
 {
   while (m_step_num < a_cutoff && m_op_state == RUNNING)
   {
@@ -78,7 +78,7 @@ void Chain_Simulator::step()
   cur_symbol = m_tape.get_top_symbol();
 
   TRANSITION new_trans;
-  m_machine.get_transition(m_op_state,new_trans,num_steps,
+  m_machine->get_transition(m_op_state,new_trans,num_steps,
                            cur_symbol,m_trans);
 
   if (new_trans.m_state == m_trans.m_state &&

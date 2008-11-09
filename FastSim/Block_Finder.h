@@ -7,7 +7,7 @@
 class Block_Finder
 {
   public:
-    Block_Finder(const Turing_Machine& a_machine);
+    Block_Finder(const Turing_Machine & a_machine);
 
     ~Block_Finder();
 

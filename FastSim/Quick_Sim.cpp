@@ -102,7 +102,7 @@ main(int argc, char** argv)
     fprintf(stderr,"Unable to parse TM from '%s'\n",filename);
   }
 
-  Turing_Machine* machine = new Simple_Turing_Machine(ttable);
+  shared_ptr<Turing_Machine> machine(new Simple_Turing_Machine(ttable));
 
   if (macro)
   {
@@ -115,16 +115,16 @@ main(int argc, char** argv)
 
     if (block_size > 1)
     {
-      machine = new Macro_Turing_Machine(*machine, block_size);
+      machine.reset(new Macro_Turing_Machine(machine, block_size));
     }
   }
 
   if (back)
   {
-    machine = new Backsymbol_Turing_Machine(*machine);
+    machine.reset(new Backsymbol_Turing_Machine(machine));
   }
 
-  Chain_Simulator sim(*machine, recursive, prover);
+  Chain_Simulator sim(machine, recursive, prover);
 
   INTEGER extent = 1;
   while (sim.m_op_state == RUNNING)

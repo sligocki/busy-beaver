@@ -18,17 +18,17 @@ class Tape
 
     ~Tape();
 
-    void define(const TRANSITION& a_init_trans);
+    void define(const TRANSITION & a_init_trans);
 
-    INTEGER get_nonzeros(const INTEGER& a_state_value);
+    INTEGER get_nonzeros(const INTEGER & a_state_value);
 
     REPEATED_SYMBOL get_top_block();
 
     SYMBOL get_top_symbol();
 
-    void apply_single_move(const TRANSITION& a_trans);
+    void apply_single_move(const TRANSITION & a_trans);
 
-    INTEGER apply_chain_move(const SYMBOL& a_new_symbol);
+    INTEGER apply_chain_move(const SYMBOL & a_new_symbol);
 
     SYMBOL m_init_symbol;
     int    m_dir;

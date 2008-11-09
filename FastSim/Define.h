@@ -9,7 +9,10 @@
 #include <vector>
 #include <map>
 
+#include <boost/shared_ptr.hpp>
+
 using namespace std;
+using namespace boost;
 
 #include "Exception.h"
 

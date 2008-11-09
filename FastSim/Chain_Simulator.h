@@ -9,13 +9,13 @@
 class Chain_Simulator
 {
   public:
-    Chain_Simulator(const Turing_Machine& a_machine,
-                    const bool          & a_recursive,
-                    const bool          & a_prover);
+    Chain_Simulator(shared_ptr<Turing_Machine> a_machine,
+                    const bool               & a_recursive,
+                    const bool               & a_prover);
 
     virtual ~Chain_Simulator();
 
-    void seek(const INTEGER& a_cutoff);
+    void seek(const INTEGER & a_cutoff);
 
     void step();
 
@@ -36,9 +36,10 @@ class Chain_Simulator
     INTEGER m_num_rule_moves;
     INTEGER m_steps_from_rule;
 
-    Turing_Machine m_machine;
-    TRANSITION     m_trans;
-    Tape           m_tape;
+    shared_ptr<Turing_Machine> m_machine;
+
+    TRANSITION m_trans;
+    Tape       m_tape;
 
     INTEGER   m_step_num;
     RUN_STATE m_op_state;

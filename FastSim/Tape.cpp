@@ -9,7 +9,7 @@ Tape::~Tape()
 {
 }
 
-void Tape::define(const TRANSITION& a_init_trans)
+void Tape::define(const TRANSITION & a_init_trans)
 {
   m_init_symbol = a_init_trans.m_symbol;
 
@@ -27,7 +27,7 @@ void Tape::define(const TRANSITION& a_init_trans)
   m_is_defined = true;
 }
 
-INTEGER Tape::get_nonzeros(const INTEGER& a_state_value)
+INTEGER Tape::get_nonzeros(const INTEGER & a_state_value)
 {
   INTEGER num;
 
@@ -59,11 +59,11 @@ SYMBOL Tape::get_top_symbol()
   return m_tape[m_dir][0].m_symbol;
 }
 
-void Tape::apply_single_move(const TRANSITION& a_trans)
+void Tape::apply_single_move(const TRANSITION & a_trans)
 {
   {
-    vector<REPEATED_SYMBOL>& stack = m_tape[m_dir];
-    REPEATED_SYMBOL& top = stack[0];
+    vector<REPEATED_SYMBOL> & stack = m_tape[m_dir];
+    REPEATED_SYMBOL & top = stack[0];
     if (top.m_number != INFINITY)
     {
       top.m_number--;
@@ -76,8 +76,8 @@ void Tape::apply_single_move(const TRANSITION& a_trans)
   }
 
   {
-    vector<REPEATED_SYMBOL>& stack = m_tape[1 - a_trans.m_dir];
-    REPEATED_SYMBOL& top = stack[0];
+    vector<REPEATED_SYMBOL> & stack = m_tape[1 - a_trans.m_dir];
+    REPEATED_SYMBOL & top = stack[0];
     if (top.m_symbol == a_trans.m_symbol)
     {
       if (top.m_number != INFINITY)
@@ -107,19 +107,19 @@ void Tape::apply_single_move(const TRANSITION& a_trans)
   }
 }
 
-INTEGER Tape::apply_chain_move(const SYMBOL& a_new_symbol)
+INTEGER Tape::apply_chain_move(const SYMBOL & a_new_symbol)
 {
   INTEGER num;
 
-  vector<REPEATED_SYMBOL>& stack_dir = m_tape[m_dir];
+  vector<REPEATED_SYMBOL> & stack_dir = m_tape[m_dir];
   num = stack_dir[0].m_number;
 
   if (num != INFINITY)
   {
     stack_dir.erase(stack_dir.begin());
 
-    vector<REPEATED_SYMBOL>& stack_not_dir = m_tape[1 - m_dir];
-    REPEATED_SYMBOL& top = stack_not_dir[0];
+    vector<REPEATED_SYMBOL> & stack_not_dir = m_tape[1 - m_dir];
+    REPEATED_SYMBOL & top = stack_not_dir[0];
     if (top.m_symbol == a_new_symbol)
     {
       if (top.m_number != INFINITY)

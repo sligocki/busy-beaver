@@ -8,12 +8,15 @@
 class Simple_Turing_Machine: public Turing_Machine
 {
   public:
-    Simple_Turing_Machine(const TTable& a_ttable);
+    Simple_Turing_Machine(const TTable & a_ttable);
 
     virtual ~Simple_Turing_Machine();
 
-    virtual RUN_STATE get_transition(TRANSITION&       a_trans_out,
-                                     const TRANSITION& a_trans_in);
+    virtual void get_transition(RUN_STATE        & a_run_state,
+                                TRANSITION       & a_trans_out,
+                                INTEGER          & a_num_steps,
+                                const SYMBOL     & a_cur_symbol,
+                                const TRANSITION & a_trans_in);
 
     TTable m_ttable;
 };
