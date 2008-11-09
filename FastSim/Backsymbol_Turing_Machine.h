@@ -8,9 +8,15 @@
 class Backsymbol_Turing_Machine: public Turing_Machine
 {
   public:
-    Backsymbol_Turing_Machine(const Turing_Machine& a_machine);
+    Backsymbol_Turing_Machine(shared_ptr<Turing_Machine> a_machine);
 
     virtual ~Backsymbol_Turing_Machine();
+
+    virtual void get_transition(RUN_STATE        & a_run_state,
+                                TRANSITION       & a_trans_out,
+                                INTEGER          & a_num_steps,
+                                const SYMBOL     & a_cur_symbol,
+                                const TRANSITION & a_trans_in);
 };
 
 #endif

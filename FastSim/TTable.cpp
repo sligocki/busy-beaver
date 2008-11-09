@@ -18,9 +18,9 @@ void TTable::clear()
   m_is_defined = false;
 }
 
-void TTable::define(const int                        & a_num_states,
-                    const int                        & a_num_symbols,
-                    const vector<vector<TRANSITION> >& a_transitions)
+void TTable::define(const int                         & a_num_states,
+                    const int                         & a_num_symbols,
+                    const vector<vector<TRANSITION> > & a_transitions)
 {
   m_num_states  = a_num_states;
   m_num_symbols = a_num_symbols;

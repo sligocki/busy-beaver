@@ -12,9 +12,9 @@ class TTable
     
     void clear();
 
-    void define(const int                        & a_num_states,
-                const int                        & a_num_symbols,
-                const vector<vector<TRANSITION> >& a_transitions);
+    void define(const int                         & a_num_states,
+                const int                         & a_num_symbols,
+                const vector<vector<TRANSITION> > & a_transitions);
 
     bool read(FILE* a_file);
 
