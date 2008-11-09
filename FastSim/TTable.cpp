@@ -53,7 +53,6 @@ bool TTable::read(FILE* a_file)
   while (cur_char != ']')
   {
     num_states++;
-
     num_symbols = 0;
 
     if (cur_char != '[')
@@ -67,26 +66,13 @@ bool TTable::read(FILE* a_file)
 
     while (cur_char != ']')
     {
+      num_symbols++;
+
       TRANSITION cur_transition;
 
       if (cur_char != '(')
       {
         Error("Unable to read '(' for transition");
-      }
-
-      SKIP_WHITESPACE(cur_char,a_file);
-
-      ungetc(cur_char,a_file);
-      if (fscanf(a_file,"%d",&(cur_transition.m_state)) != 1)
-      {
-        Error("Unable to read new state for transition");
-      }
-
-      SKIP_WHITESPACE(cur_char,a_file);
-
-      if (cur_char != ',')
-      {
-        Error("Unable to read first ',' in transition");
       }
 
       SKIP_WHITESPACE(cur_char,a_file);
@@ -114,6 +100,21 @@ bool TTable::read(FILE* a_file)
 
       SKIP_WHITESPACE(cur_char,a_file);
 
+      if (cur_char != ',')
+      {
+        Error("Unable to read second ',' in transition");
+      }
+
+      SKIP_WHITESPACE(cur_char,a_file);
+
+      ungetc(cur_char,a_file);
+      if (fscanf(a_file,"%d",&(cur_transition.m_state)) != 1)
+      {
+        Error("Unable to read new state for transition");
+      }
+
+      SKIP_WHITESPACE(cur_char,a_file);
+
       if (cur_char != ')')
       {
         Error("Unable to read ')' in transition");
@@ -130,7 +131,79 @@ bool TTable::read(FILE* a_file)
     }
 
     transitions.push_back(state_transitions);
+
+    SKIP_WHITESPACE(cur_char,a_file);
+
+    if (cur_char == ',')
+      {
+        SKIP_WHITESPACE(cur_char,a_file);
+      }
   }
 
   define(num_states,num_symbols,transitions);
+
+  return true;
+}
+
+ostream& operator<<(ostream      & a_ostream,
+                    const TTable & a_ttable)
+{
+  a_ostream << "   ";
+  for (int symbol = 0; symbol < a_ttable.m_num_symbols; symbol++)
+  {
+    a_ostream << "  " << symbol << "   ";
+  }
+  a_ostream << endl;
+
+  a_ostream << "  +";
+  for (int symbol = 0; symbol < a_ttable.m_num_symbols; symbol++)
+  {
+    a_ostream << "-----+";
+  }
+  a_ostream << endl;
+
+  for (int state = 0; state < a_ttable.m_num_states; state++)
+  {
+    const vector<TRANSITION>& row = a_ttable.m_transitions[state];
+
+    char state_char = 'A' + state;
+    a_ostream << state_char << " |";
+
+    for (int symbol = 0; symbol < a_ttable.m_num_symbols; symbol++)
+    {
+      const TRANSITION& cur_trans = row[symbol];
+
+      a_ostream << " " << cur_trans.m_symbol;
+
+      if (cur_trans.m_dir == 0)
+      {
+        a_ostream << 'L';
+      }
+      else
+      {
+        a_ostream << 'R';
+      }
+
+      if (cur_trans.m_state == -1)
+      {
+        a_ostream << "H |";
+      }
+      else
+      {
+        char new_state_char = 'A' + cur_trans.m_state;
+        a_ostream << new_state_char << " |";
+      }
+    }
+
+    a_ostream << endl;
+
+    a_ostream << "  +";
+    for (int symbol = 0; symbol < a_ttable.m_num_symbols; symbol++)
+    {
+      a_ostream << "-----+";
+    }
+    a_ostream << endl;
+  }
+
+  return a_ostream;
 }

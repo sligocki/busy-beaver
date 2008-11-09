@@ -33,4 +33,6 @@ void Simple_Turing_Machine::get_transition(RUN_STATE        & a_run_state,
   {
     a_run_state = RUNNING;
   }
+
+  a_num_steps = 1;
 }

@@ -102,6 +102,10 @@ main(int argc, char** argv)
     fprintf(stderr,"Unable to parse TM from '%s'\n",filename);
   }
 
+  cout << endl;
+  cout << ttable;
+  cout << endl;
+
   shared_ptr<Turing_Machine> machine(new Simple_Turing_Machine(ttable));
 
   if (macro)

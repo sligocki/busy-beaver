@@ -26,4 +26,7 @@ class TTable
     bool m_is_defined;
 };
 
+ostream& operator<<(ostream      & a_ostream,
+                    const TTable & a_machine);
+
 #endif

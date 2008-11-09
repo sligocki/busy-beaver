@@ -1,6 +1,6 @@
-CFLAGS = -g -O2
-CXXFLAGS = -g -O2
-LDFLAGS = -g -O2
+CFLAGS = -g # -O2
+CXXFLAGS = -g # -O2
+LDFLAGS = -g # -O2
 LIBS = -lm
 
 exe1 = Quick_Sim
