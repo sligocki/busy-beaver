@@ -47,6 +47,7 @@ class Proof_System
     shared_ptr<Turing_Machine> m_machine;
 
     bool m_recursive;
+    bool m_prove_new_rules;
 
     map<vector<int>,vector<int> > m_past_configs;
     map<vector<int>,RULE>         m_proven_transitions;

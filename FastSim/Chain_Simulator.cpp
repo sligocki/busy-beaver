@@ -79,7 +79,7 @@ void Chain_Simulator::step()
 
   TRANSITION new_trans;
   m_machine->get_transition(m_op_state,new_trans,num_steps,
-                           cur_symbol,m_trans);
+                            cur_symbol,m_trans);
 
   if (new_trans.m_state == m_trans.m_state &&
       new_trans.m_dir   == m_trans.m_dir   &&

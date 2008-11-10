@@ -16,6 +16,8 @@ void Proof_System::define(shared_ptr<Turing_Machine> a_machine,
   m_machine   = a_machine;
   m_recursive = a_recursive;
 
+  m_prove_new_rules = true;
+
   m_is_defined = true;
 }
 
@@ -38,7 +40,17 @@ void Proof_System::log(RUN_STATE     & a_cond,
 
     applies(is_good,trans,bad_delta,m_proven_transitions[stripped_config],
             a_old_tape,a_old_state,a_step_num,a_loop_num);
+    
+    if (is_good)
+    {
+      if ((!m_recursive || bad_delta) && m_prove_new_rules)
+      {
+        m_past_configs.clear();
+      }
+    }
   }
+
+  Error("Not implemented...");
 }
 
 bool Proof_System::compare()
