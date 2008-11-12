@@ -64,6 +64,7 @@ void Chain_Simulator::step()
     {
       m_op_state = INFINITE;
       m_inf_reason = "Proof_System";
+      return;
     }
     else if (cond == RUNNING)
     {
@@ -71,6 +72,7 @@ void Chain_Simulator::step()
       m_step_num += num_steps;
       m_num_rule_moves++;
       m_steps_from_rule += num_steps;
+      return;
     }
   }
 
