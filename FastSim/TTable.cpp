@@ -148,14 +148,14 @@ bool TTable::read(FILE* a_file)
 ostream& operator<<(ostream      & a_ostream,
                     const TTable & a_ttable)
 {
-  a_ostream << "   ";
+  a_ostream << "    ";
   for (int symbol = 0; symbol < a_ttable.m_num_symbols; symbol++)
   {
     a_ostream << "  " << symbol << "   ";
   }
   a_ostream << endl;
 
-  a_ostream << "  +";
+  a_ostream << "   +";
   for (int symbol = 0; symbol < a_ttable.m_num_symbols; symbol++)
   {
     a_ostream << "-----+";
@@ -167,7 +167,7 @@ ostream& operator<<(ostream      & a_ostream,
     const vector<TRANSITION>& row = a_ttable.m_transitions[state];
 
     char state_char = 'A' + state;
-    a_ostream << state_char << " |";
+    a_ostream << " " << state_char << " |";
 
     for (int symbol = 0; symbol < a_ttable.m_num_symbols; symbol++)
     {
@@ -197,7 +197,7 @@ ostream& operator<<(ostream      & a_ostream,
 
     a_ostream << endl;
 
-    a_ostream << "  +";
+    a_ostream << "   +";
     for (int symbol = 0; symbol < a_ttable.m_num_symbols; symbol++)
     {
       a_ostream << "-----+";
