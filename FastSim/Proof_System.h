@@ -6,9 +6,9 @@
 #include "Tape.h"
 
 typedef struct {
-  Tape    m_initial_tape;
-  Tape    m_diff_tape;
-  INTEGER m_diff_num_steps;
+  Tape<INTEGER> m_initial_tape;
+  Tape<INTEGER> m_diff_tape;
+  INTEGER   m_diff_num_steps;
 } RULE;
 
 class Proof_System
@@ -21,28 +21,28 @@ class Proof_System
     void define(shared_ptr<Turing_Machine> a_machine,
                 const bool               & a_recursive);
 
-    void log(RUN_STATE     & a_cond,
-             Tape          & a_new_tape,
-             INTEGER       & a_num_steps,
-             const Tape    & a_old_tape,
-             const STATE   & a_old_state,
-             const INTEGER & a_step_num,
-             const INTEGER & a_loop_num);
+    void log(RUN_STATE           & a_cond,
+             Tape<INTEGER>       & a_new_tape,
+             INTEGER             & a_num_steps,
+             const Tape<INTEGER> & a_old_tape,
+             const STATE         & a_old_state,
+             const INTEGER       & a_step_num,
+             const INTEGER       & a_loop_num);
 
     bool compare();
 
-    bool applies(bool          & a_is_good,
-                 TRANSITION    & a_trans,
-                 bool          & a_bad_delta,
-                 const RULE    & a_rule,
-                 const Tape    & a_new_tape,
-                 const STATE   & a_new_state,
-                 const INTEGER & a_new_step_num,
-                 const INTEGER & a_new_loop_num);
+    bool applies(bool                & a_is_good,
+                 TRANSITION          & a_trans,
+                 bool                & a_bad_delta,
+                 const RULE          & a_rule,
+                 const Tape<INTEGER> & a_new_tape,
+                 const STATE         & a_new_state,
+                 const INTEGER       & a_new_step_num,
+                 const INTEGER       & a_new_loop_num);
 
-    void strip_config(vector<int> & a_stripped_config,
-                      const STATE & a_state,
-                      const Tape  & a_tape);
+    void strip_config(vector<int>         & a_stripped_config,
+                      const STATE         & a_state,
+                      const Tape<INTEGER> & a_tape);
 
     shared_ptr<Turing_Machine> m_machine;
 

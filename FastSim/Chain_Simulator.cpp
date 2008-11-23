@@ -56,7 +56,7 @@ void Chain_Simulator::step()
   if (m_proof.m_is_defined)
   {
     RUN_STATE cond;
-    Tape new_tape;
+    Tape<INTEGER> new_tape;
 
     m_proof.log(cond,new_tape,num_steps,m_tape,m_trans.m_state,m_step_num,m_num_loops-1);
 

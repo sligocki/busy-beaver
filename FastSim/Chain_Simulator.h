@@ -38,8 +38,8 @@ class Chain_Simulator
 
     shared_ptr<Turing_Machine> m_machine;
 
-    TRANSITION m_trans;
-    Tape       m_tape;
+    TRANSITION    m_trans;
+    Tape<INTEGER> m_tape;
 
     INTEGER   m_step_num;
     RUN_STATE m_op_state;
