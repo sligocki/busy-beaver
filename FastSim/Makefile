@@ -1,7 +1,7 @@
-CFLAGS = -g -O2
-CXXFLAGS = -g -O2
+CFLAGS = -g -O2 -I Packages/lib
+CXXFLAGS = -g -O2 -I Packages/lib
 LDFLAGS = -g -O2
-LIBS = -lm
+LIBS = Packages/lib/libgmpxx.a Packages/lib/libgmp.a -lm
 
 exe1 = Quick_Sim
 src1 = Quick_Sim.cpp                 \
@@ -61,10 +61,11 @@ Quick_Sim.o: /usr/include/boost/detail/bad_weak_ptr.hpp
 Quick_Sim.o: /usr/include/boost/detail/sp_counted_base.hpp
 Quick_Sim.o: /usr/include/boost/detail/sp_counted_base_gcc_x86.hpp
 Quick_Sim.o: /usr/include/boost/detail/sp_counted_impl.hpp
-Quick_Sim.o: /usr/include/boost/detail/workaround.hpp Exception.h TTable.h
-Quick_Sim.o: Turing_Machine.h Simple_Turing_Machine.h Block_Finder.h
-Quick_Sim.o: Macro_Turing_Machine.h Backsymbol_Turing_Machine.h
-Quick_Sim.o: Chain_Simulator.h Tape.h Proof_System.h
+Quick_Sim.o: /usr/include/boost/detail/workaround.hpp /usr/include/gmpxx.h
+Quick_Sim.o: /usr/include/gmp.h Exception.h TTable.h Turing_Machine.h
+Quick_Sim.o: Simple_Turing_Machine.h Block_Finder.h Macro_Turing_Machine.h
+Quick_Sim.o: Backsymbol_Turing_Machine.h Chain_Simulator.h Tape.h
+Quick_Sim.o: Proof_System.h
 TTable.o: TTable.h Define.h /usr/include/boost/shared_ptr.hpp
 TTable.o: /usr/include/boost/config.hpp /usr/include/boost/config/user.hpp
 TTable.o: /usr/include/boost/config/select_compiler_config.hpp
@@ -85,7 +86,8 @@ TTable.o: /usr/include/boost/detail/bad_weak_ptr.hpp
 TTable.o: /usr/include/boost/detail/sp_counted_base.hpp
 TTable.o: /usr/include/boost/detail/sp_counted_base_gcc_x86.hpp
 TTable.o: /usr/include/boost/detail/sp_counted_impl.hpp
-TTable.o: /usr/include/boost/detail/workaround.hpp Exception.h
+TTable.o: /usr/include/boost/detail/workaround.hpp /usr/include/gmpxx.h
+TTable.o: /usr/include/gmp.h Exception.h
 Simple_Turing_Machine.o: Simple_Turing_Machine.h Define.h
 Simple_Turing_Machine.o: /usr/include/boost/shared_ptr.hpp
 Simple_Turing_Machine.o: /usr/include/boost/config.hpp
@@ -112,7 +114,8 @@ Simple_Turing_Machine.o: /usr/include/boost/detail/bad_weak_ptr.hpp
 Simple_Turing_Machine.o: /usr/include/boost/detail/sp_counted_base.hpp
 Simple_Turing_Machine.o: /usr/include/boost/detail/sp_counted_base_gcc_x86.hpp
 Simple_Turing_Machine.o: /usr/include/boost/detail/sp_counted_impl.hpp
-Simple_Turing_Machine.o: /usr/include/boost/detail/workaround.hpp Exception.h
+Simple_Turing_Machine.o: /usr/include/boost/detail/workaround.hpp
+Simple_Turing_Machine.o: /usr/include/gmpxx.h /usr/include/gmp.h Exception.h
 Simple_Turing_Machine.o: TTable.h Turing_Machine.h
 Block_Finder.o: Block_Finder.h Define.h /usr/include/boost/shared_ptr.hpp
 Block_Finder.o: /usr/include/boost/config.hpp
@@ -135,8 +138,8 @@ Block_Finder.o: /usr/include/boost/detail/bad_weak_ptr.hpp
 Block_Finder.o: /usr/include/boost/detail/sp_counted_base.hpp
 Block_Finder.o: /usr/include/boost/detail/sp_counted_base_gcc_x86.hpp
 Block_Finder.o: /usr/include/boost/detail/sp_counted_impl.hpp
-Block_Finder.o: /usr/include/boost/detail/workaround.hpp Exception.h
-Block_Finder.o: Turing_Machine.h
+Block_Finder.o: /usr/include/boost/detail/workaround.hpp /usr/include/gmpxx.h
+Block_Finder.o: /usr/include/gmp.h Exception.h Turing_Machine.h
 Macro_Turing_Machine.o: Macro_Turing_Machine.h Define.h
 Macro_Turing_Machine.o: /usr/include/boost/shared_ptr.hpp
 Macro_Turing_Machine.o: /usr/include/boost/config.hpp
@@ -162,7 +165,8 @@ Macro_Turing_Machine.o: /usr/include/boost/detail/bad_weak_ptr.hpp
 Macro_Turing_Machine.o: /usr/include/boost/detail/sp_counted_base.hpp
 Macro_Turing_Machine.o: /usr/include/boost/detail/sp_counted_base_gcc_x86.hpp
 Macro_Turing_Machine.o: /usr/include/boost/detail/sp_counted_impl.hpp
-Macro_Turing_Machine.o: /usr/include/boost/detail/workaround.hpp Exception.h
+Macro_Turing_Machine.o: /usr/include/boost/detail/workaround.hpp
+Macro_Turing_Machine.o: /usr/include/gmpxx.h /usr/include/gmp.h Exception.h
 Macro_Turing_Machine.o: TTable.h Turing_Machine.h
 Backsymbol_Turing_Machine.o: Backsymbol_Turing_Machine.h Define.h
 Backsymbol_Turing_Machine.o: /usr/include/boost/shared_ptr.hpp
@@ -193,6 +197,7 @@ Backsymbol_Turing_Machine.o: /usr/include/boost/detail/sp_counted_base.hpp
 Backsymbol_Turing_Machine.o: /usr/include/boost/detail/sp_counted_base_gcc_x86.hpp
 Backsymbol_Turing_Machine.o: /usr/include/boost/detail/sp_counted_impl.hpp
 Backsymbol_Turing_Machine.o: /usr/include/boost/detail/workaround.hpp
+Backsymbol_Turing_Machine.o: /usr/include/gmpxx.h /usr/include/gmp.h
 Backsymbol_Turing_Machine.o: Exception.h TTable.h Turing_Machine.h
 Chain_Simulator.o: Chain_Simulator.h Define.h
 Chain_Simulator.o: /usr/include/boost/shared_ptr.hpp
@@ -217,7 +222,8 @@ Chain_Simulator.o: /usr/include/boost/detail/bad_weak_ptr.hpp
 Chain_Simulator.o: /usr/include/boost/detail/sp_counted_base.hpp
 Chain_Simulator.o: /usr/include/boost/detail/sp_counted_base_gcc_x86.hpp
 Chain_Simulator.o: /usr/include/boost/detail/sp_counted_impl.hpp
-Chain_Simulator.o: /usr/include/boost/detail/workaround.hpp Exception.h
+Chain_Simulator.o: /usr/include/boost/detail/workaround.hpp
+Chain_Simulator.o: /usr/include/gmpxx.h /usr/include/gmp.h Exception.h
 Chain_Simulator.o: Turing_Machine.h Tape.h Proof_System.h
 Tape.o: Tape.h Define.h /usr/include/boost/shared_ptr.hpp
 Tape.o: /usr/include/boost/config.hpp /usr/include/boost/config/user.hpp
@@ -238,7 +244,8 @@ Tape.o: /usr/include/boost/detail/bad_weak_ptr.hpp
 Tape.o: /usr/include/boost/detail/sp_counted_base.hpp
 Tape.o: /usr/include/boost/detail/sp_counted_base_gcc_x86.hpp
 Tape.o: /usr/include/boost/detail/sp_counted_impl.hpp
-Tape.o: /usr/include/boost/detail/workaround.hpp Exception.h
+Tape.o: /usr/include/boost/detail/workaround.hpp /usr/include/gmpxx.h
+Tape.o: /usr/include/gmp.h Exception.h Turing_Machine.h
 Proof_System.o: Proof_System.h Define.h /usr/include/boost/shared_ptr.hpp
 Proof_System.o: /usr/include/boost/config.hpp
 Proof_System.o: /usr/include/boost/config/user.hpp
@@ -260,8 +267,8 @@ Proof_System.o: /usr/include/boost/detail/bad_weak_ptr.hpp
 Proof_System.o: /usr/include/boost/detail/sp_counted_base.hpp
 Proof_System.o: /usr/include/boost/detail/sp_counted_base_gcc_x86.hpp
 Proof_System.o: /usr/include/boost/detail/sp_counted_impl.hpp
-Proof_System.o: /usr/include/boost/detail/workaround.hpp Exception.h
-Proof_System.o: Turing_Machine.h Tape.h
+Proof_System.o: /usr/include/boost/detail/workaround.hpp /usr/include/gmpxx.h
+Proof_System.o: /usr/include/gmp.h Exception.h Turing_Machine.h Tape.h
 Exception.o: Exception.h Define.h /usr/include/boost/shared_ptr.hpp
 Exception.o: /usr/include/boost/config.hpp /usr/include/boost/config/user.hpp
 Exception.o: /usr/include/boost/config/select_compiler_config.hpp
@@ -282,4 +289,5 @@ Exception.o: /usr/include/boost/detail/bad_weak_ptr.hpp
 Exception.o: /usr/include/boost/detail/sp_counted_base.hpp
 Exception.o: /usr/include/boost/detail/sp_counted_base_gcc_x86.hpp
 Exception.o: /usr/include/boost/detail/sp_counted_impl.hpp
-Exception.o: /usr/include/boost/detail/workaround.hpp
+Exception.o: /usr/include/boost/detail/workaround.hpp /usr/include/gmpxx.h
+Exception.o: /usr/include/gmp.h

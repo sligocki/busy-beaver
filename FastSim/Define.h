@@ -11,12 +11,16 @@
 
 #include <boost/shared_ptr.hpp>
 
+#include <gmpxx.h>
+
 using namespace std;
 using namespace boost;
 
 #include "Exception.h"
 
-typedef long long INTEGER;
+// typedef int INTEGER;
+// typedef long long INTEGER;
+typedef mpz_class INTEGER;
 
 typedef int STATE;
 typedef int SYMBOL;
