@@ -4,17 +4,19 @@
 #include "Define.h"
 #include "Turing_Machine.h"
 
-typedef struct
-{
-  SYMBOL  m_symbol;
-  INTEGER m_number;
-} REPEATED_SYMBOL;
-
 #define INFINITY -1
 
-class Tape
+template <class T> class repeated_symbol
 {
   public:
+    SYMBOL m_symbol;
+    T      m_number;
+};
+
+template <class T> class Tape
+{
+  public:
+
     Tape();
 
     ~Tape();
@@ -24,7 +26,7 @@ class Tape
     INTEGER num_nonzero(shared_ptr<Turing_Machine> a_machine,
                         const STATE              & a_state);
 
-    REPEATED_SYMBOL get_top_block();
+    repeated_symbol<T> get_top_block();
 
     SYMBOL get_top_symbol();
 
@@ -35,14 +37,16 @@ class Tape
     SYMBOL m_init_symbol;
     int    m_dir;
 
-    vector<REPEATED_SYMBOL> m_tape[2];
+    vector<repeated_symbol<T> > m_tape[2];
 
     INTEGER m_displace;
 
     bool m_is_defined;
 };
 
-ostream& operator<<(ostream    & a_ostream,
-                    const Tape & a_tape);
+ostream& operator<<(ostream             & a_ostream,
+                    const Tape<INTEGER> & a_tape);
+
+#include "TapeImplem.h"
 
 #endif

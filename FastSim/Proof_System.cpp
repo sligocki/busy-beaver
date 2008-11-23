@@ -21,13 +21,13 @@ void Proof_System::define(shared_ptr<Turing_Machine> a_machine,
   m_is_defined = true;
 }
 
-void Proof_System::log(RUN_STATE     & a_cond,
-                       Tape          & a_new_tape,
-                       INTEGER       & a_num_steps,
-                       const Tape    & a_old_tape,
-                       const STATE   & a_old_state,
-                       const INTEGER & a_step_num,
-                       const INTEGER & a_loop_num)
+void Proof_System::log(RUN_STATE           & a_cond,
+                       Tape<INTEGER>       & a_new_tape,
+                       INTEGER             & a_num_steps,
+                       const Tape<INTEGER> & a_old_tape,
+                       const STATE         & a_old_state,
+                       const INTEGER       & a_step_num,
+                       const INTEGER       & a_loop_num)
 {
   vector<int> stripped_config;
   strip_config(stripped_config,a_old_state,a_old_tape);
@@ -58,28 +58,28 @@ bool Proof_System::compare()
   Error("Not implemented...");
 }
 
-bool Proof_System::applies(bool          & a_is_good,
-                           TRANSITION    & a_trans,
-                           bool          & a_bad_delta,
-                           const RULE    & a_rule,
-                           const Tape    & a_new_tape,
-                           const STATE   & a_new_state,
-                           const INTEGER & a_new_step_num,
-                           const INTEGER & a_new_loop_num)
+bool Proof_System::applies(bool                & a_is_good,
+                           TRANSITION          & a_trans,
+                           bool                & a_bad_delta,
+                           const RULE          & a_rule,
+                           const Tape<INTEGER> & a_new_tape,
+                           const STATE         & a_new_state,
+                           const INTEGER       & a_new_step_num,
+                           const INTEGER       & a_new_loop_num)
 {
   Error("Not implemented...");
 }
 
-void Proof_System::strip_config(vector<int> & a_stripped_config,
-                                const STATE & a_state,
-                                const Tape  & a_tape)
+void Proof_System::strip_config(vector<int>         & a_stripped_config,
+                                const STATE         & a_state,
+                                const Tape<INTEGER> & a_tape)
 {
   a_stripped_config.push_back(a_state);
   a_stripped_config.push_back(a_tape.m_dir);
 
   for (int side = 0; side < 2; side++)
   {
-    for (vector<REPEATED_SYMBOL>::const_iterator it = a_tape.m_tape[side].begin();
+    for (vector<repeated_symbol<INTEGER> >::const_iterator it = a_tape.m_tape[side].begin();
          it != a_tape.m_tape[side].end();
          it++)
     {

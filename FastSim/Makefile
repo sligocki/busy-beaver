@@ -6,22 +6,22 @@ LIBS = Packages/lib/libgmpxx.a Packages/lib/libgmp.a -lm
 exe1 = Quick_Sim
 src1 = Quick_Sim.cpp                 \
        TTable.cpp                    \
+       Tape.cpp                      \
        Simple_Turing_Machine.cpp     \
        Block_Finder.cpp              \
        Macro_Turing_Machine.cpp      \
        Backsymbol_Turing_Machine.cpp \
        Chain_Simulator.cpp           \
-       Tape.cpp                      \
        Proof_System.cpp              \
        Exception.cpp
 obj1 = Quick_Sim.o                   \
        TTable.o                      \
+       Tape.o                        \
        Simple_Turing_Machine.o       \
        Block_Finder.o                \
        Macro_Turing_Machine.o        \
        Backsymbol_Turing_Machine.o   \
        Chain_Simulator.o             \
-       Tape.o                        \
        Proof_System.o                \
        Exception.o
 
@@ -65,7 +65,7 @@ Quick_Sim.o: /usr/include/boost/detail/workaround.hpp
 Quick_Sim.o: Packages/include/gmpxx.h Packages/include/gmp.h Exception.h
 Quick_Sim.o: TTable.h Turing_Machine.h Simple_Turing_Machine.h Block_Finder.h
 Quick_Sim.o: Macro_Turing_Machine.h Backsymbol_Turing_Machine.h
-Quick_Sim.o: Chain_Simulator.h Tape.h Proof_System.h
+Quick_Sim.o: Chain_Simulator.h Tape.h TapeImplem.h Proof_System.h
 TTable.o: TTable.h Define.h /usr/include/boost/shared_ptr.hpp
 TTable.o: /usr/include/boost/config.hpp /usr/include/boost/config/user.hpp
 TTable.o: /usr/include/boost/config/select_compiler_config.hpp
@@ -88,6 +88,27 @@ TTable.o: /usr/include/boost/detail/sp_counted_base_gcc_x86.hpp
 TTable.o: /usr/include/boost/detail/sp_counted_impl.hpp
 TTable.o: /usr/include/boost/detail/workaround.hpp Packages/include/gmpxx.h
 TTable.o: Packages/include/gmp.h Exception.h
+Tape.o: Tape.h Define.h /usr/include/boost/shared_ptr.hpp
+Tape.o: /usr/include/boost/config.hpp /usr/include/boost/config/user.hpp
+Tape.o: /usr/include/boost/config/select_compiler_config.hpp
+Tape.o: /usr/include/boost/config/compiler/gcc.hpp
+Tape.o: /usr/include/boost/config/select_stdlib_config.hpp
+Tape.o: /usr/include/boost/config/select_platform_config.hpp
+Tape.o: /usr/include/boost/config/suffix.hpp /usr/include/limits.h
+Tape.o: /usr/include/features.h /usr/include/sys/cdefs.h
+Tape.o: /usr/include/bits/wordsize.h /usr/include/gnu/stubs.h
+Tape.o: /usr/include/gnu/stubs-64.h /usr/include/bits/posix1_lim.h
+Tape.o: /usr/include/bits/local_lim.h /usr/include/linux/limits.h
+Tape.o: /usr/include/bits/posix2_lim.h /usr/include/boost/assert.hpp
+Tape.o: /usr/include/assert.h /usr/include/boost/checked_delete.hpp
+Tape.o: /usr/include/boost/throw_exception.hpp /usr/include/boost/config.hpp
+Tape.o: /usr/include/boost/detail/shared_count.hpp
+Tape.o: /usr/include/boost/detail/bad_weak_ptr.hpp
+Tape.o: /usr/include/boost/detail/sp_counted_base.hpp
+Tape.o: /usr/include/boost/detail/sp_counted_base_gcc_x86.hpp
+Tape.o: /usr/include/boost/detail/sp_counted_impl.hpp
+Tape.o: /usr/include/boost/detail/workaround.hpp Packages/include/gmpxx.h
+Tape.o: Packages/include/gmp.h Exception.h Turing_Machine.h TapeImplem.h
 Simple_Turing_Machine.o: Simple_Turing_Machine.h Define.h
 Simple_Turing_Machine.o: /usr/include/boost/shared_ptr.hpp
 Simple_Turing_Machine.o: /usr/include/boost/config.hpp
@@ -225,28 +246,8 @@ Chain_Simulator.o: /usr/include/boost/detail/sp_counted_base_gcc_x86.hpp
 Chain_Simulator.o: /usr/include/boost/detail/sp_counted_impl.hpp
 Chain_Simulator.o: /usr/include/boost/detail/workaround.hpp
 Chain_Simulator.o: Packages/include/gmpxx.h Packages/include/gmp.h
-Chain_Simulator.o: Exception.h Turing_Machine.h Tape.h Proof_System.h
-Tape.o: Tape.h Define.h /usr/include/boost/shared_ptr.hpp
-Tape.o: /usr/include/boost/config.hpp /usr/include/boost/config/user.hpp
-Tape.o: /usr/include/boost/config/select_compiler_config.hpp
-Tape.o: /usr/include/boost/config/compiler/gcc.hpp
-Tape.o: /usr/include/boost/config/select_stdlib_config.hpp
-Tape.o: /usr/include/boost/config/select_platform_config.hpp
-Tape.o: /usr/include/boost/config/suffix.hpp /usr/include/limits.h
-Tape.o: /usr/include/features.h /usr/include/sys/cdefs.h
-Tape.o: /usr/include/bits/wordsize.h /usr/include/gnu/stubs.h
-Tape.o: /usr/include/gnu/stubs-64.h /usr/include/bits/posix1_lim.h
-Tape.o: /usr/include/bits/local_lim.h /usr/include/linux/limits.h
-Tape.o: /usr/include/bits/posix2_lim.h /usr/include/boost/assert.hpp
-Tape.o: /usr/include/assert.h /usr/include/boost/checked_delete.hpp
-Tape.o: /usr/include/boost/throw_exception.hpp /usr/include/boost/config.hpp
-Tape.o: /usr/include/boost/detail/shared_count.hpp
-Tape.o: /usr/include/boost/detail/bad_weak_ptr.hpp
-Tape.o: /usr/include/boost/detail/sp_counted_base.hpp
-Tape.o: /usr/include/boost/detail/sp_counted_base_gcc_x86.hpp
-Tape.o: /usr/include/boost/detail/sp_counted_impl.hpp
-Tape.o: /usr/include/boost/detail/workaround.hpp Packages/include/gmpxx.h
-Tape.o: Packages/include/gmp.h Exception.h Turing_Machine.h
+Chain_Simulator.o: Exception.h Turing_Machine.h Tape.h TapeImplem.h
+Chain_Simulator.o: Proof_System.h
 Proof_System.o: Proof_System.h Define.h /usr/include/boost/shared_ptr.hpp
 Proof_System.o: /usr/include/boost/config.hpp
 Proof_System.o: /usr/include/boost/config/user.hpp
@@ -270,7 +271,7 @@ Proof_System.o: /usr/include/boost/detail/sp_counted_base_gcc_x86.hpp
 Proof_System.o: /usr/include/boost/detail/sp_counted_impl.hpp
 Proof_System.o: /usr/include/boost/detail/workaround.hpp
 Proof_System.o: Packages/include/gmpxx.h Packages/include/gmp.h Exception.h
-Proof_System.o: Turing_Machine.h Tape.h
+Proof_System.o: Turing_Machine.h Tape.h TapeImplem.h
 Exception.o: Exception.h Define.h /usr/include/boost/shared_ptr.hpp
 Exception.o: /usr/include/boost/config.hpp /usr/include/boost/config/user.hpp
 Exception.o: /usr/include/boost/config/select_compiler_config.hpp
