@@ -21,7 +21,7 @@ class Proof_System
     void define(shared_ptr<Turing_Machine> a_machine,
                 const bool               & a_recursive);
 
-    void log(RUN_STATE           & a_cond,
+    bool log(RUN_STATE           & a_run_state,
              Tape<INTEGER>       & a_new_tape,
              INTEGER             & a_num_steps,
              const Tape<INTEGER> & a_old_tape,
@@ -31,14 +31,15 @@ class Proof_System
 
     bool compare();
 
-    bool applies(bool                & a_is_good,
-                 TRANSITION          & a_trans,
+    bool applies(RUN_STATE           & a_run_state,
+                 Tape<INTEGER>       & a_new_tape,
+                 INTEGER             & a_num_steps,
                  bool                & a_bad_delta,
                  const RULE          & a_rule,
-                 const Tape<INTEGER> & a_new_tape,
-                 const STATE         & a_new_state,
-                 const INTEGER       & a_new_step_num,
-                 const INTEGER       & a_new_loop_num);
+                 const Tape<INTEGER> & a_old_tape,
+                 const STATE         & a_old_state,
+                 const INTEGER       & a_step_num,
+                 const INTEGER       & a_loop_num);
 
     void strip_config(vector<int>         & a_stripped_config,
                       const STATE         & a_state,

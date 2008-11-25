@@ -21,7 +21,7 @@ void Proof_System::define(shared_ptr<Turing_Machine> a_machine,
   m_is_defined = true;
 }
 
-void Proof_System::log(RUN_STATE           & a_cond,
+bool Proof_System::log(RUN_STATE           & a_run_state,
                        Tape<INTEGER>       & a_new_tape,
                        INTEGER             & a_num_steps,
                        const Tape<INTEGER> & a_old_tape,
@@ -34,20 +34,21 @@ void Proof_System::log(RUN_STATE           & a_cond,
 
   if (m_proven_transitions.find(stripped_config) != m_proven_transitions.end())
   {
-    bool is_good;
-    TRANSITION trans;
     bool bad_delta;
-
-    applies(is_good,trans,bad_delta,m_proven_transitions[stripped_config],
-            a_old_tape,a_old_state,a_step_num,a_loop_num);
     
-    if (is_good)
+    if (applies(a_run_state,a_new_tape,a_num_steps,bad_delta,
+                m_proven_transitions[stripped_config],a_old_tape,a_old_state,
+                a_step_num,a_loop_num))
     {
       if ((!m_recursive || bad_delta) && m_prove_new_rules)
       {
         m_past_configs.clear();
       }
+
+      return true;
     }
+
+    return false;
   }
 
   Error("Not implemented...");
@@ -58,14 +59,15 @@ bool Proof_System::compare()
   Error("Not implemented...");
 }
 
-bool Proof_System::applies(bool                & a_is_good,
-                           TRANSITION          & a_trans,
+bool Proof_System::applies(RUN_STATE           & a_run_state,
+                           Tape<INTEGER>       & a_new_tape,
+                           INTEGER             & a_num_steps,
                            bool                & a_bad_delta,
                            const RULE          & a_rule,
-                           const Tape<INTEGER> & a_new_tape,
-                           const STATE         & a_new_state,
-                           const INTEGER       & a_new_step_num,
-                           const INTEGER       & a_new_loop_num)
+                           const Tape<INTEGER> & a_old_tape,
+                           const STATE         & a_old_state,
+                           const INTEGER       & a_step_num,
+                           const INTEGER       & a_loop_num)
 {
   Error("Not implemented...");
 }
