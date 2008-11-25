@@ -13,7 +13,8 @@ src1 = Quick_Sim.cpp                 \
        Backsymbol_Turing_Machine.cpp \
        Chain_Simulator.cpp           \
        Proof_System.cpp              \
-       Exception.cpp
+       Exception.cpp                 \
+       Expression.cpp	
 obj1 = Quick_Sim.o                   \
        TTable.o                      \
        Tape.o                        \
@@ -23,7 +24,8 @@ obj1 = Quick_Sim.o                   \
        Backsymbol_Turing_Machine.o   \
        Chain_Simulator.o             \
        Proof_System.o                \
-       Exception.o
+       Exception.o                   \
+       Expression.o
 
 all: $(exe1)
 
@@ -41,44 +43,38 @@ clean:
 
 # DO NOT DELETE
 
-Quick_Sim.o: Define.h /usr/include/boost/shared_ptr.hpp
-Quick_Sim.o: /usr/include/boost/config.hpp /usr/include/boost/config/user.hpp
-Quick_Sim.o: /usr/include/boost/config/select_compiler_config.hpp
-Quick_Sim.o: /usr/include/boost/config/compiler/gcc.hpp
-Quick_Sim.o: /usr/include/boost/config/select_stdlib_config.hpp
-Quick_Sim.o: /usr/include/boost/config/select_platform_config.hpp
-Quick_Sim.o: /usr/include/boost/config/suffix.hpp /usr/include/limits.h
-Quick_Sim.o: /usr/include/features.h /usr/include/sys/cdefs.h
-Quick_Sim.o: /usr/include/bits/wordsize.h /usr/include/gnu/stubs.h
-Quick_Sim.o: /usr/include/gnu/stubs-64.h /usr/include/bits/posix1_lim.h
-Quick_Sim.o: /usr/include/bits/local_lim.h /usr/include/linux/limits.h
-Quick_Sim.o: /usr/include/bits/posix2_lim.h /usr/include/boost/assert.hpp
-Quick_Sim.o: /usr/include/assert.h /usr/include/boost/checked_delete.hpp
-Quick_Sim.o: /usr/include/boost/throw_exception.hpp
-Quick_Sim.o: /usr/include/boost/config.hpp
-Quick_Sim.o: /usr/include/boost/detail/shared_count.hpp
-Quick_Sim.o: /usr/include/boost/detail/bad_weak_ptr.hpp
-Quick_Sim.o: /usr/include/boost/detail/sp_counted_base.hpp
-Quick_Sim.o: /usr/include/boost/detail/sp_counted_base_gcc_x86.hpp
-Quick_Sim.o: /usr/include/boost/detail/sp_counted_impl.hpp
-Quick_Sim.o: /usr/include/boost/detail/workaround.hpp
-Quick_Sim.o: Packages/include/gmpxx.h Packages/include/gmp.h Exception.h
-Quick_Sim.o: TTable.h Turing_Machine.h Simple_Turing_Machine.h Block_Finder.h
-Quick_Sim.o: Macro_Turing_Machine.h Backsymbol_Turing_Machine.h
-Quick_Sim.o: Chain_Simulator.h Tape.h TapeImplem.h Proof_System.h
+test2.o: Expression.h Define.h /usr/include/boost/shared_ptr.hpp
+test2.o: /usr/include/boost/config.hpp /usr/include/boost/config/user.hpp
+test2.o: /usr/include/boost/config/select_compiler_config.hpp
+test2.o: /usr/include/boost/config/compiler/gcc.hpp
+test2.o: /usr/include/boost/config/select_stdlib_config.hpp
+test2.o: /usr/include/boost/config/no_tr1/utility.hpp
+test2.o: /usr/include/boost/config/select_platform_config.hpp
+test2.o: /usr/include/boost/config/suffix.hpp /usr/include/boost/assert.hpp
+test2.o: /usr/include/assert.h /usr/include/features.h
+test2.o: /usr/include/sys/cdefs.h /usr/include/bits/wordsize.h
+test2.o: /usr/include/gnu/stubs.h /usr/include/gnu/stubs-32.h
+test2.o: /usr/include/boost/checked_delete.hpp
+test2.o: /usr/include/boost/throw_exception.hpp /usr/include/boost/config.hpp
+test2.o: /usr/include/boost/detail/shared_count.hpp
+test2.o: /usr/include/boost/detail/bad_weak_ptr.hpp
+test2.o: /usr/include/boost/detail/sp_counted_base.hpp
+test2.o: /usr/include/boost/detail/sp_counted_base_gcc_x86.hpp
+test2.o: /usr/include/boost/detail/sp_counted_impl.hpp
+test2.o: /usr/include/boost/detail/workaround.hpp Packages/include/gmpxx.h
+test2.o: Packages/include/gmp.h Exception.h
 TTable.o: TTable.h Define.h /usr/include/boost/shared_ptr.hpp
 TTable.o: /usr/include/boost/config.hpp /usr/include/boost/config/user.hpp
 TTable.o: /usr/include/boost/config/select_compiler_config.hpp
 TTable.o: /usr/include/boost/config/compiler/gcc.hpp
 TTable.o: /usr/include/boost/config/select_stdlib_config.hpp
+TTable.o: /usr/include/boost/config/no_tr1/utility.hpp
 TTable.o: /usr/include/boost/config/select_platform_config.hpp
-TTable.o: /usr/include/boost/config/suffix.hpp /usr/include/limits.h
-TTable.o: /usr/include/features.h /usr/include/sys/cdefs.h
-TTable.o: /usr/include/bits/wordsize.h /usr/include/gnu/stubs.h
-TTable.o: /usr/include/gnu/stubs-64.h /usr/include/bits/posix1_lim.h
-TTable.o: /usr/include/bits/local_lim.h /usr/include/linux/limits.h
-TTable.o: /usr/include/bits/posix2_lim.h /usr/include/boost/assert.hpp
-TTable.o: /usr/include/assert.h /usr/include/boost/checked_delete.hpp
+TTable.o: /usr/include/boost/config/suffix.hpp /usr/include/boost/assert.hpp
+TTable.o: /usr/include/assert.h /usr/include/features.h
+TTable.o: /usr/include/sys/cdefs.h /usr/include/bits/wordsize.h
+TTable.o: /usr/include/gnu/stubs.h /usr/include/gnu/stubs-32.h
+TTable.o: /usr/include/boost/checked_delete.hpp
 TTable.o: /usr/include/boost/throw_exception.hpp
 TTable.o: /usr/include/boost/config.hpp
 TTable.o: /usr/include/boost/detail/shared_count.hpp
@@ -93,14 +89,13 @@ Tape.o: /usr/include/boost/config.hpp /usr/include/boost/config/user.hpp
 Tape.o: /usr/include/boost/config/select_compiler_config.hpp
 Tape.o: /usr/include/boost/config/compiler/gcc.hpp
 Tape.o: /usr/include/boost/config/select_stdlib_config.hpp
+Tape.o: /usr/include/boost/config/no_tr1/utility.hpp
 Tape.o: /usr/include/boost/config/select_platform_config.hpp
-Tape.o: /usr/include/boost/config/suffix.hpp /usr/include/limits.h
-Tape.o: /usr/include/features.h /usr/include/sys/cdefs.h
-Tape.o: /usr/include/bits/wordsize.h /usr/include/gnu/stubs.h
-Tape.o: /usr/include/gnu/stubs-64.h /usr/include/bits/posix1_lim.h
-Tape.o: /usr/include/bits/local_lim.h /usr/include/linux/limits.h
-Tape.o: /usr/include/bits/posix2_lim.h /usr/include/boost/assert.hpp
-Tape.o: /usr/include/assert.h /usr/include/boost/checked_delete.hpp
+Tape.o: /usr/include/boost/config/suffix.hpp /usr/include/boost/assert.hpp
+Tape.o: /usr/include/assert.h /usr/include/features.h
+Tape.o: /usr/include/sys/cdefs.h /usr/include/bits/wordsize.h
+Tape.o: /usr/include/gnu/stubs.h /usr/include/gnu/stubs-32.h
+Tape.o: /usr/include/boost/checked_delete.hpp
 Tape.o: /usr/include/boost/throw_exception.hpp /usr/include/boost/config.hpp
 Tape.o: /usr/include/boost/detail/shared_count.hpp
 Tape.o: /usr/include/boost/detail/bad_weak_ptr.hpp
@@ -116,17 +111,13 @@ Simple_Turing_Machine.o: /usr/include/boost/config/user.hpp
 Simple_Turing_Machine.o: /usr/include/boost/config/select_compiler_config.hpp
 Simple_Turing_Machine.o: /usr/include/boost/config/compiler/gcc.hpp
 Simple_Turing_Machine.o: /usr/include/boost/config/select_stdlib_config.hpp
+Simple_Turing_Machine.o: /usr/include/boost/config/no_tr1/utility.hpp
 Simple_Turing_Machine.o: /usr/include/boost/config/select_platform_config.hpp
 Simple_Turing_Machine.o: /usr/include/boost/config/suffix.hpp
-Simple_Turing_Machine.o: /usr/include/limits.h /usr/include/features.h
-Simple_Turing_Machine.o: /usr/include/sys/cdefs.h
-Simple_Turing_Machine.o: /usr/include/bits/wordsize.h
-Simple_Turing_Machine.o: /usr/include/gnu/stubs.h /usr/include/gnu/stubs-64.h
-Simple_Turing_Machine.o: /usr/include/bits/posix1_lim.h
-Simple_Turing_Machine.o: /usr/include/bits/local_lim.h
-Simple_Turing_Machine.o: /usr/include/linux/limits.h
-Simple_Turing_Machine.o: /usr/include/bits/posix2_lim.h
 Simple_Turing_Machine.o: /usr/include/boost/assert.hpp /usr/include/assert.h
+Simple_Turing_Machine.o: /usr/include/features.h /usr/include/sys/cdefs.h
+Simple_Turing_Machine.o: /usr/include/bits/wordsize.h
+Simple_Turing_Machine.o: /usr/include/gnu/stubs.h /usr/include/gnu/stubs-32.h
 Simple_Turing_Machine.o: /usr/include/boost/checked_delete.hpp
 Simple_Turing_Machine.o: /usr/include/boost/throw_exception.hpp
 Simple_Turing_Machine.o: /usr/include/boost/config.hpp
@@ -144,14 +135,14 @@ Block_Finder.o: /usr/include/boost/config/user.hpp
 Block_Finder.o: /usr/include/boost/config/select_compiler_config.hpp
 Block_Finder.o: /usr/include/boost/config/compiler/gcc.hpp
 Block_Finder.o: /usr/include/boost/config/select_stdlib_config.hpp
+Block_Finder.o: /usr/include/boost/config/no_tr1/utility.hpp
 Block_Finder.o: /usr/include/boost/config/select_platform_config.hpp
-Block_Finder.o: /usr/include/boost/config/suffix.hpp /usr/include/limits.h
+Block_Finder.o: /usr/include/boost/config/suffix.hpp
+Block_Finder.o: /usr/include/boost/assert.hpp /usr/include/assert.h
 Block_Finder.o: /usr/include/features.h /usr/include/sys/cdefs.h
 Block_Finder.o: /usr/include/bits/wordsize.h /usr/include/gnu/stubs.h
-Block_Finder.o: /usr/include/gnu/stubs-64.h /usr/include/bits/posix1_lim.h
-Block_Finder.o: /usr/include/bits/local_lim.h /usr/include/linux/limits.h
-Block_Finder.o: /usr/include/bits/posix2_lim.h /usr/include/boost/assert.hpp
-Block_Finder.o: /usr/include/assert.h /usr/include/boost/checked_delete.hpp
+Block_Finder.o: /usr/include/gnu/stubs-32.h
+Block_Finder.o: /usr/include/boost/checked_delete.hpp
 Block_Finder.o: /usr/include/boost/throw_exception.hpp
 Block_Finder.o: /usr/include/boost/config.hpp
 Block_Finder.o: /usr/include/boost/detail/shared_count.hpp
@@ -169,16 +160,13 @@ Macro_Turing_Machine.o: /usr/include/boost/config/user.hpp
 Macro_Turing_Machine.o: /usr/include/boost/config/select_compiler_config.hpp
 Macro_Turing_Machine.o: /usr/include/boost/config/compiler/gcc.hpp
 Macro_Turing_Machine.o: /usr/include/boost/config/select_stdlib_config.hpp
+Macro_Turing_Machine.o: /usr/include/boost/config/no_tr1/utility.hpp
 Macro_Turing_Machine.o: /usr/include/boost/config/select_platform_config.hpp
 Macro_Turing_Machine.o: /usr/include/boost/config/suffix.hpp
-Macro_Turing_Machine.o: /usr/include/limits.h /usr/include/features.h
-Macro_Turing_Machine.o: /usr/include/sys/cdefs.h /usr/include/bits/wordsize.h
-Macro_Turing_Machine.o: /usr/include/gnu/stubs.h /usr/include/gnu/stubs-64.h
-Macro_Turing_Machine.o: /usr/include/bits/posix1_lim.h
-Macro_Turing_Machine.o: /usr/include/bits/local_lim.h
-Macro_Turing_Machine.o: /usr/include/linux/limits.h
-Macro_Turing_Machine.o: /usr/include/bits/posix2_lim.h
 Macro_Turing_Machine.o: /usr/include/boost/assert.hpp /usr/include/assert.h
+Macro_Turing_Machine.o: /usr/include/features.h /usr/include/sys/cdefs.h
+Macro_Turing_Machine.o: /usr/include/bits/wordsize.h /usr/include/gnu/stubs.h
+Macro_Turing_Machine.o: /usr/include/gnu/stubs-32.h
 Macro_Turing_Machine.o: /usr/include/boost/checked_delete.hpp
 Macro_Turing_Machine.o: /usr/include/boost/throw_exception.hpp
 Macro_Turing_Machine.o: /usr/include/boost/config.hpp
@@ -197,19 +185,15 @@ Backsymbol_Turing_Machine.o: /usr/include/boost/config/user.hpp
 Backsymbol_Turing_Machine.o: /usr/include/boost/config/select_compiler_config.hpp
 Backsymbol_Turing_Machine.o: /usr/include/boost/config/compiler/gcc.hpp
 Backsymbol_Turing_Machine.o: /usr/include/boost/config/select_stdlib_config.hpp
+Backsymbol_Turing_Machine.o: /usr/include/boost/config/no_tr1/utility.hpp
 Backsymbol_Turing_Machine.o: /usr/include/boost/config/select_platform_config.hpp
 Backsymbol_Turing_Machine.o: /usr/include/boost/config/suffix.hpp
-Backsymbol_Turing_Machine.o: /usr/include/limits.h /usr/include/features.h
+Backsymbol_Turing_Machine.o: /usr/include/boost/assert.hpp
+Backsymbol_Turing_Machine.o: /usr/include/assert.h /usr/include/features.h
 Backsymbol_Turing_Machine.o: /usr/include/sys/cdefs.h
 Backsymbol_Turing_Machine.o: /usr/include/bits/wordsize.h
 Backsymbol_Turing_Machine.o: /usr/include/gnu/stubs.h
-Backsymbol_Turing_Machine.o: /usr/include/gnu/stubs-64.h
-Backsymbol_Turing_Machine.o: /usr/include/bits/posix1_lim.h
-Backsymbol_Turing_Machine.o: /usr/include/bits/local_lim.h
-Backsymbol_Turing_Machine.o: /usr/include/linux/limits.h
-Backsymbol_Turing_Machine.o: /usr/include/bits/posix2_lim.h
-Backsymbol_Turing_Machine.o: /usr/include/boost/assert.hpp
-Backsymbol_Turing_Machine.o: /usr/include/assert.h
+Backsymbol_Turing_Machine.o: /usr/include/gnu/stubs-32.h
 Backsymbol_Turing_Machine.o: /usr/include/boost/checked_delete.hpp
 Backsymbol_Turing_Machine.o: /usr/include/boost/throw_exception.hpp
 Backsymbol_Turing_Machine.o: /usr/include/boost/config.hpp
@@ -228,14 +212,13 @@ Chain_Simulator.o: /usr/include/boost/config/user.hpp
 Chain_Simulator.o: /usr/include/boost/config/select_compiler_config.hpp
 Chain_Simulator.o: /usr/include/boost/config/compiler/gcc.hpp
 Chain_Simulator.o: /usr/include/boost/config/select_stdlib_config.hpp
+Chain_Simulator.o: /usr/include/boost/config/no_tr1/utility.hpp
 Chain_Simulator.o: /usr/include/boost/config/select_platform_config.hpp
-Chain_Simulator.o: /usr/include/boost/config/suffix.hpp /usr/include/limits.h
+Chain_Simulator.o: /usr/include/boost/config/suffix.hpp
+Chain_Simulator.o: /usr/include/boost/assert.hpp /usr/include/assert.h
 Chain_Simulator.o: /usr/include/features.h /usr/include/sys/cdefs.h
 Chain_Simulator.o: /usr/include/bits/wordsize.h /usr/include/gnu/stubs.h
-Chain_Simulator.o: /usr/include/gnu/stubs-64.h /usr/include/bits/posix1_lim.h
-Chain_Simulator.o: /usr/include/bits/local_lim.h /usr/include/linux/limits.h
-Chain_Simulator.o: /usr/include/bits/posix2_lim.h
-Chain_Simulator.o: /usr/include/boost/assert.hpp /usr/include/assert.h
+Chain_Simulator.o: /usr/include/gnu/stubs-32.h
 Chain_Simulator.o: /usr/include/boost/checked_delete.hpp
 Chain_Simulator.o: /usr/include/boost/throw_exception.hpp
 Chain_Simulator.o: /usr/include/boost/config.hpp
@@ -254,14 +237,14 @@ Proof_System.o: /usr/include/boost/config/user.hpp
 Proof_System.o: /usr/include/boost/config/select_compiler_config.hpp
 Proof_System.o: /usr/include/boost/config/compiler/gcc.hpp
 Proof_System.o: /usr/include/boost/config/select_stdlib_config.hpp
+Proof_System.o: /usr/include/boost/config/no_tr1/utility.hpp
 Proof_System.o: /usr/include/boost/config/select_platform_config.hpp
-Proof_System.o: /usr/include/boost/config/suffix.hpp /usr/include/limits.h
+Proof_System.o: /usr/include/boost/config/suffix.hpp
+Proof_System.o: /usr/include/boost/assert.hpp /usr/include/assert.h
 Proof_System.o: /usr/include/features.h /usr/include/sys/cdefs.h
 Proof_System.o: /usr/include/bits/wordsize.h /usr/include/gnu/stubs.h
-Proof_System.o: /usr/include/gnu/stubs-64.h /usr/include/bits/posix1_lim.h
-Proof_System.o: /usr/include/bits/local_lim.h /usr/include/linux/limits.h
-Proof_System.o: /usr/include/bits/posix2_lim.h /usr/include/boost/assert.hpp
-Proof_System.o: /usr/include/assert.h /usr/include/boost/checked_delete.hpp
+Proof_System.o: /usr/include/gnu/stubs-32.h
+Proof_System.o: /usr/include/boost/checked_delete.hpp
 Proof_System.o: /usr/include/boost/throw_exception.hpp
 Proof_System.o: /usr/include/boost/config.hpp
 Proof_System.o: /usr/include/boost/detail/shared_count.hpp
@@ -277,14 +260,14 @@ Exception.o: /usr/include/boost/config.hpp /usr/include/boost/config/user.hpp
 Exception.o: /usr/include/boost/config/select_compiler_config.hpp
 Exception.o: /usr/include/boost/config/compiler/gcc.hpp
 Exception.o: /usr/include/boost/config/select_stdlib_config.hpp
+Exception.o: /usr/include/boost/config/no_tr1/utility.hpp
 Exception.o: /usr/include/boost/config/select_platform_config.hpp
-Exception.o: /usr/include/boost/config/suffix.hpp /usr/include/limits.h
+Exception.o: /usr/include/boost/config/suffix.hpp
+Exception.o: /usr/include/boost/assert.hpp /usr/include/assert.h
 Exception.o: /usr/include/features.h /usr/include/sys/cdefs.h
 Exception.o: /usr/include/bits/wordsize.h /usr/include/gnu/stubs.h
-Exception.o: /usr/include/gnu/stubs-64.h /usr/include/bits/posix1_lim.h
-Exception.o: /usr/include/bits/local_lim.h /usr/include/linux/limits.h
-Exception.o: /usr/include/bits/posix2_lim.h /usr/include/boost/assert.hpp
-Exception.o: /usr/include/assert.h /usr/include/boost/checked_delete.hpp
+Exception.o: /usr/include/gnu/stubs-32.h
+Exception.o: /usr/include/boost/checked_delete.hpp
 Exception.o: /usr/include/boost/throw_exception.hpp
 Exception.o: /usr/include/boost/config.hpp
 Exception.o: /usr/include/boost/detail/shared_count.hpp
@@ -294,3 +277,26 @@ Exception.o: /usr/include/boost/detail/sp_counted_base_gcc_x86.hpp
 Exception.o: /usr/include/boost/detail/sp_counted_impl.hpp
 Exception.o: /usr/include/boost/detail/workaround.hpp
 Exception.o: Packages/include/gmpxx.h Packages/include/gmp.h
+Expression.o: Expression.h Define.h /usr/include/boost/shared_ptr.hpp
+Expression.o: /usr/include/boost/config.hpp
+Expression.o: /usr/include/boost/config/user.hpp
+Expression.o: /usr/include/boost/config/select_compiler_config.hpp
+Expression.o: /usr/include/boost/config/compiler/gcc.hpp
+Expression.o: /usr/include/boost/config/select_stdlib_config.hpp
+Expression.o: /usr/include/boost/config/no_tr1/utility.hpp
+Expression.o: /usr/include/boost/config/select_platform_config.hpp
+Expression.o: /usr/include/boost/config/suffix.hpp
+Expression.o: /usr/include/boost/assert.hpp /usr/include/assert.h
+Expression.o: /usr/include/features.h /usr/include/sys/cdefs.h
+Expression.o: /usr/include/bits/wordsize.h /usr/include/gnu/stubs.h
+Expression.o: /usr/include/gnu/stubs-32.h
+Expression.o: /usr/include/boost/checked_delete.hpp
+Expression.o: /usr/include/boost/throw_exception.hpp
+Expression.o: /usr/include/boost/config.hpp
+Expression.o: /usr/include/boost/detail/shared_count.hpp
+Expression.o: /usr/include/boost/detail/bad_weak_ptr.hpp
+Expression.o: /usr/include/boost/detail/sp_counted_base.hpp
+Expression.o: /usr/include/boost/detail/sp_counted_base_gcc_x86.hpp
+Expression.o: /usr/include/boost/detail/sp_counted_impl.hpp
+Expression.o: /usr/include/boost/detail/workaround.hpp
+Expression.o: Packages/include/gmpxx.h Packages/include/gmp.h Exception.h

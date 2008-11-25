@@ -11,6 +11,7 @@
 
 #include <boost/shared_ptr.hpp>
 
+#include <assert.h>
 #include <gmpxx.h>
 
 using namespace std;
