@@ -58,7 +58,13 @@ void Chain_Simulator::step()
     RUN_STATE cond;
     Tape<INTEGER> new_tape;
 
-    m_proof.log(cond,new_tape,num_steps,m_tape,m_trans.m_state,m_step_num,m_num_loops-1);
+    CONFIG full_config;
+    full_config.m_state = m_trans.m_state;
+    full_config.m_tape  = m_tape;
+    full_config.m_step_num = m_step_num;
+    full_config.m_loop_num = m_num_loops - 1;
+
+    m_proof.log(cond,new_tape,num_steps,full_config);
 
     if (cond == INFINITE)
     {
