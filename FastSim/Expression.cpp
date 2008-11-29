@@ -13,10 +13,10 @@ void Expression::add_new_variable()
   m_vars[new_var()] = 1;
 }
 
-void Expression::add(Expression other)
+void Expression::add(Expression a_other)
 {
-  // Iterate through other expression's variable list and add
-  for (var_map::iterator it = other.m_vars.begin(); it != other.m_vars.end(); it++)
+  // Iterate through a_other expression's variable list and add
+  for (var_map::iterator it = a_other.m_vars.begin(); it != a_other.m_vars.end(); it++)
   {
     VARIABLE var = it->first;
     int coef = it->second;
@@ -25,10 +25,10 @@ void Expression::add(Expression other)
   }
   
   // Add the constant
-  m_constant += other.m_constant;
+  m_constant += a_other.m_constant;
 }
 
-INTEGER Expression::eval(map<VARIABLE, INTEGER> assign)
+INTEGER Expression::eval(map<VARIABLE, INTEGER> a_assign)
 {
   // result = constant + "evaluation of variables"
   INTEGER result = m_constant;
@@ -39,7 +39,7 @@ INTEGER Expression::eval(map<VARIABLE, INTEGER> assign)
     VARIABLE var = it->first;
     int coef = it->second;
     
-    result += coef * assign[var];
+    result += coef * a_assign[var];
   }
   
   // Add the constant
@@ -59,37 +59,37 @@ VARIABLE Expression::get_var()
 }
 
 // return a string representation for a variable
-char repr_variable(VARIABLE var)
+char repr_variable(VARIABLE a_var)
 {
-  assert(var < 60);
+  assert(a_var < 60);
   
-  return var + 'A';
+  return a_var + 'A';
 }
 
-ostream& operator<<(ostream& stream, Expression expr)
+ostream& operator<<(ostream& a_stream, Expression a_expr)
 {
   // Iterate through expression's variable list and print
-  for (var_map::iterator it = expr.m_vars.begin(); it != expr.m_vars.end(); it++)
+  for (var_map::iterator it = a_expr.m_vars.begin(); it != a_expr.m_vars.end(); it++)
   {
     VARIABLE var = it->first;
     int coef = it->second;
     
     if (coef == 1)
     {
-      stream << repr_variable(var) << " + ";
+      a_stream << repr_variable(var) << " + ";
     }
     else if (coef == -1)
     {
-      stream << "-" << repr_variable(var) << " + ";
+      a_stream << "-" << repr_variable(var) << " + ";
     }
     else
     {
-      stream << coef << repr_variable(var) << " + ";
+      a_stream << coef << repr_variable(var) << " + ";
     }
   }
   
   // Print the constant
-  stream << expr.m_constant;
+  a_stream << a_expr.m_constant;
   
-  return stream;
+  return a_stream;
 }
