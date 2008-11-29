@@ -23,16 +23,16 @@ class Expression
     INTEGER m_constant; // TODO: should this be a diff type of int?
     
     // Cast an integer to an Expression type with no variables.
-    Expression(INTEGER const_in=0)
+    Expression(INTEGER a_const_in=0)
     {
-      m_constant = const_in;
+      m_constant = a_const_in;
     };
     
     // Create an expression from one variable + one constant.
-    Expression(INTEGER const_in, VARIABLE var_in)
+    Expression(INTEGER a_const_in, VARIABLE a_var_in)
     {
-      m_vars[var_in] = 1;
-      m_constant = const_in;
+      m_vars[a_var_in] = 1;
+      m_constant = a_const_in;
     };
     
     virtual ~Expression()
@@ -43,19 +43,19 @@ class Expression
     void add_new_variable();
     
     // Arithmetic operations that mutate this object (like += and -=)
-    void add(Expression other);
-    //void sub(Expression other);
-    void add_int(INTEGER other) { m_constant += other; };
-    void sub_int(INTEGER other) { m_constant -= other; };
+    void add(Expression a_other);
+    //void sub(Expression a_other);
+    void add_int(INTEGER a_other) { m_constant += a_other; };
+    void sub_int(INTEGER a_other) { m_constant -= a_other; };
     
     // Evaluate this expression with a given variable assignment
-    INTEGER eval(map<VARIABLE, INTEGER> assign);
+    INTEGER eval(map<VARIABLE, INTEGER> a_assign);
     
     // Get the single variable from an expression.
     // TODO: This is ugly, can we find another way to do this?
     VARIABLE get_var();
     
-    friend ostream& operator<<(ostream& stream, Expression ob);
+    friend ostream& operator<<(ostream& a_stream, Expression a_expr);
 };
 
 #endif
