@@ -21,24 +21,19 @@ void Proof_System::define(shared_ptr<Turing_Machine> a_machine,
   m_is_defined = true;
 }
 
-bool Proof_System::log(RUN_STATE           & a_run_state,
-                       Tape<INTEGER>       & a_new_tape,
-                       INTEGER             & a_num_steps,
-                       const Tape<INTEGER> & a_old_tape,
-                       const STATE         & a_old_state,
-                       const INTEGER       & a_step_num,
-                       const INTEGER       & a_loop_num)
+bool Proof_System::log(RUN_STATE     & a_run_state,
+                       Tape<INTEGER> & a_new_tape,
+                       INTEGER       & a_num_steps,
+                       const CONFIG  & a_full_config)
 {
   vector<int> stripped_config;
-  strip_config(stripped_config,a_old_state,a_old_tape);
+  strip_config(stripped_config,a_full_config.m_state,a_full_config.m_tape);
 
   if (m_proven_transitions.find(stripped_config) != m_proven_transitions.end())
   {
     bool bad_delta;
-    
     if (applies(a_run_state,a_new_tape,a_num_steps,bad_delta,
-                m_proven_transitions[stripped_config],a_old_tape,a_old_state,
-                a_step_num,a_loop_num))
+                m_proven_transitions[stripped_config],a_full_config))
     {
       if ((!m_recursive || bad_delta) && m_prove_new_rules)
       {
@@ -51,23 +46,67 @@ bool Proof_System::log(RUN_STATE           & a_run_state,
     return false;
   }
 
-  Error("Not implemented...");
+  if (!m_prove_new_rules)
+  {
+    return false;
+  }
+
+  if (m_past_configs.find(stripped_config) == m_past_configs.end())
+  {
+    PAST_CONFIG cur_config;
+    cur_config.m_times_seen = 1;
+    cur_config.m_config     = a_full_config;
+
+    m_past_configs[stripped_config] = cur_config;
+
+    return false;
+  }
+
+  PAST_CONFIG past_config = m_past_configs[stripped_config];
+
+  if ((past_config.m_times_seen == 1) ||
+      (a_full_config.m_loop_num - past_config.m_config.m_loop_num != past_config.m_delta_loop))
+  {
+    past_config.m_times_seen++;
+    past_config.m_delta_loop = a_full_config.m_loop_num - past_config.m_config.m_loop_num;
+    past_config.m_config     = a_full_config;
+
+    m_past_configs[stripped_config] = past_config;
+
+    return false;
+  } 
+
+  RULE rule;
+  if (compare(rule,past_config,a_full_config))
+  {
+    m_proven_transitions[stripped_config] = rule;
+
+    m_past_configs.clear();
+
+    bool bad_delta;
+    if (applies(a_run_state,a_new_tape,a_num_steps,bad_delta,
+                rule,a_full_config))
+    {
+      return true;
+    }
+  }
+
+  return false;
 }
 
-bool Proof_System::compare()
+bool Proof_System::compare(RULE              & a_rule,
+                           const PAST_CONFIG & a_past_config,
+                           const CONFIG      & a_full_config)
 {
   Error("Not implemented...");
 }
 
-bool Proof_System::applies(RUN_STATE           & a_run_state,
-                           Tape<INTEGER>       & a_new_tape,
-                           INTEGER             & a_num_steps,
-                           bool                & a_bad_delta,
-                           const RULE          & a_rule,
-                           const Tape<INTEGER> & a_old_tape,
-                           const STATE         & a_old_state,
-                           const INTEGER       & a_step_num,
-                           const INTEGER       & a_loop_num)
+bool Proof_System::applies(RUN_STATE     & a_run_state,
+                           Tape<INTEGER> & a_new_tape,
+                           INTEGER       & a_num_steps,
+                           bool          & a_bad_delta,
+                           const RULE    & a_rule,
+                           const CONFIG  & a_full_config)
 {
   Error("Not implemented...");
 }
@@ -85,10 +124,13 @@ void Proof_System::strip_config(vector<int>         & a_stripped_config,
          it != a_tape.m_tape[side].end();
          it++)
     {
-      a_stripped_config.push_back(it->m_symbol);
       if (it->m_number == 1)
       {
-        a_stripped_config.push_back(1);
+        a_stripped_config.push_back(-(it->m_symbol));
+      }
+      else
+      {
+        a_stripped_config.push_back(it->m_symbol);
       }
     }
   }
