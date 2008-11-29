@@ -1,10 +1,11 @@
-#ifndef _GENERAL_INTEGER_H_
-#define _GENERAL_INTEGER_H_
+#ifndef _EXPRESSION_H_
+#define _EXPRESSION_H_
 
 #include "Define.h"
 
 // Variable labels
 typedef int VARIABLE;
+
 // Returns a new, distinct variable
 VARIABLE new_var();
 
