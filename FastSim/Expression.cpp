@@ -93,4 +93,3 @@ ostream& operator<<(ostream& stream, Expression expr)
   
   return stream;
 }
-
