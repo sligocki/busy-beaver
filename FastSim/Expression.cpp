@@ -10,31 +10,31 @@ VARIABLE new_var()
 
 void Expression::add_new_variable()
 {
-  vars[new_var()] = 1;
+  m_vars[new_var()] = 1;
 }
 
 void Expression::add(Expression other)
 {
   // Iterate through other expression's variable list and add
-  for (var_map::iterator it = other.vars.begin(); it != other.vars.end(); it++)
+  for (var_map::iterator it = other.m_vars.begin(); it != other.m_vars.end(); it++)
   {
     VARIABLE var = it->first;
     int coef = it->second;
-    // TODO: I assume that vars[n] will initialize to 0 if not already set (is it safe?)
-    vars[var] += coef;
+    // TODO: I assume that m_vars[n] will initialize to 0 if not already set (is it safe?)
+    m_vars[var] += coef;
   }
   
   // Add the constant
-  constant += other.constant;
+  m_constant += other.m_constant;
 }
 
 INTEGER Expression::eval(map<VARIABLE, INTEGER> assign)
 {
   // result = constant + "evaluation of variables"
-  INTEGER result = constant;
+  INTEGER result = m_constant;
   
   // Iterate through expression's variable list and evaluate
-  for (var_map::iterator it = vars.begin(); it != vars.end(); it++)
+  for (var_map::iterator it = m_vars.begin(); it != m_vars.end(); it++)
   {
     VARIABLE var = it->first;
     int coef = it->second;
@@ -49,10 +49,10 @@ INTEGER Expression::eval(map<VARIABLE, INTEGER> assign)
 VARIABLE Expression::get_var()
 {
   // Must be only one variable
-  assert(vars.size() == 1);
+  assert(m_vars.size() == 1);
   
   // Must have coeficient of one
-  var_map::iterator it = vars.begin();
+  var_map::iterator it = m_vars.begin();
   assert(it->second == 1);
   
   return it->first;
@@ -69,7 +69,7 @@ char repr_variable(VARIABLE var)
 ostream& operator<<(ostream& stream, Expression expr)
 {
   // Iterate through expression's variable list and print
-  for (var_map::iterator it = expr.vars.begin(); it != expr.vars.end(); it++)
+  for (var_map::iterator it = expr.m_vars.begin(); it != expr.m_vars.end(); it++)
   {
     VARIABLE var = it->first;
     int coef = it->second;
@@ -89,7 +89,7 @@ ostream& operator<<(ostream& stream, Expression expr)
   }
   
   // Print the constant
-  stream << expr.constant;
+  stream << expr.m_constant;
   
   return stream;
 }

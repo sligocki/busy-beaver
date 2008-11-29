@@ -16,23 +16,23 @@ class Expression
 {
   public:
     // Set of variables and their coeficients.
-    // e.g. if expr = 2x + 1, then vars[x] = 2 and vars[y] = 0
-    var_map vars;
+    // e.g. if expr = 2x + 1, then m_vars[x] = 2 and m_vars[y] = 0
+    var_map m_vars;
     
     // Integer constant. e.g. the 1 from above
-    INTEGER constant; // TODO: should this be a diff type of int?
+    INTEGER m_constant; // TODO: should this be a diff type of int?
     
     // Cast an integer to an Expression type with no variables.
     Expression(INTEGER const_in=0)
     {
-      constant = const_in;
+      m_constant = const_in;
     };
     
     // Create an expression from one variable + one constant.
     Expression(INTEGER const_in, VARIABLE var_in)
     {
-      vars[var_in] = 1;
-      constant = const_in;
+      m_vars[var_in] = 1;
+      m_constant = const_in;
     };
     
     virtual ~Expression()
@@ -45,8 +45,8 @@ class Expression
     // Arithmetic operations that mutate this object (like += and -=)
     void add(Expression other);
     //void sub(Expression other);
-    void add_int(INTEGER other) { constant += other; };
-    void sub_int(INTEGER other) { constant -= other; };
+    void add_int(INTEGER other) { m_constant += other; };
+    void sub_int(INTEGER other) { m_constant -= other; };
     
     // Evaluate this expression with a given variable assignment
     INTEGER eval(map<VARIABLE, INTEGER> assign);
