@@ -1,3 +1,5 @@
+#include "Expression.h"
+#include "General_Chain_Simulator.h"
 #include "Proof_System.h"
 
 Proof_System::Proof_System()
@@ -77,7 +79,7 @@ bool Proof_System::log(RUN_STATE     & a_run_state,
   } 
 
   RULE rule;
-  if (compare(rule,past_config,a_full_config))
+  if (compare(rule,past_config.m_config,a_full_config))
   {
     m_proven_transitions[stripped_config] = rule;
 
@@ -94,10 +96,55 @@ bool Proof_System::log(RUN_STATE     & a_run_state,
   return false;
 }
 
-bool Proof_System::compare(RULE              & a_rule,
-                           const PAST_CONFIG & a_past_config,
-                           const CONFIG      & a_full_config)
+bool Proof_System::compare(RULE         & a_rule,
+                           const CONFIG & a_old_config,
+                           const CONFIG & a_new_config)
 {
+  Tape<Expression> gen_tape;
+
+  gen_tape.m_init_symbol = a_old_config.m_tape.m_init_symbol;
+  gen_tape.m_dir         = a_old_config.m_tape.m_dir;
+  gen_tape.m_displace    = a_old_config.m_tape.m_displace;
+
+  map<VARIABLE,INTEGER> min_val;
+
+  for (int dir = 0; dir < 2; dir++)
+  {
+    const vector<Repeated_Symbol<INTEGER> >& old_half_tape = a_old_config.m_tape.m_half_tape[dir];
+    vector<Repeated_Symbol<Expression> >& new_half_tape = gen_tape.m_half_tape[dir];
+    for (int i = 0; i < old_half_tape.size(); i++)
+    {
+      const Repeated_Symbol<INTEGER> & old_repeated_symbol = old_half_tape[i];
+      Repeated_Symbol<Expression> new_repeated_symbol;
+
+      new_repeated_symbol.m_symbol = old_repeated_symbol.m_symbol;
+
+      if (old_repeated_symbol.m_number != 1 &&
+          old_repeated_symbol.m_number != INFINITY)
+      {
+        VARIABLE cur_var = new_var();
+
+        Expression new_number(old_repeated_symbol.m_number,cur_var);
+        new_repeated_symbol.m_number = new_number;
+
+        min_val[cur_var] = old_repeated_symbol.m_number;
+      }
+      else
+      {
+        new_repeated_symbol.m_number = old_repeated_symbol.m_number;
+      }
+
+      new_half_tape.push_back(new_repeated_symbol);
+    }
+  }
+
+  gen_tape.m_is_defined  = a_old_config.m_tape.m_is_defined;
+
+  Tape<Expression> initial_tape = gen_tape;
+
+  General_Chain_Simulator gen_sim(m_machine,false,false);
+  gen_sim.m_tape = gen_tape;
+
   Error("Not implemented...");
 }
 
@@ -120,8 +167,8 @@ void Proof_System::strip_config(vector<int>         & a_stripped_config,
 
   for (int side = 0; side < 2; side++)
   {
-    for (vector<repeated_symbol<INTEGER> >::const_iterator it = a_tape.m_tape[side].begin();
-         it != a_tape.m_tape[side].end();
+    for (vector<Repeated_Symbol<INTEGER> >::const_iterator it = a_tape.m_half_tape[side].begin();
+         it != a_tape.m_half_tape[side].end();
          it++)
     {
       if (it->m_number == 1)

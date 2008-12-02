@@ -38,7 +38,7 @@ class Expression
     virtual ~Expression()
     {
     };
-    
+
     // Add a new variable to the expression: 2 -> x + 2
     void add_new_variable();
     

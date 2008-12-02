@@ -6,7 +6,7 @@
 
 #define INFINITY -1
 
-template <class T> class repeated_symbol
+template <class T> class Repeated_Symbol
 {
   public:
     SYMBOL m_symbol;
@@ -26,7 +26,7 @@ template <class T> class Tape
     INTEGER num_nonzero(shared_ptr<Turing_Machine> a_machine,
                         const STATE              & a_state);
 
-    repeated_symbol<T> get_top_block();
+    Repeated_Symbol<T> get_top_block();
 
     SYMBOL get_top_symbol();
 
@@ -37,7 +37,7 @@ template <class T> class Tape
     SYMBOL m_init_symbol;
     int    m_dir;
 
-    vector<repeated_symbol<T> > m_tape[2];
+    vector<Repeated_Symbol<T> > m_half_tape[2];
 
     INTEGER m_displace;
 
