@@ -13,12 +13,12 @@ template <class T> inline void Tape<T>::define(const TRANSITION & a_init_trans)
 
   m_dir = a_init_trans.m_dir;
 
-  repeated_symbol<T> infinite_zero;
+  Repeated_Symbol<T> infinite_zero;
   infinite_zero.m_symbol = m_init_symbol;
   infinite_zero.m_number = INFINITY;
 
-  m_tape[0].push_back(infinite_zero);
-  m_tape[1].push_back(infinite_zero);
+  m_half_tape[0].push_back(infinite_zero);
+  m_half_tape[1].push_back(infinite_zero);
   
   m_displace = 0;
 
@@ -34,12 +34,12 @@ template <class T> inline INTEGER Tape<T>::num_nonzero(shared_ptr<Turing_Machine
 
   for (int dir = 0; dir < 2; dir++)
   {
-    int n = m_tape[dir].size();
+    int n = m_half_tape[dir].size();
 
     for (int i = 0; i < n; i++)
     {
-      const SYMBOL & symbol = m_tape[dir][i].m_symbol;
-      const T      & number = m_tape[dir][i].m_number;
+      const SYMBOL & symbol = m_half_tape[dir][i].m_symbol;
+      const T      & number = m_half_tape[dir][i].m_number;
 
       if (symbol != m_init_symbol && number != INFINITY)
       {
@@ -51,21 +51,21 @@ template <class T> inline INTEGER Tape<T>::num_nonzero(shared_ptr<Turing_Machine
   return num;
 }
 
-template <class T> inline repeated_symbol<T> Tape<T>::get_top_block()
+template <class T> inline Repeated_Symbol<T> Tape<T>::get_top_block()
 {
-  return m_tape[m_dir][0];
+  return m_half_tape[m_dir][0];
 }
 
 template <class T> inline SYMBOL Tape<T>::get_top_symbol()
 {
-  return m_tape[m_dir][0].m_symbol;
+  return m_half_tape[m_dir][0].m_symbol;
 }
 
 template <class T> inline void Tape<T>::apply_single_move(const TRANSITION & a_trans)
 {
   {
-    vector<repeated_symbol<T> > & stack = m_tape[m_dir];
-    repeated_symbol<T> & top = stack[0];
+    vector<Repeated_Symbol<T> > & stack = m_half_tape[m_dir];
+    Repeated_Symbol<T> & top = stack[0];
     if (top.m_number != INFINITY)
     {
       top.m_number--;
@@ -78,8 +78,8 @@ template <class T> inline void Tape<T>::apply_single_move(const TRANSITION & a_t
   }
 
   {
-    vector<repeated_symbol<T> > & stack = m_tape[1 - a_trans.m_dir];
-    repeated_symbol<T> & top = stack[0];
+    vector<Repeated_Symbol<T> > & stack = m_half_tape[1 - a_trans.m_dir];
+    Repeated_Symbol<T> & top = stack[0];
     if (top.m_symbol == a_trans.m_symbol)
     {
       if (top.m_number != INFINITY)
@@ -89,7 +89,7 @@ template <class T> inline void Tape<T>::apply_single_move(const TRANSITION & a_t
     }
     else
     {
-      repeated_symbol<T> new_repeat;
+      Repeated_Symbol<T> new_repeat;
       new_repeat.m_symbol = a_trans.m_symbol;
       new_repeat.m_number = 1;
 
@@ -113,15 +113,15 @@ template <class T> inline INTEGER Tape<T>::apply_chain_move(const SYMBOL & a_new
 {
   INTEGER num;
 
-  vector<repeated_symbol<T> > & stack_dir = m_tape[m_dir];
+  vector<Repeated_Symbol<T> > & stack_dir = m_half_tape[m_dir];
   num = stack_dir[0].m_number;
 
   if (num != INFINITY)
   {
     stack_dir.erase(stack_dir.begin());
 
-    vector<repeated_symbol<T> > & stack_not_dir = m_tape[1 - m_dir];
-    repeated_symbol<T> & top = stack_not_dir[0];
+    vector<Repeated_Symbol<T> > & stack_not_dir = m_half_tape[1 - m_dir];
+    Repeated_Symbol<T> & top = stack_not_dir[0];
     if (top.m_symbol == a_new_symbol)
     {
       if (top.m_number != INFINITY)
@@ -131,7 +131,7 @@ template <class T> inline INTEGER Tape<T>::apply_chain_move(const SYMBOL & a_new
     }
     else
     {
-      repeated_symbol<T> new_repeat;
+      Repeated_Symbol<T> new_repeat;
       new_repeat.m_symbol = a_new_symbol;
       new_repeat.m_number = num;
 

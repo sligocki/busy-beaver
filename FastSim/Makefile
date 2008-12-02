@@ -13,6 +13,7 @@ src1 = Quick_Sim.cpp                 \
        Backsymbol_Turing_Machine.cpp \
        Chain_Simulator.cpp           \
        Proof_System.cpp              \
+       General_Chain_Simulator.cpp   \
        Exception.cpp                 \
        Expression.cpp	
 obj1 = Quick_Sim.o                   \
@@ -24,6 +25,7 @@ obj1 = Quick_Sim.o                   \
        Backsymbol_Turing_Machine.o   \
        Chain_Simulator.o             \
        Proof_System.o                \
+       General_Chain_Simulator.o     \
        Exception.o                   \
        Expression.o
 

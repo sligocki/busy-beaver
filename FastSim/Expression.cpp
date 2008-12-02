@@ -1,11 +1,11 @@
 #include "Expression.h"
 
 // Global variable ids bound, to assure we can distinguish variables
-VARIABLE num_variables = 0;
+static VARIABLE g_num_variables = 0;
 
 VARIABLE new_var()
 {
-  return num_variables++;
+  return g_num_variables++;
 }
 
 void Expression::add_new_variable()

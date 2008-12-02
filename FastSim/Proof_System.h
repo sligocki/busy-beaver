@@ -39,9 +39,9 @@ class Proof_System
              INTEGER       & a_num_steps,
              const CONFIG  & a_full_config);
 
-    bool compare(RULE              & a_rule,
-                 const PAST_CONFIG & a_past_config,
-                 const CONFIG      & a_full_config);
+    bool compare(RULE         & a_rule,
+                 const CONFIG & a_old_config,
+                 const CONFIG & a_new_config);
 
     bool applies(RUN_STATE     & a_run_state,
                  Tape<INTEGER> & a_new_tape,
