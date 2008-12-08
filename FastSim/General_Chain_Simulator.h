@@ -4,7 +4,7 @@
 #include "Define.h"
 #include "Turing_Machine.h"
 #include "Tape.h"
-#include "Proof_System.h"
+#include "General_Proof_System.h"
 #include "Expression.h"
 
 class General_Chain_Simulator
@@ -45,7 +45,7 @@ class General_Chain_Simulator
     Expression m_step_num;
     RUN_STATE  m_op_state;
 
-    Proof_System m_proof;
+    General_Proof_System m_proof;
 };
 
 ostream& operator<<(ostream                       & a_ostream,

@@ -69,7 +69,7 @@ void General_Chain_Simulator::step()
     if (cond == INFINITE)
     {
       m_op_state = INFINITE;
-      m_inf_reason = "Proof_System";
+      m_inf_reason = "General_Proof_System";
       return;
     }
     else if (cond == RUNNING)
