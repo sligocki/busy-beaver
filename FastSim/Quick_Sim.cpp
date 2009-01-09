@@ -9,7 +9,7 @@
 
 void usage()
 {
-  fprintf(stderr,"Usage: QuickSim [-b] [-m] [-p] [-r] [-br] [-bs block_size] [TMfile]\n");
+  fprintf(stderr,"Usage: Quick_Sim [-b] [-m] [-p] [-r] [-br] [-bs block_size] [TMfile]\n");
 }
 
 main(int argc, char** argv)
