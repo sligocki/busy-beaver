@@ -177,7 +177,7 @@ def run(machine, tape_length, num_steps, silent=False):
 
 # White, Red, Blue, Green, Magenta, Cyan, Brown/Yellow
 color = [49, 41, 44, 42, 45, 46, 43]
-def run_visual(machine, tape_length, num_steps, print_width=79, silent=False):
+def run_visual(machine, tape_length, num_steps, print_width=79, silent=False, start_tape=None):
   """
   Start the tape and run it until it halts with visual output.
   """
@@ -187,12 +187,16 @@ def run_visual(machine, tape_length, num_steps, print_width=79, silent=False):
   num_syms = 0
 
   tape = [0] * tape_length
-  middle = tape_length / 2
-
-  position = middle
-
-  position_start = position
-  position_end   = position
+  start_pos = tape_length // 2  # Default to middle
+  
+  if start_tape:
+    n = len(start_tape)
+    tape[start_pos : start_pos + n] = start_tape
+  
+  position = start_pos
+  
+  position_left  = position
+  position_right = position
 
   state = 0
 
@@ -201,16 +205,35 @@ def run_visual(machine, tape_length, num_steps, print_width=79, silent=False):
 
   TTable = machine.get_TTable()
 
-  half_width = (print_width - 18) / 2
+  half_width = (print_width - 18) // 2
   if half_width < 1:
     half_width = 1
+
+  # Print configuration
+  if not silent:
+    sys.stdout.write("\033[0m%10d: " % 0)  # Step number
+
+    for j in xrange(2*half_width):
+      value = tape[start_pos+(j-half_width)]
+      assert 0 <= value <= 6
+      assert -1 <= state <= 25
+      if position == start_pos+(j-half_width):
+        # If this is the current possition ...
+        sys.stdout.write("\033[1;%dm%c" % (color[value], chr(65+state)))
+      else:
+        sys.stdout.write("\033[%dm " % (color[value]))
+
+    sys.stdout.write("\033[0m %2d"   % state)
+    sys.stdout.write(" %2d\n" % tape[position])
+
+    sys.stdout.flush()
 
   t = 0
   nt = 1
   while t < nt:
     for i in xrange(num_steps):
       if position < 1 or position >= tape_length-1:
-        print "Oops..."
+        print "Oops ... Didn't start on tape!?"
         sys.stdout.flush()
         num_syms  = -1
         num_steps = -1
@@ -232,15 +255,16 @@ def run_visual(machine, tape_length, num_steps, print_width=79, silent=False):
 
       if new_move == 0:
         position -= 1
-        if position < position_start:
-          position_start = position
+        if position < position_left:
+          position_left = position
       else:
         position += 1
-        if position > position_end:
-          position_end = position
-
+        if position > position_right:
+          position_right = position
+      
+      # Print configuration
       if not silent:
-        if position > middle - half_width - 2 and position < middle + half_width +1:
+        if position > start_pos - half_width - 2 and position < start_pos + half_width +1:
           just_on = True
 
           cur_step = total_steps + i
@@ -248,10 +272,10 @@ def run_visual(machine, tape_length, num_steps, print_width=79, silent=False):
           sys.stdout.write("\033[0m%10d: " % int(cur_step+1))  # Step number
 
           for j in xrange(2*half_width):
-            value = tape[middle+(j-half_width)]
+            value = tape[start_pos+(j-half_width)]
             assert 0 <= value <= 6
             assert -1 <= new_state <= 25
-            if position == middle+(j-half_width):
+            if position == start_pos+(j-half_width):
               # If this is the current possition ...
               sys.stdout.write("\033[1;%dm%c" % (color[value], chr(65+new_state)))
             else:
@@ -303,8 +327,8 @@ def run_visual(machine, tape_length, num_steps, print_width=79, silent=False):
   print
   print "Steps/second: ", num_steps / (end_time - start_time)
   print
-  print "Range on tape: ", position_start - middle, \
-                     "to", position_end   - middle
+  print "Range on tape: ", position_left  - start_pos, \
+                     "to", position_right - start_pos
 
   sys.stdout.flush()
 
