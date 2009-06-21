@@ -1,7 +1,9 @@
 from __future__ import division
 
 import sys
-import Chain_Simulator, Turing_Machine
+
+import Chain_Simulator
+import Turing_Machine
 
 DEBUG = False
 
@@ -69,12 +71,14 @@ def block_finder(machine, limit=1000):
   return opt_mult*opt_size
 
 def uncompress_tape(compr_tape):
+  """Expand out repatition counts in tape."""
   tape_out = []
   for seq in compr_tape[0][-2::-1]+compr_tape[1][:-1]:
     tape_out += [seq.symbol]*seq.num
   return tape_out
 
 def compression_efficiency(tape, k):
+  """Find size of tape when compressed with blocks of size k."""
   compr_size = len(tape)
   for i in range(0, len(tape) - 2*k, k):
     if tape[i:i + k] == tape[i + k:i + 2*k]:
