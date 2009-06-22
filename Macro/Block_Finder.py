@@ -8,7 +8,6 @@ import Turing_Machine
 
 DEBUG = False
 
-@profile
 def block_finder(machine, limit=1000):
   """Tries to find the optimal block-size for macromachines"""
   ## First find the minimum efficient tape compression size
