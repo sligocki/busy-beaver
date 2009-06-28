@@ -236,7 +236,7 @@ if __name__ == "__main__":
 
   if rank == 0:
     from Option_Parser_Parallel import Filter_Option_Parser
-    
+
     # Get command line options.
     opts, args = Filter_Option_Parser(sys.argv, 
             [("time",      float,                     15, False, True), 
@@ -263,56 +263,14 @@ if __name__ == "__main__":
     states      = opts["states"]
     symbols     = opts["symbols"]
     timeout     = opts["time"]
+    infilename  = opts["infilename"]
     outfilename = opts["outfilename"]
     log_number  = opts["log_number"]
     seed        = opts["seed"]
     save_freq   = opts["save_freq"]
     save_unk    = opts["save_unk"]
 
-    mpi.bcast((states,symbols,steps,timeout,outfilename,log_number,seed,save_freq,save_unk))
-
-    infile = opts["infile"]
-
-    if outfilename == "-":
-      outfile = sys.stdout
-    else:
-      outfilename = outfilename + ".%05d" % rank
-      if os.path.exists(outfilename):
-        sys.stderr.write("Output test file, '%s', exists\n" % outfilename)
-        sys.exit(1)
-      # outfile = bz2.BZ2File(outfilename, "w")
-      outfile = file(outfilename, "w")
-
-    # io = IO(None, outfile, log_number, True)
-    io = IO(infile, outfile, log_number, False)
-
-    all = []
-
-    count = 0
-    next = io.read_result()
-    if next:
-      all.append(next)
-
-    while next:
-      count += 1
-      next = io.read_result()
-      if next:
-        all.append(next)
-
-    print "Worker: " + str(rank) + " (" + str(nprocs) + ") - " + str(count) + "..."
-    sys.stdout.flush()
-
-    runmore = Runlonger(states, symbols, steps, 
-                      timeout, io, seed, save_freq, save_unk)
-
-    init_stack = mpi.scatter(all)
-
-    runmore.stack = init_stack[:]
-
-    print "Worker: " + str(rank) + " (" + str(nprocs) + ") - " + str(len(init_stack)) + " (" + str(len(runmore.stack)) + ")..."
-    sys.stdout.flush()
-    
-    runmore.enum()
+    mpi.bcast((states,symbols,steps,timeout,infilename,outfilename,log_number,seed,save_freq,save_unk))
   else:
     params = mpi.bcast()
 
@@ -320,39 +278,56 @@ if __name__ == "__main__":
     symbols     = params[1]
     steps       = params[2]
     timeout     = params[3]
-    outfilename = params[4]
-    log_number  = params[5]
-    seed        = params[6]
-    save_freq   = params[7]
-    save_unk    = params[8]
+    infilename  = params[4]
+    outfilename = params[5]
+    log_number  = params[6]
+    seed        = params[7]
+    save_freq   = params[8]
+    save_unk    = params[9]
 
-    if outfilename == "-":
-      outfile = sys.stdout
-    else:
-      outfilename = outfilename + ".%05d" % rank
-      if os.path.exists(outfilename):
-        sys.stderr.write("Output test file, '%s', exists\n" % outfilename)
-        sys.exit(1)
-      # outfile = bz2.BZ2File(outfilename, "w")
-      outfile = file(outfilename, "w")
+  infilename = infilename + ".%05d" % rank + ".unknown.new"
+  if os.path.exists(infilename):
+    infile = file(infilename, "r")
+  else:
+    sys.stderr.write("Input file, '%s', doesn't exist\n",infilename)
+    mpi.abort()
 
-    print "Worker: " + str(rank) + " (" + str(nprocs) + ")..."
-    sys.stdout.flush()
+  if outfilename == "-":
+    outfile = sys.stdout
+  else:
+    outfilename = outfilename + ".%05d" % rank
+    if os.path.exists(outfilename):
+      sys.stderr.write("Output test file, '%s', exists\n" % outfilename)
+      mpi.abort()
+    # outfile = bz2.BZ2File(outfilename, "w")
+    outfile = file(outfilename, "w")
 
-    io = IO(None, outfile, log_number, False)
+  io = IO(infile, outfile, log_number, False)
 
-    runmore = Runlonger(states, symbols, steps, 
-                      timeout, io, seed, save_freq, save_unk)
+  init_stack = []
 
-    all = []
-    init_stack = mpi.scatter(all)
+  count = 0
+  next = io.read_result()
+  if next:
+    init_stack.insert(0,next)
 
-    runmore.stack = init_stack[:]
+  while next:
+    count += 1
+    next = io.read_result()
+    if next:
+      init_stack.insert(0,next)
 
-    print "Worker: " + str(rank) + " (" + str(nprocs) + ") - " + str(len(init_stack)) + " (" + str(len(runmore.stack)) + ")..."
-    sys.stdout.flush()
+  print "Worker: " + str(rank) + " (" + str(nprocs) + ") - " + str(count) + "..."
+  sys.stdout.flush()
 
-    runmore.enum()
+  runlonger = Runlonger(states, symbols, steps, 
+                        timeout, io, seed, save_freq, save_unk)
+  runlonger.stack = init_stack[:]
+
+  print "Worker: " + str(rank) + " (" + str(nprocs) + ") - " + str(len(init_stack)) + " (" + str(len(runlonger.stack)) + ")..."
+  sys.stdout.flush()
+  
+  runlonger.enum()
 
   print "Worker: " + str(rank) + " (" + str(nprocs) + ") - done..."
   sys.stdout.flush()

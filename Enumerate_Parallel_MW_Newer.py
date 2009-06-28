@@ -357,7 +357,7 @@ if __name__ == "__main__":
       outfilename = outfilename + ".%05d" % mpi.rank
       if os.path.exists(outfilename):
         sys.stderr.write("Output test file, '%s', exists\n" % outfilename)
-        sys.exit(1)
+        mpi.abort()
       outfile = file(outfilename, "w")
       
     io = IO(None, outfile, log_number)

@@ -435,7 +435,7 @@ if __name__ == "__main__":
       outfilename = outfilename + ".%05d" % rank
       if os.path.exists(outfilename):
         sys.stderr.write("Output test file, '%s', exists\n" % outfilename)
-        sys.exit(1)
+        mpi.abort()
       # outfile = bz2.BZ2File(outfilename, "w")
       outfile = file(outfilename, "w")
 
@@ -487,7 +487,7 @@ if __name__ == "__main__":
       outfilename = outfilename + ".%05d" % rank
       if os.path.exists(outfilename):
         sys.stderr.write("Output test file, '%s', exists\n" % outfilename)
-        sys.exit(1)
+        mpi.abort()
       # outfile = bz2.BZ2File(outfilename, "w")
       outfile = file(outfilename, "w")
 
