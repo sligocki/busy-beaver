@@ -8,23 +8,23 @@ import Turing_Machine
 
 DEBUG = False
 
-def block_finder(machine, limit=1000):
+def block_finder(machine, limit=100):
   """Tries to find the optimal block-size for macromachines"""
   ## First find the minimum efficient tape compression size
   sim = Chain_Simulator.Simulator()
   sim.init(machine)
   sim.proof = None # Level 2 machine
   # Run sim to find when the tape is least compressed with macro size 1
-  max_length = len(sim.tape.tape[0]) + len(sim.tape.tape[1])
-  worst_time = 0
-  worst_tape = copy.copy(sim.tape.tape)
+  #max_length = len(sim.tape.tape[0]) + len(sim.tape.tape[1])
+  #worst_time = 0
+  #worst_tape = copy.deepcopy(sim.tape.tape)
   for i in range(limit):
     sim.step()
-    l = len(sim.tape.tape[0]) + len(sim.tape.tape[1])
-    if l > max_length:
-      max_length = l
-      worst_time = sim.step_num
-      worst_tape = copy.copy(sim.tape.tape)
+#    l = len(sim.tape.tape[0]) + len(sim.tape.tape[1])
+#    if l > max_length:
+#      max_length = l
+#      worst_time = sim.step_num
+#      worst_tape = copy.deepcopy(sim.tape.tape)
     # If it has stopped running then this is a good block size!
     if sim.op_state != Turing_Machine.RUNNING:
       if DEBUG:
@@ -35,7 +35,7 @@ def block_finder(machine, limit=1000):
     #print worst_tape
     sys.stdout.flush()
   # Analyze this time to see which block size provides greatest compression
-  tape = uncompress_tape(worst_tape)
+  tape = uncompress_tape(sim.tape.tape)
   min_compr = len(tape) + 1 # Worse than no compression
   opt_size = 1
   for block_size in range(1, len(tape)//2):
