@@ -61,6 +61,7 @@ def Filter_Option_Parser(argv, extra_opt, ignore_outfile = False):
   """
   extra_opt = list of (opt, type_func, default_val, is_required, has_val)
   """
+
   opts = [("tape"      , int, None, False, True),
           ("steps"     , int, None, False, True),
           ("infile"    , str, None, True , True),
@@ -158,7 +159,6 @@ def Option_Parser(argv, opts, help_flag = True, no_mult = True,
     # Takes options with trailing equal sign.
     opt_val_pairs, args = getopt.getopt(argv[1:], "", opts_format2)
   except getopt.GetoptError:
-    sys.stderr.write("%s\n" % usage)
     mpi.abort()
 
   result = {}
