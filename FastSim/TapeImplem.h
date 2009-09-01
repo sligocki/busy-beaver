@@ -63,6 +63,7 @@ template <class T> inline SYMBOL Tape<T>::get_top_symbol()
 
 template <class T> inline void Tape<T>::apply_single_move(const TRANSITION & a_trans)
 {
+  // Pop off the top symbol that we're reading.
   {
     vector<Repeated_Symbol<T> > & stack = m_half_tape[m_dir];
     Repeated_Symbol<T> & top = stack[0];
