@@ -2,7 +2,10 @@
 Abstract Turing Machine model with basic NxM TM and Macro-Machine derivatives
 """
 
+LEFT = 0
 RIGHT = 1
+STAY = 2
+
 # Return Conditions:
 RUNNING    = "Running"    # Machine still running normally
 HALT       = "Halt"       # Machine halts in or directly after move
@@ -116,7 +119,7 @@ class Block_Macro_Machine(Macro_Machine):
       dir = dir_out
       if dir_out is RIGHT:
         pos += 1
-      else:
+      elif dir_out is LEFT:
         pos -= 1
       if cond[0] != RUNNING:
         return cond+(pos,), (tuple(tape), state, dir), num_steps
@@ -182,7 +185,7 @@ class Backsymbol_Macro_Machine(Macro_Machine):
       dir = dir_out
       if dir_out is RIGHT:
         pos += 1
-      else:
+      elif dir_out is LEFT:
         pos -= 1
       if cond[0] != RUNNING:
         trans = backsymbol_get_trans(tape, state, dir)
