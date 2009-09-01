@@ -3,7 +3,7 @@
 import string
 
 symbols = string.digits
-dirs = "LR"
+dirs = "LRS"
 states = string.ascii_uppercase[:7]
 halt_state = "HZ"
 

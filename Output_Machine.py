@@ -28,7 +28,7 @@ def get_ttable(string):
 def display_ttable(table):
   """Pretty print the ttable."""
   symbols = string.digits
-  dirs = "LR"
+  dirs = "LRS"
   states = string.ascii_uppercase[:7]
   s = ""
   for row in table:
