@@ -10,10 +10,10 @@ import IO, Reverse_Engineer_Filter, CTL1, CTL2
 from Macro.Chain_Tape import INF
 
 TIMEOUT = "Timeout"
-OVERSTEPS = "Over steps"
+OVERSTEPS = "Over_steps"
 HALT = "Halt"
-INFINITE = "Infinite repeat"
-UNDEFINED = "Undefined Transition"
+INFINITE = "Infinite_repeat"
+UNDEFINED = "Undefined_Transition"
 
 
 class AlarmException(Exception):
@@ -47,7 +47,6 @@ def setup_CTL(m, cutoff):
     tape[d] = [block.symbol for block in sim.tape.tape[d] if block.num != "Inf"]
   config = GenContainer(state=sim.state, dir=sim.dir, tape=tape)
   return config
-
 
 def run(TTable, steps=INF, runtime=None, block_size=None, back=True, prover=True, rec=False, cutoff=200):
   """Run the Accelerated Turing Machine Simulator, running a few simple filters first and using intelligent blockfinding."""
