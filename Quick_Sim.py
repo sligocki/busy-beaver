@@ -7,6 +7,9 @@ import IO
 def run(TTable, block_size=None, back=True, prover=True, rec=False, verbose=True):
   # Construct Machine (Backsymbol-k-Block-Macro-Machine)
   m = Turing_Machine.Simple_Machine(TTable)
+  # If there are any stay instructions, encapsulate this machine
+  if [[dir == Turing_Machine.STAY for state, dir, symbol in row] for row in TTable]:
+    m = Turing_Machine.Block_Macro_Machine(m, 1)
   # If no explicit block-size given, use inteligent software to find one
   if not block_size:
     Block_Finder.DEBUG = True
