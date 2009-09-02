@@ -137,9 +137,10 @@ def load_TTable_filename(filename, line_num = 1):
 def load_TTable(infile, line_num = 1):
   """Load a transition table from a file w/ optional line number."""
   if line_num < 1:
-    raise IO_Error, "load_TTable - line_num must be >= 1"
+    raise Exception, "load_TTable: line_num must be >= 1"
   while line_num > 1:
-    infile.readline()
+    if not infile.readline():
+      raise Exception, "Not enought lines in file"
     line_num -= 1
   line = infile.readline()
   return get_TTable_line(line)
@@ -150,4 +151,4 @@ def get_TTable_line(line):
   if start != -1 and end != -1:
     return eval(line[start:end])
   else:
-    raise IO_Error, "Turing Machine not found in input file"
+    raise Exception, "Turing Machine not found in input file."
