@@ -1,7 +1,12 @@
 #! /usr/bin/env python
 #
 # Filters out machines whose halt states obviously cannot be reached based
-# on reverse engineering/backtracking.
+# on a simple end case fact:
+#   If machine:
+#     * only halts on symbol 2 and in state B,
+#     * only writes 2s when moving Left (thus all 2s are on it's Right) and
+#     * only transitions to state B when moving Left
+#   then it cannot ever halt.
 
 from __future__ import division
 import IO
