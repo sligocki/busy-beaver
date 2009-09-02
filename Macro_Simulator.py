@@ -58,7 +58,7 @@ def run(TTable, steps=INF, runtime=None, block_size=None, back=True, prover=True
         return INFINITE, ("Reverse_Engineered",)
       
       ## Construct the Macro Turing Machine (Backsymbol-k-Block-Macro-Machine)
-      m = Turing_Machine.Simple_Machine(TTable)
+      m = Turing_Machine.make_machine(TTable)
 
       try:
         ## Set the timer (if non-zero runtime)

@@ -23,6 +23,18 @@ class Turing_Machine:
     # Condition
     return NotImplemented
 
+def make_machine(trans_table):
+  """Generate a standard Turing Machine based on a transition table. Wraps any machine that has Stay with a macro machine."""
+  machine = Simple_Machine(trans_table)
+  # If there are any stay instructions, encapsulate this machine
+  # TODO: There is a much more efficient rapper than block-1 macro machine.
+  for row in trans_table:
+    for state, dir, symbol in row:
+      if dir == STAY:
+        return Block_Macro_Machine(machine, 1)
+  # Otherwise return the simple machine
+  return machine
+
 class Simple_Machine(Turing_Machine):
   """The most general Turing Machine based off of a transition table"""
   def __init__(self, trans_table):
