@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 #
 # Filters out machines whose halt states obviously cannot be reached based
-# on reverse engineering/backtracking.
+# on backtracking.
 
 from __future__ import division
 import IO, copy

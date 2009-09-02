@@ -101,8 +101,6 @@ def run(TTable, steps=INF, runtime=None, block_size=None, back=True, prover=True
             signalPlus.alarm(0)  # Turn off timer
             return INFINITE, ("CTL_A*_B",)
 
-          signalPlus.alarm(0)  # Turn off timer
-
         except AlarmException:
           signalPlus.alarm(0)  # Turn off timer
 
