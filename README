@@ -1,64 +1,124 @@
-A somewhat haphazard collection of Busy Beaver hunting tools. Here follows an attempt at describing them all.
+A somewhat haphazard collection of Busy Beaver hunting tools. Here follows an 
+attempt at describing them all.
 
-There are two sorts of programs here "Forest" and "Tree". "Tree" programs analyze individual machines specifically. They generally simulate them. "Forest" programs facilitate searching through all possible Turing machines of a given size and sorting them based on whether they halt, run forever, or we don't know. They mostly involve generators which generate all machines and filters which try to prove unknown machines will run forever. There are also a few which search the space of Turing Machines.
+There are two sorts of programs here "Forest" and "Tree". "Tree" programs 
+analyze individual machines specifically. They generally simulate them. 
+"Forest" programs facilitate searching through all possible Turing machines of 
+a given size and sorting them based on whether they halt, run forever, or we 
+don't know. They mostly involve generators which generate all machines and 
+filters which try to prove unknown machines will run forever. There are also a 
+few which search the space of Turing Machines.
 
 == Tree programs ==
-* Macro_Simulator.py - The creme-de-le-creme of our simulators, it simulates a turing machine using macro-machine acceleration and an automatic proof engine as well as running through several filters to try and prove it will never halt.
+* Macro_Simulator.py - The creme-de-le-creme of our simulators, it simulates a 
+    turing machine using macro-machine acceleration and an automatic proof 
+    engine as well as running through several filters to try and prove it will 
+    never halt.
 
-* Quick_Sim.py - Like the Macro_Simulator, but only tries simulation (not filters to test that it will run forever). This is the standard simulator to run on machines you expect to halt (ex: record confirmations).
+* Quick_Sim.py - Like the Macro_Simulator, but only tries simulation (not 
+    filters to test that it will run forever). This is the standard simulator 
+    to run on machines you expect to halt (ex: record confirmations).
 
-* Direct_Simulator - The standard step-by-step simulator, interfaces with C to run more quickly, good for reality check on small machines.
+* Direct_Simulator - The standard step-by-step simulator, interfaces with C to 
+    run more quickly, good for reality check on small machines.
 
-* Visual_Simulator - Uses rudimentory terminal graphics to visually simulate a Turing Machine. Can use color or not.
+* Visual_Simulator - Uses rudimentory terminal graphics to visually simulate a 
+    Turing Machine. Can use color or not.
 
 
 Esoteric:
-* Accelerated_Simulator.py - An early attempt to make an accelerated simulator, uses rather clunky techniques (by Quick_Sim standards), but could be used to verify a few medium run length machines, or machine that aren't particularly amenable to the macro-machine techniques.
+* Accelerated_Simulator.py - An early attempt to make an accelerated simulator, 
+    uses rather clunky techniques (by Quick_Sim standards), but could be used 
+    to verify a few medium run length machines, or machine that aren't 
+    particularly amenable to the macro-machine techniques.
 
-* Busy_Beaver_Sim.py - This is actually the program called by Direct_Simulator and Visual_Simulator, but it's complexity of options make it uncommon to call itself.
+* Busy_Beaver_Sim.py - This is actually the program called by Direct_Simulator 
+    and Visual_Simulator, but it's complexity of options make it uncommon to 
+    call itself.
 
 
 == Forest programs ==
-* Enumerate_All.py - Generates and enumetes all Turing Machines of a give class and runs them through the Marco_Simulator (which uses state-of-the-art simulation and filtering of non-halting machines). This is now the prefered way of enumerating new classes of machines (used to be Generate.py). After it has finished, our other filters are not likely to change much. (Should be renamed to Enumerate.py)
+* Enumerate_All.py - Generates and enumetes all Turing Machines of a give class 
+    and runs them through the Marco_Simulator (which uses state-of-the-art 
+    simulation and filtering of non-halting machines). This is now the prefered 
+    way of enumerating new classes of machines (used to be Generate.py). After 
+    it has finished, our other filters are not likely to change much.
+    (Should be renamed to Enumerate.py)
 
-* Reverse_Engineer_Filter.py - Check a simple condition of transition-table that assures some TMs will never halt. Extremely fast, so it's run before we simulate TMs in Macro_Simulator.
+* Reverse_Engineer_Filter.py - Check a simple condition of transition-table 
+    that assures some TMs will never halt. Extremely fast, so it's run before 
+    we simulate TMs in Macro_Simulator.
 
-* CTL*_Filter.py - A handfull of filters which develops a class of configurations that a TM could end up in, if that class does not include a halting config, TM won't halt. These are pretty fast and 1 & 2 are very effective, so they are run before simulation in Macro_Simulator.
+* CTL*_Filter.py - A handfull of filters which develops a class of 
+    configurations that a TM could end up in, if that class does not include a 
+    halting config, TM won't halt. These are pretty fast and 1 & 2 are very 
+    effective, so they are run before simulation in Macro_Simulator.
 
-* Macro_Machine_Filter.py - Tests machines with the macro-machine acceleration technique with different parameterizations. One of the few filters that can find a halting machine as will as non-halting machines. Generally run at increasing block_sizes 1, 2, 3, 4, ...
+* Macro_Machine_Filter.py - Tests machines with the macro-machine acceleration 
+    technique with different parameterizations. One of the few filters that can 
+    find a halting machine as will as non-halting machines. Generally run at 
+    increasing block_sizes 1, 2, 3, 4, ...
 
-* Backtracking_Filter.py - Similar to CTL but they start with the set of all possible halting configs and backtrack, creating a set of all configs that could lead to halting. In a few cases, iterating this algorithm will prove that a TM can't halt. Machines caught by this filter are offen caught by others, and it is not extremely fast, so it is not run before simulation.
+* Backtracking_Filter.py - Similar to CTL but they start with the set of all 
+    possible halting configs and backtrack, creating a set of all configs that 
+    could lead to halting. In a few cases, iterating this algorithm will prove 
+    that a TM can't halt. Machines caught by this filter are offen caught by 
+    others, and it is not extremely fast, so it is not run before simulation.
 
-Assign_Undecideds_Filter.py - Because of an artifact of the filtering process, some machines might be created during filtering and need to be re-classified and ran through all the filters so far. Essential to run if any undecided machines (not to be confused with unknown machines) exist.
+* Assign_Undecideds_Filter.py - Because of an artifact of the filtering 
+    process, some machines might be created during filtering and need to be 
+    re-classified and ran through all the filters so far. Essential to run if 
+    any undecided machines (not to be confused with unknown machines) exist.
 
 
 Esoteric:
-* Enumerate_Parallel_*.py - Attempts to make Enumerate_All run on parallel supercomputers.
+* Enumerate_Parallel_*.py - Attempts to make Enumerate_All run on parallel 
+    supercomputers.
 
-* Enumerate.py - Originial enumerator, it only printed out best champion halting machines (originally intended for fast searching, rather than complete categorizing)
+* Enumerate.py - Originial enumerator, it only printed out best champion 
+    halting machines (originally intended for fast searching, rather than 
+    complete categorizing)
 
-* Generate.py - Generates and enumerates all TMs of a given class and runs them for a given number of steps in the Direct_Simulator. In-efficient, but a good model for generators.
+* Generate.py - Generates and enumerates all TMs of a given class and runs them 
+    for a given number of steps in the Direct_Simulator. In-efficient, but a 
+    good model for generators.
 
-* Dual_Machine_Filter.py - One of the first filters, this simulates a TM at 2 different speeds to catch machine which repeat configurations.
+* Dual_Machine_Filter.py - One of the first filters, this simulates a TM at 2 
+    different speeds to catch machine which repeat configurations.
 
-* No_Halt_Filter.py - Checks to see if halts cannot be reached for trivial reasons (no transitions to that state). Probably superseeded by Reverse_Engineer_Filter.
+* No_Halt_Filter.py - Checks to see if halts cannot be reached for trivial 
+    reasons (no transitions to that state).
+    Probably superseeded by Reverse_Engineer_Filter.
 
-* Macro_Tree_Filter*.py - An early attempt at proving X-Mas Trees were non-halting, extremely complicated, I believe unfinished, and ineffective. But a great motivation to implement the macro-machine technique.
+* Macro_Tree_Filter*.py - An early attempt at proving X-Mas Trees were 
+    non-halting, extremely complicated, I believe unfinished, and ineffective. 
+    But a great motivation to implement the macro-machine technique.
 
 * BB_Anneal* BB_Temper* 
 
 == Misc/Other ==
-* Adjacent.py - Enumerate all machines adjacent to a given one. Ex: to explore the neighborhood of a successful machine.
+* Adjacent.py - Enumerate all machines adjacent to a given one. Ex: to explore 
+    the neighborhood of a successful machine.
 
-* Count.py - Count the number of TMs represented by each machine which is in tree normal form. When run over all machines in TNF, this should sum up to the total number of machines (QS-1) * (2QS)^(QS-2).
+* Count.py - Count the number of TMs represented by each machine which is in 
+    tree normal form. When run over all machines in TNF, this should sum up to 
+    the total number of machines (QS-1) * (2QS)^(QS-2).
 
-* Heuristic*.py - Attempts to capture heuristics of TM growth patterns for use in predicting what type of machines they are (ex: counters, trees, etc.)
+* Heuristic*.py - Attempts to capture heuristics of TM growth patterns for use 
+    in predicting what type of machines they are (ex: counters, trees, etc.)
 
-* Input_Machine.py Output_Machine.py - Simple interfaces to input and output machines from a more human readable format into the internal representation. Saves machines to Machines/ folder.
+* Input_Machine.py Output_Machine.py - Simple interfaces to input and output 
+    machines from a more human readable format into the internal representation.
+    Saves machines to Machines/ folder.
 
-* Multiple_Halt_Find.py - Provide statistics for how many machines have multiple halts and how many. Useful to know how likely it is that more machines will be created if one of the halts is reached.
+* Multiple_Halt_Find.py - Provide statistics for how many machines have 
+    multiple halts and how many. Useful to know how likely it is that more 
+    machines will be created if one of the halts is reached.
 
-* Random_Sample.py - Randomly samples a specified number of machines (lines really) from a specified file. Useful when trying to examine (or test more thoroughly) an extremely large population to get an idea for what might work, what the composition of the population is, etc.
+* Random_Sample.py - Samples a specified number of machines (lines really) from 
+    a specified file. Useful when trying to examine (or test more thoroughly) 
+    an extremely large population to get an idea for what might work, what the 
+    composition of the population is, etc.
 
 * setup*.py - Used to compile C code and intigrate it with python.
 
