@@ -2,18 +2,21 @@
 #
 # Enumerate.py
 #
-# This is a Busy Beaver Turing machine enumerator.  It enumerates a 
-# representative set of all Busy Beavers for given # of states and symbols,
-# runs the accelerated simulator, gathers statistics, and outputs the machines
-# that take the longest to halt.
+# This is a Busy Beaver Turing machine enumerator.
+#
+# It enumerates all Busy Beavers for given # of states and symbols,
+# runs the Macro Machine simulator, gathers statistics, and outputs all of the
+# machines like Generate does.
 #
 
-import sys
-import math
-import random
-import time
 import copy
+import math
+import os
 import cPickle as pickle
+import random
+import shutil
+import sys
+import time
 
 from Turing_Machine import Turing_Machine
 from IO import IO
@@ -36,10 +39,12 @@ def long_to_eng_str(number, left, right):
     return "0.%se+00" % ("0" * right)
 
 class Stack(list):
+  """A simple FILO type. Has push(x) and pop()"""
   def push(self, item):
     return self.append(item)
 
 class DefaultDict(dict):
+  """Dictionary that defaults to a value."""
   def __init__(self, default):
     self.default = default
   def __getitem__(self, item):
@@ -47,32 +52,38 @@ class DefaultDict(dict):
 
 class Enumerator(object):
   """Holds enumeration state information for checkpointing."""
-  def __init__(self, num_states, num_symbols, max_steps, max_time, io, seed,
+  def __init__(self, num_states, num_symbols, max_steps, max_time, io,
                      save_freq=100000, checkpoint_filename="checkpoint",
-                     save_unk=False, randomize=False):
+                     randomize=False, seed=None):
+    # Main TM attributes
     self.num_states = num_states
     self.num_symbols = num_symbols
     self.max_steps = max_steps
     self.max_time = max_time
+    # I/O info
     self.io = io
     self.save_freq = save_freq
     self.checkpoint_filename = checkpoint_filename
-    self.save_unk = save_unk
+    self.backup_checkpoint_filename = checkpoint_filename + ".bak"
     
+    # Stack of TM descriptions to simulate
     self.stack = Stack()
-    self.tm_num = 0
     
+    # If we are randomizing the stack order
     self.randomize = randomize
     if randomize:
       self.random = random.Random()
       self.random.seed(seed)
     
+    # Statistics
+    self.tm_num = 0
     self.num_halt = self.num_infinite = self.num_unresolved = 0
     self.best_steps = self.best_score = 0
     self.inf_type = DefaultDict(0)
     self.num_over_time = self.num_over_steps = 0
   
   def __getstate__(self):
+    """Gets state of TM for checkpoint file."""
     d = self.__dict__.copy()
     del d["io"]
     if self.randomize:
@@ -81,6 +92,7 @@ class Enumerator(object):
     return d
   
   def __setstate__(self, d):
+    """Resets state of TM from checkpoint file."""
     if d["randomize"]:
       d["random"] = random.Random()
       d["random"].setstate(d["random_state"])
@@ -88,67 +100,77 @@ class Enumerator(object):
     self.__dict__ = d
   
   def enum(self):
-    """Enumerate all num_states*num_symbols TMs in Tree-Normal Form"""
+    """Enumerate all num_states, num_symbols TMs in Tree-Normal Form"""
     blank_tm = Turing_Machine(self.num_states, self.num_symbols)
     self.stack.push(blank_tm)
     self.continue_enum()
 
   def continue_enum(self):
-    i = 0
+    """
+    Pull one machine off of the stack and simulate it, perhaps creating more 
+    machines to push back onto the stack.
+    """
     self.start_time = time.time()
     while len(self.stack) > 0:
-      if (i % self.save_freq) == 0:
+      # Periodically save state
+      if (self.tm_num % self.save_freq) == 0:
         self.save()
-      i += 1
       # While we have machines to run, pop one off the stack ...
-      cur_tm = self.stack.pop()
+      tm = self.stack.pop()
       # ... and run it
-      cond, info = self.run(cur_tm)
+      cond, info = self.run(tm)
       
       # If it hits an undefined transition ...
       if cond == Macro_Simulator.UNDEFINED:
         on_state, on_symbol, steps, score = info
         # ... push all the possible non-halting transitions onto the stack ...
-        self.add_transitions(cur_tm, on_state, on_symbol)
-        # ... and make this tm the halting one (mutates cur_tm)
-        self.add_halt_trans(cur_tm, on_state, on_symbol, steps, score)
+        self.add_transitions(tm, on_state, on_symbol)
+        # ... and make this TM the halting one (mutates tm)
+        self.add_halt_trans(tm, on_state, on_symbol, steps, score)
       # Otherwise record defined result
       elif cond == Macro_Simulator.HALT:
         steps, score = info
-        self.add_halt(cur_tm, steps, score)
+        self.add_halt(tm, steps, score)
       elif cond == Macro_Simulator.INFINITE:
         reason, = info
-        self.add_infinite(cur_tm, reason)
+        self.add_infinite(tm, reason)
       elif cond == Macro_Simulator.OVERSTEPS:
         steps, = info
-        self.add_unresolved(cur_tm, Macro_Simulator.OVERSTEPS, steps)
+        self.add_unresolved(tm, Macro_Simulator.OVERSTEPS, steps)
       elif cond == Macro_Simulator.TIMEOUT:
         runtime, steps = info
-        self.add_unresolved(cur_tm, Macro_Simulator.TIMEOUT, steps, runtime)
-        if (self.save_unk):
-          self.io.write_result(self.tm_num, -1, -1, (2, -1, -1), cur_tm)
+        self.add_unresolved(tm, Macro_Simulator.TIMEOUT, steps, runtime)
       else:
         raise Exception, "Enumerator.enum() - unexpected condition (%r)" % cond
-
+    
+    # Done
     self.save()
   
   def save(self):
+    """Save a checkpoint file so that computation can be restarted if it fails."""
     self.end_time = time.time()
-
-    print self.num_halt+self.num_infinite+self.num_unresolved, "-", 
+    
+    # Print out statistical data
+    print self.tm_num, "-", 
     print self.num_halt, self.num_infinite, self.num_unresolved, "-", 
     print long_to_eng_str(self.best_steps,1,3),
     print long_to_eng_str(self.best_score,1,3),
     print "(%.2f)" % (self.end_time - self.start_time)
     sys.stdout.flush()
-
-    self.start_time = time.time()
-
+    
+    # Backup old checkpoint file (in case the new checkpoint is interrupted in mid-write)
+    if os.path.exists(self.checkpoint_filename):
+      shutil.move(self.checkpoint_filename, self.backup_checkpoint_filename)
+    # Save checkpoint file
     f = file(self.checkpoint_filename, "wb")
     pickle.dump(self, f)
     f.close()
+    
+    # Restart timer
+    self.start_time = time.time()
   
   def run(self, tm):
+    """Simulate TM"""
     return Macro_Simulator.run(tm.get_TTable(), self.max_steps, self.max_time)
   
   def add_transitions(self, old_tm, state_in, symbol_in):
@@ -178,14 +200,16 @@ class Enumerator(object):
       self.stack.extend(new_tms)
 
   def add_halt_trans(self, tm, on_state, on_symbol, steps, score):
+    """Edit the TM to have a halt at on_stat/on_symbol and save the result."""
     #   1) Add the halt state
     tm.add_cell(on_state, on_symbol, -1, 1, 1)
     #   2) Save this machine
     self.add_halt(tm, steps, score)
   
   def add_halt(self, tm, steps, score):
+    """Note a halting TM. Add statistics and output it with score/steps."""
     self.num_halt += 1
-    ## Magic nums: the '-1' is for tape size (not used) .. the '0' is for halting.
+    ## Magic nums: the '-1's are for tape size and max_steps (not used) .. the '0' is for halting.
     self.io.write_result(self.tm_num, -1, -1, (0, score, steps), tm)
     if steps > self.best_steps or score > self.best_score:
       self.best_steps = max(self.best_steps, steps)
@@ -193,24 +217,28 @@ class Enumerator(object):
     self.tm_num += 1
 
   def add_infinite(self, tm, reason):
+    """Note an infinite TM. Add statistics and output it with reason."""
     self.num_infinite += 1
     self.io.write_result(self.tm_num, -1, -1, (4, "Infinite"), tm)
     self.inf_type[reason] += 1
     self.tm_num += 1
 
   def add_unresolved(self, tm, reason, steps, runtime=None):
+    """Note an unresolved TM. Add statistics and output it with reason."""
     self.num_unresolved += 1
-    self.io.write_result(self.tm_num, -1, -1, (2, "Timeout"), tm)
-    if runtime == None:
-      self.num_over_steps
+    self.io.write_result(self.tm_num, -1, -1, (2, reason), tm)
+    if reason == Macro_Simulator.OVERSTEPS:
+      self.num_over_steps += 1
     else:
-      self.num_over_time
+      assert reason == Macro_Simulator.TIMEOUT, "Invalid reason (%r)" % reason
+      self.num_over_time += 1
     self.tm_num += 1
 
 # Command line interpretter code
 if __name__ == "__main__":
   from optparse import OptionParser, OptionGroup
-  # Parse command line options.
+  
+  ## Parse command line options.
   usage = "usage: %prog --states= --symbols= [options]"
   parser = OptionParser(usage=usage)
   req_parser = OptionGroup(parser, "Required Parameters") # Oxymoron?
@@ -221,7 +249,6 @@ if __name__ == "__main__":
   enum_parser = OptionGroup(parser, "Enumeration Options")
   enum_parser.add_option("--steps", type=int, default=10000, help="Max steps to run each machine [Default: %default]")
   enum_parser.add_option("--time", type=float, default=15., help="Max (real) time to run each machine [Default: %default]")
-  enum_parser.add_option("--save_unk", action="store_true", default=False)
   enum_parser.add_option("--randomize", action="store_true", default=False, help="Randomize the order of enumeration.")
   enum_parser.add_option("--seed", type=int, help="Seed to randomize with.")
   parser.add_option_group(enum_parser)
@@ -235,12 +262,12 @@ if __name__ == "__main__":
   
   (options, args) = parser.parse_args()
   
-  # Enforce required parameters
+  ## Enforce required parameters
   if not options.states or not options.symbols:
     parser.error("--states= and --symbols= are required parameters")
   
-  ## Set defaults
-  if not options.seed:
+  ## Set complex defaults
+  if options.randomize and not options.seed:
     options.seed = long(1000*time.time())
   if options.steps == 0:
     options.steps = Macro_Simulator.INF
@@ -249,24 +276,29 @@ if __name__ == "__main__":
   if not options.checkpoint:
     options.checkpoint = options.outfilename + ".check"
   
-  # Set up I/O
+  ## Set up I/O
+  if os.path.exists(options.outfilename):
+    reply = raw_input("File '%s' exists, overwrite it?")
+    if reply.lower() not in ("y", "yes"):
+      parser.error("Choose different outfilename")
   outfile = open(options.outfilename, "w")
+  
   io = IO(None, outfile, options.log_number)
   
-  # Print command line
-  print "Enumerate.py --states=%d --symbols=%d --steps=%d --time=%f --save_freq=%d" \
-    % (options.states, options.symbols, options.steps, options.time, options.save_freq),
-  if options.save_unk:
-    print "--save_unk",
+  ## Print command line
+  print "Enumerate.py --states=%d --symbols=%d --steps=%d --time=%f" \
+    % (options.states, options.symbols, options.steps, options.time),
   if options.randomize:
     print "--randomize --seed=%d" % options.seed,
   
-  print "--outfile=%s --checkpoint=%s" % (options.outfilename, options.checkpoint),
+  print "--outfile=%s" % options.outfilename
   if options.log_number:
     print "--log_number=%d" % options.log_number,
+  print "--checkpoint=%s --save_freq=%d" % (options.checkpoint, options.save_freq),
   print
   
+  ## Enumerate machines
   enumerator = Enumerator(options.states, options.symbols, options.steps,
-                          options.time, io, options.seed, options.save_freq,
-                          options.checkpoint, options.save_unk, options.randomize)
+                          options.time, io, options.save_freq,
+                          options.checkpoint, options.randomize, options.seed)
   enumerator.enum()
