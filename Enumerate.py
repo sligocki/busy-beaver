@@ -8,17 +8,21 @@
 # that take the longest to halt.
 #
 
-import copy, sys, time, math
+import sys
+import math
+import random
+import time
+import copy
 import cPickle as pickle
 
 from Turing_Machine import Turing_Machine
 from IO import IO
 import Macro_Simulator
 
-def long_to_eng_str(number,left,right):
+def long_to_eng_str(number, left, right):
   if number != 0:
-    expo = int(math.log(abs(number))/math.log(10))
-    number_str = str(int(number / 10**(expo-right)))
+    expo = int(math.log(abs(number), 10))
+    number_str = str(int(number / 10**(expo - right)))
 
     if number < 0:
       return "-%s.%se+%d" % (number_str[1     :1+left      ],
@@ -46,7 +50,6 @@ class Enumerator(object):
   def __init__(self, num_states, num_symbols, max_steps, max_time, io, seed,
                      save_freq=100000, checkpoint_filename="checkpoint",
                      save_unk=False, randomize=False):
-    import random
     self.num_states = num_states
     self.num_symbols = num_symbols
     self.max_steps = max_steps
@@ -61,7 +64,7 @@ class Enumerator(object):
     
     self.randomize = randomize
     if randomize:
-      self.random = random
+      self.random = random.Random()
       self.random.seed(seed)
     
     self.num_halt = self.num_infinite = self.num_unresolved = 0
@@ -78,10 +81,9 @@ class Enumerator(object):
     return d
   
   def __setstate__(self, d):
-    import random
     if d["randomize"]:
-      random.setstate(d["random_state"])
-      d["random"] = random
+      d["random"] = random.Random()
+      d["random"].setstate(d["random_state"])
       del d["random_state"]
     self.__dict__ = d
   
@@ -251,7 +253,7 @@ if __name__ == "__main__":
   outfile = open(options.outfilename, "w")
   io = IO(None, outfile, options.log_number)
   
-  # Print command
+  # Print command line
   print "Enumerate.py --states=%d --symbols=%d --steps=%d --time=%f --save_freq=%d" \
     % (options.states, options.symbols, options.steps, options.time, options.save_freq),
   if options.save_unk:
