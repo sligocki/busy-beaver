@@ -52,7 +52,7 @@ def run(TTable, block_size, block_finder_limit, back, prover, rec, verbose):
 
 if __name__ == "__main__":
   from optparse import OptionParser
- # Parse command line options.
+  # Parse command line options.
   usage = "usage: %prog [options] machine_file [line_number]"
   parser = OptionParser(usage=usage)
   #parser.set_defaults(verbose=True)
