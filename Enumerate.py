@@ -45,7 +45,7 @@ class Enumerator(object):
   """Holds enumeration state information for checkpointing."""
   def __init__(self, num_states, num_symbols, max_steps, max_time, io, seed,
                      save_freq=100000, checkpoint_filename="checkpoint",
-                     save_unk=False, ranomize=False):
+                     save_unk=False, randomize=False):
     import random
     self.num_states = num_states
     self.num_symbols = num_symbols
@@ -71,16 +71,19 @@ class Enumerator(object):
   
   def __getstate__(self):
     d = self.__dict__.copy()
-    del d["io"], d["random"]
-    d["random_state"] = self.random.getstate()
+    del d["io"]
+    if self.randomize:
+      del d["random"]
+      d["random_state"] = self.random.getstate()
     return d
   
   def __setstate__(self, d):
     import random
-    random.setstate(d["random_state"])
-    del d["random_state"]
+    if d["randomize"]:
+      random.setstate(d["random_state"])
+      d["random"] = random
+      del d["random_state"]
     self.__dict__ = d
-    self.random = random
   
   def enum(self):
     """Enumerate all num_states*num_symbols TMs in Tree-Normal Form"""
@@ -204,39 +207,64 @@ class Enumerator(object):
 
 # Command line interpretter code
 if __name__ == "__main__":
-  from Option_Parser import Generator_Option_Parser
+  from optparse import OptionParser, OptionGroup
+  # Parse command line options.
+  usage = "usage: %prog --states= --symbols= [options]"
+  parser = OptionParser(usage=usage)
+  req_parser = OptionGroup(parser, "Required Parameters") # Oxymoron?
+  req_parser.add_option("--states",  type=int, help="Number of states")
+  req_parser.add_option("--symbols", type=int, help="Number of symbols")
+  parser.add_option_group(req_parser)
   
-  # Get command line options.
-  # Enumerate.py may be sent an infile param but it should be ignored
-  opts, args = Generator_Option_Parser(sys.argv, 
-          [("time",      float,                     15, False, True), 
-           ("save_freq",   int,                 100000, False, True),
-           ("seed",       long, long(1000*time.time()), False, True),
-           ("checkpoint",  str,                   None, False, True),
-           ("save_unk"  , None,                  False, False, False),
-           ("ranomize"  , None,                  False, False, False)],
-          ignore_infile=True)
+  enum_parser = OptionGroup(parser, "Enumeration Options")
+  enum_parser.add_option("--steps", type=int, default=10000, help="Max steps to run each machine [Default: %default]")
+  enum_parser.add_option("--time", type=float, default=15., help="Max (real) time to run each machine [Default: %default]")
+  enum_parser.add_option("--save_unk", action="store_true", default=False)
+  enum_parser.add_option("--randomize", action="store_true", default=False, help="Randomize the order of enumeration.")
+  enum_parser.add_option("--seed", type=int, help="Seed to randomize with.")
+  parser.add_option_group(enum_parser)
   
-  steps = (opts["steps"] if opts["steps"] > 0 else Macro_Simulator.INF)
-  io = IO(None, opts["outfile"], opts["log_number"])
-
-  save_unk_str = ""
-  if opts["save_unk"]:
-    save_unk_str = " --save_unk"
-
-  if opts["checkpoint"] == None:
-    opts["checkpoint"] = opts["outfilename"] + ".check"
-
-  print "Enumerate.py --steps=%s --time=%s --save_freq=%s --seed=%s --outfile=%s --checkpoint=%s%s --states=%s --symbols=%s" % \
-        (opts["steps"],opts["time"],opts["save_freq"],opts["seed"],opts["outfilename"],opts["checkpoint"],save_unk_str,opts["states"],opts["symbols"])
-  sys.stdout.flush()
-
-  if opts["log_number"] != None:
-    print "--log_number=%s" % (opts["log_number"])
-  else:
-    print ""
+  out_parser = OptionGroup(parser, "Output Options")
+  out_parser.add_option("--outfile", dest="outfilename", metavar="OUTFILE", help="Output file name [Default: Enum.STATES.SYMBOLS.STEPS.out]")
+  out_parser.add_option("--log_number", type=int, metavar="NUM", help="Log number to use in output file")
+  out_parser.add_option("--checkpoint", metavar="FILE", help="Checkpoint file name [Default: OUTFILE.check]")
+  enum_parser.add_option("--save_freq", type=int, default=100000, metavar="FREQ", help="Freq to save checkpoints [Default: %default]")
+  parser.add_option_group(out_parser)
   
-  enumerator = Enumerator(opts["states"], opts["symbols"], steps, 
-                          opts["time"], io, opts["seed"], opts["save_freq"],
-                          opts["checkpoint"],opts["save_unk"], opts["randomize"])
+  (options, args) = parser.parse_args()
+  
+  # Enforce required parameters
+  if not options.states or not options.symbols:
+    parser.error("--states= and --symbols= are required parameters")
+  
+  ## Set defaults
+  if not options.seed:
+    options.seed = long(1000*time.time())
+  if options.steps == 0:
+    options.steps = Macro_Simulator.INF
+  if not options.outfilename:
+    options.outfilename = "Enum.%d.%d.%d.out" % (options.states, options.symbols, options.steps)
+  if not options.checkpoint:
+    options.checkpoint = options.outfilename + ".check"
+  
+  # Set up I/O
+  outfile = open(options.outfilename, "w")
+  io = IO(None, outfile, options.log_number)
+  
+  # Print command
+  print "Enumerate.py --states=%d --symbols=%d --steps=%d --time=%f --save_freq=%d" \
+    % (options.states, options.symbols, options.steps, options.time, options.save_freq),
+  if options.save_unk:
+    print "--save_unk",
+  if options.randomize:
+    print "--randomize --seed=%d" % options.seed,
+  
+  print "--outfile=%s --checkpoint=%s" % (options.outfilename, options.checkpoint),
+  if options.log_number:
+    print "--log_number=%d" % options.log_number,
+  print
+  
+  enumerator = Enumerator(options.states, options.symbols, options.steps,
+                          options.time, io, options.seed, options.save_freq,
+                          options.checkpoint, options.save_unk, options.randomize)
   enumerator.enum()
