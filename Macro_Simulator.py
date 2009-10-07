@@ -1,8 +1,11 @@
 #! /usr/bin/env python
 
-import sys, math, copy
+import copy
+import math
+import sys
+import signal
 
-import signal, signalPlus
+import signalPlus
 
 from Macro import Turing_Machine, Chain_Simulator, Block_Finder
 import IO, Reverse_Engineer_Filter, CTL1, CTL2
@@ -18,7 +21,6 @@ UNDEFINED = "Undefined_Transition"
 
 class AlarmException(Exception):
   """An exception to be tied to a timer running out."""
-  pass
 
 def AlarmHandler(signum, frame):
   raise AlarmException, "Timeout!"

@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 
 import sys
+
 from Macro import Turing_Machine, Chain_Simulator, Block_Finder
 import IO
 
