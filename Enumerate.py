@@ -45,7 +45,7 @@ class Enumerator(object):
   """Holds enumeration state information for checkpointing."""
   def __init__(self, num_states, num_symbols, max_steps, max_time, io, seed,
                      save_freq=100000, checkpoint_filename="checkpoint",
-                     save_unk=False):
+                     save_unk=False, ranomize=False):
     import random
     self.num_states = num_states
     self.num_symbols = num_symbols
@@ -56,10 +56,13 @@ class Enumerator(object):
     self.checkpoint_filename = checkpoint_filename
     self.save_unk = save_unk
     
-    self.random = random
-    self.random.seed(seed)
     self.stack = Stack()
     self.tm_num = 0
+    
+    self.randomize = randomize
+    if randomize:
+      self.random = random
+      self.random.seed(seed)
     
     self.num_halt = self.num_infinite = self.num_unresolved = 0
     self.best_steps = self.best_score = 0
@@ -113,16 +116,16 @@ class Enumerator(object):
         self.add_infinite(cur_tm, reason)
       elif cond == Macro_Simulator.OVERSTEPS:
         steps, = info
-        self.add_unresolved(Macro_Simulator.OVERSTEPS, steps)
-        if (self.save_unk):
-          self.io.write_result(self.tm_num, -1, -1, (2, -1, -1), cur_tm)
+        self.add_unresolved(cur_tm, Macro_Simulator.OVERSTEPS, steps)
       elif cond == Macro_Simulator.TIMEOUT:
         runtime, steps = info
-        self.add_unresolved(Macro_Simulator.TIMEOUT, steps, runtime)
+        self.add_unresolved(cur_tm, Macro_Simulator.TIMEOUT, steps, runtime)
         if (self.save_unk):
           self.io.write_result(self.tm_num, -1, -1, (2, -1, -1), cur_tm)
       else:
         raise Exception, "Enumerator.enum() - unexpected condition (%r)" % cond
+
+    self.save()
   
   def save(self):
     self.end_time = time.time()
@@ -161,10 +164,12 @@ class Enumerator(object):
             new_tm.add_cell(state_in , symbol_in ,
                             state_out, symbol_out, direction_out)
             new_tms.append(new_tm)
+      
+      # If we are randomizing TM order, do so
+      if self.randomize:
+        self.random.shuffle(new_tms)
 
-      self.random.shuffle(new_tms)
-
-      # Push the (randomize) list of TMs onto the stack
+      # Push the list of TMs onto the stack
       self.stack.extend(new_tms)
 
   def add_halt_trans(self, tm, on_state, on_symbol, steps, score):
@@ -175,18 +180,22 @@ class Enumerator(object):
   
   def add_halt(self, tm, steps, score):
     self.num_halt += 1
+    ## Magic nums: the '-1' is for tape size (not used) .. the '0' is for halting.
+    self.io.write_result(self.tm_num, -1, -1, (0, score, steps), tm)
     if steps > self.best_steps or score > self.best_score:
-      ## Magic nums: the '-1' is for tape size (not used) .. the '0' is for halting.
-      self.io.write_result(self.tm_num, -1, -1, (0, score, steps), tm)
       self.best_steps = max(self.best_steps, steps)
       self.best_score = max(self.best_score, score)
     self.tm_num += 1
+
   def add_infinite(self, tm, reason):
     self.num_infinite += 1
+    self.io.write_result(self.tm_num, -1, -1, (4, "Infinite"), tm)
     self.inf_type[reason] += 1
     self.tm_num += 1
-  def add_unresolved(self, tm, steps, runtime=None):
+
+  def add_unresolved(self, tm, reason, steps, runtime=None):
     self.num_unresolved += 1
+    self.io.write_result(self.tm_num, -1, -1, (2, "Timeout"), tm)
     if runtime == None:
       self.num_over_steps
     else:
@@ -204,7 +213,8 @@ if __name__ == "__main__":
            ("save_freq",   int,                 100000, False, True),
            ("seed",       long, long(1000*time.time()), False, True),
            ("checkpoint",  str,                   None, False, True),
-           ("save_unk"  , None,                  False, False, False)],
+           ("save_unk"  , None,                  False, False, False),
+           ("ranomize"  , None,                  False, False, False)],
           ignore_infile=True)
   
   steps = (opts["steps"] if opts["steps"] > 0 else Macro_Simulator.INF)
@@ -228,5 +238,5 @@ if __name__ == "__main__":
   
   enumerator = Enumerator(opts["states"], opts["symbols"], steps, 
                           opts["time"], io, opts["seed"], opts["save_freq"],
-                          opts["checkpoint"],opts["save_unk"])
+                          opts["checkpoint"],opts["save_unk"], opts["randomize"])
   enumerator.enum()
