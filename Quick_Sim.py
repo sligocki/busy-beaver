@@ -69,7 +69,7 @@ if __name__ == "__main__":
                     help="Turn ON recursive proof system")
   
   parser.add_option("-n", "--block-size", type=int, help="Block size to use in macro machine simulator (default is to guess with the block_finder algorithm)")
-  parser.add_option("-l", "--block-finder-limit", type=int, default=1000, help="Number of steps to run the block_finder algorithm for (if manual block size not specified) (Default = %default).")
+  parser.add_option("-l", "--block-finder-limit", type=int, default=1000, metavar="LIMIT", help="Number of steps to run the block_finder algorithm for (if manual block size not specified) (Default = %default).")
   (options, args) = parser.parse_args()
   
   # Verbose Prover
