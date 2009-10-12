@@ -4,3 +4,4 @@ syntax: glob
 *.so
 *.dll
 build
+cvs2hg_stuff
