@@ -1,9 +1,14 @@
 """
-Turing Machine Simulator with considerable accelleration due to tape compression and chain moves.
+Turing Machine Simulator with considerable accelleration due to tape compression
+and chain moves.
 """
 
-import Turing_Machine, Chain_Tape, Chain_Proof_System
-import time, math
+import math
+import time
+
+import Chain_Proof_System
+import Chain_Tape
+import Turing_Machine
 
 DEBUG = False
 
@@ -13,9 +18,12 @@ REPEAT_IN_PLACE = "Repeat_in_Place"
 CHAIN_MOVE = "Chain_Move"
 
 class Simulator:
+  """Turing machine simulator using chain-tape optimization."""
   def __init__(self):
     self.init_stats()
+  
   def init(self, machine, recursive=False):
+    """Default initialization, creates a blank tape, proof system, etc."""
     self.machine = machine
     self.tape = Chain_Tape.Chain_Tape()
     self.tape.init(machine.init_symbol, machine.init_dir)
@@ -27,7 +35,9 @@ class Simulator:
     self.op_state = Turing_Machine.RUNNING
     self.op_details = ()
     self.init_stats()
+  
   def init_stats(self):
+    """Initializes statistics about simulation."""
     self.num_loops = 0
     self.num_macro_moves = 0
     self.steps_from_macro = 0
@@ -39,18 +49,21 @@ class Simulator:
   def run(self, steps):
     self.seek(self.step_num + steps)
   def seek(self, cutoff):
+    """Run until we've reached (exceeded) step n."""
     while self.step_num < cutoff and self.op_state == Turing_Machine.RUNNING:
       self.step()
 
   def loop_run(self, loops):
+    """Loop through the step algorithm n times."""
     self.loop_seek(self.num_loops + loops)
   def loop_seek(self, cutoff):
-   while self.num_loops < cutoff and self.op_state == Turing_Machine.RUNNING:
+    while self.num_loops < cutoff and self.op_state == Turing_Machine.RUNNING:
       self.step()
 
   def true_loop_run(self, loops):
     self.true_loop_seek(self.num_loops + self.machine.num_loops + self.proof.num_loops + loops)
   def true_loop_seek(self, cutoff):
+    """Like loop_seek except that it also considers loops through the proof system."""
     while self.num_loops + self.machine.num_loops + self.proof.num_loops < cutoff and self.op_state == Turing_Machine.RUNNING:
       self.step()
 
@@ -60,11 +73,14 @@ class Simulator:
       return
     self.num_loops += 1
     if self.proof:
+      # Log the configuration and see if we can apply a rule.
       cond, new_tape, num_steps = self.proof.log(self.tape, self.state, self.step_num, self.num_loops-1)
+      # Proof system says that machine will repeat forever
       if cond == Turing_Machine.INF_REPEAT:
         self.op_state = Turing_Machine.INF_REPEAT
         self.inf_reason = PROOF_SYSTEM
         return
+      # Proof system says that we can apply a rule
       elif cond == Turing_Machine.RUNNING:
         if DEBUG:
           print
@@ -80,16 +96,16 @@ class Simulator:
         return
     # Get current symbol
     cur_symbol = self.tape.get_top_symbol()
-    # Get transition
+    # Lookup TM transition rule
     cond, (symbol2write, next_state, next_dir), num_steps = \
           self.machine.get_transition(cur_symbol, self.state, self.dir)
     # Test condition
     self.op_state = cond[0]
     self.op_details = cond[1:]
     # Apply transition
+    # Chain move
     if next_state == self.state and next_dir == self.dir and \
        self.op_state == Turing_Machine.RUNNING:
-      # Apply chain move
       num_reps = self.tape.apply_chain_move(symbol2write)
       if num_reps == Chain_Tape.INF:
         self.op_state = Turing_Machine.INF_REPEAT
@@ -99,8 +115,8 @@ class Simulator:
       self.step_num += num_steps*num_reps
       self.num_chain_moves += 1
       self.steps_from_chain += num_steps*num_reps
+    # Simple move
     else:
-      # Apply simple move
       self.tape.apply_single_move(symbol2write, next_dir)
       self.state = next_state
       self.dir = next_dir
@@ -109,9 +125,12 @@ class Simulator:
       self.steps_from_macro += num_steps
       if self.op_state == Turing_Machine.INF_REPEAT:
         self.inf_reason = REPEAT_IN_PLACE
+  
   def get_nonzeros(self):
+    """Get Busy Beaver score, number of non-zero symbols on tape."""
     return self.tape.get_nonzeros(self.machine.eval_symbol,
                                   self.machine.eval_state(self.state))
+  
   def print_self(self):
     x = len(repr(self.step_num)) + 1
     print
@@ -134,6 +153,7 @@ class Simulator:
     print "Num Nonzeros:", with_power(self.get_nonzeros())
 
 def template(s, m, x, n):
+  """Pretty printing function"""
   title = "%-8s" % s
   try:
     log_m = "10^%-6.1f" % math.log10(m)
@@ -147,6 +167,7 @@ def template(s, m, x, n):
   return title+" "+log_m+" "+m_str+" "+n_str
 
 def with_power(value):
+  """Pretty print helper. Print log(value) and value (if it's not too big)"""
   try:
     r = "10^%-6.1f " % math.log10(value)
   except:

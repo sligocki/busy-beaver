@@ -93,9 +93,9 @@ def test_CTL(ttable, cutoff, block_size=1, offset=None):
   for d in range(2):
     # Pass all symbols from this side of tape except for inf 0s
     #   and possably the last symbol before the inf 0s
-    tape[d] = [block.symbol for block in sim.tape.tape[d][:-1]]
-    if len(sim.tape.tape[d]) >= 2 and sim.tape.tape[d][-2].num > 1:
-      tape[d].append(sim.tape.tape[d][-2].symbol)
+    tape[d] = [block.symbol for block in reversed(sim.tape.tape[d][1:])]
+    if len(sim.tape.tape[d]) >= 2 and sim.tape.tape[d][1].num > 1:
+      tape[d].append(sim.tape.tape[d][1].symbol)
   config = GenContainer(state=sim.state, dir=sim.dir, tape=tape)
   return CTL(m, config)
 
