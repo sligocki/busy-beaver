@@ -12,8 +12,6 @@
 # it evenly to all the processors and then they all run until they are done
 # with their work or time runs out - no further load balancing.
 #
-# Test comment for Shawn...
-#
 
 import copy, sys, time, math, random, os, bz2
 import cPickle as pickle
