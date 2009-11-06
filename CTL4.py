@@ -94,35 +94,35 @@ def test_CTL(ttable, cutoff, block_size=1, offset=None):
   for d in range(2):
     # Pass all symbols from this side of tape except for inf 0s
     # A is set of all symbols except the last two non-zeros
-    A = set([block.symbol for block in sim.tape.tape[d][0:-3]])
+    A = set([block.symbol for block in sim.tape.tape[d][2:]])
     # The number of non-zero symbols not in A is at least 2
     # Set C to the last non-zero symbol
     # Set B to the second to last non-zero symbol
     # Add all other non-zero symbols to A
     if  len(sim.tape.tape[d]) >= 3 or \
-       (len(sim.tape.tape[d]) == 2 and sim.tape.tape[d][-2].num > 1):
-      C = set([sim.tape.tape[d][-2].symbol])
-      if sim.tape.tape[d][-2].num > 1:
-        B = set([sim.tape.tape[d][-2].symbol])
+       (len(sim.tape.tape[d]) == 2 and sim.tape.tape[d][1].num > 1):
+      C = set([sim.tape.tape[d][1].symbol])
+      if sim.tape.tape[d][1].num > 1:
+        B = set([sim.tape.tape[d][1].symbol])
         if len(sim.tape.tape[d]) >= 3:
-          A.add(sim.tape.tape[d][-3].symbol)
+          A.add(sim.tape.tape[d][2].symbol)
         if sim.tape.tape[d][-2].num > 2:
-          A.add(sim.tape.tape[d][-2].symbol)
+          A.add(sim.tape.tape[d][1].symbol)
       else:
-        B = set([sim.tape.tape[d][-3].symbol])
+        B = set([sim.tape.tape[d][2].symbol])
         if sim.tape.tape[d][-3].num > 1:
-          A.add(sim.tape.tape[d][-3].symbol)
+          A.add(sim.tape.tape[d][2].symbol)
     # Only one non-zero symbols not in A
-    # Set C to the non-zero symbol
+    # Set C to the zero symbol
     # Set B to the last non-zero symbol
     elif len(sim.tape.tape[d]) == 2:
-      C = set([sim.tape.tape[d][-1].symbol])
-      B = set([sim.tape.tape[d][-2].symbol])
+      C = set([sim.tape.tape[d][0].symbol])
+      B = set([sim.tape.tape[d][1].symbol])
     # No non-zero symbols not in A
-    # Set B and C to the non-zero symbol
+    # Set B and C to the zero symbol
     else:
-      C = set([sim.tape.tape[d][-1].symbol])
-      B = set([sim.tape.tape[d][-1].symbol])
+      C = set([sim.tape.tape[d][0].symbol])
+      B = set([sim.tape.tape[d][0].symbol])
     sets[d] = (A, B, C)
   config = GenContainer(state=sim.state, dir=sim.dir, init_sets=tuple(sets))
   return CTL(m, config)
