@@ -1,0 +1,15 @@
+2.4.100000.5000000
+
+Max Steps         = 3932964
+Max Symbols       = 2050
+
+Number Total      = 348261
+Number Halt       = 116849
+Number Infinite   = 231232
+Number Undecided  = 0
+Number Unknown    = 180
+
+Percent Halt      = 0.335521347495
+Percent Infinite  = 0.663961798766
+Percent Undecided = 0.0
+Percent Unknown   = 0.000516853739006

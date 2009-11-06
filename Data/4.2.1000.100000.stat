@@ -1,0 +1,15 @@
+4.2.1000.100000
+
+Max Steps         = 107
+Max Symbols       = 13
+
+Number Total      = 620261
+Number Halt       = 183983
+Number Infinite   = 436262
+Number Undecided  = 0
+Number Unknown    = 16
+
+Percent Halt      = 0.29662190594
+Percent Infinite  = 0.703352298468
+Percent Undecided = 0.0
+Percent Unknown   = 2.57955925006e-05
