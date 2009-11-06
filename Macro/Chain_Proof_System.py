@@ -2,8 +2,12 @@
 Proof System which observes and attempts to prove paterns in computation.
 """
 
-import sys, copy
-import Chain_Simulator, Turing_Machine, Chain_Tape
+import copy
+import sys
+
+import Chain_Simulator
+import Chain_Tape
+import Turing_Machine
 
 parent_dir = sys.path[0][:sys.path[0].rfind("/")] # pwd path with last directory removed
 sys.path.insert(1, parent_dir)

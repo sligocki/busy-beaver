@@ -1,7 +1,7 @@
 from __future__ import division
 
-import sys
 import copy
+import sys
 
 import Chain_Simulator
 import Turing_Machine
@@ -84,7 +84,10 @@ def block_finder(machine, limit=200):
 def uncompress_tape(compr_tape):
   """Expand out repatition counts in tape."""
   tape_out = []
-  for seq in compr_tape[0][-2::-1]+compr_tape[1][:-1]:
+  left_tape = compr_tape[0][1:]
+  right_tape = compr_tape[1][1:]
+  right_tape.reverse()
+  for seq in left_tape + right_tape:
     tape_out += [seq.symbol]*seq.num
   return tape_out
 
