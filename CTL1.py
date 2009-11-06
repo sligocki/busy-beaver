@@ -80,7 +80,7 @@ def test_CTL(ttable, cutoff, block_size=1, offset=None):
     print
   tape = [None, None]
   for d in range(2):
-    tape[d] = [block.symbol for block in sim.tape.tape[d] if block.num != "Inf"]
+    tape[d] = [block.symbol for block in reversed(sim.tape.tape[d]) if block.num != "Inf"]
   config = GenContainer(state=sim.state, dir=sim.dir, tape=tape)
   return CTL(m, config)
 

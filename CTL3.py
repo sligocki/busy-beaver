@@ -83,11 +83,11 @@ def test_CTL(ttable, cutoff, block_size=1, offset=None):
   for d in range(2):
     # Pass all symbols from this side of tape except for inf 0s
     # A is the first symbol
-    A = set([sim.tape.tape[d][0].symbol])
+    A = set([sim.tape.tape[d][-1].symbol])
     # B is set of all other symbols before inf 0s
-    B = set([block.symbol for block in sim.tape.tape[d][1:-1]])
-    if sim.tape.tape[d][0].num >= 2 and sim.tape.tape[d][0] != "Inf":
-      B.add(sim.tape.tape[d][0].symbol)
+    B = set([block.symbol for block in reversed(sim.tape.tape[d][1:-1])])
+    if sim.tape.tape[d][-1].num >= 2 and sim.tape.tape[d][-1] != "Inf":
+      B.add(sim.tape.tape[d][-1].symbol)
     sets[d] = (A, B)
   config = GenContainer(state=sim.state, dir=sim.dir, init_sets=tuple(sets))
   return CTL(m, config)
