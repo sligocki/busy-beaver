@@ -11,6 +11,8 @@
 # Hopefully this will have less communication bottlenecks when there are 100's
 # to 1000's of processors.
 #
+# Another test comment...
+#
 
 import copy, sys, time, math, random, os, bz2
 import cPickle as pickle
