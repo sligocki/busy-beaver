@@ -48,23 +48,32 @@ def count(ttable):
   return result
 
 #main prog
-import sys, IO
-total = 0
-for filename in sys.argv[1:]:
+import sys
+
+import IO
+
+def count_all(filename):
+  """Count total number of machines represented in a file."""
   infile = open(filename, "r")
   io = IO.IO(infile, None)
 
-  subtotal = 0
+  total = 0
   next = io.read_result()
   while next:
     ttable = next[6]
     n = count(ttable)
     #print n, subtotal
-    subtotal += n
+    total += n
     next = io.read_result()
   infile.close()
-  print "", filename, subtotal
-  sys.stdout.flush()
-  total += subtotal
-print "Total", total
+  return total
+
+if __name__ == "__main__":
+  total = 0
+  for filename in sys.argv[1:]:
+    subtotal = count_all(filename)
+    print "", filename, subtotal
+    sys.stdout.flush()
+    total += subtotal
+  print "Total", total
 
