@@ -33,7 +33,7 @@ def get_numeric(cell):
   try:
     next_symbol = int(cell[0])
     next_dir = int(cell[1])
-    next_state = int(cell[2])
+    next_state = int(cell[2])  if cell[2] != "-"  else -1
     return next_symbol, next_dir, next_state
   except ValueError:
     return False
@@ -60,7 +60,7 @@ if __name__ == "__main__":
           temp = raw_input("State %c, Symbol %d: " % (state+ord("A"), symbol))
           temp = temp.strip().upper()
           parts = temp.split()
-        if len(parts[0]) != 3:
+        if len(parts) == 0 or len(parts[0]) != 3:
           print format
           parts = []
           continue
