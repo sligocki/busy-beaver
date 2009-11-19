@@ -66,7 +66,7 @@ if __name__ == "__main__":
   parser.add_option("-p", "--no-prover", action="store_false", dest="prover", default=True, 
                     help="Turn off proof system")
   parser.add_option("-r", "--recursive", action="store_true", default=False, 
-                    help="Turn ON recursive proof system")
+                    help="Turn ON recursive proof system [Very Experimental]")
   
   parser.add_option("-n", "--block-size", type=int, help="Block size to use in macro machine simulator (default is to guess with the block_finder algorithm)")
   parser.add_option("-l", "--block-finder-limit", type=int, default=1000, metavar="LIMIT", help="Number of steps to run the block_finder algorithm for (if manual block size not specified) (Default = %default).")
