@@ -29,14 +29,14 @@ def display_ttable(table):
   """Pretty print the ttable."""
   symbols = string.digits
   dirs = "LRS"
-  states = string.ascii_uppercase[:7]
+  states = string.ascii_uppercase#[:7]
   s = ""
   for row in table:
     for cell in row:
       if cell[0] == -1:
         s += "--- "
       elif cell[2] == -1:
-        s += "%c%cH " % (symbols[cell[0]], dirs[cell[1]])
+        s += "%c%cZ " % (symbols[cell[0]], dirs[cell[1]])
       else:
         s += "%c%c%c " % (symbols[cell[0]], dirs[cell[1]], states[cell[2]])
     s += " "
