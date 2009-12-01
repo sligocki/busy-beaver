@@ -1,27 +1,36 @@
 from __future__ import division
 
+import copy
 import sys
-import Chain_Simulator, Turing_Machine
+
+import Chain_Simulator
+import Turing_Machine
 
 DEBUG = False
 
-def block_finder(machine, limit=1000):
+def block_finder(machine, limit=200):
   """Tries to find the optimal block-size for macromachines"""
   ## First find the minimum efficient tape compression size
   sim = Chain_Simulator.Simulator()
   sim.init(machine)
   sim.proof = None # Level 2 machine
+
+  # The original method was very time consuming and was originally not 
+  #   implemented correctly. Now we just run for limit steps.
+  sim.run(limit)
+  
+  '''
   # Run sim to find when the tape is least compressed with macro size 1
   max_length = len(sim.tape.tape[0]) + len(sim.tape.tape[1])
   worst_time = 0
-  worst_tape = uncompress_tape(sim.tape.tape)
+  worst_tape = copy.deepcopy(sim.tape.tape)
   for i in range(limit):
     sim.step()
     l = len(sim.tape.tape[0]) + len(sim.tape.tape[1])
     if l > max_length:
       max_length = l
       worst_time = sim.step_num
-      worst_tape = uncompress_tape(sim.tape.tape)
+      worst_tape = copy.deepcopy(sim.tape.tape)
     # If it has stopped running then this is a good block size!
     if sim.op_state != Turing_Machine.RUNNING:
       if DEBUG:
@@ -31,8 +40,10 @@ def block_finder(machine, limit=1000):
     print "Least compression at time:", worst_time
     #print worst_tape
     sys.stdout.flush()
+  '''
+
   # Analyze this time to see which block size provides greatest compression
-  tape = worst_tape
+  tape = uncompress_tape(sim.tape.tape)
   min_compr = len(tape) + 1 # Worse than no compression
   opt_size = 1
   for block_size in range(1, len(tape)//2):
@@ -43,6 +54,8 @@ def block_finder(machine, limit=1000):
   if DEBUG:
     print "Optimal base block size:", opt_size
     sys.stdout.flush()
+  return opt_size
+  
   ## Then try a couple different multiples of this base size to find best speed
   max_chain_factor = 0
   opt_mult = 1
@@ -69,12 +82,17 @@ def block_finder(machine, limit=1000):
   return opt_mult*opt_size
 
 def uncompress_tape(compr_tape):
+  """Expand out repatition counts in tape."""
   tape_out = []
-  for seq in compr_tape[0][-2::-1]+compr_tape[1][:-1]:
+  left_tape = compr_tape[0][1:]
+  right_tape = compr_tape[1][1:]
+  right_tape.reverse()
+  for seq in left_tape + right_tape:
     tape_out += [seq.symbol]*seq.num
   return tape_out
 
 def compression_efficiency(tape, k):
+  """Find size of tape when compressed with blocks of size k."""
   compr_size = len(tape)
   for i in range(0, len(tape) - 2*k, k):
     if tape[i:i + k] == tape[i + k:i + 2*k]:
