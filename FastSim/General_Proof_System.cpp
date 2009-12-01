@@ -23,10 +23,10 @@ void General_Proof_System::define(shared_ptr<Turing_Machine> a_machine,
   m_is_defined = true;
 }
 
-bool General_Proof_System::log(RUN_STATE     & a_run_state,
-                               Tape<INTEGER> & a_new_tape,
-                               INTEGER       & a_num_steps,
-                               const CONFIG  & a_full_config)
+bool General_Proof_System::log(RUN_STATE            & a_run_state,
+                               Tape<Expression>     & a_new_tape,
+                               Expression           & a_num_steps,
+                               const GENERAL_CONFIG & a_full_config)
 {
   vector<int> stripped_config;
   strip_config(stripped_config,a_full_config.m_state,a_full_config.m_tape);
@@ -55,7 +55,7 @@ bool General_Proof_System::log(RUN_STATE     & a_run_state,
 
   if (m_past_configs.find(stripped_config) == m_past_configs.end())
   {
-    PAST_CONFIG cur_config;
+    GENERAL_PAST_CONFIG cur_config;
     cur_config.m_times_seen = 1;
     cur_config.m_config     = a_full_config;
 
@@ -64,7 +64,7 @@ bool General_Proof_System::log(RUN_STATE     & a_run_state,
     return false;
   }
 
-  PAST_CONFIG past_config = m_past_configs[stripped_config];
+  GENERAL_PAST_CONFIG past_config = m_past_configs[stripped_config];
 
   if ((past_config.m_times_seen == 1) ||
       (a_full_config.m_loop_num - past_config.m_config.m_loop_num != past_config.m_delta_loop))
@@ -96,9 +96,9 @@ bool General_Proof_System::log(RUN_STATE     & a_run_state,
   return false;
 }
 
-bool General_Proof_System::compare(RULE         & a_rule,
-                                   const CONFIG & a_old_config,
-                                   const CONFIG & a_new_config)
+bool General_Proof_System::compare(RULE                 & a_rule,
+                                   const GENERAL_CONFIG & a_old_config,
+                                   const GENERAL_CONFIG & a_new_config)
 {
   Tape<Expression> gen_tape;
 
@@ -148,19 +148,19 @@ bool General_Proof_System::compare(RULE         & a_rule,
   Error("Not implemented...");
 }
 
-bool General_Proof_System::applies(RUN_STATE     & a_run_state,
-                                   Tape<INTEGER> & a_new_tape,
-                                   INTEGER       & a_num_steps,
-                                   bool          & a_bad_delta,
-                                   const RULE    & a_rule,
-                                   const CONFIG  & a_full_config)
+bool General_Proof_System::applies(RUN_STATE            & a_run_state,
+                                   Tape<Expression>     & a_new_tape,
+                                   Expression           & a_num_steps,
+                                   bool                 & a_bad_delta,
+                                   const RULE           & a_rule,
+                                   const GENERAL_CONFIG & a_full_config)
 {
   Error("Not implemented...");
 }
 
-void General_Proof_System::strip_config(vector<int>         & a_stripped_config,
-                                        const STATE         & a_state,
-                                        const Tape<INTEGER> & a_tape)
+void General_Proof_System::strip_config(vector<int>            & a_stripped_config,
+                                        const STATE            & a_state,
+                                        const Tape<Expression> & a_tape)
 {
   a_stripped_config.push_back(a_state);
   a_stripped_config.push_back(a_tape.m_dir);

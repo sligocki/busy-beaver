@@ -58,6 +58,26 @@ VARIABLE Expression::get_var()
   return it->first;
 }
 
+Expression & operator=(const INTEGER & a_constant)
+{
+  m_vars.clear();
+  m_constant = a_constant;
+
+  return *this;
+}
+
+Expression & operator+=(const Expression & a_expression)
+{
+  MayDay::Error("Not implemented...");
+  return *this;
+}
+
+Expression & operator+=(const INTEGER & a_expression)
+{
+  MayDay::Error("Not implemented...");
+  return *this;
+}
+
 // return a string representation for a variable
 char repr_variable(VARIABLE a_var)
 {

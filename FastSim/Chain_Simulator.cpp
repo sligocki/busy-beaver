@@ -51,7 +51,7 @@ void Chain_Simulator::step()
 
   m_num_loops++;
 
-  INTEGER num_steps;
+  INTEGER steps_in_proof;
 
   if (m_proof.m_is_defined)
   {
@@ -64,7 +64,7 @@ void Chain_Simulator::step()
     full_config.m_step_num = m_step_num;
     full_config.m_loop_num = m_num_loops - 1;
 
-    m_proof.log(cond,new_tape,num_steps,full_config);
+    m_proof.log(cond,new_tape,steps_in_proof,full_config);
 
     if (cond == INFINITE)
     {
@@ -75,9 +75,9 @@ void Chain_Simulator::step()
     else if (cond == RUNNING)
     {
       m_tape = new_tape;
-      m_step_num += num_steps;
+      m_step_num += steps_in_proof;
       m_num_rule_moves++;
-      m_steps_from_rule += num_steps;
+      m_steps_from_rule += steps_in_proof;
       return;
     }
   }
@@ -85,8 +85,9 @@ void Chain_Simulator::step()
   SYMBOL cur_symbol;
   cur_symbol = m_tape.get_top_symbol();
 
+  INTEGER steps_from_transition;
   TRANSITION new_trans;
-  m_machine->get_transition(m_op_state,new_trans,num_steps,
+  m_machine->get_transition(m_op_state,new_trans,steps_from_transition,
                             cur_symbol,m_trans);
 
   if (new_trans.m_state == m_trans.m_state &&
@@ -103,18 +104,18 @@ void Chain_Simulator::step()
     }
     else
     {
-      m_step_num += num_steps*num_reps;
+      m_step_num += steps_from_transition*num_reps;
       m_num_chain_moves++;
-      m_steps_from_chain += num_steps*num_reps;
+      m_steps_from_chain += steps_from_transition*num_reps;
     }
   }
   else
   {
     m_tape.apply_single_move(new_trans);
     m_trans = new_trans;
-    m_step_num += num_steps;
+    m_step_num += steps_from_transition;
     m_num_macro_moves++;
-    m_steps_from_macro += num_steps;
+    m_steps_from_macro += steps_from_transition;
     if (m_op_state == INFINITE)
     {
       m_inf_reason = "Repeat_in_Place";

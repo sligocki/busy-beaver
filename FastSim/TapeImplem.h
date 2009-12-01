@@ -110,9 +110,9 @@ template <class T> inline void Tape<T>::apply_single_move(const TRANSITION & a_t
   }
 }
 
-template <class T> inline INTEGER Tape<T>::apply_chain_move(const SYMBOL & a_new_symbol)
+template <class T> inline T Tape<T>::apply_chain_move(const SYMBOL & a_new_symbol)
 {
-  INTEGER num;
+  T num;
 
   vector<Repeated_Symbol<T> > & stack_dir = m_half_tape[m_dir];
   num = stack_dir[0].m_number;
@@ -150,4 +150,8 @@ template <class T> inline INTEGER Tape<T>::apply_chain_move(const SYMBOL & a_new
   }
 
   return num;
+}
+
+template <class T> inline Tape<T> & Tape<T>::operator=(const Tape<T> & a_tape)
+{
 }
