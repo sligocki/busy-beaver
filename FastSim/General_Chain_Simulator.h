@@ -16,8 +16,6 @@ class General_Chain_Simulator
 
     virtual ~General_Chain_Simulator();
 
-    void seek(const INTEGER & a_cutoff);
-
     void step();
 
     INTEGER num_nonzero();
@@ -27,15 +25,6 @@ class General_Chain_Simulator
     const char* m_inf_reason;
 
     INTEGER m_num_loops;
-
-    INTEGER m_num_macro_moves;
-    INTEGER m_steps_from_macro;
-
-    INTEGER m_num_chain_moves;
-    INTEGER m_steps_from_chain;
-
-    INTEGER m_num_rule_moves;
-    INTEGER m_steps_from_rule;
 
     shared_ptr<Turing_Machine> m_machine;
 

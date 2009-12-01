@@ -9,7 +9,7 @@ typedef int VARIABLE;
 // Returns a new, distinct variable
 VARIABLE new_var();
 
-typedef map<VARIABLE, int> var_map; // TODO: should this be a diff type of int?
+typedef map<VARIABLE, INTEGER> var_map; // TODO: should this be a diff type of int?
 
 // A linear combination of variables and integers
 class Expression
@@ -54,6 +54,12 @@ class Expression
     // Get the single variable from an expression.
     // TODO: This is ugly, can we find another way to do this?
     VARIABLE get_var();
+
+    Expression & operator=(const INTEGER & a_constant);
+
+    Expression & operator+=(const Expression & a_expression);
+
+    Expression & operator+=(const INTEGER & a_constant);
     
     friend ostream& operator<<(ostream& a_stream, Expression a_expr);
 };

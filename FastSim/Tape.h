@@ -32,7 +32,9 @@ template <class T> class Tape
 
     void apply_single_move(const TRANSITION & a_trans);
 
-    INTEGER apply_chain_move(const SYMBOL & a_new_symbol);
+    T apply_chain_move(const SYMBOL & a_new_symbol);
+
+    Tape<T> & operator=(const Tape<T> & a_tape);
 
     SYMBOL m_init_symbol;
     int    m_dir;

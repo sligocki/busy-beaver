@@ -4,6 +4,7 @@
 #include "Define.h"
 #include "Turing_Machine.h"
 #include "Tape.h"
+#include "Expression.h"
 
 typedef struct {
   Tape<INTEGER> m_initial_tape;
@@ -19,10 +20,23 @@ typedef struct {
 } CONFIG;
 
 typedef struct {
+  STATE            m_state;
+  Tape<Expression> m_tape;
+  Expression       m_step_num;
+  INTEGER          m_loop_num;
+} GENERAL_CONFIG;
+
+typedef struct {
   int     m_times_seen;
   INTEGER m_delta_loop;
   CONFIG  m_config;
 } PAST_CONFIG;
+
+typedef struct {
+  int            m_times_seen;
+  INTEGER        m_delta_loop;
+  GENERAL_CONFIG m_config;
+} GENERAL_PAST_CONFIG;
 
 class Proof_System
 {
