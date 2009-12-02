@@ -178,6 +178,7 @@ class Proof_System:
         #raw_input()
       if gen_sim.op_state is not Turing_Machine.RUNNING:
         return False
+      # Update min_val for each expression.
       for dir in range(2):
         for block in gen_sim.tape.tape[dir]:
           if isinstance(block.num, Algebraic_Expression):
@@ -202,15 +203,16 @@ class Proof_System:
         if new_block.num != end_value:
           return False
     # If machine has run delta_steps without error, it is a general rule.
-#    diff_tape = new_tape.copy()
+    #diff_tape = new_tape.copy()
     diff_tape = gen_sim.tape.copy()
     for dir in range(2):
-#      for diff_block, old_block in zip(diff_tape.tape[dir], old_tape.tape[dir]):
+      #for diff_block, old_block in zip(diff_tape.tape[dir], old_tape.tape[dir]):
       for diff_block, old_block in zip(diff_tape.tape[dir], initial_tape.tape[dir]):
         if diff_block.num != Chain_Tape.INF:
           diff_block.num -= old_block.num
           if isinstance(diff_block.num, Algebraic_Expression) and len(diff_block.num.terms) == 0:
             diff_block.num = diff_block.num.const
+    # Tighten up rule to be as general as possible (e.g. by replacing x+5 with x+1).
     replaces = []
     for dir in range(2):
       for init_block in initial_tape.tape[dir]:

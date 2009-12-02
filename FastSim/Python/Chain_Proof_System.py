@@ -174,6 +174,7 @@ class Proof_System:
         #raw_input()
       if gen_sim.op_state is not Turing_Machine.RUNNING:
         return False
+      # Update min_val for each expression.
       for dir in range(2):
         for block in gen_sim.tape.tape[dir]:
           if isinstance(block.num, Algebraic_Expression):
