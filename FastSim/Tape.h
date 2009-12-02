@@ -23,8 +23,8 @@ template <class T> class Tape
 
     void define(const TRANSITION & a_init_trans);
 
-    INTEGER num_nonzero(shared_ptr<Turing_Machine> a_machine,
-                        const STATE              & a_state);
+    T num_nonzero(shared_ptr<Turing_Machine> a_machine,
+                  const STATE              & a_state);
 
     Repeated_Symbol<T> get_top_block();
 

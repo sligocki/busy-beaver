@@ -25,10 +25,10 @@ template <class T> inline void Tape<T>::define(const TRANSITION & a_init_trans)
   m_is_defined = true;
 }
 
-template <class T> inline INTEGER Tape<T>::num_nonzero(shared_ptr<Turing_Machine> a_machine,
-                                                const STATE              & a_state)
+template <class T> inline T Tape<T>::num_nonzero(shared_ptr<Turing_Machine> a_machine,
+                                                 const STATE              & a_state)
 {
-  INTEGER num;
+  T num;
 
   num = a_machine->eval_state(a_state);
 
