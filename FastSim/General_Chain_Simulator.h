@@ -4,21 +4,18 @@
 #include "Define.h"
 #include "Turing_Machine.h"
 #include "Tape.h"
-#include "General_Proof_System.h"
+// This would need to be added back for recursive proofs
+// #include "General_Proof_System.h"
 #include "Expression.h"
 
 class General_Chain_Simulator
 {
   public:
-    General_Chain_Simulator(shared_ptr<Turing_Machine> a_machine,
-                            const bool               & a_recursive,
-                            const bool               & a_prover);
+    General_Chain_Simulator(shared_ptr<Turing_Machine> a_machine);
 
     virtual ~General_Chain_Simulator();
 
     void step();
-
-    INTEGER num_nonzero();
 
     void print(ostream & a_out) const;
 
@@ -34,7 +31,8 @@ class General_Chain_Simulator
     Expression m_step_num;
     RUN_STATE  m_op_state;
 
-    General_Proof_System m_proof;
+    // This would need to be added back for recursive proofs
+    // General_Proof_System m_proof;
 };
 
 ostream& operator<<(ostream                       & a_ostream,

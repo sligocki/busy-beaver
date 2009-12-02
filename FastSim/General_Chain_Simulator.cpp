@@ -1,8 +1,6 @@
 #include "General_Chain_Simulator.h"
 
-General_Chain_Simulator::General_Chain_Simulator(shared_ptr<Turing_Machine> a_machine,
-                                                 const bool               & a_recursive,
-                                                 const bool               & a_prover)
+General_Chain_Simulator::General_Chain_Simulator(shared_ptr<Turing_Machine> a_machine)
 {
   m_inf_reason = NULL;
 
@@ -15,10 +13,11 @@ General_Chain_Simulator::General_Chain_Simulator(shared_ptr<Turing_Machine> a_ma
   m_step_num = 0;
   m_op_state = RUNNING;
   
-  if (a_prover)
-  {
-    m_proof.define(m_machine,a_recursive);
-  }
+  // Needed for recursive proofs
+  // if (a_prover)
+  // {
+  //   m_proof.define(m_machine,false);
+  // }
 }
 
 General_Chain_Simulator::~General_Chain_Simulator()
@@ -35,33 +34,6 @@ void General_Chain_Simulator::step()
   m_num_loops++;
 
   Expression steps_in_proof;
-
-  if (m_proof.m_is_defined)
-  {
-    RUN_STATE cond;
-    Tape<Expression> new_tape;
-
-    GENERAL_CONFIG full_config;
-    full_config.m_state = m_trans.m_state;
-    full_config.m_tape  = m_tape;
-    full_config.m_step_num = m_step_num;
-    full_config.m_loop_num = m_num_loops - 1;
-
-    m_proof.log(cond,new_tape,steps_in_proof,full_config);
-
-    if (cond == INFINITE)
-    {
-      m_op_state = INFINITE;
-      m_inf_reason = "General_Proof_System";
-      return;
-    }
-    else if (cond == RUNNING)
-    {
-      m_tape = new_tape;
-      m_step_num += steps_in_proof;
-      return;
-    }
-  }
 
   SYMBOL cur_symbol;
   cur_symbol = m_tape.get_top_symbol();
@@ -98,11 +70,6 @@ void General_Chain_Simulator::step()
       m_inf_reason = "Repeat_in_Place";
     }
   }
-}
-
-INTEGER General_Chain_Simulator::num_nonzero()
-{
-  return m_tape.num_nonzero(m_machine,m_trans.m_state);
 }
 
 void General_Chain_Simulator::print(ostream & a_out) const

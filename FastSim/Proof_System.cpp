@@ -142,7 +142,7 @@ bool Proof_System::compare(RULE         & a_rule,
 
   Tape<Expression> initial_tape = gen_tape;
 
-  General_Chain_Simulator gen_sim(m_machine,false,false);
+  General_Chain_Simulator gen_sim(m_machine);
   gen_sim.m_tape = gen_tape;
 
   Error("Not implemented...");
