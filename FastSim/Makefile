@@ -14,7 +14,6 @@ src1 = Quick_Sim.cpp                 \
        Chain_Simulator.cpp           \
        Proof_System.cpp              \
        General_Chain_Simulator.cpp   \
-       General_Proof_System.cpp      \
        Exception.cpp                 \
        Expression.cpp	
 obj1 = Quick_Sim.o                   \
@@ -27,7 +26,6 @@ obj1 = Quick_Sim.o                   \
        Chain_Simulator.o             \
        Proof_System.o                \
        General_Chain_Simulator.o     \
-       General_Proof_System.o        \
        Exception.o                   \
        Expression.o
 
@@ -71,7 +69,7 @@ Quick_Sim.o: /usr/include/boost/detail/workaround.hpp /usr/include/gmpxx.h
 Quick_Sim.o: /usr/include/gmp.h Exception.h TTable.h Turing_Machine.h
 Quick_Sim.o: Simple_Turing_Machine.h Block_Finder.h Macro_Turing_Machine.h
 Quick_Sim.o: Backsymbol_Turing_Machine.h Chain_Simulator.h Tape.h
-Quick_Sim.o: TapeImplem.h Proof_System.h
+Quick_Sim.o: TapeImplem.h Proof_System.h Expression.h
 TTable.o: TTable.h Define.h /usr/include/boost/shared_ptr.hpp
 TTable.o: /usr/include/boost/config.hpp /usr/include/boost/config/user.hpp
 TTable.o: /usr/include/boost/config/select_compiler_config.hpp
@@ -252,6 +250,7 @@ Chain_Simulator.o: /usr/include/boost/detail/sp_counted_impl.hpp
 Chain_Simulator.o: /usr/include/boost/detail/workaround.hpp
 Chain_Simulator.o: /usr/include/gmpxx.h /usr/include/gmp.h Exception.h
 Chain_Simulator.o: Turing_Machine.h Tape.h TapeImplem.h Proof_System.h
+Chain_Simulator.o: Expression.h
 Proof_System.o: Expression.h Define.h /usr/include/boost/shared_ptr.hpp
 Proof_System.o: /usr/include/boost/config.hpp
 Proof_System.o: /usr/include/boost/config/user.hpp
@@ -275,8 +274,7 @@ Proof_System.o: /usr/include/boost/detail/sp_counted_base_gcc_x86.hpp
 Proof_System.o: /usr/include/boost/detail/sp_counted_impl.hpp
 Proof_System.o: /usr/include/boost/detail/workaround.hpp /usr/include/gmpxx.h
 Proof_System.o: /usr/include/gmp.h Exception.h General_Chain_Simulator.h
-Proof_System.o: Turing_Machine.h Tape.h TapeImplem.h General_Proof_System.h
-Proof_System.o: Proof_System.h
+Proof_System.o: Turing_Machine.h Tape.h TapeImplem.h Proof_System.h
 General_Chain_Simulator.o: General_Chain_Simulator.h Define.h
 General_Chain_Simulator.o: /usr/include/boost/shared_ptr.hpp
 General_Chain_Simulator.o: /usr/include/boost/config.hpp
@@ -308,36 +306,7 @@ General_Chain_Simulator.o: /usr/include/boost/detail/sp_counted_impl.hpp
 General_Chain_Simulator.o: /usr/include/boost/detail/workaround.hpp
 General_Chain_Simulator.o: /usr/include/gmpxx.h /usr/include/gmp.h
 General_Chain_Simulator.o: Exception.h Turing_Machine.h Tape.h TapeImplem.h
-General_Chain_Simulator.o: General_Proof_System.h Proof_System.h Expression.h
-General_Proof_System.o: Expression.h Define.h
-General_Proof_System.o: /usr/include/boost/shared_ptr.hpp
-General_Proof_System.o: /usr/include/boost/config.hpp
-General_Proof_System.o: /usr/include/boost/config/user.hpp
-General_Proof_System.o: /usr/include/boost/config/select_compiler_config.hpp
-General_Proof_System.o: /usr/include/boost/config/compiler/gcc.hpp
-General_Proof_System.o: /usr/include/boost/config/select_stdlib_config.hpp
-General_Proof_System.o: /usr/include/boost/config/select_platform_config.hpp
-General_Proof_System.o: /usr/include/boost/config/suffix.hpp
-General_Proof_System.o: /usr/include/limits.h /usr/include/features.h
-General_Proof_System.o: /usr/include/sys/cdefs.h /usr/include/bits/wordsize.h
-General_Proof_System.o: /usr/include/gnu/stubs.h /usr/include/gnu/stubs-64.h
-General_Proof_System.o: /usr/include/bits/posix1_lim.h
-General_Proof_System.o: /usr/include/bits/local_lim.h
-General_Proof_System.o: /usr/include/linux/limits.h
-General_Proof_System.o: /usr/include/bits/posix2_lim.h
-General_Proof_System.o: /usr/include/boost/assert.hpp /usr/include/assert.h
-General_Proof_System.o: /usr/include/boost/checked_delete.hpp
-General_Proof_System.o: /usr/include/boost/throw_exception.hpp
-General_Proof_System.o: /usr/include/boost/config.hpp
-General_Proof_System.o: /usr/include/boost/detail/shared_count.hpp
-General_Proof_System.o: /usr/include/boost/detail/bad_weak_ptr.hpp
-General_Proof_System.o: /usr/include/boost/detail/sp_counted_base.hpp
-General_Proof_System.o: /usr/include/boost/detail/sp_counted_base_gcc_x86.hpp
-General_Proof_System.o: /usr/include/boost/detail/sp_counted_impl.hpp
-General_Proof_System.o: /usr/include/boost/detail/workaround.hpp
-General_Proof_System.o: /usr/include/gmpxx.h /usr/include/gmp.h Exception.h
-General_Proof_System.o: General_Chain_Simulator.h Turing_Machine.h Tape.h
-General_Proof_System.o: TapeImplem.h General_Proof_System.h Proof_System.h
+General_Chain_Simulator.o: Expression.h
 Exception.o: Exception.h Define.h /usr/include/boost/shared_ptr.hpp
 Exception.o: /usr/include/boost/config.hpp /usr/include/boost/config/user.hpp
 Exception.o: /usr/include/boost/config/select_compiler_config.hpp
