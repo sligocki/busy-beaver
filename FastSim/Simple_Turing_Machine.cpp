@@ -3,14 +3,38 @@
 Simple_Turing_Machine::Simple_Turing_Machine(const TTable & a_ttable)
 {
   m_ttable = a_ttable;
-
-  m_init_trans.m_state  = 0;
-  m_init_trans.m_symbol = 0;
-  m_init_trans.m_dir    = 1;
+  
+  m_num_states  = m_ttable.m_num_states;
+  m_num_symbols = m_ttable.m_num_symbols;
+  
+  m_init_state = 0;
+  m_init_dir = LEFT;
+  m_init_symbol = 0;
 }
 
 Simple_Turing_Machine::~Simple_Turing_Machine()
 {
+}
+
+// The "sigma score" contribution from a symbol.
+// For a normal Turing Machine, it is just 1 for any non-zero symbol.
+int Simple_Turing_Machine::eval_symbol(const SYMBOL & a_symbol);
+{
+  if (a_symbol != m_init_trans.m_symbol)
+  {
+    return 1;
+  }
+  else
+  {
+    return 0;
+  }
+}
+
+// The "sigma score" contribution from the state.
+// Simple TMs contribute nothing from state.
+int Simple_Turing_Machine::eval_state(const STATE & a_state)
+{
+  return 0;
 }
 
 void Simple_Turing_Machine::get_transition(RUN_STATE        & a_run_state,

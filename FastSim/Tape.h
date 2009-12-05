@@ -37,7 +37,7 @@ template <class T> class Tape
     Tape<T> & operator=(const Tape<T> & a_tape);
 
     SYMBOL m_init_symbol;
-    int    m_dir;
+    DIR    m_dir;
 
     vector<Repeated_Symbol<T> > m_half_tape[2];
 

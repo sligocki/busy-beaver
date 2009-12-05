@@ -54,7 +54,7 @@ Quick_Sim.o: /usr/include/boost/config/select_platform_config.hpp
 Quick_Sim.o: /usr/include/boost/config/suffix.hpp /usr/include/limits.h
 Quick_Sim.o: /usr/include/features.h /usr/include/sys/cdefs.h
 Quick_Sim.o: /usr/include/bits/wordsize.h /usr/include/gnu/stubs.h
-Quick_Sim.o: /usr/include/gnu/stubs-64.h /usr/include/bits/posix1_lim.h
+Quick_Sim.o: /usr/include/gnu/stubs.h /usr/include/bits/posix1_lim.h
 Quick_Sim.o: /usr/include/bits/local_lim.h /usr/include/linux/limits.h
 Quick_Sim.o: /usr/include/bits/posix2_lim.h /usr/include/boost/assert.hpp
 Quick_Sim.o: /usr/include/assert.h /usr/include/boost/checked_delete.hpp
@@ -79,7 +79,7 @@ TTable.o: /usr/include/boost/config/select_platform_config.hpp
 TTable.o: /usr/include/boost/config/suffix.hpp /usr/include/limits.h
 TTable.o: /usr/include/features.h /usr/include/sys/cdefs.h
 TTable.o: /usr/include/bits/wordsize.h /usr/include/gnu/stubs.h
-TTable.o: /usr/include/gnu/stubs-64.h /usr/include/bits/posix1_lim.h
+TTable.o: /usr/include/gnu/stubs.h /usr/include/bits/posix1_lim.h
 TTable.o: /usr/include/bits/local_lim.h /usr/include/linux/limits.h
 TTable.o: /usr/include/bits/posix2_lim.h /usr/include/boost/assert.hpp
 TTable.o: /usr/include/assert.h /usr/include/boost/checked_delete.hpp
@@ -101,7 +101,7 @@ Tape.o: /usr/include/boost/config/select_platform_config.hpp
 Tape.o: /usr/include/boost/config/suffix.hpp /usr/include/limits.h
 Tape.o: /usr/include/features.h /usr/include/sys/cdefs.h
 Tape.o: /usr/include/bits/wordsize.h /usr/include/gnu/stubs.h
-Tape.o: /usr/include/gnu/stubs-64.h /usr/include/bits/posix1_lim.h
+Tape.o: /usr/include/gnu/stubs.h /usr/include/bits/posix1_lim.h
 Tape.o: /usr/include/bits/local_lim.h /usr/include/linux/limits.h
 Tape.o: /usr/include/bits/posix2_lim.h /usr/include/boost/assert.hpp
 Tape.o: /usr/include/assert.h /usr/include/boost/checked_delete.hpp
@@ -125,7 +125,7 @@ Simple_Turing_Machine.o: /usr/include/boost/config/suffix.hpp
 Simple_Turing_Machine.o: /usr/include/limits.h /usr/include/features.h
 Simple_Turing_Machine.o: /usr/include/sys/cdefs.h
 Simple_Turing_Machine.o: /usr/include/bits/wordsize.h
-Simple_Turing_Machine.o: /usr/include/gnu/stubs.h /usr/include/gnu/stubs-64.h
+Simple_Turing_Machine.o: /usr/include/gnu/stubs.h /usr/include/gnu/stubs.h
 Simple_Turing_Machine.o: /usr/include/bits/posix1_lim.h
 Simple_Turing_Machine.o: /usr/include/bits/local_lim.h
 Simple_Turing_Machine.o: /usr/include/linux/limits.h
@@ -152,7 +152,7 @@ Block_Finder.o: /usr/include/boost/config/select_platform_config.hpp
 Block_Finder.o: /usr/include/boost/config/suffix.hpp /usr/include/limits.h
 Block_Finder.o: /usr/include/features.h /usr/include/sys/cdefs.h
 Block_Finder.o: /usr/include/bits/wordsize.h /usr/include/gnu/stubs.h
-Block_Finder.o: /usr/include/gnu/stubs-64.h /usr/include/bits/posix1_lim.h
+Block_Finder.o: /usr/include/gnu/stubs.h /usr/include/bits/posix1_lim.h
 Block_Finder.o: /usr/include/bits/local_lim.h /usr/include/linux/limits.h
 Block_Finder.o: /usr/include/bits/posix2_lim.h /usr/include/boost/assert.hpp
 Block_Finder.o: /usr/include/assert.h /usr/include/boost/checked_delete.hpp
@@ -176,7 +176,7 @@ Macro_Turing_Machine.o: /usr/include/boost/config/select_platform_config.hpp
 Macro_Turing_Machine.o: /usr/include/boost/config/suffix.hpp
 Macro_Turing_Machine.o: /usr/include/limits.h /usr/include/features.h
 Macro_Turing_Machine.o: /usr/include/sys/cdefs.h /usr/include/bits/wordsize.h
-Macro_Turing_Machine.o: /usr/include/gnu/stubs.h /usr/include/gnu/stubs-64.h
+Macro_Turing_Machine.o: /usr/include/gnu/stubs.h /usr/include/gnu/stubs.h
 Macro_Turing_Machine.o: /usr/include/bits/posix1_lim.h
 Macro_Turing_Machine.o: /usr/include/bits/local_lim.h
 Macro_Turing_Machine.o: /usr/include/linux/limits.h
@@ -206,7 +206,7 @@ Backsymbol_Turing_Machine.o: /usr/include/limits.h /usr/include/features.h
 Backsymbol_Turing_Machine.o: /usr/include/sys/cdefs.h
 Backsymbol_Turing_Machine.o: /usr/include/bits/wordsize.h
 Backsymbol_Turing_Machine.o: /usr/include/gnu/stubs.h
-Backsymbol_Turing_Machine.o: /usr/include/gnu/stubs-64.h
+Backsymbol_Turing_Machine.o: /usr/include/gnu/stubs.h
 Backsymbol_Turing_Machine.o: /usr/include/bits/posix1_lim.h
 Backsymbol_Turing_Machine.o: /usr/include/bits/local_lim.h
 Backsymbol_Turing_Machine.o: /usr/include/linux/limits.h
@@ -235,7 +235,7 @@ Chain_Simulator.o: /usr/include/boost/config/select_platform_config.hpp
 Chain_Simulator.o: /usr/include/boost/config/suffix.hpp /usr/include/limits.h
 Chain_Simulator.o: /usr/include/features.h /usr/include/sys/cdefs.h
 Chain_Simulator.o: /usr/include/bits/wordsize.h /usr/include/gnu/stubs.h
-Chain_Simulator.o: /usr/include/gnu/stubs-64.h /usr/include/bits/posix1_lim.h
+Chain_Simulator.o: /usr/include/gnu/stubs.h /usr/include/bits/posix1_lim.h
 Chain_Simulator.o: /usr/include/bits/local_lim.h /usr/include/linux/limits.h
 Chain_Simulator.o: /usr/include/bits/posix2_lim.h
 Chain_Simulator.o: /usr/include/boost/assert.hpp /usr/include/assert.h
@@ -261,7 +261,7 @@ Proof_System.o: /usr/include/boost/config/select_platform_config.hpp
 Proof_System.o: /usr/include/boost/config/suffix.hpp /usr/include/limits.h
 Proof_System.o: /usr/include/features.h /usr/include/sys/cdefs.h
 Proof_System.o: /usr/include/bits/wordsize.h /usr/include/gnu/stubs.h
-Proof_System.o: /usr/include/gnu/stubs-64.h /usr/include/bits/posix1_lim.h
+Proof_System.o: /usr/include/gnu/stubs.h /usr/include/bits/posix1_lim.h
 Proof_System.o: /usr/include/bits/local_lim.h /usr/include/linux/limits.h
 Proof_System.o: /usr/include/bits/posix2_lim.h /usr/include/boost/assert.hpp
 Proof_System.o: /usr/include/assert.h /usr/include/boost/checked_delete.hpp
@@ -288,7 +288,7 @@ General_Chain_Simulator.o: /usr/include/limits.h /usr/include/features.h
 General_Chain_Simulator.o: /usr/include/sys/cdefs.h
 General_Chain_Simulator.o: /usr/include/bits/wordsize.h
 General_Chain_Simulator.o: /usr/include/gnu/stubs.h
-General_Chain_Simulator.o: /usr/include/gnu/stubs-64.h
+General_Chain_Simulator.o: /usr/include/gnu/stubs.h
 General_Chain_Simulator.o: /usr/include/bits/posix1_lim.h
 General_Chain_Simulator.o: /usr/include/bits/local_lim.h
 General_Chain_Simulator.o: /usr/include/linux/limits.h
@@ -316,7 +316,7 @@ Exception.o: /usr/include/boost/config/select_platform_config.hpp
 Exception.o: /usr/include/boost/config/suffix.hpp /usr/include/limits.h
 Exception.o: /usr/include/features.h /usr/include/sys/cdefs.h
 Exception.o: /usr/include/bits/wordsize.h /usr/include/gnu/stubs.h
-Exception.o: /usr/include/gnu/stubs-64.h /usr/include/bits/posix1_lim.h
+Exception.o: /usr/include/gnu/stubs.h /usr/include/bits/posix1_lim.h
 Exception.o: /usr/include/bits/local_lim.h /usr/include/linux/limits.h
 Exception.o: /usr/include/bits/posix2_lim.h /usr/include/boost/assert.hpp
 Exception.o: /usr/include/assert.h /usr/include/boost/checked_delete.hpp
@@ -339,7 +339,7 @@ Expression.o: /usr/include/boost/config/select_platform_config.hpp
 Expression.o: /usr/include/boost/config/suffix.hpp /usr/include/limits.h
 Expression.o: /usr/include/features.h /usr/include/sys/cdefs.h
 Expression.o: /usr/include/bits/wordsize.h /usr/include/gnu/stubs.h
-Expression.o: /usr/include/gnu/stubs-64.h /usr/include/bits/posix1_lim.h
+Expression.o: /usr/include/gnu/stubs.h /usr/include/bits/posix1_lim.h
 Expression.o: /usr/include/bits/local_lim.h /usr/include/linux/limits.h
 Expression.o: /usr/include/bits/posix2_lim.h /usr/include/boost/assert.hpp
 Expression.o: /usr/include/assert.h /usr/include/boost/checked_delete.hpp

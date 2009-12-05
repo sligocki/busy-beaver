@@ -12,6 +12,10 @@ class Backsymbol_Turing_Machine: public Turing_Machine
 
     virtual ~Backsymbol_Turing_Machine();
 
+    virtual int eval_symbol(const SYMBOL & a_symbol);
+
+    virtual int eval_state(const STATE & a_state);
+
     virtual void get_transition(RUN_STATE        & a_run_state,
                                 TRANSITION       & a_trans_out,
                                 INTEGER          & a_num_steps,
