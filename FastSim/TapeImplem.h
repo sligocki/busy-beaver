@@ -100,7 +100,7 @@ template <class T> inline void Tape<T>::apply_single_move(const TRANSITION & a_t
 
   m_dir = a_trans.m_dir;
 
-  if (m_dir == 0)
+  if (m_dir == LEFT)
   {
     m_displace--;
   }
@@ -139,7 +139,7 @@ template <class T> inline T Tape<T>::apply_chain_move(const SYMBOL & a_new_symbo
       stack_not_dir.insert(stack_not_dir.begin(),new_repeat);
     }
 
-    if (m_dir == 0)
+    if (m_dir == LEFT)
     {
       m_displace -= num;
     }

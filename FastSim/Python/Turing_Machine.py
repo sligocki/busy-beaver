@@ -55,73 +55,94 @@ class Macro_Machine(Turing_Machine): pass
 
 class Block_Macro_Machine(Macro_Machine):
   """A derivative Turing Machine which simulates another machine clumping k-symbols together into a block-symbol"""
+  
   MAX_TTABLE_CELLS = 100000
   DUMMY_OFFSET_STATE = "Dummy_Offset_State"
+  
   def __init__(self, base_machine, block_size, offset=None):
     assert block_size > 0
+    
     self.block_size = block_size
     self.base_machine = base_machine
+    
     self.num_states = base_machine.num_states
     self.num_symbols = base_machine.num_symbols ** block_size
+    
     # A lazy evaluation hashed macro transition table
     self.trans_table = {}
+    self.max_cells = Block_Macro_Machine.MAX_TTABLE_CELLS # Max cells in trans_table.
+    
     self.init_state = base_machine.init_state
     self.init_dir = base_machine.init_dir
+    
     if offset:
       assert 0 < offset < block_size
       self.save = self.init_state, offset
       self.init_state = Block_Macro_Machine.DUMMY_OFFSET_STATE
+    
     # initial symbol is (0, 0, 0, ..., 0) not just 0
     self.init_symbol = (base_machine.init_symbol,) * block_size
+    
     # Maximum number of base-steps per macro-step evaluation w/o repeat
     # #positions * #states * #macro_symbols
     self.max_steps = block_size * self.num_states * self.num_symbols
-    self.max_cells = Block_Macro_Machine.MAX_TTABLE_CELLS
+    
     # Stat info
     self.num_loops = 0
+  
   def eval_symbol(self, macro_symbol):
     return sum(map(self.base_machine.eval_symbol, macro_symbol))
+  
   def eval_state(self, state):
     return self.base_machine.eval_state(state)
+  
   def get_transition(self, *args):
     if not self.trans_table.has_key(args):
       if len(self.trans_table) >= self.max_cells:
         self.trans_table.clear()
       self.trans_table[args] = self.eval_trans(args)
     return self.trans_table[args]
+  
   def eval_trans(self, (macro_symbol_in, macro_state_in, macro_dir_in)):
-    import Chain_Simulator
     # Set up machine
     num_steps = num_macro_steps = 0
     tape = list(macro_symbol_in)
     state = macro_state_in
     dir = macro_dir_in
+    
     if macro_dir_in is RIGHT:
       pos = 0
     else:
       pos = self.block_size - 1
-    # Deal with dummy offset case
+    
+    \# Deal with dummy offset case
     if state == Block_Macro_Machine.DUMMY_OFFSET_STATE:
       state, pos = self.save
+    
     # Simulate Machine
     while 0 <= pos < self.block_size:
       symbol = tape[pos]
+      
       cond, (symbol_out, state_out, dir_out), num_steps_out = \
             self.base_machine.get_transition(symbol, state, dir)
       num_steps += num_steps_out
       num_macro_steps += 1
       self.num_loops += 1
+      
       tape[pos] = symbol_out
       state = state_out
       dir = dir_out
+      
       if dir_out is RIGHT:
         pos += 1
       else:
         pos -= 1
+      
       if cond[0] != RUNNING:
         return cond+(pos,), (tuple(tape), state, dir), num_steps
       if num_macro_steps > self.max_steps:
         return (INF_REPEAT, pos), (tuple(tape), state, dir), num_steps
+    
     return (RUNNING,), (tuple(tape), state, dir), num_steps
 
 def backsymbol_get_trans(tape, state, dir):
@@ -158,7 +179,6 @@ class Backsymbol_Macro_Machine(Macro_Machine):
       self.trans_table[args] = self.eval_trans(args)
     return self.trans_table[args]
   def eval_trans(self, (macro_symbol_in, macro_state_in, macro_dir_in)):
-    import Chain_Simulator
     # Set up machine
     num_steps = num_macro_steps = 0
     state, back_macro_symbol = macro_state_in

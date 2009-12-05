@@ -175,7 +175,7 @@ ostream& operator<<(ostream      & a_ostream,
 
       a_ostream << " " << cur_trans.m_symbol;
 
-      if (cur_trans.m_dir == 0)
+      if (cur_trans.m_dir == LEFT)
       {
         a_ostream << 'L';
       }

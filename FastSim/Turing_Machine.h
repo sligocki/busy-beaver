@@ -16,33 +16,28 @@ class Turing_Machine
     {
     };
 
-    virtual int eval_symbol(const SYMBOL & a_symbol)
-    {
-      if (a_symbol != m_init_trans.m_symbol)
-      {
-        return 1;
-      }
-      else
-      {
-        return 0;
-      }
-    };
+    /// The "sigma score" contribution from a symbol.
+    /// For a normal Turing Machine, it is just 1 for any non-zero symbol.
+    virtual int eval_symbol(const SYMBOL & a_symbol);
 
-    virtual int eval_state(const STATE & a_state)
-    {
-      return 0;
-    };
+    /// The "sigma score" contribution from the state.
+    /// This is normally nothing, but for Backsymbol Macro Machines store a 
+    ///   symbol in the state and so the state contributes to the score.
+    virtual int eval_state(const STATE & a_state);
 
     virtual void get_transition(RUN_STATE        & a_run_state,
                                 TRANSITION       & a_trans_out,
                                 INTEGER          & a_num_steps,
                                 const SYMBOL     & a_cur_symbol,
                                 const TRANSITION & a_trans_in) = 0;
-
+    
+    /// Start state and direction and blank symbol.
+    STATE  m_init_state;
+    DIR    m_init_dir;
+    SYMBOL m_init_symbol;
+    
     int m_num_states;
     int m_num_symbols;
-
-    TRANSITION m_init_trans;
 };
 
 #endif
