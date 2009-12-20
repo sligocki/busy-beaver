@@ -54,7 +54,7 @@ class Enumerator(object):
   """Holds enumeration state information for checkpointing."""
   def __init__(self, num_states, num_symbols, max_steps, max_time, io,
                      save_freq=100000, checkpoint_filename="checkpoint",
-                     randomize=False, seed=None):
+                     randomize=False, seed=None, options=None):
     # Main TM attributes
     self.num_states = num_states
     self.num_symbols = num_symbols
@@ -65,6 +65,8 @@ class Enumerator(object):
     self.save_freq = save_freq
     self.checkpoint_filename = checkpoint_filename
     self.backup_checkpoint_filename = checkpoint_filename + ".bak"
+    
+    self.options = options # Has options for things such as block_finder ...
     
     # Stack of TM descriptions to simulate
     self.stack = Stack()
@@ -171,7 +173,9 @@ class Enumerator(object):
   
   def run(self, tm):
     """Simulate TM"""
-    return Macro_Simulator.run(tm.get_TTable(), self.max_steps, self.max_time)
+    return Macro_Simulator.run(tm.get_TTable(), self.options, self.max_steps, self.max_time, 
+                               self.options.block_size, self.options.backsymbol, 
+                               self.options.prover, self.options.recursive)
   
   def add_transitions(self, old_tm, state_in, symbol_in):
     """Push Turing Machines with each possible transition at this state and symbol"""
@@ -251,7 +255,26 @@ if __name__ == "__main__":
   enum_parser.add_option("--time", type=float, default=15., help="Max (real) time to run each machine [Default: %default]")
   enum_parser.add_option("--randomize", action="store_true", default=False, help="Randomize the order of enumeration.")
   enum_parser.add_option("--seed", type=int, help="Seed to randomize with.")
+  
+  enum_parser.add_option("-b", "--no-backsymbol", action="store_false", dest="backsymbol", default=True, 
+                    help="Turn off backsymbol macro machine")
+  enum_parser.add_option("-p", "--no-prover", action="store_false", dest="prover", default=True, 
+                    help="Turn off proof system")
+  enum_parser.add_option("-r", "--recursive", action="store_true", default=False, 
+                    help="Turn ON recursive proof system [Very Experimental]")
+  
   parser.add_option_group(enum_parser)
+  
+  block_options = OptionGroup(parser, "Block Finder options")
+  block_options.add_option("--block-size", type=int, help="Block size to use in macro machine simulator (default is to guess with the block_finder algorithm)")
+  block_options.add_option("--bf-limit1", type=int, default=200, metavar="LIMIT", help="Number of steps to run the first half of block finder [Default: %default].")
+  block_options.add_option("--bf-limit2", type=int, default=200, metavar="LIMIT", help="Number of stpes to run the second half of block finder [Default: %default].")
+  block_options.add_option("--bf-run1", action="store_true", default=True, help="In first half, find worst tape before limit.")
+  block_options.add_option("--bf-no-run1", action="store_false", dest="bf_run1", help="In first half, just run to limit.")
+  block_options.add_option("--bf-run2", action="store_true", default=True, help="Run second half of block finder.")
+  block_options.add_option("--bf-no-run2", action="store_false", dest="bf_run2", help="Don't run second half of block finder.")
+  block_options.add_option("--bf-extra-mult", type=int, default=2, metavar="MULT", help="How far ahead to search in second half of block finder.")
+  parser.add_option_group(block_options)
   
   out_parser = OptionGroup(parser, "Output Options")
   out_parser.add_option("--outfile", dest="outfilename", metavar="OUTFILE", help="Output file name [Default: Enum.STATES.SYMBOLS.STEPS.out]")
@@ -300,5 +323,5 @@ if __name__ == "__main__":
   ## Enumerate machines
   enumerator = Enumerator(options.states, options.symbols, options.steps,
                           options.time, io, options.save_freq,
-                          options.checkpoint, options.randomize, options.seed)
+                          options.checkpoint, options.randomize, options.seed, options)
   enumerator.enum()
