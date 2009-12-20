@@ -77,8 +77,6 @@ def run(TTable, steps=INF, runtime=None, block_size=None, back=True, prover=True
         signalPlus.alarm(0)  # Turn off timer
         block_size = 1
         
-      signalPlus.alarm(0)  # Turn off timer
-
       # Do not create a 1-Block Macro-Machine (just use base machine)
       if block_size != 1:
         m = Turing_Machine.Block_Macro_Machine(m, block_size)
@@ -106,8 +104,6 @@ def run(TTable, steps=INF, runtime=None, block_size=None, back=True, prover=True
         except AlarmException:
           signalPlus.alarm(0)  # Turn off timer
 
-      signalPlus.alarm(0)  # Turn off timer
-
       ## Set up the simulator
       #global sim # Useful for Debugging
       sim = Chain_Simulator.Simulator()
@@ -128,15 +124,16 @@ def run(TTable, steps=INF, runtime=None, block_size=None, back=True, prover=True
         signalPlus.alarm(0)  # Turn off timer
         return TIMEOUT, (runtime, sim.step_num)
 
-      signalPlus.alarm(0)  # Turn off timer
-
       ## Resolve end conditions and return relevent info.
       if sim.op_state == Turing_Machine.RUNNING:
         return OVERSTEPS, (sim.step_num,)
+      
       elif sim.op_state == Turing_Machine.HALT:
         return HALT, (sim.step_num, sim.get_nonzeros())
+      
       elif sim.op_state == Turing_Machine.INF_REPEAT:
         return INFINITE, (sim.inf_reason,)
+      
       elif sim.op_state == Turing_Machine.UNDEFINED:
         on_symbol, on_state = sim.op_details[0][:2]
         return UNDEFINED, (on_state, on_symbol, 
@@ -147,69 +144,51 @@ def run(TTable, steps=INF, runtime=None, block_size=None, back=True, prover=True
 
     sys.stderr.write("Weird (%d): %s\n" % (do_over,TTable))
 
-  signalPlus.alarm(0)  # Turn off timer
   return TIMEOUT, (runtime, -1)
-
-def memoize(func, max_size=10000):
-  """Returns the memoized version of a non-recursive function "func".
-     Saves up to "max_size" inputs before wiping memory."""
-  memory = {}
-  def func_memo(*args):
-    if args not in memory:
-      # If we don't remember it, learn it.
-      if len(memory) >= max_size:
-        # Dump memory first if it's getting to big.
-        memory.clear()
-      memory[args] = func(*args)
-    return memory[args]
-# Memoized version of run ... won't work yet because lists are not hashable.
-run_memo = memoize(run)
 
 # Main script
 if __name__ == "__main__":
-  # Backsymbol (default on)
-  if "-b" in sys.argv:
-    sys.argv.remove("-b")
-    back = False
-  else:
-    back = True
+  from optparse import OptionParser
+  # Parse command line options.
+  usage = "usage: %prog [options] machine_file [line_number]"
+  parser = OptionParser(usage=usage)
+  #parser.set_defaults(verbose=True)
+  #parser.add_option("-q", "--quiet", action="store_true", help="Brief output")
+  #parser.add_option("--verbose-prover", action="store_true", help="Provide debuggin output from prover")
+  #parser.add_option("--verbose-simulator", action="store_true", help="Provide debuggin output from simulator")
+  
+  parser.add_option("-s", "--steps", type=int, default=0, help="Maximum number of steps to simulate for use 0 for infinite [Default: infinite]")
+  parser.add_option("-t", "--time", type=int, default=15, help="Maximum number of seconds to simulate for [Default: %default]")
+  
+  parser.add_option("-b", "--no-backsymbol", action="store_false", dest="backsymbol", default=True, 
+                    help="Turn off backsymbol macro machine")
+  parser.add_option("-p", "--no-prover", action="store_false", dest="prover", default=True, 
+                    help="Turn off proof system")
+  parser.add_option("-r", "--recursive", action="store_true", default=False, 
+                    help="Turn ON recursive proof system [Very Experimental]")
+  
+  parser.add_option("-n", "--block-size", type=int, help="Block size to use in macro machine simulator (default is to guess with the block_finder algorithm)")
+  parser.add_option("-l", "--block-finder-limit", type=int, default=1000, metavar="LIMIT", help="Number of steps to run the block_finder algorithm for (if manual block size not specified) [Default: %default].")
+  (options, args) = parser.parse_args()
+  
+  
+  if options.steps == 0:
+    options.steps = INF
 
-  # Prover (default on)
-  if "-p" in sys.argv:
-    sys.argv.remove("-p")
-    prover = False
-  else:
-    prover = True
-
-  # Recursive Prover (default off)
-  if "-r" in sys.argv:
-    sys.argv.remove("-r")
-    recursive = True
-  else:
-    recursive = False
-
-  if len(sys.argv) >= 3:
-    line = int(sys.argv[2])
+  if len(args) < 1:
+    parser.error("Must have at least one argument, machine_file")
+  filename = args[0]
+  
+  if len(args) >= 2:
+    try:
+      line = int(args[1])
+    except ValueError:
+      parser.error("line_number must be an integer.")
+    if line < 1:
+      parser.error("line_number must be >= 1")
   else:
     line = 1
-
-  ttable = IO.load_TTable_filename(sys.argv[1], line)
-
-  if len(sys.argv) >= 4:
-    block_size = int(sys.argv[3])
-  else:
-    block_size = None
-
-  if len(sys.argv) >= 5:
-    steps = int(sys.argv[4])
-    if steps == 0:
-      steps = INF
-  else:
-    steps = INF
-
-  if len(sys.argv) >= 6:
-    runtime = int(sys.argv[5])
-  else:
-    runtime = 15
-
-  print run(ttable, steps, runtime, block_size, back, prover, recursive)
+  
+  ttable = IO.load_TTable_filename(filename, line)
+  
+  print run(ttable, options.steps, options.time, options.block_size, options.backsymbol, options.prover, options.recursive)
