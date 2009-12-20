@@ -50,7 +50,8 @@ def setup_CTL(m, cutoff):
   config = GenContainer(state=sim.state, dir=sim.dir, tape=tape)
   return config
 
-def run(TTable, steps=INF, runtime=None, block_size=None, back=True, prover=True, rec=False, cutoff=200):
+def run(TTable, options, steps=INF, runtime=None, block_size=None, 
+                back=True, prover=True, rec=False):
   """Run the Accelerated Turing Machine Simulator, running a few simple filters first and using intelligent blockfinding."""
 
   for do_over in xrange(0,4):
@@ -69,7 +70,7 @@ def run(TTable, steps=INF, runtime=None, block_size=None, back=True, prover=True
 
         # If no explicit block-size given, use inteligent software to find one
         if not block_size:
-          block_size = Block_Finder.block_finder(m)
+          block_size = Block_Finder.block_finder(m, options.bf_limit1, options.bf_limit2, options.bf_run1, options.bf_run2, options.bf_extra_mult)
 
         signalPlus.alarm(0)  # Turn off timer
 
@@ -83,7 +84,7 @@ def run(TTable, steps=INF, runtime=None, block_size=None, back=True, prover=True
       if back:
         m = Turing_Machine.Backsymbol_Macro_Machine(m)
 
-      CTL_config = setup_CTL(m, cutoff)
+      CTL_config = setup_CTL(m, options.bf_limit1)
 
       # Run CTL filters unless machine halted
       if CTL_config:
@@ -168,7 +169,17 @@ if __name__ == "__main__":
                     help="Turn ON recursive proof system [Very Experimental]")
   
   parser.add_option("-n", "--block-size", type=int, help="Block size to use in macro machine simulator (default is to guess with the block_finder algorithm)")
-  parser.add_option("-l", "--block-finder-limit", type=int, default=1000, metavar="LIMIT", help="Number of steps to run the block_finder algorithm for (if manual block size not specified) [Default: %default].")
+  
+  block_options = OptionGroup(parser, "Block Finder options")
+  block_options.add_option("--bf-limit1", type=int, default=1000, metavar="LIMIT", help="Number of steps to run the first half of block finder [Default: %default].")
+  block_options.add_option("--bf-limit2", type=int, default=1000, metavar="LIMIT", help="Number of stpes to run the second half of block finder [Default: %default].")
+  block_options.add_option("--bf-run1", action="store_true", default=True, help="In first half, find worst tape before limit.")
+  block_options.add_option("--bf-no-run1", action="store_false", dest="bf_run1", help="In first half, just run to limit.")
+  block_options.add_option("--bf-run2", action="store_true", default=True, help="Run second half of block finder.")
+  block_options.add_option("--bf-no-run2", action="store_false", dest="bf_run2", help="Don't run second half of block finder.")
+  block_options.add_option("--bf-extra-mult", type=int, default=2, metavar="MULT", help="How far ahead to search in second half of block finder.")
+  parser.add_option_group(block_options)
+  
   (options, args) = parser.parse_args()
   
   
@@ -191,4 +202,5 @@ if __name__ == "__main__":
   
   ttable = IO.load_TTable_filename(filename, line)
   
-  print run(ttable, options.steps, options.time, options.block_size, options.backsymbol, options.prover, options.recursive)
+  print run(ttable, options, options.steps, options.time, options.block_size, 
+                    options.backsymbol, options.prover, options.recursive)
