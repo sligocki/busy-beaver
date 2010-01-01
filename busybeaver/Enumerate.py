@@ -301,7 +301,7 @@ if __name__ == "__main__":
   
   ## Set up I/O
   if os.path.exists(options.outfilename):
-    reply = raw_input("File '%s' exists, overwrite it?")
+    reply = raw_input("File '%s' exists, overwrite it? "%options.outfilename)
     if reply.lower() not in ("y", "yes"):
       parser.error("Choose different outfilename")
   outfile = open(options.outfilename, "w")
@@ -314,7 +314,7 @@ if __name__ == "__main__":
   if options.randomize:
     print "--randomize --seed=%d" % options.seed,
   
-  print "--outfile=%s" % options.outfilename
+  print "--outfile=%s" % options.outfilename,
   if options.log_number:
     print "--log_number=%d" % options.log_number,
   print "--checkpoint=%s --save_freq=%d" % (options.checkpoint, options.save_freq),
