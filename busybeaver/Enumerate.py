@@ -322,6 +322,6 @@ if __name__ == "__main__":
   
   ## Enumerate machines
   enumerator = Enumerator(options.states, options.symbols, options.steps,
-                          options.time, io, options.save_freq,
-                          options.checkpoint, options.randomize, options.seed, options)
+                        options.time, io, options.save_freq,
+                        options.checkpoint, options.randomize, options.seed, options)
   enumerator.enum()
