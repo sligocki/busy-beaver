@@ -582,10 +582,10 @@ if __name__ == "__main__":
 
   outfile.close()
 
-  print "Worker: " + str(processorID) + " (" + str(numberOfProcessors) + ") - " + "done (" + "%.2f" % str(etime - stime) + ")..."
-  sys.stdout.flush()
-
   etime = time.time()
+
+  print "Worker: " + str(processorID) + " (" + str(numberOfProcessors) + ") - " + "done (" + ("%.2f" % (etime - stime)) + ")..."
+  sys.stdout.flush()
 
   total_time = ParData(lambda pid, nProcs: etime - stime)
 
