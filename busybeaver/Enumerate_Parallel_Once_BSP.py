@@ -106,7 +106,7 @@ class Enumerator(object):
     """Enumerate all num_states, num_symbols TMs in Tree-Normal Form"""
     # blank_tm = Turing_Machine(self.num_states, self.num_symbols)
     # self.stack.push(blank_tm)
-    self.continue_enum()
+    return self.continue_enum()
 
   def continue_enum(self):
     """
@@ -114,7 +114,8 @@ class Enumerator(object):
     machines to push back onto the stack.
     """
     self.start_time = time.time()
-    while len(self.stack) > 0:
+    stime = time.time()
+    while time.time() - stime < 60 and len(self.stack) > 0:
       # Periodically save state
       if (self.tm_num % self.save_freq) == 0:
         self.save()
@@ -147,14 +148,17 @@ class Enumerator(object):
         raise Exception, "Enumerator.enum() - unexpected condition (%r)" % cond
     
     # Done
-    self.save()
+    if len(self.stack) == 0:
+      self.save()
+
+    return self.stack
   
   def save(self):
     """Save a checkpoint file so that computation can be restarted if it fails."""
     self.end_time = time.time()
     
     # Print out statistical data
-    print "Worker: " + str(processorID) + " (" + str(numberOfProcessors) + ") -", 
+    print "Stat Worker: " + str(processorID) + " (" + str(numberOfProcessors) + ") -", 
     print self.tm_num, "-", 
     print self.num_halt, self.num_infinite, self.num_unresolved, "-", 
     print long_to_eng_str(self.best_steps,1,3),
@@ -440,7 +444,9 @@ def enumerate(init_stack,io,checkpoint,options):
                           options.randomize, options.seed, options)
   enumerator.stack = init_stack[:]
 
-  enumerator.enum()
+  cur_stack = enumerator.enum()
+
+  return cur_stack
 
 def print_runtime(min_time,max_time,sum_time):
   print "Summary: " + str(processorID) + " (" + str(numberOfProcessors) + ") - (%.2f %.2f %.2f)..." % (min_time,max_time,sum_time/numberOfProcessors)
@@ -569,22 +575,36 @@ if __name__ == "__main__":
   else:
     full_stack = []
 
-  print "Init Worker: " + str(processorID) + " (" + str(numberOfProcessors) + ") - " + str(len(full_stack)) + "..."
+  print "Full Worker: " + str(processorID) + " (" + str(numberOfProcessors) + ") - " + str(len(full_stack)) + "..."
   sys.stdout.flush()
 
   init_stack = ParData(lambda pID, nProcs: full_stack)
   init_stack = ParRootSequence(init_stack)
 
-  print "Worker: " + str(processorID) + " (" + str(numberOfProcessors) + ") - " + str(len(init_stack)) + "..."
-  sys.stdout.flush()
+  while 1:
+    print "Init Worker: " + str(processorID) + " (" + str(numberOfProcessors) + ") - " + str(len(init_stack)) + "..."
+    sys.stdout.flush()
 
-  global_enumerate(init_stack,io,checkpoint,options)
+    cur_stack = global_enumerate(init_stack,io,checkpoint,options)
+
+    print "Cur  Worker: " + str(processorID) + " (" + str(numberOfProcessors) + ") - " + str(len(cur_stack)) + "..."
+    sys.stdout.flush()
+
+    etime = time.time()
+
+    all_cur_stack = cur_stack.reduce(operator.add, [])
+
+    print "All  Worker: " + str(processorID) + " (" + str(numberOfProcessors) + ") - " + str(len(all_cur_stack)) + "..."
+    sys.stdout.flush()
+
+    init_stack = ParRootSequence(all_cur_stack)
+
+    if not init_stack.totalLength().anytrue():
+      break
 
   outfile.close()
 
-  etime = time.time()
-
-  print "Worker: " + str(processorID) + " (" + str(numberOfProcessors) + ") - " + "done (" + ("%.2f" % (etime - stime)) + ")..."
+  print "Time Worker: " + str(processorID) + " (" + str(numberOfProcessors) + ") - " + "done (" + ("%.2f" % (etime - stime)) + ")..."
   sys.stdout.flush()
 
   total_time = ParData(lambda pid, nProcs: etime - stime)
