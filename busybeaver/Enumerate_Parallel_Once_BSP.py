@@ -533,7 +533,10 @@ if __name__ == "__main__":
     options.steps = Macro_Simulator.INF
 
   if not options.outfilename:
-    options.outfilename = "Enum.%d.%d.%d.out" % (options.states, options.symbols, options.steps)
+    if options.steps == Macro_Simulator.INF:
+      options.outfilename = "Enum.%d.%d.%d.out" % (options.states, options.symbols, 0)
+    else:
+      options.outfilename = "Enum.%d.%d.%d.out" % (options.states, options.symbols, options.steps)
 
   if not options.checkpoint:
     options.checkpoint = options.outfilename + ".check"
