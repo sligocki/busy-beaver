@@ -117,7 +117,7 @@ def run(TTable, options, steps=INF, runtime=None, block_size=None,
           signalPlus.alarm(runtime)  # Set timer
 
         ## Run the simulator
-        sim.seek(steps)
+        sim.loop_seek(steps)
 
         signalPlus.alarm(0)  # Turn off timer
 

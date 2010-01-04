@@ -251,8 +251,8 @@ if __name__ == "__main__":
   parser.add_option_group(req_parser)
   
   enum_parser = OptionGroup(parser, "Enumeration Options")
-  enum_parser.add_option("--steps", type=int, default=10000, help="Max steps to run each machine [Default: %default]")
-  enum_parser.add_option("--time", type=float, default=15., help="Max (real) time to run each machine [Default: %default]")
+  enum_parser.add_option("--steps", type=int, default=10000, help="Max simulation steps to run each machine (0 for infinite) [Default: %default]")
+  enum_parser.add_option("--time", type=float, default=15., help="Max (real) time (in seconds) to run each machine [Default: %default]")
   enum_parser.add_option("--randomize", action="store_true", default=False, help="Randomize the order of enumeration.")
   enum_parser.add_option("--seed", type=int, help="Seed to randomize with.")
   
@@ -292,16 +292,19 @@ if __name__ == "__main__":
   ## Set complex defaults
   if options.randomize and not options.seed:
     options.seed = long(1000*time.time())
+  
   if options.steps == 0:
     options.steps = Macro_Simulator.INF
+  
   if not options.outfilename:
     options.outfilename = "Enum.%d.%d.%d.out" % (options.states, options.symbols, options.steps)
+  
   if not options.checkpoint:
     options.checkpoint = options.outfilename + ".check"
   
   ## Set up I/O
   if os.path.exists(options.outfilename):
-    reply = raw_input("File '%s' exists, overwrite it? "%options.outfilename)
+    reply = raw_input("File '%s' exists, overwrite it? " % options.outfilename)
     if reply.lower() not in ("y", "yes"):
       parser.error("Choose different outfilename")
   outfile = open(options.outfilename, "w")
