@@ -280,7 +280,7 @@ if __name__ == "__main__":
   out_parser.add_option("--outfile", dest="outfilename", metavar="OUTFILE", help="Output file name [Default: Enum.STATES.SYMBOLS.STEPS.out]")
   out_parser.add_option("--log_number", type=int, metavar="NUM", help="Log number to use in output file")
   out_parser.add_option("--checkpoint", metavar="FILE", help="Checkpoint file name [Default: OUTFILE.check]")
-  enum_parser.add_option("--save_freq", type=int, default=100000, metavar="FREQ", help="Freq to save checkpoints [Default: %default]")
+  out_parser.add_option("--save_freq", type=int, default=100000, metavar="FREQ", help="Freq to save checkpoints [Default: %default]")
   parser.add_option_group(out_parser)
   
   (options, args) = parser.parse_args()
