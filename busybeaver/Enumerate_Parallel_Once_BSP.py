@@ -115,7 +115,7 @@ class Enumerator(object):
     """
     self.start_time = time.time()
     stime = time.time()
-    while time.time() - stime < 60 and len(self.stack) > 0:
+    while time.time() - stime < 10*self.max_time and len(self.stack) > 0:
       # Periodically save state
       if (self.tm_num % self.save_freq) == 0:
         self.save()
