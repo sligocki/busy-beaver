@@ -158,13 +158,12 @@ class Enumerator(object):
     self.end_time = time.time()
 
     # Print out statistical data
-    print "Stat Worker: " + str(processorID) + " (" + str(numberOfProcessors) + ") -",
-    print self.tm_num, "-",
-    print self.num_halt, self.num_infinite, self.num_unresolved, "-",
-    print long_to_eng_str(self.best_steps,1,3),
-    print long_to_eng_str(self.best_score,1,3),
-    print "(%.2f)" % (self.end_time - self.start_time)
-    sys.stdout.flush()
+    # print "Stat Worker: " + str(processorID) + " (" + str(numberOfProcessors) + ") -",
+    # print self.tm_num, "-",
+    # print self.num_halt, self.num_infinite, self.num_unresolved, "-",
+    # print long_to_eng_str(self.best_steps,1,3),
+    # print long_to_eng_str(self.best_score,1,3),
+    # print "(%.2f)" % (self.end_time - self.start_time)
 
     # Backup old checkpoint file (in case the new checkpoint is interrupted in mid-write)
     if os.path.exists(self.checkpoint_filename):
@@ -349,12 +348,11 @@ class Enumerator_Startup(object):
     self.end_time = time.time()
 
     # Print out statistical data
-    print self.tm_num, "-",
-    print self.num_halt, self.num_infinite, self.num_unresolved, "-",
-    print long_to_eng_str(self.best_steps,1,3),
-    print long_to_eng_str(self.best_score,1,3),
-    print "(%.2f)" % (self.end_time - self.start_time)
-    sys.stdout.flush()
+    # print self.tm_num, "-",
+    # print self.num_halt, self.num_infinite, self.num_unresolved, "-",
+    # print long_to_eng_str(self.best_steps,1,3),
+    # print long_to_eng_str(self.best_score,1,3),
+    # print "(%.2f)" % (self.end_time - self.start_time)
 
     # Backup old checkpoint file (in case the new checkpoint is interrupted in mid-write)
     # if os.path.exists(self.checkpoint_filename):
@@ -448,16 +446,26 @@ def enumerate(init_stack,io,checkpoint,options):
 
   return cur_stack
 
-def print_runtime(min_time,max_time,sum_time):
-  print "Summary: " + str(processorID) + " (" + str(numberOfProcessors) + ") - (%.2f %.2f %.2f)..." % (min_time,max_time,sum_time/numberOfProcessors)
-  sys.stdout.flush()
+def get_and_print_stats(string,mylist):
+  min_list = mylist.reduce(min,1000000)
+  max_list = mylist.reduce(max,0)
+  sum_list = mylist.reduce(operator.add,0)
+
+  global_print_stats(string,min_list,max_list,sum_list)
+
+def print_stats(string,min_list,max_list,sum_list):
+  print string + "(%.2f %.2f %.2f)..." % (min_list,max_list,sum_list/numberOfProcessors)
+
+def print_blank():
+  print
 
 # Command line interpretter code
 if __name__ == "__main__":
   stime = time.time()
 
   global_enumerate = ParFunction(enumerate)
-  global_print_runtime = ParRootFunction(print_runtime)
+  global_print_stats = ParRootFunction(print_stats)
+  global_print_blank = ParRootFunction(print_blank)
 
   from optparse import OptionParser, OptionGroup
 
@@ -508,25 +516,8 @@ if __name__ == "__main__":
   if not options.states or not options.symbols:
     parser.error("--states= and --symbols= are required parameters")
 
-  if processorID == 0:
-    ## Print command line
-    print "Enumerate.py --states=%d --symbols=%d --steps=%d --time=%f" \
-      % (options.states, options.symbols, options.steps, options.time),
-    if options.randomize:
-      print "--randomize --seed=%d" % options.seed,
-
-    print "--outfile=%s" % options.outfilename,
-    if options.log_number:
-      print "--log_number=%d" % options.log_number,
-    print "--checkpoint=%s --save_freq=%d" % (options.checkpoint, options.save_freq),
-    print
-
-  ## Enforce required parameters
-  if not options.states or not options.symbols:
-    parser.error("--states= and --symbols= are required parameters")
-
   ## Set complex defaults
-  if options.randomize and not options.seed:
+  if not options.seed:
     options.seed = long(1000*time.time())
 
   if options.steps == 0:
@@ -540,6 +531,19 @@ if __name__ == "__main__":
 
   if not options.checkpoint:
     options.checkpoint = options.outfilename + ".check"
+
+  if processorID == 0:
+    ## Print command line
+    print "Enumerate.py --states=%d --symbols=%d --steps=%d --time=%f" \
+      % (options.states, options.symbols, options.steps, options.time),
+    if options.randomize:
+      print "--randomize",
+    print "--seed=%d" % options.seed,
+    print "--outfile=%s" % options.outfilename,
+    if options.log_number:
+      print "--log_number=%d" % options.log_number,
+    print "--checkpoint=%s --save_freq=%d" % (options.checkpoint, options.save_freq),
+    print
 
   states      = options.states
   symbols     = options.symbols
@@ -581,42 +585,63 @@ if __name__ == "__main__":
   else:
     full_stack = []
 
-  print "Full Worker: " + str(processorID) + " (" + str(numberOfProcessors) + ") - " + str(len(full_stack)) + "..."
-  sys.stdout.flush()
+  full_stack_len = ParData(lambda pid, nProcs: len(full_stack));
+  get_and_print_stats("Full     Stack Size: ",full_stack_len)
 
   init_stack = ParData(lambda pID, nProcs: full_stack)
   init_stack = ParRootSequence(init_stack)
 
+  init_stack_len = ParData(lambda pid, nProcs: len(init_stack));
+  get_and_print_stats("Init     Stack Size: ",init_stack_len)
+
+  global_print_blank()
+
+  time_enum = 0.0
+  time_gath = 0.0
+  time_scat = 0.0
+
+  iter = 0
+
   while 1:
-    print "Init Worker: " + str(processorID) + " (" + str(numberOfProcessors) + ") - " + str(len(init_stack)) + "..."
-    sys.stdout.flush()
+    iter += 1
+
+    t1 = time.time()
 
     cur_stack = global_enumerate(init_stack,io,checkpoint,options)
 
-    print "Cur  Worker: " + str(processorID) + " (" + str(numberOfProcessors) + ") - " + str(len(cur_stack)) + "..."
-    sys.stdout.flush()
-
-    etime = time.time()
+    t2 = time.time()
+    time_enum += t2 - t1
 
     all_cur_stack = cur_stack.reduce(operator.add, [])
 
-    print "All  Worker: " + str(processorID) + " (" + str(numberOfProcessors) + ") - " + str(len(all_cur_stack)) + "..."
-    sys.stdout.flush()
+    t3 = time.time()
+    time_gath += t3 - t2
 
     init_stack = ParRootSequence(all_cur_stack)
+
+    init_stack_len = ParData(lambda pid, nProcs: len(init_stack));
+    get_and_print_stats("Loop %3d Stack Size: " % (iter,),init_stack_len)
+
+    t4 = time.time()
+    time_scat += t4 - t3
 
     if not init_stack.totalLength().anytrue():
       break
 
   outfile.close()
 
-  print "Time Worker: " + str(processorID) + " (" + str(numberOfProcessors) + ") - " + "done (" + ("%.2f" % (etime - stime)) + ")..."
-  sys.stdout.flush()
+  global_print_blank()
+
+  enum_time = ParData(lambda pid, nProcs: time_enum);
+  get_and_print_stats("Enum    Time: ",enum_time)
+
+  gath_time = ParData(lambda pid, nProcs: time_gath);
+  get_and_print_stats("Gather  Time: ",gath_time)
+
+  scat_time = ParData(lambda pid, nProcs: time_scat);
+  get_and_print_stats("Scatter Time: ",scat_time)
+
+  etime = time.time()
 
   total_time = ParData(lambda pid, nProcs: etime - stime)
-
-  min_time = total_time.reduce(min,1000000)
-  max_time = total_time.reduce(max,0)
-  sum_time = total_time.reduce(operator.add,0)
-
-  global_print_runtime(min_time,max_time,sum_time)
+  get_and_print_stats("Total   Time: ",total_time)
