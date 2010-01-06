@@ -583,13 +583,13 @@ if __name__ == "__main__":
     full_stack = []
 
   full_stack_len = ParData(lambda pid, nProcs: len(full_stack));
-  get_and_print_stats("Full     Stack Size: ",full_stack_len)
+  get_and_print_stats("Full Stack Size: ",full_stack_len)
 
   init_stack = ParData(lambda pID, nProcs: full_stack)
   init_stack = ParRootSequence(init_stack)
 
   init_stack_len = ParData(lambda pid, nProcs: len(init_stack));
-  get_and_print_stats("Init     Stack Size: ",init_stack_len)
+  get_and_print_stats("Init Stack Size: ",init_stack_len)
 
   global_print_blank()
 
@@ -606,18 +606,24 @@ if __name__ == "__main__":
 
     cur_stack = global_enumerate(init_stack,io,checkpoint,options)
 
+    cur_stack_len = ParData(lambda pid, nProcs: len(cur_stack));
+    get_and_print_stats("Loop %3d  Cur Stack Size: " % (iter),cur_stack_len)
+
     t2 = time.time()
     time_enum += t2 - t1
 
-    all_cur_stack = cur_stack.reduce(operator.add, [])
+    all_stack = cur_stack.reduce(operator.add, [])
+
+    all_stack_len = ParData(lambda pid, nProcs: len(all_stack));
+    get_and_print_stats("          All Stack Size: ",all_stack_len)
 
     t3 = time.time()
     time_gath += t3 - t2
 
-    init_stack = ParRootSequence(all_cur_stack)
+    init_stack = ParRootSequence(all_stack)
 
     init_stack_len = ParData(lambda pid, nProcs: len(init_stack));
-    get_and_print_stats("Loop %3d Stack Size: " % (iter,),init_stack_len)
+    get_and_print_stats("         Init Stack Size: ",init_stack_len)
 
     t4 = time.time()
     time_scat += t4 - t3
