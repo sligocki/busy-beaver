@@ -520,14 +520,8 @@ if __name__ == "__main__":
   if not options.seed:
     options.seed = long(1000*time.time())
 
-  if options.steps == 0:
-    options.steps = Macro_Simulator.INF
-
   if not options.outfilename:
-    if options.steps == Macro_Simulator.INF:
-      options.outfilename = "Enum.%d.%d.%d.out" % (options.states, options.symbols, 0)
-    else:
-      options.outfilename = "Enum.%d.%d.%d.out" % (options.states, options.symbols, options.steps)
+    options.outfilename = "Enum.%d.%d.%d.out" % (options.states, options.symbols, options.steps)
 
   if not options.checkpoint:
     options.checkpoint = options.outfilename + ".check"
@@ -544,6 +538,9 @@ if __name__ == "__main__":
       print "--log_number=%d" % options.log_number,
     print "--checkpoint=%s --save_freq=%d" % (options.checkpoint, options.save_freq),
     print
+
+  if options.steps == 0:
+    options.steps = Macro_Simulator.INF
 
   states      = options.states
   symbols     = options.symbols
