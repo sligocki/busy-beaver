@@ -306,10 +306,14 @@ class Enumerator_Startup(object):
     machines to push back onto the stack.
     """
     self.start_time = time.time()
+    next_length = 1000
     while len(self.stack) > 0:
       # Periodically save state
       if (self.tm_num % self.save_freq) == 0:
         self.save()
+      if len(self.stack) >= next_length:
+        print len(self.stack)
+        next_length += 1000
       if len(self.stack) >= numberOfProcessors*10:
         return self.stack
       # While we have machines to run, pop one off the stack (breadth first)...
