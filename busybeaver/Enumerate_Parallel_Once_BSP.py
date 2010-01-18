@@ -634,7 +634,7 @@ if __name__ == "__main__":
     aver_list = sum_list/ParConstant(float(numberOfProcessors))
     aver_list = aver_list.broadcast()
 
-    run_time = (aver_list.value/1000.0)*540.0 + 60.0
+    run_time = (aver_list.value/200.0)*540.0 + 60.0
     if run_time > 600.0:
       run_time = 600.0
 
