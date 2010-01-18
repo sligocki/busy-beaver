@@ -55,12 +55,13 @@ class Enumerator(object):
   """Holds enumeration state information for checkpointing."""
   def __init__(self, num_states, num_symbols, max_steps, max_time, io,
                      save_freq=100000, checkpoint_filename="checkpoint",
-                     randomize=False, seed=None, options=None):
+                     randomize=False, seed=None, options=None, run_time=60.0):
     # Main TM attributes
     self.num_states = num_states
     self.num_symbols = num_symbols
     self.max_steps = max_steps
     self.max_time = max_time
+    self.run_time = run_time
     # I/O info
     self.io = io
     self.save_freq = save_freq
@@ -115,7 +116,7 @@ class Enumerator(object):
     """
     self.start_time = time.time()
     stime = time.time()
-    while time.time() - stime < 10*self.max_time and len(self.stack) > 0:
+    while time.time() - stime < self.run_time and len(self.stack) > 0:
       # Periodically save state
       if (self.tm_num % self.save_freq) == 0:
         self.save()
@@ -314,7 +315,7 @@ class Enumerator_Startup(object):
       if len(self.stack) >= next_length:
         print len(self.stack)
         next_length += 1000
-      if len(self.stack) >= numberOfProcessors*10:
+      if len(self.stack) >= 2*numberOfProcessors:
         return self.stack
       # While we have machines to run, pop one off the stack (breadth first)...
       tm = self.stack.pop(0)
@@ -439,11 +440,11 @@ class Enumerator_Startup(object):
       self.num_over_time += 1
     self.tm_num += 1
 
-def enumerate(init_stack,io,checkpoint,options):
+def enumerate(init_stack,io,checkpoint,options,run_time):
   enumerator = Enumerator(options.states, options.symbols,
                           options.steps, options.time, io,
                           options.save_freq, checkpoint,
-                          options.randomize, options.seed, options)
+                          options.randomize, options.seed, options, run_time)
   enumerator.stack = init_stack[:]
 
   cur_stack = enumerator.enum()
@@ -458,7 +459,10 @@ def get_and_print_stats(string,mylist):
   global_print_stats(string,min_list,max_list,sum_list)
 
 def print_stats(string,min_list,max_list,sum_list):
-  print string + "(%.2f %.2f %.2f)..." % (min_list,max_list,sum_list/numberOfProcessors)
+  print string + "(%.2f %.2f %.2f)..." % (min_list,max_list,sum_list/float(numberOfProcessors))
+
+def print_value(value):
+  print value
 
 def print_blank():
   print
@@ -469,6 +473,7 @@ if __name__ == "__main__":
 
   global_enumerate = ParFunction(enumerate)
   global_print_stats = ParRootFunction(print_stats)
+  global_print_value = ParRootFunction(print_value)
   global_print_blank = ParRootFunction(print_blank)
 
   from optparse import OptionParser, OptionGroup
@@ -602,13 +607,16 @@ if __name__ == "__main__":
   time_scat = 0.0
 
   iter = 0
+  run_time = 15.0
 
   while 1:
     iter += 1
 
     t1 = time.time()
 
-    cur_stack = global_enumerate(init_stack,io,checkpoint,options)
+    global_print_value("Runtime %.3f" % (run_time,))
+
+    cur_stack = global_enumerate(init_stack,io,checkpoint,options,run_time)
 
     cur_stack_len = ParData(lambda pid, nProcs: len(cur_stack));
     get_and_print_stats("Loop %3d  Cur Stack Size: " % (iter),cur_stack_len)
@@ -620,6 +628,17 @@ if __name__ == "__main__":
 
     all_stack_len = ParData(lambda pid, nProcs: len(all_stack));
     get_and_print_stats("          All Stack Size: ",all_stack_len)
+
+    sum_list = all_stack_len.reduce(operator.add,0)
+
+    aver_list = sum_list/ParConstant(float(numberOfProcessors))
+    aver_list = aver_list.broadcast()
+
+    run_time = (aver_list.value/1000.0)*540.0 + 60.0
+    if run_time > 600.0:
+      run_time = 600.0
+
+    random.shuffle(all_stack.value)
 
     t3 = time.time()
     time_gath += t3 - t2
