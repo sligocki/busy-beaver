@@ -118,8 +118,8 @@ class Enumerator(object):
     stime = time.time()
     while time.time() - stime < self.run_time and len(self.stack) > 0:
       # Periodically save state
-      if (self.tm_num % self.save_freq) == 0:
-        self.save()
+      # if (self.tm_num % self.save_freq) == 0:
+      #   self.save()
       # While we have machines to run, pop one off the stack ...
       tm = self.stack.pop()
       # ... and run it
@@ -149,8 +149,8 @@ class Enumerator(object):
         raise Exception, "Enumerator.enum() - unexpected condition (%r)" % cond
 
     # Done
-    if len(self.stack) == 0:
-      self.save()
+    # if len(self.stack) == 0:
+    #   self.save()
 
     return self.stack
 
@@ -310,8 +310,8 @@ class Enumerator_Startup(object):
     next_length = 1000
     while len(self.stack) > 0:
       # Periodically save state
-      if (self.tm_num % self.save_freq) == 0:
-        self.save()
+      # if (self.tm_num % self.save_freq) == 0:
+      #   self.save()
       if len(self.stack) >= next_length:
         print len(self.stack)
         next_length += 1000
@@ -451,6 +451,15 @@ def enumerate(init_stack,io,checkpoint,options,run_time):
 
   return cur_stack
 
+def checkpoint_stack(stack,checkpoint,checkpoint_backup):
+  if os.path.exists(checkpoint):
+    shutil.move(checkpoint, checkpoint_backup)
+
+  # Save checkpoint file
+  f = file(checkpoint, "wb")
+  pickle.dump(stack, f)
+  f.close()
+
 def get_and_print_stats(string,mylist):
   min_list = mylist.reduce(min,1000000)
   max_list = mylist.reduce(max,0)
@@ -472,6 +481,7 @@ if __name__ == "__main__":
   stime = time.time()
 
   global_enumerate = ParFunction(enumerate)
+  global_checkpoint_stack = ParRootFunction(checkpoint_stack)
   global_print_stats = ParRootFunction(print_stats)
   global_print_value = ParRootFunction(print_value)
   global_print_blank = ParRootFunction(print_blank)
@@ -516,10 +526,12 @@ if __name__ == "__main__":
   out_parser.add_option("--outfile", dest="outfilename", metavar="OUTFILE", help="Output file name [Default: Enum.STATES.SYMBOLS.STEPS.out]")
   out_parser.add_option("--log_number", type=int, metavar="NUM", help="Log number to use in output file")
   out_parser.add_option("--checkpoint", metavar="FILE", help="Checkpoint file name [Default: OUTFILE.check]")
-  out_parser.add_option("--save_freq", type=int, default=100000, metavar="FREQ", help="Freq to save checkpoints [Default: %default]")
+  out_parser.add_option("--restart", metavar="FILE", help="Restart file name")
+  # out_parser.add_option("--save_freq", type=int, default=100000, metavar="FREQ", help="Freq to save checkpoints [Default: %default]")
   parser.add_option_group(out_parser)
 
   (options, args) = parser.parse_args()
+  options.save_freq = 1000000
 
   ## Enforce required parameters
   if not options.states or not options.symbols:
@@ -545,7 +557,9 @@ if __name__ == "__main__":
     print "--outfile=%s" % options.outfilename,
     if options.log_number:
       print "--log_number=%d" % options.log_number,
-    print "--checkpoint=%s --save_freq=%d" % (options.checkpoint, options.save_freq),
+    print "--checkpoint=%s" % (options.checkpoint),
+    if options.restart:
+      print "--restart=%s" % (options.restart),
     print
 
   if options.steps == 0:
@@ -561,6 +575,7 @@ if __name__ == "__main__":
   checkpoint  = options.checkpoint
   steps       = options.steps
   #save_unk    = options.save_unk
+  restart     = options.restart
 
   if outfilename == "-":
     outfile = sys.stdout
@@ -572,22 +587,29 @@ if __name__ == "__main__":
     # outfile = bz2.BZ2File(outfilename, "w")
     outfile = file(outfilename, "w")
 
-  checkpoint = checkpoint + ".%05d" % processorID + ".%05d" % numberOfProcessors
+  checkpoint_backup = checkpoint + ".bak"
+  checkpoint_procID = checkpoint + ".%05d" % processorID + ".%05d" % numberOfProcessors
 
   # io = IO(None, outfile, log_number, True)
   io = IO(None, outfile, log_number, False)
 
   if processorID == 0:
-    # Enumerate some machines
-    enumerator = Enumerator_Startup(options.states, options.symbols,
-                                    options.steps, options.time, io,
-                                    options.save_freq, checkpoint,
-                                    options.randomize, options.seed, options)
+    if restart:
+      # Read restart file
+      f = file(restart, "rb")
+      full_stack = pickle.load(f)
+      f.close()
+    else:
+      # Enumerate some machines
+      enumerator = Enumerator_Startup(options.states, options.symbols,
+                                      options.steps, options.time, io,
+                                      save_freq, checkpoint_procID,
+                                      options.randomize, options.seed, options)
 
-    full_stack = enumerator.enum()
-    #full_stack = [item for i in xrange(numberOfProcessors) for item in full_stack[i::numberOfProcessors]]
-    random.seed(seed)
-    random.shuffle(full_stack)
+      full_stack = enumerator.enum()
+
+      random.seed(seed)
+      random.shuffle(full_stack)
   else:
     full_stack = []
 
@@ -607,7 +629,18 @@ if __name__ == "__main__":
   time_scat = 0.0
 
   iter = 0
-  run_time = 15.0
+
+  if restart:
+    sum_list = full_stack_len.reduce(operator.add,0)
+
+    aver_list = sum_list/ParConstant(float(numberOfProcessors))
+    aver_list = aver_list.broadcast()
+
+    run_time = (aver_list.value/200.0)*540.0 + 60.0
+    if run_time > 600.0:
+      run_time = 600.0
+  else:
+    run_time = 15.0
 
   while 1:
     iter += 1
@@ -616,7 +649,9 @@ if __name__ == "__main__":
 
     global_print_value("Runtime %.3f" % (run_time,))
 
-    cur_stack = global_enumerate(init_stack,io,checkpoint,options,run_time)
+    cur_stack = global_enumerate(init_stack,io,checkpoint_procID,options,run_time)
+    outfile.write("\n")
+    outfile.flush()
 
     cur_stack_len = ParData(lambda pid, nProcs: len(cur_stack));
     get_and_print_stats("Loop %3d  Cur Stack Size: " % (iter),cur_stack_len)
@@ -624,12 +659,14 @@ if __name__ == "__main__":
     t2 = time.time()
     time_enum += t2 - t1
 
-    all_stack = cur_stack.reduce(operator.add, [])
+    full_stack = cur_stack.reduce(operator.add, [])
 
-    all_stack_len = ParData(lambda pid, nProcs: len(all_stack));
-    get_and_print_stats("          All Stack Size: ",all_stack_len)
+    global_checkpoint_stack(full_stack,checkpoint,checkpoint_backup)
 
-    sum_list = all_stack_len.reduce(operator.add,0)
+    full_stack_len = ParData(lambda pid, nProcs: len(full_stack));
+    get_and_print_stats("         Full Stack Size: ",full_stack_len)
+
+    sum_list = full_stack_len.reduce(operator.add,0)
 
     aver_list = sum_list/ParConstant(float(numberOfProcessors))
     aver_list = aver_list.broadcast()
@@ -638,12 +675,12 @@ if __name__ == "__main__":
     if run_time > 600.0:
       run_time = 600.0
 
-    random.shuffle(all_stack.value)
+    random.shuffle(full_stack.value)
 
     t3 = time.time()
     time_gath += t3 - t2
 
-    init_stack = ParRootSequence(all_stack)
+    init_stack = ParRootSequence(full_stack)
 
     init_stack_len = ParData(lambda pid, nProcs: len(init_stack));
     get_and_print_stats("         Init Stack Size: ",init_stack_len)
