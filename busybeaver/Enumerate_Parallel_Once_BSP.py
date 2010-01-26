@@ -587,8 +587,9 @@ if __name__ == "__main__":
     # outfile = bz2.BZ2File(outfilename, "w")
     outfile = file(outfilename, "w")
 
-  checkpoint_backup = checkpoint + ".bak"
-  checkpoint_procID = checkpoint + ".%05d" % processorID + ".%05d" % numberOfProcessors
+  checkpoint_procID       = checkpoint + ".%05d" % processorID + ".%05d" % numberOfProcessors
+  checkpoint_nProc        = checkpoint + ".%05d" % numberOfProcessors
+  checkpoint_nProc_backup = checkpoint_nProc + ".bak"
 
   # io = IO(None, outfile, log_number, True)
   io = IO(None, outfile, log_number, False)
@@ -661,7 +662,7 @@ if __name__ == "__main__":
 
     full_stack = cur_stack.reduce(operator.add, [])
 
-    global_checkpoint_stack(full_stack,checkpoint,checkpoint_backup)
+    global_checkpoint_stack(full_stack,checkpoint_nProc,checkpoint_nProc_backup)
 
     full_stack_len = ParData(lambda pid, nProcs: len(full_stack));
     get_and_print_stats("         Full Stack Size: ",full_stack_len)
