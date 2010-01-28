@@ -617,11 +617,11 @@ if __name__ == "__main__":
   full_stack_len = ParData(lambda pid, nProcs: len(full_stack));
   get_and_print_stats("Full Stack Size: ",full_stack_len)
 
-  init_stack = ParData(lambda pID, nProcs: full_stack)
-  init_stack = ParRootSequence(init_stack)
+  cur_stack = ParData(lambda pID, nProcs: full_stack)
+  cur_stack = ParRootSequence(cur_stack)
 
-  init_stack_len = ParData(lambda pid, nProcs: len(init_stack));
-  get_and_print_stats("Init Stack Size: ",init_stack_len)
+  cur_stack_len = ParData(lambda pid, nProcs: len(cur_stack));
+  get_and_print_stats("Init Stack Size: ",cur_stack_len)
 
   global_print_blank()
 
@@ -632,16 +632,17 @@ if __name__ == "__main__":
   iter = 0
 
   if restart:
-    sum_list = full_stack_len.reduce(operator.add,0)
+    # sum_list = full_stack_len.reduce(operator.add,0)
 
-    aver_list = sum_list/ParConstant(float(numberOfProcessors))
-    aver_list = aver_list.broadcast()
+    # aver_list = sum_list/ParConstant(float(numberOfProcessors))
+    # aver_list = aver_list.broadcast()
 
-    run_time = (aver_list.value/200.0)*540.0 + 60.0
-    if run_time > 600.0:
-      run_time = 600.0
+    # run_time = (aver_list.value/200.0)*540.0 + 60.0
+    # if run_time > 600.0:
+    #   run_time = 600.0
+    run_time = 10.0*timeout
   else:
-    run_time = 15.0
+    run_time = timeout
 
   while 1:
     iter += 1
@@ -650,7 +651,7 @@ if __name__ == "__main__":
 
     global_print_value("Runtime %.3f" % (run_time,))
 
-    cur_stack = global_enumerate(init_stack,io,checkpoint_procID,options,run_time)
+    cur_stack = global_enumerate(cur_stack,io,checkpoint_procID,options,run_time)
     outfile.write("\n")
     outfile.flush()
 
@@ -660,36 +661,41 @@ if __name__ == "__main__":
     t2 = time.time()
     time_enum += t2 - t1
 
-    full_stack = cur_stack.reduce(operator.add, [])
+    if not cur_stack_len.alltrue():
+      full_stack = cur_stack.reduce(operator.add, [])
 
-    global_checkpoint_stack(full_stack,checkpoint_nProc,checkpoint_nProc_backup)
+      global_checkpoint_stack(full_stack,checkpoint_nProc,checkpoint_nProc_backup)
 
-    full_stack_len = ParData(lambda pid, nProcs: len(full_stack));
-    get_and_print_stats("         Full Stack Size: ",full_stack_len)
+      full_stack_len = ParData(lambda pid, nProcs: len(full_stack));
+      get_and_print_stats("         Full Stack Size: ",full_stack_len)
 
-    sum_list = full_stack_len.reduce(operator.add,0)
+      # sum_list = full_stack_len.reduce(operator.add,0)
 
-    aver_list = sum_list/ParConstant(float(numberOfProcessors))
-    aver_list = aver_list.broadcast()
+      # aver_list = sum_list/ParConstant(float(numberOfProcessors))
+      # aver_list = aver_list.broadcast()
 
-    run_time = (aver_list.value/200.0)*540.0 + 60.0
-    if run_time > 600.0:
-      run_time = 600.0
+      # run_time = (aver_list.value/200.0)*540.0 + 60.0
+      # if run_time > 600.0:
+      #   run_time = 600.0
 
-    random.shuffle(full_stack.value)
+      random.shuffle(full_stack.value)
 
-    t3 = time.time()
-    time_gath += t3 - t2
+      t3 = time.time()
+      time_gath += t3 - t2
 
-    init_stack = ParRootSequence(full_stack)
+      cur_stack = ParRootSequence(full_stack)
 
-    init_stack_len = ParData(lambda pid, nProcs: len(init_stack));
-    get_and_print_stats("         Init Stack Size: ",init_stack_len)
+      cur_stack_len = ParData(lambda pid, nProcs: len(cur_stack));
+      get_and_print_stats("         Init Stack Size: ",cur_stack_len)
 
-    t4 = time.time()
-    time_scat += t4 - t3
+      t4 = time.time()
+      time_scat += t4 - t3
+    else:
+      global_print_value("         Continuing...")
 
-    if not init_stack.totalLength().anytrue():
+    run_time = 10.0*timeout
+
+    if not cur_stack.anytrue():
       break
 
   outfile.close()
