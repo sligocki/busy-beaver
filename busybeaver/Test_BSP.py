@@ -180,18 +180,19 @@ if __name__ == "__main__":
   t2 = time.time()
   global_print_value("Time 2s, 0000001: %20.13e" % (t2-t1))
 
-  t1 = time.time()
-  for i in xcount2:
-    temp2 = temp.reduce(operator.add, [])
-  t2 = time.time()
-  global_print_value("Time 2g         : %20.13e" % (t2-t1))
+  if (numberOfProcessors * 1) < 10000000:
+    t1 = time.time()
+    for i in xcount2:
+      temp2 = temp.reduce(operator.add, [])
+    t2 = time.time()
+    global_print_value("Time 2g         : %20.13e" % (t2-t1))
 
-  t1 = time.time()
-  for i in xcount3:
-    temp = ParRootSequence(temp2)
-  t2 = time.time()
-  global_print_value("Time 2s         : %20.13e" % (t2-t1))
-  global_print_blank()
+    t1 = time.time()
+    for i in xcount3:
+      temp = ParRootSequence(temp2)
+    t2 = time.time()
+    global_print_value("Time 2s         : %20.13e" % (t2-t1))
+    global_print_blank()
 
   t1 = time.time()
   for i in xcount1:
@@ -199,18 +200,19 @@ if __name__ == "__main__":
   t2 = time.time()
   global_print_value("Time 2s, 0000010: %20.13e" % (t2-t1))
 
-  t1 = time.time()
-  for i in xcount2:
-    temp2 = temp.reduce(operator.add, [])
-  t2 = time.time()
-  global_print_value("Time 2g         : %20.13e" % (t2-t1))
+  if (numberOfProcessors * 10) < 10000000:
+    t1 = time.time()
+    for i in xcount2:
+      temp2 = temp.reduce(operator.add, [])
+    t2 = time.time()
+    global_print_value("Time 2g         : %20.13e" % (t2-t1))
 
-  t1 = time.time()
-  for i in xcount3:
-    temp = ParRootSequence(temp2)
-  t2 = time.time()
-  global_print_value("Time 2s         : %20.13e" % (t2-t1))
-  global_print_blank()
+    t1 = time.time()
+    for i in xcount3:
+      temp = ParRootSequence(temp2)
+    t2 = time.time()
+    global_print_value("Time 2s         : %20.13e" % (t2-t1))
+    global_print_blank()
 
   t1 = time.time()
   for i in xcount1:
@@ -218,18 +220,19 @@ if __name__ == "__main__":
   t2 = time.time()
   global_print_value("Time 2s, 0000100: %20.13e" % (t2-t1))
 
-  t1 = time.time()
-  for i in xcount2:
-    temp2 = temp.reduce(operator.add, [])
-  t2 = time.time()
-  global_print_value("Time 2g         : %20.13e" % (t2-t1))
+  if (numberOfProcessors * 100) < 10000000:
+    t1 = time.time()
+    for i in xcount2:
+      temp2 = temp.reduce(operator.add, [])
+    t2 = time.time()
+    global_print_value("Time 2g         : %20.13e" % (t2-t1))
 
-  t1 = time.time()
-  for i in xcount3:
-    temp = ParRootSequence(temp2)
-  t2 = time.time()
-  global_print_value("Time 2s         : %20.13e" % (t2-t1))
-  global_print_blank()
+    t1 = time.time()
+    for i in xcount3:
+      temp = ParRootSequence(temp2)
+    t2 = time.time()
+    global_print_value("Time 2s         : %20.13e" % (t2-t1))
+    global_print_blank()
 
   t1 = time.time()
   for i in xcount1:
@@ -237,18 +240,19 @@ if __name__ == "__main__":
   t2 = time.time()
   global_print_value("Time 2s, 0001000: %20.13e" % (t2-t1))
 
-  t1 = time.time()
-  for i in xcount2:
-    temp2 = temp.reduce(operator.add, [])
-  t2 = time.time()
-  global_print_value("Time 2g         : %20.13e" % (t2-t1))
+  if (numberOfProcessors * 1000) < 10000000:
+    t1 = time.time()
+    for i in xcount2:
+      temp2 = temp.reduce(operator.add, [])
+    t2 = time.time()
+    global_print_value("Time 2g         : %20.13e" % (t2-t1))
 
-  t1 = time.time()
-  for i in xcount3:
-    temp = ParRootSequence(temp2)
-  t2 = time.time()
-  global_print_value("Time 2s         : %20.13e" % (t2-t1))
-  global_print_blank()
+    t1 = time.time()
+    for i in xcount3:
+      temp = ParRootSequence(temp2)
+    t2 = time.time()
+    global_print_value("Time 2s         : %20.13e" % (t2-t1))
+    global_print_blank()
 
   t1 = time.time()
   for i in xcount1:
@@ -256,18 +260,19 @@ if __name__ == "__main__":
   t2 = time.time()
   global_print_value("Time 2s, 0010000: %20.13e" % (t2-t1))
 
-  t1 = time.time()
-  for i in xcount2:
-    temp2 = temp.reduce(operator.add, [])
-  t2 = time.time()
-  global_print_value("Time 2g         : %20.13e" % (t2-t1))
+  if (numberOfProcessors * 10000) < 10000000:
+    t1 = time.time()
+    for i in xcount2:
+      temp2 = temp.reduce(operator.add, [])
+    t2 = time.time()
+    global_print_value("Time 2g         : %20.13e" % (t2-t1))
 
-  t1 = time.time()
-  for i in xcount3:
-    temp = ParRootSequence(temp2)
-  t2 = time.time()
-  global_print_value("Time 2s         : %20.13e" % (t2-t1))
-  global_print_blank()
+    t1 = time.time()
+    for i in xcount3:
+      temp = ParRootSequence(temp2)
+    t2 = time.time()
+    global_print_value("Time 2s         : %20.13e" % (t2-t1))
+    global_print_blank()
 
   t1 = time.time()
   for i in xcount1:
@@ -275,21 +280,37 @@ if __name__ == "__main__":
   t2 = time.time()
   global_print_value("Time 2s, 0100000: %20.13e" % (t2-t1))
 
-  t1 = time.time()
-  for i in xcount2:
-    temp2 = temp.reduce(operator.add, [])
-  t2 = time.time()
-  global_print_value("Time 2g         : %20.13e" % (t2-t1))
+  if (numberOfProcessors * 100000) < 10000000:
+    t1 = time.time()
+    for i in xcount2:
+      temp2 = temp.reduce(operator.add, [])
+    t2 = time.time()
+    global_print_value("Time 2g         : %20.13e" % (t2-t1))
 
-  t1 = time.time()
-  for i in xcount3:
-    temp = ParRootSequence(temp2)
-  t2 = time.time()
-  global_print_value("Time 2s         : %20.13e" % (t2-t1))
-  global_print_blank()
+    t1 = time.time()
+    for i in xcount3:
+      temp = ParRootSequence(temp2)
+    t2 = time.time()
+    global_print_value("Time 2s         : %20.13e" % (t2-t1))
+    global_print_blank()
 
   t1 = time.time()
   for i in xcount1:
     temp = ParData(lambda pid, nProcs: range1000000)
   t2 = time.time()
   global_print_value("Time 2s, 1000000: %20.13e" % (t2-t1))
+
+  if (numberOfProcessors * 1000000) < 10000000:
+    t1 = time.time()
+    for i in xcount2:
+      temp2 = temp.reduce(operator.add, [])
+    t2 = time.time()
+    global_print_value("Time 2g         : %20.13e" % (t2-t1))
+
+    t1 = time.time()
+    for i in xcount3:
+      temp = ParRootSequence(temp2)
+    t2 = time.time()
+    global_print_value("Time 2s         : %20.13e" % (t2-t1))
+    global_print_blank()
+
