@@ -617,7 +617,7 @@ if __name__ == "__main__":
   full_stack_len = ParData(lambda pid, nProcs: len(full_stack));
   get_and_print_stats("Full Stack Size: ",full_stack_len)
 
-  cur_stack = ParData(lambda pID, nProcs: full_stack)
+  cur_stack = ParData(lambda pid, nProcs: full_stack)
   cur_stack = ParRootSequence(cur_stack)
 
   cur_stack_len = ParData(lambda pid, nProcs: len(cur_stack));
