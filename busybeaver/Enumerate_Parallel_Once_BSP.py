@@ -482,7 +482,6 @@ if __name__ == "__main__":
   stime = time.time()
 
   global_enumerate = ParFunction(enumerate)
-  global_checkpoint_stack = ParRootFunction(checkpoint_stack)
   global_print_stats = ParRootFunction(print_stats)
   global_print_value = ParRootFunction(print_value)
   global_print_blank = ParRootFunction(print_blank)
@@ -527,7 +526,8 @@ if __name__ == "__main__":
   out_parser.add_option("--outfile", dest="outfilename", metavar="OUTFILE", help="Output file name [Default: Enum.STATES.SYMBOLS.STEPS.out]")
   out_parser.add_option("--log_number", type=int, metavar="NUM", help="Log number to use in output file")
   out_parser.add_option("--checkpoint", metavar="FILE", help="Checkpoint file name [Default: OUTFILE.check]")
-  out_parser.add_option("--restart", metavar="FILE", help="Restart file name")
+  out_parser.add_option("--restart_base", metavar="FILE", help="Restart file base name")
+  out_parser.add_option("--restart_num", type=int, default=1, help="Number of restart files")
   out_parser.add_option("--stack_mult", type=float, default=10, help="Multiplier of 'time' for checking stacks [Default: %default")
   # out_parser.add_option("--save_freq", type=int, default=100000, metavar="FREQ", help="Freq to save checkpoints [Default: %default]")
   parser.add_option_group(out_parser)
@@ -559,26 +559,29 @@ if __name__ == "__main__":
     print "--outfile=%s" % options.outfilename,
     if options.log_number:
       print "--log_number=%d" % options.log_number,
-    print "--checkpoint=%s" % (options.checkpoint),
-    if options.restart:
-      print "--restart=%s" % (options.restart),
+    print "--checkpoint=%s" % options.checkpoint,
+    if options.restart_base:
+      print "--restart_base=%s" % options.restart_base,
+      print "--restart_num=%d" % options.restart_num,
+    print "--stack_mult=%f" % options.stack_mult,
     print
 
   if options.steps == 0:
     options.steps = Macro_Simulator.INF
 
-  states      = options.states
-  symbols     = options.symbols
-  timeout     = options.time
-  outfilename = options.outfilename
-  log_number  = options.log_number
-  seed        = options.seed
-  save_freq   = options.save_freq
-  checkpoint  = options.checkpoint
-  steps       = options.steps
-  #save_unk    = options.save_unk
-  restart     = options.restart
-  stack_mult  = options.stack_mult
+  states       = options.states
+  symbols      = options.symbols
+  timeout      = options.time
+  outfilename  = options.outfilename
+  log_number   = options.log_number
+  seed         = options.seed
+  save_freq    = options.save_freq
+  checkpoint   = options.checkpoint
+  steps        = options.steps
+  #save_unk     = options.save_unk
+  restart_base = options.restart_base
+  restart_num  = options.restart_num
+  stack_mult   = options.stack_mult
 
   if outfilename == "-":
     outfile = sys.stdout
@@ -590,19 +593,27 @@ if __name__ == "__main__":
     # outfile = bz2.BZ2File(outfilename, "w")
     outfile = file(outfilename, "w")
 
-  checkpoint_procID       = checkpoint + ".%05d" % processorID + ".%05d" % numberOfProcessors
-  checkpoint_nProc        = checkpoint + ".%05d" % numberOfProcessors
-  checkpoint_nProc_backup = checkpoint_nProc + ".bak"
+  checkpoint_nProc         = checkpoint + ".%05d" % numberOfProcessors
+  checkpoint_nProc_backup  = checkpoint_nProc + ".bak"
+
+  checkpoint_procID        = checkpoint + ".%05d" % processorID + ".%05d" % numberOfProcessors
+  checkpoint_procID_backup = checkpoint_procID + ".bak"
 
   # io = IO(None, outfile, log_number, True)
   io = IO(None, outfile, log_number, False)
 
   if processorID == 0:
-    if restart:
-      # Read restart file
-      f = file(restart, "rb")
-      full_stack = pickle.load(f)
-      f.close()
+    if restart_base:
+      # Read restart files
+      full_stack = []
+      for proc in xrange(0,restart_num):
+        restart_procID = restart_base + ".%05d" % proc + ".%05d" % restart_num
+
+        f = file(restart_procID, "rb")
+        stack = pickle.load(f)
+        f.close()
+
+        full_stack.extend(stack)
     else:
       # Enumerate some machines
       enumerator = Enumerator_Startup(options.states, options.symbols,
@@ -634,7 +645,7 @@ if __name__ == "__main__":
 
   iter = 0
 
-  if restart:
+  if restart_base:
     run_time = stack_mult*timeout
   else:
     run_time = timeout
@@ -649,8 +660,11 @@ if __name__ == "__main__":
     global_print_value("Runtime %.3f" % (run_time,))
 
     cur_stack = global_enumerate(cur_stack,io,checkpoint_procID,options,run_time)
+
     outfile.write("\n")
     outfile.flush()
+
+    checkpoint_stack(cur_stack.value,checkpoint_procID,checkpoint_procID_backup)
 
     cur_stack_len = ParData(lambda pid, nProcs: len(cur_stack));
     get_and_print_stats("Loop %3d  Cur Stack Size: " % (iter),cur_stack_len)
@@ -662,8 +676,6 @@ if __name__ == "__main__":
       first_nonzero = True
 
       full_stack = cur_stack.reduce(operator.add, [])
-
-      global_checkpoint_stack(full_stack,checkpoint_nProc,checkpoint_nProc_backup)
 
       full_stack_len = ParData(lambda pid, nProcs: len(full_stack));
       get_and_print_stats("         Full Stack Size: ",full_stack_len)
