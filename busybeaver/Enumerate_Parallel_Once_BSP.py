@@ -528,6 +528,7 @@ if __name__ == "__main__":
   out_parser.add_option("--log_number", type=int, metavar="NUM", help="Log number to use in output file")
   out_parser.add_option("--checkpoint", metavar="FILE", help="Checkpoint file name [Default: OUTFILE.check]")
   out_parser.add_option("--restart", metavar="FILE", help="Restart file name")
+  out_parser.add_option("--stack_mult", type=float, default=10, help="Multiplier of 'time' for checking stacks [Default: %default")
   # out_parser.add_option("--save_freq", type=int, default=100000, metavar="FREQ", help="Freq to save checkpoints [Default: %default]")
   parser.add_option_group(out_parser)
 
@@ -577,6 +578,7 @@ if __name__ == "__main__":
   steps       = options.steps
   #save_unk    = options.save_unk
   restart     = options.restart
+  stack_mult  = options.stack_mult
 
   if outfilename == "-":
     outfile = sys.stdout
@@ -633,17 +635,11 @@ if __name__ == "__main__":
   iter = 0
 
   if restart:
-    # sum_list = full_stack_len.reduce(operator.add,0)
-
-    # aver_list = sum_list/ParConstant(float(numberOfProcessors))
-    # aver_list = aver_list.broadcast()
-
-    # run_time = (aver_list.value/200.0)*540.0 + 60.0
-    # if run_time > 600.0:
-    #   run_time = 600.0
-    run_time = 10.0*timeout
+    run_time = stack_mult*timeout
   else:
     run_time = timeout
+
+  first_nonzero = False
 
   while 1:
     iter += 1
@@ -663,21 +659,14 @@ if __name__ == "__main__":
     time_enum += t2 - t1
 
     if not cur_stack_len.alltrue():
+      first_nonzero = True
+
       full_stack = cur_stack.reduce(operator.add, [])
 
       global_checkpoint_stack(full_stack,checkpoint_nProc,checkpoint_nProc_backup)
 
       full_stack_len = ParData(lambda pid, nProcs: len(full_stack));
       get_and_print_stats("         Full Stack Size: ",full_stack_len)
-
-      # sum_list = full_stack_len.reduce(operator.add,0)
-
-      # aver_list = sum_list/ParConstant(float(numberOfProcessors))
-      # aver_list = aver_list.broadcast()
-
-      # run_time = (aver_list.value/200.0)*540.0 + 60.0
-      # if run_time > 600.0:
-      #   run_time = 600.0
 
       random.shuffle(full_stack.value)
 
@@ -694,7 +683,10 @@ if __name__ == "__main__":
     else:
       global_print_value("         Continuing...")
 
-    run_time = 10.0*timeout
+    if first_nonzero:
+      run_time = stack_mult*timeout
+    else:
+      run_time = timeout
 
     if not cur_stack.anytrue():
       break
