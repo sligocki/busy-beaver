@@ -299,7 +299,8 @@ class Enumerator_Startup(object):
     """Enumerate all num_states, num_symbols TMs in Tree-Normal Form"""
     blank_tm = Turing_Machine(self.num_states, self.num_symbols)
     self.stack.push(blank_tm)
-    return self.continue_enum()
+    return self.stack
+    # return self.continue_enum()
 
   def continue_enum(self):
     """
