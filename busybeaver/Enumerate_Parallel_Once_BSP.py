@@ -562,7 +562,7 @@ if __name__ == "__main__":
     if options.log_number:
       print "--log_number=%d" % options.log_number,
     print "--checkpoint=%s" % options.checkpoint,
-    print "--checkpoint_interval=%d" options.checkpoint_interval,
+    print "--checkpoint_interval=%d" % options.checkpoint_interval,
     if options.restart_base:
       print "--restart_base=%s" % options.restart_base,
       print "--restart_num=%d" % options.restart_num,
