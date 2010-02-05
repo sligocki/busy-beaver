@@ -526,8 +526,10 @@ if __name__ == "__main__":
   out_parser.add_option("--outfile", dest="outfilename", metavar="OUTFILE", help="Output file name [Default: Enum.STATES.SYMBOLS.STEPS.out]")
   out_parser.add_option("--log_number", type=int, metavar="NUM", help="Log number to use in output file")
   out_parser.add_option("--checkpoint", metavar="FILE", help="Checkpoint file name [Default: OUTFILE.check]")
+  out_parser.add_option("--checkpoint_interval", type=int, default=10, help="Checkpoint interval (in enumerator calls) [Default: %default]")
   out_parser.add_option("--restart_base", metavar="FILE", help="Restart file base name")
   out_parser.add_option("--restart_num", type=int, default=1, help="Number of restart files")
+  out_parser.add_option("--stack_multi", type=float, default=10, dest="stack_mult", help="Multiplier of 'time' for checking stacks [Default: %default")
   out_parser.add_option("--stack_mult", type=float, default=10, help="Multiplier of 'time' for checking stacks [Default: %default")
   # out_parser.add_option("--save_freq", type=int, default=100000, metavar="FREQ", help="Freq to save checkpoints [Default: %default]")
   parser.add_option_group(out_parser)
@@ -560,6 +562,7 @@ if __name__ == "__main__":
     if options.log_number:
       print "--log_number=%d" % options.log_number,
     print "--checkpoint=%s" % options.checkpoint,
+    print "--checkpoint_interval=%d" options.checkpoint_interval,
     if options.restart_base:
       print "--restart_base=%s" % options.restart_base,
       print "--restart_num=%d" % options.restart_num,
@@ -569,19 +572,20 @@ if __name__ == "__main__":
   if options.steps == 0:
     options.steps = Macro_Simulator.INF
 
-  states       = options.states
-  symbols      = options.symbols
-  timeout      = options.time
-  outfilename  = options.outfilename
-  log_number   = options.log_number
-  seed         = options.seed
-  save_freq    = options.save_freq
-  checkpoint   = options.checkpoint
-  steps        = options.steps
-  #save_unk     = options.save_unk
-  restart_base = options.restart_base
-  restart_num  = options.restart_num
-  stack_mult   = options.stack_mult
+  states              = options.states
+  symbols             = options.symbols
+  timeout             = options.time
+  outfilename         = options.outfilename
+  log_number          = options.log_number
+  seed                = options.seed
+  save_freq           = options.save_freq
+  checkpoint          = options.checkpoint
+  checkpoint_interval = options.checkpoint_interval
+  steps               = options.steps
+  #save_unk            = options.save_unk
+  restart_base        = options.restart_base
+  restart_num         = options.restart_num
+  stack_mult          = options.stack_mult
 
   if outfilename == "-":
     outfile = sys.stdout
@@ -664,7 +668,8 @@ if __name__ == "__main__":
     outfile.write("\n")
     outfile.flush()
 
-    checkpoint_stack(cur_stack.value,checkpoint_procID,checkpoint_procID_backup)
+    if iter % checkpoint_interval == 0:
+      checkpoint_stack(cur_stack.value,checkpoint_procID,checkpoint_procID_backup)
 
     cur_stack_len = ParData(lambda pid, nProcs: len(cur_stack));
     get_and_print_stats("Loop %3d  Cur Stack Size: " % (iter),cur_stack_len)
