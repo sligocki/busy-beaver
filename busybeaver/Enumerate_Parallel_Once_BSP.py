@@ -650,11 +650,11 @@ if __name__ == "__main__":
   iter = 0
 
   if restart_base:
+    first_nonzero = True
     run_time = stack_mult*timeout
   else:
+    first_nonzero = False
     run_time = timeout
-
-  first_nonzero = False
 
   while 1:
     iter += 1
@@ -678,8 +678,6 @@ if __name__ == "__main__":
     time_enum += t2 - t1
 
     if not cur_stack_len.alltrue():
-      first_nonzero = True
-
       full_stack = cur_stack.reduce(operator.add, [])
 
       full_stack_len = ParData(lambda pid, nProcs: len(full_stack));
@@ -698,6 +696,7 @@ if __name__ == "__main__":
       t4 = time.time()
       time_scat += t4 - t3
     else:
+      first_nonzero = True
       global_print_value("         Continuing...")
 
     if first_nonzero:
