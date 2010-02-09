@@ -665,10 +665,10 @@ if __name__ == "__main__":
 
     cur_stack = global_enumerate(cur_stack,io,checkpoint_procID,options,run_time)
 
-    outfile.write("\n")
-    outfile.flush()
-
     if iter % checkpoint_interval == 0:
+      outfile.write("\n")
+      outfile.flush()
+
       checkpoint_stack(cur_stack.value,checkpoint_procID,checkpoint_procID_backup)
 
     cur_stack_len = ParData(lambda pid, nProcs: len(cur_stack));
@@ -707,7 +707,11 @@ if __name__ == "__main__":
     if not cur_stack.anytrue():
       break
 
+  outfile.write("\n")
+  outfile.flush()
   outfile.close()
+
+  checkpoint_stack(cur_stack.value,checkpoint_procID,checkpoint_procID_backup)
 
   global_print_blank()
 
