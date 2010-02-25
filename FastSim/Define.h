@@ -25,8 +25,8 @@ typedef mpz_class INTEGER;
 
 typedef int STATE;
 typedef int SYMBOL;
-//typedef int DIR;
-enum DIR {LEFT, RIGHT}; /// TM head direction
+
+enum DIR {LEFT, RIGHT};
 
 typedef struct
 {
