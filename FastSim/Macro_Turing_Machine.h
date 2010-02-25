@@ -25,13 +25,6 @@ class Macro_Turing_Machine: public Turing_Machine
                                 const SYMBOL     & a_cur_symbol,
                                 const TRANSITION & a_trans_in);
 
-    STATE  m_init_state;
-    DIR    m_init_dir;
-    SYMBOL m_init_symbol;
-    
-    int m_num_states;
-    int m_num_symbols;
-    
     // Macro Machine specific fields
     int m_block_size;
     shared_ptr<Turing_Machine> m_base_machine;

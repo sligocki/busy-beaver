@@ -18,9 +18,9 @@ Simple_Turing_Machine::~Simple_Turing_Machine()
 
 // The "sigma score" contribution from a symbol.
 // For a normal Turing Machine, it is just 1 for any non-zero symbol.
-int Simple_Turing_Machine::eval_symbol(const SYMBOL & a_symbol);
+int Simple_Turing_Machine::eval_symbol(const SYMBOL & a_symbol)
 {
-  if (a_symbol != m_init_trans.m_symbol)
+  if (a_symbol != m_init_symbol)
   {
     return 1;
   }
