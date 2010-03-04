@@ -1,4 +1,4 @@
-#!/bin/csh
+#!/bin/csh -f
 
 # Check for enough arguments
 set argc="$#argv"
@@ -47,7 +47,11 @@ cmp -s "$basename.unknown" "$basename.out"
 if ("$status" != 0) then
   # Log the running of the command
   echo "$log_number" | awk '{printf("%6d",$1);}' >> "$basename.log"
-  echo " | $date | $command"                     >> "$basename.log"
+  set num=`cat "$basename.unknown" "$basename.out" | sort | uniq -u | wc -l`
+  set num=`expr $num / 2`
+  echo " | $date | $command | $num"              >> "$basename.log"
+
+  echo "$num TMs classified"
 
   # Integrate the output data into the existing database
   Integrate_Data.py "$basename.out"                                     \
