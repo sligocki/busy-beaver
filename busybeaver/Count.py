@@ -54,7 +54,10 @@ import IO
 
 def count_all(filename):
   """Count total number of machines represented in a file."""
-  infile = open(filename, "r")
+  if filename == "-":
+    infile = sys.stdin
+  else:
+    infile = open(filename, "r")
   io = IO.IO(infile, None)
 
   total = 0
