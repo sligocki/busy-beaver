@@ -114,31 +114,37 @@ class Enumerator(object):
         self.save()
       # While we have machines to run, pop one off the stack ...
       tm = self.stack.pop()
-      # ... and run it
-      cond, info = self.run(tm)
+      for do_over in xrange(0,4):
+        try:
+          # ... and run it
+          cond, info = self.run(tm)
 
-      # If it hits an undefined transition ...
-      if cond == Macro_Simulator.UNDEFINED:
-        on_state, on_symbol, steps, score = info
-        # ... push all the possible non-halting transitions onto the stack ...
-        self.add_transitions(tm, on_state, on_symbol)
-        # ... and make this TM the halting one (mutates tm)
-        self.add_halt_trans(tm, on_state, on_symbol, steps, score)
-      # Otherwise record defined result
-      elif cond == Macro_Simulator.HALT:
-        steps, score = info
-        self.add_halt(tm, steps, score)
-      elif cond == Macro_Simulator.INFINITE:
-        reason, = info
-        self.add_infinite(tm, reason)
-      elif cond == Macro_Simulator.OVERSTEPS:
-        steps, = info
-        self.add_unresolved(tm, Macro_Simulator.OVERSTEPS, steps)
-      elif cond == Macro_Simulator.TIMEOUT:
-        runtime, steps = info
-        self.add_unresolved(tm, Macro_Simulator.TIMEOUT, steps, runtime)
-      else:
-        raise Exception, "Enumerator.enum() - unexpected condition (%r)" % cond
+          # If it hits an undefined transition ...
+          if cond == Macro_Simulator.UNDEFINED:
+            on_state, on_symbol, steps, score = info
+            # ... push all the possible non-halting transitions onto the stack ...
+            self.add_transitions(tm, on_state, on_symbol)
+            # ... and make this TM the halting one (mutates tm)
+            self.add_halt_trans(tm, on_state, on_symbol, steps, score)
+          # Otherwise record defined result
+          elif cond == Macro_Simulator.HALT:
+            steps, score = info
+            self.add_halt(tm, steps, score)
+          elif cond == Macro_Simulator.INFINITE:
+            reason, = info
+            self.add_infinite(tm, reason)
+          elif cond == Macro_Simulator.OVERSTEPS:
+            steps, = info
+            self.add_unresolved(tm, Macro_Simulator.OVERSTEPS, steps)
+          elif cond == Macro_Simulator.TIMEOUT:
+            runtime, steps = info
+            self.add_unresolved(tm, Macro_Simulator.TIMEOUT, steps, runtime)
+          else:
+            raise Exception, "Enumerator.enum() - unexpected condition (%r)" % cond
+          break
+
+        except Macro_Simulator.AlarmException:
+          sys.stderr.write("Weird2 (%d): %s\n" % (do_over,tm)) 
 
     # Done
     self.save()
