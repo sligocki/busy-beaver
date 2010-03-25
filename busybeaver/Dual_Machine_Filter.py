@@ -54,7 +54,7 @@ def Dual_Machine_Recursive(machine_num, machine, num_states, num_symbols,
   # Should not occur because Filters should only be run on Generate.py results.
   elif exit_condition == 3:
     sys.stderr.write("Machine (%d) reached undefined cell: %s" %
-                     (machine_num, result))
+                     (machine_num, results))
     save_machine(machine_num, machine, results,
                  old_tape_length, old_max_steps, io, old_results)
     raise Filter_Unexpected_Return, "Machine reached undefined cell in filter."
