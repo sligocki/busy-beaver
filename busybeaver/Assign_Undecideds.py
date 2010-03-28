@@ -24,17 +24,18 @@ while next:
   (machine_num, num_states, num_symbols, tape_length, max_steps, \
     results, ttable, log_num, old_results) = next
 
-  cond, on_symb, on_state, score, steps = results
+  cond, on_state, on_symbol, score, steps = results
 
-  on_symb  = int(on_symb);
-  on_state = int(on_state)
-  score    = int(score);
-  steps    = int(steps)
+  on_state  = int(on_state)
+  on_symbol = int(on_symbol);
+  score     = int(score);
+  steps     = int(steps)
 
   # Write the halting machine
   new_results = (HALT, score, steps)
   new_ttable = copy.deepcopy(ttable)
-  new_ttable[on_state][on_symb] = HALT_TRANS
+  new_ttable[on_state][on_symbol] = HALT_TRANS
+
   io.write_result_raw(machine_num, num_states, num_symbols, tape_length,
                       max_steps, new_results, new_ttable, log_num, old_results)
 
@@ -54,7 +55,7 @@ while next:
     for symbol in range(min(max_symbol + 2, num_symbols)):
       for dir in range(2):
         for state in range(min(max_state + 2, num_states)):
-          new_ttable[on_state][on_symb] = (symbol, dir, state)
+          new_ttable[on_state][on_symbol] = (symbol, dir, state)
           io.write_result_raw(new_M_num, num_states, num_symbols, tape_length,
                               max_steps, old_results, new_ttable, log_num)
           new_M_num += 1
