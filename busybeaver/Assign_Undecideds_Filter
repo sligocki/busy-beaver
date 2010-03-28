@@ -84,7 +84,7 @@ while ($filternum < $lognum)
   if ("$curcommand" == "Assign_Undecideds_Filter") then
     echo "Skipping command: $curline"
   else
-    # Runt the filter on the subproblem
+    # Run the filter on the subproblem
     update $basename $curline
     if ("$status" != 0) then
       echo "Filter $filternum update failed"
