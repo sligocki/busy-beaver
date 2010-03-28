@@ -95,5 +95,9 @@ if __name__ == "__main__":
   io = IO(opts["infile"], opts["outfile"], opts["log_number"])
   next = io.read_result()
 
+  if opts["tape"] <= 0 or opts["steps"] <= 0:
+    sys.stderr.write("Tape length, %d, and steps, %d, must be > 0\n" % (opts["tape"],opts["steps"]))
+    sys.exit(1)
+
   Dual_Machine_Run(opts["states"], opts["symbols"], opts["tape"],
                    opts["steps"], next, io)
