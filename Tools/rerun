@@ -20,10 +20,11 @@ set line=2
 set total=`cat "$logfile" | wc -l`
 while ($line <= $total)
   # Get the command for the log file
-  set command=`head -$line "$logfile"     \
-               | tail -1                  \
-               | awk 'BEGIN {FS = "|"}    \
+  set command=`head -$line "$logfile"     \\
+               | tail -1                  \\
+               | awk 'BEGIN {FS = "|"}    \\
                             {print $3;}'`
+
   # Run the command
   echo "Running: $command"
   $command
