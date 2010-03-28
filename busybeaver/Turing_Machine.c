@@ -11,6 +11,10 @@ inline int step_TM(TM* m)
 
   if (m->new_symbol == -1)
   {
+    if (m->symbol == 0) {
+      m->total_symbols++;
+    }
+
     return RESULT_UNDEFINED;
   }
 
