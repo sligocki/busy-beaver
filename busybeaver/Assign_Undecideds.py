@@ -1,7 +1,8 @@
 #! /usr/bin/env python
 #
 # Continues enumeration of machines which reach undefined states after being
-# enumerated (sya during a simulation filter).
+# enumerated (say during a simulation filter).
+#
 
 import IO
 import sys, copy
@@ -19,20 +20,24 @@ new_M_num = opts["next_machine_num"]
 io = IO.IO(opts["infile"], opts["outfile"])
 next = io.read_result()
 
-#results = (INFINITE, 6, cutoff, block_size, offset, "CTL_A*")
-
 while next:
   (machine_num, num_states, num_symbols, tape_length, max_steps, \
     results, ttable, log_num, old_results) = next
+
   cond, on_symb, on_state, score, steps = results
-  on_symb = int(on_symb); on_state = int(on_state)
-  score = int(score); steps = int(steps)
+
+  on_symb  = int(on_symb);
+  on_state = int(on_state)
+  score    = int(score);
+  steps    = int(steps)
+
   # Write the halting machine
   new_results = (HALT, score, steps)
   new_ttable = copy.deepcopy(ttable)
   new_ttable[on_state][on_symb] = HALT_TRANS
   io.write_result_raw(machine_num, num_states, num_symbols, tape_length,
                       max_steps, new_results, new_ttable, log_num, old_results)
+
   # Get stats.  Number of undefined transitions, whether there is a halt and the max-symbol/states
   undefs = 0
   max_symbol = max_state = -1
@@ -43,6 +48,7 @@ while next:
       else:
         max_symbol = max(max_symbol, symbol)
         max_state = max(max_state, state)
+
   # If there are other undefined transitions, then define non-halting versions
   if undefs != 0:
     for symbol in range(min(max_symbol + 2, num_symbols)):
@@ -52,5 +58,6 @@ while next:
           io.write_result_raw(new_M_num, num_states, num_symbols, tape_length,
                               max_steps, old_results, new_ttable, log_num)
           new_M_num += 1
+
   # Get next machine
   next = io.read_result()
