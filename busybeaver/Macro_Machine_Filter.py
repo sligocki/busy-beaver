@@ -52,23 +52,15 @@ def Macro_Machine_Recursive(machine_num,
                  old_tape_length, old_ax_steps, io, old_results)
     raise Turing_Machine_Runtime_Error, "Error encountered while running a turing machine"
 
-  #    3) Reached Undefined Cell
-  # Should not occur because Filters should only be run on Generate.py results.
-  elif exit_condition == 3:
-    sys.stderr.write("Machine (%d) reached undefined cell: %s" %
-                     (machine_num, result))
-    save_machine(machine_num, machine, results,
-                 old_tape_length, old_max_steps, io, old_results)
-    raise Filter_Unexpected_Return, "Machine reached undefined cell in filter."
-
   # All other returns:
   #    0) Halt
   #    1) Exceed tape_length
   #    2) Exceed max_steps
+  #    3) Reached Undefined Cell
   #    4) Are in a detected infinite loop
   else:
-    # If classified (Halt or Infinite)
-    if (results[0] == 0 or results[0] == 4):
+    # If classified (Halt, Undefined Cell, or Infinite)
+    if (results[0] == 0 or results[0] == 3 or results[0] == 4):
       save_machine(machine_num, machine, results,
                    old_tape_length, old_max_steps, io, old_results)
     # If still unclassified
