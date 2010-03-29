@@ -9,6 +9,8 @@ inline int step_TM(TM* m)
   m->new_delta  = m->machine[m->state].t[m->symbol].d;
   m->new_state  = m->machine[m->state].t[m->symbol].s;
 
+  m->total_steps++;
+
   if (m->new_symbol == -1)
   {
     if (m->symbol == 0) {
@@ -17,8 +19,6 @@ inline int step_TM(TM* m)
 
     return RESULT_UNDEFINED;
   }
-
-  m->total_steps++;
 
   if (m->symbol == 0 && m->new_symbol != 0) {
     m->total_symbols++;
