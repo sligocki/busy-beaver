@@ -58,7 +58,7 @@ class Simple_Machine(Turing_Machine):
     # Historical signaling of undefined cell in transition table: (-1, 0, -1)
     if symbol_out == -1:
       # Treat an undefined cell as a halt, except note that it was undefined.
-      return (UNDEFINED, (symbol_in, state_in)), (1, -1, 1), 1
+      return (UNDEFINED, (state_in, symbol_in)), (1, -1, 1), 1
     # Historical signaling of final cell (transition to halt): (1, 1, -1)
     elif state_out == -1:
       return (HALT,), trans, 1
