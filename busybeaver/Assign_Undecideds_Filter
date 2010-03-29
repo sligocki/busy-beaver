@@ -70,13 +70,15 @@ while ($filternum < $lognum)
   echo ""
   echo $filternum
   cp -f $basename:r.log $basename.log
-  set curline=`grep "^ *$filternum " $basename.log \
-  | sed -e 's/.*|//g'                              \
-        -e 's/--infile=[^ ]* //g'                  \
-        -e 's/--infile=[^ ]*$//g'                  \
-        -e 's/--outfile=[^ ]* //g'                 \
-        -e 's/--outfile=[^ ]*$//g'                 \
-        -e 's/--log_number=[^ ]* //g'              \
+  set curline=`grep "^ *$filternum " $basename.log \\
+  | awk 'BEGIN {FS = "|"}                          \\
+               {print $3;}'                        \\
+  | sed -e 's/.*|//g'                              \\
+        -e 's/--infile=[^ ]* //g'                  \\
+        -e 's/--infile=[^ ]*$//g'                  \\
+        -e 's/--outfile=[^ ]* //g'                 \\
+        -e 's/--outfile=[^ ]*$//g'                 \\
+        -e 's/--log_number=[^ ]* //g'              \\
         -e 's/--log_number=[^ ]*$//g'`
   set curcommand=`echo $curline | sed -e 's/ .*$//g'`
 
