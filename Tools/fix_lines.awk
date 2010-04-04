@@ -1,4 +1,4 @@
-{
+NF > 0 {
   start = 1
   seek = 3
   if ($1 > 6) {
