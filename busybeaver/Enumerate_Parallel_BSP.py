@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 #
-# Enumerate_Parallel_Once.py
+# Enumerate_Parallel_BSP.py
 #
 # This is a Busy Beaver Turing machine enumerator that runs in parallel (using
 # ScientificPython and BSP).  It enumerates a representative set of all Busy
