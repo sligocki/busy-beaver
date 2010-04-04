@@ -10,9 +10,9 @@ def get_max(lines):
     num_lines += 1
   return max_steps, max_symbols, num_lines
 
-def count_lines(lines):
+def count_lines(curfile):
   num_lines = 0
-  for line in lines:
+  for line in curfile:
     num_lines += 1
   return num_lines
 
