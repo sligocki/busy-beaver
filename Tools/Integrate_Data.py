@@ -27,6 +27,13 @@ undecided_filename = sys.argv[6];   undecided_file = file(undecided_filename, "a
 #   True means at least one unexpected (weird) entry.
 was_error = False
 
+# Count output to each file type
+num_halt      = 0
+num_undecided = 0
+num_infinite  = 0
+num_unknown   = 0
+num_error     = 0
+
 for line in input_file:
   # Split each line by white charactor separation into fields.
   fields = line.split()
@@ -36,18 +43,23 @@ for line in input_file:
   # 'line' halts.
   if TEST.IS_HALT(condition):
     halt_file.write(line)
-  # 'line' hits an undefined cell
-  elif TEST.IS_UNDEFINED(condition):
-    undecided_file.write(line)
+    num_halt += 1
   # 'line' is proven infinite.
   elif TEST.IS_INFINITE(condition):
     infinite_file.write(line)
+    num_infinite += 1
+  # 'line' hits an undefined cell
+  elif TEST.IS_UNDEFINED(condition):
+    undecided_file.write(line)
+    num_undecided += 1
   # 'line' is uncategorized.
   elif TEST.IS_UNKNOWN(condition):
     unknown_file.write(line)
+    num_unknown += 1
   # 'line' is unexpected (weird).
   else:
     error_file.write(line)
+    num_error += 1
     was_error = True
     print "There was an unexpected value (%s) found in file (%s)" % (repr(condition), input_filename)
     print line
@@ -61,6 +73,9 @@ undecided_file.close()
 
 # Remove input file so that it is not accidentally re-integrated
 os.remove(input_filename)
+
+# Print counts
+print num_halt,num_infinite,num_undecided,num_unknown
 
 # If error file is empty remove it.
 if not was_error:
