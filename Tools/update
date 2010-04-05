@@ -49,14 +49,12 @@ if ("$argv[2]" == "Generate.py") then
   cp -f "$basename.out" "$basename.all"
 endif
 
+# Log the running of the command
+echo "$log_number" | awk '{printf("%6d",$1);}' >> "$basename.log"
+
 # Check for any change
 cmp -s "$basename.unknown" "$basename.out"
 if ("$status" != 0) then
-  # Log the running of the command
-  echo "$log_number" | awk '{printf("%6d",$1);}' >> "$basename.log"
-  set num=`cat "$basename.unknown" "$basename.out" | sort | uniq -u | wc -l`
-  set num=`expr $num / 2`
-
   # Integrate the output data into the existing database and get TM counts
   set counts=`Integrate_Data.py "$basename.out" "$basename.halt" "$basename.infinite" "$basename.unknown" "$basename.error" "$basename.undecided"`
 
@@ -79,8 +77,17 @@ if ("$status" != 0) then
   # Log the command and print a bit more output
   echo " | $date | $command | $count_halt $count_infinite $count_undecided $net_unknown" >> "$basename.log"
   echo "TM counts: $count_halt $count_infinite $count_undecided $net_unknown"
+
+  # Log if all the TMs have been resolved
+  if ("$count_undecided" == "0" && "$count_unknown" == "0") then
+    echo "------ | All TMs resolved" >> "$basename.log"    
+    echo "All TMs resolved"
+  endif
 else
   rm -f "$basename.out"
+
+  # Log the command and indicate no change
+  echo " | $date | $command | 0 0 0 0" >> "$basename.log"
   echo "No change"
 endif
 
