@@ -23,6 +23,13 @@ else
   echo "Integrate_Data.py $basename.out $basename.halt $basename.infinite $basename.unknown $basename.error $basename.undecided " >> "$logfile"
 endif
 
+# Get the original number of unknown TMs
+set orig_unknown=`wc -l < $basename.unknown`
+if ("$orig_unknown" == "0") then
+  echo "No unknown TMs"
+  exit 0
+endif
+
 # Get the current date and command
 set date=`\date`
 set command="$argv[2-] --infile=$basename.unknown --outfile=$basename.out --log_number=$log_number"
@@ -49,21 +56,29 @@ if ("$status" != 0) then
   echo "$log_number" | awk '{printf("%6d",$1);}' >> "$basename.log"
   set num=`cat "$basename.unknown" "$basename.out" | sort | uniq -u | wc -l`
   set num=`expr $num / 2`
-  echo " | $date | $command | $num"              >> "$basename.log"
 
-  echo "$num TMs classified"
-
-  # Integrate the output data into the existing database
-  Integrate_Data.py "$basename.out"                                     \
-                    "$basename.halt" "$basename.infinite"               \
-                    "$basename.unknown" "$basename.error"               \
-                    "$basename.undecided"
+  # Integrate the output data into the existing database and get TM counts
+  set counts=`Integrate_Data.py "$basename.out" "$basename.halt" "$basename.infinite" "$basename.unknown" "$basename.error" "$basename.undecided"`
 
   # Check for failure
   if ("$status" != 0) then
     echo "Integration failed"
     exit 1
   endif
+
+  # Break out the individual TM counts
+  set count_halt=$counts[1]
+  set count_infinite=$counts[2]
+  set count_undecided=$counts[3]
+  set count_unknown=$counts[4]
+  set count_error=$counts[5]
+
+  # Get the net change in unknown TMs
+  set net_unknown=`expr $count_unknown - $orig_unknown`
+
+  # Log the command and print a bit more output
+  echo " | $date | $command | $count_halt $count_infinite $count_undecided $net_unknown" >> "$basename.log"
+  echo "TM counts: $count_halt $count_infinite $count_undecided $net_unknown"
 else
   rm -f "$basename.out"
   echo "No change"
