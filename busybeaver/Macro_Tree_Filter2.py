@@ -74,6 +74,9 @@ if __name__ == "__main__":
   io = IO.IO(opts["infile"], opts["outfile"], log_number)
   next = io.read_result()
 
+  num_halt = 0
+  num_undefined = 0
+
   while next:
     if progress:
       print next[0], # Machine Number
@@ -90,10 +93,18 @@ if __name__ == "__main__":
       # We do not expect to find halting machines with this filter.
       # However, finding them is not a problem, but user should know.
       if results[0] == HALT:
-        sys.stderr.write("Number: %d in file: %s - halted!\n" % (next[0], opts["infilename"]))
+        num_halt += 1
       if results[0] == UNDEF_CELL:
-        sys.stderr.write("Number: %d in file: %s - undefined cell!\n" % (next[0], opts["infilename"]))
+        num_undefined += 1
       old_results = next[5]
       io.write_result_raw(*(next[0:5]+(results, TTable, log_number, old_results)))
 
     next = io.read_result()
+
+  # Print number of TMs that halted
+  if num_halt > 0:
+    sys.stderr.write("%d in file: %s - halted!\n" % (num_halt, opts["infilename"]))
+
+  # Print number of TMs that reached an undefined transition
+  if num_undefined > 0:
+    sys.stderr.write("%d in file: %s - undefined transitions reached!\n" % (num_undefined, opts["infilename"]))
