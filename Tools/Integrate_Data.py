@@ -75,7 +75,7 @@ undecided_file.close()
 os.remove(input_filename)
 
 # Print counts
-print num_halt,num_infinite,num_undecided,num_unknown
+print num_halt,num_infinite,num_undecided,num_unknown,num_error
 
 # If error file is empty remove it.
 if not was_error:
