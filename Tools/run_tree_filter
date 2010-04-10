@@ -4,34 +4,47 @@ set steps=1000
 set size=1
 set stop=10000
 
+set update_cmd="update"
+
 set argc=$#argv
-if ("$argc" >= 1) then
-  set base="$1"
+if ("${argc}" >= 1) then
+  set basename="$1"
 else
-  echo "Usage:  run_tree_filter basename [steps [start_size [stop_size]]]"
+  echo "Usage:  run_tree_filter basename [steps [start_size [stop_size [update_cmd]]]]"
   exit 1
 endif
-if ("$argc" >= 2) then
+if ("${argc}" >= 2) then
   set steps="$2"
 endif
-if ("$argc" >= 3) then
+if ("${argc}" >= 3) then
   set size="$3"
 endif
-if ("$argc" >= 4) then
+if ("${argc}" >= 4) then
   set stop="$4"
 endif
+if ("${argc}" >= 5) then
+  set update_cmd="$5"
+endif
 
-wc -l "$base".unknown
+wc -l "${basename}".unknown
 echo ""
-while ("$size" <= "$stop")
-  echo $size
-  update "$base" Macro_Tree_Filter2.py --steps=$steps --size=$size # --progress
-  wc -l "$base".unknown
-  if (-e "$base".error) then
+
+while ("${size}" <= "${stop}")
+  echo "Tree ${size}"
+  time ${update_cmd} "${basename}" Macro_Tree_Filter2.py --steps=${steps} --size=${size}
+
+  wc -l "${basename}".unknown
+
+  if (-e "${basename}".error) then
     echo "Error encountered..."
     exit 1
   endif
+
   echo ""
+
+  assign_undecided "${basename}" "${update_cmd}"
+
   @ size++
 end
+
 exit 0
