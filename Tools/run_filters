@@ -1,0 +1,126 @@
+#!/bin/tcsh -f
+setenv PATH ${PATH}:/scratch/users/ligocki/busybeaver/Tools:/scratch/users/ligocki/busybeaver/busybeaver
+
+set basename=$1
+
+set update_cmd="update $basename"
+
+echo -n "Integrate "
+time Integrate_Data.py $basename.out $basename.halt $basename.infinite $basename.unknown $basename.error $basename.undecided >&! $basename.mess
+
+while (1)
+  set size=1
+  set steps=10
+  echo -n "Tree $size "
+  time $update_cmd Macro_Tree_Filter2.py --steps=$steps --size=$size
+  set num_undecided=`ls -s $basename.undecided | awk '{print $1;}'`
+  if ($num_undecided == 0) then
+    break
+  endif
+  while ($num_undecided != 0)
+    echo -n "Undecided "
+    time $update_cmd Assign_Undecideds_Filter --next_machine_number=0
+    set num_undecided=`ls -s $basename.undecided | awk '{print $1;}'`
+  end
+end
+
+echo -n "Reverse "
+time $update_cmd Reverse_Engineer_Filter.py
+
+echo -n "Dual "
+time $update_cmd Dual_Machine_Filter.py --tape=1000 --steps=1000
+set num_undecided=`ls -s $basename.undecided | awk '{print $1;}'`
+while ($num_undecided != 0)
+  echo -n "Undecided "
+  time $update_cmd Assign_Undecideds_Filter --next_machine_number=0
+  set num_undecided=`ls -s $basename.undecided | awk '{print $1;}'`
+end
+
+while (1)
+  set size=2
+  set steps=10
+  echo -n "Tree $size "
+  time $update_cmd Macro_Tree_Filter2.py --steps=$steps --size=$size
+  set num_undecided=`ls -s $basename.undecided | awk '{print $1;}'`
+  if ($num_undecided == 0) then
+    break
+  endif
+  while ($num_undecided != 0)
+    echo -n "Undecided "
+    time $update_cmd Assign_Undecideds_Filter --next_machine_number=0
+    set num_undecided=`ls -s $basename.undecided | awk '{print $1;}'`
+  end
+end
+
+echo -n "Reverse "
+time $update_cmd Reverse_Engineer_Filter.py
+
+echo -n "Dual "
+time $update_cmd Dual_Machine_Filter.py --tape=1000 --steps=1000
+set num_undecided=`ls -s $basename.undecided | awk '{print $1;}'`
+while ($num_undecided != 0)
+  echo -n "Undecided "
+  time $update_cmd Assign_Undecideds_Filter --next_machine_number=0
+  set num_undecided=`ls -s $basename.undecided | awk '{print $1;}'`
+end
+
+foreach size (1)
+  foreach ctl (1 2 3 4)
+    set offset=0
+    while ($offset < $size)
+      echo -n "CTL${ctl} $size $offset "
+      time $update_cmd CTL${ctl}_Filter.py --size=$size --offset=$offset
+      @ offset++
+    end  
+  end
+end
+
+set size=1
+set steps=100
+while ($size <= 5)
+  set num_undecided=`ls -s $basename.undecided | awk '{print $1;}'`
+  while ($num_undecided != 0)
+    echo -n "Undecided "
+    time $update_cmd Assign_Undecideds_Filter --next_machine_number=0
+    set num_undecided=`ls -s $basename.undecided | awk '{print $1;}'`
+  end
+  echo -n "Tree $size "
+  time $update_cmd Macro_Tree_Filter2.py --steps=$steps --size=$size
+  @ size++
+end
+
+foreach size (2 3 4)
+  foreach ctl (1 2 3 4)
+    set offset=0
+    while ($offset < $size)
+      echo -n "CTL${ctl} $size $offset "
+      time $update_cmd CTL${ctl}_Filter.py --size=$size --offset=$offset
+      @ offset++
+    end  
+  end
+end
+
+set size=1
+set steps=1000
+while ($size <= 10)
+  set num_undecided=`ls -s $basename.undecided | awk '{print $1;}'`
+  while ($num_undecided != 0)
+    echo -n "Undecided "
+    time $update_cmd Assign_Undecideds_Filter --next_machine_number=0
+    set num_undecided=`ls -s $basename.undecided | awk '{print $1;}'`
+  end
+  echo -n "Tree $size "
+  time $update_cmd Macro_Tree_Filter2.py --steps=$steps --size=$size
+  @ size++
+end
+
+foreach size (5 6)
+  foreach ctl (1 2 3 4)
+    set offset=0
+    while ($offset < $size)
+      echo -n "CTL${ctl} $size $offset "
+      time $update_cmd CTL${ctl}_Filter.py --size=$size --offset=$offset
+      @ offset++
+    end  
+  end
+end

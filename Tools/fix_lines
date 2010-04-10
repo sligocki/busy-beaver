@@ -1,3 +1,3 @@
 #!/bin/csh -f
-set dir=`dirname $0`
-awk -f $dir/fix_lines.awk $*
+set cmd_dir=`dirname $0`
+awk -f $cmd_dir/fix_lines.awk $*
