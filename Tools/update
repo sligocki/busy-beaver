@@ -88,7 +88,7 @@ else
 
   # Log the command and indicate no change
   echo " | $date | $command | 0 0 0 0" >> "$basename.log"
-  echo "No change"
+  echo "TM counts: 0 0 0 0"
 endif
 
 # Exit successfully

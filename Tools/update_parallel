@@ -1,0 +1,163 @@
+#!/bin/csh -f
+
+# Check for enough arguments
+set argc="$#argv"
+if ("$argc" < 3) then
+  echo "Usage:  update_parallel nprocs basename command"
+  exit 1
+endif
+
+set cmd_dir=`dirname $0`
+
+# Make sure the "nprocs" doesn't end in ".py" - simple consistency check
+set nprocs="$argv[1]"
+if ("$nprocs:e" == "py") then
+  echo "No nprocs given"
+  exit 1
+endif
+
+# Make sure the "basename" doesn't end in ".py" - simple consistency check
+set basename="$argv[2]"
+if ("$basename:e" == "py") then
+  echo "No basename given"
+  exit 1
+endif
+
+if (! -e "$basename.unknown") then
+  echo "File $basename.unknown doesn't exist"
+  exit 1
+endif
+
+if (! -e "$basename.undecided") then
+  echo "File $basename.undecided doesn't exist"
+  exit 1
+endif
+
+# Find log file (if it exists) and set the current log number
+set logfile="$basename.log"
+if (-e "$logfile" && ! -z "logfile") then
+  set log_number=`tail -1 "$logfile" | awk '{print $1 + 1;}'`
+else
+  set log_number=1
+  echo "Integrate_Data.py $basename.out $basename.halt $basename.infinite $basename.unknown $basename.error $basename.undecided " >> "$logfile"
+endif
+
+# Get the original number of unknown TMs
+set orig_unknown=`wc -l < $basename.unknown`
+set orig_undecided=`wc -l < $basename.undecided`
+if ("$orig_unknown" == "0") then
+  echo "No unknown TMs"
+  exit 0
+endif
+
+# Get the current date and command
+set date=`\date`
+set command="$argv[3-]"
+
+# Get the number of TMs to put in each file for the parallel runs
+set tm_per_unk_file=`expr \( $orig_unknown   + \( $nprocs - 1 \) \) / $nprocs`
+set tm_per_und_file=`expr \( $orig_undecided + \( $nprocs - 1 \) \) / $nprocs`
+
+echo $tm_per_unk_file $tm_per_und_file
+
+# Number of digits in "split" pieces
+set digits=6
+
+# Construct a regular expression with '[0-9]' repeated $digits times
+set count=0
+set digit_string=""
+while ($count < $digits)
+  set digit_string="${digit_string}[0-9]"
+  @ count++
+end
+
+# Split the unknown TMs into pieces and get the correct suffix
+set total_count_unk=0
+if ("$tm_per_unk_file" > 0) then
+  split -a $digits -d -l $tm_per_unk_file $basename.unknown   $basename.unknown.
+
+  # Move the pieces to *.unknown names and count them
+  foreach i ($basename.unknown.$digit_string)
+    mv $i $i.unknown
+    touch $i.undecided
+    @ total_count_unk++
+  end
+endif
+
+set total_count_und=0
+if ("$tm_per_und_file" > 0) then
+  split -a $digits -d -l $tm_per_und_file $basename.undecided $basename.unknown.
+
+  # Move the pieces to *.undecided names and count them
+  foreach i ($basename.unknown.$digit_string)
+    mv $i $i.undecided
+    touch $i.unknown
+    @ total_count_und++
+  end
+
+endif
+
+set total_count=`echo $total_count_unk $total_count_und | awk '{ if ($1 > $2) { print $1 } else { print $2 } }'`
+
+# Run the command on all the pieces in parallel
+foreach i ($basename.unknown.$digit_string.unknown)
+  time update $i:r $command &
+end
+
+# Wait for all the commands to finish
+while (1)
+  # Check every 5 seconds
+  sleep 5
+
+  # Count the number of commands that have finished
+  set count_finished=0
+  foreach i ($basename.unknown.$digit_string.log)
+    awk -f $cmd_dir/update_parallel_done.awk $i
+    if ("$status" == 0) then
+      @ count_finished++
+    endif
+  end
+
+  # Exit loop if all commands have finished
+  if ("$count_finished" == "$total_count") then
+    echo "All done..."
+    break
+  endif
+end
+
+# Collect all the results into the places they belong
+cat $basename.unknown.$digit_string.halt      >> $basename.halt
+cat $basename.unknown.$digit_string.infinite  >> $basename.infinite
+cat $basename.unknown.$digit_string.undecided >  $basename.undecided
+cat $basename.unknown.$digit_string.unknown   >  $basename.unknown
+
+# Get count totals
+set counts=`awk -f $cmd_dir/update_parallel_total.awk $basename.unknown.$digit_string.log`
+
+# Clean up temporary files
+/bin/rm -f $basename.unknown.$digit_string.*
+
+# Log the running of the command
+echo "$log_number" | awk '{printf("%6d",$1);}' >> "$basename.log"
+
+# Break out the individual TM counts
+set count_halt=$counts[1]
+set count_infinite=$counts[2]
+set count_undecided=$counts[3]
+set count_unknown=$counts[4]
+
+# Get the net change in unknown TMs
+set net_unknown=`expr $count_unknown - $orig_unknown`
+
+# Log the command and print a bit more output
+echo " | $date | $command | $count_halt $count_infinite $count_undecided $count_unknown" >> "$basename.log"
+echo "TM counts: $count_halt $count_infinite $count_undecided $count_unknown"
+
+# Log if all the TMs have been resolved
+if ("$count_undecided" == "0" && "$count_unknown" == "0") then
+  echo "------ | All TMs resolved" >> "$basename.log"    
+  echo "All TMs resolved"
+endif
+
+# Exit successfully
+exit 0
