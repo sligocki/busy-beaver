@@ -559,7 +559,7 @@ if __name__ == "__main__":
 
   if processorID == 0:
     ## Print command line
-    print "Enumerate.py --states=%d --symbols=%d --steps=%d --time=%f" \
+    print "Enumerate_Parallel_BSP.py --states=%d --symbols=%d --steps=%d --time=%f" \
       % (options.states, options.symbols, options.steps, options.time),
     if options.randomize:
       print "--randomize",
