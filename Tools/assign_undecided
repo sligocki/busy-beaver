@@ -14,7 +14,7 @@ endif
 
 set num_undecided=`ls -s ${basename}.undecided | awk '{print $1;}'`
 while (${num_undecided} != 0)
-  echo "Undecided "
+  echo "----- Undecided -----"
   time ${update_cmd} "${basename}" Assign_Undecideds_Filter --next_machine_number=0
 
   set num_undecided=`ls -s ${basename}.undecided | awk '{print $1;}'`

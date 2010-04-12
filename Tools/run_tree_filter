@@ -30,7 +30,7 @@ wc -l "${basename}".unknown
 echo ""
 
 while ("${size}" <= "${stop}")
-  echo "Tree ${size}"
+  echo "----- Tree ${size} -----"
   time ${update_cmd} "${basename}" Macro_Tree_Filter2.py --steps=${steps} --size=${size}
 
   wc -l "${basename}".unknown
