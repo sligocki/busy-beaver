@@ -59,7 +59,7 @@ def run(TTable, options, steps=INF, runtime=None, block_size=None,
       ## Test for quickly for infinite machine
       if Reverse_Engineer_Filter.test(TTable):
         return INFINITE, ("Reverse_Engineered",)
-      
+
       ## Construct the Macro Turing Machine (Backsymbol-k-Block-Macro-Machine)
       m = Turing_Machine.make_machine(TTable)
 
@@ -77,7 +77,7 @@ def run(TTable, options, steps=INF, runtime=None, block_size=None,
       except AlarmException: # Catch Timer (unexcepted)
         signalPlus.alarm(0)  # Turn off timer
         block_size = 1
-        
+
       # Do not create a 1-Block Macro-Machine (just use base machine)
       if block_size != 1:
         m = Turing_Machine.Block_Macro_Machine(m, block_size)
