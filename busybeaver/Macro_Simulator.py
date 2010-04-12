@@ -18,12 +18,15 @@ HALT = "Halt"
 INFINITE = "Infinite_repeat"
 UNDEFINED = "Undefined_Transition"
 
+alarmHandlerOn = False
 
 class AlarmException(Exception):
   """An exception to be tied to a timer running out."""
 
 def AlarmHandler(signum, frame):
-  raise AlarmException, "Timeout!"
+  global alarmHandler
+  if alarmHandlerOn:
+    raise AlarmException, "Timeout!"
 
 # Attach the alarm signal to the alarm exception.
 #   so signalPlus.alarm will cause a catchable exception.
@@ -42,17 +45,22 @@ def setup_CTL(m, cutoff):
   sim.init(m)
   sim.proof = None
   sim.seek(cutoff)
+
   if sim.op_state != Turing_Machine.RUNNING:
     return False
+
   tape = [None, None]
+
   for d in range(2):
     tape[d] = [block.symbol for block in reversed(sim.tape.tape[d]) if block.num != "Inf"]
+
   config = GenContainer(state=sim.state, dir=sim.dir, tape=tape)
   return config
 
 def run(TTable, options, steps=INF, runtime=None, block_size=None, 
                 back=True, prover=True, rec=False):
   """Run the Accelerated Turing Machine Simulator, running a few simple filters first and using intelligent blockfinding."""
+  global alarmHandlerOn
 
   for do_over in xrange(0,4):
     try:
@@ -64,6 +72,8 @@ def run(TTable, options, steps=INF, runtime=None, block_size=None,
       m = Turing_Machine.make_machine(TTable)
 
       try:
+        alarmHandlerOn = True
+
         ## Set the timer (if non-zero runtime)
         if runtime:
           signalPlus.alarm(runtime/10.0)  # Set timer
@@ -73,9 +83,12 @@ def run(TTable, options, steps=INF, runtime=None, block_size=None,
           block_size = Block_Finder.block_finder(m, options.bf_limit1, options.bf_limit2, options.bf_run1, options.bf_run2, options.bf_extra_mult)
 
         signalPlus.alarm(0)  # Turn off timer
+        alarmHandlerOn = False
 
       except AlarmException: # Catch Timer (unexcepted)
         signalPlus.alarm(0)  # Turn off timer
+        alarmHandlerOn = False
+
         block_size = 1
 
       # Do not create a 1-Block Macro-Machine (just use base machine)
@@ -88,6 +101,8 @@ def run(TTable, options, steps=INF, runtime=None, block_size=None,
 
       # Run CTL filters unless machine halted
       if CTL_config:
+        alarmHandlerOn = True
+
         try:
           if runtime:
             signalPlus.alarm(runtime/10.0)
@@ -105,6 +120,8 @@ def run(TTable, options, steps=INF, runtime=None, block_size=None,
         except AlarmException:
           signalPlus.alarm(0)  # Turn off timer
 
+        alarmHandlerOn = False
+
       ## Set up the simulator
       #global sim # Useful for Debugging
       sim = Chain_Simulator.Simulator()
@@ -113,6 +130,8 @@ def run(TTable, options, steps=INF, runtime=None, block_size=None,
         sim.proof = None
 
       try:
+        alarmHandlerOn = True
+
         if runtime:
           signalPlus.alarm(runtime)  # Set timer
 
@@ -121,9 +140,14 @@ def run(TTable, options, steps=INF, runtime=None, block_size=None,
 
         signalPlus.alarm(0)  # Turn off timer
 
+        alarmHandlerOn = False
+
       except AlarmException: # Catch Timer
         signalPlus.alarm(0)  # Turn off timer
+        alarmHandlerOn = False
+
         return TIMEOUT, (runtime, sim.step_num)
+
 
       ## Resolve end conditions and return relevent info.
       if sim.op_state == Turing_Machine.RUNNING:
