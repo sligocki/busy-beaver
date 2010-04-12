@@ -50,7 +50,7 @@ def run(TTable, block_size, level, steps, timeout, recursive, progress):
     if progress:
       print "\tUndefined", sim.get_nonzeros(), sim.step_num
     # sim.op_details[0][0 & 1] stores the symbol and state that we halted on
-    return UNDEF_CELL, sim.op_details[0][0], sim.op_details[0][1], sim.get_nonzeros(), sim.step_num
+    return UNDEF_CELL, sim.op_details[0][1], sim.op_details[0][0], sim.get_nonzeros(), sim.step_num
   elif sim.op_state == Turing_Machine.TIME_OUT:
     if progress:
       print "\tTimeout", block_size, sim.step_num, sim.num_loops
