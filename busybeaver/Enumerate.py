@@ -294,9 +294,6 @@ if __name__ == "__main__":
   if options.randomize and not options.seed:
     options.seed = long(1000*time.time())
 
-  if options.steps == 0:
-    options.steps = Macro_Simulator.INF
-
   if not options.outfilename:
     options.outfilename = "Enum.%d.%d.%d.out" % (options.states, options.symbols, options.steps)
 
@@ -323,6 +320,9 @@ if __name__ == "__main__":
     print "--log_number=%d" % options.log_number,
   print "--checkpoint=%s --save_freq=%d" % (options.checkpoint, options.save_freq),
   print
+
+  if options.steps == 0:
+    options.steps = Macro_Simulator.INF
 
   ## Enumerate machines
   enumerator = Enumerator(options.states, options.symbols, options.steps,
