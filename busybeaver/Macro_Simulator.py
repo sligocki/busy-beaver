@@ -44,13 +44,11 @@ ALARM = Alarm()
 #   so signalPlus.alarm will cause a catchable exception.
 signal.signal(signal.SIGALRM, ALARM.alarm_handler)
 
-
 class GenContainer:
   """Generic Container class"""
   def __init__(self, **args):
     for atr in args:
       self.__dict__[atr] = args[atr]
-
 
 def setup_CTL(m, cutoff):
   sim = Chain_Simulator.Simulator()
@@ -94,6 +92,7 @@ def run(TTable, options, steps=INF, runtime=None, block_size=None,
 
         except AlarmException: # Catch Timer
           ALARM.cancel_alarm()
+
           block_size = 1
 
       # Do not create a 1-Block Macro-Machine (just use base machine)
@@ -120,6 +119,8 @@ def run(TTable, options, steps=INF, runtime=None, block_size=None,
             ALARM.cancel_alarm()
             return INFINITE, ("CTL_A*_B",)
 
+          ALARM.cancel_alarm()
+
         except AlarmException:
           ALARM.cancel_alarm()
 
@@ -136,12 +137,12 @@ def run(TTable, options, steps=INF, runtime=None, block_size=None,
 
         ## Run the simulator
         sim.loop_seek(steps)
+
         ALARM.cancel_alarm()
 
       except AlarmException: # Catch Timer
         ALARM.cancel_alarm()
         return TIMEOUT, (runtime, sim.step_num)
-
 
       ## Resolve end conditions and return relevent info.
       if sim.op_state == Turing_Machine.RUNNING:
