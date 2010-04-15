@@ -9,54 +9,42 @@ set basename=$1
 
 set update_cmd="update"
 
-echo -n "Integrate "
+echo "----- Integrate -----"
 time integrate ${basename} >&! ${basename}.mess
 
 while (1)
-  echo -n "Dual "
+  echo "----- Dual -----"
   time ${update_cmd} ${basename} Dual_Machine_Filter.py --tape=1000 --steps=1000
+
+  set num_undecided=`ls -s ${basename}.undecided | awk '{print $1;}'`
 
   assign_undecided "${basename}" "${update_cmd}"
 
-  set num_undecided=`ls -s ${basename}.undecided | awk '{print $1;}'`
   if (${num_undecided} == 0) then
     break
   endif
 end
 
-echo -n "Reverse "
+echo "----- Reverse -----"
 time ${update_cmd} ${basename} Reverse_Engineer_Filter.py
 
 run_tree_filter "${basename}" 10 1 2 "${update_cmd}"
 
-echo -n "Reverse "
+echo "----- Reverse -----"
 time ${update_cmd} ${basename} Reverse_Engineer_Filter.py
 
-echo -n "Dual "
+echo "----- Dual -----"
 time ${update_cmd} ${basename} Dual_Machine_Filter.py --tape=1000 --steps=1000
-
-assign_undecided "${basename}" "${update_cmd}"
-
-foreach size (1)
-  foreach ctl (1 2 3 4)
-    set offset=0
-    while (${offset} < ${size})
-      echo -n "CTL${ctl} ${size} ${offset} "
-      time ${update_cmd} ${basename} CTL${ctl}_Filter.py --size=${size} --offset=${offset}
-      @ offset++
-    end  
-  end
-end
 
 assign_undecided "${basename}" "${update_cmd}"
 
 run_tree_filter "${basename}" 100 1 5 "${update_cmd}"
 
-foreach size (2 3)
+foreach size (1)
   foreach ctl (1 2 3 4)
     set offset=0
     while (${offset} < ${size})
-      echo -n "CTL${ctl} ${size} ${offset} "
+      echo "----- CTL${ctl} ${size} ${offset} -----"
       time ${update_cmd} ${basename} CTL${ctl}_Filter.py --size=${size} --offset=${offset}
       @ offset++
     end  
@@ -67,11 +55,26 @@ assign_undecided "${basename}" "${update_cmd}"
 
 run_tree_filter "${basename}" 1000 1 10 "${update_cmd}"
 
+foreach size (2 3)
+  foreach ctl (1 2 3 4)
+    set offset=0
+    while (${offset} < ${size})
+      echo "----- CTL${ctl} ${size} ${offset} -----"
+      time ${update_cmd} ${basename} CTL${ctl}_Filter.py --size=${size} --offset=${offset}
+      @ offset++
+    end  
+  end
+end
+
+assign_undecided "${basename}" "${update_cmd}"
+
+run_tree_filter "${basename}" 10000 1 25 "${update_cmd}"
+
 foreach size (4 5 6)
   foreach ctl (1 2 3 4)
     set offset=0
     while (${offset} < ${size})
-      echo -n "CTL${ctl} ${size} ${offset} "
+      echo "----- CTL${ctl} ${size} ${offset} -----"
       time ${update_cmd} ${basename} CTL${ctl}_Filter.py --size=${size} --offset=${offset}
       @ offset++
     end  
