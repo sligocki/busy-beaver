@@ -1,0 +1,3 @@
+#!/bin/csh -f
+set cmd_dir=`dirname $0`
+awk -f $cmd_dir/remove_blank_lines.awk $*
