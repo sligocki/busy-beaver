@@ -18,27 +18,37 @@ HALT = "Halt"
 INFINITE = "Infinite_repeat"
 UNDEFINED = "Undefined_Transition"
 
-alarmHandlerOn = False
-
 class AlarmException(Exception):
   """An exception to be tied to a timer running out."""
 
-def AlarmHandler(signum, frame):
-  global alarmHandler
-  if alarmHandlerOn:
-    raise AlarmException, "Timeout!"
+class Alarm(object):
+  """Singleton class that takes care of setting and turning off timer."""
+  def __init__(self):
+    self.is_alarm_on = False
+  
+  def set_alarm(self, time):
+    self.is_alarm_on = True
+    signalPlus.alarm(time)
+  
+  def cancel_alarm(self):
+    self.is_alarm_on = False
+    signalPlus.alarm(0)
+  
+  def alarm_handler(self, signum, frame):
+    if self.is_alarm_on:
+      raise AlarmException, "Timeout!"
+
+ALARM = Alarm()
 
 # Attach the alarm signal to the alarm exception.
 #   so signalPlus.alarm will cause a catchable exception.
-signal.signal(signal.SIGALRM, AlarmHandler)
-
+signal.signal(signal.SIGALRM, ALARM.alarm_handler)
 
 class GenContainer:
   """Generic Container class"""
   def __init__(self, **args):
     for atr in args:
       self.__dict__[atr] = args[atr]
-
 
 def setup_CTL(m, cutoff):
   sim = Chain_Simulator.Simulator()
@@ -60,8 +70,6 @@ def setup_CTL(m, cutoff):
 def run(TTable, options, steps=INF, runtime=None, block_size=None, 
                 back=True, prover=True, rec=False):
   """Run the Accelerated Turing Machine Simulator, running a few simple filters first and using intelligent blockfinding."""
-  global alarmHandlerOn
-
   for do_over in xrange(0,4):
     try:
       ## Test for quickly for infinite machine
@@ -71,25 +79,21 @@ def run(TTable, options, steps=INF, runtime=None, block_size=None,
       ## Construct the Macro Turing Machine (Backsymbol-k-Block-Macro-Machine)
       m = Turing_Machine.make_machine(TTable)
 
-      try:
-        alarmHandlerOn = True
+      if not block_size:
+        try:
+          ## Set the timer (if non-zero runtime)
+          if runtime:
+            ALARM.set_alarm(runtime/10.0)  # Set timer
 
-        ## Set the timer (if non-zero runtime)
-        if runtime:
-          signalPlus.alarm(runtime/10.0)  # Set timer
-
-        # If no explicit block-size given, use inteligent software to find one
-        if not block_size:
+          # If no explicit block-size given, use inteligent software to find one
           block_size = Block_Finder.block_finder(m, options.bf_limit1, options.bf_limit2, options.bf_run1, options.bf_run2, options.bf_extra_mult)
 
-        signalPlus.alarm(0)  # Turn off timer
-        alarmHandlerOn = False
+          ALARM.cancel_alarm()
 
-      except AlarmException: # Catch Timer (unexcepted)
-        signalPlus.alarm(0)  # Turn off timer
-        alarmHandlerOn = False
+        except AlarmException: # Catch Timer
+          ALARM.cancel_alarm()
 
-        block_size = 1
+          block_size = 1
 
       # Do not create a 1-Block Macro-Machine (just use base machine)
       if block_size != 1:
@@ -101,26 +105,24 @@ def run(TTable, options, steps=INF, runtime=None, block_size=None,
 
       # Run CTL filters unless machine halted
       if CTL_config:
-        alarmHandlerOn = True
-
         try:
           if runtime:
-            signalPlus.alarm(runtime/10.0)
+            ALARM.set_alarm(runtime/10.0)
 
           CTL_config_copy = copy.deepcopy(CTL_config)
           if CTL1.CTL(m, CTL_config_copy):
-            signalPlus.alarm(0)  # Turn off timer
+            ALARM.cancel_alarm()
             return INFINITE, ("CTL_A*",)
 
           CTL_config_copy = copy.deepcopy(CTL_config)
           if CTL2.CTL(m, CTL_config_copy):
-            signalPlus.alarm(0)  # Turn off timer
+            ALARM.cancel_alarm()
             return INFINITE, ("CTL_A*_B",)
 
-        except AlarmException:
-          signalPlus.alarm(0)  # Turn off timer
+          ALARM.cancel_alarm()
 
-        alarmHandlerOn = False
+        except AlarmException:
+          ALARM.cancel_alarm()
 
       ## Set up the simulator
       #global sim # Useful for Debugging
@@ -130,24 +132,17 @@ def run(TTable, options, steps=INF, runtime=None, block_size=None,
         sim.proof = None
 
       try:
-        alarmHandlerOn = True
-
         if runtime:
-          signalPlus.alarm(runtime)  # Set timer
+          ALARM.set_alarm(runtime)  # Set timer
 
         ## Run the simulator
         sim.loop_seek(steps)
 
-        signalPlus.alarm(0)  # Turn off timer
-
-        alarmHandlerOn = False
+        ALARM.cancel_alarm()
 
       except AlarmException: # Catch Timer
-        signalPlus.alarm(0)  # Turn off timer
-        alarmHandlerOn = False
-
+        ALARM.cancel_alarm()
         return TIMEOUT, (runtime, sim.step_num)
-
 
       ## Resolve end conditions and return relevent info.
       if sim.op_state == Turing_Machine.RUNNING:
@@ -165,7 +160,7 @@ def run(TTable, options, steps=INF, runtime=None, block_size=None,
                            sim.step_num, sim.get_nonzeros())
 
     except AlarmException: # Catch Timer (unexpected!)
-      signalPlus.alarm(0)  # Turn off timer and try again
+      ALARM.cancel_alarm()  # Turn off timer and try again
 
     sys.stderr.write("Weird1 (%d): %s\n" % (do_over,TTable))
 
