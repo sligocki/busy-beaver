@@ -10,6 +10,7 @@ import CTL2
 import CTL3
 import CTL4
 from Option_Parser import Filter_Option_Parser
+from Alarm import ALARM, AlarmException
 
 #
 # Return Conditions
@@ -25,10 +26,13 @@ INFINITE = 4
 #
 # Get command line options.
 #                                     Form: (opt, type, def_val, req?, has_val?)
-opts, args = Filter_Option_Parser(sys.argv, [("size"  , int, 1   , False, True),
-                                             ("offset", int, 0   , False, True),
-                                             ("cutoff", int, 200 , False, True),
-                                             ("type"  , str, None, True , True)])
+opts, args = Filter_Option_Parser(sys.argv,
+  [("size"  , int  , 1   , False, True),
+   ("offset", int  , 0   , False, True),
+   ("cutoff", int  , 200 , False, True),
+   ("type"  , str  , None, True , True),
+   ("time"  , float, None, False, True)]
+)
 
 log_number = opts["log_number"]
 
@@ -38,6 +42,8 @@ offset     = opts["offset"] # Offset for block size to resolve parity errors
 cutoff     = opts["cutoff"] # Steps to run to get advanced config before trying CTL
 
 type       = opts["type"]   # CTL algorithm to run
+
+runtime    = opts["time"]   # Timer value
 
 if type == "CTL1":
   type_num  = 6
@@ -66,8 +72,20 @@ next = io.read_result()
 
 while next:
   ttable = next[6]
-  # Run the simulator/filter on this machine
-  success = type_func.test_CTL(ttable, cutoff, block_size, offset)
+
+  # Run the simulator/filter on this machine (with an optional timer)
+  try:
+    if runtime:
+      ALARM.set_alarm(runtime)
+
+    success = type_func.test_CTL(ttable, cutoff, block_size, offset)
+
+    ALARM.cancel_alarm()
+
+  except:
+    ALARM.cancel_alarm()
+
+    success = False
 
   # If we could not decide anything, leave the old result alone.
   if not success:
