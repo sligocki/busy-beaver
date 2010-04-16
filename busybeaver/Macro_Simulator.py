@@ -1,48 +1,19 @@
 #! /usr/bin/env python
 
 import copy
-import math
 import sys
-import signal
-
-import signalPlus
 
 from Macro import Turing_Machine, Chain_Simulator, Block_Finder
 import IO, Reverse_Engineer_Filter, CTL1, CTL2
 
 from Macro.Chain_Tape import INF
+from Alarm import ALARM, AlarmException
 
 TIMEOUT = "Timeout"
 OVERSTEPS = "Over_steps"
 HALT = "Halt"
 INFINITE = "Infinite_repeat"
 UNDEFINED = "Undefined_Transition"
-
-class AlarmException(Exception):
-  """An exception to be tied to a timer running out."""
-
-class Alarm(object):
-  """Singleton class that takes care of setting and turning off timer."""
-  def __init__(self):
-    self.is_alarm_on = False
-  
-  def set_alarm(self, time):
-    self.is_alarm_on = True
-    signalPlus.alarm(time)
-  
-  def cancel_alarm(self):
-    self.is_alarm_on = False
-    signalPlus.alarm(0)
-  
-  def alarm_handler(self, signum, frame):
-    if self.is_alarm_on:
-      raise AlarmException, "Timeout!"
-
-ALARM = Alarm()
-
-# Attach the alarm signal to the alarm exception.
-#   so signalPlus.alarm will cause a catchable exception.
-signal.signal(signal.SIGALRM, ALARM.alarm_handler)
 
 class GenContainer:
   """Generic Container class"""
