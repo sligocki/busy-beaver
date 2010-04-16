@@ -22,6 +22,7 @@ from Scientific.BSP import *
 from Turing_Machine import Turing_Machine
 from IO import IO
 import Macro_Simulator
+from Alarm import AlarmException
 
 def long_to_eng_str(number, left, right):
   if number != 0:
@@ -151,7 +152,7 @@ class Enumerator(object):
             raise Exception, "Enumerator.enum() - unexpected condition (%r)" % cond
           break
 
-        except Macro_Simulator.AlarmException:
+        except AlarmException:
           sys.stderr.write("Weird2 (%d): %s\n" % (do_over,tm)) 
 
     # Done
