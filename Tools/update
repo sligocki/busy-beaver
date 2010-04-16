@@ -23,12 +23,13 @@ else
   echo "Integrate_Data.py $basename.out $basename.halt $basename.infinite $basename.unknown $basename.error $basename.undecided " >> "$logfile"
 endif
 
+# Create an empty unknown file if there isn't one
+if (! -e $basename.unknown) then
+  touch $basename.unknown
+endif
+
 # Get the original number of unknown TMs
 set orig_unknown=`wc -l < $basename.unknown`
-if ("$orig_unknown" == "0") then
-  echo "No unknown TMs"
-  exit 0
-endif
 
 # Get the current date and command
 set date=`\date`
@@ -79,7 +80,8 @@ if ("$status" != 0) then
   echo "TM counts: $count_halt $count_infinite $count_undecided $net_unknown"
 
   # Log if all the TMs have been resolved
-  if ("$count_undecided" == "0" && "$count_unknown" == "0") then
+  set count_un=`cat $basename.unknown $basename.undecided | wc -l`
+  if ("$count_un" == "0") then
     echo "------ | All TMs resolved" >> "$basename.log"    
     echo "All TMs resolved"
   endif
