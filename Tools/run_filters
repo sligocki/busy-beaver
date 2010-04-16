@@ -10,7 +10,7 @@ set basename=$1
 set update_cmd="update"
 
 echo "----- Integrate -----"
-time integrate ${basename} >&! ${basename}.mess
+time ${update_cmd} ${basename} Initial_Filter
 
 while (1)
   echo "----- Dual -----"

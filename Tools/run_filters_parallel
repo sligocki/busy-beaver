@@ -11,7 +11,7 @@ set basename=$2
 set update_cmd="update_parallel ${nprocs}"
 
 echo "----- Integrate -----"
-time integrate ${basename} >&! ${basename}.mess
+time update ${basename} Initial_Filter
 
 while (1)
   echo "----- Dual -----"
