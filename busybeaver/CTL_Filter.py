@@ -82,7 +82,7 @@ while next:
 
     ALARM.cancel_alarm()
 
-  except:
+  except AlarmException:
     ALARM.cancel_alarm()
 
     success = False
