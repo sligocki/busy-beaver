@@ -112,8 +112,8 @@ end
 
 # Wait for all the commands to finish
 while (1)
-  # Check every 5 seconds
-  sleep 5
+  # Check every second
+  sleep 1
 
   # Count the number of commands that have finished
   set count_finished=0
