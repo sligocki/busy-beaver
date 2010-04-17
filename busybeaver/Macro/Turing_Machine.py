@@ -11,6 +11,7 @@ RUNNING    = "Running"    # Machine still running normally
 HALT       = "Halt"       # Machine halts in or directly after move
 INF_REPEAT = "Inf_Repeat" # Machine proven not to halt within move
 UNDEFINED  = "Undefined"  # Machine encountered undefined transition
+TIME_OUT   = "Timeout"    # A timer expired
 
 class Turing_Machine:
   """Abstract base for all specific Turing Machines

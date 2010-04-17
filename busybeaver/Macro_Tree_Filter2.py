@@ -4,6 +4,7 @@
 
 import IO
 from Macro import Chain_Simulator, Turing_Machine, Block_Finder
+from Alarm import ALARM, AlarmException
 
 max_step2inf = 0
 max_loop2inf = 0
@@ -18,7 +19,7 @@ INFINITE   =  4
 TIME_OUT   =  5
 UNKNOWN    = (OVER_TAPE, MAX_STEPS, TIME_OUT)
 
-def run(TTable, block_size, level, steps, timeout, recursive, progress):
+def run(TTable, block_size, level, steps, runtime, recursive, progress):
   # Get and initialize a new simulator object
   m1 = Turing_Machine.Simple_Machine(TTable)
   if not block_size:
@@ -29,8 +30,20 @@ def run(TTable, block_size, level, steps, timeout, recursive, progress):
 
   sim = Chain_Simulator.Simulator()
   sim.init(m3, recursive)
-  # sim.set_time_out(timeout)
-  sim.loop_run(steps)
+
+  # Run with an optional timer
+  try:
+    if runtime:
+      ALARM.set_alarm(runtime)
+      
+    sim.loop_run(steps)
+
+    ALARM.cancel_alarm()
+
+  except AlarmException:
+    ALARM.cancel_alarm()
+    sim.op_state = Turing_Machine.TIME_OUT
+
   if sim.op_state == Turing_Machine.RUNNING:
     if progress:
       print "\tUnknown", block_size, sim.step_num, sim.num_loops
@@ -63,11 +76,11 @@ if __name__ == "__main__":
   from Option_Parser import Filter_Option_Parser
 
   # Get command line options.
-  opts, args = Filter_Option_Parser(sys.argv, [("size"     ,  int, None, False, True),
-                                               ("level"    ,  int,    3, False, True),
-                                               ("timeout"  ,  int,    0, False, True),
-                                               ("recursive", None, None, False, False),
-                                               ("progress" , None, None, False, False)])
+  opts, args = Filter_Option_Parser(sys.argv, [("size"     , int,   None, False, True),
+                                               ("level"    , int,      3, False, True),
+                                               ("time"     , float, None, False, True),
+                                               ("recursive", None,  None, False, False),
+                                               ("progress" , None,  None, False, False)])
 
   log_number = opts["log_number"]
   progress = opts["progress"]
@@ -83,7 +96,7 @@ if __name__ == "__main__":
     TTable = next[6]
     # Run the simulator/filter on this machine
     results = run(TTable, opts["size"], opts["level"], opts["steps"], 
-                  opts["timeout"], opts["recursive"], progress)
+                  opts["time"], opts["recursive"], progress)
 
     # If we could not decide anything, leave the old result alone.
     if results[0] in UNKNOWN:
