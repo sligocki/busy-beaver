@@ -69,6 +69,7 @@ def run(TTable, options, steps=INF, runtime=None, block_size=None,
       # Do not create a 1-Block Macro-Machine (just use base machine)
       if block_size != 1:
         m = Turing_Machine.Block_Macro_Machine(m, block_size)
+
       if back:
         m = Turing_Machine.Backsymbol_Macro_Machine(m)
 
