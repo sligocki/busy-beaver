@@ -97,12 +97,12 @@ if __name__ == "__main__":
   from optparse import OptionParser, OptionGroup
 
   # Parse command line options.
-  usage = "usage: %prog --infile= --outfile= [options]"
+  usage = "usage: %prog --infile= --outfile= --log_number= [options]"
   parser = OptionParser(usage=usage)
   
   parser.add_option("--infile", dest="infilename", metavar="INFILE", help="Input file name (required, no default)")
   parser.add_option("--outfile", dest="outfilename", metavar="OUTFILE", help="Output file name (required, no default)")
-  parser.add_option("--log_number", help="Number in the log file of this run")
+  parser.add_option("--log_number", help="Number in the log file of this run (required, no default)")
   parser.add_option("-s", "--steps", type=int, default=0, help="Maximum number of steps to simulate for use 0 for infinite [Default: infinite]")
   parser.add_option("-t", "--time", type=float, default=15.0, help="Maximum number of seconds to simulate for [Default: %default]")
   
@@ -127,8 +127,8 @@ if __name__ == "__main__":
   
   (options, args) = parser.parse_args()
 
-  if not options.infilename or not options.outfilename:
-    parser.error("--infile= and --outfile= are required parameters")
+  if not options.infilename or not options.outfilename or not options.log_number:
+    parser.error("--infile=, --outfile=, and --log_number= are required parameters")
 
   infile  = file(options.infilename,  "r")
 
@@ -141,38 +141,40 @@ if __name__ == "__main__":
   if options.steps == 0:
     options.steps = INF
 
-  io = IO.IO(infile, outfile, options.log_number)
+  log_number = int(options.log_number)
+
+  io = IO.IO(infile, outfile, log_number)
 
   next = io.read_result()
 
   while next:
-    ttable = next[6]
-    tm_num = next[0]
+    old_results = next[5]
+    ttable      = next[6]
 
     # Run the simulator/filter on this machine
     cond, info = run(ttable, options, options.steps, options.time,
                      options.block_size, options.backsymbol, options.prover,
                      options.recursive)
 
-    tm = Turing_Machine.Turing_Machine(ttable)
-
     # Output the result
     if cond == UNDEFINED:
       on_state, on_symbol, steps, score = info
-      io.write_result(tm_num, -1, -1, (3, on_state, on_symbol, score, steps), tm)
+      results = (3, on_state, on_symbol, score, steps)
     elif cond == HALT:
       steps, score = info
-      io.write_result(tm_num, -1, -1, (0, score, steps), tm)
+      results = (0, score, steps)
     elif cond == INFINITE:
       reason, = info
-      io.write_result(tm_num, -1, -1, (4, "Infinite"), tm)
+      results = (4, "Infinite")
     elif cond == OVERSTEPS:
       steps, = info
-      io.write_result(tm_num, -1, -1, (2, OVERSTEPS), tm)
+      results = (2, OVERSTEPS)
     elif cond == TIMEOUT:
       runtime, steps = info
-      io.write_result(tm_num, -1, -1, (2, TIMEOUT), tm)
+      results = (2, TIMEOUT)
     else:
       raise Exception, "Unexpected TM condition (%r)" % cond
+
+    io.write_result_raw(*(next[0:5]+(results, ttable, log_number, old_results)))
 
     next = io.read_result()
