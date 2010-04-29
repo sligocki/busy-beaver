@@ -3,8 +3,11 @@
 import copy
 import os,sys
 
-from Macro import Turing_Machine, Chain_Simulator, Block_Finder
-import IO, Reverse_Engineer_Filter, CTL1, CTL2
+import Turing_Machine
+import IO
+import Macro.Block_Finder
+import Macro.Turing_Machine
+import Macro.Chain_Simulator
 
 from Macro.Chain_Tape import INF
 from Alarm import ALARM, AlarmException
@@ -21,7 +24,7 @@ def run(TTable, options, steps=INF, runtime=None, block_size=None,
   for do_over in xrange(0,4):
     try:
       ## Construct the Macro Turing Machine (Backsymbol-k-Block-Macro-Machine)
-      m = Turing_Machine.make_machine(TTable)
+      m = Macro.Turing_Machine.make_machine(TTable)
 
       if not block_size:
         try:
@@ -30,7 +33,7 @@ def run(TTable, options, steps=INF, runtime=None, block_size=None,
             ALARM.set_alarm(runtime/10.0)  # Set timer
 
           # If no explicit block-size given, use inteligent software to find one
-          block_size = Block_Finder.block_finder(m, options.bf_limit1, options.bf_limit2, options.bf_run1, options.bf_run2, options.bf_extra_mult)
+          block_size = Macro.Block_Finder.block_finder(m, options.bf_limit1, options.bf_limit2, options.bf_run1, options.bf_run2, options.bf_extra_mult)
 
           ALARM.cancel_alarm()
 
@@ -41,15 +44,15 @@ def run(TTable, options, steps=INF, runtime=None, block_size=None,
 
       # Do not create a 1-Block Macro-Machine (just use base machine)
       if block_size != 1:
-        m = Turing_Machine.Block_Macro_Machine(m, block_size)
+        m = Macro.Turing_Machine.Block_Macro_Machine(m, block_size)
 
       if backsymbol:
-        m = Turing_Machine.Backsymbol_Macro_Machine(m)
+        m = Macro.Turing_Machine.Backsymbol_Macro_Machine(m)
 
 
       ## Set up the simulator
       #global sim # Useful for Debugging
-      sim = Chain_Simulator.Simulator()
+      sim = Macro.Chain_Simulator.Simulator()
       sim.init(m, recursive)
       if not prover:
         sim.proof = None
@@ -68,16 +71,16 @@ def run(TTable, options, steps=INF, runtime=None, block_size=None,
         return TIMEOUT, (runtime, sim.step_num)
 
       ## Resolve end conditions and return relevent info.
-      if sim.op_state == Turing_Machine.RUNNING:
+      if sim.op_state == Macro.Turing_Machine.RUNNING:
         return OVERSTEPS, (sim.step_num,)
       
-      elif sim.op_state == Turing_Machine.HALT:
+      elif sim.op_state == Macro.Turing_Machine.HALT:
         return HALT, (sim.step_num, sim.get_nonzeros())
       
-      elif sim.op_state == Turing_Machine.INF_REPEAT:
+      elif sim.op_state == Macro.Turing_Machine.INF_REPEAT:
         return INFINITE, (sim.inf_reason,)
       
-      elif sim.op_state == Turing_Machine.UNDEFINED:
+      elif sim.op_state == Macro.Turing_Machine.UNDEFINED:
         on_symbol, on_state = sim.op_details[0][:2]
         return UNDEFINED, (on_state, on_symbol, 
                            sim.step_num, sim.get_nonzeros())
@@ -91,7 +94,8 @@ def run(TTable, options, steps=INF, runtime=None, block_size=None,
 
 # Main script
 if __name__ == "__main__":
-  from optparse import OptionParser
+  from optparse import OptionParser, OptionGroup
+
   # Parse command line options.
   usage = "usage: %prog --infile= --outfile= [options]"
   parser = OptionParser(usage=usage)
@@ -100,7 +104,7 @@ if __name__ == "__main__":
   parser.add_option("--outfile", dest="outfilename", metavar="OUTFILE", help="Output file name (required, no default)")
   parser.add_option("--log_number", help="Number in the log file of this run")
   parser.add_option("-s", "--steps", type=int, default=0, help="Maximum number of steps to simulate for use 0 for infinite [Default: infinite]")
-  parser.add_option("-t", "--time", type=int, default=15, help="Maximum number of seconds to simulate for [Default: %default]")
+  parser.add_option("-t", "--time", type=float, default=15.0, help="Maximum number of seconds to simulate for [Default: %default]")
   
   parser.add_option("-b", "--no-backsymbol", action="store_false", dest="backsymbol", default=True, 
                     help="Turn off backsymbol macro machine")
@@ -128,8 +132,8 @@ if __name__ == "__main__":
 
   infile  = file(options.infilename,  "r")
 
-  if os.path.exists(outfilename):
-    sys.stderr.write("Output test file, '%s', exists\n" % outfilename)
+  if os.path.exists(options.outfilename):
+    sys.stderr.write("Output test file, '%s', exists\n" % options.outfilename)
     sys.exit(1)
   else:
     outfile = file(options.outfilename, "w")
@@ -137,34 +141,38 @@ if __name__ == "__main__":
   if options.steps == 0:
     options.steps = INF
 
-  io   = IO.IO(infile, outfile)
+  io = IO.IO(infile, outfile, options.log_number)
+
   next = io.read_result()
 
   while next:
     ttable = next[6]
+    tm_num = next[0]
 
-    # Run the simulator/filter on this machine (with an optional timer)
-    try:
-      if runtime:
-        ALARM.set_alarm(runtime)
+    # Run the simulator/filter on this machine
+    cond, info = run(ttable, options, options.steps, options.time,
+                     options.block_size, options.backsymbol, options.prover,
+                     options.recursive)
 
-      success = type_func.test_CTL(ttable, cutoff, block_size, offset)
-  print run(ttable, options, options.steps, options.time, options.block_size, 
-                    options.backsymbol, options.prover, options.recursive)
+    tm = Turing_Machine.Turing_Machine(ttable)
 
-      ALARM.cancel_alarm()
-
-    except AlarmException:
-      ALARM.cancel_alarm()
-
-      success = False
-
-    # If we could not decide anything, leave the old result alone.
-    if not success:
-      io.write_result_raw(*next)
-    # Otherwise classify it as beeing decided in some way.
+    # Output the result
+    if cond == UNDEFINED:
+      on_state, on_symbol, steps, score = info
+      io.write_result(tm_num, -1, -1, (3, on_state, on_symbol, score, steps), tm)
+    elif cond == HALT:
+      steps, score = info
+      io.write_result(tm_num, -1, -1, (0, score, steps), tm)
+    elif cond == INFINITE:
+      reason, = info
+      io.write_result(tm_num, -1, -1, (4, "Infinite"), tm)
+    elif cond == OVERSTEPS:
+      steps, = info
+      io.write_result(tm_num, -1, -1, (2, OVERSTEPS), tm)
+    elif cond == TIMEOUT:
+      runtime, steps = info
+      io.write_result(tm_num, -1, -1, (2, TIMEOUT), tm)
     else:
-      old_results = next[5]
-      io.write_result_raw(*(next[0:5]+(results, ttable, log_number, old_results)))
+      raise Exception, "Unexpected TM condition (%r)" % cond
 
     next = io.read_result()
