@@ -505,7 +505,7 @@ if __name__ == "__main__":
 
   enum_parser = OptionGroup(parser, "Enumeration Options")
   enum_parser.add_option("--steps", type=int, default=10000, help="Max simulation steps to run each machine (0 for infinite) [Default: %default]")
-  enum_parser.add_option("--time", type=float, default=15., help="Max (real) time (in seconds) to run each machine [Default: %default]")
+  enum_parser.add_option("--time", type=float, default=15.0, help="Max (real) time (in seconds) to run each machine [Default: %default]")
   enum_parser.add_option("--randomize", action="store_true", default=False, help="Randomize the order of enumeration.")
   enum_parser.add_option("--seed", type=int, help="Seed to randomize with.")
 
