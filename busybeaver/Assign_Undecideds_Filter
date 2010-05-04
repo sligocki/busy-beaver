@@ -30,7 +30,7 @@ set date=`\date`
 # If there are no undecided TMs, exit so the "update" will report "No change"
 set num=`cat $basename | wc -l`
 if ("$num" == 0) then
-  cp -f $basename:r.unknown $basename:r.out
+  /bin/cp -f $basename:r.unknown $basename:r.out
   /bin/rm -f $basename.*
   exit 0
 endif
@@ -52,10 +52,9 @@ if ("$status" != 0) then
   exit 1
 endif
 
-# Generate the ".out" file containing the results from the subproblem (and all
-# the original unknown machines)
-cat $basename:r.unknown $basename.halt $basename.infinite $basename.undecided $basename.unknown \
-> $basename:r.out
+# Generate the ".out" file containing all the original unknown machines and
+# the results from the subproblem
+cat $basename:r.unknown $basename.halt $basename.infinite $basename.undecided $basename.unknown > $basename:r.out
 
 # Clean up subproblem files
 /bin/rm -f $basename $basename.*
