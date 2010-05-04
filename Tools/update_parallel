@@ -56,8 +56,8 @@ endif
 set orig_unknown=`wc -l < $basename.unknown`
 set orig_undecided=`wc -l < $basename.undecided`
 
-# Get the current date and command
-set date=`\date`
+# Get the start date and command
+set start_date=`\date`
 set command="$argv[3-]"
 
 # Get the number of TMs to put in each file for the parallel runs
@@ -155,8 +155,11 @@ set count_unknown=$counts[4]
 # Get the net change in unknown TMs
 set net_unknown=`expr $count_unknown - $orig_unknown`
 
+# Get the end date
+set end_date=`\date`
+
 # Log the command and print a bit more output
-echo " | $date | $command | $count_halt $count_infinite $count_undecided $count_unknown" >> "$basename.log"
+echo " | $start_date - $end_date | $command | $count_halt $count_infinite $count_undecided $count_unknown" >> "$basename.log"
 echo "TM counts: $count_halt $count_infinite $count_undecided $count_unknown"
 
 # Log if all the TMs have been resolved
