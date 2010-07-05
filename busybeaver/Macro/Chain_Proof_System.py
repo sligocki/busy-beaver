@@ -32,6 +32,7 @@ class Proof_System:
     self.proven_transitions = {}
     # Stat
     self.num_loops = 0
+    self.num_uses_of_rule = {}
   
   def print_rules(self):
     for (state, a, b, c), (init_tape, diff_tape, num_steps) in self.proven_transitions.items():
@@ -39,6 +40,7 @@ class Proof_System:
       print state, init_tape
       print diff_tape
       print num_steps
+      print self.num_uses_of_rule[state, a, b, c]
   
   def log(self, tape, state, step_num, loop_num):
     """Log this configuration into the table and check if it is similar to a past one.
@@ -59,6 +61,7 @@ class Proof_System:
         # a bad_delta is not recursable b/c e.g. (x + 3 // 2) is unresolvable
         if (not self.recursive  or  bad_delta) and self.past_configs is not None:
           self.past_configs = {}
+        self.num_uses_of_rule[stripped_config] += 1
         return trans
       return False, None, None
     
@@ -96,12 +99,14 @@ class Proof_System:
     if rule:
       # Remember rule
       self.proven_transitions[stripped_config] = rule
+      self.num_uses_of_rule[stripped_config] = 0
       # Clear our memory (couldn't use it anyway)
       self.past_configs = {}
       # Try to apply transition
       is_good, res = self.applies(rule, full_config)
       if is_good:
         trans, bad_delta = res
+        self.num_uses_of_rule[stripped_config] += 1
         return trans
     return False, None, None
   
