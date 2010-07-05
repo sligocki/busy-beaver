@@ -5,7 +5,7 @@ import sys
 from Macro import Turing_Machine, Chain_Simulator, Block_Finder
 import IO
 
-def run(TTable, block_size, back, prover, rec, verbose, options):
+def run(TTable, block_size, back, prover, rec, options):
   # Construct Machine (Backsymbol-k-Block-Macro-Machine)
   m = Turing_Machine.make_machine(TTable)
   # If no explicit block-size given, use inteligent software to find one
@@ -26,10 +26,18 @@ def run(TTable, block_size, back, prover, rec, verbose, options):
   extent = 1
   #raw_input("Ready?")
   try:
-    while sim.op_state == Turing_Machine.RUNNING:
-      if verbose: sim.print_self()
-      sim.seek(extent)
-      extent *= 10
+    if options.verbose:
+      while sim.op_state == Turing_Machine.RUNNING:
+        sim.print_config()
+        sim.step()  # TODO: Make prover verbose
+    elif options.quiet:
+      while sim.op_state == Turing_Machine.RUNNING:
+        sim.step()
+    else:
+      while sim.op_state == Turing_Machine.RUNNING:
+        sim.print_self()
+        sim.seek(extent)
+        extent *= 10
   finally:
     sim.print_self()
 
@@ -56,11 +64,12 @@ if __name__ == "__main__":
   # Parse command line options.
   usage = "usage: %prog [options] machine_file [line_number]"
   parser = OptionParser(usage=usage)
-  #parser.set_defaults(verbose=True)
+  # TODO: One variable for different levels of verbosity.
   parser.add_option("-q", "--quiet", action="store_true", help="Brief output")
-  parser.add_option("--verbose-prover", action="store_true", help="Provide debuggin output from prover")
-  parser.add_option("--verbose-simulator", action="store_true", help="Provide debuggin output from simulator")
-  parser.add_option("--verbose-block-finder", action="store_true", help="Provide debuggin output from block_finder")
+  parser.add_option("-v", "--verbose", action="store_true", help="Print step-by-step informaion from simulator and prover.")
+  parser.add_option("--verbose-prover", action="store_true", help="Provide debuggin output from prover.")
+  parser.add_option("--verbose-simulator", action="store_true", help="Provide debuggin output from simulator.")
+  parser.add_option("--verbose-block-finder", action="store_true", help="Provide debuggin output from block_finder.")
   
   parser.add_option("-b", "--no-backsymbol", action="store_false", dest="backsymbol", default=True, 
                     help="Turn off backsymbol macro machine")
@@ -83,30 +92,14 @@ if __name__ == "__main__":
   
   (options, args) = parser.parse_args()
   
-  # Verbose Prover
-  if options.verbose_prover:
-    Chain_Simulator.Chain_Proof_System.DEBUG = True
-  else:
-    Chain_Simulator.Chain_Proof_System.DEBUG = False
+  # Verbose prover
+  Chain_Simulator.Chain_Proof_System.DEBUG = options.verbose_prover
   
-  # Verbose Simulator
-  if options.verbose_simulator:
-    Chain_Simulator.DEBUG = True
-    verbose = False
-  else:
-    Chain_Simulator.DEBUG = False
-    verbose = True
+  # Verbose simulator
+  Chain_Simulator.DEBUG = options.verbose_simulator
   
-  # Verbose Block Finder
-  if options.verbose_block_finder:
-    Block_Finder.DEBUG = True
-  else:
-    Block_Finder.DEBUG = False
-  
-  # Brief Simulator output
-  if options.quiet:
-    Chain_Simulator.DEBUG = False
-    verbose = False
+  # Verbose block finder
+  Block_Finder.DEBUG = options.verbose_block_finder
   
   if len(args) < 1:
     parser.error("Must have at least one argument, machine_file")
@@ -125,5 +118,5 @@ if __name__ == "__main__":
   ttable = IO.load_TTable_filename(filename, line)
   
   run(ttable, options.block_size, options.backsymbol, options.prover, 
-              options.recursive, verbose, options)
+              options.recursive, options)
 

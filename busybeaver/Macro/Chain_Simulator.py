@@ -132,6 +132,12 @@ class Simulator:
                                   self.machine.eval_state(self.state))
   
   def print_self(self):
+    self.print_steps()
+    print "Time:", time.clock()
+    self.print_config()
+    print "Num Nonzeros:", with_power(self.get_nonzeros())
+  
+  def print_steps(self):
     x = len(repr(self.step_num)) + 1
     print
     print "         Steps:                       Times Applied:"
@@ -148,9 +154,9 @@ class Simulator:
     while isinstance(m, Turing_Machine.Macro_Machine):
       print "", m.num_loops
       m = m.base_machine
-    print "Time:", time.clock()
+
+  def print_config(self):
     print self.state, self.tape
-    print "Num Nonzeros:", with_power(self.get_nonzeros())
 
 def template(s, m, x, n):
   """Pretty printing function"""
