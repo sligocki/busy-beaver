@@ -5,6 +5,8 @@ Combined with the k-block macro machine, this is very powerful compression.
 Combined with an automated prover, this can prove Xmas Trees.
 """
 
+import math
+
 class Infinity(object):
   """An identifier of infinity, only to be used for comparison purposes.
   There is one instance 'INF' of this class."""
@@ -33,7 +35,11 @@ class Repeated_Symbol:
     self.num = number_of_repetitions
   
   def __repr__(self):
-    return "%s^%s" % (str(self.symbol), str(self.num))
+    if self.num < 1000000 or self.num == INF:
+      num_string = str(self.num)
+    else:
+      num_string = "(~10^%.1f)" % math.log10(self.num)
+    return "%s^%s" % (str(self.symbol), num_string)
   
   def copy(self):
     return Repeated_Symbol(self.symbol, self.num)

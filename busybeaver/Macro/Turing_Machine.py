@@ -2,6 +2,8 @@
 Abstract Turing Machine model with basic NxM TM and Macro-Machine derivatives
 """
 
+import string
+
 LEFT = 0
 RIGHT = 1
 STAY = 2
@@ -36,13 +38,19 @@ def make_machine(trans_table):
   # Otherwise return the simple machine
   return machine
 
+states = string.ascii_uppercase
+class Simple_Machine_State(int):
+  """Wrapper provides a pretty-printer for a Turing machine's integer state."""
+  def __repr__(self):
+    return states[self]
+
 class Simple_Machine(Turing_Machine):
   """The most general Turing Machine based off of a transition table"""
   def __init__(self, trans_table):
     self.trans_table = trans_table
     self.num_states = len(trans_table)
     self.num_symbols = len(trans_table[0])
-    self.init_state = 0
+    self.init_state = Simple_Machine_State(0)
     self.init_dir = 1
     self.init_symbol = 0
   def eval_symbol(self, symbol):
@@ -55,7 +63,7 @@ class Simple_Machine(Turing_Machine):
   def get_transition(self, symbol_in, state_in, dir_in):
     # Historical ordering of transition table elements: (sym, dir, state)
     symbol_out, dir_out, state_out = self.trans_table[state_in][symbol_in]
-    trans = symbol_out, state_out, dir_out
+    trans = symbol_out, Simple_Machine_State(state_out), dir_out
     # Historical signaling of undefined cell in transition table: (-1, 0, -1)
     if symbol_out == -1:
       # Treat an undefined cell as a halt, except note that it was undefined.
@@ -68,6 +76,12 @@ class Simple_Machine(Turing_Machine):
       return (RUNNING,), trans, 1
 
 class Macro_Machine(Turing_Machine): pass
+
+class Block_Symbol(tuple):
+  """Wrapper for block symbols that defines a concise-printer."""
+  def __repr__(self):
+    # TODO: this assumes single digit sub-symbols
+    return string.join((str(x) for x in self), "")
 
 class Block_Macro_Machine(Macro_Machine):
   """A derivative Turing Machine which simulates another machine clumping k-symbols together into a block-symbol"""
@@ -88,7 +102,7 @@ class Block_Macro_Machine(Macro_Machine):
       self.save = self.init_state, offset
       self.init_state = Block_Macro_Machine.DUMMY_OFFSET_STATE
     # initial symbol is (0, 0, 0, ..., 0) not just 0
-    self.init_symbol = (base_machine.init_symbol,) * block_size
+    self.init_symbol = Block_Symbol((base_machine.init_symbol,) * block_size)
     # Maximum number of base-steps per macro-step evaluation w/o repeat
     # #positions * #states * #macro_symbols
     self.max_steps = block_size * self.num_states * self.num_symbols
@@ -135,10 +149,10 @@ class Block_Macro_Machine(Macro_Machine):
       elif dir_out is LEFT:
         pos -= 1
       if cond[0] != RUNNING:
-        return cond+(pos,), (tuple(tape), state, dir), num_steps
+        return cond+(pos,), (Block_Symbol(tape), state, dir), num_steps
       if num_macro_steps > self.max_steps:
-        return (INF_REPEAT, pos), (tuple(tape), state, dir), num_steps
-    return (RUNNING,), (tuple(tape), state, dir), num_steps
+        return (INF_REPEAT, pos), (Block_Symbol(tape), state, dir), num_steps
+    return (RUNNING,), (Block_Symbol(tape), state, dir), num_steps
 
 def backsymbol_get_trans(tape, state, dir):
   backsymbol = tape[dir]
