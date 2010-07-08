@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 
-import string, math
+import math
+import string
 
 def long_to_eng_str(number,left,right):
   """Represent a Long in scientific notation."""
@@ -29,7 +30,7 @@ def display_ttable(table):
   """Pretty print the ttable."""
   symbols = string.digits
   dirs = "LRS"
-  states = string.ascii_uppercase#[:7]
+  states = string.ascii_uppercase
   s = ""
   for row in table:
     for cell in row:
