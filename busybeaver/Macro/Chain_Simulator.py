@@ -22,12 +22,13 @@ class Simulator:
   def __init__(self):
     self.init_stats()
   
-  def init(self, machine, recursive=False):
+  def init(self, machine, recursive=False, verbose=False):
     """Default initialization, creates a blank tape, proof system, etc."""
     self.machine = machine
+    self.verbose = verbose
     self.tape = Chain_Tape.Chain_Tape()
     self.tape.init(machine.init_symbol, machine.init_dir)
-    self.proof = Chain_Proof_System.Proof_System(self.machine, recursive)
+    self.proof = Chain_Proof_System.Proof_System(self.machine, recursive, self.verbose)
     self.state = machine.init_state
     self.dir = machine.init_dir
     self.step_num = 0
@@ -71,6 +72,8 @@ class Simulator:
     """Perform an atomic transition or chain step."""
     if self.op_state != Turing_Machine.RUNNING:
       return
+    if self.verbose:
+      self.print_config()
     self.num_loops += 1
     if self.proof:
       # Log the configuration and see if we can apply a rule.
@@ -138,47 +141,41 @@ class Simulator:
     print "Num Nonzeros:", with_power(self.get_nonzeros())
   
   def print_steps(self):
-    x = len(repr(self.step_num)) + 1
     print
-    print "         Steps:                       Times Applied:"
-    print template("Total:", self.step_num, x, self.num_loops)
+    print "         Steps:                        Times Applied:"
+    print template("Total:", self.step_num, self.num_loops)
     #print "Single Steps:", with_power(self.mtt.num_single_steps)
-    print template("Macro:", self.steps_from_macro, x, self.num_macro_moves) #, "Macro transitions defined:", len(self.mtt.macro_TTable)
-    print template("Chain:", self.steps_from_chain, x, self.num_chain_moves)
+    print template("Macro:", self.steps_from_macro, self.num_macro_moves)
+    #print "Macro transitions defined:", len(self.mtt.macro_TTable)
+    print template("Chain:", self.steps_from_chain, self.num_chain_moves)
     if self.proof:
-      print template("Rule:", self.steps_from_rule, x, self.num_rule_moves)
+      print template("Rule:", self.steps_from_rule, self.num_rule_moves)
       print "Rules proven:", len(self.proof.proven_transitions)
-      print "Loops through prover:", self.proof.num_loops
-    m = self.machine
-    print "Loops through macro machine"
-    while isinstance(m, Turing_Machine.Macro_Machine):
-      print "", m.num_loops
-      m = m.base_machine
 
   def print_config(self):
     print self.state, self.tape
 
-def template(s, m, x, n):
-  """Pretty printing function"""
-  title = "%-8s" % s
-  try:
-    log_m = "10^%-6.1f" % math.log10(m)
-  except:
-    log_m = "         "
-  m_str = "%-20s" % (("%%%dr" % x) % m)
-    
-  if len(m_str) > 20:
-    m_str = " "*20
-  n_str = "%12d" % n
-  return title+" "+log_m+" "+m_str+" "+n_str
+def template(title, steps, loops):
+  """Pretty print row of the steps table."""
+  return "%-8s %-20s %20d" % (title, format_power(steps), loops)
 
-def with_power(value):
-  """Pretty print helper. Print log(value) and value (if it's not too big)"""
+def with_power(value, max_width=60):
+  """Pretty print log(value) and value (if it's not too big)"""
+  output = format_power(value) + "  "
+  
+  value_string = str(value)
+  if len(output) + len(value_string) < max_width:
+    output += value_string
+  else:
+    margin = (max_width - len(output) - 2) // 2
+    if margin > 0:
+      output += value_string[:margin] + ".." + value_string[-margin:]
+  
+  return output
+
+def format_power(value):
+  """Pretty print 'value' in exponential notation."""
   try:
-    r = "10^%-6.1f " % math.log10(value)
+    return "10^%.1f" % math.log10(value)
   except:
-    r = "        "
-  value = str(value)
-  if len(value) < 60:
-    r += str(value)
-  return r
+    return ""
