@@ -20,7 +20,7 @@ def run(TTable, block_size, back, prover, rec, options):
 
   global sim
   sim = Chain_Simulator.Simulator()
-  sim.init(m, rec)
+  sim.init(m, rec, options.verbose)
   if not prover:
     sim.proof = None
   extent = 1
@@ -67,7 +67,7 @@ if __name__ == "__main__":
   # TODO: One variable for different levels of verbosity.
   parser.add_option("-q", "--quiet", action="store_true", help="Brief output")
   parser.add_option("-v", "--verbose", action="store_true", help="Print step-by-step informaion from simulator and prover.")
-  parser.add_option("--verbose-prover", action="store_true", help="Provide debuggin output from prover.")
+  #parser.add_option("--verbose-prover", action="store_true", help="Provide debuggin output from prover.")
   parser.add_option("--verbose-simulator", action="store_true", help="Provide debuggin output from simulator.")
   parser.add_option("--verbose-block-finder", action="store_true", help="Provide debuggin output from block_finder.")
   
@@ -93,7 +93,7 @@ if __name__ == "__main__":
   (options, args) = parser.parse_args()
   
   # Verbose prover
-  Chain_Simulator.Chain_Proof_System.DEBUG = options.verbose_prover
+  #Chain_Simulator.Chain_Proof_System.DEBUG = options.verbose_prover
   
   # Verbose simulator
   Chain_Simulator.DEBUG = options.verbose_simulator
