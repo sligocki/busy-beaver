@@ -232,15 +232,16 @@ class Proof_System:
   
   def applies(self, rule, new_config):
     """Make sure that a meta-transion applies and provide important info"""
-    if self.verbose:
-      print
-      print "++ Applying Rule ++"
-      print "Rule:", rule
-      print "Config:", new_config
-    
     ## Unpack input
     initial_tape, diff_tape, diff_num_steps = rule
     new_state, new_tape, new_step_num, new_loop_num = new_config
+    
+    if self.verbose:
+      print
+      print "++ Applying Rule ++"
+      print "Loop:", new_loop_num, "Rule ID:", diff_num_steps
+      print "Rule:", rule
+      print "Config:", new_config
     
     ## Calculate number of repetitionss allowable and other tape-based info.
     num_reps = Chain_Tape.INF
@@ -322,8 +323,9 @@ class Proof_System:
     ## Return the pertinent info
     if self.verbose:
       print "++ Rule successfully applied ++"
-      print "Times applied:", diff_steps
+      print "Times applied:", num_reps
       print "Resulting tape:", return_tape
+      print
     return True, ((Turing_Machine.RUNNING, return_tape, diff_steps), bad_delta)
 
 def series_sum(V0, dV, n):

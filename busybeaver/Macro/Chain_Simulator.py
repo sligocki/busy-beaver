@@ -22,13 +22,13 @@ class Simulator:
   def __init__(self):
     self.init_stats()
   
-  def init(self, machine, recursive=False, verbose=False):
+  def init(self, machine, recursive=False, verbose_simulator=False, verbose_prover=False):
     """Default initialization, creates a blank tape, proof system, etc."""
     self.machine = machine
-    self.verbose = verbose
+    self.verbose = verbose_simulator
     self.tape = Chain_Tape.Chain_Tape()
     self.tape.init(machine.init_symbol, machine.init_dir)
-    self.proof = Chain_Proof_System.Proof_System(self.machine, recursive, self.verbose)
+    self.proof = Chain_Proof_System.Proof_System(self.machine, recursive, verbose_prover)
     self.state = machine.init_state
     self.dir = machine.init_dir
     self.step_num = 0

@@ -20,7 +20,7 @@ def run(TTable, block_size, back, prover, rec, options):
 
   global sim
   sim = Chain_Simulator.Simulator()
-  sim.init(m, rec, options.verbose)
+  sim.init(m, rec, options.verbose_simulator, options.verbose_prover)
   if not prover:
     sim.proof = None
   extent = 1
@@ -45,6 +45,7 @@ def run(TTable, block_size, back, prover, rec, options):
     print
     print "Turing Machine Halted!"
     print "Steps:   ", sim.step_num
+    print
     print "Nonzeros:", sim.get_nonzeros()
   elif sim.op_state == Turing_Machine.INF_REPEAT:
     print
@@ -55,7 +56,9 @@ def run(TTable, block_size, back, prover, rec, options):
     print "Turing Machine reached Undefined transition!"
     print "State: ", sim.op_details[0][1]
     print "Symbol:", sim.op_details[0][0]
+    print
     print "Steps:   ", sim.step_num
+    print
     print "Nonzeros:", sim.get_nonzeros()
 
 
@@ -67,7 +70,7 @@ if __name__ == "__main__":
   # TODO: One variable for different levels of verbosity.
   parser.add_option("-q", "--quiet", action="store_true", help="Brief output")
   parser.add_option("-v", "--verbose", action="store_true", help="Print step-by-step informaion from simulator and prover.")
-  #parser.add_option("--verbose-prover", action="store_true", help="Provide debuggin output from prover.")
+  parser.add_option("--verbose-prover", action="store_true", help="Provide debuggin output from prover.")
   parser.add_option("--verbose-simulator", action="store_true", help="Provide debuggin output from simulator.")
   parser.add_option("--verbose-block-finder", action="store_true", help="Provide debuggin output from block_finder.")
   
@@ -92,9 +95,8 @@ if __name__ == "__main__":
   
   (options, args) = parser.parse_args()
   
-  # Verbose prover
-  #Chain_Simulator.Chain_Proof_System.DEBUG = options.verbose_prover
-  
+  if options.verbose:
+    options.verbose_simulator = options.verbose_prover = options.verbose_block_finder = True
   # Verbose simulator
   Chain_Simulator.DEBUG = options.verbose_simulator
   
