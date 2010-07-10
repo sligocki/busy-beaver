@@ -71,7 +71,6 @@ class Simulator:
     if self.op_state != Turing_Machine.RUNNING:
       return
     if self.verbose:
-      print self.num_loops,
       self.print_config()
     self.num_loops += 1
     if self.proof:
@@ -129,7 +128,7 @@ class Simulator:
   def print_self(self):
     self.print_steps()
     print "Time:", time.clock()
-    self.print_config()
+    print self.state, self.tape
     print "Num Nonzeros:", with_power(self.get_nonzeros())
   
   def print_steps(self):
@@ -147,7 +146,7 @@ class Simulator:
         print "Recursive rules proven:", self.proof.num_recursive_rules
 
   def print_config(self):
-    print self.state, self.tape
+    print self.num_loops, self.state, self.tape
 
 def template(title, steps, loops):
   """Pretty print row of the steps table."""

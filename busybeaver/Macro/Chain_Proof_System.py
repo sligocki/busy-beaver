@@ -180,7 +180,6 @@ class Proof_System:
               return False
     
     if self.verbose:
-      print gen_sim.num_loops,
       gen_sim.print_config()
     
     # Make sure finishing tape is the same as the end tape only general
@@ -330,9 +329,10 @@ class Proof_System:
     
     ## Evaluate number of steps taken by taking meta-transition.
     ##   This would be equivolent to summing the diff_num_steps over ...
+    # TODO: Appear to break for num_reps an ALgebraic_Expression.
     # Effect of the constant factor:
     diff_steps = diff_num_steps.const * num_reps
-    # Effects of each unknown in the formula:
+    # Effects of each variable in the formula:
     for term in diff_num_steps.terms:
       assert len(term.vars) == 1
       coef = term.coef; x = term.vars[0].var
@@ -357,5 +357,14 @@ class Proof_System:
 def series_sum(V0, dV, n):
   """Sums the arithmetic series V0, V0+dV, ... V0+(n-1)*dV."""
   # = sum(V0 + p*dV for p in range(n)) = V0*Sum(1) + dV*Sum(p) = V0*n + dV*(n*(n-1)/2)
-  return V0*n + (dV*n*(n-1))/2
+  # TODO: Integer division here is dangerous. It should always work out because
+  # either n or n-1 is even. However, if n is an Algebraic_Expression, this is
+  # more complicated.
+  print
+  print "%% Series Sum %%"
+  print V0, dV, n
+  print dV*n*(n-1)
+  print V0*n + (dV*n*(n-1))/2
+  print
+  return V0*n + (dV*n*(n-1))//2
 
