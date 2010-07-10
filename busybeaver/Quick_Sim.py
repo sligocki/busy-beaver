@@ -33,7 +33,7 @@ def run(TTable, block_size, back, prover, rec, options):
       # TODO: maybe print based on time
       while sim.op_state == Turing_Machine.RUNNING:
         sim.print_self()
-        sim.loop_run(10000)
+        sim.loop_run(1000)
   finally:
     sim.print_self()
 

@@ -32,9 +32,9 @@ class Var_Power:
     else:
       return "(%s^%s)" % (repr(self.var), repr(self.pow))
   def substitute(self, subs):
-    for var, val in subs:
-      if var == self.var:
-        return val**self.pow
+    """Substitute values from dict 'subs' to get an int."""
+    # TODO: What should we do if it's not in dict?
+    return subs[self.var]**self.pow
 
 class Term:
   """A term in a (multi-variable) polynomial (eg: 4 x^3 * y^2)"""
@@ -50,6 +50,7 @@ class Term:
     else:
       return repr(self.coef)+r
   def substitute(self, subs):
+    """Substitute values from dict 'subs' to get an int."""
     return reduce(operator.mul, [vp.substitute(subs) for vp in self.vars]) * self.coef
 
 class Expression(Number):
@@ -104,6 +105,7 @@ class Expression(Number):
       ### TODO: We could (actually) devide, say (8x+8) // 8 = (x+1) !
       return NotImplemented
   def substitute(self, subs):
+    """Substitute values from dict 'subs' to get an int."""
     return sum([t.substitute(subs) for t in self.terms]) + self.const
   # Temporary methods
   def __eq__(self, other):

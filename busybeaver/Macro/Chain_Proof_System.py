@@ -1,5 +1,5 @@
 """
-Proof System which observes and attempts to prove paterns in computation.
+Proof System which observes and attempts to prove patterns in computation.
 """
 
 import copy
@@ -206,14 +206,14 @@ class Proof_System:
             diff_block.num = diff_block.num.const
     
     # Tighten up rule to be as general as possible (e.g. by replacing x+5 with x+1).
-    replaces = []
+    replaces = {}
     for dir in range(2):
       for init_block in initial_tape.tape[dir]:
         if isinstance(init_block.num, Algebraic_Expression):
           x = init_block.num.unknown()
           new_value = Algebraic_Unknown(x) - min_val[x] + 1
-          init_block.num = init_block.num.substitute([ (x, new_value) ])
-          replaces.append( (x, new_value) )
+          init_block.num = init_block.num.substitute({x: new_value})
+          replaces[x] = new_value
     num_steps = gen_sim.step_num.substitute(replaces)
     
     # Cast num_steps as an Algebraic Expression (if it somehow got through as simply an int)
@@ -241,7 +241,7 @@ class Proof_System:
       print "++ Applying Rule ++"
       print "Loop:", new_loop_num, "Rule ID:", diff_num_steps
       print "Rule:", rule
-      print "Config:", new_config
+      print "Config:", new_state, new_tape
     
     ## Calculate number of repetitionss allowable and other tape-based info.
     num_reps = Chain_Tape.INF
@@ -276,11 +276,11 @@ class Proof_System:
             try:
               # As long as init_value[x] >= 0 we can apply proof
               num_reps = min(num_reps, (init_value[x] // -delta_value[x])  + 1)
-            except TypeError(e):
+            except TypeError as e:
               if self.verbose:
                 print "++ TypeError ++"
                 print e
-                print "From: num_reps = min(%r, (%r // -%r)  + 1)" & (num_reps, init_value[x], delta_value[x])
+                print "From: num_reps = min(%r, (%r // -%r)  + 1)" % (num_reps, init_value[x], delta_value[x])
               return False, 2
     
     # If none of the diffs are negative, this will repeat forever.
@@ -289,11 +289,23 @@ class Proof_System:
         print "++ Rules applies infinitely ++"
       return True, ((Turing_Machine.INF_REPEAT, None, None), bad_delta)
     
-    # We can't apply recursive transitions ... yet.
+    # Apply recursive transition once (Constant speed up).
+    # TODO: Get function to apply repeatedly in tight loop.
     if has_variable:
+      diff_steps = diff_num_steps.substitute(init_value)
+      return_tape = new_tape.copy()
+      for dir in range(2):
+        for diff_block, return_block in zip(diff_tape.tape[dir], return_tape.tape[dir]):
+          if return_block.num is not Chain_Tape.INF:
+            if isinstance(diff_block.num, Algebraic_Expression):
+              return_block.num += diff_block.num.substitute(init_value)
+            else:  # Else it's an int hopefully
+              return_block.num += diff_block.num
+        return_tape.tape[dir] = [x for x in return_tape.tape[dir] if x.num != 0]
       if self.verbose:
-        print "++ Cannot apply variable deltas ++"
-      return False, 4
+        print "++ Applying variable deltas once ++"
+        print "Resulting tape:", return_tape
+      return True, ((Turing_Machine.RUNNING, return_tape, diff_steps), bad_delta)
     
     # If we cannot even apply this transition once, we're done.
     if num_reps <= 0:
@@ -317,7 +329,6 @@ class Proof_System:
       for diff_block, return_block in zip(diff_tape.tape[dir], return_tape.tape[dir]):
         if return_block.num is not Chain_Tape.INF:
           return_block.num += num_reps * diff_block.num
-      #raise Exception, return_tape.tape
       return_tape.tape[dir] = [x for x in return_tape.tape[dir] if x.num != 0]
     
     ## Return the pertinent info
