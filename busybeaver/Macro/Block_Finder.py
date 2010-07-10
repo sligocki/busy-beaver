@@ -25,9 +25,9 @@ def block_finder(machine, limit1=200, limit2=200, run1=True, run2=True, extra_mu
     worst_time = 0
     for i in range(limit1):
       sim.step()
-      l = len(sim.tape.tape[0]) + len(sim.tape.tape[1])
-      if l > max_length:
-        max_length = l
+      tape_length = len(sim.tape.tape[0]) + len(sim.tape.tape[1])
+      if tape_length > max_length:
+        max_length = tape_length
         worst_time = sim.step_num
       # If it has stopped running then this is a good block size!
       if sim.op_state != Turing_Machine.RUNNING:
@@ -35,21 +35,26 @@ def block_finder(machine, limit1=200, limit2=200, run1=True, run2=True, extra_mu
           print "Halted, returning base block size: 1"
         return 1
     
-    sim.init(machine)
-    sim.seek(worst_time)
-    
     if DEBUG:
-      print "Run1 end time:", time.clock()
+      print "Found least compression time:", time.clock()
       print "Least compression at step:", worst_time
-  
+    
+    sim.init(machine)
+    sim.proof = None
+    sim.seek(worst_time)
+      
   ## Or just find the best compression at time limit
   else:
     sim.run(limit1)
+  
+  if DEBUG:
+    print "Reset sim time:", time.clock()
   
   # Analyze this time to see which block size provides greatest compression
   tape = uncompress_tape(sim.tape.tape)
   
   if DEBUG:
+    print "Uncompressed tape time:", time.clock()
     print tape
   
   min_compr = len(tape) + 1 # Worse than no compression
@@ -61,6 +66,7 @@ def block_finder(machine, limit1=200, limit2=200, run1=True, run2=True, extra_mu
       opt_size = block_size
   
   if DEBUG:
+    print "Run1 end time:", time.clock()
     print "Optimal base block size:", opt_size
     print tape
   
