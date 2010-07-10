@@ -135,7 +135,7 @@ class Proof_System:
       gen_sim.proof.past_configs = None
     else:
       gen_sim.proof = None
-
+    
     # Create a new tape which we will use to simulate general situation.
     gen_sim.tape = old_tape.copy()
     min_val = {} # Notes the minimum value exponents with each unknown take.
@@ -178,6 +178,7 @@ class Proof_System:
               return False
     
     if self.verbose:
+      print gen_sim.num_loops,
       gen_sim.print_config()
     
     # Make sure finishing tape is the same as the end tape only general
@@ -214,6 +215,13 @@ class Proof_System:
           new_value = Algebraic_Unknown(x) - min_val[x] + 1
           init_block.num = init_block.num.substitute({x: new_value})
           replaces[x] = new_value
+    # Fix diff_tape.
+    for dir in range(2):
+      for diff_block in diff_tape.tape[dir]:
+        if isinstance(diff_block.num, Algebraic_Expression):
+          diff_block.num = diff_block.num.substitute(replaces)
+    # Fix num_steps.
+    # TODO: Steps are not coming out right.
     num_steps = gen_sim.step_num.substitute(replaces)
     
     # Cast num_steps as an Algebraic Expression (if it somehow got through as simply an int)
