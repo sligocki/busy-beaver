@@ -2,6 +2,7 @@ from __future__ import division
 
 import copy
 import sys
+import time
 
 import Chain_Simulator
 import Turing_Machine
@@ -15,6 +16,8 @@ def block_finder(machine, limit1=200, limit2=200, run1=True, run2=True, extra_mu
   sim.init(machine)
   sim.proof = None # Don't allow proof steps. We just want to find the best block size.
   
+  if DEBUG:
+    print "Block finder start time:", time.clock()
   ## Find the least compressed time in before limit
   if run1:
     # Run sim to find when the tape is least compressed with macro size 1
@@ -36,7 +39,8 @@ def block_finder(machine, limit1=200, limit2=200, run1=True, run2=True, extra_mu
     sim.seek(worst_time)
     
     if DEBUG:
-      print "Least compression at time:", worst_time
+      print "Run1 end time:", time.clock()
+      print "Least compression at step:", worst_time
   
   ## Or just find the best compression at time limit
   else:
@@ -88,6 +92,7 @@ def block_finder(machine, limit1=200, limit2=200, run1=True, run2=True, extra_mu
     mult += 1
   
   if DEBUG:
+    print "Run2 end time:", time.clock()
     print "Optimal block mult:", opt_mult
     sys.stdout.flush()
   
