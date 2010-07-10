@@ -80,8 +80,8 @@ if __name__ == "__main__":
   parser.add_option("-n", "--block-size", type=int, help="Block size to use in macro machine simulator (default is to guess with the block_finder algorithm)")
   
   block_options = OptionGroup(parser, "Block Finder options")
-  block_options.add_option("--bf-limit1", type=int, default=1000, metavar="LIMIT", help="Number of steps to run the first half of block finder [Default: %default].")
-  block_options.add_option("--bf-limit2", type=int, default=1000, metavar="LIMIT", help="Number of stpes to run the second half of block finder [Default: %default].")
+  block_options.add_option("--bf-limit1", type=int, default=10000, metavar="LIMIT", help="Number of steps to run the first half of block finder [Default: %default].")
+  block_options.add_option("--bf-limit2", type=int, default=10000, metavar="LIMIT", help="Number of stpes to run the second half of block finder [Default: %default].")
   block_options.add_option("--bf-run1", action="store_true", default=True, help="In first half, find worst tape before limit.")
   block_options.add_option("--bf-no-run1", action="store_false", dest="bf_run1", help="In first half, just run to limit.")
   block_options.add_option("--bf-run2", action="store_true", default=True, help="Run second half of block finder.")
