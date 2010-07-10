@@ -71,6 +71,7 @@ class Simulator:
     if self.op_state != Turing_Machine.RUNNING:
       return
     if self.verbose:
+      print self.num_loops,
       self.print_config()
     self.num_loops += 1
     if self.proof:

@@ -26,11 +26,7 @@ def run(TTable, block_size, back, prover, rec, options):
   extent = 1
   #raw_input("Ready?")
   try:
-    if options.verbose:
-      while sim.op_state == Turing_Machine.RUNNING:
-        sim.print_config()
-        sim.step()  # TODO: Make prover verbose
-    elif options.quiet:
+    if options.quiet or options.verbose:  # If verbose sim prints for itself.
       while sim.op_state == Turing_Machine.RUNNING:
         sim.step()
     else:
