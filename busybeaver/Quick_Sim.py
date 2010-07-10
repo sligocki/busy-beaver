@@ -97,8 +97,6 @@ if __name__ == "__main__":
   
   if options.verbose:
     options.verbose_simulator = options.verbose_prover = options.verbose_block_finder = True
-  # Verbose simulator
-  Chain_Simulator.DEBUG = options.verbose_simulator
   
   # Verbose block finder
   Block_Finder.DEBUG = options.verbose_block_finder

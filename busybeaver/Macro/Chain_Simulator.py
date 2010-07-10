@@ -10,8 +10,6 @@ import Chain_Proof_System
 import Chain_Tape
 import Turing_Machine
 
-DEBUG = False
-
 # Infinite Reasons
 PROOF_SYSTEM = "Proof_System"
 REPEAT_IN_PLACE = "Repeat_in_Place"
@@ -85,17 +83,10 @@ class Simulator:
         return
       # Proof system says that we can apply a rule
       elif cond == Turing_Machine.RUNNING:
-        if DEBUG:
-          print
-          print self.step_num, self.num_loops - 1
-          print self.state, self.tape
         self.tape = new_tape
         self.step_num += num_steps
         self.num_rule_moves += 1
         self.steps_from_rule += num_steps
-        if DEBUG:
-          print self.state, self.tape
-          print self.step_num, self.num_loops
         return
     # Get current symbol
     cur_symbol = self.tape.get_top_symbol()
