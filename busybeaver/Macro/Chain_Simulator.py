@@ -143,6 +143,8 @@ class Simulator:
     if self.proof:
       print template("Rule:", self.steps_from_rule, self.num_rule_moves)
       print "Rules proven:", len(self.proof.proven_transitions)
+      if self.proof.recursive:
+        print "Recursive rules proven:", self.proof.num_recursive_rules
 
   def print_config(self):
     print self.state, self.tape
