@@ -32,6 +32,8 @@ class Proof_System:
     # Stat
     self.num_loops = 0
     self.num_uses_of_rule = {}
+    self.num_recursive_rules = 0
+    # TODO: Record how many steps are taken by recursive rules in simulator!
   
   def print_rules(self):
     for (state, a, b, c), (init_tape, diff_tape, num_steps) in self.proven_transitions.items():
@@ -215,14 +217,19 @@ class Proof_System:
           new_value = Algebraic_Unknown(x) - min_val[x] + 1
           init_block.num = init_block.num.substitute({x: new_value})
           replaces[x] = new_value
+    is_recursive_rule = False
     # Fix diff_tape.
     for dir in range(2):
       for diff_block in diff_tape.tape[dir]:
         if isinstance(diff_block.num, Algebraic_Expression):
+          is_recursive_rule = True  # Recursive rules have variables in diff.
           diff_block.num = diff_block.num.substitute(replaces)
     # Fix num_steps.
     # TODO: Steps are not coming out right.
     num_steps = gen_sim.step_num.substitute(replaces)
+    
+    if is_recursive_rule:
+      self.num_recursive_rules += 1
     
     # Cast num_steps as an Algebraic Expression (if it somehow got through as simply an int)
     if not isinstance(num_steps, Algebraic_Expression):
