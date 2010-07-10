@@ -21,10 +21,11 @@ def stripped_info(block):
 
 class Proof_System:
   """Stores past information and runs automated proof finders when it finds patterns."""
-  def __init__(self, machine, recursive=False, verbose=False):
+  def __init__(self, machine, recursive=False, verbose=False, verbose_prefix=""):
     self.machine = machine
     self.recursive = recursive
     self.verbose = verbose  # Step-by-step state printing
+    self.verbose_prefix = verbose_prefix
     # Hash of general forms of past configs
     self.past_configs = {}
     # Hash of general forms of proven meta-transitions
@@ -35,13 +36,20 @@ class Proof_System:
     self.num_recursive_rules = 0
     # TODO: Record how many steps are taken by recursive rules in simulator!
   
+  def print_this(self, *args):
+    """Print with prefix."""
+    print self.verbose_prefix,
+    for arg in args:
+      print arg,
+    print
+  
   def print_rules(self):
     for (state, a, b, c), (init_tape, diff_tape, num_steps) in self.proven_transitions.items():
       print
-      print state, init_tape
-      print diff_tape
-      print num_steps
-      print self.num_uses_of_rule[state, a, b, c]
+      self.print_this(state, init_tape)
+      self.print_this(diff_tape)
+      self.print_this(num_steps)
+      self.print_this(self.num_uses_of_rule[state, a, b, c])
   
   def log(self, tape, state, step_num, loop_num):
     """Log this configuration into the table and check if it is similar to a past one.
@@ -112,10 +120,10 @@ class Proof_System:
     """Test the generality of a suggested meta-transition."""
     if self.verbose:
       print
-      print "** Testing new rule **"
-      print "Example transition:"
-      print "From:", old_config
-      print "To:  ", new_config
+      self.print_this("** Testing new rule **")
+      self.print_this("Example transition:")
+      self.print_this("From:", old_config)
+      self.print_this("To:  ", new_config)
     
     # Unpack configurations
     old_state, old_tape, old_step_num, old_loop_num = old_config
@@ -125,6 +133,7 @@ class Proof_System:
     gen_sim = Chain_Simulator.Simulator()
     gen_sim.machine = self.machine
     gen_sim.verbose = self.verbose
+    gen_sim.verbose_prefix = self.verbose_prefix + "  "
     gen_sim.state = old_state
     gen_sim.step_num = Algebraic_Expression([], 0)
     gen_sim.num_loops = 0
@@ -135,6 +144,7 @@ class Proof_System:
     if self.recursive:
       gen_sim.proof = copy.copy(self)
       gen_sim.proof.past_configs = None
+      gen_sim.proof.verbose_prefix = gen_sim.verbose_prefix + "  "
     else:
       gen_sim.proof = None
     
@@ -179,8 +189,7 @@ class Proof_System:
             elif len(block.num.terms) > 1:
               return False
     
-    if self.verbose:
-      gen_sim.print_config()
+    gen_sim.verbose_print()
     
     # Make sure finishing tape is the same as the end tape only general
     for dir in range(2):
@@ -227,19 +236,21 @@ class Proof_System:
     # TODO: Steps are not coming out right.
     num_steps = gen_sim.step_num.substitute(replaces)
     
-    if is_recursive_rule:
-      self.num_recursive_rules += 1
-    
     # Cast num_steps as an Algebraic Expression (if it somehow got through as simply an int)
     if not isinstance(num_steps, Algebraic_Expression):
       num_steps = Algebraic_Expression([], num_steps)
     
+    if is_recursive_rule:
+      if self.verbose:
+        self.print_this("** New recursive rule proven **")
+      self.num_recursive_rules += 1
+
     if self.verbose:
       print
-      print "** New rule proven **"
-      print "Initial:", initial_tape
-      print "Diff:   ", diff_tape
-      print "In steps:", num_steps
+      self.print_this("** New rule proven **")
+      self.print_this("Initial:", initial_tape)
+      self.print_this("Diff:   ", diff_tape)
+      self.print_this("In steps:", num_steps)
       print
     
     return initial_tape, diff_tape, num_steps
@@ -252,10 +263,10 @@ class Proof_System:
     
     if self.verbose:
       print
-      print "++ Applying Rule ++"
-      print "Loop:", new_loop_num, "Rule ID:", diff_num_steps
-      print "Rule:", rule
-      print "Config:", new_state, new_tape
+      self.print_this("++ Applying Rule ++")
+      self.print_this("Loop:", new_loop_num, "Rule ID:", diff_num_steps)
+      self.print_this("Rule:", rule)
+      self.print_this("Config:", new_state, new_tape)
     
     ## Calculate number of repetitionss allowable and other tape-based info.
     num_reps = Chain_Tape.INF
@@ -272,9 +283,9 @@ class Proof_System:
           init_value[x] = new_block.num - init_block.num.const
           if init_value[x] < 0:
             if self.verbose:
-              print "++ Current config is below rule minimum ++"
-              print "Config block:", new_block
-              print "Rule initial block:", init_block
+              self.print_this("++ Current config is below rule minimum ++")
+              self.print_this("Config block:", new_block)
+              self.print_this("Rule initial block:", init_block)
             return False, 1
           delta_value[x] = diff_block.num
           # We can't apply non-constant deltas ... yet.
@@ -292,15 +303,15 @@ class Proof_System:
               num_reps = min(num_reps, (init_value[x] // -delta_value[x])  + 1)
             except TypeError as e:
               if self.verbose:
-                print "++ TypeError ++"
-                print e
-                print "From: num_reps = min(%r, (%r // -%r)  + 1)" % (num_reps, init_value[x], delta_value[x])
+                self.print_this("++ TypeError ++")
+                self.print_this(e)
+                self.print_this("From: num_reps = min(%r, (%r // -%r)  + 1)" % (num_reps, init_value[x], delta_value[x]))
               return False, 2
     
     # If none of the diffs are negative, this will repeat forever.
     if num_reps is Chain_Tape.INF:
       if self.verbose:
-        print "++ Rules applies infinitely ++"
+        self.print_this("++ Rules applies infinitely ++")
       return True, ((Turing_Machine.INF_REPEAT, None, None), bad_delta)
     
     # Apply recursive transition once (Constant speed up).
@@ -317,14 +328,14 @@ class Proof_System:
               return_block.num += diff_block.num
         return_tape.tape[dir] = [x for x in return_tape.tape[dir] if x.num != 0]
       if self.verbose:
-        print "++ Applying variable deltas once ++"
-        print "Resulting tape:", return_tape
+        self.print_this("++ Applying variable deltas once ++")
+        self.print_this("Resulting tape:", return_tape)
       return True, ((Turing_Machine.RUNNING, return_tape, diff_steps), bad_delta)
     
     # If we cannot even apply this transition once, we're done.
     if num_reps <= 0:
       if self.verbose:
-        print "++ Cannot even apply transition once ++"
+        self.print_this("++ Cannot even apply transition once ++")
       return False, 3
     
     ## Evaluate number of steps taken by taking meta-transition.
@@ -348,23 +359,24 @@ class Proof_System:
     
     ## Return the pertinent info
     if self.verbose:
-      print "++ Rule successfully applied ++"
-      print "Times applied:", num_reps
-      print "Resulting tape:", return_tape
+      self.print_this("++ Rule successfully applied ++")
+      self.print_this("Times applied:", num_reps)
+      self.print_this("Resulting tape:", return_tape)
       print
     return True, ((Turing_Machine.RUNNING, return_tape, diff_steps), bad_delta)
 
 def series_sum(V0, dV, n):
   """Sums the arithmetic series V0, V0+dV, ... V0+(n-1)*dV."""
   # = sum(V0 + p*dV for p in range(n)) = V0*Sum(1) + dV*Sum(p) = V0*n + dV*(n*(n-1)/2)
-  # TODO: Integer division here is dangerous. It should always work out because
-  # either n or n-1 is even. However, if n is an Algebraic_Expression, this is
-  # more complicated.
+  # TODO: The '/' is actually integer division, this is dangerous. It should
+  # always work out because either n or n-1 is even. However, if n is an
+  # Algebraic_Expression, this is more complicated. We don't want to use
+  # __truediv__ because then we'd get a float output for ints.
   print
   print "%% Series Sum %%"
   print V0, dV, n
   print dV*n*(n-1)
   print V0*n + (dV*n*(n-1))/2
   print
-  return V0*n + (dV*n*(n-1))//2
+  return V0*n + (dV*n*(n-1))/2
 

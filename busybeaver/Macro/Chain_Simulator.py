@@ -20,13 +20,14 @@ class Simulator:
   def __init__(self):
     self.init_stats()
   
-  def init(self, machine, recursive=False, verbose_simulator=False, verbose_prover=False):
+  def init(self, machine, recursive=False, verbose_simulator=False, verbose_prover=False, verbose_prefix=""):
     """Default initialization, creates a blank tape, proof system, etc."""
     self.machine = machine
     self.verbose = verbose_simulator
+    self.verbose_prefix = verbose_prefix
     self.tape = Chain_Tape.Chain_Tape()
     self.tape.init(machine.init_symbol, machine.init_dir)
-    self.proof = Chain_Proof_System.Proof_System(self.machine, recursive, verbose_prover)
+    self.proof = Chain_Proof_System.Proof_System(self.machine, recursive, verbose_prover, verbose_prefix + "  ")
     self.state = machine.init_state
     self.dir = machine.init_dir
     self.step_num = 0
@@ -70,8 +71,7 @@ class Simulator:
     """Perform an atomic transition or chain step."""
     if self.op_state != Turing_Machine.RUNNING:
       return
-    if self.verbose:
-      self.print_config()
+    self.verbose_print()
     self.num_loops += 1
     if self.proof:
       # Log the configuration and see if we can apply a rule.
@@ -145,8 +145,9 @@ class Simulator:
       if self.proof.recursive:
         print "Recursive rules proven:", self.proof.num_recursive_rules
 
-  def print_config(self):
-    print self.num_loops, self.state, self.tape
+  def verbose_print(self):
+    if self.verbose:
+      print self.verbose_prefix, self.num_loops, self.state, self.tape, self.step_num
 
 def template(title, steps, loops):
   """Pretty print row of the steps table."""
