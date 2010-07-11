@@ -15,7 +15,7 @@ PROOF_SYSTEM = "Proof_System"
 REPEAT_IN_PLACE = "Repeat_in_Place"
 CHAIN_MOVE = "Chain_Move"
 
-class Simulator:
+class Simulator(object):
   """Turing machine simulator using chain-tape optimization."""
   def __init__(self):
     self.init_stats()
@@ -136,7 +136,7 @@ class Simulator:
     print template("Chain:", self.steps_from_chain, self.num_chain_moves)
     if self.proof:
       print template("Rule:", self.steps_from_rule, self.num_rule_moves)
-      print "Rules proven:", len(self.proof.proven_transitions)
+      print "Rules proven:", len(self.proof.rules)
       if self.proof.recursive:
         print "Recursive rules proven:", self.proof.num_recursive_rules
 
