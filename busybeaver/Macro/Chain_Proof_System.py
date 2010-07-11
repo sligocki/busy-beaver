@@ -14,12 +14,13 @@ sys.path.insert(1, parent_dir)
 from Numbers.Algebraic_Expression import Algebraic_Unknown, Algebraic_Expression
 
 def stripped_info(block):
+  """Get an abstraction of a tape block. We try to prove rules between configuration which have the same abstraction."""
   if block.num == 1:
     return block.symbol, 1
   else:
     return block.symbol
 
-class Proof_System:
+class Proof_System(object):
   """Stores past information and runs automated proof finders when it finds patterns."""
   def __init__(self, machine, recursive=False, verbose=False, verbose_prefix=""):
     self.machine = machine
@@ -347,7 +348,9 @@ class Proof_System:
     for term in diff_num_steps.terms:
       assert len(term.vars) == 1
       coef = term.coef; x = term.vars[0].var
-      diff_steps += coef * series_sum(init_value[x], delta_value[x], num_reps)
+      # We don't factor out the coef, because it might make this work better for
+      # some recursive rules.
+      diff_steps += series_sum(coef * init_value[x], coef * delta_value[x], num_reps)
     
     ## Alter the tape to account for taking meta-transition.
     return_tape = new_tape.copy()
@@ -368,9 +371,10 @@ class Proof_System:
 def series_sum(V0, dV, n):
   """Sums the arithmetic series V0, V0+dV, ... V0+(n-1)*dV."""
   # = sum(V0 + p*dV for p in range(n)) = V0*Sum(1) + dV*Sum(p) = V0*n + dV*(n*(n-1)/2)
-  # TODO: The '/' is actually integer division, this is dangerous. It should
+  # TODO: The '/' acts as integer division, this is dangerous. It should
   # always work out because either n or n-1 is even. However, if n is an
   # Algebraic_Expression, this is more complicated. We don't want to use
   # __truediv__ because then we'd get a float output for ints.
+  # TODO: Don't crash when we get NotImplemented exception from Algebraic_Expression.__div__.
   return V0*n + (dV*n*(n-1))/2
 
