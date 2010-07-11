@@ -19,13 +19,10 @@ def run(TTable, block_size, back, prover, recursive, options):
     m = Turing_Machine.Backsymbol_Macro_Machine(m)
 
   global sim
-  sim = Chain_Simulator.Simulator(m, recursive, enable_prover=True, init_tape=True,
+  sim = Chain_Simulator.Simulator(m, recursive, enable_prover=prover, init_tape=True,
                                   verbose_simulator=options.verbose_simulator,
                                   verbose_prover=options.verbose_prover,
                                   verbose_prefix="")
-  if not prover:
-    sim.prover = None
-  extent = 1
   #raw_input("Ready?")
   try:
     if options.quiet or options.verbose:  # Note verbose prints inside sim.step()

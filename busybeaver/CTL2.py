@@ -80,9 +80,7 @@ def test_CTL(ttable, cutoff, block_size=1, offset=None):
   if block_size != 1:
     m = Turing_Machine.Block_Macro_Machine(m, block_size, offset)
   m = Turing_Machine.Backsymbol_Macro_Machine(m)
-  sim = Chain_Simulator.Simulator()
-  sim.init(m)
-  sim.prover = None
+  sim = Chain_Simulator.Simulator(m, enable_prover=False)
   sim.seek(cutoff)
   if sim.op_state != Turing_Machine.RUNNING:
     return False
