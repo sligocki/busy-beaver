@@ -5,7 +5,7 @@ import sys
 from Macro import Turing_Machine, Chain_Simulator, Block_Finder
 import IO
 
-def run(TTable, block_size, back, prover, recursive, options):
+def run(TTable, block_size, back, prover, rec, options):
   # Construct Machine (Backsymbol-k-Block-Macro-Machine)
   m = Turing_Machine.make_machine(TTable)
   # If no explicit block-size given, use inteligent software to find one
@@ -19,8 +19,10 @@ def run(TTable, block_size, back, prover, recursive, options):
     m = Turing_Machine.Backsymbol_Macro_Machine(m)
 
   global sim
-  sim = Chain_Simulator.Simulator(m, prover, recursive, options.compute_steps, options.verbose_simulator, options.verbose_prover)
-  sim.init()
+  sim = Chain_Simulator.Simulator(m, rec, options.verbose_simulator, options.verbose_prover)
+  sim.init_big()
+  if not prover:
+    sim.prover = None
   extent = 1
   #raw_input("Ready?")
   try:
@@ -73,10 +75,8 @@ if __name__ == "__main__":
                     help="Turn off backsymbol macro machine")
   parser.add_option("-p", "--no-prover", action="store_false", dest="prover", default=True, 
                     help="Turn off proof system")
-  parser.add_option("-r", "--recursive", action="store_true",
+  parser.add_option("-r", "--recursive", action="store_true", default=False, 
                     help="Turn ON recursive proof system [Very Experimental]")
-  parser.add_option("--no-steps", action="store_false", dest="compute_steps", default=True,
-                    help="Don't keep track of steps (can speed up considerably when in recursive-mode because of expensive multiplications).")
   
   parser.add_option("-n", "--block-size", type=int, help="Block size to use in macro machine simulator (default is to guess with the block_finder algorithm)")
   

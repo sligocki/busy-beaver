@@ -17,58 +17,51 @@ CHAIN_MOVE = "Chain_Move"
 
 class Simulator(object):
   """Turing machine simulator using chain-tape optimization."""
-  def __init__(self, machine, have_prover=True, recursive=False, compute_steps=True,
-               verbose_simulator=False, verbose_prover=False, verbose_prefix=""):
-    """Initializes all the simple objects. Call init() to create tape and proof system."""
+  def __init__(self, *args, **keys):
+    if args or keys:
+      self.init_small(*args, **keys)
+    else:
+      self.init_stats()
+  
+  def init(self, *args, **keys):
+    """Default initialization, creates a blank tape, proof system, etc."""
+    self.init_small(*args, **keys)
+    self.init_big()
+  
+  def init_small(self, machine, recursive=False, verbose_simulator=False, verbose_prover=False, verbose_prefix=""):
     self.machine = machine
-    self.have_prover = have_prover
     self.recursive = recursive
-    self.compute_steps = compute_steps
     self.verbose = verbose_simulator
     self.verbose_prover = verbose_prover
     self.verbose_prefix = verbose_prefix
     self.state = machine.init_state
     self.dir = machine.init_dir
-    if compute_steps:
-      self.step_num = 0
-    else:
-      self.step_num = None
+    self.step_num = 0
     # Operation state (e.g. running, halted, proven-infinite, ...)
     self.op_state = Turing_Machine.RUNNING
     self.op_details = ()
-    # Stats
-    self.num_loops = 0
-    self.num_macro_moves = 0
-    self.num_chain_moves = 0
-    self.num_rule_moves = 0
-    if self.compute_steps:
-      self.steps_from_macro = 0
-      self.steps_from_chain = 0
-      self.steps_from_rule = 0
-    else:
-      self.step_from_macro = None
-      self.step_from_chain = None
-      self.step_from_rule = None
+    self.init_stats()
   
-  def init(self):
-    """Default initialization, creates a blank tape, proof system, etc."""
+  def init_big(self):
     self.tape = Chain_Tape.Chain_Tape()
     self.tape.init(self.machine.init_symbol, self.machine.init_dir)
-    if self.have_prover:
-      self.prover = Chain_Proof_System.Proof_System(
-          self.machine, self.recursive, self.verbose_prover, self.verbose_prefix + "  ")
-    else:
-      self.prover = None
-
-  def restart(self, *args, **keys):
-    """Restart simulator."""
-    self.__init__(*args, **keys)
-    self.init()
+    self.prover = Chain_Proof_System.Proof_System(
+        self.machine, self.recursive, self.verbose_prover, self.verbose_prefix + "  ")
   
+  def init_stats(self):
+    """Initializes statistics about simulation."""
+    self.num_loops = 0
+    self.num_macro_moves = 0
+    self.steps_from_macro = 0
+    self.num_chain_moves = 0
+    self.steps_from_chain = 0
+    self.num_rule_moves = 0
+    self.steps_from_rule = 0
 
+  def run(self, steps):
+    self.seek(self.step_num + steps)
   def seek(self, cutoff):
     """Run until we've reached (exceeded) step n."""
-    assert self.compute_steps, "Cannot seek without computing steps."
     while self.step_num < cutoff and self.op_state == Turing_Machine.RUNNING:
       self.step()
 
@@ -98,8 +91,7 @@ class Simulator(object):
       # Proof system says that we can apply a rule
       elif cond == Turing_Machine.RUNNING:
         self.tape = new_tape
-        if self.compute_steps:
-          self.step_num += num_steps
+        self.step_num += num_steps
         self.num_rule_moves += 1
         self.steps_from_rule += num_steps
         return
@@ -121,19 +113,17 @@ class Simulator(object):
         self.inf_reason = CHAIN_MOVE
         return
       # Don't need to change state or direction
+      self.step_num += num_steps*num_reps
       self.num_chain_moves += 1
-      if self.compute_steps:
-        self.step_num += num_steps*num_reps
-        self.steps_from_chain += num_steps*num_reps
+      self.steps_from_chain += num_steps*num_reps
     # Simple move
     else:
       self.tape.apply_single_move(symbol2write, next_dir)
       self.state = next_state
       self.dir = next_dir
+      self.step_num += num_steps
       self.num_macro_moves += 1
-      if self.compute_steps:
-        self.step_num += num_steps
-        self.steps_from_macro += num_steps
+      self.steps_from_macro += num_steps
       if self.op_state == Turing_Machine.INF_REPEAT:
         self.inf_reason = REPEAT_IN_PLACE
   
