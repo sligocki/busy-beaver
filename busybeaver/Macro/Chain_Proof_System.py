@@ -22,6 +22,7 @@ class Diff_Rule(Rule):
 class Gen_Rule(Rule):
   """A general rule that specifies some general end configuraton."""
 
+# TODO: Try out some other stripped_configs
 def stripped_info(block):
   """Get an abstraction of a tape block. We try to prove rules between configuration which have the same abstraction."""
   if block.num == 1:
@@ -36,7 +37,9 @@ class Proof_System(object):
     self.recursive = recursive  # Should we try to prove recursive rules? (That is rules which use previous rules as steps.)
     self.verbose = verbose  # Step-by-step state printing
     self.verbose_prefix = verbose_prefix
-    # Memory of past stripped configurations with enough extra information to try to prove rules.
+    # Memory of past stripped configurations with enough extra information to
+    # try to prove rules. Set to None to disable proving new rules (for example
+    # if this is a recursive proof system being used simply to apply rules).
     self.past_configs = {}
     # Colection of proven rules indexed by stripped configurations.
     self.rules = {}
@@ -54,17 +57,18 @@ class Proof_System(object):
     print
   
   def print_rules(self):
-    for (state, a, b, c), (init_tape, diff_tape, num_steps) in self.rules.items():
+    for rule in self.rules:
       print
-      self.print_this(state, init_tape)
-      self.print_this(diff_tape)
-      self.print_this(num_steps)
-      self.print_this(self.num_uses_of_rule[state, a, b, c])
+      self.print_this(rule.num)
+      self.print_this(rule.state, rule.init_tape)
+      self.print_this(rule.diff_tape)
+      self.print_this("Loops:", rule.num_loops, "Steps:", rule.num_steps)
+      self.print_this(rule.num_times_applied)
   
   def log(self, tape, state, step_num, loop_num):
-    """Log this configuration into the table and check if it is similar to a past one.
-    Returned boolean answers question: General tape action applies?"""
-    # Stores state, direction pointed, and list of sequences on tape.
+    """Log this configuration into the memory and check if it is similar to a past one.
+    Returned boolean answers question: Rule applies?"""
+    # Stores state, direction pointed, and list of symbols on tape.
     # Note: we ignore the number of repetitions of these sequences so that we
     #   can get a very general view of the tape.
     stripped_config = (state, tape.dir,
@@ -72,7 +76,7 @@ class Proof_System(object):
                        tuple(map(stripped_info, tape.tape[1])))
     full_config = (state, tape, step_num, loop_num)
     
-    # If this config already has a proven meta-transition return it.
+    ## If we're already proven a rule for this stripped_config, try to apply it.
     if self.rules.has_key(stripped_config):
       is_good, res = self.applies(self.rules[stripped_config], full_config)
       if is_good:
@@ -152,11 +156,11 @@ class Proof_System(object):
     # If prover can run recursively, we let it simulate with a lazy proof system.
     # That is, one that cannot prove new rules.
     if self.recursive:
-      gen_sim.proof = copy.copy(self)
-      gen_sim.proof.past_configs = None
-      gen_sim.proof.verbose_prefix = gen_sim.verbose_prefix + "  "
+      gen_sim.prover = copy.copy(self)
+      gen_sim.prover.past_configs = None
+      gen_sim.prover.verbose_prefix = gen_sim.verbose_prefix + "  "
     else:
-      gen_sim.proof = None
+      gen_sim.prover = None
     
     # Create a new tape which we will use to simulate general situation.
     gen_sim.tape = old_tape.copy()
