@@ -22,8 +22,7 @@ class GenContainer(object):
       self.__dict__[atr] = args[atr]
 
 def setup_CTL(m, cutoff):
-  sim = Chain_Simulator.Simulator()
-  sim.init(m)
+  sim = Chain_Simulator.Simulator(m)
   sim.prover = None
   sim.seek(cutoff)
 
@@ -99,8 +98,7 @@ def run(TTable, options, steps=INF, runtime=None, block_size=None,
 
       ## Set up the simulator
       #global sim # Useful for Debugging
-      sim = Chain_Simulator.Simulator()
-      sim.init(m, rec)
+      sim = Chain_Simulator.Simulator(m, rec)
       if not prover:
         sim.prover = None
 
