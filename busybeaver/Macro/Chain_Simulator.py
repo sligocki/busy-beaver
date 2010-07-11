@@ -28,7 +28,10 @@ class Simulator(object):
     self.verbose_prefix = verbose_prefix
     self.state = machine.init_state
     self.dir = machine.init_dir
-    self.step_num = 0
+    if self.compute_steps:
+      self.step_num = 0
+    else:
+      self.step_num = None
     
     # Init tape and prover (if needed).
     if init_tape:
@@ -46,14 +49,20 @@ class Simulator(object):
     # Operation state (e.g. running, halted, proven-infinite, ...)
     self.op_state = Turing_Machine.RUNNING
     self.op_details = ()
+    
     # Stats
     self.num_loops = 0
     self.num_macro_moves = 0
-    self.steps_from_macro = 0
     self.num_chain_moves = 0
-    self.steps_from_chain = 0
     self.num_rule_moves = 0
-    self.steps_from_rule = 0
+    if self.compute_steps:
+      self.steps_from_macro = 0
+      self.steps_from_chain = 0
+      self.steps_from_rule = 0
+    else:
+      self.steps_from_macro = None
+      self.steps_from_chain = None
+      self.steps_from_rule = None
 
   def run(self, steps):
     self.seek(self.step_num + steps)
@@ -88,9 +97,10 @@ class Simulator(object):
       # Proof system says that we can apply a rule
       elif cond == Turing_Machine.RUNNING:
         self.tape = new_tape
-        self.step_num += num_steps
         self.num_rule_moves += 1
-        self.steps_from_rule += num_steps
+        if self.compute_steps:
+          self.step_num += num_steps
+          self.steps_from_rule += num_steps
         return
     # Get current symbol
     cur_symbol = self.tape.get_top_symbol()
@@ -110,17 +120,19 @@ class Simulator(object):
         self.inf_reason = CHAIN_MOVE
         return
       # Don't need to change state or direction
-      self.step_num += num_steps*num_reps
       self.num_chain_moves += 1
-      self.steps_from_chain += num_steps*num_reps
+      if self.compute_steps:
+        self.step_num += num_steps*num_reps
+        self.steps_from_chain += num_steps*num_reps
     # Simple move
     else:
       self.tape.apply_single_move(symbol2write, next_dir)
       self.state = next_state
       self.dir = next_dir
-      self.step_num += num_steps
       self.num_macro_moves += 1
-      self.steps_from_macro += num_steps
+      if self.compute_steps:
+        self.step_num += num_steps
+        self.steps_from_macro += num_steps
       if self.op_state == Turing_Machine.INF_REPEAT:
         self.inf_reason = REPEAT_IN_PLACE
   
