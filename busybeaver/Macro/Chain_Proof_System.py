@@ -84,6 +84,7 @@ class Proof_System(object):
     # Stores state, direction pointed, and list of symbols on tape.
     # Note: we ignore the number of repetitions of these sequences so that we
     #   can get a very general view of the tape.
+    # TODO: This map is expensive upwards of 25% of time is spend here.
     stripped_config = (state, tape.dir,
                        tuple(map(stripped_info, tape.tape[0])),
                        tuple(map(stripped_info, tape.tape[1])))
@@ -124,6 +125,8 @@ class Proof_System(object):
     if times_seen == 1:
       last_loop_num = rest
       delta_loop = loop_num - last_loop_num
+      # TODO: maybe don't copy tape until we get a consistent delta_loop.
+      # Simulators which prove no rules are spending about 15% of time copying.
       self.past_configs[stripped_config] = (2, ((state, tape.copy(), step_num, loop_num), loop_num, delta_loop))
       return False, None, None
     
