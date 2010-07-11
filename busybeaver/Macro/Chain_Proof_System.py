@@ -43,7 +43,7 @@ class Proof_System(object):
   """Stores past information, looks for patterns and tries to prove general
   rules when it finds patterns.
   """
-  def __init__(self, machine, recursive=False, verbose=False, verbose_prefix=""):
+  def __init__(self, machine, recursive, compute_steps, verbose, verbose_prefix):
     self.machine = machine
     self.recursive = recursive  # Should we try to prove recursive rules? (That is rules which use previous rules as steps.)
     self.verbose = verbose  # Step-by-step state printing

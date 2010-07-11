@@ -1,6 +1,6 @@
 """
-Turing Machine Simulator with considerable accelleration due to tape compression
-and chain moves.
+Turing Machine Simulator with considerable accelleration due to tape compression,
+chain moves and a proof system.
 """
 
 import math
@@ -17,25 +17,32 @@ CHAIN_MOVE = "Chain_Move"
 
 class Simulator(object):
   """Turing machine simulator using chain-tape optimization."""
-  def __init__(self, machine, recursive=False, enable_prover=True, init_tape=True,
-               verbose_simulator=False, verbose_prover=False, verbose_prefix=""):
+  def __init__(self, machine, recursive=False, enable_prover=True,
+               init_tape=True, compute_steps=True, verbose_simulator=False,
+               verbose_prover=False, verbose_prefix=""):
     self.machine = machine
     self.recursive = recursive
+    self.compute_steps = compute_steps
     self.verbose = verbose_simulator
     self.verbose_prover = verbose_prover
     self.verbose_prefix = verbose_prefix
     self.state = machine.init_state
     self.dir = machine.init_dir
     self.step_num = 0
+    
     # Init tape and prover (if needed).
     if init_tape:
       self.tape = Chain_Tape.Chain_Tape()
       self.tape.init(self.machine.init_symbol, self.machine.init_dir)
     if enable_prover:
-      self.prover = Chain_Proof_System.Proof_System(
-          self.machine, self.recursive, self.verbose_prover, self.verbose_prefix + "  ")
+      self.prover = Chain_Proof_System.Proof_System(self.machine,
+                                                    recursive=self.recursive,
+                                                    compute_steps=self.compute_steps,
+                                                    verbose=self.verbose_prover,
+                                                    verbose_prefix=self.verbose_prefix + "  ")
     else:
       self.prover = None  # We will run the simulation without a proof system.
+    
     # Operation state (e.g. running, halted, proven-infinite, ...)
     self.op_state = Turing_Machine.RUNNING
     self.op_details = ()
