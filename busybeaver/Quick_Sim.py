@@ -76,7 +76,7 @@ if __name__ == "__main__":
   parser.add_option("-p", "--no-prover", action="store_false", dest="prover", default=True, 
                     help="Turn off proof system")
   parser.add_option("-r", "--recursive", action="store_true", default=False, 
-                    help="Turn ON recursive proof system [Very Experimental]")
+                    help="Turn ON recursive proof system [Experimental]")
   parser.add_option("--no-steps", action="store_false", dest="compute_steps", default=True,
                     help="Don't keep track of base step count (can be expensive to calculate especially with recursive proofs).")
   
