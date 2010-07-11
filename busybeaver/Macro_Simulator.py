@@ -97,7 +97,7 @@ def run(TTable, options, steps=INF, runtime=None, block_size=None,
 
       ## Set up the simulator
       #global sim # Useful for Debugging
-      sim = Chain_Simulator.Simulator(m, rec, enable_prover=prover)
+      sim = Chain_Simulator.Simulator(m, rec, enable_prover=prover, compute_steps=options.compute_steps)
 
       try:
         if runtime:
@@ -148,7 +148,9 @@ if __name__ == "__main__":
   parser.add_option("-p", "--no-prover", action="store_false", dest="prover", default=True, 
                     help="Turn off proof system")
   parser.add_option("-r", "--recursive", action="store_true", default=False, 
-                    help="Turn ON recursive proof system [Very Experimental]")
+                    help="Turn ON recursive proof system [Experimental]")
+  parser.add_option("--no-steps", action="store_false", dest="compute_steps", default=True,
+                    help="Don't keep track of base step count (can be expensive to calculate especially with recursive proofs).")
   
   parser.add_option("-n", "--block-size", type=int, help="Block size to use in macro machine simulator (default is to guess with the block_finder algorithm)")
   
