@@ -46,6 +46,7 @@ class Proof_System(object):
   def __init__(self, machine, recursive, compute_steps, verbose, verbose_prefix):
     self.machine = machine
     self.recursive = recursive  # Should we try to prove recursive rules? (That is rules which use previous rules as steps.)
+    self.compute_steps = compute_steps
     self.verbose = verbose  # Step-by-step state printing
     self.verbose_prefix = verbose_prefix
     # Memory of past stripped configurations with enough extra information to
@@ -170,6 +171,7 @@ class Proof_System(object):
                                         recursive=False,
                                         enable_prover=False,  # We'll create out own if needed.
                                         init_tape=False,
+                                        compute_steps=self.compute_steps,
                                         verbose_simulator=self.verbose,
                                         verbose_prover=False,
                                         verbose_prefix=self.verbose_prefix + "  ")
@@ -379,15 +381,18 @@ class Proof_System(object):
       return False, 3
     
     ## Determine number of base steps taken by applying rule.
-    # Effect of the constant factor:
-    diff_steps = rule.num_steps.const * num_reps
-    # Effects of each variable in the formula:
-    for term in rule.num_steps.terms:
-      assert len(term.vars) == 1
-      coef = term.coef; x = term.vars[0].var
-      # We don't factor out the coef, because it might make this work better for
-      # some recursive rules.
-      diff_steps += series_sum(coef * init_value[x], coef * delta_value[x], num_reps)
+    if self.compute_steps:
+      # Effect of the constant factor:
+      diff_steps = rule.num_steps.const * num_reps
+      # Effects of each variable in the formula:
+      for term in rule.num_steps.terms:
+        assert len(term.vars) == 1
+        coef = term.coef; x = term.vars[0].var
+        # We don't factor out the coef, because it might make this work better for
+        # some recursive rules.
+        diff_steps += series_sum(coef * init_value[x], coef * delta_value[x], num_reps)
+    else:
+      diff_steps = 0 # TODO: Make it None instead of a lie
     
     ## Alter the tape to account for taking meta-transition.
     return_tape = new_tape.copy()
