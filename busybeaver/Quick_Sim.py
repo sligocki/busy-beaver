@@ -40,8 +40,10 @@ def run(TTable, block_size, back, prover, recursive, options):
   if sim.op_state == Turing_Machine.HALT:
     print
     print "Turing Machine Halted!"
-    print "Steps:   ", sim.step_num
     print
+    if options.compute_steps:
+      print "Steps:   ", sim.step_num
+      print
     print "Nonzeros:", sim.get_nonzeros()
   elif sim.op_state == Turing_Machine.INF_REPEAT:
     print
