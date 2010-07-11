@@ -168,6 +168,8 @@ class Proof_System(object):
     # Create the serogate simulator with the apm only able to use proven trans.
     gen_sim = Chain_Simulator.Simulator(self.machine,
                                         recursive=False,
+                                        init_prover=False,
+                                        init_tape=False,
                                         verbose_simulator=self.verbose,
                                         verbose_prover=False,
                                         verbose_prefix=self.verbose_prefix + "  ")
