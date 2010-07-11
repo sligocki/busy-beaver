@@ -52,9 +52,7 @@ def run(TTable, options, steps=INF, runtime=None, block_size=None,
 
       ## Set up the simulator
       #global sim # Useful for Debugging
-      sim = Macro.Chain_Simulator.Simulator(m, recursive)
-      if not prover:
-        sim.prover = None
+      sim = Macro.Chain_Simulator.Simulator(m, recursive, enable_prover=prover)
 
       try:
         if runtime:

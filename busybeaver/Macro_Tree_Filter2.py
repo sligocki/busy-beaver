@@ -28,8 +28,7 @@ def run(TTable, block_size, level, steps, runtime, recursive, progress):
   m2 = Turing_Machine.Block_Macro_Machine(m1, block_size)
   m3 = Turing_Machine.Backsymbol_Macro_Machine(m2)
 
-  sim = Chain_Simulator.Simulator()
-  sim.init(m3, recursive)
+  sim = Chain_Simulator.Simulator(m3, recursive)
 
   # Run with an optional timer
   try:
