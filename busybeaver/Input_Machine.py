@@ -42,11 +42,15 @@ if __name__ == "__main__":
   num_states = int(raw_input("Num States? "))
   num_symbols = int(raw_input("Num Symbols? "))
   name = raw_input("Name? ")
-
-  format = """Numberic: symbol-dir-state (e.g. 210 for 2RA, 11- for 1RH)
+  
+  # Open first, so we immediately know of any problems.
+  filename = "Machines/%dx%d-%s.bb" % (num_states, num_symbols, name)
+  table_file = open(filename, "w")
+  
+  format = """Numeric: symbol-dir-state (e.g. 210 for 2RA, 11- for 1RH)
   or any order with letters (e.g. RA2 or A2R or ... for 2RA)
   symbol must be an integer 0-9 less than num_symbols
-  dir must be R for right or L for left
+  dir must be R for right or L for left or S for stay
   state must be letter A-G less than num_states (Halt = H or Z)"""
 
   parts = []
@@ -57,19 +61,31 @@ if __name__ == "__main__":
       have_input = False
       while not have_input:
         if not parts:
-          temp = raw_input("State %c, Symbol %d: " % (state+ord("A"), symbol))
+          temp = raw_input("State %c, Symbol %d: " % (states[state], symbol))
           temp = temp.strip().upper()
           parts = temp.split()
         if len(parts) == 0 or len(parts[0]) != 3:
           print format
           parts = []
           continue
-        result = get_alpha(parts[0])
+        if parts[0] == "---":
+          result = -1, 0, -1  # Undefined
+        else:
+          result = get_alpha(parts[0])
         if not result:
           result = get_numeric(parts[0])
         if not result:
-          print "Bad Symbol input, please enter state information in this form:"
+          print "Bad input, please enter transition information in this form:"
           print format
+          parts = []
+          continue
+        new_symbol, new_dir, new_state = result
+        if new_symbol >= num_symbols:
+          print "Symbol %d is too large." % new_symbol
+          parts = []
+          continue
+        if new_state >= num_states:
+          print "State %d is too large." % new_state
           parts = []
           continue
         TTable[state][symbol] = result
@@ -77,8 +93,6 @@ if __name__ == "__main__":
         del parts[0]
     print
 
-  filename = "Machines/%dx%d-%s.bb" % (num_states, num_symbols, name)
-  table_file = open(filename, "w")
   table_file.write(`TTable`+'\n')
   table_file.close()
   print "Successfully wrote %s" % filename
