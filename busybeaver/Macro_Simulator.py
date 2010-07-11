@@ -24,7 +24,7 @@ class GenContainer:
 def setup_CTL(m, cutoff):
   sim = Chain_Simulator.Simulator()
   sim.init(m)
-  sim.proof = None
+  sim.prover = None
   sim.seek(cutoff)
 
   if sim.op_state != Turing_Machine.RUNNING:
@@ -101,7 +101,7 @@ def run(TTable, options, steps=INF, runtime=None, block_size=None,
       sim = Chain_Simulator.Simulator()
       sim.init(m, rec)
       if not prover:
-        sim.proof = None
+        sim.prover = None
 
       try:
         if runtime:
