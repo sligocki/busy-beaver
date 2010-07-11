@@ -15,7 +15,7 @@ HALT = "Halt"
 INFINITE = "Infinite_repeat"
 UNDEFINED = "Undefined_Transition"
 
-class GenContainer:
+class GenContainer(object):
   """Generic Container class"""
   def __init__(self, **args):
     for atr in args:
@@ -40,7 +40,8 @@ def setup_CTL(m, cutoff):
 
 def run(TTable, options, steps=INF, runtime=None, block_size=None, 
                 back=True, prover=True, rec=False):
-  """Run the Accelerated Turing Machine Simulator, running a few simple filters first and using intelligent blockfinding."""
+  """Run the Accelerated Turing Machine Simulator, running a few simple filters
+  first and using intelligent blockfinding."""
   for do_over in xrange(0,4):
     try:
       ## Test for quickly for infinite machine
@@ -144,11 +145,6 @@ if __name__ == "__main__":
   # Parse command line options.
   usage = "usage: %prog [options] machine_file [line_number]"
   parser = OptionParser(usage=usage)
-  #parser.set_defaults(verbose=True)
-  #parser.add_option("-q", "--quiet", action="store_true", help="Brief output")
-  #parser.add_option("--verbose-prover", action="store_true", help="Provide debuggin output from prover")
-  #parser.add_option("--verbose-simulator", action="store_true", help="Provide debuggin output from simulator")
-  
   parser.add_option("-s", "--steps", type=int, default=0, help="Maximum number of steps to simulate for use 0 for infinite [Default: infinite]")
   parser.add_option("-t", "--time", type=int, default=15, help="Maximum number of seconds to simulate for [Default: %default]")
   
