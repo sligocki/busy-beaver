@@ -43,10 +43,9 @@ class Proof_System(object):
   """Stores past information, looks for patterns and tries to prove general
   rules when it finds patterns.
   """
-  def __init__(self, machine, recursive=False, compute_steps=True, verbose=False, verbose_prefix=""):
+  def __init__(self, machine, recursive=False, verbose=False, verbose_prefix=""):
     self.machine = machine
     self.recursive = recursive  # Should we try to prove recursive rules? (That is rules which use previous rules as steps.)
-    self.compute_steps = compute_steps
     self.verbose = verbose  # Step-by-step state printing
     self.verbose_prefix = verbose_prefix
     # Memory of past stripped configurations with enough extra information to
@@ -168,14 +167,12 @@ class Proof_System(object):
     
     # Create the serogate simulator with the apm only able to use proven trans.
     gen_sim = Chain_Simulator.Simulator(self.machine,
-                                        have_prover=self.recursive,
                                         recursive=False,
-                                        compute_steps=self.compute_steps,
                                         verbose_simulator=self.verbose,
-                                        verbose_prover=self.verbose,
+                                        verbose_prover=False,
                                         verbose_prefix=self.verbose_prefix + "  ")
-    if self.compute_steps:
-      gen_sim.step_num = Algebraic_Expression([], 0)
+    gen_sim.state = old_state
+    gen_sim.step_num = Algebraic_Expression([], 0)
     
     # If prover can run recursively, we let it simulate with a lazy proof system.
     # That is, one that cannot prove new rules.
