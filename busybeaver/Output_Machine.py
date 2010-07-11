@@ -43,16 +43,8 @@ def display_ttable(table):
     s += " "
   return s
 
-# Main script
-import sys
-
-filename = sys.argv[1]
-if filename == "-":
-  infile = sys.stdin
-else:
-  infile = open(filename, "r")
-
-for line in infile:
+def display_line(line):
+  """Print ttable and other info from line of log file."""
   table = get_ttable(line)
   parts = line.split()
   try:
@@ -61,3 +53,25 @@ for line in infile:
     print display_ttable(table), "# ",ones, "", steps, "", long_to_eng_str(ones,1,3), "", long_to_eng_str(steps,1,3)
   except:
     print display_ttable(table)
+
+if __name__ == "__main__":
+  import sys
+  
+  if not (2 <= len(sys.argv) <= 3):
+    print >>sys.stderr, "usage: Output_Machine.py filename [line-num]"
+    sys.exit(1)
+  filename = sys.argv[1]
+  if filename == "-":
+    infile = sys.stdin
+  else:
+    infile = open(filename, "r")
+  
+  if len(sys.argv) >= 3:
+    line_num = int(sys.argv[2])
+    for n, line in enumerate(infile):
+      if n == line_num - 1:  # line_num counds from 1
+        display_line(line)
+        break
+  else:
+    for line in infile:
+      display_line(line)
