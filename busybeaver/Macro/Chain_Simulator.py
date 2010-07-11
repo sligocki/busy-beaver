@@ -59,13 +59,8 @@ class Simulator:
   def loop_seek(self, cutoff):
     while self.num_loops < cutoff and self.op_state == Turing_Machine.RUNNING:
       self.step()
-
-  def true_loop_run(self, loops):
-    self.true_loop_seek(self.num_loops + self.machine.num_loops + self.proof.num_loops + loops)
-  def true_loop_seek(self, cutoff):
-    """Like loop_seek except that it also considers loops through the proof system."""
-    while self.num_loops + self.machine.num_loops + self.proof.num_loops < cutoff and self.op_state == Turing_Machine.RUNNING:
-      self.step()
+  
+  # TODO: true_loop_run which captures cost of prover, etc. also.
 
   def step(self):
     """Perform an atomic transition or chain step."""
