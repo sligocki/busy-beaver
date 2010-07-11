@@ -28,7 +28,7 @@ def reverse(in_list):
   reversed_in_list.reverse()
   return reversed_in_list
 
-class Repeated_Symbol:
+class Repeated_Symbol(object):
   """Slice of tape with repatitions."""
   def __init__(self, symbol, number_of_repetitions):
     self.symbol = symbol
@@ -44,7 +44,7 @@ class Repeated_Symbol:
   def copy(self):
     return Repeated_Symbol(self.symbol, self.num)
 
-class Chain_Tape:
+class Chain_Tape(object):
   """Stores the turing machine tape with repetition compression."""
   def init(self, init_symbol, init_dir):
     self.dir = init_dir
