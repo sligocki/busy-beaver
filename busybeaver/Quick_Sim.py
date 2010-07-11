@@ -5,7 +5,7 @@ import sys
 from Macro import Turing_Machine, Chain_Simulator, Block_Finder
 import IO
 
-def run(TTable, block_size, back, prover, rec, options):
+def run(TTable, block_size, back, prover, recursive, options):
   # Construct Machine (Backsymbol-k-Block-Macro-Machine)
   m = Turing_Machine.make_machine(TTable)
   # If no explicit block-size given, use inteligent software to find one
@@ -19,7 +19,10 @@ def run(TTable, block_size, back, prover, rec, options):
     m = Turing_Machine.Backsymbol_Macro_Machine(m)
 
   global sim
-  sim = Chain_Simulator.Simulator(m, rec, options.verbose_simulator, options.verbose_prover)
+  sim = Chain_Simulator.Simulator(m, recursive, init_prover=True, init_tape=True,
+                                  verbose_simulator=options.verbose_simulator,
+                                  verbose_prover=options.verbose_prover,
+                                  verbose_prefix="")
   sim.init_big()
   if not prover:
     sim.prover = None

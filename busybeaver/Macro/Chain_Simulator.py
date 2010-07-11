@@ -17,18 +17,8 @@ CHAIN_MOVE = "Chain_Move"
 
 class Simulator(object):
   """Turing machine simulator using chain-tape optimization."""
-  def __init__(self, *args, **keys):
-    if args or keys:
-      self.init_small(*args, **keys)
-    else:
-      self.init_stats()
-  
-  def init(self, *args, **keys):
-    """Default initialization, creates a blank tape, proof system, etc."""
-    self.init_small(*args, **keys)
-    self.init_big()
-  
-  def init_small(self, machine, recursive=False, verbose_simulator=False, verbose_prover=False, verbose_prefix=""):
+  def __init__(self, machine, recursive=False, init_prover=True, init_tape=True,
+               verbose_simulator=False, verbose_prover=False, verbose_prefix=""):
     self.machine = machine
     self.recursive = recursive
     self.verbose = verbose_simulator
@@ -41,12 +31,14 @@ class Simulator(object):
     self.op_state = Turing_Machine.RUNNING
     self.op_details = ()
     self.init_stats()
-  
+    if init_tape:
+      self.tape = Chain_Tape.Chain_Tape()
+      self.tape.init(self.machine.init_symbol, self.machine.init_dir)
+    if init_prover:
+      self.prover = Chain_Proof_System.Proof_System(
+          self.machine, self.recursive, self.verbose_prover, self.verbose_prefix + "  ")
   def init_big(self):
-    self.tape = Chain_Tape.Chain_Tape()
-    self.tape.init(self.machine.init_symbol, self.machine.init_dir)
-    self.prover = Chain_Proof_System.Proof_System(
-        self.machine, self.recursive, self.verbose_prover, self.verbose_prefix + "  ")
+    pass
   
   def init_stats(self):
     """Initializes statistics about simulation."""
@@ -154,7 +146,7 @@ class Simulator(object):
 
   def verbose_print(self):
     if self.verbose:
-      print self.verbose_prefix, self.num_loops, self.state, self.tape, self.step_num
+      print self.verbose_prefix, self.num_loops, self.state, self.tape
 
 def template(title, steps, loops):
   """Pretty print row of the steps table."""
