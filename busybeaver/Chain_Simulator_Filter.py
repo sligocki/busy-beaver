@@ -55,7 +55,7 @@ def run(TTable, options, steps=INF, runtime=None, block_size=None,
       sim = Macro.Chain_Simulator.Simulator()
       sim.init(m, recursive)
       if not prover:
-        sim.proof = None
+        sim.prover = None
 
       try:
         if runtime:
