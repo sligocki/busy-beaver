@@ -18,20 +18,31 @@ class Rule(object):
 
 class Diff_Rule(Rule):
   """A rule that specifies constant deltas for each tape block' repetition count."""
+  def __init__(self, initial_tape, diff_tape, num_loops, num_steps, rule_num):
+    self.initial_tape = initial_tape
+    self.diff_tape = diff_tape
+    self.num_loops = num_loops
+    self.num_steps = num_steps
+    self.num = rule_num
+    self.num_uses = 0  # Number of times this rule has been applied.
 
 class Gen_Rule(Rule):
   """A general rule that specifies some general end configuraton."""
 
 # TODO: Try out some other stripped_configs
 def stripped_info(block):
-  """Get an abstraction of a tape block. We try to prove rules between configuration which have the same abstraction."""
+  """Get an abstraction of a tape block. We try to prove rules between
+  configuration which have the same abstraction.
+  """
   if block.num == 1:
     return block.symbol, 1
   else:
     return block.symbol
 
 class Proof_System(object):
-  """Stores past information, looks for patterns and tries to prove general rules when it finds patterns."""
+  """Stores past information, looks for patterns and tries to prove general
+  rules when it finds patterns.
+  """
   def __init__(self, machine, recursive=False, verbose=False, verbose_prefix=""):
     self.machine = machine
     self.recursive = recursive  # Should we try to prove recursive rules? (That is rules which use previous rules as steps.)
@@ -45,7 +56,6 @@ class Proof_System(object):
     self.rules = {}
     # Stat
     self.num_loops = 0
-    self.num_uses_of_rule = {}
     self.num_recursive_rules = 0
     # TODO: Record how many steps are taken by recursive rules in simulator!
   
@@ -67,7 +77,8 @@ class Proof_System(object):
   
   def log(self, tape, state, step_num, loop_num):
     """Log this configuration into the memory and check if it is similar to a past one.
-    Returned boolean answers question: Rule applies?"""
+    Returned boolean answers question: Rule applies?
+    """
     # Stores state, direction pointed, and list of symbols on tape.
     # Note: we ignore the number of repetitions of these sequences so that we
     #   can get a very general view of the tape.
@@ -77,19 +88,27 @@ class Proof_System(object):
     full_config = (state, tape, step_num, loop_num)
     
     ## If we're already proven a rule for this stripped_config, try to apply it.
+    # TODO: stripped_config in self.rules.
     if self.rules.has_key(stripped_config):
-      is_good, res = self.applies(self.rules[stripped_config], full_config)
+      rule = self.rules[stripped_config]
+      is_good, res = self.applies(rule, full_config)
       if is_good:
-        trans, bad_delta = res
-        # a bad_delta is not recursable b/c e.g. (x + 3 // 2) is unresolvable
-        if (not self.recursive  or  bad_delta) and self.past_configs is not None:
+        trans, large_delta = res
+        # Optimization: If we apply a rule and we are not trying to perform
+        # recursive proofs, clear past configuration memory.
+        # Likewise, even recursive proofs cannot use every subrule as a step.
+        # Specifically, if there are any negative deltas other than -1, we cannot
+        # apply the rule in a proof (yet) becuase e.g. (x + 3 // 2) is unresolvable
+        # TODO: Enable Collatz proofs!
+        if (not self.recursive  or  large_delta) and self.past_configs is not None:
           self.past_configs = {}
-        self.num_uses_of_rule[stripped_config] += 1
+        rule.num_uses += 1
         return trans
       return False, None, None
     
     # If we are not trying to prove new rules, quit
     if self.past_configs is None:
+      # TODO: Just return False for fail and object for success.
       return False, None, None
     
     # Otherwise
@@ -108,30 +127,33 @@ class Proof_System(object):
     
     # If this is the third (or greater) time (i.e. config is stored) ...
     old_config, old_loop_num, delta_loop = rest
-    # ... but loops don't match up, save config again in hope for next time
+    # ... but loops don't match up, save config again in hope for next time.
+    # (Note: We can only prove rules that take the same number of loops each time.)
     if loop_num - old_loop_num != delta_loop:
       delta_loop = loop_num - old_loop_num
       self.past_configs[stripped_config] = (times_seen + 1, ((state, tape.copy(), step_num, loop_num), loop_num, delta_loop))
       return False, None, None
     
-    # ... and loops do match up, then try the proof!
-    rule = self.compare(old_config, full_config)
-    if rule:
+    # ... and loops do match up, then try to prove it.
+    rule = self.prove_rule(old_config, full_config)
+    if rule:  # If we successfully proved a rule:
       # Remember rule
       self.rules[stripped_config] = rule
-      self.num_uses_of_rule[stripped_config] = 0
       # Clear our memory (couldn't use it anyway)
       self.past_configs = {}
       # Try to apply transition
       is_good, res = self.applies(rule, full_config)
       if is_good:
-        trans, bad_delta = res
-        self.num_uses_of_rule[stripped_config] += 1
+        trans, large_delta = res
+        rule.num_uses += 1
         return trans
     return False, None, None
   
-  def compare(self, old_config, new_config):
-    """Test the generality of a suggested meta-transition."""
+  def prove_rule(self, old_config, new_config):
+    """Try to prove a general rule based upon specific example.
+    
+    Returns rule if successful or None.
+    """
     if self.verbose:
       print
       self.print_this("** Testing new rule **")
@@ -254,11 +276,6 @@ class Proof_System(object):
     if not isinstance(num_steps, Algebraic_Expression):
       num_steps = Algebraic_Expression([], num_steps)
     
-    if is_recursive_rule:
-      if self.verbose:
-        self.print_this("** New recursive rule proven **")
-      self.num_recursive_rules += 1
-
     if self.verbose:
       print
       self.print_this("** New rule proven **")
@@ -267,18 +284,26 @@ class Proof_System(object):
       self.print_this("In steps:", num_steps)
       print
     
-    return initial_tape, diff_tape, num_steps
+    if is_recursive_rule:
+      if self.verbose:
+        self.print_this("** New recursive rule proven **")
+      self.num_recursive_rules += 1
+      # TODO: rule = Gen_Rule()
+      rule = Diff_Rule(initial_tape, diff_tape, gen_sim.num_loops, num_steps, len(self.rules))
+    else:
+      rule = Diff_Rule(initial_tape, diff_tape, gen_sim.num_loops, num_steps, len(self.rules))
+    
+    return rule
   
-  def applies(self, rule, new_config):
+  def applies(self, rule, start_config):
     """Make sure that a meta-transion applies and provide important info"""
     ## Unpack input
-    initial_tape, diff_tape, diff_num_steps = rule
-    new_state, new_tape, new_step_num, new_loop_num = new_config
+    new_state, new_tape, new_step_num, new_loop_num = start_config
     
     if self.verbose:
       print
       self.print_this("++ Applying Rule ++")
-      self.print_this("Loop:", new_loop_num, "Rule ID:", diff_num_steps)
+      self.print_this("Loop:", new_loop_num, "Rule ID:", rule.num)
       self.print_this("Rule:", rule)
       self.print_this("Config:", new_state, new_tape)
     
@@ -286,10 +311,12 @@ class Proof_System(object):
     num_reps = Chain_Tape.INF
     init_value = {}
     delta_value = {}
-    bad_delta = False  # bad_delta == True  iff there is a negative delta != -1
+    # large_delta == True  iff there is a negative delta != -1
+    # We keep track because even recursive proofs cannot contain rules with large_deltas.
+    large_delta = False
     has_variable = False
     for dir in range(2):
-      for init_block, diff_block, new_block in zip(initial_tape.tape[dir], diff_tape.tape[dir], new_tape.tape[dir]):
+      for init_block, diff_block, new_block in zip(rule.initial_tape.tape[dir], rule.diff_tape.tape[dir], new_tape.tape[dir]):
         # The constant term in init_block.num represents the minimum required value.
         if isinstance(init_block.num, Algebraic_Expression):
           # Calculate the initial and change in value for each variable.
@@ -311,7 +338,7 @@ class Proof_System(object):
           #   above the minimum requirement.
           if delta_value[x] < 0:
             if delta_value[x] != -1:
-              bad_delta = True
+              large_delta = True
             try:
               # As long as init_value[x] >= 0 we can apply proof
               num_reps = min(num_reps, (init_value[x] // -delta_value[x])  + 1)
@@ -326,15 +353,15 @@ class Proof_System(object):
     if num_reps is Chain_Tape.INF:
       if self.verbose:
         self.print_this("++ Rules applies infinitely ++")
-      return True, ((Turing_Machine.INF_REPEAT, None, None), bad_delta)
+      return True, ((Turing_Machine.INF_REPEAT, None, None), large_delta)
     
     # Apply recursive transition once (Constant speed up).
     # TODO: Get function to apply repeatedly in tight loop.
     if has_variable:
-      diff_steps = diff_num_steps.substitute(init_value)
+      diff_steps = rule.num_steps.substitute(init_value)
       return_tape = new_tape.copy()
       for dir in range(2):
-        for diff_block, return_block in zip(diff_tape.tape[dir], return_tape.tape[dir]):
+        for diff_block, return_block in zip(rule.diff_tape.tape[dir], return_tape.tape[dir]):
           if return_block.num is not Chain_Tape.INF:
             if isinstance(diff_block.num, Algebraic_Expression):
               return_block.num += diff_block.num.substitute(init_value)
@@ -344,7 +371,7 @@ class Proof_System(object):
       if self.verbose:
         self.print_this("++ Applying variable deltas once ++")
         self.print_this("Resulting tape:", return_tape)
-      return True, ((Turing_Machine.RUNNING, return_tape, diff_steps), bad_delta)
+      return True, ((Turing_Machine.RUNNING, return_tape, diff_steps), large_delta)
     
     # If we cannot even apply this transition once, we're done.
     if num_reps <= 0:
@@ -352,13 +379,11 @@ class Proof_System(object):
         self.print_this("++ Cannot even apply transition once ++")
       return False, 3
     
-    ## Evaluate number of steps taken by taking meta-transition.
-    ##   This would be equivolent to summing the diff_num_steps over ...
-    # TODO: Appear to break for num_reps an ALgebraic_Expression.
+    ## Determine number of base steps taken by applying rule.
     # Effect of the constant factor:
-    diff_steps = diff_num_steps.const * num_reps
+    diff_steps = rule.num_steps.const * num_reps
     # Effects of each variable in the formula:
-    for term in diff_num_steps.terms:
+    for term in rule.num_steps.terms:
       assert len(term.vars) == 1
       coef = term.coef; x = term.vars[0].var
       # We don't factor out the coef, because it might make this work better for
@@ -368,7 +393,7 @@ class Proof_System(object):
     ## Alter the tape to account for taking meta-transition.
     return_tape = new_tape.copy()
     for dir in range(2):
-      for diff_block, return_block in zip(diff_tape.tape[dir], return_tape.tape[dir]):
+      for diff_block, return_block in zip(rule.diff_tape.tape[dir], return_tape.tape[dir]):
         if return_block.num is not Chain_Tape.INF:
           return_block.num += num_reps * diff_block.num
       return_tape.tape[dir] = [x for x in return_tape.tape[dir] if x.num != 0]
@@ -379,7 +404,7 @@ class Proof_System(object):
       self.print_this("Times applied:", num_reps)
       self.print_this("Resulting tape:", return_tape)
       print
-    return True, ((Turing_Machine.RUNNING, return_tape, diff_steps), bad_delta)
+    return True, ((Turing_Machine.RUNNING, return_tape, diff_steps), large_delta)
 
 def series_sum(V0, dV, n):
   """Sums the arithmetic series V0, V0+dV, ... V0+(n-1)*dV."""
