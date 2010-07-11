@@ -4,7 +4,7 @@ from Number import Number, Rational
 def is_scalar(value):
   return isinstance(value, (int, long, Rational))
 
-class Variable:
+class Variable(object):
   """A distinct variable in an algebraic expression"""
   num_vars = 0
   def __init__(self):
@@ -21,7 +21,7 @@ class Variable:
   def __hash__(self):
     return hash(self.id)
 
-class Var_Power:
+class Var_Power(object):
   """A variable raised to some power (eg: a^3)"""
   def __init__(self, variable, power):
     self.var = variable
@@ -36,7 +36,7 @@ class Var_Power:
     # TODO: What should we do if it's not in dict?
     return subs[self.var]**self.pow
 
-class Term:
+class Term(object):
   """A term in a (multi-variable) polynomial (eg: 4 x^3 * y^2)"""
   def __init__(self, var_powers, coeficient):
     self.vars = var_powers # Always assumed to be a non-empty tuple
@@ -81,11 +81,25 @@ class Expression(Number):
     else:
       return expr_prod(self, other)
   def __div__(self, other):
+    """Divide the expression by a scalar.
+    
+    If the scalar does not perfectly divide all the coeficients and constant,
+    we return NotImplemented
+    """
+    # TODO: Implement some way of dealing with situations like (d + d^2) / 2
     if other == 1:
       return self
-    if is_scalar(other):
-      new_terms = tuple([Term(t.vars, t.coef.__div__(other)) for t in self.terms])
-      return Expression(new_terms, self.const.__div__(other))
+    elif is_scalar(other):
+      new_const = self.const.__div__(other)
+      if new_const * other != self.const:
+        return NotImplemented
+      new_terms = []
+      for old_term in self.terms:
+        new_coef = old_term.coef.__div__(other)
+        if new_coef * other != old_term.coef:
+          return NotImplemented
+        new_terms.append(Term(old_term.vars, new_coef))
+      return Expression(tuple(new_terms), new_const)
     else:
       ### TODO: We could (actually) devide, say (8x+8) / (x+1) = 8 !
       return NotImplemented
