@@ -7,6 +7,7 @@ import signal
 try:
   from signalPlus import alarm
 except ImportError:
+  import sys; print >>sys.stderr, "Alarm.py: Failed to import signalPlus, falling back to signal."
   from signal import alarm
 
 class AlarmException(Exception):

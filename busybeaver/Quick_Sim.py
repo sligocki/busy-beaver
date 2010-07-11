@@ -19,7 +19,7 @@ def run(TTable, block_size, back, prover, recursive, options):
     m = Turing_Machine.Backsymbol_Macro_Machine(m)
 
   global sim
-  sim = Chain_Simulator.Simulator(m, recursive, init_prover=True, init_tape=True,
+  sim = Chain_Simulator.Simulator(m, recursive, enable_prover=True, init_tape=True,
                                   verbose_simulator=options.verbose_simulator,
                                   verbose_prover=options.verbose_prover,
                                   verbose_prefix="")

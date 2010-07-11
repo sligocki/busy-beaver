@@ -17,7 +17,7 @@ CHAIN_MOVE = "Chain_Move"
 
 class Simulator(object):
   """Turing machine simulator using chain-tape optimization."""
-  def __init__(self, machine, recursive=False, init_prover=True, init_tape=True,
+  def __init__(self, machine, recursive=False, enable_prover=True, init_tape=True,
                verbose_simulator=False, verbose_prover=False, verbose_prefix=""):
     self.machine = machine
     self.recursive = recursive
@@ -31,9 +31,11 @@ class Simulator(object):
     if init_tape:
       self.tape = Chain_Tape.Chain_Tape()
       self.tape.init(self.machine.init_symbol, self.machine.init_dir)
-    if init_prover:
+    if enable_prover:
       self.prover = Chain_Proof_System.Proof_System(
           self.machine, self.recursive, self.verbose_prover, self.verbose_prefix + "  ")
+    else:
+      self.prover = None  # We will run the simulation without a proof system.
     # Operation state (e.g. running, halted, proven-infinite, ...)
     self.op_state = Turing_Machine.RUNNING
     self.op_details = ()

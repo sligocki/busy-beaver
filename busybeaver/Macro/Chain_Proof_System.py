@@ -168,7 +168,7 @@ class Proof_System(object):
     # Create the serogate simulator with the apm only able to use proven trans.
     gen_sim = Chain_Simulator.Simulator(self.machine,
                                         recursive=False,
-                                        init_prover=False,
+                                        enable_prover=False,  # We'll create out own if needed.
                                         init_tape=False,
                                         verbose_simulator=self.verbose,
                                         verbose_prover=False,
@@ -182,8 +182,6 @@ class Proof_System(object):
       gen_sim.prover = copy.copy(self)
       gen_sim.prover.past_configs = None
       gen_sim.prover.verbose_prefix = gen_sim.verbose_prefix + "  "
-    else:
-      gen_sim.prover = None
     
     # Create a new tape which we will use to simulate general situation.
     gen_sim.tape = old_tape.copy()
