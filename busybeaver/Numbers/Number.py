@@ -1,6 +1,6 @@
 from __future__ import division
 
-class Number:
+class Number(object):
   """Base class for user-defined number-like objects"""
   # Basic Laws of "Numbers"
   def __radd__(self, other):

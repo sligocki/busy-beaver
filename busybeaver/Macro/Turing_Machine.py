@@ -15,7 +15,7 @@ INF_REPEAT = "Inf_Repeat" # Machine proven not to halt within move
 UNDEFINED  = "Undefined"  # Machine encountered undefined transition
 TIME_OUT   = "Timeout"    # A timer expired
 
-class Turing_Machine:
+class Turing_Machine(object):
   """Abstract base for all specific Turing Machines
 
   Derived classes should define:
