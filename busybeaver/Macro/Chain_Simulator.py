@@ -137,7 +137,7 @@ class Simulator(object):
   
   def print_steps(self):
     print
-    print "         Steps:                        Times Applied:"
+    print "         Steps:                     Times Applied:"
     print template("Total:", self.step_num, self.num_loops)
     #print "Single Steps:", with_power(self.mtt.num_single_steps)
     print template("Macro:", self.steps_from_macro, self.num_macro_moves)
