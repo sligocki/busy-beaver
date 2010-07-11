@@ -13,6 +13,15 @@ parent_dir = sys.path[0][:sys.path[0].rfind("/")] # pwd path with last directory
 sys.path.insert(1, parent_dir)
 from Numbers.Algebraic_Expression import Algebraic_Unknown, Algebraic_Expression
 
+class Rule(object):
+  """Base type for Proof_System rules."""
+
+class Diff_Rule(Rule):
+  """A rule that specifies constant deltas for each tape block' repetition count."""
+
+class Gen_Rule(Rule):
+  """A general rule that specifies some general end configuraton."""
+
 def stripped_info(block):
   """Get an abstraction of a tape block. We try to prove rules between configuration which have the same abstraction."""
   if block.num == 1:
@@ -21,16 +30,16 @@ def stripped_info(block):
     return block.symbol
 
 class Proof_System(object):
-  """Stores past information and runs automated proof finders when it finds patterns."""
+  """Stores past information, looks for patterns and tries to prove general rules when it finds patterns."""
   def __init__(self, machine, recursive=False, verbose=False, verbose_prefix=""):
     self.machine = machine
-    self.recursive = recursive
+    self.recursive = recursive  # Should we try to prove recursive rules? (That is rules which use previous rules as steps.)
     self.verbose = verbose  # Step-by-step state printing
     self.verbose_prefix = verbose_prefix
-    # Hash of general forms of past configs
+    # Memory of past stripped configurations with enough extra information to try to prove rules.
     self.past_configs = {}
-    # Hash of general forms of proven meta-transitions
-    self.proven_transitions = {}
+    # Colection of proven rules indexed by stripped configurations.
+    self.rules = {}
     # Stat
     self.num_loops = 0
     self.num_uses_of_rule = {}
@@ -45,7 +54,7 @@ class Proof_System(object):
     print
   
   def print_rules(self):
-    for (state, a, b, c), (init_tape, diff_tape, num_steps) in self.proven_transitions.items():
+    for (state, a, b, c), (init_tape, diff_tape, num_steps) in self.rules.items():
       print
       self.print_this(state, init_tape)
       self.print_this(diff_tape)
@@ -64,8 +73,8 @@ class Proof_System(object):
     full_config = (state, tape, step_num, loop_num)
     
     # If this config already has a proven meta-transition return it.
-    if self.proven_transitions.has_key(stripped_config):
-      is_good, res = self.applies(self.proven_transitions[stripped_config], full_config)
+    if self.rules.has_key(stripped_config):
+      is_good, res = self.applies(self.rules[stripped_config], full_config)
       if is_good:
         trans, bad_delta = res
         # a bad_delta is not recursable b/c e.g. (x + 3 // 2) is unresolvable
@@ -105,7 +114,7 @@ class Proof_System(object):
     rule = self.compare(old_config, full_config)
     if rule:
       # Remember rule
-      self.proven_transitions[stripped_config] = rule
+      self.rules[stripped_config] = rule
       self.num_uses_of_rule[stripped_config] = 0
       # Clear our memory (couldn't use it anyway)
       self.past_configs = {}
