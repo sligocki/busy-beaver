@@ -22,7 +22,7 @@ def run(TTable, block_size, back, prover, rec, options):
   sim = Chain_Simulator.Simulator()
   sim.init(m, rec, options.verbose_simulator, options.verbose_prover)
   if not prover:
-    sim.proof = None
+    sim.prover = None
   extent = 1
   #raw_input("Ready?")
   try:

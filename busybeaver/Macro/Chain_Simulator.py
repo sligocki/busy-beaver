@@ -27,7 +27,7 @@ class Simulator(object):
     self.verbose_prefix = verbose_prefix
     self.tape = Chain_Tape.Chain_Tape()
     self.tape.init(machine.init_symbol, machine.init_dir)
-    self.proof = Chain_Proof_System.Proof_System(self.machine, recursive, verbose_prover, verbose_prefix + "  ")
+    self.prover = Chain_Proof_System.Proof_System(self.machine, recursive, verbose_prover, verbose_prefix + "  ")
     self.state = machine.init_state
     self.dir = machine.init_dir
     self.step_num = 0
@@ -68,9 +68,9 @@ class Simulator(object):
       return
     self.verbose_print()
     self.num_loops += 1
-    if self.proof:
+    if self.prover:
       # Log the configuration and see if we can apply a rule.
-      cond, new_tape, num_steps = self.proof.log(self.tape, self.state, self.step_num, self.num_loops-1)
+      cond, new_tape, num_steps = self.prover.log(self.tape, self.state, self.step_num, self.num_loops-1)
       # Proof system says that machine will repeat forever
       if cond == Turing_Machine.INF_REPEAT:
         self.op_state = Turing_Machine.INF_REPEAT
@@ -134,11 +134,11 @@ class Simulator(object):
     print template("Macro:", self.steps_from_macro, self.num_macro_moves)
     #print "Macro transitions defined:", len(self.mtt.macro_TTable)
     print template("Chain:", self.steps_from_chain, self.num_chain_moves)
-    if self.proof:
+    if self.prover:
       print template("Rule:", self.steps_from_rule, self.num_rule_moves)
-      print "Rules proven:", len(self.proof.rules)
-      if self.proof.recursive:
-        print "Recursive rules proven:", self.proof.num_recursive_rules
+      print "Rules proven:", len(self.prover.rules)
+      if self.prover.recursive:
+        print "Recursive rules proven:", self.prover.num_recursive_rules
 
   def verbose_print(self):
     if self.verbose:
