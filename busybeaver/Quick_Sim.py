@@ -26,14 +26,16 @@ def run(TTable, block_size, back, prover, rec, options):
   extent = 1
   #raw_input("Ready?")
   try:
-    if options.quiet or options.verbose:  # If verbose sim prints for itself.
+    if options.cutoff_loops:  # TODO: maybe allow printing? Mostly inteded for batch work.
+      sim.loop_seek(options.cutoff_loops)
+    elif options.quiet or options.verbose:  # Note verbose prints inside sim.step()
       while sim.op_state == Turing_Machine.RUNNING:
         sim.step()
     else:
       # TODO: maybe print based on time
       while sim.op_state == Turing_Machine.RUNNING:
         sim.print_self()
-        sim.loop_run(1000)
+        sim.loop_run(options.print_loops)
   finally:
     sim.print_self()
 
@@ -69,6 +71,8 @@ if __name__ == "__main__":
   parser.add_option("--verbose-prover", action="store_true", help="Provide debuggin output from prover.")
   parser.add_option("--verbose-simulator", action="store_true", help="Provide debuggin output from simulator.")
   parser.add_option("--verbose-block-finder", action="store_true", help="Provide debuggin output from block_finder.")
+  parser.add_option("--print-loops", type=int, default=10000, metavar="LOOPS", help="Print every LOOPS loops.")
+  parser.add_option("--cutoff-loops", type=int, default=None, metavar="LOOPS", help="Run for LOOPS loops and then quit.")
   
   parser.add_option("-b", "--no-backsymbol", action="store_false", dest="backsymbol", default=True, 
                     help="Turn off backsymbol macro machine")
