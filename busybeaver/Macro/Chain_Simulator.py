@@ -27,21 +27,17 @@ class Simulator(object):
     self.state = machine.init_state
     self.dir = machine.init_dir
     self.step_num = 0
-    # Operation state (e.g. running, halted, proven-infinite, ...)
-    self.op_state = Turing_Machine.RUNNING
-    self.op_details = ()
-    self.init_stats()
+    # Init tape and prover (if needed).
     if init_tape:
       self.tape = Chain_Tape.Chain_Tape()
       self.tape.init(self.machine.init_symbol, self.machine.init_dir)
     if init_prover:
       self.prover = Chain_Proof_System.Proof_System(
           self.machine, self.recursive, self.verbose_prover, self.verbose_prefix + "  ")
-  def init_big(self):
-    pass
-  
-  def init_stats(self):
-    """Initializes statistics about simulation."""
+    # Operation state (e.g. running, halted, proven-infinite, ...)
+    self.op_state = Turing_Machine.RUNNING
+    self.op_details = ()
+    # Stats
     self.num_loops = 0
     self.num_macro_moves = 0
     self.steps_from_macro = 0
