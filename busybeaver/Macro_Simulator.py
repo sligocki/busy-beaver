@@ -140,7 +140,7 @@ def run(TTable, options, steps=INF, runtime=None, block_size=None,
 
 # Main script
 if __name__ == "__main__":
-  from optparse import OptionParser
+  from optparse import OptionParser, OptionGroup
   # Parse command line options.
   usage = "usage: %prog [options] machine_file [line_number]"
   parser = OptionParser(usage=usage)

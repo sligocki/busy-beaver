@@ -1,7 +1,13 @@
 #! /usr/bin/env python
 
 import signal
-import signalPlus
+
+# SignalPlus allows milisecond alarm, but needs to be compiled seperately.
+# Fall back to inferior signal.alarm if we have to.
+try:
+  from signalPlus import alarm
+except ImportError:
+  from signal import alarm
 
 class AlarmException(Exception):
   """An exception to be tied to a timer running out."""
@@ -13,11 +19,11 @@ class Alarm(object):
   
   def set_alarm(self, time):
     self.is_alarm_on = True
-    signalPlus.alarm(time)
+    alarm(time)
   
   def cancel_alarm(self):
     self.is_alarm_on = False
-    signalPlus.alarm(0)
+    alarm(0)
   
   def alarm_handler(self, signum, frame):
     if self.is_alarm_on:

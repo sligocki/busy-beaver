@@ -1,4 +1,4 @@
-prover#! /usr/bin/env python
+#! /usr/bin/env python
 #
 # Runs the CTL (A* B) on a machine to discover infinite behavior
 
