@@ -13,7 +13,6 @@ def block_finder(machine, limit1=200, limit2=200, run1=True, run2=True, extra_mu
   """Tries to find the optimal block-size for macromachines"""
   ## First find the minimum efficient tape compression size
   sim = Simulator(machine)
-  sim.init_big()
   sim.prover = None # Don't allow proof steps. We just want to find the best block size.
   
   if DEBUG:
@@ -40,7 +39,6 @@ def block_finder(machine, limit1=200, limit2=200, run1=True, run2=True, extra_mu
       print "Least compression at step:", worst_time
     
     sim = Simulator(machine)
-    sim.init_big()
     sim.prover = None
     sim.seek(worst_time)
       
@@ -82,7 +80,6 @@ def block_finder(machine, limit1=200, limit2=200, run1=True, run2=True, extra_mu
     block_machine = Turing_Machine.Block_Macro_Machine(machine, mult*opt_size)
     back_machine = Turing_Machine.Backsymbol_Macro_Machine(block_machine)
     sim = Simulator(back_machine)
-    sim.init_big()
     sim.prover = None # No proof system
     sim.loop_seek(limit2)
     if sim.op_state != Turing_Machine.RUNNING:

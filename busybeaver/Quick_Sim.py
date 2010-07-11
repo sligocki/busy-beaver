@@ -23,7 +23,6 @@ def run(TTable, block_size, back, prover, recursive, options):
                                   verbose_simulator=options.verbose_simulator,
                                   verbose_prover=options.verbose_prover,
                                   verbose_prefix="")
-  sim.init_big()
   if not prover:
     sim.prover = None
   extent = 1
