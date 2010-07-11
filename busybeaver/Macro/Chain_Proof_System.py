@@ -372,11 +372,5 @@ def series_sum(V0, dV, n):
   # always work out because either n or n-1 is even. However, if n is an
   # Algebraic_Expression, this is more complicated. We don't want to use
   # __truediv__ because then we'd get a float output for ints.
-  print
-  print "%% Series Sum %%"
-  print V0, dV, n
-  print dV*n*(n-1)
-  print V0*n + (dV*n*(n-1))/2
-  print
   return V0*n + (dV*n*(n-1))/2
 
