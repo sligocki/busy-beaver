@@ -157,10 +157,10 @@ class Simulator(object):
     print template("Chain:", self.steps_from_chain, self.num_chain_moves)
     if self.prover:
       print template("Rule:", self.steps_from_rule, self.num_rule_moves)
-      print "Loops through prover:", self.prover.num_loops
       print "Rules proven:", len(self.prover.rules)
       if self.prover.recursive:
         print "Recursive rules proven:", self.prover.num_recursive_rules
+      print "Tapes copied in prover:", self.prover.tapes_copied
 
   def verbose_print(self):
     if self.verbose:

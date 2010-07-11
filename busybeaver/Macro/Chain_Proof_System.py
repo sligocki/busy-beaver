@@ -39,6 +39,11 @@ def stripped_info(block):
   else:
     return block.symbol
 
+def strip_config(state, dir, tape):
+  """"Return a generalized configuration removing the non-1 repatition counts from the tape."""
+  # TODO: This map is expensive upwards of 25% of time is spend here.
+  return state, dir, tuple(map(stripped_info, tape[0])), tuple(map(stripped_info, tape[1]))
+
 class Proof_System(object):
   """Stores past information, looks for patterns and tries to prove general
   rules when it finds patterns.
@@ -60,6 +65,7 @@ class Proof_System(object):
     self.num_loops = 0
     self.num_recursive_rules = 0
     # TODO: Record how many steps are taken by recursive rules in simulator!
+    self.tapes_copied = 0  # Copying tapes is expensive, we should keep an eye on this.
   
   def print_this(self, *args):
     """Print with prefix."""
@@ -84,10 +90,7 @@ class Proof_System(object):
     # Stores state, direction pointed, and list of symbols on tape.
     # Note: we ignore the number of repetitions of these sequences so that we
     #   can get a very general view of the tape.
-    # TODO: This map is expensive upwards of 25% of time is spend here.
-    stripped_config = (state, tape.dir,
-                       tuple(map(stripped_info, tape.tape[0])),
-                       tuple(map(stripped_info, tape.tape[1])))
+    stripped_config = strip_config(state, tape.dir, tape.tape)
     full_config = (state, tape, step_num, loop_num)
     
     ## If we're already proven a rule for this stripped_config, try to apply it.
@@ -128,6 +131,7 @@ class Proof_System(object):
       # TODO: maybe don't copy tape until we get a consistent delta_loop.
       # Simulators which prove no rules are spending about 15% of time copying.
       self.past_configs[stripped_config] = (2, ((state, tape.copy(), step_num, loop_num), loop_num, delta_loop))
+      self.tapes_copied += 1
       return False, None, None
     
     # If this is the third (or greater) time (i.e. config is stored) ...
@@ -137,6 +141,7 @@ class Proof_System(object):
     if loop_num - old_loop_num != delta_loop:
       delta_loop = loop_num - old_loop_num
       self.past_configs[stripped_config] = (times_seen + 1, ((state, tape.copy(), step_num, loop_num), loop_num, delta_loop))
+      self.tapes_copied += 1
       return False, None, None
     
     # ... and loops do match up, then try to prove it.
