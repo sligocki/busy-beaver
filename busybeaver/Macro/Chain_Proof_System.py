@@ -45,7 +45,8 @@ class Proof_System(object):
   """
   def __init__(self, machine, recursive, compute_steps, verbose, verbose_prefix):
     self.machine = machine
-    self.recursive = recursive  # Should we try to prove recursive rules? (That is rules which use previous rules as steps.)
+    # Should we try to prove recursive rules? (Rules which use previous rules as steps.)
+    self.recursive = recursive
     self.compute_steps = compute_steps
     self.verbose = verbose  # Step-by-step state printing
     self.verbose_prefix = verbose_prefix
@@ -270,8 +271,10 @@ class Proof_System(object):
           is_recursive_rule = True  # Recursive rules have variables in diff.
           diff_block.num = diff_block.num.substitute(replaces)
     # Fix num_steps.
-    # TODO: Steps are not coming out right.
-    num_steps = gen_sim.step_num.substitute(replaces)
+    if self.compute_steps:
+      num_steps = gen_sim.step_num.substitute(replaces)
+    else:
+      num_steps = 0
     
     # Cast num_steps as an Algebraic Expression (if it somehow got through as simply an int)
     if not isinstance(num_steps, Algebraic_Expression):
@@ -359,7 +362,10 @@ class Proof_System(object):
     # Apply recursive transition once (Constant speed up).
     # TODO: Get function to apply repeatedly in tight loop.
     if has_variable:
-      diff_steps = rule.num_steps.substitute(init_value)
+      if self.compute_steps:
+        diff_steps = rule.num_steps.substitute(init_value)
+      else:
+        diff_steps = 0
       return_tape = new_tape.copy()
       for dir in range(2):
         for diff_block, return_block in zip(rule.diff_tape.tape[dir], return_tape.tape[dir]):
