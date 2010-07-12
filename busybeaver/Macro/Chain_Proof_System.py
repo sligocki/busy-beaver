@@ -39,10 +39,35 @@ def stripped_info(block):
   else:
     return block.symbol
 
-def strip_config(state, dir, tape):
+## Multiple implementations for profiling test.
+def strip_config_map(state, dir, tape):
   """"Return a generalized configuration removing the non-1 repatition counts from the tape."""
   # TODO: This map is expensive upwards of 25% of time is spend here.
   return state, dir, tuple(map(stripped_info, tape[0])), tuple(map(stripped_info, tape[1]))
+
+def strip_config_iter(state, dir, tape):
+  """"Return a generalized configuration removing the non-1 repatition counts from the tape."""
+  stripped_tape = [[], []]
+  for dir in range(2):
+    for block in tape[dir]:
+      if block.num == 1:
+        stripped_tape[dir].append((block.symbol, 1))
+      else:
+        stripped_tape[dir].append(block.symbol)
+  return state, dir, tuple(stripped_tape[0]), tuple(stripped_tape[1])
+
+def strip_config_hash(state, dir, tape):
+  """"Return a generalized configuration removing the non-1 repatition counts from the tape."""
+  running_hash = None
+  for dir in range(2):
+    for block in tape[dir]:
+      if block.num == 1:
+        running_hash = hash((running_hash, block.symbol, 1))
+      else:
+        running_hash = hash((running_hash, block.symbol))
+  return state, dir, running_hash
+
+strip_config = strip_config_map
 
 class Proof_System(object):
   """Stores past information, looks for patterns and tries to prove general
