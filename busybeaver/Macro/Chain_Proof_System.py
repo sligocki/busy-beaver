@@ -27,7 +27,7 @@ class Diff_Rule(Rule):
     self.num_uses = 0  # Number of times this rule has been applied.
 
 class Gen_Rule(Rule):
-  """A general rule that specifies some general end configuraton."""
+  """A general rule that specifies some general end configuration."""
 
 # TODO: Try out some other stripped_configs
 def stripped_info(block):
@@ -40,38 +40,14 @@ def stripped_info(block):
     return block.symbol
 
 ## Multiple implementations for profiling test.
-def strip_config_map(state, dir, tape):
-  """"Return a generalized configuration removing the non-1 repatition counts from the tape."""
+def strip_config(state, dir, tape):
+  """"Return a generalized configuration removing the non-1 repetition counts from the tape."""
   # Optimization: Strip off Infinity blocks before we run the map (see tape[x][1:]).
   # Turns out Infinity.__cmp__ is expensive when run millions of times.
   # It used to spend up to 25% ot time here.
   # TODO: This map is expensive upwards of 10% of time is spend here.
   return (state, dir, tuple(map(stripped_info, tape[0][1:])),
                       tuple(map(stripped_info, tape[1][1:])))
-
-def strip_config_iter(state, dir, tape):
-  """"Return a generalized configuration removing the non-1 repatition counts from the tape."""
-  stripped_tape = [[], []]
-  for dir in range(2):
-    for block in tape[dir]:
-      if block.num == 1:
-        stripped_tape[dir].append((block.symbol, 1))
-      else:
-        stripped_tape[dir].append(block.symbol)
-  return state, dir, tuple(stripped_tape[0]), tuple(stripped_tape[1])
-
-def strip_config_hash(state, dir, tape):
-  """"Return a generalized configuration removing the non-1 repatition counts from the tape."""
-  running_hash = None
-  for dir in range(2):
-    for block in tape[dir]:
-      if block.num == 1:
-        running_hash = hash((running_hash, block.symbol, 1))
-      else:
-        running_hash = hash((running_hash, block.symbol))
-  return state, dir, running_hash
-
-strip_config = strip_config_map
 
 class Proof_System(object):
   """Stores past information, looks for patterns and tries to prove general
@@ -337,7 +313,7 @@ class Proof_System(object):
     return rule
   
   def applies(self, rule, start_config):
-    """Make sure that a meta-transion applies and provide important info"""
+    """Try to apply a rule."""
     ## Unpack input
     new_state, new_tape, new_step_num, new_loop_num = start_config
     
