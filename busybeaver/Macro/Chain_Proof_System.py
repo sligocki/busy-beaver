@@ -18,16 +18,31 @@ class Rule(object):
 
 class Diff_Rule(Rule):
   """A rule that specifies constant deltas for each tape block' repetition count."""
-  def __init__(self, initial_tape, diff_tape, num_loops, num_steps, rule_num):
+  def __init__(self, initial_tape, diff_tape, num_steps, num_loops, rule_num):
+    # TODO: Use basic lists instead of tapes, we never use the symbols.
+    # TODO: Have a variable list and a min list instead of packing both into init_tape.
+    # TOOD: Or maybe we don't even need variables, we could just have the things that
+    # depend on variables index directly into the tapes?
+    # TODO: Actually, variables only appear in num_steps, so we don't even need them
+    # if we are not computing steps.
     self.initial_tape = initial_tape
     self.diff_tape = diff_tape
-    self.num_loops = num_loops
     self.num_steps = num_steps
-    self.num = rule_num
+    self.num_loops = num_loops
+    self.num = rule_num  # Unique identifier.
     self.num_uses = 0  # Number of times this rule has been applied.
 
-class Gen_Rule(Rule):
-  """A general rule that specifies some general end configuration."""
+class General_Rule(Rule):
+  """A general rule that specifies any general end configuration."""
+  def __init__(self, var_list, min_list, result_tape, num_steps, num_loops, rule_num):
+    self.var_list = var_list  # List of variables (or None) to assign repetition counts to.
+    self.min_list = min_list  # List of minimum values for 
+    # TODO: result_list and force output tape to be the same stripped config as input tape.
+    self.result_tape = result_tape
+    self.num_steps = num_steps
+    self.num_loops = num_loops
+    self.num = rule_num
+    self.num_uses = 0
 
 # TODO: Try out some other stripped_configs
 def stripped_info(block):
@@ -102,7 +117,7 @@ class Proof_System(object):
     # TODO: stripped_config in self.rules.
     if self.rules.has_key(stripped_config):
       rule = self.rules[stripped_config]
-      is_good, res = self.applies(rule, full_config)
+      is_good, res = self.apply_rule(rule, full_config)
       if is_good:
         trans, large_delta = res
         # Optimization: If we apply a rule and we are not trying to perform
@@ -157,7 +172,7 @@ class Proof_System(object):
       # Clear our memory (couldn't use it anyway)
       self.past_configs = {}
       # Try to apply transition
-      is_good, res = self.applies(rule, full_config)
+      is_good, res = self.apply_rule(rule, full_config)
       if is_good:
         trans, large_delta = res
         rule.num_uses += 1
@@ -257,6 +272,9 @@ class Proof_System(object):
           return False
     
     # If machine has run delta_steps without error, it is a general rule.
+    # Compute the diff_tape and find out if this is a recursive rule.
+    # TODO: There should be a better way to find out if this is recursive.
+    is_recursive_rule = False
     #diff_tape = new_tape.copy()
     diff_tape = gen_sim.tape.copy()
     for dir in range(2):
@@ -264,9 +282,55 @@ class Proof_System(object):
       for diff_block, old_block in zip(diff_tape.tape[dir], initial_tape.tape[dir]):
         if diff_block.num != Chain_Tape.INF:
           diff_block.num -= old_block.num
-          if isinstance(diff_block.num, Algebraic_Expression) and len(diff_block.num.terms) == 0:
-            diff_block.num = diff_block.num.const
+          if isinstance(diff_block.num, Algebraic_Expression):
+            if len(diff_block.num.terms) == 0:
+              diff_block.num = diff_block.num.const
+            else:
+              is_recursive_rule = True
     
+    if is_recursive_rule:
+      # TODO: Don't do all the work above if we not going to use it
+      # Get everything in the right form for a General_Rule.
+      var_list = []
+      min_list = []
+      assignment = {}
+      for init_block in initial_tape.tape[0]+initial_tape.tape[1]:
+        if isinstance(init_block.num, Algebraic_Expression):
+          x = init_block.num.unknown()
+          var_list.append(x)
+          min_list.append(init_block.num.const - min_val[x] + 1)
+          # Hackish: If exponent was x + 5 we want to replace all x with x - 5.
+          # TODO: Make nicer.
+          assignment[x] = init_block.num - 2*init_block.num.const
+        else:
+          var_list.append(None)
+          min_list.append(init_block.num)
+      
+      # TODO: result_list = []
+      result_tape = gen_sim.tape
+      # Fix up result_tape to by applying variable substitution.
+      for result_block in result_tape.tape[0]+result_tape.tape[1]:
+        if isinstance(result_block.num, Algebraic_Expression):
+          result_block.num = result_block.num.substitute(assignment)
+      
+      # Fix num_steps.
+      if self.compute_steps:
+        num_steps = gen_sim.step_num.substitute(assignment)
+      else:
+        num_steps = 0
+      
+      if self.verbose:
+        print
+        self.print_this("** New recursive rule proven **")
+        self.print_this("Variables:", var_list)
+        self.print_this("Minimums:", min_list)
+        self.print_this("Result: ", result_tape)
+        self.print_this("In steps:", num_steps)
+        print
+      self.num_recursive_rules += 1
+      return General_Rule(var_list, min_list, result_tape, num_steps, gen_sim.num_loops, len(self.rules))
+    
+    # Else if a normal diff rule:
     # Tighten up rule to be as general as possible (e.g. by replacing x+5 with x+1).
     replaces = {}
     for dir in range(2):
@@ -276,12 +340,10 @@ class Proof_System(object):
           new_value = Algebraic_Unknown(x) - min_val[x] + 1
           init_block.num = init_block.num.substitute({x: new_value})
           replaces[x] = new_value
-    is_recursive_rule = False
-    # Fix diff_tape.
+    # Fix diff_tape.  # TODO: rm, only happens for recursive_rules
     for dir in range(2):
       for diff_block in diff_tape.tape[dir]:
         if isinstance(diff_block.num, Algebraic_Expression):
-          is_recursive_rule = True  # Recursive rules have variables in diff.
           diff_block.num = diff_block.num.substitute(replaces)
     # Fix num_steps.
     if self.compute_steps:
@@ -301,28 +363,28 @@ class Proof_System(object):
       self.print_this("In steps:", num_steps)
       print
     
-    if is_recursive_rule:
-      if self.verbose:
-        self.print_this("** New recursive rule proven **")
-      self.num_recursive_rules += 1
-      # TODO: rule = Gen_Rule()
-      rule = Diff_Rule(initial_tape, diff_tape, gen_sim.num_loops, num_steps, len(self.rules))
-    else:
-      rule = Diff_Rule(initial_tape, diff_tape, gen_sim.num_loops, num_steps, len(self.rules))
-    
-    return rule
+    return Diff_Rule(initial_tape, diff_tape, num_steps, gen_sim.num_loops, len(self.rules))
   
-  def applies(self, rule, start_config):
-    """Try to apply a rule."""
-    ## Unpack input
-    new_state, new_tape, new_step_num, new_loop_num = start_config
-    
+  def apply_rule(self, rule, start_config):
+    """Try to apply a rule to a given configuration."""
+    # TODO: Currently this returns a new tape and does not mutate the input.
+    # Is that necessary, would it be worth it to mutate the input config in-place?
     if self.verbose:
+      start_state, start_tape, start_step_num, start_loop_num = start_config
       print
       self.print_this("++ Applying Rule ++")
-      self.print_this("Loop:", new_loop_num, "Rule ID:", rule.num)
+      self.print_this("Loop:", start_loop_num, "Rule ID:", rule.num)
       self.print_this("Rule:", rule)
-      self.print_this("Config:", new_state, new_tape)
+      self.print_this("Config:", start_state, start_tape)
+    
+    if isinstance(rule, Diff_Rule):
+      return self.apply_diff_rule(rule, start_config)
+    if isinstance(rule, General_Rule):
+      return self.apply_general_rule(rule, start_config)
+    
+  def apply_diff_rule(self, rule, start_config):
+    ## Unpack input
+    new_state, new_tape, new_step_num, new_loop_num = start_config
     
     ## Calculate number of repetitionss allowable and other tape-based info.
     num_reps = Chain_Tape.INF
@@ -346,10 +408,7 @@ class Proof_System(object):
               self.print_this("Rule initial block:", init_block)
             return False, 1
           delta_value[x] = diff_block.num
-          # We can't apply non-constant deltas ... yet.
-          # But, if all deltas are possitive, it is infinite.
-          if isinstance(delta_value[x], Algebraic_Expression):
-            has_variable = True
+          assert(isinstance(delta_value[x], (int, long)))
           # If this block's repetitions will be depleted during this transition,
           #   count the number of repetitions that it can allow while staying
           #   above the minimum requirement.
@@ -372,27 +431,6 @@ class Proof_System(object):
         self.print_this("++ Rules applies infinitely ++")
       return True, ((Turing_Machine.INF_REPEAT, None, None), large_delta)
     
-    # Apply recursive transition once (Constant speed up).
-    # TODO: Get function to apply repeatedly in tight loop.
-    if has_variable:
-      if self.compute_steps:
-        diff_steps = rule.num_steps.substitute(init_value)
-      else:
-        diff_steps = 0
-      return_tape = new_tape.copy()
-      for dir in range(2):
-        for diff_block, return_block in zip(rule.diff_tape.tape[dir], return_tape.tape[dir]):
-          if return_block.num is not Chain_Tape.INF:
-            if isinstance(diff_block.num, Algebraic_Expression):
-              return_block.num += diff_block.num.substitute(init_value)
-            else:  # Else it's an int hopefully
-              return_block.num += diff_block.num
-        return_tape.tape[dir] = [x for x in return_tape.tape[dir] if x.num != 0]
-      if self.verbose:
-        self.print_this("++ Applying variable deltas once ++")
-        self.print_this("Resulting tape:", return_tape)
-      return True, ((Turing_Machine.RUNNING, return_tape, diff_steps), large_delta)
-    
     # If we cannot even apply this transition once, we're done.
     if num_reps <= 0:
       if self.verbose:
@@ -413,7 +451,7 @@ class Proof_System(object):
     else:
       diff_steps = 0 # TODO: Make it None instead of a lie
     
-    ## Alter the tape to account for taking meta-transition.
+    ## Alter the tape to account for applying rule.
     return_tape = new_tape.copy()
     for dir in range(2):
       for diff_block, return_block in zip(rule.diff_tape.tape[dir], return_tape.tape[dir]):
@@ -427,6 +465,43 @@ class Proof_System(object):
       self.print_this("Times applied:", num_reps)
       self.print_this("Resulting tape:", return_tape)
       print
+    return True, ((Turing_Machine.RUNNING, return_tape, diff_steps), large_delta)
+
+  # Diff rules can be applied any number of times in a single evaluation.
+  # But we can only apply a general rule once at a time.
+  # TODO: Get function to apply repeatedly in tight loop.
+  # TOOD: Allow this to prove rules are infinite.
+  def apply_general_rule(self, rule, start_config):
+    # Unpack input
+    new_state, new_tape, new_step_num, new_loop_num = start_config
+    
+    # Get variable assignments for this case and check minimums.
+    assignment = {}
+    for var, min_val, start_block in zip(rule.var_list, rule.min_list, new_tape.tape[0]+new_tape.tape[1]):
+      start_val = start_block.num
+      if start_val < min_val:
+        if self.verbose:
+          self.print_this("++ Current config is below rule minimum ++")
+          self.print_this("Config block:", start_block)
+          self.print_this("Min val:", min_val)
+        return False, 1  # Below rule minimum.
+      assignment[var] = start_val
+
+    # Apply variable assignment.
+    diff_steps = rule.num_steps.substitute(assignment) if self.compute_steps else None
+    return_tape = rule.result_tape.copy()
+    for dir in range(2):
+      for return_block in return_tape.tape[dir]:
+        if return_block.num is not Chain_Tape.INF:
+          if isinstance(return_block.num, Algebraic_Expression):
+            return_block.num = return_block.num.substitute(assignment)
+      return_tape.tape[dir] = [x for x in return_tape.tape[dir] if x.num != 0]
+    large_delta = True  # TODO: Does this make sense? Should we rename this?
+
+    # Return result.
+    if self.verbose:
+      self.print_this("++ Applying variable deltas once ++")
+      self.print_this("Resulting tape:", return_tape)
     return True, ((Turing_Machine.RUNNING, return_tape, diff_steps), large_delta)
 
 def series_sum(V0, dV, n):
