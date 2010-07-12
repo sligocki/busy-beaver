@@ -473,36 +473,53 @@ class Proof_System(object):
   # TOOD: Allow this to prove rules are infinite.
   def apply_general_rule(self, rule, start_config):
     # Unpack input
-    new_state, new_tape, new_step_num, new_loop_num = start_config
+    start_state, start_tape, start_step_num, start_loop_num = start_config
     
-    # Get variable assignments for this case and check minimums.
-    assignment = {}
-    for var, min_val, start_block in zip(rule.var_list, rule.min_list, new_tape.tape[0]+new_tape.tape[1]):
-      start_val = start_block.num
-      if start_val < min_val:
-        if self.verbose:
-          self.print_this("++ Current config is below rule minimum ++")
-          self.print_this("Config block:", start_block)
-          self.print_this("Min val:", min_val)
-        return False, 1  # Below rule minimum.
-      assignment[var] = start_val
+    # Keep applying rule till we fail can't any more
+    # TODO: Maybe we can use some intelligence when only - rules are constants
+    # becuase, then we know how many time we can apply the rule.
+    result = False, 1  # If we fail before doing anything, return false
+    num_reps = 0
+    tape = start_tape
+    diff_steps = 0
+    while True:
+      # Get variable assignments for this case and check minimums.
+      assignment = {}
+      for var, min_val, start_block in zip(rule.var_list, rule.min_list, tape.tape[0]+tape.tape[1]):
+        start_val = start_block.num
+        if start_val < min_val:
+          # We cannot apply rule any more.
+          # Make sure there are no zero's in tape exponents.
+          if result[0]:
+            # Should be a better way to do this.
+            cond, ((op_state, tape, diff_steps), large_delta) = result
+            for dir in range(2):
+              tape.tape[dir] = [x for x in tape.tape[dir] if x.num != 0]
+            result = cond, ((op_state, tape, diff_steps), large_delta)
+          
+          if self.verbose:
+            self.print_this("++ Recursive rule applied ++")
+            self.print_this("Times applied", num_reps)
+            self.print_this("Resulting tape:", tape)
+          return result
+        assignment[var] = start_val
 
-    # Apply variable assignment.
-    diff_steps = rule.num_steps.substitute(assignment) if self.compute_steps else None
-    return_tape = rule.result_tape.copy()
-    for dir in range(2):
-      for return_block in return_tape.tape[dir]:
-        if return_block.num is not Chain_Tape.INF:
-          if isinstance(return_block.num, Algebraic_Expression):
-            return_block.num = return_block.num.substitute(assignment)
-      return_tape.tape[dir] = [x for x in return_tape.tape[dir] if x.num != 0]
-    large_delta = True  # TODO: Does this make sense? Should we rename this?
+      # Apply variable assignment.
+      if self.compute_steps:
+        diff_steps += rule.num_steps.substitute(assignment)
+      # Update the tape to the new config.
+      # TODO: Stop all the copying.
+      tape = rule.result_tape.copy()
+      for dir in range(2):
+        for block in tape.tape[dir]:
+          if block.num is not Chain_Tape.INF:
+            if isinstance(block.num, Algebraic_Expression):
+              block.num = block.num.substitute(assignment)
+      large_delta = True  # TODO: Does this make sense? Should we rename this?
 
-    # Return result.
-    if self.verbose:
-      self.print_this("++ Applying variable deltas once ++")
-      self.print_this("Resulting tape:", return_tape)
-    return True, ((Turing_Machine.RUNNING, return_tape, diff_steps), large_delta)
+      # Update result.
+      num_reps += 1
+      result = True, ((Turing_Machine.RUNNING, tape, diff_steps), large_delta)
 
 def series_sum(V0, dV, n):
   """Sums the arithmetic series V0, V0+dV, ... V0+(n-1)*dV."""
