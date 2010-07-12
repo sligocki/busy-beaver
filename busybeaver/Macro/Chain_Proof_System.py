@@ -42,8 +42,12 @@ def stripped_info(block):
 ## Multiple implementations for profiling test.
 def strip_config_map(state, dir, tape):
   """"Return a generalized configuration removing the non-1 repatition counts from the tape."""
-  # TODO: This map is expensive upwards of 25% of time is spend here.
-  return state, dir, tuple(map(stripped_info, tape[0])), tuple(map(stripped_info, tape[1]))
+  # Optimization: Strip off Infinity blocks before we run the map (see tape[x][1:]).
+  # Turns out Infinity.__cmp__ is expensive when run millions of times.
+  # It used to spend up to 25% ot time here.
+  # TODO: This map is expensive upwards of 10% of time is spend here.
+  return (state, dir, tuple(map(stripped_info, tape[0][1:])),
+                      tuple(map(stripped_info, tape[1][1:])))
 
 def strip_config_iter(state, dir, tape):
   """"Return a generalized configuration removing the non-1 repatition counts from the tape."""
