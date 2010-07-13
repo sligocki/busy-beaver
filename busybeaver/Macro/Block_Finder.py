@@ -37,6 +37,7 @@ def block_finder(machine, limit1=200, limit2=200, run1=True, run2=True, extra_mu
       print "Found least compression time:", time.clock()
       print "Least compression at step:", worst_time
     
+    # TODO: Instead of re-seeking, keep going till next bigger tape?
     sim = Simulator(machine, enable_prover=False)
     sim.seek(worst_time)
       

@@ -264,6 +264,8 @@ if __name__ == "__main__":
                     help="Turn off proof system")
   enum_parser.add_option("-r", "--recursive", action="store_true", default=False,
                     help="Turn ON recursive proof system [Very Experimental]")
+  enum_parser.add_option("--no-steps", action="store_false", dest="compute_steps", default=True,
+                         help="Don't keep track of base step count (can be expensive to calculate especially with recursive proofs).")
 
   parser.add_option_group(enum_parser)
 

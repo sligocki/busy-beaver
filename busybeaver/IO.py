@@ -18,7 +18,7 @@ class IO:
     * if this is 'None' then the user doesn't intend to do this type of
       operation.
   """
-  def __init__(self, input_file, output_file, log_number = None, compressed = False):
+  def __init__(self, input_file, output_file, log_number = None, compressed = True):
     """
     Save file information.
     """
@@ -71,6 +71,7 @@ class IO:
 
       self.output_file.write("\n")
       if not self.compressed:
+        # Flushing every machine is expensive
         self.output_file.flush()
 
   def read_result(self):

@@ -28,10 +28,7 @@ class Simulator(object):
     self.verbose_prefix = verbose_prefix
     self.state = machine.init_state
     self.dir = machine.init_dir
-    if self.compute_steps:
-      self.step_num = 0
-    else:
-      self.step_num = None
+    self.step_num = 0
     
     # Init tape and prover (if needed).
     if init_tape:

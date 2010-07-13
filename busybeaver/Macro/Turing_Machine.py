@@ -114,7 +114,7 @@ class Block_Macro_Machine(Macro_Machine):
   def eval_state(self, state):
     return self.base_machine.eval_state(state)
   def get_transition(self, *args):
-    if not self.trans_table.has_key(args):
+    if args not in self.trans_table:
       if len(self.trans_table) >= self.max_cells:
         self.trans_table.clear()
       self.trans_table[args] = self.eval_trans(args)
@@ -182,7 +182,7 @@ class Backsymbol_Macro_Machine(Macro_Machine):
   def eval_state(self, (base_state, backsymbol)):
     return self.base_machine.eval_state(base_state) + self.base_machine.eval_symbol(backsymbol)
   def get_transition(self, *args):
-    if not self.trans_table.has_key(args):
+    if args not in self.trans_table:
       if len(self.trans_table) >= self.max_cells:
         self.trans_table.clear()
       self.trans_table[args] = self.eval_trans(args)
