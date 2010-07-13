@@ -39,6 +39,7 @@ class General_Rule(Rule):
     self.min_list = min_list  # List of minimum values for 
     # TODO: result_list and force output tape to be the same stripped config as input tape.
     self.result_tape = result_tape
+    self.result_list = [block.num for block in result_tape.tape[0] + result_tape.tape[1]]
     self.num_steps = num_steps
     self.num_loops = num_loops
     self.num = rule_num
@@ -85,7 +86,8 @@ class Proof_System(object):
     self.num_loops = 0
     self.num_recursive_rules = 0
     # TODO: Record how many steps are taken by recursive rules in simulator!
-    self.tapes_copied = 0  # Copying tapes is expensive, we should keep an eye on this.
+    # Copying tapes is expensive, we should keep an eye on this.
+    self.tapes_copied = 0  # TODO: move this into tape.
   
   def print_this(self, *args):
     """Print with prefix."""
@@ -476,50 +478,51 @@ class Proof_System(object):
     start_state, start_tape, start_step_num, start_loop_num = start_config
     
     # Keep applying rule till we fail can't any more
-    # TODO: Maybe we can use some intelligence when only - rules are constants
+    # TODO: Maybe we can use some intelligence when all negative rules are constants
     # becuase, then we know how many time we can apply the rule.
-    result = False, 1  # If we fail before doing anything, return false
+    success = False  # If we fail before doing anything, return false
     num_reps = 0
-    tape = start_tape
     diff_steps = 0
+    large_delta = True  # TODO: Does this make sense? Should we rename this?
+    # Current list of all block exponents. We will update it in place repeatedly
+    # rather than creating new tapes.
+    current_list = [block.num for block in start_tape.tape[0] + start_tape.tape[1]]
     while True:
       # Get variable assignments for this case and check minimums.
       assignment = {}
-      for var, min_val, start_block in zip(rule.var_list, rule.min_list, tape.tape[0]+tape.tape[1]):
-        start_val = start_block.num
-        if start_val < min_val:
+      for var, min_val, current_val in zip(rule.var_list, rule.min_list, current_list):
+        if current_val < min_val:
           # We cannot apply rule any more.
           # Make sure there are no zero's in tape exponents.
-          if result[0]:
-            # Should be a better way to do this.
-            cond, ((op_state, tape, diff_steps), large_delta) = result
+          if success:
+            self.tapes_copied += 1
+            tape = start_tape.copy()
+            for block, current_val in zip(tape.tape[0] + tape.tape[1], current_list):
+              block.num = current_val
+            # TODO: Perhaps do this in one step?
             for dir in range(2):
               tape.tape[dir] = [x for x in tape.tape[dir] if x.num != 0]
-            result = cond, ((op_state, tape, diff_steps), large_delta)
+            if self.verbose:
+              self.print_this("++ Recursive rule applied ++")
+              self.print_this("Times applied", num_reps)
+              self.print_this("Resulting tape:", tape)
+            return True, ((Turing_Machine.RUNNING, tape, diff_steps), large_delta)
+          else:
+            if self.verbose:
+              self.print_this("++ Current config is below rule minimum ++")
+              self.print_this("Config tape:", start_tape)
+              self.print_this("Rule min vals:", min_list)
+            return False, 1
           
-          if self.verbose:
-            self.print_this("++ Recursive rule applied ++")
-            self.print_this("Times applied", num_reps)
-            self.print_this("Resulting tape:", tape)
-          return result
-        assignment[var] = start_val
+        assignment[var] = current_val
 
-      # Apply variable assignment.
+      # Apply variable assignment to update number of steps and tape config.
       if self.compute_steps:
         diff_steps += rule.num_steps.substitute(assignment)
-      # Update the tape to the new config.
-      # TODO: Stop all the copying.
-      tape = rule.result_tape.copy()
-      for dir in range(2):
-        for block in tape.tape[dir]:
-          if block.num is not Chain_Tape.INF:
-            if isinstance(block.num, Algebraic_Expression):
-              block.num = block.num.substitute(assignment)
-      large_delta = True  # TODO: Does this make sense? Should we rename this?
-
-      # Update result.
+      # Stop using substitute and make this a tuple-to-tuple function?
+      current_list = [val.substitute(assignment) if isinstance(val, Algebraic_Expression) else val for val in rule.result_list]
       num_reps += 1
-      result = True, ((Turing_Machine.RUNNING, tape, diff_steps), large_delta)
+      success = True
 
 def series_sum(V0, dV, n):
   """Sums the arithmetic series V0, V0+dV, ... V0+(n-1)*dV."""
