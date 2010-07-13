@@ -66,6 +66,7 @@ if __name__ == "__main__":
   usage = "usage: %prog [options] machine_file [line_number]"
   parser = OptionParser(usage=usage)
   # TODO: One variable for different levels of verbosity.
+  # TODO: Combine optparsers from MacroMachine, Enumerate and here.
   parser.add_option("-q", "--quiet", action="store_true", help="Brief output")
   parser.add_option("-v", "--verbose", action="store_true", help="Print step-by-step informaion from simulator and prover.")
   parser.add_option("--verbose-prover", action="store_true", help="Provide debuggin output from prover.")
