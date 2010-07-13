@@ -160,7 +160,7 @@ class Simulator(object):
       print "Rules proven:", len(self.prover.rules)
       if self.prover.recursive:
         print "Recursive rules proven:", self.prover.num_recursive_rules
-      print "Tapes copied in prover:", self.prover.tapes_copied
+    print "Tape copies:", Chain_Tape.Chain_Tape.num_copies
 
   def verbose_print(self):
     if self.verbose:
