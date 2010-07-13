@@ -86,8 +86,6 @@ class Proof_System(object):
     self.num_loops = 0
     self.num_recursive_rules = 0
     # TODO: Record how many steps are taken by recursive rules in simulator!
-    # Copying tapes is expensive, we should keep an eye on this.
-    self.tapes_copied = 0  # TODO: move this into tape.
   
   def print_this(self, *args):
     """Print with prefix."""
@@ -153,7 +151,6 @@ class Proof_System(object):
       # TODO: maybe don't copy tape until we get a consistent delta_loop.
       # Simulators which prove no rules are spending about 15% of time copying.
       self.past_configs[stripped_config] = (2, ((state, tape.copy(), step_num, loop_num), loop_num, delta_loop))
-      self.tapes_copied += 1
       return False, None, None
     
     # If this is the third (or greater) time (i.e. config is stored) ...
@@ -163,7 +160,6 @@ class Proof_System(object):
     if loop_num - old_loop_num != delta_loop:
       delta_loop = loop_num - old_loop_num
       self.past_configs[stripped_config] = (times_seen + 1, ((state, tape.copy(), step_num, loop_num), loop_num, delta_loop))
-      self.tapes_copied += 1
       return False, None, None
     
     # ... and loops do match up, then try to prove it.
@@ -495,7 +491,6 @@ class Proof_System(object):
           # We cannot apply rule any more.
           # Make sure there are no zero's in tape exponents.
           if success:
-            self.tapes_copied += 1
             tape = start_tape.copy()
             for block, current_val in zip(tape.tape[0] + tape.tape[1], current_list):
               block.num = current_val

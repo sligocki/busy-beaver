@@ -46,6 +46,8 @@ class Repeated_Symbol(object):
 
 class Chain_Tape(object):
   """Stores the turing machine tape with repetition compression."""
+  # Total number of times tapes are copied. Copies are expensive.
+  num_copies = 0
   def init(self, init_symbol, init_dir):
     self.dir = init_dir
     self.tape = [[], []]
@@ -60,6 +62,7 @@ class Chain_Tape(object):
     return `self.tape[0]`+dir+`reverse(self.tape[1])`
   
   def copy(self):
+    Chain_Tape.num_copies += 1
     new = Chain_Tape()
     new.dir = self.dir
     new.displace = self.displace
