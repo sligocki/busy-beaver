@@ -118,9 +118,21 @@ class Expression(Number):
     else:
       ### TODO: We could (actually) devide, say (8x+8) // 8 = (x+1) !
       return NotImplemented
+  
   def substitute(self, subs):
     """Substitute values from dict 'subs' to get an int."""
     return sum([t.substitute(subs) for t in self.terms]) + self.const
+  
+  def always_greater_than(self, other):
+    """True if self > other for any non-negative variable assignment."""
+    diff = self - other
+    if not diff.const > 0:
+      return False
+    for term in diff.terms:
+      if not term.coef >= 0:
+        return False
+    return True
+  
   # Temporary methods
   def __eq__(self, other):
     if is_scalar(other):
@@ -209,14 +221,19 @@ def vars_prod(vars1, vars2):
   new_vars.extend(vars2[j:])
   return new_vars
 
-def new_variable(v=None):
-  """Produce an expression containing only a new variable (or an already defined variable as an argument)."""
-  if v is None:
-    v = Variable()
-  vp = Var_Power(v, 1)
-  t = Term([vp], 1)
-  e = Expression([t], 0)
-  return e
+def NewVariableExpression():
+  """Produce an expression containing only a new variable."""
+  return VariableToExpression(Variable())
 
-Algebraic_Unknown = new_variable
+def VariableToExpression(var):
+  """Produce Algebraic Expression from a lone variable."""
+  vp = Var_Power(var, 1)
+  term = Term([vp], 1)
+  expr = Expression([term], 0)
+  return expr
+
+def ConstantToExpression(const):
+  """Produce an Algebraic Expression from a lone constant."""
+  return Expression([], const)
+
 Algebraic_Expression = Expression

@@ -11,7 +11,7 @@ import Turing_Machine
 
 parent_dir = sys.path[0][:sys.path[0].rfind("/")] # pwd path with last directory removed
 sys.path.insert(1, parent_dir)
-from Numbers.Algebraic_Expression import Algebraic_Unknown, Algebraic_Expression
+from Numbers.Algebraic_Expression import Algebraic_Expression, Variable, NewVariableExpression, VariableToExpression, ConstantToExpression
 
 class Rule(object):
   """Base type for Proof_System rules."""
@@ -44,6 +44,17 @@ class General_Rule(Rule):
     self.num_loops = num_loops
     self.num = rule_num
     self.num_uses = 0
+    
+    # Is this an infinite rule?
+    self.infinite = True
+    for var, result in zip(self.var_list, self.result_list):
+      if var:  # If this exponent changes in this rule (has a variable)
+        # TODO: This is a bit heavy-handed, but we probably don't prove
+        #   too many recursive rules :)
+        if not result.always_greater_than(VariableToExpression(var)):
+          # If any exponent can decrease, this is not an infinite rule.
+          self.infinite = False
+          break
 
 # TODO: Try out some other stripped_configs
 def stripped_info(block):
@@ -203,7 +214,7 @@ class Proof_System(object):
                                         verbose_prover=False,
                                         verbose_prefix=self.verbose_prefix + "  ")
     gen_sim.state = old_state
-    gen_sim.step_num = Algebraic_Expression([], 0)
+    gen_sim.step_num = ConstantToExpression(0)
     
     # If prover can run recursively, we let it simulate with a lazy proof system.
     # That is, one that cannot prove new rules.
@@ -220,9 +231,10 @@ class Proof_System(object):
         # Generalize, eg. (abc)^5 -> (abc)^(n+5)
         # Blocks with one rep are not generalized, eg. (abc)^1 -> (abc)^1
         if block.num not in (Chain_Tape.INF, 1):
-          x = Algebraic_Unknown()
-          block.num += x
-          min_val[x.unknown()] = block.num.const
+          x = Variable()
+          x_expr = VariableToExpression(x)
+          block.num += x_expr
+          min_val[x] = block.num.const
     initial_tape = gen_sim.tape.copy()
     gen_sim.dir = gen_sim.tape.dir
     
@@ -335,7 +347,7 @@ class Proof_System(object):
       for init_block in initial_tape.tape[dir]:
         if isinstance(init_block.num, Algebraic_Expression):
           x = init_block.num.unknown()
-          new_value = Algebraic_Unknown(x) - min_val[x] + 1
+          new_value = VariableToExpression(x) - min_val[x] + 1
           init_block.num = init_block.num.substitute({x: new_value})
           replaces[x] = new_value
     # Fix diff_tape.  # TODO: rm, only happens for recursive_rules
@@ -351,7 +363,7 @@ class Proof_System(object):
     
     # Cast num_steps as an Algebraic Expression (if it somehow got through as simply an int)
     if not isinstance(num_steps, Algebraic_Expression):
-      num_steps = Algebraic_Expression([], num_steps)
+      num_steps = ConstantToExpression(num_steps)
     
     if self.verbose:
       print
@@ -468,10 +480,21 @@ class Proof_System(object):
   # Diff rules can be applied any number of times in a single evaluation.
   # But we can only apply a general rule once at a time.
   # TODO: Get function to apply repeatedly in tight loop.
-  # TOOD: Allow this to prove rules are infinite.
   def apply_general_rule(self, rule, start_config):
     # Unpack input
     start_state, start_tape, start_step_num, start_loop_num = start_config
+
+    large_delta = True  # TODO: Does this make sense? Should we rename this?
+    # Current list of all block exponents. We will update it in place repeatedly
+    # rather than creating new tapes.
+    current_list = [block.num for block in start_tape.tape[0] + start_tape.tape[1]]
+    
+    # If this recursive rule is infinite.
+    if rule.infinite and config_is_above_min(rule.var_list, rule.min_list,
+                                             current_list):
+      if self.verbose:
+        self.print_this("++ Rules applies infinitely ++")
+      return True, ((Turing_Machine.INF_REPEAT, None, None), large_delta)
     
     # Keep applying rule till we fail can't any more
     # TODO: Maybe we can use some intelligence when all negative rules are constants
@@ -479,38 +502,12 @@ class Proof_System(object):
     success = False  # If we fail before doing anything, return false
     num_reps = 0
     diff_steps = 0
-    large_delta = True  # TODO: Does this make sense? Should we rename this?
-    # Current list of all block exponents. We will update it in place repeatedly
-    # rather than creating new tapes.
-    current_list = [block.num for block in start_tape.tape[0] + start_tape.tape[1]]
-    while True:
-      # Get variable assignments for this case and check minimums.
-      assignment = {}
-      for var, min_val, current_val in zip(rule.var_list, rule.min_list, current_list):
-        if current_val < min_val:
-          # We cannot apply rule any more.
-          # Make sure there are no zero's in tape exponents.
-          if success:
-            tape = start_tape.copy()
-            for block, current_val in zip(tape.tape[0] + tape.tape[1], current_list):
-              block.num = current_val
-            # TODO: Perhaps do this in one step?
-            for dir in range(2):
-              tape.tape[dir] = [x for x in tape.tape[dir] if x.num != 0]
-            if self.verbose:
-              self.print_this("++ Recursive rule applied ++")
-              self.print_this("Times applied", num_reps)
-              self.print_this("Resulting tape:", tape)
-            return True, ((Turing_Machine.RUNNING, tape, diff_steps), large_delta)
-          else:
-            if self.verbose:
-              self.print_this("++ Current config is below rule minimum ++")
-              self.print_this("Config tape:", start_tape)
-              self.print_this("Rule min vals:", min_list)
-            return False, 1
-          
-        assignment[var] = current_val
-
+    # Get variable assignments for this case and check minimums.
+    assignment = {}
+    while config_is_above_min(rule.var_list, rule.min_list,
+                              current_list, assignment):
+      if self.verbose:
+        self.print_this(num_reps, current_list)
       # Apply variable assignment to update number of steps and tape config.
       if self.compute_steps:
         diff_steps += rule.num_steps.substitute(assignment)
@@ -518,6 +515,36 @@ class Proof_System(object):
       current_list = [val.substitute(assignment) if isinstance(val, Algebraic_Expression) else val for val in rule.result_list]
       num_reps += 1
       success = True
+      assignment = {}
+    
+    # We cannot apply rule any more.
+    # Make sure there are no zero's in tape exponents.
+    if success:
+      tape = start_tape.copy()
+      for block, current_val in zip(tape.tape[0] + tape.tape[1], current_list):
+        block.num = current_val
+      # TODO: Perhaps do this in one step?
+      for dir in range(2):
+        tape.tape[dir] = [x for x in tape.tape[dir] if x.num != 0]
+      if self.verbose:
+        self.print_this("++ Recursive rule applied ++")
+        self.print_this("Times applied", num_reps)
+        self.print_this("Resulting tape:", tape)
+      return True, ((Turing_Machine.RUNNING, tape, diff_steps), large_delta)
+    else:
+      if self.verbose:
+        self.print_this("++ Current config is below rule minimum ++")
+        self.print_this("Config tape:", start_tape)
+        self.print_this("Rule min vals:", min_list)
+      return False, 1
+
+def config_is_above_min(var_list, min_list, current_list, assignment={}):
+  """Tests if current_list is above min_list setting assignment along the way"""
+  for var, min_val, current_val in zip(var_list, min_list, current_list):
+    if current_val < min_val:
+      return False
+    assignment[var] = current_val
+  return True
 
 def series_sum(V0, dV, n):
   """Sums the arithmetic series V0, V0+dV, ... V0+(n-1)*dV."""
