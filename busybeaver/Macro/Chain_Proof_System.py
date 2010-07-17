@@ -192,10 +192,10 @@ class Proof_System(object):
       return False, None, None
     
     # Otherwise log it into past_configs and see if we should try and prove a new rule.
-    past_config = self.past_configs[stripped_config].last_config
-    if self.past_configs[stripped_config].log_config(state, tape, step_num, loop_num):
+    past_config = self.past_configs[stripped_config]
+    if past_config.log_config(state, tape, step_num, loop_num):
       # We see enough of a pattern to try and prove a rule.
-      rule = self.prove_rule(past_config, full_config)
+      rule = self.prove_rule(stripped_config, full_config, past_config.delta_loop)
       if rule:  # If we successfully proved a rule:
         # Remember rule
         self.rules[stripped_config] = rule
@@ -209,7 +209,7 @@ class Proof_System(object):
           return trans
     return False, None, None
   
-  def prove_rule(self, old_config, new_config):
+  def prove_rule(self, stripped_config, full_config, delta_loop):
     """Try to prove a general rule based upon specific example.
     
     Returns rule if successful or None.
@@ -217,13 +217,11 @@ class Proof_System(object):
     if self.verbose:
       print
       self.print_this("** Testing new rule **")
-      self.print_this("Example transition:")
-      self.print_this("From:", old_config)
-      self.print_this("To:  ", new_config)
+      self.print_this("From: ", new_config)
+      self.print_this("Loops:", delta_loop)
     
     # Unpack configurations
-    old_state, old_tape, old_step_num, old_loop_num = old_config
-    new_state, new_tape, new_step_num, new_loop_num = new_config
+    new_state, new_tape, new_step_num, new_loop_num = full_config
     
     # Create the serogate simulator with the apm only able to use proven trans.
     gen_sim = Chain_Simulator.Simulator(self.machine,
@@ -234,7 +232,7 @@ class Proof_System(object):
                                         verbose_simulator=self.verbose,
                                         verbose_prover=False,
                                         verbose_prefix=self.verbose_prefix + "  ")
-    gen_sim.state = old_state
+    gen_sim.state = new_state
     gen_sim.step_num = ConstantToExpression(0)
     
     # If prover can run recursively, we let it simulate with a lazy proof system.
@@ -245,7 +243,7 @@ class Proof_System(object):
       gen_sim.prover.verbose_prefix = gen_sim.verbose_prefix + "  "
     
     # Create a new tape which we will use to simulate general situation.
-    gen_sim.tape = old_tape.copy()
+    gen_sim.tape = new_tape.copy()
     min_val = {} # Notes the minimum value exponents with each unknown take.
     for direction in range(2):
       for block in gen_sim.tape.tape[direction]:
@@ -262,8 +260,8 @@ class Proof_System(object):
     # Run the simulator
     gen_sim.step()
     self.num_loops += 1
-    #for i in xrange(new_loop_num - old_loop_num):
-    while gen_sim.num_loops < (new_loop_num - old_loop_num):
+    #for i in xrange(delta_loop):
+    while gen_sim.num_loops < (delta_loop):
       # We cannot step onto/over a block with 0 repetitions.
       block = gen_sim.tape.get_top_block()
       if isinstance(block.num, Algebraic_Expression) and block.num.const <= 0:
@@ -304,8 +302,6 @@ class Proof_System(object):
     
     # Make sure finishing tape has the same stripped config as original.
     gen_stripped_config = strip_config(gen_sim.state, gen_sim.tape.dir, gen_sim.tape.tape)
-    # TODO: Just pass this in:
-    stripped_config = strip_config(old_state, old_tape.dir, old_tape.tape)
     if gen_stripped_config != stripped_config:
       if self.verbose:
         print
@@ -322,10 +318,9 @@ class Proof_System(object):
     #diff_tape = new_tape.copy()
     diff_tape = gen_sim.tape.copy()
     for dir in range(2):
-      #for diff_block, old_block in zip(diff_tape.tape[dir], old_tape.tape[dir]):
-      for diff_block, old_block in zip(diff_tape.tape[dir], initial_tape.tape[dir]):
+      for diff_block, initial_block in zip(diff_tape.tape[dir], initial_tape.tape[dir]):
         if diff_block.num != Chain_Tape.INF:
-          diff_block.num -= old_block.num
+          diff_block.num -= initial_block.num
           if isinstance(diff_block.num, Algebraic_Expression):
             if len(diff_block.num.terms) == 0:
               diff_block.num = diff_block.num.const
