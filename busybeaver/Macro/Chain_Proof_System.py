@@ -220,7 +220,6 @@ class Proof_System(object):
       self.print_this("Example transition:")
       self.print_this("From:", old_config)
       self.print_this("To:  ", new_config)
-      # TODO: Add verbose comments for failures.
     
     # Unpack configurations
     old_state, old_tape, old_step_num, old_loop_num = old_config
@@ -270,11 +269,19 @@ class Proof_System(object):
       if isinstance(block.num, Algebraic_Expression) and block.num.const <= 0:
         # TODO: A more sophisticated system might try to make this block fixed sized.
         # For now we just fail. It may not be worth implimenting this anyway
+        if self.verbose:
+          print
+          self.print_this("** Failed: Exponent below min **")
+          self.print_this(gen_sim.tape)
         return False
       gen_sim.step()
       self.num_loops += 1
       
       if gen_sim.op_state is not Turing_Machine.RUNNING:
+        if self.verbose:
+          print
+          self.print_this("** Failed: Machine stopped running **")
+          self.print_this(gen_sim.op_state)
         return False
       # Update min_val for each expression.
       # TODO: We only need to update for the blocks on each side of head.
@@ -287,17 +294,25 @@ class Proof_System(object):
               min_val[x] = min(min_val[x], block.num.const)
             # If more than one variable is clumped into a single term, it will fail.
             elif len(block.num.terms) > 1:
+              if self.verbose:
+                print
+                self.print_this("** Failed: Multiple vars in one term **")
+                self.print_this(gen_sim.tape)
               return False
     
     gen_sim.verbose_print()
     
     # Make sure finishing tape has the same stripped config as original.
-    for dir in range(2):
-      if len(gen_sim.tape.tape[dir]) != len(old_tape.tape[dir]):
-        return False
-    stripped_gen = strip_config(gen_sim.state, gen_sim.tape.dir, gen_sim.tape.tape)
-    stripped_init = strip_config(old_state, old_tape.dir, old_tape.tape)
-    if stripped_gen != stripped_init:
+    gen_stripped_config = strip_config(gen_sim.state, gen_sim.tape.dir, gen_sim.tape.tape)
+    # TODO: Just pass this in:
+    stripped_config = strip_config(old_state, old_tape.dir, old_tape.tape)
+    if gen_stripped_config != stripped_config:
+      if self.verbose:
+        print
+        self.print_this("** Failed: Config mismatch **")
+        self.print_this(gen_sim.tape)
+        self.print_this(gen_stripped_config)
+        self.print_this(stripped_config)
       return False
         
     # If machine has run delta_steps without error, it is a general rule.
