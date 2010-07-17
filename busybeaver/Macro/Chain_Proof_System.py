@@ -82,7 +82,6 @@ class Past_Config(object):
   def __init__(self):
     self.times_seen = 0
     self.last_config = None
-    self.last_step_num = None
     self.last_loop_num = None
     self.delta_loop = None
   def log_config(self, state, tape, step_num, loop_num):
@@ -91,13 +90,13 @@ class Past_Config(object):
     with the same delta_loop.
     """
     # If this is the first time we see this stripped config, just store the loop number
-    if self.times_seen == 0:
+    if self.last_loop_num == None:
       self.last_loop_num = loop_num
       self.times_seen += 1
       return False
     
     # If this is the second time, store more information for verification on third sighting
-    if self.times_seen == 1:
+    if self.delta_loop == None:
       self.delta_loop = loop_num - self.last_loop_num
       # TODO: maybe don't copy tape until we get a consistent delta_loop.
       # Simulators which prove no rules are spending about 15% of time copying.
@@ -116,6 +115,7 @@ class Past_Config(object):
       self.times_seen += 1
       return False
     
+    # We have successfully seen a this stripped config 3 times at regular intervals.
     return True
 
 class Proof_System(object):
