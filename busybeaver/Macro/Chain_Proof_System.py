@@ -107,15 +107,6 @@ class Past_Config(object):
       self.times_seen += 1
       return False
     
-    # We have successfully seen a this stripped config at least 3 times at
-    # regular intervals.
-    if self.last_config == None:
-      assert self.delta_loop == loop_num - self.last_loop_num
-      self.last_config = (state, tape.copy(), step_num, loop_num)
-      self.last_loop_num = loop_num
-      self.times_seen += 1
-      return False
-    
     # Now we can finally try a proof.
     return True
 
