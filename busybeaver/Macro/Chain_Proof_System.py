@@ -76,6 +76,20 @@ def strip_config(state, dir, tape):
   return (state, dir, tuple(map(stripped_info, tape[0][1:])),
                       tuple(map(stripped_info, tape[1][1:])))
 
+class Past_Config(object):
+  """A record of info from past instances of a stripped_config."""
+  def __init__(self):
+    self.times_seen = 0
+    self.last_config = None
+    self.last_step_num = None
+    self.last_loop_num = None
+    self.delta_loop = None
+  def log_new_config(self, state, tape, step_num, loop_num):
+    self.last_loop_num = loop_num
+    if self.times_seen > 1:
+      pass
+    self.times_seen += 1
+
 class Proof_System(object):
   """Stores past information, looks for patterns and tries to prove general
   rules when it finds patterns.
@@ -126,7 +140,7 @@ class Proof_System(object):
     
     ## If we're already proven a rule for this stripped_config, try to apply it.
     # TODO: stripped_config in self.rules.
-    if self.rules.has_key(stripped_config):
+    if stripped_config in self.rules:
       rule = self.rules[stripped_config]
       is_good, res = self.apply_rule(rule, full_config)
       if is_good:
@@ -150,36 +164,40 @@ class Proof_System(object):
     
     # Otherwise
     # If this is the first time we see this stripped config, just store the loop number
-    if not self.past_configs.has_key(stripped_config):
-      self.past_configs[stripped_config] = (1, loop_num)
+    if stripped_config not in self.past_configs:
+      self.past_configs[stripped_config] = config = Past_Config()
+      config.times_seen = 1
+      config.last_loop_num = loop_num
       return False, None, None
     
-    times_seen, rest = self.past_configs[stripped_config]
+    past_config = self.past_configs[stripped_config]
     # If this is the second time, store more information for verification on third sighting
-    if times_seen == 1:
-      last_loop_num = rest
-      delta_loop = loop_num - last_loop_num
+    if past_config.times_seen == 1:
+      past_config.delta_loop = loop_num - past_config.last_loop_num
       # TODO: maybe don't copy tape until we get a consistent delta_loop.
       # Simulators which prove no rules are spending about 15% of time copying.
-      self.past_configs[stripped_config] = (2, ((state, tape.copy(), step_num, loop_num), loop_num, delta_loop))
+      past_config.last_config = (state, tape.copy(), step_num, loop_num)
+      past_config.last_loop_num = loop_num
+      past_config.times_seen += 1
       return False, None, None
     
     # If this is the third (or greater) time (i.e. config is stored) ...
-    old_config, old_loop_num, delta_loop = rest
     # ... but loops don't match up, save config again in hope for next time.
     # (Note: We can only prove rules that take the same number of loops each time.)
-    if loop_num - old_loop_num != delta_loop:
-      delta_loop = loop_num - old_loop_num
-      self.past_configs[stripped_config] = (times_seen + 1, ((state, tape.copy(), step_num, loop_num), loop_num, delta_loop))
+    if loop_num - past_config.last_loop_num != past_config.delta_loop:
+      past_config.delta_loop = loop_num - past_config.last_loop_num
+      past_config.last_config = (state, tape.copy(), step_num, loop_num)
+      past_config.last_loop_num = loop_num
+      past_config.times_seen += 1
       return False, None, None
     
     # ... and loops do match up, then try to prove it.
-    rule = self.prove_rule(old_config, full_config)
+    rule = self.prove_rule(past_config.last_config, full_config)
     if rule:  # If we successfully proved a rule:
       # Remember rule
       self.rules[stripped_config] = rule
       # Clear our memory (couldn't use it anyway)
-      self.past_configs = {}
+      self.past_configs.clear()
       # Try to apply transition
       is_good, res = self.apply_rule(rule, full_config)
       if is_good:
