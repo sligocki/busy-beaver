@@ -89,33 +89,33 @@ class Past_Config(object):
     Currently, we try to prove a rule we've seen happen twice consecutively
     with the same delta_loop.
     """
-    # If this is the first time we see this stripped config, just store the loop number
+    # First time we see stripped_config, store loop_num.
     if self.last_loop_num == None:
       self.last_loop_num = loop_num
       self.times_seen += 1
       return False
     
-    # If this is the second time, store more information for verification on third sighting
-    if self.delta_loop == None:
+    # Next store delta_loop. If we have a delta_loop but it hasn't repeated,
+    # then update the new delta.
+    # (Note: We can only prove rules that take the same number of loops each time.)
+    if self.delta_loop == None or loop_num - self.last_loop_num != self.delta_loop:
       self.delta_loop = loop_num - self.last_loop_num
       # TODO: maybe don't copy tape until we get a consistent delta_loop.
       # Simulators which prove no rules are spending about 15% of time copying.
-      self.last_config = (state, tape.copy(), step_num, loop_num)
-      self.last_loop_num = loop_num
-      self.times_seen += 1
-      return False
-    
-    # If this is the third (or greater) time (i.e. config is stored) ...
-    # ... but loops don't match up, save config again in hope for next time.
-    # (Note: We can only prove rules that take the same number of loops each time.)
-    if loop_num - self.last_loop_num != self.delta_loop:
-      self.delta_loop = loop_num - self.last_loop_num
-      self.last_config = (state, tape.copy(), step_num, loop_num)
+      #self.last_config = (state, tape.copy(), step_num, loop_num)
       self.last_loop_num = loop_num
       self.times_seen += 1
       return False
     
     # We have successfully seen a this stripped config 3 times at regular intervals.
+    if self.last_config == None:
+      self.delta_loop = loop_num - self.last_loop_num
+      self.last_config = (state, tape.copy(), step_num, loop_num)
+      self.last_loop_num = loop_num
+      self.times_seen += 1
+      return False
+    
+    # Now we can finally try a proof.
     return True
 
 class Proof_System(object):
