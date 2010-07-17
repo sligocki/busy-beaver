@@ -81,7 +81,6 @@ class Past_Config(object):
   """A record of info from past instances of a stripped_config."""
   def __init__(self):
     self.times_seen = 0
-    self.last_config = None
     self.last_loop_num = None
     self.delta_loop = None
   def log_config(self, state, tape, step_num, loop_num):
@@ -100,9 +99,6 @@ class Past_Config(object):
     # (Note: We can only prove rules that take the same number of loops each time.)
     if self.delta_loop == None or loop_num - self.last_loop_num != self.delta_loop:
       self.delta_loop = loop_num - self.last_loop_num
-      # TODO: maybe don't copy tape until we get a consistent delta_loop.
-      # Simulators which prove no rules are spending about 15% of time copying.
-      self.last_config = (state, tape.copy(), step_num, loop_num)
       self.last_loop_num = loop_num
       self.times_seen += 1
       return False
