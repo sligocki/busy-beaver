@@ -107,9 +107,10 @@ class Past_Config(object):
       self.times_seen += 1
       return False
     
-    # We have successfully seen a this stripped config 3 times at regular intervals.
+    # We have successfully seen a this stripped config at least 3 times at
+    # regular intervals.
     if self.last_config == None:
-      self.delta_loop = loop_num - self.last_loop_num
+      assert self.delta_loop == loop_num - self.last_loop_num
       self.last_config = (state, tape.copy(), step_num, loop_num)
       self.last_loop_num = loop_num
       self.times_seen += 1
@@ -219,6 +220,7 @@ class Proof_System(object):
       self.print_this("Example transition:")
       self.print_this("From:", old_config)
       self.print_this("To:  ", new_config)
+      # TODO: Add verbose comments for failures.
     
     # Unpack configurations
     old_state, old_tape, old_step_num, old_loop_num = old_config
@@ -267,7 +269,7 @@ class Proof_System(object):
       block = gen_sim.tape.get_top_block()
       if isinstance(block.num, Algebraic_Expression) and block.num.const <= 0:
         # TODO: A more sophisticated system might try to make this block fixed sized.
-        #       For now we just fail. It may be inificient/not worth it to impliment this anyway
+        # For now we just fail. It may not be worth implimenting this anyway
         return False
       gen_sim.step()
       self.num_loops += 1
@@ -275,6 +277,8 @@ class Proof_System(object):
       if gen_sim.op_state is not Turing_Machine.RUNNING:
         return False
       # Update min_val for each expression.
+      # TODO: We only need to update for the blocks on each side of head.
+      # TODO: Better yet, build these checks into the data type!
       for dir in range(2):
         for block in gen_sim.tape.tape[dir]:
           if isinstance(block.num, Algebraic_Expression):
@@ -287,20 +291,15 @@ class Proof_System(object):
     
     gen_sim.verbose_print()
     
-    # Make sure finishing tape is the same as the end tape only general
+    # Make sure finishing tape has the same stripped config as original.
     for dir in range(2):
-      if len(gen_sim.tape.tape[dir]) != len(new_tape.tape[dir]):
+      if len(gen_sim.tape.tape[dir]) != len(old_tape.tape[dir]):
         return False
-      for init_block, gen_block, new_block in zip(initial_tape.tape[dir], gen_sim.tape.tape[dir], new_tape.tape[dir]):
-        if isinstance(init_block.num, Algebraic_Expression):
-          if (not isinstance(gen_block.num, Algebraic_Expression))  or  len(gen_block.num.terms) == 0:
-            return False
-          end_value = gen_block.num.const
-        else:
-          end_value = gen_block.num
-        if new_block.num != end_value:
-          return False
-    
+    stripped_gen = strip_config(gen_sim.state, gen_sim.tape.dir, gen_sim.tape.tape)
+    stripped_init = strip_config(old_state, old_tape.dir, old_tape.tape)
+    if stripped_gen != stripped_init:
+      return False
+        
     # If machine has run delta_steps without error, it is a general rule.
     # Compute the diff_tape and find out if this is a recursive rule.
     # TODO: There should be a better way to find out if this is recursive.
