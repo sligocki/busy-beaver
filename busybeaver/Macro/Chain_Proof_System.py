@@ -102,7 +102,7 @@ class Past_Config(object):
       self.delta_loop = loop_num - self.last_loop_num
       # TODO: maybe don't copy tape until we get a consistent delta_loop.
       # Simulators which prove no rules are spending about 15% of time copying.
-      #self.last_config = (state, tape.copy(), step_num, loop_num)
+      self.last_config = (state, tape.copy(), step_num, loop_num)
       self.last_loop_num = loop_num
       self.times_seen += 1
       return False
