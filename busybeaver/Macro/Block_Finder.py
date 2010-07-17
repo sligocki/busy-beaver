@@ -10,7 +10,7 @@ import Turing_Machine
 DEBUG = False
 
 def block_finder(machine, limit1=200, limit2=200, run1=True, run2=True, extra_mult=2):
-  """Tries to find the optimal block-size for macromachines"""
+  """Tries to find the optimal block-size for macro machines"""
   ## First find the minimum efficient tape compression size
   sim = Simulator(machine, enable_prover=False)  # Disable proof system for block finding.
   
@@ -20,13 +20,13 @@ def block_finder(machine, limit1=200, limit2=200, run1=True, run2=True, extra_mu
   if run1:
     # Run sim to find when the tape is least compressed with macro size 1
     max_length = len(sim.tape.tape[0]) + len(sim.tape.tape[1])
-    worst_time = 0
+    worst_loop = 0
     for i in range(limit1):
       sim.step()
       tape_length = len(sim.tape.tape[0]) + len(sim.tape.tape[1])
       if tape_length > max_length:
         max_length = tape_length
-        worst_time = sim.step_num
+        worst_loop = sim.num_loops
       # If it has stopped running then this is a good block size!
       if sim.op_state != Turing_Machine.RUNNING:
         if DEBUG:
@@ -35,11 +35,11 @@ def block_finder(machine, limit1=200, limit2=200, run1=True, run2=True, extra_mu
     
     if DEBUG:
       print "Found least compression time:", time.clock()
-      print "Least compression at step:", worst_time
+      print "Least compression at step:", worst_loop
     
     # TODO: Instead of re-seeking, keep going till next bigger tape?
     sim = Simulator(machine, enable_prover=False)
-    sim.seek(worst_time)
+    sim.loop_seek(worst_loop)
       
   ## Or just find the best compression at time limit
   else:
