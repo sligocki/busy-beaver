@@ -12,7 +12,7 @@ import Turing_Machine
 
 parent_dir = sys.path[0][:sys.path[0].rfind("/")] # pwd path with last directory removed
 sys.path.insert(1, parent_dir)
-from Numbers.Algebraic_Expression import Algebraic_Expression, Variable, NewVariableExpression, VariableToExpression, ConstantToExpression
+from Numbers.Algebraic_Expression import Algebraic_Expression, Variable, NewVariableExpression, VariableToExpression, ConstantToExpression, is_scalar
 
 class Rule(object):
   """Base type for Proof_System rules."""
@@ -37,7 +37,7 @@ class General_Rule(Rule):
   """A general rule that specifies any general end configuration."""
   def __init__(self, var_list, min_list, result_tape, num_steps, num_loops, rule_num):
     self.var_list = var_list  # List of variables (or None) to assign repetition counts to.
-    self.min_list = min_list  # List of minimum values for 
+    self.min_list = min_list  # List of minimum values for variables.
     # TODO: result_list and force output tape to be the same stripped config as input tape.
     self.result_tape = result_tape
     self.result_list = [block.num for block in result_tape.tape[0] + result_tape.tape[1]]
@@ -52,7 +52,7 @@ class General_Rule(Rule):
       if var:  # If this exponent changes in this rule (has a variable)
         # TODO: This is a bit heavy-handed, but we probably don't prove
         #   too many recursive rules :)
-        if not result.always_greater_than(VariableToExpression(var)):
+        if is_scalar(result) or not result.always_greater_than(VariableToExpression(var)):
           # If any exponent can decrease, this is not an infinite rule.
           self.infinite = False
           break
@@ -444,7 +444,7 @@ class Proof_System(object):
             try:
               # As long as init_value[x] >= 0 we can apply proof
               num_reps = min(num_reps, (init_value[x] // -delta_value[x])  + 1)
-            except TypeError as e:
+            except TypeError, e:
               if self.verbose:
                 self.print_this("++ TypeError ++")
                 self.print_this(e)
@@ -571,4 +571,3 @@ def series_sum(V0, dV, n):
   # __truediv__ because then we'd get a float output for ints.
   # TODO: Don't crash when we get NotImplemented exception from Algebraic_Expression.__div__.
   return V0*n + (dV*n*(n-1))/2
-
