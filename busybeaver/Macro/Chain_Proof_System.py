@@ -67,7 +67,6 @@ def stripped_info(block):
   else:
     return block.symbol
 
-## Multiple implementations for profiling test.
 def strip_config(state, dir, tape):
   """"Return a generalized configuration removing the non-1 repetition counts from the tape."""
   # Optimization: Strip off Infinity blocks before we run the map (see tape[x][1:]).
