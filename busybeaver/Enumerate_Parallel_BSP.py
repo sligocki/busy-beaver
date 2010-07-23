@@ -578,6 +578,8 @@ if __name__ == "__main__":
   if options.steps == 0:
     options.steps = Macro_Simulator.INF
 
+  options.compute_steps = True
+
   states              = options.states
   symbols             = options.symbols
   timeout             = options.time
