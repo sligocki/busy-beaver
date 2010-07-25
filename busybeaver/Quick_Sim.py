@@ -24,7 +24,8 @@ def run(TTable, block_size, back, prover, recursive, options):
                                   verbose_simulator=options.verbose_simulator,
                                   verbose_prover=options.verbose_prover,
                                   verbose_prefix="")
-  #raw_input("Ready?")
+  if options.manual:
+    return  # Let's us run the machine manually. Must be run as python -i Quick_Sim.py
   try:
     if options.quiet or options.verbose:  # Note verbose prints inside sim.step()
       while sim.op_state == Turing_Machine.RUNNING:
@@ -82,6 +83,8 @@ if __name__ == "__main__":
                     help="Turn ON recursive proof system [Experimental]")
   parser.add_option("--no-steps", action="store_false", dest="compute_steps", default=True,
                     help="Don't keep track of base step count (can be expensive to calculate especially with recursive proofs).")
+  parser.add_option("--manual", action="store_true",
+                    help="Don't run any simulation, just set up simulator and quit. (Run as python -i Quick_Sim.py to interactively run simulation.)")
   
   parser.add_option("-n", "--block-size", type=int, help="Block size to use in macro machine simulator (default is to guess with the block_finder algorithm)")
   
