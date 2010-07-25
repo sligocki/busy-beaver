@@ -203,7 +203,7 @@ class Proof_System(object):
     if self.verbose:
       print
       self.print_this("** Testing new rule **")
-      self.print_this("From: ", new_config)
+      self.print_this("From: ", full_config)
       self.print_this("Loops:", delta_loop)
     
     # Unpack configurations
