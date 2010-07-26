@@ -1,4 +1,4 @@
 #!/bin/csh -f
 # Sorts all halting machines by number of steps and then number of 
 # symbols and then machine number (preffering smaller numbers).
-getAllHalt $* | sort +6n +7n +0rn
+getAllHalt $* | sort -k7,7rn -k8,8rn -k1,1n
