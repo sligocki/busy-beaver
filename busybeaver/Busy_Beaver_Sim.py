@@ -215,7 +215,7 @@ def run_visual(machine, tape_length, num_steps, print_width=79, silent=False, st
 
     for j in xrange(2*half_width):
       value = tape[start_pos+(j-half_width)]
-      assert 0 <= value <= 6
+      #assert 0 <= value <= 6
       assert -1 <= state <= 25
       if position == start_pos+(j-half_width):
         # If this is the current possition ...
@@ -273,7 +273,7 @@ def run_visual(machine, tape_length, num_steps, print_width=79, silent=False, st
 
           for j in xrange(2*half_width):
             value = tape[start_pos+(j-half_width)]
-            assert 0 <= value <= 6
+            #assert 0 <= value <= 6
             assert -1 <= new_state <= 25
             if position == start_pos+(j-half_width):
               # If this is the current possition ...
