@@ -337,11 +337,22 @@ def run_visual(machine, tape_length, num_steps, print_width=79, silent=False, st
 
 if __name__ == "__main__":
   from Option_Parser import Filter_Option_Parser
+  import fcntl, termios, struct
+
+  # Get terminal width to use as the default width. This is surprisingly hard to do :(
+  # See: http://stackoverflow.com/questions/566746/how-to-get-console-window-width-in-python
+  try:
+    # This will be fooled if you pipe in stdin from somewhere else, but I don't
+    # know why you would do that since this program doesn't read stdin.
+    fd = 0
+    term_height, term_width = struct.unpack('hh', fcntl.ioctl(fd, termios.TIOCGWINSZ, '1234'))
+  except:
+    term_width = 80
 
   opts, args = Filter_Option_Parser(sys.argv,
                                     [("brief"      , None, None, False, False),
                                      ("visual"     , None, None, False, False),
-                                     ("width"      , int , 79  , False, True ),
+                                     ("width", int, term_width , False, True ),
                                      ("old"        , None, None, False, False),
                                      ("line_num"   , int , 1   , False, True ),
                                      ("machine_num", int , None, False, True )],
@@ -388,4 +399,3 @@ if __name__ == "__main__":
       print "Number of 'not 0's printed: %u, steps: %u" % (num_syms,num_steps)
 
   sys.stdout.flush()
-  sys.exit(0)
