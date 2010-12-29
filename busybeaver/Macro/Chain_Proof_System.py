@@ -472,7 +472,12 @@ class Proof_System(object):
         coef = term.coef; x = term.vars[0].var
         # We don't factor out the coef, because it might make this work better for
         # some recursive rules.
-        diff_steps += series_sum(coef * init_value[x], coef * delta_value[x], num_reps)
+        try:
+          diff_steps += series_sum(coef * init_value[x], coef * delta_value[x], num_reps)
+        except TypeError:
+          if self.verbose:
+            self.print_this("++ Cannot divide expression by 2 ++")
+          return False, 4
     else:
       diff_steps = 0 # TODO: Make it None instead of a lie
     

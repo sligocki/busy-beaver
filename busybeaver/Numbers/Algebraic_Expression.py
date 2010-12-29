@@ -80,6 +80,7 @@ class Expression(Number):
         return Expression(new_terms, self.const*other)
     else:
       return expr_prod(self, other)
+  
   def __div__(self, other):
     """Divide the expression by a scalar.
     
@@ -101,8 +102,9 @@ class Expression(Number):
         new_terms.append(Term(old_term.vars, new_coef))
       return Expression(tuple(new_terms), new_const)
     else:
-      ### TODO: We could (actually) devide, say (8x+8) / (x+1) = 8 !
+      ### TODO: We could (actually) divide, say (8x+8) / (x+1) = 8 !
       return NotImplemented
+  
   def __truediv__(self, other):
     if other == 1:
       return self
@@ -110,13 +112,14 @@ class Expression(Number):
       new_terms = tuple([Term(t.vars, t.coef.__truediv__(other)) for t in self.terms])
       return Expression(new_terms, self.const.__truediv__(other))
     else:
-      ### TODO: We could (actually) devide, say (8x+8) / (x+1) = 8 !
+      ### TODO: We could (actually) divide, say (8x+8) / (x+1) = 8 !
       return NotImplemented
+  
   def __floordiv__(self, other):
     if other == 1:
       return self
     else:
-      ### TODO: We could (actually) devide, say (8x+8) // 8 = (x+1) !
+      ### TODO: We could (actually) divide, say (8x+8) // 8 = (x+1) !
       return NotImplemented
   
   def substitute(self, subs):
