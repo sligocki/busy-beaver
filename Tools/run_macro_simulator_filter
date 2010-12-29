@@ -1,0 +1,60 @@
+#!/bin/csh -f
+set steps=1000
+
+set size=1
+set stop=10000
+
+set timeout=-1
+
+set update_cmd="update"
+
+set argc=$#argv
+if ("${argc}" >= 1) then
+  set basename="$1"
+else
+  echo "Usage:  run_macro_simulator_filter basename [steps [start_size [stop_size [timeout [update_cmd]]]]]"
+  exit 1
+endif
+if ("${argc}" >= 2) then
+  set steps="$2"
+endif
+if ("${argc}" >= 3) then
+  set size="$3"
+endif
+if ("${argc}" >= 4) then
+  set stop="$4"
+endif
+if ("${argc}" >= 5) then
+  set timeout="$5"
+endif
+if ("${argc}" >= 6) then
+  set update_cmd="$6"
+endif
+
+wc -l "${basename}".unknown
+echo ""
+
+while ("${size}" <= "${stop}")
+  if ("${timeout}" == "-1") then
+    echo "----- Macro ${size} -----"
+    time ${update_cmd} "${basename}" Macro_Simulator_Filter.py --recursive --steps=${steps} --size=${size}
+  else
+    echo "----- Macro ${size} ${timeout} -----"
+    time ${update_cmd} "${basename}" Macro_Simulator_Filter.py --recursive --time=${timeout} --steps=${steps} --size=${size}
+  endif
+
+  wc -l "${basename}".unknown
+
+  if (-e "${basename}".error) then
+    echo "Error encountered..."
+    exit 1
+  endif
+
+  echo ""
+
+  assign_undecided "${basename}" "${update_cmd}"
+
+  @ size++
+end
+
+exit 0
