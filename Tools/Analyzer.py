@@ -1,4 +1,6 @@
 #! /usr/bin/env python
+import math
+
 from Format_New import FIELD
 
 def get_max(lines):
@@ -48,23 +50,26 @@ if __name__ == "__main__":
   num_unknown = count_lines(unknown_file)
   num_total = num_halt + num_infinite + num_undecided + num_unknown
   # Derive percentages in each category
-  percent_halt = float(num_halt) / num_total
-  percent_infinite = float(num_infinite) / num_total
-  percent_undecided = float(num_undecided) / num_total
-  percent_unknown = float(num_unknown) / num_total
+  percent_halt = 100.0*float(num_halt) / num_total
+  percent_infinite = 100.0*float(num_infinite) / num_total
+  percent_undecided = 100.0*float(num_undecided) / num_total
+  percent_unknown = 100.0*float(num_unknown) / num_total
+
+  digits = int(math.ceil(math.log10(num_total)))
+  format_string = "%%%dd" % digits
 
   print basename
   print ""
-  print "Max Steps         =", max_steps
-  print "Max Symbols       =", max_symbols
+  print "Max Steps         = ", max_steps
+  print "Max Symbols       = ", max_symbols
   print ""
-  print "Number Total      =", num_total
-  print "Number Halt       =", num_halt
-  print "Number Infinite   =", num_infinite
-  print "Number Undecided  =", num_undecided
-  print "Number Unknown    =", num_unknown
+  print "Number Total      = ", format_string % num_total
+  print "Number Halt       = ", format_string % num_halt
+  print "Number Infinite   = ", format_string % num_infinite
+  print "Number Undecided  = ", format_string % num_undecided
+  print "Number Unknown    = ", format_string % num_unknown
   print ""
-  print "Percent Halt      =", percent_halt
-  print "Percent Infinite  =", percent_infinite
-  print "Percent Undecided =", percent_undecided
-  print "Percent Unknown   =", percent_unknown
+  print "Percent Halt      =", "%10.6f" % percent_halt
+  print "Percent Infinite  =", "%10.6f" % percent_infinite
+  print "Percent Undecided =", "%10.6f" % percent_undecided
+  print "Percent Unknown   =", "%10.6f" % percent_unknown
