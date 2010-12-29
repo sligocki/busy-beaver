@@ -1,0 +1,26 @@
+#!/bin/tcsh -f
+
+set cmd_dir=`dirname $0`
+set filter_dir=${cmd_dir}/../busybeaver
+
+setenv PATH ${PATH}:${cmd_dir}:${filter_dir}
+
+set nprocs=$1
+set basename=$2
+
+set update_cmd="update_parallel ${nprocs}"
+
+echo "----- Integrate -----"
+time update ${basename} Initial_Filter
+
+echo "----- Dual -----"
+time ${update_cmd} ${basename} Dual_Machine_Filter.py --tape=100 --steps=100
+
+set num_undecided=`ls -s ${basename}.undecided | awk '{print $1;}'`
+
+while ($num_undecided != 0)
+  echo "----- Undecided/Dual -----"
+  time ${update_cmd} ${basename} Find_New_TM_Filter --tape=100 --steps=100 --next_machine_number=0
+
+  set num_undecided=`ls -s ${basename}.undecided | awk '{print $1;}'`
+end
