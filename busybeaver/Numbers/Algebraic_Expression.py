@@ -55,9 +55,11 @@ class Term(object):
 
 class Expression(Number):
   """An algebraic expression, i.e. a multi-variable polynomial."""
+  
   def __init__(self, terms, constant):
     self.terms = terms
     self.const = constant
+  
   def __repr__(self):
     if len(self.terms) == 0:
       return repr(self.const)
@@ -66,11 +68,13 @@ class Expression(Number):
       return "("+r+")"
     else:
       return "("+r+" + "+repr(self.const)+")"
+  
   def __add__(self, other):
     if is_scalar(other):
       return Expression(self.terms, self.const + other)
     else:
       return Expression(term_sum(self.terms, other.terms), self.const + other.const)
+  
   def __mul__(self, other):
     if is_scalar(other):
       if other == 0:
