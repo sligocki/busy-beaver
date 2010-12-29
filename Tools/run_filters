@@ -10,11 +10,11 @@ set basename=$1
 set update_cmd="update"
 
 echo "----- Integrate -----"
-time ${update_cmd} ${basename} Initial_Filter
+time update ${basename} Initial_Filter
 
 while (1)
   echo "----- Dual -----"
-  time ${update_cmd} ${basename} Dual_Machine_Filter.py --tape=1000 --steps=1000
+  time ${update_cmd} ${basename} Dual_Machine_Filter.py --tape=100 --steps=100
 
   set num_undecided=`ls -s ${basename}.undecided | awk '{print $1;}'`
 
@@ -28,21 +28,16 @@ end
 echo "----- Reverse -----"
 time ${update_cmd} ${basename} Reverse_Engineer_Filter.py
 
-set time=0.1
+set time=0.001
 
-run_tree_filter "${basename}" 10 1 2 ${time} "${update_cmd}"
+run_macro_simulator_filter "${basename}" 100 1 6 ${time} "${update_cmd}"
 
 echo "----- Reverse -----"
 time ${update_cmd} ${basename} Reverse_Engineer_Filter.py
 
-echo "----- Dual -----"
-time ${update_cmd} ${basename} Dual_Machine_Filter.py --tape=1000 --steps=1000
+set time=0.01
 
-assign_undecided "${basename}" "${update_cmd}"
-
-run_tree_filter "${basename}" 100 1 5 ${time} "${update_cmd}"
-
-foreach size (1)
+foreach size (1 2)
   foreach ctl (1 2 3 4)
     set offset=0
     while (${offset} < ${size})
@@ -55,9 +50,11 @@ end
 
 assign_undecided "${basename}" "${update_cmd}"
 
-run_tree_filter "${basename}" 1000 1 10 ${time} "${update_cmd}"
+run_macro_simulator_filter "${basename}" 1000 1 8 ${time} "${update_cmd}"
 
-foreach size (2 3)
+set time=0.1
+
+foreach size (1 2 3)
   foreach ctl (1 2 3 4)
     set offset=0
     while (${offset} < ${size})
@@ -68,9 +65,7 @@ foreach size (2 3)
   end
 end
 
-assign_undecided "${basename}" "${update_cmd}"
-
-run_tree_filter "${basename}" 10000 1 25 ${time} "${update_cmd}"
+run_macro_simulator_filter "${basename}" 10000 1 8 ${time} "${update_cmd}"
 
 foreach size (4 5 6)
   foreach ctl (1 2 3 4)
@@ -85,36 +80,4 @@ end
 
 assign_undecided "${basename}" "${update_cmd}"
 
-set time=1.0
-
-run_tree_filter "${basename}" 10000 1 25 ${time} "${update_cmd}"
-
-foreach size (1 2 3 4 5 6)
-  foreach ctl (1 2 3 4)
-    set offset=0
-    while (${offset} < ${size})
-      echo "----- CTL${ctl} ${size} ${offset} ${time} -----"
-      time ${update_cmd} ${basename} CTL_Filter.py --time=${time} --type=CTL${ctl} --size=${size} --offset=${offset}
-      @ offset++
-    end  
-  end
-end
-
-assign_undecided "${basename}" "${update_cmd}"
-
-set time=10.0
-
-run_tree_filter "${basename}" 10000 1 25 ${time} "${update_cmd}"
-
-foreach size (1 2 3 4 5 6)
-  foreach ctl (1 2 3 4)
-    set offset=0
-    while (${offset} < ${size})
-      echo "----- CTL${ctl} ${size} ${offset} ${time} -----"
-      time ${update_cmd} ${basename} CTL_Filter.py --time=${time} --type=CTL${ctl} --size=${size} --offset=${offset}
-      @ offset++
-    end  
-  end
-end
-
-assign_undecided "${basename}" "${update_cmd}"
+run_macro_simulator_filter "${basename}" 10000 9 25 ${time} "${update_cmd}"
