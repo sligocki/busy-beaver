@@ -536,7 +536,7 @@ if __name__ == "__main__":
   out_parser.add_option("--checkpoint_interval", type=int, default=10, help="Checkpoint interval (in enumerator calls) [Default: %default]")
   out_parser.add_option("--restart_base", metavar="FILE", help="Restart file base name")
   out_parser.add_option("--restart_num", type=int, default=1, help="Number of restart files")
-  out_parser.add_option("--stack_mult", type=float, default=10, help="Multiplier of 'time' for checking stacks [Default: %default")
+  out_parser.add_option("--stack_mult", type=float, default=10, help="Multiplier of 'time' for checking stacks [Default: %default]")
   # out_parser.add_option("--save_freq", type=int, default=100000, metavar="FREQ", help="Freq to save checkpoints [Default: %default]")
   parser.add_option_group(out_parser)
 
