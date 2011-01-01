@@ -1,7 +1,7 @@
 A somewhat haphazard collection of Busy Beaver hunting tools. Here follows an 
 attempt at describing them all.
 
-= Files in busybeaver/ =
+= Files in Code/ =
 
 There are two sorts of programs here "Forest" and "Tree". "Tree" programs 
 analyze individual machines specifically. They generally simulate them. 
