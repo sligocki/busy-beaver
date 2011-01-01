@@ -15,4 +15,5 @@ set update_cmd="update_parallel ${nprocs}"
 # set time=0.1
 set time=1.0
 # set time=10.0
+
 run_macro_simulator_filter "${basename}" 1000000000000000000 1 25 ${time} "${update_cmd}"
