@@ -10,16 +10,9 @@ set basename=$1
 set update_cmd="update"
 
 # set time=0.001
-# run_macro_simulator_filter "${basename}" 1000000000000000000 1 6 ${time} "${update_cmd}"
-
 # set time=0.01
-# run_macro_simulator_filter "${basename}" 1000000000000000000 1 8 ${time} "${update_cmd}"
-
 # set time=0.1
-# run_macro_simulator_filter "${basename}" 1000000000000000000 1 25 ${time} "${update_cmd}"
+set time=1.0
+# set time=10.0
 
-# set time=1.0
-# run_macro_simulator_filter "${basename}" 1000000000000000000 1 25 ${time} "${update_cmd}"
-
-set time=10.0
 run_macro_simulator_filter "${basename}" 1000000000000000000 1 25 ${time} "${update_cmd}"

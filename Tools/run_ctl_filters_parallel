@@ -11,6 +11,7 @@ set basename=$2
 set update_cmd="update_parallel ${nprocs}"
 
 set time=1.0
+# set time=10.0
 
 foreach size (1 2 3 4 5 6)
   foreach ctl (1 2 3 4)
