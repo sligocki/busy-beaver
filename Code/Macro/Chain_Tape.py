@@ -57,9 +57,18 @@ class Chain_Tape(object):
     self.displace = 0
   
   def __repr__(self):
-    if self.dir:  dir = " -> "
-    else:         dir = " <- "
-    return `self.tape[0]`+dir+`reverse(self.tape[1])`
+    retval = ""
+    for sym in self.tape[0]:
+      retval = retval + `sym` + " "
+
+    if self.dir:  dir = " ->  "
+    else:         dir = " <-  "
+    retval = retval + dir
+
+    for sym in reverse(self.tape[1]):
+      retval = retval + `sym` + " "
+
+    return retval
   
   def copy(self):
     Chain_Tape.num_copies += 1
