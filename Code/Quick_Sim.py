@@ -70,9 +70,9 @@ if __name__ == "__main__":
   # TODO: Combine optparsers from MacroMachine, Enumerate and here.
   parser.add_option("-q", "--quiet", action="store_true", help="Brief output")
   parser.add_option("-v", "--verbose", action="store_true", help="Print step-by-step informaion from simulator and prover.")
-  parser.add_option("--verbose-prover", action="store_true", help="Provide debuggin output from prover.")
-  parser.add_option("--verbose-simulator", action="store_true", help="Provide debuggin output from simulator.")
-  parser.add_option("--verbose-block-finder", action="store_true", help="Provide debuggin output from block_finder.")
+  parser.add_option("--verbose-prover", action="store_true", help="Provide debugging output from prover.")
+  parser.add_option("--verbose-simulator", action="store_true", help="Provide debugging output from simulator.")
+  parser.add_option("--verbose-block-finder", action="store_true", help="Provide debugging output from block_finder.")
   parser.add_option("--print-loops", type=int, default=10000, metavar="LOOPS", help="Print every LOOPS loops.")
   
   parser.add_option("-b", "--no-backsymbol", action="store_false", dest="backsymbol", default=True, 
