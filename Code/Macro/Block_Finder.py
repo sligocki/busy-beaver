@@ -15,6 +15,7 @@ def block_finder(machine, limit1=200, limit2=200, run1=True, run2=True, extra_mu
   sim = Simulator(machine, enable_prover=False)  # Disable proof system for block finding.
   
   if DEBUG:
+    print ""
     print "Block finder start time:", time.clock()
   ## Find the least compressed time in before limit
   if run1:
@@ -31,11 +32,13 @@ def block_finder(machine, limit1=200, limit2=200, run1=True, run2=True, extra_mu
       if sim.op_state != Turing_Machine.RUNNING:
         if DEBUG:
           print "Halted, returning base block size: 1"
+          print ""
         return 1
     
     if DEBUG:
       print "Found least compression time:", time.clock()
       print "Least compression at step:", worst_loop
+      print ""
     
     # TODO: Instead of re-seeking, keep going till next bigger tape?
     sim = Simulator(machine, enable_prover=False)
@@ -47,13 +50,16 @@ def block_finder(machine, limit1=200, limit2=200, run1=True, run2=True, extra_mu
   
   if DEBUG:
     print "Reset sim time:", time.clock()
+    print ""
   
   # Analyze this time to see which block size provides greatest compression
   tape = uncompress_tape(sim.tape.tape)
   
   if DEBUG:
     print "Uncompressed tape time:", time.clock()
+    print ""
     print tape
+    print ""
   
   min_compr = len(tape) + 1 # Worse than no compression
   opt_size = 1
@@ -66,7 +72,9 @@ def block_finder(machine, limit1=200, limit2=200, run1=True, run2=True, extra_mu
   if DEBUG:
     print "Run1 end time:", time.clock()
     print "Optimal base block size:", opt_size
+    print ""
     print tape
+    print ""
   
   if not run2:
     return opt_size
@@ -95,8 +103,10 @@ def block_finder(machine, limit1=200, limit2=200, run1=True, run2=True, extra_mu
     mult += 1
   
   if DEBUG:
+    print ""
     print "Run2 end time:", time.clock()
     print "Optimal block mult:", opt_mult
+    print ""
     sys.stdout.flush()
   
   return opt_mult*opt_size
