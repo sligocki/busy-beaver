@@ -161,7 +161,7 @@ class Simulator(object):
 
   def verbose_print(self):
     if self.verbose:
-      print self.verbose_prefix, self.num_loops, self.state, self.tape
+      print "%s %6d  %s  %s" % (self.verbose_prefix, self.num_loops, self.state, self.tape)
 
 def template(title, steps, loops):
   """Pretty print row of the steps table."""
