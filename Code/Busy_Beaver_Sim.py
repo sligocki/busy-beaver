@@ -108,17 +108,27 @@ def print_machine(machine):
   """
 
   sys.stdout.write("Transition table:\n")
+  sys.stdout.write("\n")
 
   TTable = machine.get_TTable()
 
+  sys.stdout.write("   ")
+  for j in xrange(len(TTable[0])):
+    sys.stdout.write("  %d " % j)
+  sys.stdout.write("\n")
+
   for i in xrange(len(TTable)):
-    sys.stdout.write("  State %d:\n" % i)
+    sys.stdout.write(" %c " % chr(ord('A') + i))
     for j in xrange(len(TTable[i])):
-      sys.stdout.write("    %d: (" % j)
-      for k in TTable[i][j]:
-        sys.stdout.write(" %2d" % k)
-      sys.stdout.write(" )\n")
+      sys.stdout.write(" ")
+      if TTable[i][j][2] == -1:
+        sys.stdout.write("%c" % 'Z')
+      else:
+        sys.stdout.write("%c" % chr(ord('A') + TTable[i][j][2]))
+      sys.stdout.write("%d" % TTable[i][j][0])
+      sys.stdout.write("%c" % ('L','R')[TTable[i][j][1]])
     sys.stdout.write("\n")
+  sys.stdout.write("\n")
         
   sys.stdout.flush()
 
@@ -219,11 +229,11 @@ def run_visual(machine, tape_length, num_steps, print_width=79, silent=False, st
       assert -1 <= state <= 25
       if position == start_pos+(j-half_width):
         # If this is the current possition ...
-        sys.stdout.write("\033[1;%dm%c" % (color[value], chr(65+state)))
+        sys.stdout.write("\033[1;%dm%c" % (color[value], chr(ord('A') + state)))
       else:
         sys.stdout.write("\033[%dm " % (color[value]))
 
-    sys.stdout.write("\033[0m %2d"   % state)
+    sys.stdout.write("\033[0m  %c" % chr(ord('A') + state))
     sys.stdout.write(" %2d\n" % tape[position])
 
     sys.stdout.flush()
@@ -277,11 +287,11 @@ def run_visual(machine, tape_length, num_steps, print_width=79, silent=False, st
             assert -1 <= new_state <= 25
             if position == start_pos+(j-half_width):
               # If this is the current possition ...
-              sys.stdout.write("\033[1;%dm%c" % (color[value], chr(65+new_state)))
+              sys.stdout.write("\033[1;%dm%c" % (color[value], chr(ord('A') + new_state)))
             else:
               sys.stdout.write("\033[%dm " % (color[value]))
 
-          sys.stdout.write("\033[0m %2d"   % new_state)
+          sys.stdout.write("\033[0m  %c" % chr(ord('A') + new_state))
           sys.stdout.write(" %2d\n" % tape[position])
 
           sys.stdout.flush()
