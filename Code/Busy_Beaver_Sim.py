@@ -4,7 +4,6 @@
 #
 # This module contains the Busy_Beaver class, which runs a Turing machine
 # simulator (either in C or Python) with an initially blank tape.
-#
 
 import sys, time, string
 
@@ -187,6 +186,7 @@ def run(machine, tape_length, num_steps, silent=False):
 
 # White, Red, Blue, Green, Magenta, Cyan, Brown/Yellow
 color = [49, 41, 44, 42, 45, 46, 43]
+states = string.ascii_uppercase + string.ascii_lowercase + string.digits + "!@#$%^&*"
 def run_visual(machine, tape_length, num_steps, print_width=79, silent=False, start_tape=None):
   """
   Start the tape and run it until it halts with visual output.
@@ -225,11 +225,9 @@ def run_visual(machine, tape_length, num_steps, print_width=79, silent=False, st
 
     for j in xrange(2*half_width):
       value = tape[start_pos+(j-half_width)]
-      #assert 0 <= value <= 6
-      assert -1 <= state <= 25
       if position == start_pos+(j-half_width):
         # If this is the current possition ...
-        sys.stdout.write("\033[1;%dm%c" % (color[value], chr(ord('A') + state)))
+        sys.stdout.write("\033[1;%dm%c" % (color[value], states[state]))
       else:
         sys.stdout.write("\033[%dm " % (color[value]))
 
@@ -283,11 +281,9 @@ def run_visual(machine, tape_length, num_steps, print_width=79, silent=False, st
 
           for j in xrange(2*half_width):
             value = tape[start_pos+(j-half_width)]
-            #assert 0 <= value <= 6
-            assert -1 <= new_state <= 25
             if position == start_pos+(j-half_width):
               # If this is the current possition ...
-              sys.stdout.write("\033[1;%dm%c" % (color[value], chr(ord('A') + new_state)))
+              sys.stdout.write("\033[1;%dm%c" % (color[value], states[new_state]))
             else:
               sys.stdout.write("\033[%dm " % (color[value]))
 
@@ -393,8 +389,8 @@ if __name__ == "__main__":
     machine = load(infile,line_num,machine_num)
   infile.close()
 
-  if not brief:
-    print_machine(machine)
+  #if not brief:
+  #  print_machine(machine)
 
   if visual:
     num_syms, num_steps = run_visual(machine,tape,steps,width,brief)
