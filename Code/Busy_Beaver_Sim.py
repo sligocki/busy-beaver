@@ -9,6 +9,11 @@ import sys, time, string
 
 from Turing_Machine import Turing_Machine
 
+# White, Red, Blue, Green, Magenta, Cyan, Brown/Yellow
+color = [49, 41, 44, 42, 45, 46, 43]
+# Characters to use for states.
+states = string.ascii_uppercase + string.ascii_lowercase + string.digits + "!@#$%^&*"
+
 def load(infile, line_num = 1, machine_num = None):
   """
   Load the contents of the Turing machine from a file.
@@ -117,13 +122,13 @@ def print_machine(machine):
   sys.stdout.write("\n")
 
   for i in xrange(len(TTable)):
-    sys.stdout.write(" %c " % chr(ord('A') + i))
+    sys.stdout.write(" %c " % states[i])
     for j in xrange(len(TTable[i])):
       sys.stdout.write(" ")
       if TTable[i][j][2] == -1:
         sys.stdout.write("%c" % 'Z')
       else:
-        sys.stdout.write("%c" % chr(ord('A') + TTable[i][j][2]))
+        sys.stdout.write("%c" % states[TTable[i][j][2]])
       sys.stdout.write("%d" % TTable[i][j][0])
       sys.stdout.write("%c" % ('L','R')[TTable[i][j][1]])
     sys.stdout.write("\n")
@@ -184,9 +189,6 @@ def run(machine, tape_length, num_steps, silent=False):
   return (num_syms, num_steps)
 
 
-# White, Red, Blue, Green, Magenta, Cyan, Brown/Yellow
-color = [49, 41, 44, 42, 45, 46, 43]
-states = string.ascii_uppercase + string.ascii_lowercase + string.digits + "!@#$%^&*"
 def run_visual(machine, tape_length, num_steps, print_width=79, silent=False, start_tape=None):
   """
   Start the tape and run it until it halts with visual output.
@@ -226,12 +228,12 @@ def run_visual(machine, tape_length, num_steps, print_width=79, silent=False, st
     for j in xrange(2*half_width):
       value = tape[start_pos+(j-half_width)]
       if position == start_pos+(j-half_width):
-        # If this is the current possition ...
+        # If this is the current position ...
         sys.stdout.write("\033[1;%dm%c" % (color[value], states[state]))
       else:
         sys.stdout.write("\033[%dm " % (color[value]))
 
-    sys.stdout.write("\033[0m  %c" % chr(ord('A') + state))
+    sys.stdout.write("\033[0m  %c" % states[state])
     sys.stdout.write(" %2d\n" % tape[position])
 
     sys.stdout.flush()
@@ -285,9 +287,9 @@ def run_visual(machine, tape_length, num_steps, print_width=79, silent=False, st
               # If this is the current possition ...
               sys.stdout.write("\033[1;%dm%c" % (color[value], states[new_state]))
             else:
-              sys.stdout.write("\033[%dm " % (color[value]))
+              sys.stdout.write("\033[%dm " % color[value])
 
-          sys.stdout.write("\033[0m  %c" % chr(ord('A') + new_state))
+          sys.stdout.write("\033[0m  %c" % states[new_state])
           sys.stdout.write(" %2d\n" % tape[position])
 
           sys.stdout.flush()
