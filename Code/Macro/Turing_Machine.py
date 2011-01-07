@@ -38,13 +38,15 @@ def make_machine(trans_table):
   # Otherwise return the simple machine
   return machine
 
+# Characters to use for states.
+states = string.ascii_uppercase + string.ascii_lowercase + string.digits + "!@#$%^&*" + "Z"
 class Simple_Machine_State(int):
   """Wrapper provides a pretty-printer for a Turing machine's integer state."""
   def __str__(self):
-    return chr(ord('A') + self)
+    return states[self]
 
   def __repr__(self):
-    return chr(ord('A') + self)
+    return states[self]
 
 class Simple_Machine(Turing_Machine):
   """The most general Turing Machine based off of a transition table"""
