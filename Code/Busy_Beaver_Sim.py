@@ -12,7 +12,7 @@ from Turing_Machine import Turing_Machine
 # White, Red, Blue, Green, Magenta, Cyan, Brown/Yellow
 color = [49, 41, 44, 42, 45, 46, 43]
 # Characters to use for states.
-states = string.ascii_uppercase + string.ascii_lowercase + string.digits + "!@#$%^&*"
+states = string.ascii_uppercase + string.ascii_lowercase + string.digits + "!@#$%^&*" + "Z"
 
 def load(infile, line_num = 1, machine_num = None):
   """
@@ -111,29 +111,43 @@ def print_machine(machine):
   but not the contents of the tape.
   """
 
+  sys.stdout.write("\n")
   sys.stdout.write("Transition table:\n")
   sys.stdout.write("\n")
 
   TTable = machine.get_TTable()
 
-  sys.stdout.write("   ")
+  sys.stdout.write("       ")
   for j in xrange(len(TTable[0])):
-    sys.stdout.write("  %d " % j)
-  sys.stdout.write("\n")
+    sys.stdout.write("+-----")
+  sys.stdout.write("+\n")
+
+  sys.stdout.write("       ")
+  for j in xrange(len(TTable[0])):
+    sys.stdout.write("|  %d  " % j)
+  sys.stdout.write("|\n")
+
+  sys.stdout.write("   +---")
+  for j in xrange(len(TTable[0])):
+    sys.stdout.write("+-----")
+  sys.stdout.write("+\n")
 
   for i in xrange(len(TTable)):
-    sys.stdout.write(" %c " % states[i])
+    sys.stdout.write("   | %c " % states[i])
     for j in xrange(len(TTable[i])):
-      sys.stdout.write(" ")
-      if TTable[i][j][2] == -1:
-        sys.stdout.write("%c" % 'Z')
-      else:
-        sys.stdout.write("%c" % states[TTable[i][j][2]])
-      sys.stdout.write("%d" % TTable[i][j][0])
-      sys.stdout.write("%c" % ('L','R')[TTable[i][j][1]])
-    sys.stdout.write("\n")
+      sys.stdout.write("| ")
+      sys.stdout.write("%c"  % states[TTable[i][j][2]])
+      sys.stdout.write("%d"  % TTable[i][j][0])
+      sys.stdout.write("%c " % ('L','R')[TTable[i][j][1]])
+    sys.stdout.write("|\n")
+
+    sys.stdout.write("   +---")
+    for j in xrange(len(TTable[0])):
+      sys.stdout.write("+-----")
+    sys.stdout.write("+\n")
+
   sys.stdout.write("\n")
-        
+
   sys.stdout.flush()
 
 
@@ -391,8 +405,8 @@ if __name__ == "__main__":
     machine = load(infile,line_num,machine_num)
   infile.close()
 
-  #if not brief:
-  #  print_machine(machine)
+  if not brief:
+    print_machine(machine)
 
   if visual:
     num_syms, num_steps = run_visual(machine,tape,steps,width,brief)
