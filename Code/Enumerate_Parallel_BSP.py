@@ -20,7 +20,7 @@ import cPickle as pickle
 from Scientific.BSP import *
 
 from Turing_Machine import Turing_Machine
-from IO import IO_old as IO
+from IO_old import IO
 import Macro_Simulator
 from Alarm import AlarmException
 
