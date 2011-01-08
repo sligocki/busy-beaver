@@ -4,7 +4,7 @@
 # on backtracking.
 
 from __future__ import division
-import IO, copy
+import IO_old as IO, copy
 
 # Constants
 INFINITE = 4

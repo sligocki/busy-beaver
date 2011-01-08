@@ -4,7 +4,7 @@
 #
 
 import sys
-import IO
+import IO_old as IO
 import CTL1
 import CTL2
 import CTL3

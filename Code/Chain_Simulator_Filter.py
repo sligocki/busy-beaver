@@ -4,7 +4,7 @@ import copy
 import os,sys
 
 import Turing_Machine
-import IO
+import IO_old as IO
 import Macro.Block_Finder
 import Macro.Turing_Machine
 import Macro.Chain_Simulator

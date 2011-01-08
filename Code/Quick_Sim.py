@@ -3,7 +3,7 @@
 import sys
 
 from Macro import Turing_Machine, Chain_Simulator, Block_Finder
-import IO
+import IO_old as IO
 
 def run(TTable, block_size, back, prover, recursive, options):
   # Construct Machine (Backsymbol-k-Block-Macro-Machine)

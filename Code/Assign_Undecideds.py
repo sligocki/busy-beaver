@@ -4,7 +4,7 @@
 # enumerated (say during a simulation filter).
 #
 
-import IO
+import IO_old as IO
 import sys, copy
 from Option_Parser import Filter_Option_Parser
 
