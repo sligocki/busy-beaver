@@ -259,7 +259,7 @@ class Stack:
     return "["+reduce((lambda x, y: x+", "+y.repr(dir)), l[1:], l[0].repr(dir))+"]"
 
 if __name__ == "__main__":
-  import IO, sys, time, math, os
+  import IO_old as IO, sys, time, math, os
 
   infile = file(sys.argv[1], "r")
   if len(sys.argv) > 2: line = int(sys.argv[2])

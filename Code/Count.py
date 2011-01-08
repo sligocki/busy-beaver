@@ -50,7 +50,7 @@ def count(ttable):
 #main prog
 import sys
 
-import IO
+import IO_old as IO
 
 def count_all(filename):
   """Count total number of machines represented in a file."""
