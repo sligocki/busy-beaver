@@ -1,5 +1,9 @@
 """
-Does IO of Busy Beaver results (IO class).
+Old IO for Busy Beaver results.
+
+Format looks like:
+6 2 2 -1 -1 4 Infinite [[(1, 1, 1), (-1, 0, -1)], [(1, 0, 1), (0, 0, 1)]] 
+7 2 2 -1 -1 0 2 4 [[(1, 1, 1), (1, 1, -1)], [(1, 0, 1), (1, 1, 0)]] 
 """
 
 import sys
@@ -141,7 +145,7 @@ def load_TTable(infile, line_num = 1):
     raise Exception, "load_TTable: line_num must be >= 1"
   while line_num > 1:
     if not infile.readline():
-      raise Exception, "Not enought lines in file"
+      raise Exception, "Not enough lines in file"
     line_num -= 1
   line = infile.readline()
   return get_TTable_line(line)
