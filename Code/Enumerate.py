@@ -14,7 +14,7 @@ import copy, sys, time, math, random, os, shutil
 import cPickle as pickle
 
 from Turing_Machine import Turing_Machine
-from IO import IO
+from IO_old import IO
 import Macro_Simulator
 from Alarm import AlarmException
 
