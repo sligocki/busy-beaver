@@ -10,6 +10,7 @@ Format looks like:
 <transition table> | <log num> <category> <category specific attributes> ... [| <extended attributes>] 
 """
 
+import json
 import sys
 
 import Input_Machine
@@ -22,31 +23,31 @@ class Result(object):
   Structuring of information in a result line.
   """
   def __init__(self):
-    self.ttable = None             # a list of lists
-    self.log_number = None         # an int or None
-    self.category = None           # Halt, Infinite, Unknown, Undecided
-    self.category_attributes = []  # a generic list of attributes
-    self.extended_results = []     # a generic list of extended information
+    self.ttable = None          # a list of lists
+    self.log_number = None      # an int or None
+    self.category = None        # Halt, Infinite, Unknown, Undecided
+    self.category_results = []  # a generic list of attributes
+    self.extended_results = []  # a generic list of extended information
 
   def write(self, out):
     """Write out a Result object result."""
     out.write(Output_Machine.display_ttable(self.ttable))
     out.write(" | %r %s" % (self.log_number, self.category))
-    self.write_list(self.category_attributes, out)
+    self.write_list(self.category_results, out)
     if self.extended_results:
       out.write(" |")
       self.write_list(self.extended_results, out)
     out.write("\n")
-  
-  def write_list(self, xs, out):
-    for x in xs:
-      out.write(" %r" % x)
-  
+
+  def write_list(self, objs, out):
+    for obj in objs:
+      out.write(" %s" % self.str_generic(obj))
+
   def read(self, line):
     """Read a result off of a line from a file."""
-    parts = line.split("|")
+    parts = line.split("|", 2)
     self.ttable = Input_Machine.read_ttable(parts[0])
-    if len(parts) > 1:
+    if len(parts) >= 2:
       subparts = parts[1].split()  # Split by whitespace
       try:
         self.log_number = int(subparts[0])
@@ -54,7 +55,23 @@ class Result(object):
         self.log_number = None
       # TODO(shawn): There probably need to be evaluated.
       self.category = subparts[1]
-      self.category_results = subparts[2:]
+      self.category_results = self.read_list(subparts[2:])
+    if len(parts) >= 3:
+      self.extended_results = self.read_list(parts[2].split())
+
+  def read_list(self, strs):
+    res = []
+    for s in strs:
+      res.append(self.read_generic(s))
+    return res
+
+  def str_generic(self, obj):
+    """Convert generic structure to string."""
+    return json.dumps(obj, separators=(",", ":"))  # Compact
+
+  def read_generic(self, s):
+    """Read generic structure from string."""
+    return json.loads(s)
 
 class IO(object):
   """
@@ -92,7 +109,7 @@ class IO(object):
       result.ttable = machine_TTable
       result.log_number = log_number
       result.category = results[0]
-      result.category_attributes = results[1:]
+      result.category_results = results[1:]
       result.extended_results = old_results
       
       result.write(self.output_file)
@@ -108,7 +125,7 @@ class IO(object):
       line = self.input_file.readline()
       result.read(line)
       return (0, len(result.ttable[0]), len(result.ttable), -1, -1,
-              [result.category] + result.category_attributes,
+              [result.category] + result.category_results,
               result.ttable, result.log_number, result.extended_results)
 
 
@@ -133,7 +150,13 @@ def load_TTable(infile, line_num = 1):
   return result.ttable
 
 def test():
-  io = IO(None, sys.stdout)
+  from StringIO import StringIO
+  global s
+  s = StringIO()
+  io = IO(s, s)
   io.write_result_raw(8, 2, 2, -1, -1, ["Halt", 3, 6], 
                       [[(1, 1, 1), (1, 1, -1)], [(1, 0, 1), (1, 1, 0)]],
                       13, ["Unknown", 2, 2])
+  print s.getvalue()
+  s.seek(0)
+  print io.read_result()
