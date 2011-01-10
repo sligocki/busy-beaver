@@ -1,9 +1,9 @@
 #! /usr/bin/env python
-#
-# Run one of the CTL algorithms - CTL1, CTL2, CTL3, CTL4
-#
+"""Run one of the CTL algorithms - CTL1, CTL2, CTL3, CTL4."""
 
 import sys
+
+from Common import Exit_Condition
 import IO_old as IO
 import CTL1
 import CTL2
@@ -11,17 +11,6 @@ import CTL3
 import CTL4
 from Option_Parser import Filter_Option_Parser
 from Alarm import ALARM, AlarmException
-
-#
-# Return Conditions
-#
-ERROR = -1
-HALT = 0
-OVER_TAPE = 1
-MAX_STEPS = 2
-UNKNOWN = (OVER_TAPE, MAX_STEPS)
-UNDEF_CELL = 3
-INFINITE = 4
 
 #
 # Get command line options.
@@ -65,7 +54,8 @@ else:
   print "Unknown CTL: %s" % (type,)
   sys.exit(1)
 
-results = (INFINITE, type_num, cutoff, block_size, offset, type_str)
+results = (Exit_Condition.INIFINITE,
+           type_num, cutoff, block_size, offset, type_str)
 
 io   = IO.IO(opts["infile"], opts["outfile"], log_number)
 next = io.read_result()

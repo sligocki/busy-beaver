@@ -4,13 +4,12 @@
 # enumerated (say during a simulation filter).
 #
 
-import IO_old as IO
-import sys, copy
-from Option_Parser import Filter_Option_Parser
+import copy
+import sys
 
-# Consts
-HALT = 0
-HALT_TRANS = (1, 1, -1)
+from Common import Exit_Condition, HALT_TRANS
+import IO_old as IO
+from Option_Parser import Filter_Option_Parser
 
 # Get command line options.
 opts, args = Filter_Option_Parser(sys.argv,
@@ -21,8 +20,8 @@ io = IO.IO(opts["infile"], opts["outfile"])
 next = io.read_result()
 
 while next:
-  (machine_num, num_states, num_symbols, tape_length, max_steps, \
-    results, ttable, log_num, old_results) = next
+  (machine_num, num_states, num_symbols, tape_length, max_steps,
+   results, ttable, log_num, old_results) = next
 
   cond, on_state, on_symbol, score, steps = results
 
@@ -31,15 +30,17 @@ while next:
   score     = int(score);
   steps     = int(steps)
 
-  # Write the halting machine
-  new_results = (HALT, score, steps)
+  # Write the halting machine.
+  new_results = (Exit_Condition.HALT, score, steps)
   new_ttable = copy.deepcopy(ttable)
   new_ttable[on_state][on_symbol] = HALT_TRANS
 
-  io.write_result_raw(machine_num, num_states, num_symbols, tape_length,
-                      max_steps, new_results, new_ttable, log_num, old_results)
+  io.write_result_raw(machine_num, num_states, num_symbols,
+                      tape_length, max_steps, new_results,
+                      new_ttable, log_num, old_results)
 
-  # Get stats.  Number of undefined transitions, whether there is a halt and the max-symbol/states
+  # Get stats.  Number of undefined transitions, whether there is a halt,
+  # and the max symbol/states.
   undefs = 0
   max_symbol = max_state = -1
   for row in new_ttable:
@@ -50,7 +51,7 @@ while next:
         max_symbol = max(max_symbol, symbol)
         max_state = max(max_state, state)
 
-  # If there are other undefined transitions, then define non-halting versions
+  # If there are other undefined transitions, then define non-halting versions.
   if undefs != 0:
     for symbol in range(min(max_symbol + 2, num_symbols)):
       for dir in range(2):
@@ -60,5 +61,5 @@ while next:
                               max_steps, old_results, new_ttable, log_num)
           new_M_num += 1
 
-  # Get next machine
+  # Get next machine.
   next = io.read_result()
