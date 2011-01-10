@@ -9,7 +9,7 @@
 import copy
 
 from Turing_Machine import Turing_Machine, Turing_Machine_Runtime_Error
-from IO import IO
+from IO_old import IO
 
 # global machine number
 g_machine_num = 0

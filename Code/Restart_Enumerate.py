@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 import sys, pickle
 from Enumerate import *
-from IO import IO
+from IO_old import IO
 
 try:
   checkpoint_fn = sys.argv[1]

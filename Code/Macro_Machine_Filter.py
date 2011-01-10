@@ -8,7 +8,7 @@
 
 from Turing_Machine import Turing_Machine, Turing_Machine_Runtime_Error, \
                            Filter_Unexpected_Return
-from IO import IO
+from IO_old import IO
 
 def Macro_Machine_Run(num_states, num_symbols, macro_size, tape_length,
                       max_steps, next, io):

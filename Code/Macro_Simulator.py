@@ -4,7 +4,10 @@ import copy
 import sys
 
 from Macro import Turing_Machine, Chain_Simulator, Block_Finder
-import IO, Reverse_Engineer_Filter, CTL1, CTL2
+import IO_old as IO
+import Reverse_Engineer_Filter
+import CTL1
+import CTL2
 
 from Macro.Chain_Tape import INF
 from Alarm import ALARM, AlarmException

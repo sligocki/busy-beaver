@@ -9,7 +9,7 @@
 #   then it cannot ever halt.
 
 from __future__ import division
-import IO
+import IO_old as IO
 
 # Constants
 INFINITE = 4
