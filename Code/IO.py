@@ -13,6 +13,7 @@ Format looks like:
 import json
 import sys
 
+from Common import Exit_Condition
 import Input_Machine
 import Output_Machine
 
@@ -32,7 +33,7 @@ class Result(object):
   def write(self, out):
     """Write out a Result object result."""
     out.write(Output_Machine.display_ttable(self.ttable))
-    out.write(" | %r %s" % (self.log_number, self.category))
+    out.write(" | %r %s" % (self.log_number, Exit_Condition.name(self.category)))
     self.write_list(self.category_results, out)
     if self.extended_results:
       out.write(" |")
@@ -123,10 +124,11 @@ class IO(object):
     if self.input_file:
       result = Result()
       line = self.input_file.readline()
-      result.read(line)
-      return (0, len(result.ttable[0]), len(result.ttable), -1, -1,
-              [result.category] + result.category_results,
-              result.ttable, result.log_number, result.extended_results)
+      if line.strip():
+        result.read(line)
+        return (0, len(result.ttable[0]), len(result.ttable), -1, -1,
+                [result.category] + result.category_results,
+                result.ttable, result.log_number, result.extended_results)
 
 
 def load_TTable_filename(filename, line_num = 1):
