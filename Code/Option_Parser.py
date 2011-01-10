@@ -1,4 +1,5 @@
 import os, sys, getopt
+from IO_old import IO
 
 def Generator_Option_Parser(argv, extra_opt, ignore_infile = True):
   """
@@ -52,7 +53,6 @@ def Generator_Option_Parser(argv, extra_opt, ignore_infile = True):
   return opts, args
 
 def Read_Atributes(input_file):
-  from IO import IO
   temp_in = IO(input_file, None)
   line = temp_in.read_result()
   input_file.seek(0)

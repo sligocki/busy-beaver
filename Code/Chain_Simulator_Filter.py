@@ -1,8 +1,10 @@
 #! /usr/bin/env python
 
 import copy
-import os,sys
+import os
+import sys
 
+from Common import Exit_Condition
 import Turing_Machine
 import IO_old as IO
 import Macro.Block_Finder
@@ -156,19 +158,19 @@ if __name__ == "__main__":
     # Output the result
     if cond == UNDEFINED:
       on_state, on_symbol, steps, score = info
-      results = (3, on_state, on_symbol, score, steps)
+      results = (Exit_Condition.UNDEF_CELL, on_state, on_symbol, score, steps)
     elif cond == HALT:
       steps, score = info
-      results = (0, score, steps)
+      results = (Exit_Condition.HALT, score, steps)
     elif cond == INFINITE:
       reason, = info
-      results = (4, "Infinite")
+      results = (Exit_Condition.INFINITE, reason)
     elif cond == OVERSTEPS:
       steps, = info
-      results = (2, OVERSTEPS)
+      results = (Exit_Condition.OVERSTEPS, steps)
     elif cond == TIMEOUT:
       runtime, steps = info
-      results = (2, TIMEOUT)
+      results = (Exit_Condition.TIME_OUT, runtime, steps)
     else:
       raise Exception, "Unexpected TM condition (%r)" % cond
 
