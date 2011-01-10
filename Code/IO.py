@@ -156,9 +156,9 @@ def test():
   global s
   s = StringIO()
   io = IO(s, s)
-  io.write_result_raw(8, 2, 2, -1, -1, ["Halt", 3, 6], 
+  io.write_result_raw(8, 2, 2, -1, -1, [Exit_Condition.HALT, 3, 6], 
                       [[(1, 1, 1), (1, 1, -1)], [(1, 0, 1), (1, 1, 0)]],
-                      13, ["Unknown", 2, 2])
+                      13, ["Time_Out", 2, 2])
   print s.getvalue()
   s.seek(0)
   print io.read_result()
