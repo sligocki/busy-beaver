@@ -7,6 +7,24 @@ dirs = "LRS"
 states = string.ascii_uppercase[:7]
 halt_state = "HZ"
 
+def read_ttable(line):
+  """Read transition table given a string representation."""
+  ttable = []
+  rows = line.strip().split("  ")
+  for row in rows:
+    cells = row.split()
+    ttable_row = []
+    for cell in cells:
+      assert len(cell) == 3
+      # Could be more efficient as a lookup table, rather than list find.
+      # But number of symbols is pretty small, so it probably doesn't matter.
+      symb_out = symbols.find(cell[0])
+      dir_out = dirs.find(cell[1])
+      state_out = states.find(cell[2])
+      ttable_row.append((symb_out, dir_out, state_out))
+    ttable.append(ttable_row)
+  return ttable
+
 def get_from_list(l1, l2):
   for item in l1:
     pos = l2.find(item)

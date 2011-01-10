@@ -41,7 +41,7 @@ def display_ttable(table):
       else:
         s += "%c%c%c " % (symbols[cell[0]], dirs[cell[1]], states[cell[2]])
     s += " "
-  return s
+  return s.strip()
 
 def display_line(line):
   """Print ttable and other info from line of log file."""
