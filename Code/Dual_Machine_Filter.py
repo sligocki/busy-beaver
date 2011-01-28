@@ -1,11 +1,13 @@
 #! /usr/bin/env python
 #
 # Dual_Machine_Filter.py
-#
-# This runs Turing machines that did not halt at two different speeds and
-# detects whether they match exactly (i.e. detects repeating).
-#
+"""
+This runs Turing machines that did not halt at two different speeds and
+detects whether they match exactly (i.e. detects repeating).
+"""
 
+from Common import Exit_Condition
+from Dual_Machine import Dual_Machine
 from Turing_Machine import Turing_Machine, Turing_Machine_Runtime_Error, \
                            Filter_Unexpected_Return
 from IO_old import IO
@@ -42,7 +44,7 @@ def Dual_Machine_Recursive(machine_num, machine, num_states, num_symbols,
   exit_condition = results[0]
 
   #   -1) Error
-  if exit_condition == -1:
+  if exit_condition == Exit_Condition.ERROR:
     error_number = results[1]
     message      = results[2]
     sys.stderr.write("Error %d: %s\n" % (error_number, message))
@@ -50,21 +52,20 @@ def Dual_Machine_Recursive(machine_num, machine, num_states, num_symbols,
                  old_tape_length, old_max_steps, io, old_results)
     raise Turing_Machine_Runtime_Error, "Error encountered while running a turing machine"
 
-  # All other returns:
+  # If it's been classified:
   #    0) Halt
-  #    1) Exceed tape_length
-  #    2) Exceed max_steps
   #    3) Reached Undefined Cell
   #    4) Are in a detected infinite loop
+  elif (exit_condition in (Exit_Condition.HALT, Exit_Condition.UNDEF_CELL,
+                           Exit_Condtion.INFINITE)):
+    save_machine(machine_num, machine, results,
+                 old_tape_length, old_max_steps, io, old_results)
+  # If still unclassified
+  #    1) Exceed tape_length
+  #    2) Exceed max_steps
   else:
-    # If classified (Halt, Undefined Cell, or Infinite)
-    if (results[0] == 0 or results[0] == 3 or results[0] == 4):
-      save_machine(machine_num, machine, results,
-                   old_tape_length, old_max_steps, io, old_results)
-    # If still unclassified
-    else:
-      save_machine(machine_num, machine, old_results,
-                   old_tape_length, old_max_steps, io)
+    save_machine(machine_num, machine, old_results,
+                 old_tape_length, old_max_steps, io)
 
   return
 
@@ -72,9 +73,7 @@ def run(TTable, num_states, num_symbols, tape_length, max_steps):
   """
   Wrapper for C machine running code.
   """
-  from Dual_Machine import Dual_Machine
-  return Dual_Machine(TTable, num_states, num_symbols,
-                      tape_length, max_steps)
+  return Dual_Machine(TTable, num_states, num_symbols, tape_length, max_steps)
 
 def save_machine(machine_num, machine, results, tape_length, max_steps,
                  io, old_results = []):

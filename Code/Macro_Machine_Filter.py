@@ -6,6 +6,10 @@
 # infinite left or right movement in one macro step.
 #
 
+import sys
+
+from Common import Exit_Condition
+from Macro_Machine import Macro_Machine
 from Turing_Machine import Turing_Machine, Turing_Machine_Runtime_Error, \
                            Filter_Unexpected_Return
 from IO_old import IO
@@ -44,7 +48,7 @@ def Macro_Machine_Recursive(machine_num,
   exit_condition = results[0]
 
   #   -1) Error
-  if exit_condition == -1:
+  if exit_condition == Exit_Condition.ERROR:
     error_number = results[1]
     message      = results[2]
     sys.stderr.write("Error %d: %s\n" % (error_number, message))
@@ -52,21 +56,20 @@ def Macro_Machine_Recursive(machine_num,
                  old_tape_length, old_ax_steps, io, old_results)
     raise Turing_Machine_Runtime_Error, "Error encountered while running a turing machine"
 
-  # All other returns:
+  # If it's been classified:
   #    0) Halt
-  #    1) Exceed tape_length
-  #    2) Exceed max_steps
   #    3) Reached Undefined Cell
   #    4) Are in a detected infinite loop
+  elif (exit_condition in (Exit_Condition.HALT, Exit_Condition.UNDEF_CELL,
+                           Exit_Condtion.INFINITE)):
+    save_machine(machine_num, machine, results,
+                 old_tape_length, old_max_steps, io, old_results)
+  # If still unclassified
+  #    1) Exceed tape_length
+  #    2) Exceed max_steps
   else:
-    # If classified (Halt, Undefined Cell, or Infinite)
-    if (results[0] == 0 or results[0] == 3 or results[0] == 4):
-      save_machine(machine_num, machine, results,
-                   old_tape_length, old_max_steps, io, old_results)
-    # If still unclassified
-    else:
-      save_machine(machine_num, machine, old_results,
-                   old_tape_length, old_max_steps, io)
+    save_machine(machine_num, machine, old_results,
+                 old_tape_length, old_max_steps, io)
 
   return
 
@@ -75,8 +78,6 @@ def run(TTable, num_states, num_symbols, macro_size,
   """
   Wrapper for C machine running code.
   """
-  import sys
-  from Macro_Machine import Macro_Machine
   return Macro_Machine(TTable, num_states, num_symbols, macro_size,
                        tape_length, max_steps)
 

@@ -1,13 +1,14 @@
 #! /usr/bin/env python
 #
 # Restart.py
-#
-# Continues earlier incomplete runs of Generate.py.  Takes output from
-# Generate.py as input.
-#
+"""
+Continues earlier incomplete runs of Generate.py.  Takes output from
+Generate.py as input.
+"""
 
 import copy
 
+from Common import Exit_Condition
 from Turing_Machine import Turing_Machine, Turing_Machine_Runtime_Error
 from IO_old import IO
 
@@ -43,7 +44,7 @@ def Generate_Recursive(machine, num_states, num_symbols,
   exit_condition = results[0]
 
   # 3) Reached Undefined Cell
-  if exit_condition == 3:
+  if exit_condition == Exit_Condition.UNDEF_CELL:
     # Position of undefined cell in transition table
     state_in  = results[1]
     symbol_in = results[2]
@@ -99,7 +100,7 @@ def Generate_Recursive(machine, num_states, num_symbols,
             Generate_Recursive(machine_new, num_states, num_symbols,
                                tape_length, max_steps, io)
   # -1) Error
-  elif exit_condition == -1:
+  elif exit_condition == Exit_Condition.ERROR:
     error_number = results[1]
     message = results[2]
     sys.stderr.write("Error %d: %s\n" % (error_number, message))

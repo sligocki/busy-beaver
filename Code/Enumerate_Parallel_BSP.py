@@ -19,6 +19,7 @@ import cPickle as pickle
 
 from Scientific.BSP import *
 
+from Common import Exit_Condition
 from Turing_Machine import Turing_Machine
 from IO_old import IO
 import Macro_Simulator
@@ -226,8 +227,9 @@ class Enumerator(object):
   def add_halt(self, tm, steps, score):
     """Note a halting TM. Add statistics and output it with score/steps."""
     self.num_halt += 1
-    ## Magic nums: the '-1's are for tape size and max_steps (not used) .. the '0' is for halting.
-    self.io.write_result(self.tm_num, -1, -1, (0, score, steps), tm)
+    ## Magic nums: the '-1's are for tape size and max_steps (not used)
+    self.io.write_result(self.tm_num, -1, -1,
+                         (Exit_Condition.HALT, score, steps), tm)
     if steps > self.best_steps or score > self.best_score:
       self.best_steps = max(self.best_steps, steps)
       self.best_score = max(self.best_score, score)
@@ -236,14 +238,16 @@ class Enumerator(object):
   def add_infinite(self, tm, reason):
     """Note an infinite TM. Add statistics and output it with reason."""
     self.num_infinite += 1
-    self.io.write_result(self.tm_num, -1, -1, (4, "Infinite"), tm)
+    self.io.write_result(self.tm_num, -1, -1,
+                         (Exit_Condition.INFINITE, "Enumerate_BSP"), tm)
     self.inf_type[reason] += 1
     self.tm_num += 1
 
   def add_unresolved(self, tm, reason, steps, runtime=None):
     """Note an unresolved TM. Add statistics and output it with reason."""
     self.num_unresolved += 1
-    self.io.write_result(self.tm_num, -1, -1, (2, reason), tm)
+    self.io.write_result(self.tm_num, -1, -1,
+                         (Exit_Condition.UNKNOWN, reason), tm)
     if reason == Macro_Simulator.OVERSTEPS:
       self.num_over_steps += 1
     else:
