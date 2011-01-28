@@ -2,17 +2,14 @@
 
 # Check for enough arguments
 set argc="$#argv"
-if ("$argc" < 2) then
-  echo "Usage:  update basename command"
+if ("$argc" < 3) then
+  echo "Usage:  update basename command_type command"
   exit 1
 endif
 
 # Make sure the "basename" doesn't end in ".py" - simple consistency check
 set basename="$argv[1]"
-if ("$basename:e" == "py") then
-  echo "No basename given"
-  exit 1
-endif
+set command_type="$argv[2]"
 
 # Find log file (if it exists) and set the current log number
 set logfile="$basename.log"
@@ -33,7 +30,7 @@ set orig_unknown=`wc -l < $basename.unknown`
 
 # Get the start date and command
 set start_date=`\date`
-set command="$argv[2-] --infile=$basename.unknown --outfile=$basename.out --log_number=$log_number"
+set command="$argv[3-] --infile=$basename.unknown --outfile=$basename.out --log_number=$log_number"
 
 # Run the command
 echo "Running: $command"
@@ -51,7 +48,7 @@ if ("$argv[2]" == "Generate.py") then
 endif
 
 # Log the running of the command
-echo "$log_number" | awk '{printf("%6d",$1);}' >> "$basename.log"
+echo "$log_number" "$command_type" | awk '{printf("%6d %s",$1,$2);}' >> "$basename.log"
 
 # Check for any change
 cmp -s "$basename.unknown" "$basename.out"
@@ -77,9 +74,10 @@ if ("$status" != 0) then
 
   # Get the end date
   set end_date=`\date`
+  set delta_time=`Diff_Time.py "$start_date" "$end_date"`
 
   # Log the command and print a bit more output
-  echo " | $start_date - $end_date | $command | $count_halt $count_infinite $count_undecided $net_unknown" >> "$basename.log"
+  echo " | $command | $start_date | $delta_time | $count_halt $count_infinite $count_undecided $net_unknown" >> "$basename.log"
   echo "TM counts: $count_halt $count_infinite $count_undecided $net_unknown"
 
   # Log if all the TMs have been resolved
@@ -93,9 +91,10 @@ else
 
   # Get the end date
   set end_date=`\date`
+  set delta_time=`Diff_Time.py "$start_date" "$end_date"`
 
   # Log the command and indicate no change
-  echo " | $start_date - $end_date | $command | 0 0 0 0" >> "$basename.log"
+  echo " | $command | $start_date | $delta_time | 0 0 0 0" >> "$basename.log"
   echo "TM counts: 0 0 0 0"
 endif
 
