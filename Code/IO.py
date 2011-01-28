@@ -7,7 +7,7 @@ Format looks like:
 1RB ---  1LB 0LB | 1 Infinite CTL2 3 5
 1RB 1RZ  1LB 1RA | 0 Halt 2 4
 
-<transition table> | <log num> <category> <category specific attributes> ... [| <extended attributes>] 
+<transition table> | <log num> <category> <category specific attributes> ... [| <extended attributes>]
 """
 
 import string
@@ -27,6 +27,9 @@ class Result(object):
     self.category = None        # Halt, Infinite, Unknown, Undecided
     self.category_results = []  # a generic list of attributes
     self.extended_results = []  # a generic list of extended information
+
+  def __str__(self):
+    return "[IO.Result: %s ]" % str(self.__dict__)
 
   def write(self, out):
     """Write out a Result object result."""
@@ -104,6 +107,33 @@ class IO(object):
     self.log_number  = log_number
     self.flush_each  = not compressed
 
+  def write_Result(self, result):
+    """New interface for writing a Result object."""
+    result.write(self.output_file)
+
+    if self.flush_each:
+      # Flushing every machine is expensive
+      self.output_file.flush()
+
+  def read_Result(self):
+    """"New interface for reading a Result object."""
+    line = self.input_file.readline()
+    if line.strip():
+      result = Result()
+      result.read(line)
+      return result
+
+  # Allow iteration through input_file machines.
+  def __iter__(self):
+    return self
+  def next(self):
+    result = self.read_Result()
+    if result:
+      return result
+    else:
+      raise StopIteration
+
+
   def write_result(self, machine_num, tape_length, max_steps, results,
                    machine, log_number = None, old_results = []):
     if log_number is None:
@@ -123,20 +153,14 @@ class IO(object):
       result.category = results[0]
       result.category_results = results[1:]
       result.extended_results = old_results
-      
-      result.write(self.output_file)
 
-      if self.flush_each:
-        # Flushing every machine is expensive
-        self.output_file.flush()
+      self.write_Result(result)
 
   def read_result(self):
     """Legacy interface used by IO_old to read a single result."""
     if self.input_file:
-      result = Result()
-      line = self.input_file.readline()
-      if line.strip():
-        result.read(line)
+      result = self.read_Result()
+      if result:
         return (0, len(result.ttable[0]), len(result.ttable), -1, -1,
                 [result.category] + result.category_results,
                 result.ttable, result.log_number, result.extended_results)
@@ -167,7 +191,7 @@ def test():
   global s
   s = StringIO()
   io = IO(s, s)
-  io.write_result_raw(8, 2, 2, -1, -1, [Exit_Condition.HALT, 3, 6], 
+  io.write_result_raw(8, 2, 2, -1, -1, [Exit_Condition.HALT, 3, 6],
                       [[(1, 1, 1), (1, 1, -1)], [(1, 0, 1), (1, 1, 0)]],
                       13, ["Time_Out", 2, 2])
   print s.getvalue()
