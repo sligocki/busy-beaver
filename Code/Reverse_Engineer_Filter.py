@@ -78,7 +78,7 @@ def test(TTable):
       return False
   # If all halt states cannot be reached:
   return Exit_Condition.INFINITE, REVERSE_ENG
-      
+
 def apply_results(results, old_line, log_number):
   old_results = next[5]
   return next[0:5]+(results, next[6], log_number, old_results)
