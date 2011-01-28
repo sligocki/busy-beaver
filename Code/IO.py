@@ -55,8 +55,7 @@ class Result(object):
         self.log_number = int(subparts[0])
       except ValueError:
         self.log_number = None
-      # TODO(shawn): There probably need to be evaluated.
-      self.category = subparts[1]
+      self.category = Exit_Condition.read(subparts[1])
       self.category_results = self.read_list(subparts[2:])
     if len(parts) >= 3:
       self.extended_results = self.read_list(parts[2].split())
