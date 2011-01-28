@@ -5,12 +5,12 @@
 
 from __future__ import division
 import copy
+
+from Common import Exit_Condition, HALT_STATE
 import IO_old as IO
 
 # Constants
-INFINITE = 4
-BACKTRACK = 5
-HALT_STATE = -1
+BACKTRACK = "Backtrack"
 
 def init_array(val, num):
   temp = [None] * num
@@ -91,7 +91,7 @@ def test(TTable, steps, limit):
       return False
     max_steps = max(max_steps, this_steps)
   # If all halt states cannot be reached:
-  return INFINITE, BACKTRACK, max_steps, "Backtrack"
+  return Exit_Condition.INFINITE, BACKTRACK, max_steps, "Backtrack"
       
 def apply_results(results, old_line, log_number):
   old_results = next[5]

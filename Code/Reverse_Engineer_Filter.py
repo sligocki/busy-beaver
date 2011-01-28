@@ -1,28 +1,31 @@
 #! /usr/bin/env python
-#
-# Filters out machines whose halt states obviously cannot be reached based
-# on a simple end case fact:
-#   If machine:
-#     * only halts on symbol 2 and in state B,
-#     * only writes 2s when moving Left (thus all 2s are on it's Right) and
-#     * only transitions to state B when moving Left
-#   then it cannot ever halt.
+"""
+Filters out machines whose halt states obviously cannot be reached based
+on a simple end case fact:
+  If machine:
+    * only halts on symbol 2 and in state B,
+    * only writes 2s when moving Left (thus all 2s are on it's Right) and
+    * only transitions to state B when moving Left
+  then it cannot ever halt.
+"""
 
 from __future__ import division
+
+from Common import Exit_Condition, HALT_STATE
 import IO_old as IO
 
 # Constants
-INFINITE = 4
-REVERSE_ENG = 3
-HALT_STATE = -1
+REVERSE_ENG = "Reverse_Engineer"
 
 def get_stats(TTable):
   """Finds all halt transitions and other statistical info"""
   num_states = len(TTable)
   num_symbols = len(TTable[0])
   halts = []
-  to_state =  [ [] for i in range(num_states) ]  # List of transitions to this state
-  to_symbol = [ [] for i in range(num_symbols) ] # List of transitions which write this symbol
+  # List of transitions to this state.
+  to_state =  [ [] for i in range(num_states) ]
+  # List of transitions which write this symbol.
+  to_symbol = [ [] for i in range(num_symbols) ]
   for state in range(num_states):
     for symbol in range(num_symbols):
       cell = TTable[state][symbol]
@@ -74,7 +77,7 @@ def test(TTable):
     if not cannot_reach_halt(halt, to_state, to_symbol):
       return False
   # If all halt states cannot be reached:
-  return INFINITE, REVERSE_ENG, "Reverse_Engineer"
+  return Exit_Condition.INFINITE, REVERSE_ENG
       
 def apply_results(results, old_line, log_number):
   old_results = next[5]
