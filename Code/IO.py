@@ -10,7 +10,7 @@ Format looks like:
 <transition table> | <log num> <category> <category specific attributes> ... [| <extended attributes>] 
 """
 
-import json
+import string
 import sys
 
 from Common import Exit_Condition
@@ -20,9 +20,7 @@ import Output_Machine
 class IO_Error(Exception): pass
 
 class Result(object):
-  """
-  Structuring of information in a result line.
-  """
+  """Structuring of information in a result line."""
   def __init__(self):
     self.ttable = None          # a list of lists
     self.log_number = None      # an int or None
@@ -67,12 +65,25 @@ class Result(object):
     return res
 
   def str_generic(self, obj):
-    """Convert generic structure to string."""
-    return json.dumps(obj, separators=(",", ":"))  # Compact
+    """Convert generic object to string."""
+    # Note: Don't pass in strings which begin with digits or have spaces
+    # TODO(shawn): Perhaps the asserts are expensive?
+    if isinstance(obj, str):
+      assert ' ' not in obj
+      # Note: Turned this off so that IO_Convert works. Old format reads
+      # everything as strings.
+      #assert obj[0] not in string.digits
+      return obj
+    else:
+      assert isinstance(obj, (int, long, float))
+      return str(obj)
 
   def read_generic(self, s):
     """Read generic structure from string."""
-    return json.loads(s)
+    if s[0] in string.digits:
+      return int(s)
+    else:
+      return s
 
 class IO(object):
   """
