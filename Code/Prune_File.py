@@ -1,8 +1,8 @@
 #! /usr/bin/env python
-#
-# Read two files - a reference file and a completed file - and output the
-# TTables in the reference file that were not in the completed file.
-#
+"""
+Read two files - a reference file and a completed file - and output the
+TTables in the reference file that were not in the completed file.
+"""
 
 import sys, IO
 

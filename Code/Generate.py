@@ -1,14 +1,16 @@
 #! /usr/bin/env python
 #
 # Generate.py
-#
-# This is a Busy Beaver Turing machine generator.  It enumerates a 
-# representative set of all Busy Beavers for given # of states and symbols.
-#
+"""
+This is a Busy Beaver Turing machine generator.  It enumerates a 
+representative set of all Busy Beavers for given # of states and symbols.
+"""
 
 import copy
 
+from Common import Exit_Condition
 from Turing_Machine import Turing_Machine, Turing_Machine_Runtime_Error
+from Turing_Machine_Sim import Turing_Machine_Sim
 from IO_old import IO
 
 # global machine number
@@ -57,14 +59,14 @@ def Generate_Recursive(machine, num_states, num_symbols,
   #  tape)  (1, #sym, #steps)
   #  steps) (2, #sym, #steps)
   #  undef) (3, cur_state, cur_sym, #sym, #stpes)
-  #  inf)   (4, inf#, ..., inf_message)
+  #  inf)   (4, inf_reason, ...)
   results = run(machine.get_TTable(), num_states, num_symbols,
                 tape_length, max_steps)
 
   exit_condition = results[0]
 
   # 3) Reached Undefined Cell
-  if exit_condition == 3:
+  if exit_condition == Exit_Condition.UNDEF_CELL:
     # Position of undefined cell in transition table
     state_in  = results[1]
     symbol_in = results[2]
@@ -85,7 +87,7 @@ def Generate_Recursive(machine, num_states, num_symbols,
     #   3) This machine will take one more step to halt state
     num_steps_taken += 1
 
-    new_results = (0, num_symb_written, num_steps_taken)
+    new_results = (Exit_Condition.HALT, num_symb_written, num_steps_taken)
 
     #   4) Save this machine
     save_machine(machine_new, new_results, tape_length, max_steps, io)
@@ -112,7 +114,7 @@ def Generate_Recursive(machine, num_states, num_symbols,
             Generate_Recursive(machine_new, num_states, num_symbols,
                                tape_length, max_steps, io)
   # -1) Error
-  elif exit_condition == -1:
+  elif exit_condition == Exit_Condition.ERROR:
     error_number = results[1]
     message = results[2]
     sys.stderr.write("Error %d: %s\n" % (error_number, message))
@@ -128,7 +130,6 @@ def run(TTable, num_states, num_symbols, tape_length, max_steps):
   """
   Wrapper for C machine running code.
   """
-  from Turing_Machine_Sim import Turing_Machine_Sim
   return Turing_Machine_Sim(TTable, num_states, num_symbols,
                             tape_length, max_steps)
 

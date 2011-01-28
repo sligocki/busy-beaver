@@ -89,7 +89,7 @@ if __name__ == "__main__":
                   opts["time"], opts["recursive"], progress)
 
     # If we could not decide anything, leave the old result alone.
-    if results[0] in Exit_Condition.UNKNOWN:
+    if results[0] in Exit_Condition.UNKNOWN_SET:
       io.write_result_raw(*next)
     # Otherwise classify it as beeing decided in some way.
     else:
