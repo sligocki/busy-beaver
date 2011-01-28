@@ -1,11 +1,14 @@
 #! /usr/bin/env python
 #
 # No_Halt_Filter.py
-#
-# This detects some cases where the current transition table can
-# never be extended to include a halt.
-#
+"""
+This detects some cases where the current transition table can
+never be extended to include a halt.
+"""
 
+import sys
+
+from Common import Exit_Condition
 from Turing_Machine import Turing_Machine, Turing_Machine_Runtime_Error, \
                            Filter_Unexpected_Return
 from IO_old import IO
@@ -42,7 +45,7 @@ def No_Halt_Recursive(machine_num, machine, num_states, num_symbols,
   exit_condition = results[0]
 
   #   -1) Error
-  if exit_condition == -1:
+  if exit_condition == Exit_Condition.ERROR:
     error_number = results[1]
     message      = results[2]
     sys.stderr.write("Error %d: %s\n" % (error_number, message))
@@ -52,7 +55,7 @@ def No_Halt_Recursive(machine_num, machine, num_states, num_symbols,
 
   #    3) Reached Undefined Cell
   # Should not occur because Filters should only be run on Generate.py results.
-  elif exit_condition == 3:
+  elif exit_condition == Exit_Condition.UNDEF_CELL:
     sys.stderr.write("Machine (%d) reached undefined cell: %s" %
                      (machine_num, result))
     save_machine(machine_num, machine, results,
@@ -61,18 +64,16 @@ def No_Halt_Recursive(machine_num, machine, num_states, num_symbols,
 
   # All other returns:
   #    0) Halt
+  #    4) Are in a detected infinite loop
+  elif (exit_condition in (Exit_Condition.HALT, Exit_Condition.INFINITE)):
+    save_machine(machine_num, machine, results,
+                 old_tape_length, old_max_steps, io, old_results)
+  # If still unclassified:
   #    1) Exceed tape_length
   #    2) Exceed max_steps
-  #    4) Are in a detected infinite loop
   else:
-    # If classified (Halt or Infinite)
-    if (results[0] == 0 or results[0] == 4):
-      save_machine(machine_num, machine, results,
-                   old_tape_length, old_max_steps, io, old_results)
-    # If still unclassified
-    else:
-      save_machine(machine_num, machine, old_results,
-                   old_tape_length, old_max_steps, io)
+    save_machine(machine_num, machine, old_results,
+                 old_tape_length, old_max_steps, io)
 
   return
 
@@ -80,31 +81,30 @@ def run(TTable, num_states, num_symbols, tape_length, max_steps):
   """
   Checks No_Halt condition.
   """
-  import sys
-
-  symbol_written = [False]*num_symbols
-  undefined_transition = [False]*num_symbols
+  symbol_written = [False] * num_symbols
+  undefined_transition = [False] * num_symbols
   # Symbol 0 is there from the start
   symbol_written[0] = True
 
   for state in xrange(num_states):
     for symbol in xrange(num_symbols):
       new_symbol = TTable[state][symbol][0]
+      # TODO(shawn): Should this be checking new_state == HALT_STATE (== -1)?
       if (new_symbol == -1):
         undefined_transition[symbol] = True
       else:
         symbol_written[new_symbol] = True
 
-  result = (4,3,"Infinite_no_halt")
+  result = (Exit_Condition.INFINITE, "No_Halt")
   for symbol in xrange(num_symbols):
     if (symbol_written[symbol] and undefined_transition[symbol]):
-      result = (1,0,0)
+      result = (Exit_Condition.UNKNOWN, 0, 0)
       break
 
   return result
 
 def save_machine(machine_num, machine, results, tape_length, max_steps,
-                    io, old_results = []):
+                 io, old_results = []):
   """
   Saves a busy beaver machine with the provided data information.
   """
@@ -113,7 +113,6 @@ def save_machine(machine_num, machine, results, tape_length, max_steps,
 
 # Default test code
 if __name__ == "__main__":
-  import sys
   from Option_Parser import Filter_Option_Parser
 
   # Get command line options.
