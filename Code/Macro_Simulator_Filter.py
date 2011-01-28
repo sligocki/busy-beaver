@@ -2,7 +2,7 @@
 """Tree Filter which uses the Macro Machine Simulator."""
 
 from Common import Exit_Condition
-import IO_old as IO
+import IO as IO
 from Macro import Chain_Simulator, Turing_Machine, Block_Finder
 from Alarm import ALARM, AlarmException
 

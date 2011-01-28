@@ -2,7 +2,7 @@
 
 import sys, os
 
-from IO_old import IO
+from IO import IO
 from Turing_Machine import Turing_Machine
 
 usage = "rewind.py command_number save_halt_filename halt_filename save_infinite_filename infinite_filename save_undecided_filename undecided_filename unknown_filename"

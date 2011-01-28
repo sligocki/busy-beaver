@@ -21,7 +21,7 @@ from Scientific.BSP import *
 
 from Common import Exit_Condition
 from Turing_Machine import Turing_Machine
-from IO_old import IO
+from IO import IO
 import Macro_Simulator
 from Alarm import AlarmException
 

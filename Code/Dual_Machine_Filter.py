@@ -10,7 +10,7 @@ from Common import Exit_Condition
 from Dual_Machine import Dual_Machine
 from Turing_Machine import Turing_Machine, Turing_Machine_Runtime_Error, \
                            Filter_Unexpected_Return
-from IO_old import IO
+from IO import IO
 
 def Dual_Machine_Run(num_states, num_symbols, tape_length, max_steps, next, io):
   while next:

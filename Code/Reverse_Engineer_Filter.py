@@ -12,7 +12,7 @@ on a simple end case fact:
 from __future__ import division
 
 from Common import Exit_Condition, HALT_STATE
-import IO_old as IO
+import IO as IO
 
 # Constants
 REVERSE_ENG = "Reverse_Engineer"

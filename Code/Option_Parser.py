@@ -1,5 +1,5 @@
 import os, sys, getopt
-from IO_old import IO
+from IO import IO
 
 def Generator_Option_Parser(argv, extra_opt, ignore_infile = True):
   """

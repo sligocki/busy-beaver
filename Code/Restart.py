@@ -10,7 +10,7 @@ import copy
 
 from Common import Exit_Condition
 from Turing_Machine import Turing_Machine, Turing_Machine_Runtime_Error
-from IO_old import IO
+from IO import IO
 
 # global machine number
 g_machine_num = 0
