@@ -35,27 +35,22 @@ type       = opts["type"]   # CTL algorithm to run
 runtime    = opts["time"]   # Timer value
 
 if type == "CTL1":
-  type_num  = 6
-  type_str  = "CTL_A*"
+  type_str  = "CTL1_A*"
   type_func = CTL1
 elif type == "CTL2":
-  type_num  = 7
-  type_str  = "CTL_A*_B"
+  type_str  = "CTL2_A*_B"
   type_func = CTL2
 elif type == "CTL3":
-  type_num  = 8
-  type_str  = "CTL_A_B*"
+  type_str  = "CTL3_A_B*"
   type_func = CTL3
 elif type == "CTL4":
-  type_num  = 9
-  type_str  = "CTL_A*_B_C"
+  type_str  = "CTL4_A*_B_C"
   type_func = CTL4
 else:
   print "Unknown CTL: %s" % (type,)
   sys.exit(1)
 
-results = (Exit_Condition.INIFINITE,
-           type_num, cutoff, block_size, offset, type_str)
+results = (Exit_Condition.INFINITE, type_str, cutoff, block_size, offset)
 
 io   = IO.IO(opts["infile"], opts["outfile"], log_number)
 next = io.read_result()

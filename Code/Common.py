@@ -22,26 +22,26 @@ class Exit_Condition(object):
   # Set of all unkown conditions
   UNKNOWN_SET = (UNKNOWN, OVER_TAPE, MAX_STEPS, TIME_OUT)
 
+  names = { ERROR: "Error",
+            HALT: "Halt",
+            UNDEF_CELL: "Undefined_Cell",
+            INFINITE: "Infinite",
+            # TODO(shawn): Print out "Unknown" for all of these.
+            OVER_TAPE: "Over_Tape",
+            MAX_STEPS: "Max_Steps",
+            TIME_OUT: "Time_Out",
+            }
+  condition_from_name = dict((name, cond) for (cond, name) in names.items())
+
   @classmethod
   def name(cls, cond):
-    if cond == Exit_Condition.ERROR:
-      return "Error"
-    elif cond == Exit_Condition.HALT:
-      return "Halt"
-    elif cond == Exit_Condition.UNDEF_CELL:
-      return "Undefined_Cell"
-    elif cond == Exit_Condition.INFINITE:
-      return "Infinite"
+    """Convert Exit_Conditions to strings."""
+    return cls.names[cond]
 
-    # TODO(shawn): Print out "Unknown" for all of these.
-    elif cond == Exit_Condition.OVER_TAPE:
-      return "Over_Tape"
-    elif cond == Exit_Condition.MAX_STEPS:
-      return "Max_Steps"
-    elif cond == Exit_Condition.TIME_OUT:
-      return "Time_Out"
-    else:
-      raise Exception, "Invalid exit condition %r" % cond
+  @classmethod
+  def read(cls, name):
+    """Read Exit_Condition strings into constants."""
+    return cls.condition_from_name[name]
 
 HALT_TRANS = (1, 1, -1)
 HALT_STATE = -1
