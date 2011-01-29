@@ -7,9 +7,20 @@ if ("$argc" < 3) then
   exit 1
 endif
 
-# Make sure the "basename" doesn't end in ".py" - simple consistency check
+set cmd_dir=`dirname $0`
+
 set basename="$argv[1]"
 set command_type="$argv[2]"
+
+# Create an empty unknown file if there isn't one
+if (! -e "$basename.unknown") then
+  touch $basename.unknown
+endif
+
+# Create an empty undecided file if there isn't one
+if (! -e "$basename.undecided") then
+  touch $basename.undecided
+endif
 
 # Find log file (if it exists) and set the current log number
 set logfile="$basename.log"
@@ -20,13 +31,9 @@ else
   echo "Integrate_Data.py $basename.out $basename.halt $basename.infinite $basename.unknown $basename.error $basename.undecided " >> "$logfile"
 endif
 
-# Create an empty unknown file if there isn't one
-if (! -e $basename.unknown) then
-  touch $basename.unknown
-endif
-
-# Get the original number of unknown TMs
+# Get the original number of unknown and undecided TMs
 set orig_unknown=`wc -l < $basename.unknown`
+set orig_undecided=`wc -l < $basename.undecided`
 
 # Get the start date and command
 set start_date=`\date`
@@ -74,7 +81,7 @@ if ("$status" != 0) then
 
   # Get the end date
   set end_date=`\date`
-  set delta_time=`Diff_Time.py "$start_date" "$end_date"`
+  set delta_time=`Diff_Date.py "$start_date" "$end_date"`
 
   # Log the command and print a bit more output
   echo " | $command | $start_date | $delta_time | $count_halt $count_infinite $count_undecided $net_unknown" >> "$basename.log"
@@ -91,7 +98,7 @@ else
 
   # Get the end date
   set end_date=`\date`
-  set delta_time=`Diff_Time.py "$start_date" "$end_date"`
+  set delta_time=`Diff_Date.py "$start_date" "$end_date"`
 
   # Log the command and indicate no change
   echo " | $command | $start_date | $delta_time | 0 0 0 0" >> "$basename.log"

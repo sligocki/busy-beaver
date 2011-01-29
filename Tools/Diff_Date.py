@@ -1,4 +1,9 @@
 #! /usr/bin/env python
+#
+# Diff_Date.py
+#
+# Print the time difference between two dates passed as argument 1 and 2
+#
 
 import sys, time
 

@@ -2,26 +2,16 @@
 
 # Check for enough arguments
 set argc="$#argv"
-if ("$argc" < 3) then
-  echo "Usage:  update_parallel nprocs basename command"
+if ("$argc" < 4) then
+  echo "Usage:  update_parallel nprocs basename command_type command"
   exit 1
 endif
 
 set cmd_dir=`dirname $0`
 
-# Make sure the "nprocs" doesn't end in ".py" - simple consistency check
 set nprocs="$argv[1]"
-if ("$nprocs:e" == "py") then
-  echo "No nprocs given"
-  exit 1
-endif
-
-# Make sure the "basename" doesn't end in ".py" - simple consistency check
 set basename="$argv[2]"
-if ("$basename:e" == "py") then
-  echo "No basename given"
-  exit 1
-endif
+set command_type="$argv[3]"
 
 if (! -e "$basename.unknown") then
   echo "File $basename.unknown doesn't exist"
@@ -42,23 +32,13 @@ else
   echo "Integrate_Data.py $basename.out $basename.halt $basename.infinite $basename.unknown $basename.error $basename.undecided " >> "$logfile"
 endif
 
-# Create an empty unknown file if there isn't one
-if (! -e $basename.unknown) then
-  touch $basename.unknown
-endif
-
-# Create an empty undecided file if there isn't one
-if (! -e $basename.undecided) then
-  touch $basename.undecided
-endif
-
 # Get the original number of unknown and undecided TMs
 set orig_unknown=`wc -l < $basename.unknown`
 set orig_undecided=`wc -l < $basename.undecided`
 
 # Get the start date and command
 set start_date=`\date`
-set command="$argv[3-]"
+set command="$argv[4-]"
 
 # Get the number of TMs to put in each file for the parallel runs
 set tm_per_unk_file=`expr \( $orig_unknown   + \( $nprocs - 1 \) \) / $nprocs`
@@ -144,7 +124,7 @@ set counts=`awk -f $cmd_dir/update_parallel_total.awk $basename.unknown.$digit_s
 /bin/rm -f $basename.unknown.$digit_string.*
 
 # Log the running of the command
-echo "$log_number" | awk '{printf("%6d",$1);}' >> "$basename.log"
+echo "$log_number" "$command_type" | awk '{printf("%6d %s",$1,$2);}' >> "$basename.log"
 
 # Break out the individual TM counts
 set count_halt=$counts[1]
@@ -157,9 +137,10 @@ set net_unknown=`expr $count_unknown - $orig_unknown`
 
 # Get the end date
 set end_date=`\date`
+set delta_time=`Diff_Date.py "$start_date" "$end_date"`
 
 # Log the command and print a bit more output
-echo " | $start_date - $end_date | $command | $count_halt $count_infinite $count_undecided $count_unknown" >> "$basename.log"
+echo " | $command | $start_date | $delta_time | $count_halt $count_infinite $count_undecided $count_unknown" >> "$basename.log"
 echo "TM counts: $count_halt $count_infinite $count_undecided $count_unknown"
 
 # Log if all the TMs have been resolved
