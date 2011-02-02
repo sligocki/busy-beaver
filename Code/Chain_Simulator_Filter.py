@@ -6,7 +6,7 @@ import sys
 
 from Common import Exit_Condition
 import Turing_Machine
-import IO as IO
+import IO
 import Macro.Block_Finder
 import Macro.Turing_Machine
 import Macro.Chain_Simulator

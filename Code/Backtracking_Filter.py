@@ -7,7 +7,7 @@ from __future__ import division
 import copy
 
 from Common import Exit_Condition, HALT_STATE
-import IO as IO
+import IO
 
 # Constants
 BACKTRACK = "Backtrack"

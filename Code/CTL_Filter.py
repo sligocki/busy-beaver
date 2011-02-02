@@ -4,7 +4,7 @@
 import sys
 
 from Common import Exit_Condition
-import IO as IO
+import IO
 import CTL1
 import CTL2
 import CTL3

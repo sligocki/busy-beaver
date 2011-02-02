@@ -5,7 +5,7 @@ import math
 import sys
 import time
 
-import IO as IO
+import IO
 
 # Abstraction of infinity.
 Inf = "Inf"
