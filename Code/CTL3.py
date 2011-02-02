@@ -2,7 +2,7 @@
 #
 # Runs the CTL (A B*) on a machine to discover infinite behavior
 
-import IO as IO
+import IO
 from Macro import Turing_Machine, Chain_Simulator
 
 VERBOSE = False

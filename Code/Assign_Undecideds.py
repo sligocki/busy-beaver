@@ -8,7 +8,7 @@ import copy
 import sys
 
 from Common import Exit_Condition, HALT_TRANS
-import IO as IO
+import IO
 from Option_Parser import Filter_Option_Parser
 
 # Get command line options.

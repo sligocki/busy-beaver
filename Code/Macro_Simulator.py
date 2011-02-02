@@ -4,7 +4,7 @@ import copy
 import sys
 
 from Macro import Turing_Machine, Chain_Simulator, Block_Finder
-import IO as IO
+import IO
 import Reverse_Engineer_Filter
 import CTL1
 import CTL2
