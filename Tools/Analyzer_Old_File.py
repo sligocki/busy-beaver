@@ -1,5 +1,6 @@
 #! /usr/bin/env python
-from Format import FIELD, TEST
+
+from Format_Old_File import FIELD, TEST
 
 def count_lines(lines, field, test):
   count = 0
