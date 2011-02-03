@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 import math
 
-from Format_New import FIELD
+from Format_Old_Base import FIELD
 
 def get_max(lines):
   max_steps = max_symbols = 0
@@ -21,7 +21,7 @@ def count_lines(curfile):
 if __name__ == "__main__":
   import sys
 
-  usage = "Analyzer.py basename"
+  usage = "Analyzer_Old_Base.py basename"
 
   # Load command line args
   try:
