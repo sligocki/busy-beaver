@@ -11,6 +11,11 @@ except:
   sys.exit(1)
 
 enumerator = pickle.load( file(checkpoint_fn, "r") )
-enumerator.io = IO(None, file(output_fn, "ab"), None)
+outfile = file(output_fn, "ab")
+enumerator.io = IO(None, outfile, None)
+
+# TODO(shawn): Automatically clear duplicate machines?
+outfile.write("\nRestarted - Some machines will be duplicated.\n")
+
 enumerator.continue_enum()
 
