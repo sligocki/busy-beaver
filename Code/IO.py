@@ -40,7 +40,7 @@ class Result(object):
       if self.extended_results:
         out.write(" |")
         self.write_list(self.extended_results, out)
-      out.write("\n")
+    out.write("\n")
 
   def write_list(self, objs, out):
     for obj in objs:
