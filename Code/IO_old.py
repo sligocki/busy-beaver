@@ -9,6 +9,7 @@ Format looks like:
 import sys
 import string
 
+from Common import Exit_Condition
 from Turing_Machine import Turing_Machine 
 
 class IO_Error(Exception): pass
@@ -88,43 +89,58 @@ class IO:
     if self.input_file:
       cur_line = self.input_file.readline()
 
+      cur_line = string.strip(cur_line)
+
       if cur_line:
-        parts = cur_line.split()
-
-        machine_num = int(parts[0])
-
-        num_states  = int(parts[1])
-        num_symbols = int(parts[2])
-
-        tape_length = int(parts[3])
-        max_steps   = int(parts[4])
-
-        results = [int(parts[5])]
-
-        index = 6
-        for item in parts[6:]:
-          if item[0] == "[":
-            break
-          else:
-            results.append(item)
-            index += 1
-        results = tuple(results)
-
-        machine_TTable = []
-        for item in parts[index:]:
-          machine_TTable.append(item)
-          index += 1
-          if len(item) >= 2 and item[-2:] == "]]":
-            break
-        machine_TTable = eval(string.join(machine_TTable))
-
         try:
-          log_number = int(parts[index])
-        except:
-          log_number = None
-        index += 1
+          parts = cur_line.split()
 
-        old_results = list(parts[index:])
+          machine_num = int(parts[0])
+
+          num_states  = int(parts[1])
+          num_symbols = int(parts[2])
+
+          tape_length = int(parts[3])
+          max_steps   = int(parts[4])
+
+          results = [int(parts[5])]
+
+          index = 6
+          for item in parts[6:]:
+            if item[0] == "[":
+              break
+            else:
+              results.append(item)
+              index += 1
+          results = tuple(results)
+
+          machine_TTable = []
+          for item in parts[index:]:
+            machine_TTable.append(item)
+            index += 1
+            if len(item) >= 2 and item[-2:] == "]]":
+              break
+          machine_TTable = eval(string.join(machine_TTable))
+
+          try:
+            log_number = int(parts[index])
+          except:
+            log_number = None
+          index += 1
+
+          old_results = list(parts[index:])
+        except:
+          # Try to read a line that's just a ttable.
+          machine_num = -1
+          print repr(cur_line)
+          machine_TTable = eval(cur_line)
+          num_states = len(machine_TTable[0])
+          num_symbols = len(machine_TTable)
+          tape_length = -1
+          max_steps = -1
+          results = []
+          log_number = -1
+          old_results = []
 
         return_value = (machine_num, num_states, num_symbols, tape_length,
                         max_steps, results, machine_TTable, log_number,

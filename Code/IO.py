@@ -34,12 +34,13 @@ class Result(object):
   def write(self, out):
     """Write out a Result object result."""
     out.write(Output_Machine.display_ttable(self.ttable))
-    out.write(" | %r %s" % (self.log_number, Exit_Condition.name(self.category)))
-    self.write_list(self.category_results, out)
-    if self.extended_results:
-      out.write(" |")
-      self.write_list(self.extended_results, out)
-    out.write("\n")
+    if self.category != None:
+      out.write(" | %r %s" % (self.log_number, Exit_Condition.name(self.category)))
+      self.write_list(self.category_results, out)
+      if self.extended_results:
+        out.write(" |")
+        self.write_list(self.extended_results, out)
+      out.write("\n")
 
   def write_list(self, objs, out):
     for obj in objs:
@@ -149,7 +150,10 @@ class IO(object):
       result = Result()
       result.ttable = machine_TTable
       result.log_number = log_number
-      result.category = results[0]
+      try:
+        result.category = results[0]
+      except:
+        result.category = None
       result.category_results = results[1:]
       result.extended_results = old_results
 
