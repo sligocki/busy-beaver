@@ -5,103 +5,31 @@
 # This module contains the Busy_Beaver class, which runs a Turing machine
 # simulator (either in C or Python) with an initially blank tape.
 
-import sys, time, string
+import string
+import sys
+import time
 
+from IO import IO
 from Turing_Machine import Turing_Machine
 
 # White, Red, Blue, Green, Magenta, Cyan, Brown/Yellow
 color = [49, 41, 44, 42, 45, 46, 43]
-# Characters to use for states.
+# Characters to use for states (end in "Z" so that halt is Z)
 states = string.ascii_uppercase + string.ascii_lowercase + string.digits + "!@#$%^&*" + "Z"
+symbols = string.digits + "-"
+dirs = "LRS-"
 
-def load(infile, line_num = 1, machine_num = None):
+def load(infile, line_num = 1):
   """
   Load the contents of the Turing machine from a file.
   """
 
-  if machine_num == None:
-    while line_num > 1:
-      infile.readline()
-      line_num -= 1
+  io = IO(infile, None)
 
-    line = infile.readline()
-    parts = line.split()
-  else:
-    line = infile.readline()
-    parts = line.split()
-
-    while line != "" and int(parts[0]) != machine_num:
-      line = infile.readline()
-      parts = line.split()
-
-  start_index = 0
-  start_found = False
-  for item in parts:
-    if len(item) >= 2:
-      if item[:2] == "[[":
-        start_found = True
-        break
-    start_index += 1
-
-  end_index = start_index+1
-  end_found = False
-  for item in parts[start_index+1:]:
-    if len(item) >= 2:
-      if item[-2:] == "]]":
-        end_found = True
-        end_index += 1
-        break
-    end_index += 1
-
-  if start_found and end_found:
-    TTable = eval(string.join(parts[start_index:end_index]))
-  else:
-    sys.stderr.write("Turing machine not found in input file\n")
-    sys.exit(1)
-  return Turing_Machine(TTable)
-
-
-def load_old(file):
-  """
-  Load the contents of the Turing machine from a file using the old format.
-  """
-
-  machine = Turing_Machine(1,1)
-
-  data = file.read()
-  data = data.splitlines()
-
-  nstates = len(data)
-  nsymbols = 0
-
-  for state in data:
-    state = state.split()
-
-    if nsymbols == 0:
-      nsymbols = int(len(state)) / 3
-      TTable = []
-
-    for j in xrange(nsymbols):
-      if state[3*j + 1] == "R":
-        state[3*j + 1] = 1
-      elif state[3*j + 1] == "L":
-        state[3*j + 1] = 0
-      else:
-        sys.stderr.write("Direction not 'L' or 'R'\n")
-        sys.exit(1)
-
-    state = map(int, state)
-
-    state_list = [None] * nsymbols
-    for j in xrange(nsymbols):
-      state_list[j] = tuple(state[3*j:3*j + 3])
-
-    TTable.append(state_list)
-
-  machine.set_TTable(TTable)
-
-  return machine
-
+  for i, result in enumerate(io):
+    # Note: we start counting lines at 1, but enumerate starts at 0.
+    if i + 1 == line_num:
+      return Turing_Machine(result.ttable)
 
 def print_machine(machine):
   """
@@ -136,9 +64,9 @@ def print_machine(machine):
     sys.stdout.write("   | %c " % states[i])
     for j in xrange(len(TTable[i])):
       sys.stdout.write("| ")
-      sys.stdout.write("%c"  % states[TTable[i][j][2]])
-      sys.stdout.write("%d"  % TTable[i][j][0])
-      sys.stdout.write("%c " % ('L','R')[TTable[i][j][1]])
+      sys.stdout.write("%c"  % symbols[TTable[i][j][0]])
+      sys.stdout.write("%c" % dirs[TTable[i][j][1]])
+      sys.stdout.write("%c "  % states[TTable[i][j][2]])
     sys.stdout.write("|\n")
 
     sys.stdout.write("   +---")
@@ -154,7 +82,7 @@ def print_machine(machine):
 def run(machine, tape_length, num_steps, silent=False):
   """
   Start the tape and run it until it halts.
-  If 'silent' is 1, don't print out anything during the run.
+  If 'silent' is True, don't print out anything during the run.
   """
   from Turing_Machine_Sim import Turing_Machine_Sim
 
@@ -361,7 +289,7 @@ if __name__ == "__main__":
   from Option_Parser import Filter_Option_Parser
   import fcntl, termios, struct
 
-  # Get terminal width to use as the default width. This is surprisingly hard to do :(
+  # Get terminal width, this is surprisingly hard to do :(
   # See: http://stackoverflow.com/questions/566746/how-to-get-console-window-width-in-python
   try:
     # This will be fooled if you pipe in stdin from somewhere else, but I don't
@@ -375,9 +303,7 @@ if __name__ == "__main__":
                                     [("brief"      , None, None, False, False),
                                      ("visual"     , None, None, False, False),
                                      ("width", int, term_width , False, True ),
-                                     ("old"        , None, None, False, False),
-                                     ("line_num"   , int , 1   , False, True ),
-                                     ("machine_num", int , None, False, True )],
+                                     ("line_num"   , int , 1   , False, True )],
                                     True)
 
   infile      = opts["infile"]
@@ -385,9 +311,7 @@ if __name__ == "__main__":
   brief       = opts["brief"]
   visual      = opts["visual"]
   width       = opts["width"]
-  old         = opts["old"]
   line_num    = opts["line_num"]
-  machine_num = opts["machine_num"]
 
   if opts["tape"] == None:
     tape = 10000000
@@ -399,25 +323,22 @@ if __name__ == "__main__":
   else:
     steps = opts["steps"]
 
-  if old:
-    machine = load_old(infile)
-  else:
-    machine = load(infile,line_num,machine_num)
+  machine = load(infile, line_num)
   infile.close()
 
   if not brief:
     print_machine(machine)
 
   if visual:
-    num_syms, num_steps = run_visual(machine,tape,steps,width,brief)
+    num_syms, num_steps = run_visual(machine, tape, steps, width, brief)
     print
-    print "Number of 'not 0's printed: %u, steps: %u" % (num_syms,num_steps)
+    print "Number of 'not 0's printed: %u, steps: %u" % (num_syms, num_steps)
   else:
     num_syms, num_steps = run(machine,tape,steps,brief)
     if brief:
-      print machine.num_states,machine.num_symbols,num_syms,num_steps
+      print machine.num_states, machine.num_symbols, num_syms,num_steps
     else:
       print
-      print "Number of 'not 0's printed: %u, steps: %u" % (num_syms,num_steps)
+      print "Number of 'not 0's printed: %u, steps: %u" % (num_syms, num_steps)
 
   sys.stdout.flush()
