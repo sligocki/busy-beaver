@@ -1,4 +1,10 @@
 #! /usr/bin/env python
+"""
+Library for reading Turing Machine transition tables from human readable format.
+
+As an executable, it convert from human readable format to IO_old format (Deprecated).
+Now it is used by IO to read the stored notation.
+"""
 
 import string
 
