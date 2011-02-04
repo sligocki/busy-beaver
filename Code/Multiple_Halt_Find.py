@@ -1,6 +1,16 @@
 #! /usr/bin/env python
+"""
+Find how many halt (or undefined cells) all TMs in a file have.
+
+Prints out all TMs with more than one halt state and lists the number of TMs that
+have each number of halts.
+"""
 
 from __future__ import division
+import math
+import sys
+
+from IO import IO
 
 def get_ttable(string):
   start = string.find("[[")
@@ -16,24 +26,24 @@ def count_halts(ttable):
   return halts
 
 # Main
-import sys, math
-
 infile = open(sys.argv[1], "r")
+io = IO(infile, sys.stdout)
 
 count = {}
-for line in infile:
-  ttable = get_ttable(line)
-  halts = count_halts(ttable)
+for result in io:
+  halts = count_halts(result.ttable)
   count[halts] = count.get(halts, 0) + 1
   if halts > 1:
     # Print the multiple ones
-    print line,
+    io.write_Result(result)
 
 # Output stats
 total_count = sum(count.values())
 width = int(math.log(total_count, 10)) + 2
+
 print
-for n in range(max(count.keys()) + 1):
-  print ("%"+`width`+"d machines with %d halts (%.1f%%)") % (count.get(n, 0), n, count.get(n, 0) * 100 / total_count)
+for n in range(1, max(count.keys()) + 1):
+  print ("%"+`width`+"d machines with %d halts (%.1f%%)") % (
+    count.get(n, 0), n, count.get(n, 0) * 100 / total_count)
 print
 print ("%"+`width`+"d total machines") % total_count
