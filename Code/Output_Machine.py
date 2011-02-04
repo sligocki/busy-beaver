@@ -42,10 +42,12 @@ def display_ttable(table):
     for cell in row:
       if cell[0] == -1:
         s += "--- "
-      elif cell[2] == -1:
-        s += "%c%cZ " % (symbols[cell[0]], dirs[cell[1]])
       else:
-        s += "%c%c%c " % (symbols[cell[0]], dirs[cell[1]], states[cell[2]])
+        symbol = symbols[cell[0]]
+        dir = dirs[cell[1]]
+        # Note: we use python trickyness to map state = -1 -> "Z"
+        state = states[cell[2]]
+        s += "%c%c%c " % (symbol, dir, state)
     s += " "
   return s.strip()
 
