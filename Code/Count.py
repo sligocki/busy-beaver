@@ -25,7 +25,8 @@ def count(ttable):
   max_state = 0
   num_states = len(ttable)
   num_symbols = len(ttable[0])
-  # Get stats.  Number of undefined transitions, whether there is a halt and the max-symbol/states
+  # Get stats.  Number of undefined transitions, whether there is a halt
+  # and the max-symbol/states
   for state_in in range(num_states):
     for symbol_in in range(num_symbols):
       symbol, dir, state = ttable[state_in][symbol_in]
@@ -65,7 +66,6 @@ def count_all(filename):
   symbols = None
   for result in io:
     n, states, symbols = count(result.ttable)
-    #print n, total
     total += n
 
   infile.close()
