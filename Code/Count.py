@@ -45,7 +45,7 @@ def count(ttable):
     result *= (2*num_states*num_symbols)**undefs
   else:
     result *= undefs * (2*num_states*num_symbols)**(undefs - 1)
-  return result
+  return result, num_states, num_symbols
 
 #main prog
 import sys
@@ -61,21 +61,25 @@ def count_all(filename):
   io = IO.IO(infile, None)
 
   total = 0
+  states = None
+  symbols = None
   for result in io:
-    n = count(result.ttable)
+    n, states, symbols = count(result.ttable)
     #print n, total
     total += n
 
   infile.close()
-  return total
+  return total, states, symbols
 
 if __name__ == "__main__":
   total = 0
   for filename in sys.argv[1:]:
-    subtotal = count_all(filename)
+    subtotal, states, symbols = count_all(filename)
     print "", filename, subtotal
     sys.stdout.flush()
     total += subtotal
   print "Total", total
-  # TODO(shawn): Print out the (QS-1) * ...
-  #print "Expected %dx%d: %d" % (
+  if states and symbols:
+    expected = ((states * symbols - 1) *
+                (2 * states * symbols)**(states * symbols - 2))
+    print "Expected %dx%d: %d" % (states, symbols, expected)
