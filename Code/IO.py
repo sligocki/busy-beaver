@@ -175,7 +175,7 @@ class IO(object):
     if self.input_file:
       result = self.read_Result()
       if result:
-        return (0, len(result.ttable[0]), len(result.ttable), -1, -1,
+        return (0, len(result.ttable), len(result.ttable[0]), -1, -1,
                 [result.category] + result.category_results,
                 result.ttable, result.log_number, result.extended_results)
 
