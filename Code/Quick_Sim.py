@@ -69,39 +69,69 @@ if __name__ == "__main__":
   # TODO: One variable for different levels of verbosity.
   # TODO: Combine optparsers from MacroMachine, Enumerate and here.
   parser.add_option("-q", "--quiet", action="store_true", help="Brief output")
-  parser.add_option("-v", "--verbose", action="store_true", help="Print step-by-step informaion from simulator and prover.")
-  parser.add_option("--verbose-prover", action="store_true", help="Provide debugging output from prover.")
-  parser.add_option("--verbose-simulator", action="store_true", help="Provide debugging output from simulator.")
-  parser.add_option("--verbose-block-finder", action="store_true", help="Provide debugging output from block_finder.")
-  parser.add_option("--print-loops", type=int, default=10000, metavar="LOOPS", help="Print every LOOPS loops.")
+  parser.add_option("-v", "--verbose", action="store_true",
+                    help="Print step-by-step informaion from simulator "
+                    "and prover.")
+  parser.add_option("--verbose-prover", action="store_true",
+                    help="Provide debugging output from prover.")
+  parser.add_option("--verbose-simulator", action="store_true",
+                    help="Provide debugging output from simulator.")
+  parser.add_option("--verbose-block-finder", action="store_true",
+                    help="Provide debugging output from block_finder.")
+  parser.add_option("--print-loops", type=int, default=10000, metavar="LOOPS",
+                    help="Print every LOOPS loops.")
   
-  parser.add_option("-b", "--no-backsymbol", action="store_false", dest="backsymbol", default=True, 
+  parser.add_option("-b", "--no-backsymbol", dest="backsymbol",
+                    action="store_false", default=True,
                     help="Turn off backsymbol macro machine")
-  parser.add_option("-p", "--no-prover", action="store_false", dest="prover", default=True, 
+  parser.add_option("-p", "--no-prover", dest="prover",
+                    action="store_false", default=True,
                     help="Turn off proof system")
   parser.add_option("-r", "--recursive", action="store_true", default=False, 
-                    help="Turn ON recursive proof system [Experimental]")
-  parser.add_option("--no-steps", action="store_false", dest="compute_steps", default=True,
-                    help="Don't keep track of base step count (can be expensive to calculate especially with recursive proofs).")
+                    help="Turn on recursive proof system")
+  parser.add_option("--no-steps", dest="compute_steps",
+                    action="store_false", default=True,
+                    help="Don't keep track of base step count (can be expensive"
+                    " to calculate especially with recursive proofs).")
   parser.add_option("--manual", action="store_true",
-                    help="Don't run any simulation, just set up simulator and quit. (Run as python -i Quick_Sim.py to interactively run simulation.)")
+                    help="Don't run any simulation, just set up simulator "
+                    "and quit. (Run as python -i Quick_Sim.py to interactively "
+                    "run simulation.)")
   
-  parser.add_option("-n", "--block-size", type=int, help="Block size to use in macro machine simulator (default is to guess with the block_finder algorithm)")
+  parser.add_option("-n", "--block-size", type=int,
+                    help="Block size to use in macro machine simulator "
+                    "(default is to guess with the block_finder algorithm)")
   
   block_options = OptionGroup(parser, "Block Finder options")
-  block_options.add_option("--bf-limit1", type=int, default=10000, metavar="LIMIT", help="Number of steps to run the first half of block finder [Default: %default].")
-  block_options.add_option("--bf-limit2", type=int, default=10000, metavar="LIMIT", help="Number of stpes to run the second half of block finder [Default: %default].")
-  block_options.add_option("--bf-run1", action="store_true", default=True, help="In first half, find worst tape before limit.")
-  block_options.add_option("--bf-no-run1", action="store_false", dest="bf_run1", help="In first half, just run to limit.")
-  block_options.add_option("--bf-run2", action="store_true", default=True, help="Run second half of block finder.")
-  block_options.add_option("--bf-no-run2", action="store_false", dest="bf_run2", help="Don't run second half of block finder.")
-  block_options.add_option("--bf-extra-mult", type=int, default=2, metavar="MULT", help="How far ahead to search in second half of block finder.")
+  block_options.add_option("--block-size", type=int,
+                           help="Block size to use in macro machine simulator "
+                           "(default is to guess with the block_finder "
+                           "algorithm)")
+  block_options.add_option("--bf-limit1", type=int, default=200, metavar="LIMIT",
+                           help="Number of steps to run the first half of "
+                           "block finder [Default: %default].")
+  block_options.add_option("--bf-limit2", type=int, default=200, metavar="LIMIT",
+                           help="Number of steps to run the second half of "
+                           "block finder [Default: %default].")
+  block_options.add_option("--bf-run1", action="store_true", default=True,
+                           help="In first half, find worst tape before limit.")
+  block_options.add_option("--bf-no-run1", action="store_false", dest="bf_run1",
+                           help="In first half, just run to limit.")
+  block_options.add_option("--bf-run2", action="store_true", default=True,
+                           help="Run second half of block finder.")
+  block_options.add_option("--bf-no-run2", action="store_false", dest="bf_run2",
+                           help="Don't run second half of block finder.")
+  block_options.add_option("--bf-extra-mult", type=int, default=2,
+                           metavar="MULT", help="How far ahead to search in "
+                           "second half of block finder.")
   parser.add_option_group(block_options)
   
   (options, args) = parser.parse_args()
   
   if options.verbose:
-    options.verbose_simulator = options.verbose_prover = options.verbose_block_finder = True
+    options.verbose_simulator = True
+    options.verbose_prover = True
+    options.verbose_block_finder = True
   
   # Verbose block finder
   Block_Finder.DEBUG = options.verbose_block_finder
