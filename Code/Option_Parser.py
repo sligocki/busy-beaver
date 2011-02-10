@@ -1,5 +1,27 @@
-import os, sys, getopt
+import getopt
+import os
+import string
+import sys
+
 from IO import IO
+
+def open_infile(infilename):
+  """Create input file based on a filename."""
+  if not infilename or infilename == "-":
+    return sys.stdin
+  else:
+    return file(infilename, "r")
+
+def open_outfile(outfilename):
+  """Create output file based on filename."""
+  if outfilename == "-":
+    return sys.stdout
+  else:
+    if os.path.exists(outfilename):
+      sys.stderr.write("Output text file, '%s', exists\n" % outfilename)
+      if string.lower(raw_input("Overwrite? ")) not in ("y", "yes"):
+        return None
+    return file(outfilename, "w")
 
 def Generator_Option_Parser(argv, extra_opt, ignore_infile = True):
   """
@@ -28,27 +50,14 @@ def Generator_Option_Parser(argv, extra_opt, ignore_infile = True):
   if not opts["outfile"]:
     opts["outfile"] = "%d.%d.%d.%d.out" % (opts["states"], opts["symbols"],
                                            opts["tape"], opts["steps"])
-  if opts["outfile"] == "-":
-    opts["outfilename"] = "-"
-    opts["outfile"] = sys.stdout
-  else:
-    if os.path.exists(opts["outfile"]):
-      sys.stderr.write("Output text file, '%s', exists\n" % opts["outfile"])
-      sys.exit(1)
-    else:
-      # This double use of opts["outfile"] is odd and possibly a bad idea,
-      # but I don't think that the filename will ever be needed.
-      opts["outfilename"] = opts["outfile"]
-      opts["outfile"] = file(opts["outfile"], "w")
+  opts["outfilename"] = opts["outfile"]
+  opts["outfile"] = open_outfile(opts["outfilename"])
+  if not opts["outfile"]:
+    sys.exit(1)
 
+  opts["infilename"] = opts["infile"]
   if not ignore_infile:
-    if not opts["infile"] or opts["infile"] == "-":
-      opts["infilename"] = "-"
-      opts["infile"] = sys.stdin
-    else:
-      opts["infilename"] = opts["infile"]
-      opts["infile"] = file(opts["infile"], "r")
-    
+    opts["infile"] = open_infile(opts["infilename"])
 
   return opts, args
 
