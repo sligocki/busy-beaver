@@ -34,6 +34,7 @@ count = {Exit_Condition.HALT: 0,
          Exit_Condition.UNDEF_CELL: 0,
          Exit_Condition.ERROR: 0,
          # Various Unknown types:
+         Exit_Condition.UNKNOWN: 0,
          Exit_Condition.MAX_STEPS: 0,
          Exit_Condition.OVER_TAPE: 0,
          Exit_Condition.TIME_OUT: 0}
@@ -49,9 +50,7 @@ for result in io:
 
 num_halt = count[Exit_Condition.HALT]
 num_infinite = count[Exit_Condition.INFINITE]
-num_unknown = (count[Exit_Condition.MAX_STEPS] +
-               count[Exit_Condition.OVER_TAPE] +
-               count[Exit_Condition.TIME_OUT])
+num_unknown = sum(count[x] for x in Exit_Condition.UNKNOWN_SET)
 num_undecided = count[Exit_Condition.UNDEF_CELL]
 num_error = count[Exit_Condition.ERROR]
 

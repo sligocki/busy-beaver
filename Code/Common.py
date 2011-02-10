@@ -15,7 +15,7 @@ class Exit_Condition(object):
 
   # Generic unknown condition, we should move to this and add extra info as
   # reason text (Result.category_results).
-  UNKNOWN = 2  # Make it redundant with MAX_STEPS for backwards compatibility.
+  UNKNOWN = 6
   OVER_TAPE = 1
   MAX_STEPS = 2
   TIME_OUT = 5
@@ -27,6 +27,7 @@ class Exit_Condition(object):
             UNDEF_CELL: "Undefined_Cell",
             INFINITE: "Infinite",
             # TODO(shawn): Print out "Unknown" for all of these.
+            UNKNOWN: "Unknown",
             OVER_TAPE: "Over_Tape",
             MAX_STEPS: "Max_Steps",
             TIME_OUT: "Time_Out",
