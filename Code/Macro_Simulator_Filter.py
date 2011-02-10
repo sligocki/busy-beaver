@@ -63,6 +63,7 @@ def run(TTable, block_size, steps, runtime, recursive, progress):
 
 if __name__ == "__main__":
   from optparse import OptionParser
+  import sys
 
   from Option_Parser import open_infile, open_outfile
 
