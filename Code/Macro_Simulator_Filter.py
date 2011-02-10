@@ -6,10 +6,11 @@ import IO
 from Macro import Chain_Simulator, Turing_Machine, Block_Finder
 from Alarm import ALARM, AlarmException
 
+# TODO(shawn): Get rid of bad global vars :/
 max_step2inf = 0
 max_loop2inf = 0
 
-def run(TTable, block_size, level, steps, runtime, recursive, progress):
+def run(TTable, block_size, steps, runtime, recursive, progress):
   # Get and initialize a new simulator object.
   m1 = Turing_Machine.Simple_Machine(TTable)
   if not block_size:
@@ -61,56 +62,73 @@ def run(TTable, block_size, level, steps, runtime, recursive, progress):
     raise Exception, "unexpected op_state"
 
 if __name__ == "__main__":
-  import sys
-  from Option_Parser import Filter_Option_Parser
+  from optparse import OptionParser
 
-  # Get command line options.
-  opts, args = Filter_Option_Parser(sys.argv,
-      [("size"     , int,   None, False, True),
-       ("level"    , int,      3, False, True),
-       ("time"     , float, None, False, True),
-       ("recursive", None,  None, False, False),
-       ("progress" , None,  None, False, False)])
+  from Option_Parser import open_infile, open_outfile
 
-  log_number = opts["log_number"]
-  progress = opts["progress"]
-  io = IO.IO(opts["infile"], opts["outfile"], log_number)
-  next = io.read_result()
+  # Parse command line options
+  usage = "usage: %prog --infile= --outfile= [options]"
+  parser = OptionParser(usage=usage)
+  # General options:
+  parser.add_option("--infile", help="Input file name.")
+  parser.add_option("--outfile", help="Output file name.")
+  parser.add_option("--log_number", type=int, metavar="NUM",
+                    help="Log number to use in output file.")
+  # Macro_Simulator specific:
+  parser.add_option("-n", "--block-size", type=int,
+                    help="Block size to use in macro machine simulator "
+                    "(default is to guess with the block_finder algorithm).")
+  parser.add_option("--steps", type=int, default=10000,
+                    help="Max simulation loops to run each machine for "
+                    "(0 for infinite) [Default: %default].")
+  parser.add_option("--time", type=float,
+                    help="Max (real) time (in seconds) to run each simulation "
+                    "for (default is no time limit).")
+  parser.add_option("-r", "--recursive", action="store_true", default=False,
+                    help="Turn on recursive proof system.")
+  parser.add_option("--progress", action="store_true", default=False,
+                    help="Print progress to stdout.")
+
+  (options, args) = parser.parse_args()
+
+  if not options.infile:
+    parser.error("--infile is a required parameter.")
+
+  infile = open_infile(options.infile)
+  outfile = open_outfile(options.outfile)
+  io = IO.IO(infile, outfile, options.log_number)
 
   num_halt = 0
   num_undefined = 0
 
-  while next:
-    if progress:
-      pass #print next[0], # Machine Number
-    TTable = next[6]
+  for result in io:
     # Run the simulator/filter on this machine.
-    results = run(TTable, opts["size"], opts["level"], opts["steps"], 
-                  opts["time"], opts["recursive"], progress)
+    sim_results = run(result.ttable, options.block_size, options.steps, 
+                      options.time, options.recursive, options.progress)
 
     # If we could not decide anything, leave the old result alone.
-    if results[0] in Exit_Condition.UNKNOWN_SET:
-      io.write_result_raw(*next)
+    if sim_results[0] in Exit_Condition.UNKNOWN_SET:
+      io.write_Result(result)
     # Otherwise classify it as beeing decided in some way.
     else:
       # We do not expect to find halting machines with this filter.
       # However, finding them is not a problem, but user should know.
-      if results[0] == Exit_Condition.HALT:
+      if sim_results[0] == Exit_Condition.HALT:
         num_halt += 1
-      if results[0] == Exit_Condition.UNDEF_CELL:
+      if sim_results[0] == Exit_Condition.UNDEF_CELL:
         num_undefined += 1
-      old_results = next[5]
-      io.write_result_raw(*(next[0:5]+
-                            (results, TTable, log_number, old_results)))
-
-    next = io.read_result()
+      result.extended_results = ([Exit_Condition.name(result.category)] +
+                                 result.category_results)
+      result.category = sim_results[0]
+      result.category_results = sim_results[1:]
+      result.log_number = options.log_number
+      io.write_Result(result)
 
   # Print number of TMs that halted.
   if num_halt > 0:
-    sys.stderr.write("%d in file: %s - halted!\n" % 
-                     (num_halt, opts["infilename"]))
+    print >>sys.stderr, num_halt, "in file:", options.infile, "- halted!"
 
   # Print number of TMs that reached an undefined transition.
   if num_undefined > 0:
-    sys.stderr.write("%d in file: %s - undefined transitions reached!\n" %
-                     (num_undefined, opts["infilename"]))
+    print >>sys.stderr, num_undefined, "in file:", options.infile,
+    print >>sys.stderr, "- undefined transitions reached!"
