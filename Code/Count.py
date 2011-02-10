@@ -1,10 +1,10 @@
 #! /usr/bin/env python
 #
-# Count the number of distinct TM represented by machines in tree-normal-form (TNF)
+# Count the number of distinct TM represented by machines in tree-normal-form
 # With the restriction that A0->1RB and Halt=1RH.
 #
-# Note that for the space of Q-state, S-symbol TMs, there are 
-#   (QS-1) * (2QS)^(QS-2) with such restrictions. Thus, if we run this count 
+# Note that for the space of Q-state, S-symbol TMs, there are
+#   (QS-1) * (2QS)^(QS-2) with such restrictions. Thus, if we run this count
 #   over a completed TNF set of machines, we should get this value.
 #
 
@@ -25,7 +25,8 @@ def count(ttable):
   max_state = 0
   num_states = len(ttable)
   num_symbols = len(ttable[0])
-  # Get stats.  Number of undefined transitions, whether there is a halt and the max-symbol/states
+  # Get stats.  Number of undefined transitions, whether there is a halt
+  # and the max-symbol/states
   for state_in in range(num_states):
     for symbol_in in range(num_symbols):
       symbol, dir, state = ttable[state_in][symbol_in]
@@ -45,7 +46,7 @@ def count(ttable):
     result *= (2*num_states*num_symbols)**undefs
   else:
     result *= undefs * (2*num_states*num_symbols)**(undefs - 1)
-  return result
+  return result, num_states, num_symbols
 
 #main prog
 import sys
@@ -61,22 +62,24 @@ def count_all(filename):
   io = IO.IO(infile, None)
 
   total = 0
-  next = io.read_result()
-  while next:
-    ttable = next[6]
-    n = count(ttable)
-    #print n, subtotal
+  states = None
+  symbols = None
+  for result in io:
+    n, states, symbols = count(result.ttable)
     total += n
-    next = io.read_result()
+
   infile.close()
-  return total
+  return total, states, symbols
 
 if __name__ == "__main__":
   total = 0
   for filename in sys.argv[1:]:
-    subtotal = count_all(filename)
+    subtotal, states, symbols = count_all(filename)
     print "", filename, subtotal
     sys.stdout.flush()
     total += subtotal
   print "Total", total
-
+  if states and symbols:
+    expected = ((states * symbols - 1) *
+                (2 * states * symbols)**(states * symbols - 2))
+    print "Expected %dx%d: %d" % (states, symbols, expected)

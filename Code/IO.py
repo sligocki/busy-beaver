@@ -48,18 +48,23 @@ class Result(object):
 
   def read(self, line):
     """Read a result off of a line from a file."""
-    parts = line.split("|", 2)
-    self.ttable = Input_Machine.read_ttable(parts[0])
-    if len(parts) >= 2:
-      subparts = parts[1].split()  # Split by whitespace
-      try:
-        self.log_number = int(subparts[0])
-      except ValueError:
-        self.log_number = None
-      self.category = Exit_Condition.read(subparts[1])
-      self.category_results = self.read_list(subparts[2:])
-    if len(parts) >= 3:
-      self.extended_results = self.read_list(parts[2].split())
+    try:
+      parts = line.split("|", 2)
+      self.ttable = Input_Machine.read_ttable(parts[0])
+      if len(parts) >= 2:
+        subparts = parts[1].split()  # Split by whitespace
+        try:
+          self.log_number = int(subparts[0])
+        except ValueError:
+          self.log_number = None
+        self.category = Exit_Condition.read(subparts[1])
+        self.category_results = self.read_list(subparts[2:])
+      if len(parts) >= 3:
+        self.extended_results = self.read_list(parts[2].split())
+      return True
+    except Exception as e:
+      print >>sys.stderr, "IO read error:", e
+      return False
 
   def read_list(self, strs):
     res = []
@@ -116,12 +121,18 @@ class IO(object):
       self.output_file.flush()
 
   def read_Result(self):
-    """"New interface for reading a Result object."""
+    """
+    New interface for reading a Result object.
+
+    Returns the next result in input_file until it reaches end of file or
+    incorrectly formatted line, which returns None.
+    """
     line = self.input_file.readline()
     if line.strip():
       result = Result()
-      result.read(line)
-      return result
+      # Only return object if read succeeds.
+      if result.read(line):
+        return result
 
   # Allow iteration through input_file machines.
   def __iter__(self):
@@ -164,7 +175,7 @@ class IO(object):
     if self.input_file:
       result = self.read_Result()
       if result:
-        return (0, len(result.ttable[0]), len(result.ttable), -1, -1,
+        return (0, len(result.ttable), len(result.ttable[0]), -1, -1,
                 [result.category] + result.category_results,
                 result.ttable, result.log_number, result.extended_results)
 
