@@ -31,7 +31,7 @@ while ("$size" <= "$stop")
   echo $size
   set cur_steps=`expr $steps \* $size`
   set cur_tape=`expr $tape \* $size`
-  update "$base" Macro_Machine_Filter.py --tape=$cur_tape --steps=$cur_steps --size=$size
+  update "$base" "f" Macro_Machine_Filter.py --tape=$cur_tape --steps=$cur_steps --size=$size
   wc -l "$base".unknown
   if (-e "$base".error) then
     echo "Error encountered..."

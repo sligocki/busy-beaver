@@ -37,10 +37,10 @@ echo ""
 while ("${size}" <= "${stop}")
   if ("${timeout}" == "-1") then
     echo "----- Tree ${size} -----"
-    time ${update_cmd} "${basename}" Macro_Tree_Filter2.py --steps=${steps} --size=${size}
+    time ${update_cmd} "${basename}" "f" Macro_Tree_Filter2.py --steps=${steps} --size=${size}
   else
     echo "----- Tree ${size} ${timeout} -----"
-    time ${update_cmd} "${basename}" Macro_Tree_Filter2.py --time=${timeout} --steps=${steps} --size=${size}
+    time ${update_cmd} "${basename}" "f" Macro_Tree_Filter2.py --time=${timeout} --steps=${steps} --size=${size}
   endif
 
   wc -l "${basename}".unknown
