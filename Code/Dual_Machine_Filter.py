@@ -57,7 +57,7 @@ def Dual_Machine_Recursive(machine_num, machine, num_states, num_symbols,
   #    3) Reached Undefined Cell
   #    4) Are in a detected infinite loop
   elif (exit_condition in (Exit_Condition.HALT, Exit_Condition.UNDEF_CELL,
-                           Exit_Condtion.INFINITE)):
+                           Exit_Condition.INFINITE)):
     save_machine(machine_num, machine, results,
                  old_tape_length, old_max_steps, io, old_results)
   # If still unclassified
