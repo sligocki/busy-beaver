@@ -22,7 +22,7 @@ class tests_container:
     self.IS_UNKNOWN    = lambda x: x == "Unknown"
     # Note, these should never actually appear in program outputs at time of
     # writing (Dec 26, 2005).
-    self.IS_UNDEFINED  = lambda x: x == "Undefined"
+    self.IS_UNDEFINED  = lambda x: x == "Undefined_Cell"
     self.IS_ERROR      = lambda x: x == -1
 
 FIELD = fields_container()
