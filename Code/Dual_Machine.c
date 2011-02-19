@@ -155,7 +155,7 @@ static PyObject* Dual_Machine(PyObject* self,
           return Py_BuildValue("(iis)",-1,13,"Illegal_symbol_in_Turing_machine_transistion_3-tuple");
         }
 
-        if (i1 < 0 || i1 > 1)
+        if (i1 < -1 || i1 > 1)
         {
           return Py_BuildValue("(iis)",-1,14,"Illegal_direction_in_Turing_machine_transistion_3-tuple");
         }
@@ -166,11 +166,11 @@ static PyObject* Dual_Machine(PyObject* self,
         }
 
         m1.machine[iter_state].t[iter_symbol].w = i0;
-        m1.machine[iter_state].t[iter_symbol].d = 2*i1 - 1;
+        m1.machine[iter_state].t[iter_symbol].d = i1;
         m1.machine[iter_state].t[iter_symbol].s = i2;
 
         m2.machine[iter_state].t[iter_symbol].w = i0;
-        m2.machine[iter_state].t[iter_symbol].d = 2*i1 - 1;
+        m2.machine[iter_state].t[iter_symbol].d = i1;
         m2.machine[iter_state].t[iter_symbol].s = i2;
       }
     }
