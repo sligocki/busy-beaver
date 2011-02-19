@@ -111,7 +111,7 @@ if __name__ == "__main__":
 
     # If we could not decide anything, leave the old io_record alone.
     if sim_results[0] in Exit_Condition.UNKNOWN_SET:
-      io.write_Result(io_record)
+      io.write_record(io_record)
     # Otherwise classify it as beeing decided in some way.
     else:
       # We do not expect to find halting machines with this filter.
@@ -121,11 +121,11 @@ if __name__ == "__main__":
       if sim_results[0] == Exit_Condition.UNDEF_CELL:
         num_undefined += 1
       io_record.extended_results = ([Exit_Condition.name(io_record.category)] +
-                                 io_record.category_results)
+                                 io_record.category_reason)
       io_record.category = sim_results[0]
-      io_record.category_results = sim_results[1:]
+      io_record.category_reason = sim_results[1:]
       io_record.log_number = options.log_number
-      io.write_Result(io_record)
+      io.write_record(io_record)
 
   # Print number of TMs that halted.
   if num_halt > 0:

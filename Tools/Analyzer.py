@@ -44,7 +44,7 @@ for result in io:
   num_total += 1
   count[result.category] += 1
   if result.category == Exit_Condition.HALT:
-    symbols, steps = result.category_results
+    symbols, steps = result.category_reason
     max_symbols = max(max_symbols, symbols)
     max_steps = max(max_steps, steps)
 
