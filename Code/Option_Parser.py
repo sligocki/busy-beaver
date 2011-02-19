@@ -48,8 +48,7 @@ def Generator_Option_Parser(argv, extra_opt, ignore_infile = True):
 
   # Default output filename is based off of parameters.
   if not opts["outfile"]:
-    opts["outfile"] = "%d.%d.%d.%d.out" % (opts["states"], opts["symbols"],
-                                           opts["tape"], opts["steps"])
+    opts["outfile"] = "%dx%d.out" % (opts["states"], opts["symbols"])
   opts["outfilename"] = opts["outfile"]
   opts["outfile"] = open_outfile(opts["outfilename"])
   if not opts["outfile"]:
@@ -82,12 +81,8 @@ def Filter_Option_Parser(argv, extra_opt, ignore_outfile = False):
   opts, args = Option_Parser(argv, opts, help_flag = True, no_mult = True,
                              ignore_opts = ignore_opts)
 
-  if not opts["infile"] or opts["infile"] == "-":
-    sys.stderr.write("Filter_Option_Parser -- input from stdin currently not available\n")
-    sys.exit(1)
-  else:
-    opts["infilename"] = opts["infile"]
-    opts["infile"] = file(opts["infile"], "r")
+  opts["infilename"] = opts["infile"]
+  opts["infile"] = open_infile(opts["infilename"])
 
   if not ignore_outfile:
     opts["states"], opts["symbols"], tape, steps = Read_Atributes(opts["infile"])
@@ -98,28 +93,15 @@ def Filter_Option_Parser(argv, extra_opt, ignore_outfile = False):
     if not opts["steps"]:
       opts["steps"] = steps
 
-    # The furthest that the machine can travel in n steps is n+1 away from the
-    # origin.  It could travel in either direction so the tape need not be longer
-    # than 2 * max_steps + 3
-    if opts["tape"] > 2 * opts["steps"] + 3:
-      opts["tape"] = 2 * opts["steps"] + 3
-
     if not opts["outfile"]:
       # Default output filename is based off of parameters.
-      opts["outfile"] = "%d.%d.%d.%d.out" % (opts["states"], opts["symbols"],
-                                             opts["tape"], opts["steps"])
-    if opts["outfile"] == "-":
-      opts["outfilename"] = "-"
-      opts["outfile"] = sys.stdout
-    else:
-      if os.path.exists(opts["outfile"]):
-        sys.stderr.write("Output text file, '%s', exists\n" % opts["outfile"])
-        sys.exit(1)
-      else:
-        # This double use of opts["outfile"] is odd and possibly a bad idea,
-        # but I don't think that the filename will ever be needed.
-        opts["outfilename"] = opts["outfile"]
-        opts["outfile"] = file(opts["outfile"], "w")
+      opts["outfile"] = "%dx%d.out" % (opts["states"], opts["symbols"])
+
+    opts["outfilename"] = opts["outfile"]
+    opts["outfile"] = open_outfile(opts["outfilename"])
+    if not opts["outfile"]:
+      sys.exit(1)
+
 
   return opts, args
 

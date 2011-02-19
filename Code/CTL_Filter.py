@@ -54,13 +54,13 @@ inf_reasons = (type_str, cutoff, block_size, offset)
 
 io = IO.IO(opts["infile"], opts["outfile"], log_number)
 
-for result in io:
+for io_record in io:
   # Run the simulator/filter on this machine (with an optional timer)
   try:
     if runtime:
       ALARM.set_alarm(runtime)
 
-    success = type_func.test_CTL(result.ttable, cutoff, block_size, offset)
+    success = type_func.test_CTL(io_record.ttable, cutoff, block_size, offset)
 
     ALARM.cancel_alarm()
 
@@ -71,12 +71,12 @@ for result in io:
 
   # If we could not decide anything, leave the old result alone.
   if not success:
-    io.write_Result(result)
+    io.write_Result(io_record)
   # Otherwise classify it as beeing decided in some way.
   else:
-    result.extended_results = ([Exit_Condition.name(result.category)] +
-                               result.category_results)
-    result.category = Exit_Condition.INFINITE
-    result.category_results = inf_reasons
-    result.log_number = log_number
-    io.write_Result(result)
+    io_record.extended_results = ([Exit_Condition.name(io_record.category)] +
+                               io_record.category_results)
+    io_record.category = Exit_Condition.INFINITE
+    io_record.category_results = inf_reasons
+    io_record.log_number = log_number
+    io.write_Result(io_record)
