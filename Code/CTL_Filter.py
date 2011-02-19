@@ -16,7 +16,7 @@ from Alarm import ALARM, AlarmException
 # Get command line options.
 #                                     Form: (opt, type, def_val, req?, has_val?)
 opts, args = Filter_Option_Parser(sys.argv,
-  [("size"  , int  , 1   , False, True),
+  [("block-size", int, 1 , False, True),
    ("offset", int  , 0   , False, True),
    ("cutoff", int  , 200 , False, True),
    ("type"  , str  , None, True , True),
@@ -25,7 +25,7 @@ opts, args = Filter_Option_Parser(sys.argv,
 
 log_number = opts["log_number"]
 
-block_size = opts["size"]   # Block size for macro machine
+block_size = opts["block-size"]   # Block size for macro machine
 offset     = opts["offset"] # Offset for block size to resolve parity errors
 
 cutoff     = opts["cutoff"] # Steps to run to get advanced config before trying CTL
@@ -50,20 +50,17 @@ else:
   print "Unknown CTL: %s" % (type,)
   sys.exit(1)
 
-results = (Exit_Condition.INFINITE, type_str, cutoff, block_size, offset)
+inf_reasons = (type_str, cutoff, block_size, offset)
 
-io   = IO.IO(opts["infile"], opts["outfile"], log_number)
-next = io.read_result()
+io = IO.IO(opts["infile"], opts["outfile"], log_number)
 
-while next:
-  ttable = next[6]
-
+for io_record in io:
   # Run the simulator/filter on this machine (with an optional timer)
   try:
     if runtime:
       ALARM.set_alarm(runtime)
 
-    success = type_func.test_CTL(ttable, cutoff, block_size, offset)
+    success = type_func.test_CTL(io_record.ttable, cutoff, block_size, offset)
 
     ALARM.cancel_alarm()
 
@@ -74,10 +71,12 @@ while next:
 
   # If we could not decide anything, leave the old result alone.
   if not success:
-    io.write_result_raw(*next)
+    io.write_record(io_record)
   # Otherwise classify it as beeing decided in some way.
   else:
-    old_results = next[5]
-    io.write_result_raw(*(next[0:5]+(results, ttable, log_number, old_results)))
-
-  next = io.read_result()
+    io_record.extended_results = ([Exit_Condition.name(io_record.category)] +
+                               io_record.category_reason)
+    io_record.category = Exit_Condition.INFINITE
+    io_record.category_reason = inf_reasons
+    io_record.log_number = log_number
+    io.write_record(io_record)
