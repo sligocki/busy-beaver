@@ -43,7 +43,7 @@ endif
 /bin/cp -f $basename:r.log $basename.log
 
 # Convert undecided TMs to new TMs
-update $basename Assign_Undecideds.py --next_machine_num=$nextmachnum
+update $basename "f" Assign_Undecideds.py --next_machine_num=$nextmachnum
 
 # Check to see if this succeeded
 if ("$status" != 0) then

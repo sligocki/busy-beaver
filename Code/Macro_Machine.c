@@ -493,7 +493,7 @@ static PyObject* Macro_Machine(PyObject* self,
           return Py_BuildValue("(iis)",-1,15,"Illegal_symbol_in_Turing_machine_transistion_3-tuple");
         }
 
-        if (i1 < 0 || i1 > 1)
+        if (i1 < -1 || i1 > 1)
         {
           return Py_BuildValue("(iis)",-1,16,"Illegal_direction_in_Turing_machine_transistion_3-tuple");
         }

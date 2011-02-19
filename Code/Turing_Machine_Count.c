@@ -144,7 +144,7 @@ static PyObject* Turing_Machine_Count(PyObject* self,
           return Py_BuildValue("(iis)",-1,13,"Illegal_symbol_in_Turing_machine_transistion_3-tuple");
         }
 
-        if (i1 < 0 || i1 > 1)
+        if (i1 < -1 || i1 > 1)
         {
           return Py_BuildValue("(iis)",-1,14,"Illegal_direction_in_Turing_machine_transistion_3-tuple");
         }
