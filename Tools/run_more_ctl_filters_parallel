@@ -18,7 +18,7 @@ foreach size (7 8 9 10 11 12)
     set offset=0
     while (${offset} < ${size})
       echo "----- CTL${ctl} ${size} ${offset} ${time} -----"
-      time ${update_cmd} ${basename} "f" CTL_Filter.py --time=${time} --type=CTL${ctl} --size=${size} --offset=${offset}
+      time ${update_cmd} ${basename} "f" CTL_Filter.py --time=${time} --type=CTL${ctl} --block-size=${size} --offset=${offset}
       @ offset++
     end  
   end
