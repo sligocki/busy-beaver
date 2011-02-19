@@ -14,11 +14,11 @@ import Macro.Chain_Simulator
 from Macro.Chain_Tape import INF
 from Alarm import ALARM, AlarmException
 
-TIMEOUT = "Timeout"
-OVERSTEPS = "Over_steps"
-HALT = "Halt"
-INFINITE = "Infinite_repeat"
-UNDEFINED = "Undefined_Transition"
+#TIMEOUT = "Time_Out"
+#OVERSTEPS = "Over_steps"
+#HALT = "Halt"
+#INFINITE = "Infinite_repeat"
+#UNDEFINED = "Undefined_Transition"
 
 def run(TTable, options, steps=INF, runtime=None, block_size=None, 
                 backsymbol=True, prover=True, recursive=False):
@@ -67,21 +67,21 @@ def run(TTable, options, steps=INF, runtime=None, block_size=None,
 
       except AlarmException: # Catch Timer
         ALARM.cancel_alarm()
-        return TIMEOUT, (runtime, sim.step_num)
+        return Exit_Condition.TIME_OUT, (runtime, sim.step_num)
 
       ## Resolve end conditions and return relevent info.
       if sim.op_state == Macro.Turing_Machine.RUNNING:
-        return OVERSTEPS, (sim.step_num,)
+        return Exit_Condition.MAX_STEPS, (sim.step_num,)
       
       elif sim.op_state == Macro.Turing_Machine.HALT:
-        return HALT, (sim.step_num, sim.get_nonzeros())
+        return Exit_Condition.HALT, (sim.step_num, sim.get_nonzeros())
       
       elif sim.op_state == Macro.Turing_Machine.INF_REPEAT:
-        return INFINITE, (sim.inf_reason,)
+        return Exit_Condition.INFINITE, (sim.inf_reason,)
       
       elif sim.op_state == Macro.Turing_Machine.UNDEFINED:
         on_symbol, on_state = sim.op_details[0][:2]
-        return UNDEFINED, (on_state, on_symbol, 
+        return Exit_Condition.UNDEF_CELL, (on_state, on_symbol, 
                            sim.step_num, sim.get_nonzeros())
 
     except AlarmException: # Catch Timer (unexpected!)
@@ -89,7 +89,7 @@ def run(TTable, options, steps=INF, runtime=None, block_size=None,
 
     sys.stderr.write("Weird1 (%d): %s\n" % (do_over,TTable))
 
-  return TIMEOUT, (runtime, -1)
+  return Exit_Condition.TIME_OUT, (runtime, -1)
 
 # Main script
 if __name__ == "__main__":
@@ -156,19 +156,19 @@ if __name__ == "__main__":
                      options.recursive)
 
     # Output the result
-    if cond == UNDEFINED:
+    if cond == Exit_Condition.UNDEF_CELL:
       on_state, on_symbol, steps, score = info
       results = (Exit_Condition.UNDEF_CELL, on_state, on_symbol, score, steps)
-    elif cond == HALT:
+    elif cond == Exit_Condition.HALT:
       steps, score = info
       results = (Exit_Condition.HALT, score, steps)
-    elif cond == INFINITE:
+    elif cond == Exit_Condition.INFINITE:
       reason, = info
       results = (Exit_Condition.INFINITE, reason)
-    elif cond == OVERSTEPS:
+    elif cond == Exit_Condition.MAX_STEPS:
       steps, = info
-      results = (Exit_Condition.OVERSTEPS, steps)
-    elif cond == TIMEOUT:
+      results = (Exit_Condition.MAX_STEPS, steps)
+    elif cond == Exit_Condition.TIME_OUT:
       runtime, steps = info
       results = (Exit_Condition.TIME_OUT, runtime, steps)
     else:
