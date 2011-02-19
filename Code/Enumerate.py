@@ -15,7 +15,7 @@ import cPickle as pickle
 
 from Common import Exit_Condition
 from Turing_Machine import Turing_Machine
-from IO import IO
+import IO
 import Macro_Simulator
 from Alarm import AlarmException
 
@@ -216,33 +216,44 @@ class Enumerator(object):
   def add_halt(self, tm, steps, score):
     """Note a halting TM. Add statistics and output it with score/steps."""
     self.num_halt += 1
-    ## Magic nums: the '-1's are for tape size and max_steps (not used) .. the '0' is for halting.
-    self.io.write_result(self.tm_num, -1, -1,
-                         (Exit_Condition.HALT, score, steps), tm)
     if steps > self.best_steps or score > self.best_score:
       self.best_steps = max(self.best_steps, steps)
       self.best_score = max(self.best_score, score)
     self.tm_num += 1
 
+    io_record = IO.Record()
+    io_record.ttable = tm.get_TTable()
+    io_record.category = Exit_Condition.HALT
+    io_record.category_reason = (score, steps)
+    io.write_record(io_record)
+
   def add_infinite(self, tm, reason):
     """Note an infinite TM. Add statistics and output it with reason."""
     self.num_infinite += 1
-    self.io.write_result(self.tm_num, -1, -1,
-                         (Exit_Condition.INFINITE, "Enumerate"), tm)
     self.inf_type[reason] += 1
     self.tm_num += 1
+
+    io_record = IO.Record()
+    io_record.ttable = tm.get_TTable()
+    io_record.category = Exit_Condition.INFINITE
+    io_record.category_reason = (reason,)
+    io.write_record(io_record)
 
   def add_unresolved(self, tm, reason, steps, runtime=None):
     """Note an unresolved TM. Add statistics and output it with reason."""
     self.num_unresolved += 1
-    self.io.write_result(self.tm_num, -1, -1,
-                         (Exit_Condition.UNKNOWN, reason), tm)
     if reason == Macro_Simulator.OVERSTEPS:
       self.num_over_steps += 1
     else:
       assert reason == Macro_Simulator.TIMEOUT, "Invalid reason (%r)" % reason
       self.num_over_time += 1
     self.tm_num += 1
+
+    io_record = IO.Record()
+    io_record.ttable = tm.get_TTable()
+    io_record.category = Exit_Condition.UNKNOWN
+    io_record.category_reason = (Exit_Condition.name(reason), steps, runtime)
+    io.write_record(io_record)
 
 # Command line interpretter code
 if __name__ == "__main__":
@@ -343,7 +354,7 @@ if __name__ == "__main__":
       parser.error("Choose different outfilename")
   outfile = open(options.outfilename, "w")
 
-  io = IO(None, outfile, options.log_number)
+  io = IO.IO(None, outfile, options.log_number)
 
   ## Print command line
   print "Enumerate.py --states=%d --symbols=%d --steps=%d --time=%f" \

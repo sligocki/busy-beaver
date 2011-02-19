@@ -114,6 +114,8 @@ class IO(object):
 
   def write_record(self, result):
     """New interface for writing an IO.Record object."""
+    if result.log_number == None:
+      result.log_number = self.log_number
     result.write(self.output_file)
 
     if self.flush_each:
