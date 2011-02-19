@@ -166,11 +166,11 @@ static PyObject* Dual_Machine(PyObject* self,
         }
 
         m1.machine[iter_state].t[iter_symbol].w = i0;
-        m1.machine[iter_state].t[iter_symbol].d = 2*i1-1;
+        m1.machine[iter_state].t[iter_symbol].d = 2*i1 - 1;
         m1.machine[iter_state].t[iter_symbol].s = i2;
 
         m2.machine[iter_state].t[iter_symbol].w = i0;
-        m2.machine[iter_state].t[iter_symbol].d = 2*i1-1;
+        m2.machine[iter_state].t[iter_symbol].d = 2*i1 - 1;
         m2.machine[iter_state].t[iter_symbol].s = i2;
       }
     }
