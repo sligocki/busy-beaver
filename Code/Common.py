@@ -14,7 +14,7 @@ class Exit_Condition(object):
   INFINITE = 4
 
   # Generic unknown condition, we should move to this and add extra info as
-  # reason text (Result.category_results).
+  # reason text (IO.Record.category_reason).
   UNKNOWN = 6
   OVER_TAPE = 1
   MAX_STEPS = 2

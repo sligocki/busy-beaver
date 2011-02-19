@@ -19,24 +19,24 @@ import Output_Machine
 
 class IO_Error(Exception): pass
 
-class Result(object):
-  """Structuring of information in a result line."""
+class Record(object):
+  """Structuring of information in a Turing machine result line."""
   def __init__(self):
     self.ttable = None          # a list of lists
     self.log_number = None      # an int or None
     self.category = None        # Halt, Infinite, Unknown, Undecided
-    self.category_results = []  # a generic list of attributes
+    self.category_reason = []   # a generic list of attributes
     self.extended_results = []  # a generic list of extended information
 
   def __str__(self):
-    return "[IO.Result: %s ]" % str(self.__dict__)
+    return "[IO.Record: %s ]" % str(self.__dict__)
 
   def write(self, out):
-    """Write out a Result object result."""
+    """Write out a Record object result."""
     out.write(Output_Machine.display_ttable(self.ttable))
     if self.category != None:
       out.write(" | %r %s" % (self.log_number, Exit_Condition.name(self.category)))
-      self.write_list(self.category_results, out)
+      self.write_list(self.category_reason, out)
       if self.extended_results:
         out.write(" |")
         self.write_list(self.extended_results, out)
@@ -58,7 +58,7 @@ class Result(object):
         except ValueError:
           self.log_number = None
         self.category = Exit_Condition.read(subparts[1])
-        self.category_results = self.read_list(subparts[2:])
+        self.category_reason = self.read_list(subparts[2:])
       if len(parts) >= 3:
         self.extended_results = self.read_list(parts[2].split())
       return True
@@ -112,24 +112,24 @@ class IO(object):
     self.log_number  = log_number
     self.flush_each  = not compressed
 
-  def write_Result(self, result):
-    """New interface for writing a Result object."""
+  def write_record(self, result):
+    """New interface for writing an IO.Record object."""
     result.write(self.output_file)
 
     if self.flush_each:
       # Flushing every machine is expensive
       self.output_file.flush()
 
-  def read_Result(self):
+  def read_record(self):
     """
-    New interface for reading a Result object.
+    New interface for reading an IO.Record object.
 
     Returns the next result in input_file until it reaches end of file or
     incorrectly formatted line, which returns None.
     """
     line = self.input_file.readline()
     if line.strip():
-      result = Result()
+      result = Record()
       # Only return object if read succeeds.
       if result.read(line):
         return result
@@ -138,7 +138,7 @@ class IO(object):
   def __iter__(self):
     return self
   def next(self):
-    result = self.read_Result()
+    result = self.read_record()
     if result:
       return result
     else:
@@ -158,25 +158,25 @@ class IO(object):
                        old_results = []):
     """Legacy interface used by IO_old to write a single result."""
     if self.output_file:
-      result = Result()
+      result = Record()
       result.ttable = machine_TTable
       result.log_number = log_number
       try:
         result.category = results[0]
       except:
         result.category = None
-      result.category_results = results[1:]
+      result.category_reason = results[1:]
       result.extended_results = old_results
 
-      self.write_Result(result)
+      self.write_record(result)
 
   def read_result(self):
     """Legacy interface used by IO_old to read a single result."""
     if self.input_file:
-      result = self.read_Result()
+      result = self.read_record()
       if result:
         return (0, len(result.ttable), len(result.ttable[0]), -1, -1,
-                [result.category] + result.category_results,
+                [result.category] + result.category_reason,
                 result.ttable, result.log_number, result.extended_results)
 
 
@@ -196,7 +196,7 @@ def load_TTable(infile, line_num = 1):
       raise Exception, "Not enough lines in file"
     line_num -= 1
   line = infile.readline()
-  result = Result()
+  result = Record()
   result.read(line)
   return result.ttable
 

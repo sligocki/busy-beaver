@@ -30,12 +30,12 @@ infile = open(sys.argv[1], "r")
 io = IO(infile, sys.stdout)
 
 count = {}
-for result in io:
-  halts = count_halts(result.ttable)
+for io_record in io:
+  halts = count_halts(io_record.ttable)
   count[halts] = count.get(halts, 0) + 1
   if halts > 1:
     # Print the multiple ones
-    io.write_Result(result)
+    io.write_record(io_record)
 
 # Output stats
 total_count = sum(count.values())

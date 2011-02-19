@@ -71,12 +71,12 @@ for io_record in io:
 
   # If we could not decide anything, leave the old result alone.
   if not success:
-    io.write_Result(io_record)
+    io.write_record(io_record)
   # Otherwise classify it as beeing decided in some way.
   else:
     io_record.extended_results = ([Exit_Condition.name(io_record.category)] +
-                               io_record.category_results)
+                               io_record.category_reason)
     io_record.category = Exit_Condition.INFINITE
-    io_record.category_results = inf_reasons
+    io_record.category_reason = inf_reasons
     io_record.log_number = log_number
-    io.write_Result(io_record)
+    io.write_record(io_record)
