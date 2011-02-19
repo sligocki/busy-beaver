@@ -37,10 +37,10 @@ echo ""
 while ("${size}" <= "${stop}")
   if ("${timeout}" == "-1") then
     echo "----- Macro ${size} -----"
-    time ${update_cmd} "${basename}" "f" Macro_Simulator_Filter.py --recursive --steps=${steps} --size=${size}
+    time ${update_cmd} "${basename}" "f" Macro_Simulator_Filter.py --recursive --steps=${steps} --block-size=${size}
   else
     echo "----- Macro ${size} ${timeout} -----"
-    time ${update_cmd} "${basename}" "f" Macro_Simulator_Filter.py --recursive --time=${timeout} --steps=${steps} --size=${size}
+    time ${update_cmd} "${basename}" "f" Macro_Simulator_Filter.py --recursive --time=${timeout} --steps=${steps} --block-size=${size}
   endif
 
   wc -l "${basename}".unknown
