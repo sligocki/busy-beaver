@@ -47,7 +47,7 @@ foreach size (1 2)
     set offset=0
     while (${offset} < ${size})
       echo "----- CTL${ctl} ${size} ${offset} ${time} -----"
-      time ${update_cmd} ${basename} "f" CTL_Filter.py --time=${time} --type=CTL${ctl} --size=${size} --offset=${offset}
+      time ${update_cmd} ${basename} "f" CTL_Filter.py --time=${time} --type=CTL${ctl} --block-size=${size} --offset=${offset}
       @ offset++
     end  
   end
@@ -64,7 +64,7 @@ foreach size (1 2 3)
     set offset=0
     while (${offset} < ${size})
       echo "----- CTL${ctl} ${size} ${offset} ${time} -----"
-      time ${update_cmd} ${basename} "f" CTL_Filter.py --time=${time} --type=CTL${ctl} --size=${size} --offset=${offset}
+      time ${update_cmd} ${basename} "f" CTL_Filter.py --time=${time} --type=CTL${ctl} --block-size=${size} --offset=${offset}
       @ offset++
     end  
   end
@@ -77,7 +77,7 @@ foreach size (4 5 6)
     set offset=0
     while (${offset} < ${size})
       echo "----- CTL${ctl} ${size} ${offset} ${time} -----"
-      time ${update_cmd} ${basename} "f" CTL_Filter.py --time=${time} --type=CTL${ctl} --size=${size} --offset=${offset}
+      time ${update_cmd} ${basename} "f" CTL_Filter.py --time=${time} --type=CTL${ctl} --block-size=${size} --offset=${offset}
       @ offset++
     end  
   end

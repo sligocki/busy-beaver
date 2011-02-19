@@ -94,6 +94,8 @@ if __name__ == "__main__":
 
   if not options.infile:
     parser.error("--infile is a required parameter.")
+  if not options.outfile:
+    parser.error("--outfile is a required parameter.")
 
   infile = open_infile(options.infile)
   outfile = open_outfile(options.outfile)
@@ -102,14 +104,14 @@ if __name__ == "__main__":
   num_halt = 0
   num_undefined = 0
 
-  for result in io:
+  for io_record in io:
     # Run the simulator/filter on this machine.
-    sim_results = run(result.ttable, options.block_size, options.steps, 
+    sim_results = run(io_record.ttable, options.block_size, options.steps, 
                       options.time, options.recursive, options.progress)
 
-    # If we could not decide anything, leave the old result alone.
+    # If we could not decide anything, leave the old io_record alone.
     if sim_results[0] in Exit_Condition.UNKNOWN_SET:
-      io.write_Result(result)
+      io.write_record(io_record)
     # Otherwise classify it as beeing decided in some way.
     else:
       # We do not expect to find halting machines with this filter.
@@ -118,12 +120,12 @@ if __name__ == "__main__":
         num_halt += 1
       if sim_results[0] == Exit_Condition.UNDEF_CELL:
         num_undefined += 1
-      result.extended_results = ([Exit_Condition.name(result.category)] +
-                                 result.category_results)
-      result.category = sim_results[0]
-      result.category_results = sim_results[1:]
-      result.log_number = options.log_number
-      io.write_Result(result)
+      io_record.extended_results = ([Exit_Condition.name(io_record.category)] +
+                                 io_record.category_reason)
+      io_record.category = sim_results[0]
+      io_record.category_reason = sim_results[1:]
+      io_record.log_number = options.log_number
+      io.write_record(io_record)
 
   # Print number of TMs that halted.
   if num_halt > 0:
