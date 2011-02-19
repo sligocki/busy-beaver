@@ -3,6 +3,7 @@
 import copy
 import sys
 
+from Common import Exit_Condition
 from Macro import Turing_Machine, Chain_Simulator, Block_Finder
 import IO
 import Reverse_Engineer_Filter
@@ -12,11 +13,11 @@ import CTL2
 from Macro.Chain_Tape import INF
 from Alarm import ALARM, AlarmException
 
-TIMEOUT = "Timeout"
-OVERSTEPS = "Over_steps"
-HALT = "Halt"
-INFINITE = "Infinite_repeat"
-UNDEFINED = "Undefined_Transition"
+#TIMEOUT = "Time_Out"
+#OVERSTEPS = "Over_steps"
+#HALT = "Halt"
+#INFINITE = "Infinite_repeat"
+#UNDEFINED = "Undefined_Transition"
 
 class GenContainer(object):
   """Generic Container class"""
@@ -47,7 +48,7 @@ def run(TTable, options, steps=INF, runtime=None, block_size=None,
     try:
       ## Test for quickly for infinite machine
       if Reverse_Engineer_Filter.test(TTable):
-        return INFINITE, ("Reverse_Engineered",)
+        return Exit_Condition.INFINITE, ("Reverse_Engineered",)
 
       ## Construct the Macro Turing Machine (Backsymbol-k-Block-Macro-Machine)
       m = Turing_Machine.make_machine(TTable)
@@ -86,12 +87,12 @@ def run(TTable, options, steps=INF, runtime=None, block_size=None,
           CTL_config_copy = copy.deepcopy(CTL_config)
           if CTL1.CTL(m, CTL_config_copy):
             ALARM.cancel_alarm()
-            return INFINITE, ("CTL_A*",)
+            return Exit_Condition.INFINITE, ("CTL_A*",)
 
           CTL_config_copy = copy.deepcopy(CTL_config)
           if CTL2.CTL(m, CTL_config_copy):
             ALARM.cancel_alarm()
-            return INFINITE, ("CTL_A*_B",)
+            return Exit_Condition.INFINITE, ("CTL_A*_B",)
 
           ALARM.cancel_alarm()
 
@@ -113,29 +114,29 @@ def run(TTable, options, steps=INF, runtime=None, block_size=None,
 
       except AlarmException: # Catch Timer
         ALARM.cancel_alarm()
-        return TIMEOUT, (runtime, sim.step_num)
+        return Exit_Condition.TIME_OUT, (runtime, sim.step_num)
 
       ## Resolve end conditions and return relevent info.
       if sim.op_state == Turing_Machine.RUNNING:
-        return OVERSTEPS, (sim.step_num,)
+        return Exit_Condition.MAX_STEPS, (sim.step_num,)
       
       elif sim.op_state == Turing_Machine.HALT:
-        return HALT, (sim.step_num, sim.get_nonzeros())
+        return Exit_Condition.HALT, (sim.step_num, sim.get_nonzeros())
       
       elif sim.op_state == Turing_Machine.INF_REPEAT:
-        return INFINITE, (sim.inf_reason,)
+        return Exit_Condition.INFINITE, (sim.inf_reason,)
       
       elif sim.op_state == Turing_Machine.UNDEFINED:
         on_symbol, on_state = sim.op_details[0][:2]
-        return UNDEFINED, (on_state, on_symbol, 
-                           sim.step_num, sim.get_nonzeros())
+        return Exit_Condition.UNDEF_CELL, (on_state, on_symbol, 
+                                           sim.step_num, sim.get_nonzeros())
 
     except AlarmException: # Catch Timer (unexpected!)
       ALARM.cancel_alarm()  # Turn off timer and try again
 
     sys.stderr.write("Weird1 (%d): %s\n" % (do_over,TTable))
 
-  return TIMEOUT, (runtime, -1)
+  return Exit_Condition.TIME_OUT, (runtime, -1)
 
 # Main script
 if __name__ == "__main__":

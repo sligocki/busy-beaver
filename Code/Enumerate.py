@@ -122,25 +122,25 @@ class Enumerator(object):
           cond, info = self.run(tm)
 
           # If it hits an undefined transition ...
-          if cond == Macro_Simulator.UNDEFINED:
+          if cond == Exit_Condition.UNDEF_CELL:
             on_state, on_symbol, steps, score = info
             # ... push all the possible non-halting transitions onto the stack ...
             self.add_transitions(tm, on_state, on_symbol)
             # ... and make this TM the halting one (mutates tm)
             self.add_halt_trans(tm, on_state, on_symbol, steps, score)
           # Otherwise record defined result
-          elif cond == Macro_Simulator.HALT:
+          elif cond == Exit_Condition.HALT:
             steps, score = info
             self.add_halt(tm, steps, score)
-          elif cond == Macro_Simulator.INFINITE:
+          elif cond == Exit_Condition.INFINITE:
             reason, = info
             self.add_infinite(tm, reason)
-          elif cond == Macro_Simulator.OVERSTEPS:
+          elif cond == Exit_Condition.MAX_STEPS:
             steps, = info
-            self.add_unresolved(tm, Macro_Simulator.OVERSTEPS, steps)
-          elif cond == Macro_Simulator.TIMEOUT:
+            self.add_unresolved(tm, Exit_Condition.MAX_STEPS, steps)
+          elif cond == Exit_Condition.TIME_OUT:
             runtime, steps = info
-            self.add_unresolved(tm, Macro_Simulator.TIMEOUT, steps, runtime)
+            self.add_unresolved(tm, Exit_Condition.TIME_OUT, steps, runtime)
           else:
             raise Exception, "Enumerator.enum() - unexpected condition (%r)" % cond
           break
@@ -242,10 +242,10 @@ class Enumerator(object):
   def add_unresolved(self, tm, reason, steps, runtime=None):
     """Note an unresolved TM. Add statistics and output it with reason."""
     self.num_unresolved += 1
-    if reason == Macro_Simulator.OVERSTEPS:
+    if reason == Exit_Condition.MAX_STEPS:
       self.num_over_steps += 1
     else:
-      assert reason == Macro_Simulator.TIMEOUT, "Invalid reason (%r)" % reason
+      assert reason == Exit_Condition.TIME_OUT, "Invalid reason (%r)" % reason
       self.num_over_time += 1
     self.tm_num += 1
 
