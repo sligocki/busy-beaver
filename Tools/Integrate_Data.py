@@ -9,7 +9,7 @@
 # Should be called automatically by 'update'.
 #
 
-from Format import FIELD, TEST
+from Format_New_File import FIELD, TEST
 
 import sys, os
 
@@ -36,7 +36,8 @@ num_error     = 0
 
 for line in input_file:
   # Split each line by white charactor separation into fields.
-  fields = line.split()
+  mainFields = line.split("|")
+  fields = mainFields[1].split()
   # The condition field describes whether the program halts, is provably
   # infinite, unknown or error
   condition = FIELD.CONDITION.type(fields[FIELD.CONDITION.num])
