@@ -107,9 +107,6 @@ class IO(object):
     self.log_number  = log_number
     self.flush_each  = not compressed
 
-    # Support specification that once an iterator raises done_iterating
-    self.done_iterating = False
-
   def write_record(self, result):
     """New interface for writing an IO.Record object."""
     if result.log_number == None:
@@ -124,28 +121,28 @@ class IO(object):
     """
     New interface for reading an IO.Record object.
 
-    Returns the next result in input_file until it reaches end of file or
+    Returns the next result in input_file unless it reaches end of file or
     incorrectly formatted line, which returns None.
     """
     line = self.input_file.readline()
     if line.strip():
       result = Record()
-      # Only return object if read succeeds.
       result.read(line)
       return result
 
-  # Allow iteration through input_file machines.
   def __iter__(self):
-    return self
-  def next(self):
-    if self.done_iterating:
-      raise StopIteration
-    result = self.read_record()
-    if result:
-      return result
-    else:
-      self.done_iterating = True
-      raise StopIteration
+    """
+    Iterate through all records in input_file.
+
+    Allows:
+    >>> io = IO(infile, outfile)
+    >>> for io_record in io:
+    ...   # do something with io_record
+    """
+    for line in self.input_file:
+      result = Record()
+      result.read(line)
+      yield result
 
 
   def write_result(self, machine_num, tape_length, max_steps, results,
