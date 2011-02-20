@@ -37,27 +37,40 @@ def run(TTable, block_size, steps, runtime, recursive, progress):
   if sim.op_state == Turing_Machine.RUNNING:
     if progress:
       pass #print "\tUnknown", block_size, sim.step_num, sim.num_loops
-    return Exit_Condition.MAX_STEPS, sim.get_nonzeros(), sim.step_num
+    # TODO(shawn): Return time taken.
+    return Exit_Condition.UNKNOWN, "Max_Steps", sim.get_nonzeros(), sim.step_num
+
+  elif sim.op_state == Turing_Machine.TIME_OUT:
+    if progress:
+      print "\tTimeout", block_size, sim.step_num, sim.num_loops
+    return Exit_Condition.UNKNOWN, "Timeout", sim.get_nonzeros(), sim.step_num
+
   elif sim.op_state == Turing_Machine.INF_REPEAT:
     if progress:
       global max_step2inf, max_loop2inf
       max_step2inf = max(max_step2inf, sim.step_num)
       max_loop2inf = max(max_loop2inf, sim.num_loops)
-      print "\tInfinite", block_size, (sim.step_num, max_step2inf), (sim.num_loops, max_loop2inf)
-    return Exit_Condition.INFINITE, "Macro_Simulator", block_size
+      print "\tInfinite", block_size, (sim.step_num, max_step2inf),
+      print (sim.num_loops, max_loop2inf)
+    return (Exit_Condition.INFINITE, "Macro_Simulator",
+            block_size, len(sim.prover.rules), sim.prover.num_recursive_rules,
+            sim.step_num, sim.num_loops)
+
   elif sim.op_state == Turing_Machine.HALT:
     if progress:
       print "\tHalted", sim.get_nonzeros(), sim.step_num
-    return Exit_Condition.HALT, sim.get_nonzeros(), sim.step_num
+    return (Exit_Condition.HALT, sim.get_nonzeros(), sim.step_num,
+            "Macro_Simulator", block_size, len(sim.prover.rules),
+            sim.prover.num_recursive_rules, sim.num_loops)
+
   elif sim.op_state == Turing_Machine.UNDEFINED:
     if progress:
       print "\tUndefined", sim.get_nonzeros(), sim.step_num
     # sim.op_details[0][0 & 1] stores the symbol and state that we halted on.
-    return Exit_Condition.UNDEF_CELL, sim.op_details[0][1], sim.op_details[0][0], sim.get_nonzeros(), sim.step_num
-  elif sim.op_state == Turing_Machine.TIME_OUT:
-    if progress:
-      print "\tTimeout", block_size, sim.step_num, sim.num_loops
-    return Exit_Condition.TIME_OUT, sim.get_nonzeros(), sim.step_num
+    return (Exit_Condition.UNDEF_CELL, sim.op_details[0][1], sim.op_details[0][0],
+            sim.get_nonzeros(), sim.step_num, "Macro_Simulator", block_size,
+            len(sim.prover.rules), sim.prover.num_recursive_rules, sim.num_loops)
+
   else:
     raise Exception, "unexpected op_state"
 
