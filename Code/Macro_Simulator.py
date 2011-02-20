@@ -4,13 +4,13 @@ import copy
 import sys
 
 from Common import Exit_Condition
-from Macro import Turing_Machine, Chain_Simulator, Block_Finder
+from Macro import Turing_Machine, Simulator, Block_Finder
 import IO
 import Reverse_Engineer_Filter
 import CTL1
 import CTL2
 
-from Macro.Chain_Tape import INF
+from Macro.Tape import INF
 from Alarm import ALARM, AlarmException
 
 #TIMEOUT = "Time_Out"
@@ -26,7 +26,7 @@ class GenContainer(object):
       self.__dict__[atr] = args[atr]
 
 def setup_CTL(m, cutoff):
-  sim = Chain_Simulator.Simulator(m, enable_prover=False)
+  sim = Simulator.Simulator(m, enable_prover=False)
   sim.seek(cutoff)
 
   if sim.op_state != Turing_Machine.RUNNING:
@@ -101,7 +101,7 @@ def run(TTable, options, steps=INF, runtime=None, block_size=None,
 
       ## Set up the simulator
       #global sim # Useful for Debugging
-      sim = Chain_Simulator.Simulator(m, rec, enable_prover=prover, compute_steps=options.compute_steps)
+      sim = Simulator.Simulator(m, rec, enable_prover=prover, compute_steps=options.compute_steps)
 
       try:
         if runtime:

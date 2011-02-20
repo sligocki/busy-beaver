@@ -6,8 +6,8 @@ import copy
 from collections import defaultdict
 import sys
 
-import Chain_Simulator
-import Chain_Tape
+import Simulator
+import Tape
 import Turing_Machine
 
 parent_dir = sys.path[0][:sys.path[0].rfind("/")] # pwd path with last directory removed
@@ -210,14 +210,15 @@ class Proof_System(object):
     new_state, new_tape, new_step_num, new_loop_num = full_config
     
     # Create the serogate simulator with the apm only able to use proven trans.
-    gen_sim = Chain_Simulator.Simulator(self.machine,
-                                        recursive=False,
-                                        enable_prover=False,  # We'll create out own if needed.
-                                        init_tape=False,
-                                        compute_steps=self.compute_steps,
-                                        verbose_simulator=self.verbose,
-                                        verbose_prover=False,
-                                        verbose_prefix=self.verbose_prefix + "  ")
+    gen_sim = Simulator.Simulator(self.machine,
+                                  recursive=False,
+                                  # We'll create our own prover if needed.
+                                  enable_prover=False,
+                                  init_tape=False,
+                                  compute_steps=self.compute_steps,
+                                  verbose_simulator=self.verbose,
+                                  verbose_prover=False,
+                                  verbose_prefix=self.verbose_prefix + "  ")
     gen_sim.state = new_state
     gen_sim.step_num = ConstantToExpression(0)
     
@@ -235,7 +236,7 @@ class Proof_System(object):
       for block in gen_sim.tape.tape[direction]:
         # Generalize, eg. (abc)^5 -> (abc)^(n+5)
         # Blocks with one rep are not generalized, eg. (abc)^1 -> (abc)^1
-        if block.num not in (Chain_Tape.INF, 1):
+        if block.num not in (Tape.INF, 1):
           x = Variable()
           x_expr = VariableToExpression(x)
           block.num += x_expr
@@ -305,7 +306,7 @@ class Proof_System(object):
     diff_tape = gen_sim.tape.copy()
     for dir in range(2):
       for diff_block, initial_block in zip(diff_tape.tape[dir], initial_tape.tape[dir]):
-        if diff_block.num != Chain_Tape.INF:
+        if diff_block.num != Tape.INF:
           diff_block.num -= initial_block.num
           if isinstance(diff_block.num, Algebraic_Expression):
             if len(diff_block.num.terms) == 0:
@@ -412,7 +413,7 @@ class Proof_System(object):
     new_state, new_tape, new_step_num, new_loop_num = start_config
     
     ## Calculate number of repetitionss allowable and other tape-based info.
-    num_reps = Chain_Tape.INF
+    num_reps = Tape.INF
     init_value = {}
     delta_value = {}
     # large_delta == True  iff there is a negative delta != -1
@@ -451,7 +452,7 @@ class Proof_System(object):
               return False, 2
     
     # If none of the diffs are negative, this will repeat forever.
-    if num_reps is Chain_Tape.INF:
+    if num_reps is Tape.INF:
       if self.verbose:
         self.print_this("++ Rules applies infinitely ++")
       return True, ((Turing_Machine.INF_REPEAT, None, None), large_delta)
@@ -485,7 +486,7 @@ class Proof_System(object):
     return_tape = new_tape.copy()
     for dir in range(2):
       for diff_block, return_block in zip(rule.diff_tape.tape[dir], return_tape.tape[dir]):
-        if return_block.num is not Chain_Tape.INF:
+        if return_block.num is not Tape.INF:
           return_block.num += num_reps * diff_block.num
       return_tape.tape[dir] = [x for x in return_tape.tape[dir] if x.num != 0]
     

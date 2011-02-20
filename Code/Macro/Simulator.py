@@ -6,8 +6,8 @@ chain moves and a proof system.
 import math
 import time
 
-import Chain_Proof_System
-import Chain_Tape
+import Proof_System
+import Tape
 import Turing_Machine
 
 # Infinite Reasons
@@ -32,14 +32,14 @@ class Simulator(object):
     
     # Init tape and prover (if needed).
     if init_tape:
-      self.tape = Chain_Tape.Chain_Tape()
+      self.tape = Tape.Chain_Tape()
       self.tape.init(self.machine.init_symbol, self.machine.init_dir)
     if enable_prover:
-      self.prover = Chain_Proof_System.Proof_System(self.machine,
-                                                    recursive=self.recursive,
-                                                    compute_steps=self.compute_steps,
-                                                    verbose=self.verbose_prover,
-                                                    verbose_prefix=self.verbose_prefix + "  ")
+      self.prover = Proof_System.Proof_System(self.machine,
+                                              recursive=self.recursive,
+                                              compute_steps=self.compute_steps,
+                                              verbose=self.verbose_prover,
+                                              verbose_prefix=self.verbose_prefix + "  ")
     else:
       self.prover = None  # We will run the simulation without a proof system.
     
@@ -112,7 +112,7 @@ class Simulator(object):
     if next_state == self.state and next_dir == self.dir and \
        self.op_state == Turing_Machine.RUNNING:
       num_reps = self.tape.apply_chain_move(symbol2write)
-      if num_reps == Chain_Tape.INF:
+      if num_reps == Tape.INF:
         self.op_state = Turing_Machine.INF_REPEAT
         self.inf_reason = CHAIN_MOVE
         return
@@ -157,7 +157,7 @@ class Simulator(object):
       print "Rules proven:", len(self.prover.rules)
       if self.prover.recursive:
         print "Recursive rules proven:", self.prover.num_recursive_rules
-    print "Tape copies:", Chain_Tape.Chain_Tape.num_copies
+    print "Tape copies:", Tape.Chain_Tape.num_copies
 
   def verbose_print(self):
     if self.verbose:

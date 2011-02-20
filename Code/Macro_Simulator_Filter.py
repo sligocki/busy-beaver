@@ -3,7 +3,7 @@
 
 from Common import Exit_Condition
 import IO
-from Macro import Chain_Simulator, Turing_Machine, Block_Finder
+from Macro import Simulator, Turing_Machine, Block_Finder
 from Alarm import ALARM, AlarmException
 
 # TODO(shawn): Get rid of bad global vars :/
@@ -19,7 +19,7 @@ def run(TTable, block_size, steps, runtime, recursive, progress):
   m2 = Turing_Machine.Block_Macro_Machine(m1, block_size)
   m3 = Turing_Machine.Backsymbol_Macro_Machine(m2)
 
-  sim = Chain_Simulator.Simulator(m3, recursive)
+  sim = Simulator.Simulator(m3, recursive)
 
   # Run with an optional timer.
   try:

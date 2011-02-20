@@ -2,7 +2,7 @@
 
 import sys
 
-from Macro import Turing_Machine, Chain_Simulator, Block_Finder
+from Macro import Turing_Machine, Simulator, Block_Finder
 import IO
 
 def run(TTable, block_size, back, prover, recursive, options):
@@ -19,11 +19,11 @@ def run(TTable, block_size, back, prover, recursive, options):
     m = Turing_Machine.Backsymbol_Macro_Machine(m)
 
   global sim
-  sim = Chain_Simulator.Simulator(m, recursive, enable_prover=prover, init_tape=True,
-                                  compute_steps=options.compute_steps,
-                                  verbose_simulator=options.verbose_simulator,
-                                  verbose_prover=options.verbose_prover,
-                                  verbose_prefix="")
+  sim = Simulator.Simulator(m, recursive, enable_prover=prover, init_tape=True,
+                            compute_steps=options.compute_steps,
+                            verbose_simulator=options.verbose_simulator,
+                            verbose_prover=options.verbose_prover,
+                            verbose_prefix="")
   if options.manual:
     return  # Let's us run the machine manually. Must be run as python -i Quick_Sim.py
   try:
