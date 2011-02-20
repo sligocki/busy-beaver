@@ -67,7 +67,8 @@ def run(TTable, block_size, steps, runtime, recursive, progress):
     if progress:
       print "\tUndefined", sim.get_nonzeros(), sim.step_num
     # sim.op_details[0][0 & 1] stores the symbol and state that we halted on.
-    return (Exit_Condition.UNDEF_CELL, sim.op_details[0][1], sim.op_details[0][0],
+    return (Exit_Condition.UNDEF_CELL,
+            int(sim.op_details[0][1]), int(sim.op_details[0][0]),
             sim.get_nonzeros(), sim.step_num, "Macro_Simulator", block_size,
             len(sim.prover.rules), sim.prover.num_recursive_rules, sim.num_loops)
 
