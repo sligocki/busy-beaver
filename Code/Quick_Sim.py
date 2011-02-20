@@ -103,10 +103,6 @@ if __name__ == "__main__":
                     "(default is to guess with the block_finder algorithm)")
   
   block_options = OptionGroup(parser, "Block Finder options")
-  block_options.add_option("--block-size", type=int,
-                           help="Block size to use in macro machine simulator "
-                           "(default is to guess with the block_finder "
-                           "algorithm)")
   block_options.add_option("--bf-limit1", type=int, default=200, metavar="LIMIT",
                            help="Number of steps to run the first half of "
                            "block finder [Default: %default].")
