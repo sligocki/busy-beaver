@@ -4,7 +4,7 @@ import copy
 import sys
 import time
 
-from Chain_Simulator import Simulator
+from Simulator import Simulator
 import Turing_Machine
 
 DEBUG = False

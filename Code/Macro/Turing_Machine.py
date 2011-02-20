@@ -124,7 +124,6 @@ class Block_Macro_Machine(Macro_Machine):
       self.trans_table[args] = self.eval_trans(args)
     return self.trans_table[args]
   def eval_trans(self, (macro_symbol_in, macro_state_in, macro_dir_in)):
-    import Chain_Simulator
     # Set up machine
     num_steps = num_macro_steps = 0
     tape = list(macro_symbol_in)
@@ -192,7 +191,6 @@ class Backsymbol_Macro_Machine(Macro_Machine):
       self.trans_table[args] = self.eval_trans(args)
     return self.trans_table[args]
   def eval_trans(self, (macro_symbol_in, macro_state_in, macro_dir_in)):
-    import Chain_Simulator
     # Set up machine
     num_steps = num_macro_steps = 0
     state, back_macro_symbol = macro_state_in

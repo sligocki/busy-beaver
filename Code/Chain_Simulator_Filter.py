@@ -9,9 +9,9 @@ import Turing_Machine
 import IO
 import Macro.Block_Finder
 import Macro.Turing_Machine
-import Macro.Chain_Simulator
+import Macro.Simulator
 
-from Macro.Chain_Tape import INF
+from Macro.Tape import INF
 from Alarm import ALARM, AlarmException
 
 #TIMEOUT = "Time_Out"
@@ -54,7 +54,7 @@ def run(TTable, options, steps=INF, runtime=None, block_size=None,
 
       ## Set up the simulator
       #global sim # Useful for Debugging
-      sim = Macro.Chain_Simulator.Simulator(m, recursive, enable_prover=prover)
+      sim = Macro.Simulator.Simulator(m, recursive, enable_prover=prover)
 
       try:
         if runtime:
