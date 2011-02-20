@@ -48,23 +48,18 @@ class Record(object):
 
   def read(self, line):
     """Read a result off of a line from a file."""
-    try:
-      parts = line.split("|", 2)
-      self.ttable = Input_Machine.read_ttable(parts[0])
-      if len(parts) >= 2:
-        subparts = parts[1].split()  # Split by whitespace
-        try:
-          self.log_number = int(subparts[0])
-        except ValueError:
-          self.log_number = None
-        self.category = Exit_Condition.read(subparts[1])
-        self.category_reason = self.read_list(subparts[2:])
-      if len(parts) >= 3:
-        self.extended_results = self.read_list(parts[2].split())
-      return True
-    except Exception as e:
-      print >>sys.stderr, "IO read error:", e
-      return False
+    parts = line.split("|", 2)
+    self.ttable = Input_Machine.read_ttable(parts[0])
+    if len(parts) >= 2:
+      subparts = parts[1].split()  # Split by whitespace
+      try:
+        self.log_number = int(subparts[0])
+      except ValueError:
+        self.log_number = None
+      self.category = Exit_Condition.read(subparts[1])
+      self.category_reason = self.read_list(subparts[2:])
+    if len(parts) >= 3:
+      self.extended_results = self.read_list(parts[2].split())
 
   def read_list(self, strs):
     res = []
@@ -112,6 +107,9 @@ class IO(object):
     self.log_number  = log_number
     self.flush_each  = not compressed
 
+    # Support specification that once an iterator raises done_iterating
+    self.done_iterating = False
+
   def write_record(self, result):
     """New interface for writing an IO.Record object."""
     if result.log_number == None:
@@ -133,17 +131,20 @@ class IO(object):
     if line.strip():
       result = Record()
       # Only return object if read succeeds.
-      if result.read(line):
-        return result
+      result.read(line)
+      return result
 
   # Allow iteration through input_file machines.
   def __iter__(self):
     return self
   def next(self):
+    if self.done_iterating:
+      raise StopIteration
     result = self.read_record()
     if result:
       return result
     else:
+      self.done_iterating = True
       raise StopIteration
 
 
