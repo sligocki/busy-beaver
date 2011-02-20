@@ -64,9 +64,11 @@ def count_all(filename):
   total = 0
   states = None
   symbols = None
-  for result in io:
-    n, states, symbols = count(result.ttable)
-    total += n
+  for io_record in io.catch_error_iter():
+    # Skip unparsable lines (io_record == None
+    if io_record:
+      n, states, symbols = count(io_record.ttable)
+      total += n
 
   infile.close()
   return total, states, symbols

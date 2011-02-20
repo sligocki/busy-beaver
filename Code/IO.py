@@ -144,6 +144,23 @@ class IO(object):
       result.read(line)
       yield result
 
+  def catch_error_iter(self):
+    """
+    Iterator that catches and prints exceptions to sys.stderr.
+
+    Use this if you want your iteration to be robust to files with some
+    badly formatted/corrupted lines.
+    """
+    for line in self.input_file:
+      try:
+        result = Record()
+        result.read(line)
+        yield result
+      except Exception as e:
+        print >>sys.stderr, "IO Parsing error", repr(e),
+        print >>sys.stderr, "while parsing line:", line
+        yield None
+
 
   def write_result(self, machine_num, tape_length, max_steps, results,
                    machine, log_number = None, old_results = []):
