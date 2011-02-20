@@ -79,7 +79,7 @@ if __name__ == "__main__":
   parser.add_option("--verbose-block-finder", action="store_true",
                     help="Provide debugging output from block_finder.")
   parser.add_option("--print-loops", type=int, default=10000, metavar="LOOPS",
-                    help="Print every LOOPS loops.")
+                    help="Print every LOOPS loops [Default %default].")
   
   parser.add_option("-b", "--no-backsymbol", dest="backsymbol",
                     action="store_false", default=True,
