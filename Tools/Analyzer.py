@@ -40,13 +40,14 @@ count = {Exit_Condition.HALT: 0,
          Exit_Condition.TIME_OUT: 0}
 max_symbols = -1
 max_steps = -1
-for result in io:
-  num_total += 1
-  count[result.category] += 1
-  if result.category == Exit_Condition.HALT:
-    symbols, steps = result.category_reason
-    max_symbols = max(max_symbols, symbols)
-    max_steps = max(max_steps, steps)
+for result in io.catch_error_iter():
+  if result:
+    num_total += 1
+    count[result.category] += 1
+    if result.category == Exit_Condition.HALT:
+      symbols, steps = result.category_reason
+      max_symbols = max(max_symbols, symbols)
+      max_steps = max(max_steps, steps)
 
 num_halt = count[Exit_Condition.HALT]
 num_infinite = count[Exit_Condition.INFINITE]
