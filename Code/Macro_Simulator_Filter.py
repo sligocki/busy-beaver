@@ -134,11 +134,15 @@ if __name__ == "__main__":
         num_halt += 1
       if sim_results[0] == Exit_Condition.UNDEF_CELL:
         num_undefined += 1
-      io_record.extended_results = ([Exit_Condition.name(io_record.category)] +
-                                 io_record.category_reason)
-      io_record.category = sim_results[0]
-      io_record.category_reason = sim_results[1:]
+
       io_record.log_number = options.log_number
+
+      io_record.extended        = io_record.category
+      io_record.extended_reason = io_record.category_reason
+
+      io_record.category        = sim_results[0]
+      io_record.category_reason = sim_results[1:]
+
       io.write_record(io_record)
 
   # Print number of TMs that halted.
