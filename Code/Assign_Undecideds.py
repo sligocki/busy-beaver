@@ -23,7 +23,7 @@ while next:
   (machine_num, num_states, num_symbols, tape_length, max_steps,
    results, ttable, log_num, old_results) = next
 
-  cond, on_state, on_symbol, score, steps = results
+  cond, on_state, on_symbol, score, steps = results[0:5]
 
   on_state  = int(on_state)
   on_symbol = int(on_symbol);
