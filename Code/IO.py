@@ -26,7 +26,8 @@ class Record(object):
     self.log_number = None      # an int or None
     self.category = None        # Halt, Infinite, Unknown, Undecided
     self.category_reason = []   # a generic list of attributes
-    self.extended_results = []  # a generic list of extended information
+    self.extended = None        # Halt, Infinite, Unknown, Undecided (extended)
+    self.extended_reason = []   # a generic list of attributes (extended)
 
   def __str__(self):
     return "[IO.Record: %s ]" % str(self.__dict__)
@@ -37,9 +38,9 @@ class Record(object):
     if self.category != None:
       out.write(" | %r %s" % (self.log_number, Exit_Condition.name(self.category)))
       self.write_list(self.category_reason, out)
-      if self.extended_results:
-        out.write(" |")
-        self.write_list(self.extended_results, out)
+      if self.extended != None:
+        out.write(" | %s" % Exit_Condition.name(self.extended))
+        self.write_list(self.extended_reason, out)
     out.write("\n")
 
   def write_list(self, objs, out):
@@ -59,7 +60,9 @@ class Record(object):
       self.category = Exit_Condition.read(subparts[1])
       self.category_reason = self.read_list(subparts[2:])
     if len(parts) >= 3:
-      self.extended_results = self.read_list(parts[2].split())
+      subparts = parts[2].split()  # Split by whitespace
+      self.extended = Exit_Condition.read(subparts[0])
+      self.extended_reason = self.read_list(subparts[1:])
 
   def read_list(self, strs):
     res = []
@@ -176,14 +179,21 @@ class IO(object):
     """Legacy interface used by IO_old to write a single result."""
     if self.output_file:
       result = Record()
+
       result.ttable = machine_TTable
+
       result.log_number = log_number
       try:
         result.category = results[0]
       except:
         result.category = None
       result.category_reason = results[1:]
-      result.extended_results = old_results
+
+      try:
+        result.extended = old_results[0]
+      except:
+        result.extended = None
+      result.extended_reason = old_results[1:]
 
       self.write_record(result)
 
@@ -194,7 +204,8 @@ class IO(object):
       if result:
         return (0, len(result.ttable), len(result.ttable[0]), -1, -1,
                 [result.category] + result.category_reason,
-                result.ttable, result.log_number, result.extended_results)
+                result.ttable, result.log_number,
+                [result.extended] + result.extended_reason)
 
 
 def load_TTable_filename(filename, line_num = 1):

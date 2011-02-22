@@ -74,9 +74,12 @@ for io_record in io:
     io.write_record(io_record)
   # Otherwise classify it as beeing decided in some way.
   else:
-    io_record.extended_results = ([Exit_Condition.name(io_record.category)] +
-                               io_record.category_reason)
-    io_record.category = Exit_Condition.INFINITE
-    io_record.category_reason = inf_reasons
     io_record.log_number = log_number
+
+    io_record.extended        = io_record.category
+    io_record.extended_reason = io_record.category_reason
+
+    io_record.category        = Exit_Condition.INFINITE
+    io_record.category_reason = inf_reasons
+
     io.write_record(io_record)
