@@ -77,6 +77,7 @@ if ("$status" != 0) then
   set count_error=$counts[5]
 
   # Get the net change in unknown TMs
+  set net_undecided=`expr $count_undecided - $orig_undecided`
   set net_unknown=`expr $count_unknown - $orig_unknown`
 
   # Get the end date
@@ -84,8 +85,8 @@ if ("$status" != 0) then
   set delta_time=`Diff_Date.py "$start_date" "$end_date"`
 
   # Log the command and print a bit more output
-  echo " | $command | $start_date | $delta_time | $count_halt $count_infinite $count_undecided $net_unknown" >> "$basename.log"
-  echo "TM counts: $count_halt $count_infinite $count_undecided $net_unknown"
+  echo " | $command | $start_date | $delta_time | $count_halt $count_infinite $net_undecided $net_unknown" >> "$basename.log"
+  echo "TM counts: $count_halt $count_infinite $net_undecided $net_unknown"
 
   # Log if all the TMs have been resolved
   set count_un=`cat $basename.unknown $basename.undecided | wc -l`
