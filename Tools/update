@@ -31,9 +31,9 @@ else
   echo "Integrate_Data.py $basename.out $basename.halt $basename.infinite $basename.unknown $basename.error $basename.undecided " >> "$logfile"
 endif
 
-# Get the original number of unknown and undecided TMs
-set orig_unknown=`wc -l < $basename.unknown`
+# Get the original number of undecided and unknown TMs
 set orig_undecided=`wc -l < $basename.undecided`
+set orig_unknown=`wc -l < $basename.unknown`
 
 # Get the start date and command
 set start_date=`\date`
@@ -72,11 +72,11 @@ if ("$status" != 0) then
   # Break out the individual TM counts
   set count_halt=$counts[1]
   set count_infinite=$counts[2]
-  set count_undecided=$counts[3]
+  set count_undecided=`wc -l < $basename.undecided`
   set count_unknown=$counts[4]
   set count_error=$counts[5]
 
-  # Get the net change in unknown TMs
+  # Get the net change in undecided and unknown TMs
   set net_undecided=`expr $count_undecided - $orig_undecided`
   set net_unknown=`expr $count_unknown - $orig_unknown`
 
