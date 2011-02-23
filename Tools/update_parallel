@@ -32,9 +32,9 @@ else
   echo "Integrate_Data.py $basename.out $basename.halt $basename.infinite $basename.unknown $basename.error $basename.undecided " >> "$logfile"
 endif
 
-# Get the original number of unknown and undecided TMs
-set orig_unknown=`wc -l < $basename.unknown`
+# Get the original number of undecided and unknown TMs
 set orig_undecided=`wc -l < $basename.undecided`
+set orig_unknown=`wc -l < $basename.unknown`
 
 # Get the start date and command
 set start_date=`\date`
@@ -118,7 +118,10 @@ cat $basename.unknown.$digit_string.undecided >  $basename.undecided
 cat $basename.unknown.$digit_string.unknown   >  $basename.unknown
 
 # Get count totals
-set counts=`awk -f $cmd_dir/update_parallel_total.awk $basename.unknown.$digit_string.log`
+set count_halt=`cat $basename.unknown.$digit_string.halt | wc -l`
+set count_infinite=`cat $basename.unknown.$digit_string.infinite | wc -l`
+set count_undecided=`cat $basename.unknown.$digit_string.undecided | wc -l`
+set count_unknown=`cat $basename.unknown.$digit_string.unknown | wc -l`
 
 # Clean up temporary files
 /bin/rm -f $basename.unknown.$digit_string.*
@@ -126,13 +129,8 @@ set counts=`awk -f $cmd_dir/update_parallel_total.awk $basename.unknown.$digit_s
 # Log the running of the command
 echo "$log_number" "$command_type" | awk '{printf("%6d %s",$1,$2);}' >> "$basename.log"
 
-# Break out the individual TM counts
-set count_halt=$counts[1]
-set count_infinite=$counts[2]
-set count_undecided=$counts[3]
-set count_unknown=$counts[4]
-
-# Get the net change in unknown TMs
+# Get the net change in undecided and unknown TMs
+set net_undecided=`expr $count_undecided - $orig_undecided`
 set net_unknown=`expr $count_unknown - $orig_unknown`
 
 # Get the end date
@@ -140,8 +138,8 @@ set end_date=`\date`
 set delta_time=`Diff_Date.py "$start_date" "$end_date"`
 
 # Log the command and print a bit more output
-echo " | $command | $start_date | $delta_time | $count_halt $count_infinite $count_undecided $count_unknown" >> "$basename.log"
-echo "TM counts: $count_halt $count_infinite $count_undecided $count_unknown"
+echo " | $command | $start_date | $delta_time | $count_halt $count_infinite $net_undecided $net_unknown" >> "$basename.log"
+echo "TM counts: $count_halt $count_infinite $net_undecided $net_unknown"
 
 # Log if all the TMs have been resolved
 set count_un=`cat $basename.unknown $basename.undecided | wc -l`
