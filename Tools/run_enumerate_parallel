@@ -1,0 +1,19 @@
+#!/bin/tcsh -f
+
+set cmd_dir=`dirname $0`
+set filter_dir=${cmd_dir}/../Code
+
+setenv PATH ${PATH}:${cmd_dir}:${filter_dir}
+
+if ($#argv < 2) then
+  echo "Usage `basename $0` nprocs basename <enumerate-options>"
+  exit 1
+endif
+
+set nprocs=$1
+set basename=$2
+
+set update_cmd="update"
+
+echo "----- Enumerate -----"
+time update ${basename} "g" Enumerate_Filter_Parallel $nprocs $basename $argv[2-]

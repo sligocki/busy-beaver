@@ -28,7 +28,6 @@ if (-e "$logfile" && ! -z "logfile") then
   set log_number=`tail -1 "$logfile" | awk '{print $1 + 1;}'`
 else
   set log_number=1
-  echo "Integrate_Data.py $basename.out $basename.halt $basename.infinite $basename.unknown $basename.error $basename.undecided " >> "$logfile"
 endif
 
 # Get the original number of undecided and unknown TMs
@@ -91,7 +90,7 @@ if ("$status" != 0) then
   # Log if all the TMs have been resolved
   set count_un=`cat $basename.unknown $basename.undecided | wc -l`
   if ("$count_un" == "0") then
-    echo "------ | All TMs resolved" >> "$basename.log"    
+    echo "-------- | All TMs resolved" >> "$basename.log"    
     echo "All TMs resolved"
   endif
 else

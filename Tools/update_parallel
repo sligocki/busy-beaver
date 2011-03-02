@@ -144,7 +144,7 @@ echo "TM counts: $count_halt $count_infinite $net_undecided $net_unknown"
 # Log if all the TMs have been resolved
 set count_un=`cat $basename.unknown $basename.undecided | wc -l`
 if ("$count_un" == "0") then
-  echo "------ | All TMs resolved" >> "$basename.log"    
+  echo "-------- | All TMs resolved" >> "$basename.log"    
   echo "All TMs resolved"
 endif
 

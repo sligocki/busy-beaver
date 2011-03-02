@@ -1,5 +1,0 @@
-#!/bin/csh -f
-
-# Do nothing as there should already be a ".out" file and all we want is this
-# ".out" file to be processed by "Integrate_Data.py" as part of an "update"
-exit 0
