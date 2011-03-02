@@ -1,0 +1,6 @@
+#!/bin/csh -f
+
+# Get rid of "--infile=..." and call "Enumerate.py"...
+set new_argv=`echo "$argv" | sed -e 's/--infile=[^ ]*//g'`
+
+Enumerate.py $new_argv
