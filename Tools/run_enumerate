@@ -1,0 +1,18 @@
+#!/bin/tcsh -f
+
+set cmd_dir=`dirname $0`
+set filter_dir=${cmd_dir}/../Code
+
+setenv PATH ${PATH}:${cmd_dir}:${filter_dir}
+
+if ($#argv < 1) then
+  echo "Usage `basename $0` basename <enumerate-options>"
+  exit 1
+endif
+
+set basename=$1
+
+set update_cmd="update"
+
+echo "----- Enumerate -----"
+time update ${basename} "g" Enumerate_Filter $argv[2-]
