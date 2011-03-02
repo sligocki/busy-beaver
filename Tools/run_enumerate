@@ -15,4 +15,4 @@ set basename=$1
 set update_cmd="update"
 
 echo "----- Enumerate -----"
-time update ${basename} "g" Enumerate_Filter $argv[2-]
+time update ${basename} "g" Enumerate.py $argv[2-]

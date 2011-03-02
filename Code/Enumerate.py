@@ -146,7 +146,7 @@ class Enumerator(object):
           break
 
         except AlarmException:
-          sys.stderr.write("Weird2 (%d): %s\n" % (do_over,tm)) 
+          sys.stderr.write("Weird2 (%d): %s\n" % (do_over,tm))
 
     # Done
     self.save()
@@ -323,6 +323,7 @@ if __name__ == "__main__":
   out_parser.add_option("--outfile", dest="outfilename", metavar="OUTFILE",
                         help="Output file name "
                         "[Default: Enum.STATES.SYMBOLS.STEPS.out]")
+  out_parser.add_option("--infile", help="Ignored (For script compatibility)")
   out_parser.add_option("--log_number", type=int, metavar="NUM",
                         help="Log number to use in output file")
   out_parser.add_option("--checkpoint", metavar="FILE",
@@ -374,5 +375,6 @@ if __name__ == "__main__":
   ## Enumerate machines
   enumerator = Enumerator(options.states, options.symbols, options.steps,
                           options.time, io, options.save_freq,
-                          options.checkpoint, options.randomize, options.seed, options)
+                          options.checkpoint, options.randomize, options.seed,
+                          options)
   enumerator.enum()
