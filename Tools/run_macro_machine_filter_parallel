@@ -13,18 +13,20 @@ else
   echo "Usage:  run_macro_machine_filter_parallel nprocs basename [tape [steps [start_size [stop_size]]]]"
   exit 1
 endif
-if ("$argc" >= 2) then
-  set tape="$2"
-endif
 if ("$argc" >= 3) then
-  set steps="$3"
+  set tape="$3"
 endif
 if ("$argc" >= 4) then
-  set size="$4"
+  set steps="$4"
 endif
 if ("$argc" >= 5) then
-  set stop="$5"
+  set size="$5"
 endif
+if ("$argc" >= 6) then
+  set stop="$6"
+endif
+
+set update_cmd="update_parallel ${nprocs}"
 
 wc -l "$base".unknown
 echo ""
@@ -32,7 +34,7 @@ while ("$size" <= "$stop")
   echo $size
   set cur_steps=`expr $steps \* $size`
   set cur_tape=`expr $tape \* $size`
-  update_parallel "$nprocs" "$base" "f" Macro_Machine_Filter.py --tape=$cur_tape --steps=$cur_steps --block-size=$size
+  ${update_cmd} "$base" "f" Macro_Machine_Filter.py --tape=$cur_tape --steps=$cur_steps --block-size=$size
   wc -l "$base".unknown
   if (-e "$base".error) then
     echo "Error encountered..."
