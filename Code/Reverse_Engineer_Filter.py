@@ -14,9 +14,6 @@ from __future__ import division
 from Common import Exit_Condition, HALT_STATE
 import IO
 
-# Constants
-REVERSE_ENG = "Reverse_Engineer"
-
 def get_stats(TTable):
   """Finds all halt transitions and other statistical info"""
   num_states = len(TTable)
@@ -77,7 +74,8 @@ def test(TTable):
     if not cannot_reach_halt(halt, to_state, to_symbol):
       return False
   # If all halt states cannot be reached:
-  return Exit_Condition.INFINITE, REVERSE_ENG
+  return Exit_Condition.INFINITE, "Reverse_Engineer"
+
 
 def apply_results(results, old_line, log_number):
   old_results = next[5]

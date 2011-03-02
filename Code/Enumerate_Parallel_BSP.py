@@ -239,7 +239,7 @@ class Enumerator(object):
     """Note an infinite TM. Add statistics and output it with reason."""
     self.num_infinite += 1
     self.io.write_result(self.tm_num, -1, -1,
-                         (Exit_Condition.INFINITE, "Enumerate_BSP"), tm)
+                         (Exit_Condition.INFINITE, reason), tm)
     self.inf_type[reason] += 1
     self.tm_num += 1
 

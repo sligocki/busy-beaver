@@ -43,7 +43,7 @@ def run(TTable, block_size, steps, runtime, recursive, progress):
   elif sim.op_state == Turing_Machine.TIME_OUT:
     if progress:
       print "\tTimeout", block_size, sim.step_num, sim.num_loops
-    return Exit_Condition.UNKNOWN, "Timeout", sim.get_nonzeros(), sim.step_num
+    return Exit_Condition.UNKNOWN, "Time_Out", sim.get_nonzeros(), sim.step_num
 
   elif sim.op_state == Turing_Machine.INF_REPEAT:
     if progress:
