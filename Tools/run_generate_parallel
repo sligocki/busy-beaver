@@ -15,17 +15,14 @@ set basename=$2
 
 set update_cmd="update_parallel ${nprocs}"
 
-echo "----- Integrate -----"
-time update ${basename} "f" Initial_Filter
-
 echo "----- Dual -----"
-time ${update_cmd} ${basename} "f" Dual_Machine_Filter.py --tape=100 --steps=100
+time ${update_cmd} ${basename} "g" Dual_Machine_Filter.py --tape=100 --steps=100
 
 set num_undecided=`ls -s ${basename}.undecided | awk '{print $1;}'`
 
 while ($num_undecided != 0)
   echo "----- Undecided/Dual -----"
-  time ${update_cmd} ${basename} "f" Find_New_TM_Filter --tape=100 --steps=100 --next_machine_number=0
+  time ${update_cmd} ${basename} "g" Find_New_TM_Filter --tape=100 --steps=100 --next_machine_number=0
 
   set num_undecided=`ls -s ${basename}.undecided | awk '{print $1;}'`
 end
