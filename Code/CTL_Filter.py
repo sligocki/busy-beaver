@@ -69,11 +69,11 @@ for io_record in io:
 
     success = False
 
-  # If we could not decide anything, leave the old result alone.
   if not success:
+    # If we could not decide anything, leave the old result alone.
     io.write_record(io_record)
-  # Otherwise classify it as beeing decided in some way.
   else:
+    # Otherwise classify it as being decided in some way.
     io_record.log_number = log_number
 
     io_record.extended        = io_record.category
