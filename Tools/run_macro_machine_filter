@@ -25,13 +25,15 @@ if ("$argc" >= 5) then
   set stop="$5"
 endif
 
+set update_cmd="update"
+
 wc -l "$base".unknown
 echo ""
 while ("$size" <= "$stop")
   echo $size
   set cur_steps=`expr $steps \* $size`
   set cur_tape=`expr $tape \* $size`
-  update "$base" "f" Macro_Machine_Filter.py --tape=$cur_tape --steps=$cur_steps --block-size=$size
+  ${update_cmd} "$base" "f" Macro_Machine_Filter.py --tape=$cur_tape --steps=$cur_steps --block-size=$size
   wc -l "$base".unknown
   if (-e "$base".error) then
     echo "Error encountered..."
