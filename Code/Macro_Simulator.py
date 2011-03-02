@@ -48,7 +48,7 @@ def run(TTable, options, steps=INF, runtime=None, block_size=None,
     try:
       ## Test for quickly for infinite machine
       if Reverse_Engineer_Filter.test(TTable):
-        return Exit_Condition.INFINITE, ("Reverse_Engineered",)
+        return Exit_Condition.INFINITE, ("Reverse_Engineer",)
 
       ## Construct the Macro Turing Machine (Backsymbol-k-Block-Macro-Machine)
       m = Turing_Machine.make_machine(TTable)
