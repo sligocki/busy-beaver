@@ -58,7 +58,7 @@ set tmp_basename=$basename.tmp
 touch $tmp_basename.unknown
 
 # Convert undecided TMs to new TMs
-update $tmp_basename Assign_Undecideds_Filter --next_machine_number=$nextmachnum
+update $tmp_basename "g" Assign_Undecideds_Filter --next_machine_number=$nextmachnum
 
 # Check to see if this succeeded
 if ("$status" != 0) then
@@ -89,7 +89,7 @@ if ("$stepsflag" == 0) then
   set dual_args="$dual_args --steps=$steps"
 endif
 
-update $tmp_basename Dual_Machine_Filter.py $dual_args
+update $tmp_basename "g" Dual_Machine_Filter.py $dual_args
 
 # Check to see if this succeeded
 if ("$status" != 0) then
