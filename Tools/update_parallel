@@ -133,7 +133,7 @@ set count_unknown=`cat $basename.unknown.$digit_string.unknown | wc -l`
 /bin/rm -f $basename.unknown.$digit_string.*
 
 # Log the running of the command
-echo "$log_number" "$command_type" | awk '{printf("%6d %s",$1,$2);}' >> "$basename.log"
+echo "$log_number" "$command_type" | awk '{printf("%6d %s ",$1,$2);}' >> "$basename.log"
 
 # Get the net change in undecided and unknown TMs
 set net_undecided=`expr $count_undecided - $orig_undecided`
@@ -144,7 +144,7 @@ set end_date=`\date`
 set delta_time=`Diff_Date.py "$start_date" "$end_date"`
 
 # Log the command and print a bit more output
-echo " | $command | $nprocs p | $start_date | $delta_time | $count_halt $count_infinite $net_undecided $net_unknown" >> "$basename.log"
+echo "| p $nprocs | $command | $start_date | $delta_time | $count_halt $count_infinite $net_undecided $net_unknown" >> "$basename.log"
 echo "TM counts: $count_halt $count_infinite $net_undecided $net_unknown"
 
 # Log if all the TMs have been resolved
