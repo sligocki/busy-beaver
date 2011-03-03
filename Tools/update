@@ -34,13 +34,17 @@ endif
 set orig_undecided=`wc -l < $basename.undecided`
 set orig_unknown=`wc -l < $basename.unknown`
 
+if (${orig_undecided} == 0 && ${orig_unknown} == 0) then
+  exit 0
+endif
+
 # Get the start date and command
 set start_date=`\date`
-set command="$argv[3-] --infile=$basename.unknown --outfile=$basename.out --log_number=$log_number"
+set command="$argv[3-]"
 
 # Run the command
 echo "Running: $command"
-$command
+$command --infile=$basename.unknown --outfile=$basename.out --log_number=$log_number
 
 # Check for failure
 if ("$status" != 0) then
@@ -84,7 +88,7 @@ if ("$status" != 0) then
   set delta_time=`Diff_Date.py "$start_date" "$end_date"`
 
   # Log the command and print a bit more output
-  echo " | $command | $start_date | $delta_time | $count_halt $count_infinite $net_undecided $net_unknown" >> "$basename.log"
+  echo " | $command | s | $start_date | $delta_time | $count_halt $count_infinite $net_undecided $net_unknown" >> "$basename.log"
   echo "TM counts: $count_halt $count_infinite $net_undecided $net_unknown"
 
   # Log if all the TMs have been resolved
@@ -101,7 +105,7 @@ else
   set delta_time=`Diff_Date.py "$start_date" "$end_date"`
 
   # Log the command and indicate no change
-  echo " | $command | $start_date | $delta_time | 0 0 0 0" >> "$basename.log"
+  echo " | $command | s | $start_date | $delta_time | 0 0 0 0" >> "$basename.log"
   echo "TM counts: 0 0 0 0"
 endif
 

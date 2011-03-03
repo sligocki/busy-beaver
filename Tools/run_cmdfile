@@ -5,15 +5,47 @@ set filter_dir=${cmd_dir}/../Code
 
 setenv PATH ${PATH}:${cmd_dir}:${filter_dir}
 
+set nprocs=1
+
+set args=`getopt -u -l nprocs: "" $argv[1]`
+
+if ($status != 0) then
+  echo "Usage: `basename $0` [--nprocs=#] basename cmd_file"
+  exit 1
+endif
+
+while (1)
+  if ($#args < 1) then
+    echo "Usage: `basename $0` [--nprocs=#] basename cmd_file"
+    exit 1
+  endif
+  switch ($args[1])
+    case "--nprocs":
+      shift args
+      set nprocs=$args[1]
+      shift args
+      shift argv
+      breaksw
+
+    case "--":
+      break
+      breaksw
+  endsw
+end
+
 if ($#argv < 2) then
-  echo "Usage `basename $0` basename cmd_file"
+  echo "Usage: `basename $0` [--nprocs=#] basename cmd_file"
   exit 1
 endif
 
 set basename=$1
 set cmd_file=$2
 
-set update_cmd="update"
+if (${nprocs} == 1) then
+  set update_cmd="update"
+else
+  set update_cmd="update_parallel ${nprocs}"
+endif
 
 set num_lines=`cat $cmd_file | wc -l`
 set line=1

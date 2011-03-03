@@ -12,7 +12,7 @@ set argc=$#argv
 if ("${argc}" >= 1) then
   set basename="$1"
 else
-  echo "Usage:  run_macro_simulator_filter basename [steps [start_size [stop_size [timeout [update_cmd]]]]]"
+  echo "Usage: run_macro_simulator_filter basename [steps [start_size [stop_size [timeout [update_cmd]]]]]"
   exit 1
 endif
 if ("${argc}" >= 2) then
