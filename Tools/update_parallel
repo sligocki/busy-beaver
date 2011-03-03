@@ -7,20 +7,22 @@ if ("$argc" < 4) then
   exit 1
 endif
 
+echo "--- $argv ---"
+
 set cmd_dir=`dirname $0`
 
 set nprocs="$argv[1]"
 set basename="$argv[2]"
 set command_type="$argv[3]"
 
+# Create an empty unknown file if there isn't one
 if (! -e "$basename.unknown") then
-  echo "File $basename.unknown doesn't exist"
-  exit 1
+  touch $basename.unknown
 endif
 
+# Create an empty undecided file if there isn't one
 if (! -e "$basename.undecided") then
-  echo "File $basename.undecided doesn't exist"
-  exit 1
+  touch $basename.undecided
 endif
 
 # Find log file (if it exists) and set the current log number
@@ -35,6 +37,10 @@ endif
 # Get the original number of undecided and unknown TMs
 set orig_undecided=`wc -l < $basename.undecided`
 set orig_unknown=`wc -l < $basename.unknown`
+
+if (${orig_undecided} == 0 && ${orig_unknown} == 0) then
+  exit 0
+endif
 
 # Get the start date and command
 set start_date=`\date`
@@ -87,7 +93,7 @@ set total_count=`echo $total_count_unk $total_count_und | awk '{ if ($1 > $2) { 
 
 # Run the command on all the pieces in parallel
 foreach i ($basename.unknown.$digit_string.unknown)
-  time update $i:r $command &
+  time update $i:r $command_type $command &
 end
 
 # Wait for all the commands to finish
@@ -138,7 +144,7 @@ set end_date=`\date`
 set delta_time=`Diff_Date.py "$start_date" "$end_date"`
 
 # Log the command and print a bit more output
-echo " | $command | $start_date | $delta_time | $count_halt $count_infinite $net_undecided $net_unknown" >> "$basename.log"
+echo " | $command | $nprocs p | $start_date | $delta_time | $count_halt $count_infinite $net_undecided $net_unknown" >> "$basename.log"
 echo "TM counts: $count_halt $count_infinite $net_undecided $net_unknown"
 
 # Log if all the TMs have been resolved

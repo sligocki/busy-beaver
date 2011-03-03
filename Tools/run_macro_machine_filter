@@ -1,15 +1,42 @@
 #!/bin/csh -f
-set steps=1000
 set tape=1000
-
+set steps=1000
 set size=1
 set stop=10000
+
+set nprocs=1
+
+set args=`getopt -u -l nprocs: "" $argv[1]`
+
+if ($status != 0) then
+  echo "Usage: `basename $0` [--nprocs=#] basename [tape [steps [start_size [stop_size]]]]"
+  exit 1
+endif
+
+while (1)
+  if ($#args < 1) then
+    echo "Usage: `basename $0` [--nprocs=#] basename [tape [steps [start_size [stop_size]]]]"
+    exit 1
+  endif
+  switch ($args[1])
+    case "--nprocs":
+      shift args
+      set nprocs=$args[1]
+      shift args
+      shift argv
+      breaksw
+
+    case "--":
+      break
+      breaksw
+  endsw
+end
 
 set argc=$#argv
 if ("$argc" >= 1) then
   set base="$1"
 else
-  echo "Usage:  run_macro_machine_filter basename [tape [steps [start_size [stop_size]]]]"
+  echo "Usage: `basename $0` [--nprocs=#] basename [tape [steps [start_size [stop_size]]]]"
   exit 1
 endif
 if ("$argc" >= 2) then
@@ -25,7 +52,11 @@ if ("$argc" >= 5) then
   set stop="$5"
 endif
 
-set update_cmd="update"
+if (${nprocs} == 1) then
+  set update_cmd="update"
+else
+  set update_cmd="update_parallel ${nprocs}"
+endif
 
 wc -l "$base".unknown
 echo ""

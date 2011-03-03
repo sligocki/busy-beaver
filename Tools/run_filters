@@ -5,14 +5,46 @@ set filter_dir=${cmd_dir}/../Code
 
 setenv PATH ${PATH}:${cmd_dir}:${filter_dir}
 
+set nprocs=1
+
+set args=`getopt -u -l nprocs: "" $argv[1]`
+
+if ($status != 0) then
+  echo "Usage: `basename $0` [--nprocs=#] basename"
+  exit 1
+endif
+
+while (1)
+  if ($#args < 1) then
+    echo "Usage: `basename $0` [--nprocs=#] basename"
+    exit 1
+  endif
+  switch ($args[1])
+    case "--nprocs":
+      shift args
+      set nprocs=$args[1]
+      shift args
+      shift argv
+      breaksw
+
+    case "--":
+      break
+      breaksw
+  endsw
+end
+
 if ($#argv < 1) then
-  echo "Usage `basename $0` basename"
+  echo "Usage: `basename $0` [--nprocs=#] basename"
   exit 1
 endif
 
 set basename=$1
 
-set update_cmd="update"
+if (${nprocs} == 1) then
+  set update_cmd="update"
+else
+  set update_cmd="update_parallel ${nprocs}"
+endif
 
 echo "----- Reverse -----"
 time ${update_cmd} ${basename} "f" Reverse_Engineer_Filter.py
