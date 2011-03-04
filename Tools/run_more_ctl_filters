@@ -5,6 +5,11 @@ set filter_dir=${cmd_dir}/../Code
 
 setenv PATH ${PATH}:${cmd_dir}:${filter_dir}
 
+if ($#argv < 1) then
+  echo "Usage: `basename $0` [--nprocs=#] basename"
+  exit 1
+endif
+
 set nprocs=`run_preprocessor $argv[1]`
 if ($status == 0) then
   shift argv
