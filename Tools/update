@@ -34,13 +34,6 @@ endif
 set orig_undecided=`wc -l < $basename.undecided`
 set orig_unknown=`wc -l < $basename.unknown`
 
-if (${orig_undecided} == 0 && ${orig_unknown} == 0) then
-  echo $argv[3] | grep -e '^Enumerate' >&! /dev/null
-  if ($status != 0) then
-    exit 0
-  endif
-endif
-
 # Get the start date and command
 set start_date=`\date`
 set command="$argv[3-]"
