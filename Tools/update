@@ -9,6 +9,8 @@ endif
 
 set cmd_dir=`dirname $0`
 
+set all_resolved="-------- | All TMs resolved"
+
 set basename="$argv[1]"
 set command_type="$argv[2]"
 
@@ -25,7 +27,11 @@ endif
 # Find log file (if it exists) and set the current log number
 set logfile="$basename.log"
 if (-e "$logfile" && ! -z "logfile") then
-  set log_number=`tail -1 "$logfile" | awk '{print $1 + 1;}'`
+  set last_entry=`tail -1 "$logfile"`
+  if ("$last_entry" == "$all_resolved") then
+    exit 0
+  endif
+  set log_number=`echo "$last_entry" | awk '{print $1 + 1;}'`
 else
   set log_number=1
 endif
@@ -90,7 +96,7 @@ if ("$status" != 0) then
   # Log if all the TMs have been resolved
   set count_un=`cat $basename.unknown $basename.undecided | wc -l`
   if ("$count_un" == "0") then
-    echo "-------- | All TMs resolved" >> "$basename.log"    
+    echo "$all_resolved" >> "$basename.log"    
     echo "All TMs resolved"
   endif
 else
