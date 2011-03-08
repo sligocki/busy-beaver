@@ -113,7 +113,6 @@ while (1)
   # Count the number of commands that have finished
   set count_finished=0
   if (-e $basename.unknown.$zero_string.log) then
-    ls -l $basename.unknown.$digit_string.log
     foreach i ($basename.unknown.$digit_string.log)
       awk -f $cmd_dir/update_parallel_done.awk $i
       if ("$status" == 0) then
