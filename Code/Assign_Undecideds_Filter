@@ -30,7 +30,11 @@ set date=`\date`
 # If there are no undecided TMs, exit so the "update" will report "No change"
 set num=`cat $basename | wc -l`
 if ("$num" == 0) then
-  /bin/cp -f $basename:r.unknown $basename:r.out
+  if (-e $basename:r.unknown) then
+    /bin/cp -f $basename:r.unknown $basename:r.out
+  else
+    touch $basename:r.out
+  endif
   /bin/rm -f $basename.*
   exit 0
 endif
@@ -39,8 +43,17 @@ endif
 /bin/rm -f $basename.*
 
 # Setup initial subproblem
-/bin/cp -f $basename $basename.unknown
-/bin/cp -f $basename:r.log $basename.log
+if (-e $basename) then
+  /bin/cp -f $basename $basename.unknown
+else
+  touch $basename.unknown
+endif
+
+if (-e $basename:r.log) then
+  /bin/cp -f $basename:r.log $basename.log
+else
+  touch $basename.log
+endif
 
 # Convert undecided TMs to new TMs
 update $basename "f" Assign_Undecideds.py --next_machine_num=$nextmachnum
