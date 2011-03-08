@@ -33,6 +33,7 @@ if (-e "$logfile" && ! -z "logfile") then
   endif
   set log_number=`echo "$last_entry" | awk '{print $1 + 1;}'`
 else
+  touch "$logfile"
   set log_number=1
 endif
 
@@ -56,7 +57,11 @@ endif
 
 # Save the initial output file
 if ("$argv[2]" == "Generate.py") then
-  cp -f "$basename.out" "$basename.all"
+  if (-e "$basename.out") then
+    /bin/cp -f "$basename.out" "$basename.all"
+  else
+    touch "$basename.all"
+  endif
 endif
 
 # Log the running of the command
