@@ -30,12 +30,14 @@ endif
 
 echo "----- Dual -----"
 time ${update_cmd} ${basename} "g" Dual_Machine_Filter.py --tape=100 --steps=100
+echo ""
 
 set num_undecided=`ls -s ${basename}.undecided | awk '{print $1;}'`
 
 while ($num_undecided != 0)
   echo "----- Undecided/Dual -----"
   time ${update_cmd} ${basename} "g" Find_New_TM_Filter --tape=100 --steps=100 --next_machine_number=0
+  echo ""
 
   set num_undecided=`ls -s ${basename}.undecided | awk '{print $1;}'`
 end
