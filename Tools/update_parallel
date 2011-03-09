@@ -7,8 +7,6 @@ if ("$argc" < 4) then
   exit 1
 endif
 
-echo "--- $argv ---"
-
 set cmd_dir=`dirname $0`
 
 set all_resolved="-------- | All TMs resolved"
