@@ -31,6 +31,7 @@ def load(infile, line_num = 1):
     if i + 1 == line_num:
       return Turing_Machine(result.ttable)
 
+
 def print_machine(machine):
   """
   Pretty-print the contents of the Turing machine.
