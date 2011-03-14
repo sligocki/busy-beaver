@@ -10,7 +10,10 @@ def run(TTable, block_size, back, prover, recursive, options):
   m = Turing_Machine.make_machine(TTable)
   # If no explicit block-size given, use inteligent software to find one
   if not block_size:
-    Block_Finder.DEBUG = True
+    if options.quiet:
+      Block_Finder.DEBUG = False
+    else:
+      Block_Finder.DEBUG = True
     block_size = Block_Finder.block_finder(m, options.bf_limit1, options.bf_limit2, options.bf_run1, options.bf_run2, options.bf_extra_mult)
   # Do not create a 1-Block Macro-Machine (just use base machine)
   if block_size != 1:
@@ -44,8 +47,8 @@ def run(TTable, block_size, back, prover, recursive, options):
     print
     if options.compute_steps:
       print "Steps:   ", sim.step_num
-      print
     print "Nonzeros:", sim.get_nonzeros()
+    print
   elif sim.op_state == Turing_Machine.INF_REPEAT:
     print
     print "Turing Machine proven Infinite!"
@@ -56,9 +59,10 @@ def run(TTable, block_size, back, prover, recursive, options):
     print "State: ", sim.op_details[0][1]
     print "Symbol:", sim.op_details[0][0]
     print
-    print "Steps:   ", sim.step_num
-    print
+    if options.compute_steps:
+      print "Steps:   ", sim.step_num
     print "Nonzeros:", sim.get_nonzeros()
+    print
 
 
 if __name__ == "__main__":

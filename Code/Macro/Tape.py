@@ -61,8 +61,8 @@ class Chain_Tape(object):
     for sym in self.tape[0]:
       retval = retval + `sym` + " "
 
-    if self.dir:  dir = " ->  "
-    else:         dir = " <-  "
+    if self.dir:  dir = " -> "
+    else:         dir = " <- "
     retval = retval + dir
 
     for sym in reverse(self.tape[1]):
