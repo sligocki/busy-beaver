@@ -9,6 +9,8 @@ endif
 
 set cmd_dir=`dirname $0`
 
+set all_resolved="-------- | All TMs resolved"
+
 set basename="$argv[1]"
 set command_type="$argv[2]"
 
@@ -25,18 +27,19 @@ endif
 # Find log file (if it exists) and set the current log number
 set logfile="$basename.log"
 if (-e "$logfile" && ! -z "logfile") then
-  set log_number=`tail -1 "$logfile" | awk '{print $1 + 1;}'`
+  set last_entry=`tail -1 "$logfile"`
+  if ("$last_entry" == "$all_resolved") then
+    exit 0
+  endif
+  set log_number=`echo "$last_entry" | awk '{print $1 + 1;}'`
 else
+  touch "$logfile"
   set log_number=1
 endif
 
 # Get the original number of undecided and unknown TMs
 set orig_undecided=`wc -l < $basename.undecided`
 set orig_unknown=`wc -l < $basename.unknown`
-
-if (${orig_undecided} == 0 && ${orig_unknown} == 0) then
-  exit 0
-endif
 
 # Get the start date and command
 set start_date=`\date`
@@ -54,11 +57,15 @@ endif
 
 # Save the initial output file
 if ("$argv[2]" == "Generate.py") then
-  cp -f "$basename.out" "$basename.all"
+  if (-e "$basename.out") then
+    /bin/cp -f "$basename.out" "$basename.all"
+  else
+    touch "$basename.all"
+  endif
 endif
 
 # Log the running of the command
-echo "$log_number" "$command_type" | awk '{printf("%6d %s",$1,$2);}' >> "$basename.log"
+echo "$log_number" "$command_type" | awk '{printf("%6d %s ",$1,$2);}' >> "$basename.log"
 
 # Check for any change
 cmp -s "$basename.unknown" "$basename.out"
@@ -88,13 +95,13 @@ if ("$status" != 0) then
   set delta_time=`Diff_Date.py "$start_date" "$end_date"`
 
   # Log the command and print a bit more output
-  echo " | $command | s | $start_date | $delta_time | $count_halt $count_infinite $net_undecided $net_unknown" >> "$basename.log"
+  echo "| s | $command | $start_date | $delta_time | $count_halt $count_infinite $net_undecided $net_unknown" >> "$basename.log"
   echo "TM counts: $count_halt $count_infinite $net_undecided $net_unknown"
 
   # Log if all the TMs have been resolved
   set count_un=`cat $basename.unknown $basename.undecided | wc -l`
   if ("$count_un" == "0") then
-    echo "-------- | All TMs resolved" >> "$basename.log"    
+    echo "$all_resolved" >> "$basename.log"    
     echo "All TMs resolved"
   endif
 else
@@ -105,7 +112,7 @@ else
   set delta_time=`Diff_Date.py "$start_date" "$end_date"`
 
   # Log the command and indicate no change
-  echo " | $command | s | $start_date | $delta_time | 0 0 0 0" >> "$basename.log"
+  echo "| s | $command | $start_date | $delta_time | 0 0 0 0" >> "$basename.log"
   echo "TM counts: 0 0 0 0"
 endif
 

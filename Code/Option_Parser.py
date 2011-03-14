@@ -60,11 +60,14 @@ def Generator_Option_Parser(argv, extra_opt, ignore_infile = True):
 
   return opts, args
 
-def Read_Atributes(input_file):
+def Read_Attributes(input_file):
   temp_in = IO(input_file, None)
   line = temp_in.read_result()
   input_file.seek(0)
-  return line[1:5]
+  if line == None:
+    return (0,0,0,0)
+  else:
+    return line[1:5]
 
 def Filter_Option_Parser(argv, extra_opt, ignore_outfile = False):
   """
@@ -85,7 +88,8 @@ def Filter_Option_Parser(argv, extra_opt, ignore_outfile = False):
   opts["infile"] = open_infile(opts["infilename"])
 
   if not ignore_outfile:
-    opts["states"], opts["symbols"], tape, steps = Read_Atributes(opts["infile"])
+    opts["states"], opts["symbols"], tape, steps = Read_Attributes(opts["infile"])
+
     # Tape length and max num steps default to those from the input file, but
     # can be changed by command line options.
     if not opts["tape"]:
@@ -101,7 +105,6 @@ def Filter_Option_Parser(argv, extra_opt, ignore_outfile = False):
     opts["outfile"] = open_outfile(opts["outfilename"])
     if not opts["outfile"]:
       sys.exit(1)
-
 
   return opts, args
 

@@ -5,33 +5,15 @@ set filter_dir=${cmd_dir}/../Code
 
 setenv PATH ${PATH}:${cmd_dir}:${filter_dir}
 
-set nprocs=1
-
-set args=`getopt -u -l nprocs: "" $argv[1]`
-
-if ($status != 0) then
+if ($#argv < 1) then
   echo "Usage: `basename $0` [--nprocs=#] basename"
   exit 1
 endif
 
-while (1)
-  if ($#args < 1) then
-    echo "Usage: `basename $0` [--nprocs=#] basename"
-    exit 1
-  endif
-  switch ($args[1])
-    case "--nprocs":
-      shift args
-      set nprocs=$args[1]
-      shift args
-      shift argv
-      breaksw
-
-    case "--":
-      break
-      breaksw
-  endsw
-end
+set nprocs=`run_preprocessor $argv[1]`
+if ($status == 0) then
+  shift argv
+endif
 
 if ($#argv < 1) then
   echo "Usage: `basename $0` [--nprocs=#] basename"
