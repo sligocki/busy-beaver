@@ -28,6 +28,7 @@ class Simulator(object):
     self.verbose_prefix = verbose_prefix
     self.state = machine.init_state
     self.dir = machine.init_dir
+    self.old_step_num = 0
     self.step_num = 0
     
     # Init tape and prover (if needed).
@@ -82,6 +83,8 @@ class Simulator(object):
     if self.op_state != Turing_Machine.RUNNING:
       return
     self.verbose_print()
+    if self.compute_steps:
+      self.old_step_num = self.step_num
     self.num_loops += 1
     if self.prover:
       # Log the configuration and see if we can apply a rule.
@@ -161,7 +164,7 @@ class Simulator(object):
 
   def verbose_print(self):
     if self.verbose:
-      print "%s %6d  %s  %s" % (self.verbose_prefix, self.num_loops, self.state, self.tape)
+      print "%s %6d  %s  %s (%s)" % (self.verbose_prefix, self.num_loops, self.state, self.tape, self.step_num - self.old_step_num)
 
 def template(title, steps, loops):
   """Pretty print row of the steps table."""
