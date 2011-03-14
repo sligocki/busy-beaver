@@ -432,6 +432,7 @@ class Proof_System(object):
               self.print_this("++ Current config is below rule minimum ++")
               self.print_this("Config block:", new_block)
               self.print_this("Rule initial block:", init_block)
+              self.print_this("")
             return False, 1
           delta_value[x] = diff_block.num
           assert(isinstance(delta_value[x], (int, long)))
