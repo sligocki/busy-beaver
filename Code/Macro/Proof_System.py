@@ -16,6 +16,8 @@ from Numbers.Algebraic_Expression import Algebraic_Expression, Variable, NewVari
 
 class Rule(object):
   """Base type for Proof_System rules."""
+  def __str__(self):
+    return "Rule %d" % self.num
 
 class Diff_Rule(Rule):
   """A rule that specifies constant deltas for each tape block' repetition count."""
@@ -82,8 +84,13 @@ class Past_Config(object):
     self.times_seen = 0
     self.last_loop_num = None
     self.delta_loop = None
-  def log_config(self, state, tape, step_num, loop_num):
-    """Log the configuration and see if we should try to prove it.
+
+  def __repr__(self):
+    return repr(self.__dict__)
+
+  def log_config(self, step_num, loop_num):
+    """Decide whether we should try to prove a rule.
+
     Currently, we try to prove a rule we've seen happen twice consecutively
     with the same delta_loop.
     """
@@ -180,7 +187,7 @@ class Proof_System(object):
     
     # Otherwise log it into past_configs and see if we should try and prove a new rule.
     past_config = self.past_configs[stripped_config]
-    if past_config.log_config(state, tape, step_num, loop_num):
+    if past_config.log_config(step_num, loop_num):
       # We see enough of a pattern to try and prove a rule.
       rule = self.prove_rule(stripped_config, full_config, past_config.delta_loop)
       if rule:  # If we successfully proved a rule:
