@@ -7,9 +7,9 @@ if ("$argc" < 4) then
   exit 1
 endif
 
-echo "--- $argv ---"
-
 set cmd_dir=`dirname $0`
+
+set all_resolved="-------- | All TMs resolved"
 
 set nprocs="$argv[1]"
 set basename="$argv[2]"
@@ -28,10 +28,14 @@ endif
 # Find log file (if it exists) and set the current log number
 set logfile="$basename.log"
 if (-e "$logfile" && ! -z "logfile") then
-  set log_number=`tail -1 "$logfile" | awk '{print $1 + 1;}'`
+  set last_entry=`tail -1 "$logfile"`
+  if ("$last_entry" == "$all_resolved") then
+    exit 0
+  endif
+  set log_number=`echo "$last_entry" | awk '{print $1 + 1;}'`
 else
+  touch "$logfile"
   set log_number=1
-  echo "Integrate_Data.py $basename.out $basename.halt $basename.infinite $basename.unknown $basename.error $basename.undecided " >> "$logfile"
 endif
 
 # Get the original number of undecided and unknown TMs
@@ -56,10 +60,13 @@ echo $tm_per_unk_file $tm_per_und_file
 set digits=6
 
 # Construct a regular expression with '[0-9]' repeated $digits times
+# and a string with '0' repeated $digits times
 set count=0
 set digit_string=""
+set zero_string=""
 while ($count < $digits)
   set digit_string="${digit_string}[0-9]"
+  set zero_string="${zero_string}0"
   @ count++
 end
 
@@ -103,17 +110,19 @@ while (1)
 
   # Count the number of commands that have finished
   set count_finished=0
-  foreach i ($basename.unknown.$digit_string.log)
-    awk -f $cmd_dir/update_parallel_done.awk $i
-    if ("$status" == 0) then
-      @ count_finished++
-    endif
-  end
+  if (-e $basename.unknown.$zero_string.log) then
+    foreach i ($basename.unknown.$digit_string.log)
+      awk -f $cmd_dir/update_parallel_done.awk $i
+      if ("$status" == 0) then
+        @ count_finished++
+      endif
+    end
 
-  # Exit loop if all commands have finished
-  if ("$count_finished" == "$total_count") then
-    echo "All done..."
-    break
+    # Exit loop if all commands have finished
+    if ("$count_finished" == "$total_count") then
+      echo "All done..."
+      break
+    endif
   endif
 end
 
@@ -133,7 +142,7 @@ set count_unknown=`cat $basename.unknown.$digit_string.unknown | wc -l`
 /bin/rm -f $basename.unknown.$digit_string.*
 
 # Log the running of the command
-echo "$log_number" "$command_type" | awk '{printf("%6d %s",$1,$2);}' >> "$basename.log"
+echo "$log_number" "$command_type" | awk '{printf("%6d %s ",$1,$2);}' >> "$basename.log"
 
 # Get the net change in undecided and unknown TMs
 set net_undecided=`expr $count_undecided - $orig_undecided`
@@ -144,13 +153,13 @@ set end_date=`\date`
 set delta_time=`Diff_Date.py "$start_date" "$end_date"`
 
 # Log the command and print a bit more output
-echo " | $command | $nprocs p | $start_date | $delta_time | $count_halt $count_infinite $net_undecided $net_unknown" >> "$basename.log"
+echo "| p $nprocs | $command | $start_date | $delta_time | $count_halt $count_infinite $net_undecided $net_unknown" >> "$basename.log"
 echo "TM counts: $count_halt $count_infinite $net_undecided $net_unknown"
 
 # Log if all the TMs have been resolved
 set count_un=`cat $basename.unknown $basename.undecided | wc -l`
 if ("$count_un" == "0") then
-  echo "-------- | All TMs resolved" >> "$basename.log"    
+  echo "$all_resolved" >> "$basename.log"    
   echo "All TMs resolved"
 endif
 
