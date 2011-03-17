@@ -42,6 +42,8 @@ static PyObject* Turing_Machine_Count(PyObject* self,
 
   PyObject* listStep;
   PyObject* listTape;
+  PyObject* listLeft;
+  PyObject* listRight;
 
   if (!PyTuple_CheckExact(args))
   {
@@ -224,8 +226,10 @@ static PyObject* Turing_Machine_Count(PyObject* self,
 
   result = RESULT_INVALID;
 
-  listStep = PyList_New(0);
-  listTape = PyList_New(0);
+  listStep  = PyList_New(0);
+  listTape  = PyList_New(0);
+  listLeft  = PyList_New(0);
+  listRight = PyList_New(0);
 
   {
     unsigned long long printStep = 1000;
@@ -236,8 +240,10 @@ static PyObject* Turing_Machine_Count(PyObject* self,
 
       if (i == printStep)
       {
-        PyList_Append(listStep,PyLong_FromUnsignedLongLong(printStep));
-        PyList_Append(listTape,PyLong_FromUnsignedLongLong(tm.max_right - tm.max_left));
+        PyList_Append(listStep ,PyLong_FromUnsignedLongLong(printStep));
+        PyList_Append(listTape ,PyLong_FromUnsignedLongLong(tm.max_right - tm.max_left));
+        PyList_Append(listLeft ,PyLong_FromUnsignedLongLong(tape_middle - tm.max_left));
+        PyList_Append(listRight,PyLong_FromUnsignedLongLong(tm.max_right - tape_middle));
         printStep *= 2.1;
       }
 
@@ -250,5 +256,5 @@ static PyObject* Turing_Machine_Count(PyObject* self,
 
   free_TM(&tm);
 
-  return Py_BuildValue("(OO)",listStep,listTape);
+  return Py_BuildValue("(OOOO)",listStep,listTape,listLeft,listRight);
 }
