@@ -17,11 +17,12 @@ def count(infile, num = 1):
   import string
 
   line = infile.readline()
+  linenum = 1
 
   while line:
     parts = line.split()
 
-    sys.stdout.write("%-12d     " % int(parts[0]))
+    sys.stdout.write("%-12d     " % linenum)
 
     start_index = 0
     start_found = False
@@ -54,6 +55,8 @@ def count(infile, num = 1):
 
     x = numpy.array(result[0])
     y = numpy.array(result[1])
+    l = numpy.array(result[2])
+    r = numpy.array(result[3])
 
     # print
     # print x
@@ -87,9 +90,74 @@ def count(infile, num = 1):
 
     sys.stdout.write("Poly: %13.6e %13.6e   " % (a,b))
 
+    sys.stdout.write(" - width\n")
+
+    loglin = numpy.polyfit(numpy.log(x),l,1)
+
+    a = 1.0/loglin[0]
+    if a > 10000:
+      a = math.exp(1000)
+    else:
+      a = math.exp(a)
+
+    b = -loglin[1]/loglin[0]
+    if b > 10000:
+      b = math.exp(1000)
+    else:
+      b = math.exp(b)
+
+    sys.stdout.write("                 ")
+    sys.stdout.write("Log: %13.6e %13.6e   " % (a,b))
+
+    loglog = numpy.polyfit(numpy.log(x),numpy.log(l),1)
+
+    a = 1.0/loglog[0]
+
+    b = -loglog[1]/loglog[0]
+    if b > 10000:
+      b = math.exp(1000)
+    else:
+      b = math.exp(b)
+
+    sys.stdout.write("Poly: %13.6e %13.6e   " % (a,b))
+
+    sys.stdout.write(" - left\n")
+
+    loglin = numpy.polyfit(numpy.log(x),r,1)
+
+    a = 1.0/loglin[0]
+    if a > 10000:
+      a = math.exp(1000)
+    else:
+      a = math.exp(a)
+
+    b = -loglin[1]/loglin[0]
+    if b > 10000:
+      b = math.exp(1000)
+    else:
+      b = math.exp(b)
+
+    sys.stdout.write("                 ")
+    sys.stdout.write("Log: %13.6e %13.6e   " % (a,b))
+
+    loglog = numpy.polyfit(numpy.log(x),numpy.log(r),1)
+
+    a = 1.0/loglog[0]
+
+    b = -loglog[1]/loglog[0]
+    if b > 10000:
+      b = math.exp(1000)
+    else:
+      b = math.exp(b)
+
+    sys.stdout.write("Poly: %13.6e %13.6e   " % (a,b))
+
+    sys.stdout.write(" - right\n")
+
     sys.stdout.write("\n")
 
     line = infile.readline()
+    linenum += 1
 
 def load_old(file):
   """
