@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 #
-# Heuristic2.py
+# GrowthFit.py
 #
 # Collects data on tape used vs. steps taken and fits curves to the data.
 #
@@ -65,14 +65,14 @@ def count(infile, num = 1):
     loglin = numpy.polyfit(numpy.log(x),y,1)
 
     a = 1.0/loglin[0]
-    if a > 10000:
-      a = math.exp(1000)
+    if a > 500:
+      a = math.exp(500)
     else:
       a = math.exp(a)
 
     b = -loglin[1]/loglin[0]
-    if b > 10000:
-      b = math.exp(1000)
+    if b > 500:
+      b = math.exp(500)
     else:
       b = math.exp(b)
 
@@ -83,8 +83,8 @@ def count(infile, num = 1):
     a = 1.0/loglog[0]
 
     b = -loglog[1]/loglog[0]
-    if b > 10000:
-      b = math.exp(1000)
+    if b > 500:
+      b = math.exp(500)
     else:
       b = math.exp(b)
 
@@ -95,14 +95,14 @@ def count(infile, num = 1):
     loglin = numpy.polyfit(numpy.log(x),l,1)
 
     a = 1.0/loglin[0]
-    if a > 10000:
-      a = math.exp(1000)
+    if a > 500:
+      a = math.exp(500)
     else:
       a = math.exp(a)
 
     b = -loglin[1]/loglin[0]
-    if b > 10000:
-      b = math.exp(1000)
+    if b > 500:
+      b = math.exp(500)
     else:
       b = math.exp(b)
 
@@ -114,8 +114,8 @@ def count(infile, num = 1):
     a = 1.0/loglog[0]
 
     b = -loglog[1]/loglog[0]
-    if b > 10000:
-      b = math.exp(1000)
+    if b > 500:
+      b = math.exp(500)
     else:
       b = math.exp(b)
 
@@ -126,14 +126,14 @@ def count(infile, num = 1):
     loglin = numpy.polyfit(numpy.log(x),r,1)
 
     a = 1.0/loglin[0]
-    if a > 10000:
-      a = math.exp(1000)
+    if a > 500:
+      a = math.exp(500)
     else:
       a = math.exp(a)
 
     b = -loglin[1]/loglin[0]
-    if b > 10000:
-      b = math.exp(1000)
+    if b > 500:
+      b = math.exp(500)
     else:
       b = math.exp(b)
 
@@ -145,8 +145,8 @@ def count(infile, num = 1):
     a = 1.0/loglog[0]
 
     b = -loglog[1]/loglog[0]
-    if b > 10000:
-      b = math.exp(1000)
+    if b > 500:
+      b = math.exp(500)
     else:
       b = math.exp(b)
 
