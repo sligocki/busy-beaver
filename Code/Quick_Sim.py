@@ -45,9 +45,14 @@ def print_machine(machine):
     sys.stdout.write("   | %c " % states[i])
     for j in xrange(len(TTable[i])):
       sys.stdout.write("| ")
-      sys.stdout.write("%c"  % symbols[TTable[i][j][0]])
-      sys.stdout.write("%c" % dirs[TTable[i][j][1]])
-      sys.stdout.write("%c "  % states[TTable[i][j][2]])
+      if TTable[i][j][0] == -1 and \
+         TTable[i][j][1] == -1 and \
+         TTable[i][j][2] == -1:
+        sys.stdout.write("--- ")
+      else:
+        sys.stdout.write("%c"   % symbols[TTable[i][j][0]])
+        sys.stdout.write("%c"   % dirs   [TTable[i][j][1]])
+        sys.stdout.write("%c "  % states [TTable[i][j][2]])
     sys.stdout.write("|\n")
 
     sys.stdout.write("   +---")
