@@ -40,8 +40,12 @@ def make_machine(trans_table):
 
 # Characters to use for states.
 states = string.ascii_uppercase + string.ascii_lowercase + string.digits + "!@#$%^&*" + "Z"
+
 class Simple_Machine_State(int):
   """Wrapper provides a pretty-printer for a Turing machine's integer state."""
+  def print_with_dir(self, dir):
+    return self.__str__()
+
   def __str__(self):
     return states[self]
 
@@ -57,13 +61,16 @@ class Simple_Machine(Turing_Machine):
     self.init_state = Simple_Machine_State(0)
     self.init_dir = 1
     self.init_symbol = 0
+
   def eval_symbol(self, symbol):
     if symbol != self.init_symbol:
       return 1
     else:
       return 0
+
   def eval_state(self, state):
     return 0
+
   def get_transition(self, symbol_in, state_in, dir_in):
     # Historical ordering of transition table elements: (sym, dir, state)
     symbol_out, dir_out, state_out = self.trans_table[state_in][symbol_in]
@@ -91,6 +98,7 @@ class Block_Macro_Machine(Macro_Machine):
   """A derivative Turing Machine which simulates another machine clumping k-symbols together into a block-symbol"""
   MAX_TTABLE_CELLS = 100000
   DUMMY_OFFSET_STATE = "Dummy_Offset_State"
+
   def __init__(self, base_machine, block_size, offset=None):
     assert block_size > 0
     self.block_size = block_size
@@ -113,16 +121,20 @@ class Block_Macro_Machine(Macro_Machine):
     self.max_cells = Block_Macro_Machine.MAX_TTABLE_CELLS
     # Stat info
     self.num_loops = 0
+
   def eval_symbol(self, macro_symbol):
     return sum(map(self.base_machine.eval_symbol, macro_symbol))
+
   def eval_state(self, state):
     return self.base_machine.eval_state(state)
+
   def get_transition(self, *args):
     if args not in self.trans_table:
       if len(self.trans_table) >= self.max_cells:
         self.trans_table.clear()
       self.trans_table[args] = self.eval_trans(args)
     return self.trans_table[args]
+
   def eval_trans(self, (macro_symbol_in, macro_state_in, macro_dir_in)):
     # Set up machine
     num_steps = num_macro_steps = 0
@@ -157,10 +169,25 @@ class Block_Macro_Machine(Macro_Machine):
         return (INF_REPEAT, pos), (Block_Symbol(tape), state, dir), num_steps
     return (RUNNING,), (Block_Symbol(tape), state, dir), num_steps
 
+class Backsymbol_Macro_Machine_State:
+  def __init__(self,base_state,back_symbol):
+    self.base_state  = base_state
+    self.back_symbol = back_symbol
+
+  def print_with_dir(self, dir):
+    if dir == 0:
+      return "%s (%s)" % (self.base_state.print_with_dir(dir),self.back_symbol)
+    else:
+      return "(%s) %s" % (self.back_symbol,self.base_state.print_with_dir(dir))
+    return self.__repr__()
+
+  def __repr__(self):
+    return "(%s,%s)" % (self.base_state,self.back_symbol)
+
 def backsymbol_get_trans(tape, state, dir):
   backsymbol = tape[dir]
   return_symbol = tape[1 - dir]
-  return return_symbol, (state, backsymbol), dir
+  return return_symbol, Backsymbol_Macro_Machine_State(state, backsymbol), dir
 
 class Backsymbol_Macro_Machine(Macro_Machine):
   MAX_TTABLE_CELLS = 100000
@@ -171,7 +198,7 @@ class Backsymbol_Macro_Machine(Macro_Machine):
     # A lazy evaluation hashed macro transition table
     self.trans_table = {}
     # States of macro machine are old states and symbol behind state
-    self.init_state = (base_machine.init_state, base_machine.init_symbol)
+    self.init_state = Backsymbol_Macro_Machine_State(base_machine.init_state, base_machine.init_symbol)
     self.init_dir = base_machine.init_dir
     self.init_symbol = base_machine.init_symbol
     # Maximum number of base-steps per macro-step evaluation w/o repeat
@@ -180,20 +207,25 @@ class Backsymbol_Macro_Machine(Macro_Machine):
     self.max_cells = Backsymbol_Macro_Machine.MAX_TTABLE_CELLS
     # Stats
     self.num_loops = 0
+
   def eval_symbol(self, symbol):
     return self.base_machine.eval_symbol(symbol)
-  def eval_state(self, (base_state, backsymbol)):
-    return self.base_machine.eval_state(base_state) + self.base_machine.eval_symbol(backsymbol)
+
+  def eval_state(self, backsymbol_macro_machine_state):
+    return self.base_machine.eval_state(backsymbol_macro_machine_state.base_state) + self.base_machine.eval_symbol(backsymbol_macro_machine_state.back_symbol)
+
   def get_transition(self, *args):
     if args not in self.trans_table:
       if len(self.trans_table) >= self.max_cells:
         self.trans_table.clear()
       self.trans_table[args] = self.eval_trans(args)
     return self.trans_table[args]
+
   def eval_trans(self, (macro_symbol_in, macro_state_in, macro_dir_in)):
     # Set up machine
     num_steps = num_macro_steps = 0
-    state, back_macro_symbol = macro_state_in
+    state = macro_state_in.base_state
+    back_macro_symbol = macro_state_in.back_symbol
     dir = macro_dir_in
     if macro_dir_in is RIGHT:
       tape = [back_macro_symbol, macro_symbol_in]
