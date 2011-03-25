@@ -1,6 +1,9 @@
 import string, operator
 from Number import Number, Rational
 
+class BadOperation(Exception):
+  """This operation cannot be performed on this Expression."""
+
 def is_scalar(value):
   return isinstance(value, (int, long, Rational))
 
@@ -89,7 +92,7 @@ class Expression(Number):
     """Divide the expression by a scalar.
     
     If the scalar does not perfectly divide all the coeficients and constant,
-    we return NotImplemented
+    we raise BadOperation
     """
     # TODO: Implement some way of dealing with situations like (d + d^2) / 2
     if other == 1:
@@ -97,17 +100,17 @@ class Expression(Number):
     elif is_scalar(other):
       new_const = self.const.__div__(other)
       if new_const * other != self.const:
-        return NotImplemented
+        raise BadOperation
       new_terms = []
       for old_term in self.terms:
         new_coef = old_term.coef.__div__(other)
         if new_coef * other != old_term.coef:
-          return NotImplemented
+          raise BadOperation
         new_terms.append(Term(old_term.vars, new_coef))
       return Expression(tuple(new_terms), new_const)
     else:
       ### TODO: We could (actually) divide, say (8x+8) / (x+1) = 8 !
-      return NotImplemented
+      raise BadOperation
   
   def __truediv__(self, other):
     if other == 1:
@@ -117,14 +120,14 @@ class Expression(Number):
       return Expression(new_terms, self.const.__truediv__(other))
     else:
       ### TODO: We could (actually) divide, say (8x+8) / (x+1) = 8 !
-      return NotImplemented
+      raise BadOperation
   
   def __floordiv__(self, other):
     if other == 1:
       return self
     else:
       ### TODO: We could (actually) divide, say (8x+8) // 8 = (x+1) !
-      return NotImplemented
+      raise BadOperation
   
   def substitute(self, subs):
     """Substitute values from dict 'subs' to get an int."""
@@ -141,19 +144,26 @@ class Expression(Number):
     return True
   
   # Temporary methods
+  # TODO(shawn): Allow these for self.terms == other.terms.
   def __eq__(self, other):
-    if is_scalar(other):
-      return (len(self.terms) == 0 and self.const == other)
+    if not isinstance(other, Algebraic_Expression):
+      return len(self.terms) == 0 and self.const == other
     else:
-      return NotImplemented
+      raise BadOperation
+  def __ne__(self, other):
+    return not self == other
   def __cmp__(self, other):
-    return cmp(self.const, other)
+    if is_scalar(other) and len(self.terms) == 0:
+      return cmp(self.const, other)
+    else:
+      raise BadOperation
+
   def unknown(self):
     """Returns the single variable in this expression if it exists."""
     if len(self.terms) == 1 and len(self.terms[0].vars) == 1:
       return self.terms[0].vars[0].var
     else:
-      raise Exception, "This expression does not have exactly 1 variable!"
+      raise BadOperation, "This expression does not have exactly 1 variable!"
 
 def term_sum(terms1, terms2):
   """Add 2 lists of terms"""
