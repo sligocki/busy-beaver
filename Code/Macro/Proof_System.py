@@ -120,6 +120,12 @@ class Proof_System(object):
     self.machine = machine
     # Should we try to prove recursive rules? (Rules which use previous rules as steps.)
     self.recursive = recursive
+    # Allow Collatz-style recursive rules. These are rules which depend upon
+    # the parity (or remainder mod n) of exponents.
+    # E.g. 1^(2k+1) 0 2 B>  -->  1^(3k+3) 0 2 B>
+    # Note: Very experimental, may well break your simulation.
+    # TODO(shawn): Expose this with a flag in Quick_Sim.py
+    self.allow_collatz = False
     self.compute_steps = compute_steps
     self.verbose = verbose  # Step-by-step state printing
     self.verbose_prefix = verbose_prefix
@@ -171,11 +177,13 @@ class Proof_System(object):
         # Optimization: If we apply a rule and we are not trying to perform
         # recursive proofs, clear past configuration memory.
         # Likewise, even recursive proofs cannot use every subrule as a step.
-        # Specifically, if there are any negative deltas other than -1, we cannot
-        # apply the rule in a proof (yet) becuase e.g. (x + 3 // 2) is unresolvable
+        # Specifically, if there are any negative deltas other than -1,
+        # we cannot apply the rule in a proof (yet) becuase
+        # e.g. (x + 3 // 2) is unresolvable
         # TODO: Enable Collatz proofs!
-        if (not self.recursive  or  large_delta) and self.past_configs is not None:
-          self.past_configs.clear()
+        if not self.recursive  or  (large_delta and not self.allow_collatz):
+          if self.past_configs is not None:
+            self.past_configs.clear()
         rule.num_uses += 1
         return trans
       return False, None, None
@@ -269,6 +277,8 @@ class Proof_System(object):
         return False
       gen_sim.step()
       self.num_loops += 1
+      # TODO(shawn): Perhaps we should check in applying a rule failed this
+      # step and if so cancel the proof?
       
       if gen_sim.op_state is not Turing_Machine.RUNNING:
         if self.verbose:
@@ -420,7 +430,7 @@ class Proof_System(object):
     ## Unpack input
     new_state, new_tape, new_step_num, new_loop_num = start_config
     
-    ## Calculate number of repetitionss allowable and other tape-based info.
+    ## Calculate number of repetitions allowable and other tape-based info.
     num_reps = Tape.INF
     init_value = {}
     delta_value = {}
@@ -435,6 +445,23 @@ class Proof_System(object):
           # Calculate the initial and change in value for each variable.
           x = init_block.num.unknown()
           init_value[x] = new_block.num - init_block.num.const
+          if isinstance(init_value[x], Algebraic_Expression):
+            if self.verbose:
+              # TODO(shawn): We could allow these in some cases.
+              # For example, if we have a rule:
+              #   Initial: 0^Inf 2^(d + 1)  (0)B>  2^(f + 2) 0^Inf 
+              #   Diff:    0^Inf 2^1  (0)B>  2^-1 0^Inf 
+              # then:
+              #   0^Inf 2^3  (0)B> 2^(s + 11) 0^Inf
+              # goes to:
+              #   0^Inf 2^(s + 12)  (0)B> 2^2 0^Inf
+              # But this can also get complicated if we need to compare
+              # multiple variables the diff is <= -2
+              self.print_this("++ Current config would make init_value[%r] an expression ++" % x)
+              self.print_this("Config block:", new_block)
+              self.print_this("Rule initial block:", init_block)
+              self.print_this("")
+            return False, "Init_Expression"
           if init_value[x] < 0:
             if self.verbose:
               self.print_this("++ Current config is below rule minimum ++")
