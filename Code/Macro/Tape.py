@@ -65,12 +65,12 @@ class Chain_Tape(object):
       retval = retval + `sym` + " "
 
     if state is None:
-      if self.dir:  dir = " ->  "
-      else:         dir = " <-  "
+      if self.dir:  dir = "-> "
+      else:         dir = "<- "
       retval = retval + dir
     else:
-      if self.dir:  dir = " %s>  " % state.print_with_dir(self.dir)
-      else:         dir = " <%s  " % state.print_with_dir(self.dir)
+      if self.dir:  dir = "%s> " % state.print_with_dir(self.dir)
+      else:         dir = "<%s " % state.print_with_dir(self.dir)
       retval = retval + dir
 
     for sym in reverse(self.tape[1]):
