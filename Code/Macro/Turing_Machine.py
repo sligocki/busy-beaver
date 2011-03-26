@@ -184,6 +184,14 @@ class Backsymbol_Macro_Machine_State:
   def __repr__(self):
     return "(%s,%s)" % (self.base_state,self.back_symbol)
 
+  # These must be defined so that we can check that two states are equal,
+  # not equal, or use them as keys into a dictionary.
+  def __cmp__(self, other):
+    return cmp((self.base_state, self.back_symbol),
+               (other.base_state, other.back_symbol))
+  def __hash__(self):
+    return hash((self.base_state, self.back_symbol))
+
 def backsymbol_get_trans(tape, state, dir):
   backsymbol = tape[dir]
   return_symbol = tape[1 - dir]
