@@ -91,7 +91,8 @@ def run(TTable, block_size, back, prover, recursive, options):
                             compute_steps=options.compute_steps,
                             verbose_simulator=options.verbose_simulator,
                             verbose_prover=options.verbose_prover,
-                            verbose_prefix="")
+                            verbose_prefix="",
+                            allow_collatz=options.allow_collatz)
   if options.manual:
     return  # Let's us run the machine manually. Must be run as python -i Quick_Sim.py
   try:
@@ -158,6 +159,8 @@ if __name__ == "__main__":
                     help="Turn off proof system")
   parser.add_option("-r", "--recursive", action="store_true", default=False, 
                     help="Turn on recursive proof system")
+  parser.add_option("--allow-collatz", action="store_true", default=False,
+                    help="Allow Collatz-style recursive proofs.")
   parser.add_option("--no-steps", dest="compute_steps",
                     action="store_false", default=True,
                     help="Don't keep track of base step count (can be expensive"

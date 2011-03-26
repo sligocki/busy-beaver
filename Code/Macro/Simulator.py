@@ -19,7 +19,7 @@ class Simulator(object):
   """Turing machine simulator using chain-tape optimization."""
   def __init__(self, machine, recursive=False, enable_prover=True,
                init_tape=True, compute_steps=True, verbose_simulator=False,
-               verbose_prover=False, verbose_prefix=""):
+               verbose_prover=False, verbose_prefix="", allow_collatz=False):
     self.machine = machine
     self.recursive = recursive
     self.compute_steps = compute_steps
@@ -41,6 +41,7 @@ class Simulator(object):
                                               compute_steps=self.compute_steps,
                                               verbose=self.verbose_prover,
                                               verbose_prefix=self.verbose_prefix + "  ")
+      self.prover.allow_collatz = allow_collatz
     else:
       self.prover = None  # We will run the simulation without a proof system.
     
