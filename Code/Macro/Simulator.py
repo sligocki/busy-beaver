@@ -83,7 +83,6 @@ class Simulator(object):
     """Perform an atomic transition or chain step."""
     if self.op_state != Turing_Machine.RUNNING:
       return
-    self.verbose_print()
     if self.compute_steps:
       self.old_step_num = self.step_num
     self.num_loops += 1
@@ -94,6 +93,7 @@ class Simulator(object):
       if cond == Turing_Machine.INF_REPEAT:
         self.op_state = Turing_Machine.INF_REPEAT
         self.inf_reason = PROOF_SYSTEM
+        self.verbose_print()
         return
       # Proof system says that we can apply a rule
       elif cond == Turing_Machine.RUNNING:
@@ -102,6 +102,7 @@ class Simulator(object):
         if self.compute_steps:
           self.step_num += num_steps
           self.steps_from_rule += num_steps
+        self.verbose_print()
         return
     # Get current symbol
     cur_symbol = self.tape.get_top_symbol()
@@ -119,6 +120,7 @@ class Simulator(object):
       if num_reps == Tape.INF:
         self.op_state = Turing_Machine.INF_REPEAT
         self.inf_reason = CHAIN_MOVE
+        self.verbose_print()
         return
       # Don't need to change state or direction
       self.num_chain_moves += 1
@@ -136,6 +138,7 @@ class Simulator(object):
         self.steps_from_macro += num_steps
       if self.op_state == Turing_Machine.INF_REPEAT:
         self.inf_reason = REPEAT_IN_PLACE
+    self.verbose_print()
   
   def get_nonzeros(self):
     """Get Busy Beaver score, number of non-zero symbols on tape."""
