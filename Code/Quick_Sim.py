@@ -97,6 +97,9 @@ def run(TTable, block_size, back, prover, recursive, options):
     return  # Let's us run the machine manually. Must be run as python -i Quick_Sim.py
   try:
     if options.quiet or options.verbose:  # Note verbose prints inside sim.step()
+      if options.verbose:
+        sim.verbose_print()
+
       while sim.op_state == Turing_Machine.RUNNING:
         sim.step()
     else:
