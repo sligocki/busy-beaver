@@ -189,6 +189,7 @@ class Backsymbol_Macro_Machine_State:
   def __cmp__(self, other):
     return cmp((self.base_state, self.back_symbol),
                (other.base_state, other.back_symbol))
+
   def __hash__(self):
     return hash((self.base_state, self.back_symbol))
 
