@@ -65,6 +65,7 @@ class Simulator(object):
 
   def run(self, steps):
     self.seek(self.step_num + steps)
+
   def seek(self, cutoff):
     """Run until we've reached (exceeded) step n."""
     while self.step_num < cutoff and self.op_state == Turing_Machine.RUNNING:
@@ -73,6 +74,7 @@ class Simulator(object):
   def loop_run(self, loops):
     """Loop through the step algorithm n times."""
     self.loop_seek(self.num_loops + loops)
+
   def loop_seek(self, cutoff):
     while self.num_loops < cutoff and self.op_state == Turing_Machine.RUNNING:
       self.step()
@@ -138,7 +140,8 @@ class Simulator(object):
         self.steps_from_macro += num_steps
       if self.op_state == Turing_Machine.INF_REPEAT:
         self.inf_reason = REPEAT_IN_PLACE
-    self.verbose_print()
+    if self.op_state != Turing_Machine.UNDEFINED:
+      self.verbose_print()
   
   def get_nonzeros(self):
     """Get Busy Beaver score, number of non-zero symbols on tape."""
