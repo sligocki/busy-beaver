@@ -176,6 +176,7 @@ class BBConsole(cmd.Cmd):
       print
 
   def do_tape(self, args):
+    """Enter a new tape and state - same format as output"""
     self.stdout.write("\n")
     self.stdout.write("   Tape: ")
     self.stdout.flush()
