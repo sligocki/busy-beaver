@@ -78,6 +78,7 @@ class BBConsole(cmd.Cmd):
     cmd.Cmd.__init__(self)
     self.cmdnum = 1
     self.prompt = "%d> " % (self.cmdnum,)
+    self.hist = True
 
     self.TTable = TTable
 
@@ -106,6 +107,9 @@ class BBConsole(cmd.Cmd):
                                       verbose_simulator=self.sim_options.verbose_simulator,
                                       verbose_prover=self.sim_options.verbose_prover,
                                       verbose_prefix="")
+
+    self.num_states  = self.sim.machine.num_states
+    self.num_symbols = self.sim.machine.num_symbols
 
     print "Welcome to the machine!\n"
 
@@ -195,7 +199,10 @@ class BBConsole(cmd.Cmd):
       if len(token) == 2:
         tape_length += 1
         if len(token[0]) != symbol_length:
-          print "Tape symbol lengths don't match"
+          print "Tape symbol lengths don't match\n"
+          return
+        if token[0].translate(None,string.digits[:self.num_symbols]) != "":
+          print "Some of '%s' isn't in '%s'\n" % (token[0],string.digits[:self.num_symbols])
           return
         if symbol_length == 1:
           new_symbol = int(token[0])
@@ -204,7 +211,7 @@ class BBConsole(cmd.Cmd):
         token[0] = new_symbol
       elif token[0][0] == "(":
         if len(token[0]) != symbol_length + 2:
-          print "Back symbol length doesn't match tape symbol length"
+          print "Back symbol length doesn't match tape symbol length\n"
           return
         back_index = i
       elif token[0][0] == "<":
@@ -214,33 +221,35 @@ class BBConsole(cmd.Cmd):
         state_index = i
         tape_dir = 1
       else:
-        print "Unrecognized tape entry: %s" % (token,)
+        print "Unrecognized tape entry: %s\n" % (token,)
         return
 
     if back_index > -1:
       if tape_dir == 0:
         if state_index > back_index:
-          print "State and backsymbol are out of order"
+          print "State and backsymbol are out of order\n"
           return
         elif state_index + 1 != back_index:
-          print "State and backsymbol aren't together"
+          print "State and backsymbol aren't together\n"
           return
       else:
         if state_index < back_index:
-          print "State and backsymbol are out of order"
+          print "State and backsymbol are out of order\n"
           return
         elif state_index - 1 != back_index:
-          print "State and backsymbol aren't together"
+          print "State and backsymbol aren't together\n"
           return
       new_back_symbol = tape_parse[back_index][0][1:-1]
+      if new_back_symbol.translate(None,string.digits[:self.num_symbols]) != "":
+        print "Some of back symbol, '%s', isn't in '%s'\n" % (new_back_symbol,string.digits[:self.num_symbols])
+        return
+      if symbol_length == 1:
+        new_back_symbol = int(new_back_symbol)
+      else:
+        new_back_symbol = Turing_Machine.Block_Symbol([int(c) for c in new_back_symbol])
     else:
       new_back_symbol = ""
     
-    if tape_dir == 0:
-      new_state = tape_parse[state_index][0][1]
-    else:
-      new_state = tape_parse[state_index][0][0]
-        
     new_tape = Tape.Chain_Tape()
     new_tape.dir = tape_dir
 
@@ -250,11 +259,17 @@ class BBConsole(cmd.Cmd):
         if tape_parse[i][1] == "Inf":
           new_tape.tape[0].append(Tape.Repeated_Symbol(tape_parse[i][0],Tape.INF))
         else:
+          if not tape_parse[i][1].isdigit():
+            print "Tape exponent '%s' isn't a number\n" % (token[1],)
+            return
           new_tape.tape[0].append(Tape.Repeated_Symbol(tape_parse[i][0],int(tape_parse[i][1])))
       if i > state_index and (back_index == -1 or i > back_index):
         if tape_parse[i][1] == "Inf":
           new_tape.tape[1].append(Tape.Repeated_Symbol(tape_parse[i][0],Tape.INF))
         else:
+          if not tape_parse[i][1].isdigit():
+            print "Tape exponent '%s' isn't a number\n" % (token[1],)
+            return
           new_tape.tape[1].append(Tape.Repeated_Symbol(tape_parse[i][0],int(tape_parse[i][1])))
 
     new_tape.tape[1].reverse()
@@ -266,6 +281,20 @@ class BBConsole(cmd.Cmd):
       self.sim_options.backsymbol = True
     else:
       self.sim_options.backsymbol = False
+
+    if tape_dir == 0:
+      new_state = tape_parse[state_index][0][1]
+    else:
+      new_state = tape_parse[state_index][0][0]
+        
+    if new_state.translate(None,states[:self.num_states]) != "":
+      print "State, '%s', not one of '%s'\n" % (new_state,states[:self.num_states])
+      return
+
+    new_state = Turing_Machine.Simple_Machine_State(states.index(new_state))
+
+    if self.sim_options.backsymbol:
+      new_state = Turing_Machine.Backsymbol_Macro_Machine_State(new_state,new_back_symbol)
 
     # Construct Machine (Backsymbol-k-Block-Macro-Machine)
     m = Turing_Machine.make_machine(self.TTable)
@@ -288,7 +317,8 @@ class BBConsole(cmd.Cmd):
                                       verbose_prover=self.sim_options.verbose_prover,
                                       verbose_prefix="")
 
-    self.sim.tape = new_tape
+    self.sim.state = new_state
+    self.sim.tape  = new_tape
 
     self.stdout.write("\n")
     self.sim.verbose_print()
@@ -315,7 +345,6 @@ class BBConsole(cmd.Cmd):
         it has been interpreted. If you want to modifdy the input line
         before execution (for example, variable substitution) do it here.
     """
-    self._hist += [ line.strip() ]
     return line
 
   def postcmd(self, stop, line):
@@ -324,6 +353,11 @@ class BBConsole(cmd.Cmd):
     """
     self.cmdnum += 1
     self.prompt = "%d> " % (self.cmdnum,)
+    if self.hist:
+      self._hist += [ line.strip() ]
+    else:
+      self._hist += [ "" ]
+      self.hist = True
     return stop
 
   def default(self, line):       
@@ -331,6 +365,7 @@ class BBConsole(cmd.Cmd):
        In that case we execute the line as Python code.
     """
     print "Unknown command:",line
+    self.hist = False
     self.do_help(None)
 
 
