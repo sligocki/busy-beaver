@@ -124,7 +124,6 @@ class Proof_System(object):
     # the parity (or remainder mod n) of exponents.
     # E.g. 1^(2k+1) 0 2 B>  -->  1^(3k+3) 0 2 B>
     # Note: Very experimental, may well break your simulation.
-    # TODO(shawn): Expose this with a flag in Quick_Sim.py
     self.allow_collatz = False
     self.compute_steps = compute_steps
     self.verbose = verbose  # Step-by-step state printing
@@ -431,7 +430,7 @@ class Proof_System(object):
     new_state, new_tape, new_step_num, new_loop_num = start_config
     
     ## Calculate number of repetitions allowable and other tape-based info.
-    num_reps = Tape.INF
+    num_reps = None
     init_value = {}
     delta_value = {}
     # large_delta == True  iff there is a negative delta != -1
@@ -445,24 +444,8 @@ class Proof_System(object):
           # Calculate the initial and change in value for each variable.
           x = init_block.num.unknown()
           init_value[x] = new_block.num - init_block.num.const
-          if isinstance(init_value[x], Algebraic_Expression):
-            if self.verbose:
-              # TODO(shawn): We could allow these in some cases.
-              # For example, if we have a rule:
-              #   Initial: 0^Inf 2^(d + 1)  (0)B>  2^(f + 2) 0^Inf 
-              #   Diff:    0^Inf 2^1  (0)B>  2^-1 0^Inf 
-              # then:
-              #   0^Inf 2^3  (0)B> 2^(s + 11) 0^Inf
-              # goes to:
-              #   0^Inf 2^(s + 12)  (0)B> 2^2 0^Inf
-              # But this can also get complicated if we need to compare
-              # multiple variables the diff is <= -2
-              self.print_this("++ Current config would make init_value[%r] an expression ++" % x)
-              self.print_this("Config block:", new_block)
-              self.print_this("Rule initial block:", init_block)
-              self.print_this("")
-            return False, "Init_Expression"
-          if init_value[x] < 0:
+          if (not isinstance(init_value[x], Algebraic_Expression) and
+              init_value[x] < 0):
             if self.verbose:
               self.print_this("++ Current config is below rule minimum ++")
               self.print_this("Config block:", new_block)
@@ -478,8 +461,35 @@ class Proof_System(object):
             if delta_value[x] != -1:
               large_delta = True
             try:
-              # As long as init_value[x] >= 0 we can apply proof
-              num_reps = min(num_reps, (init_value[x] // -delta_value[x])  + 1)
+              if num_reps is None:
+                # First one is safe.
+                # For example, if we have a rule:
+                #   Initial: 0^Inf 2^(d + 1)  (0)B>  2^(f + 2) 0^Inf 
+                #   Diff:    0^Inf 2^1  (0)B>  2^-1 0^Inf 
+                # then:
+                #   0^Inf 2^3  (0)B> 2^(s + 11) 0^Inf
+                # goes to:
+                #   0^Inf 2^(s + 12)  (0)B> 2^2 0^Inf
+                num_reps = (init_value[x] // -delta_value[x])  + 1
+              else:
+                if not isinstance(init_value[x], Algebraic_Expression):
+                  # As long as init_value[x] >= 0 we can apply proof
+                  num_reps = min(num_reps, (init_value[x] // -delta_value[x])  + 1)
+                else:
+                  # Example Rule:
+                  #   Initial: 0^Inf 2^a+1 0^1 1^b+3 B> 0^1 1^c+1 0^Inf
+                  #   Diff:    0^Inf 2^-1  0^0 1^+2  B> 0^0 1^-1  0^Inf
+                  # Applied to tape:
+                  #   0^Inf 2^d+5 0^1 1^3 B> 0^1 1^e+3 0^Inf
+                  # We shoud apply the rule either d+4 or e+2 times depending
+                  # on which is smaller. Too complicated, we fail.
+                  if self.verbose:
+                    self.print_this("++ Multiple negative diffs for expressions ++")
+                    self.print_this("Config block:", new_block)
+                    self.print_this("Rule initial block:", init_block)
+                    self.print_this("Rule diff block:", diff_block)
+                    self.print_this("")
+                  return False, "Init_Expression"
             except TypeError, e:
               if self.verbose:
                 self.print_this("++ TypeError ++")
@@ -488,13 +498,14 @@ class Proof_System(object):
               return False, 2
     
     # If none of the diffs are negative, this will repeat forever.
-    if num_reps is Tape.INF:
+    if num_reps is None:
       if self.verbose:
         self.print_this("++ Rules applies infinitely ++")
       return True, ((Turing_Machine.INF_REPEAT, None, None), large_delta)
     
     # If we cannot even apply this transition once, we're done.
-    if num_reps <= 0:
+    if (not isinstance(num_reps, Algebraic_Expression) and
+        num_reps <= 0):
       if self.verbose:
         self.print_this("++ Cannot even apply transition once ++")
       return False, 3
