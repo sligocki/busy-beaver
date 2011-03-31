@@ -3,6 +3,7 @@
 import sys, string
 
 from Macro import Turing_Machine, Simulator, Block_Finder, Tape
+from Numbers.Algebraic_Expression import Expression_from_string
 import IO
 
 # White, Red, Blue, Green, Magenta, Cyan, Brown/Yellow
@@ -258,20 +259,26 @@ class BBConsole(cmd.Cmd):
     for i in xrange(token_length):
       if i < state_index and (back_index == -1 or i < back_index):
         if tape_parse[i][1] == "Inf":
-          new_tape.tape[0].append(Tape.Repeated_Symbol(tape_parse[i][0],Tape.INF))
+          expo = Tape.INF
+        elif tape_parse[i][1][0] == "(":
+          expo = Expression_from_string(tape_parse[i][1])
         else:
           if not tape_parse[i][1].isdigit():
             print "Tape exponent '%s' isn't a number\n" % (token[1],)
             return
-          new_tape.tape[0].append(Tape.Repeated_Symbol(tape_parse[i][0],int(tape_parse[i][1])))
+          expo = int(tape_parse[i][1])
+        new_tape.tape[0].append(Tape.Repeated_Symbol(tape_parse[i][0],expo))
       if i > state_index and (back_index == -1 or i > back_index):
         if tape_parse[i][1] == "Inf":
-          new_tape.tape[1].append(Tape.Repeated_Symbol(tape_parse[i][0],Tape.INF))
+          expo = Tape.INF
+        elif tape_parse[i][1][0] == "(":
+          expo = Expression_from_string(tape_parse[i][1])
         else:
           if not tape_parse[i][1].isdigit():
             print "Tape exponent '%s' isn't a number\n" % (token[1],)
             return
-          new_tape.tape[1].append(Tape.Repeated_Symbol(tape_parse[i][0],int(tape_parse[i][1])))
+          expo = int(tape_parse[i][1])
+        new_tape.tape[1].append(Tape.Repeated_Symbol(tape_parse[i][0],expo))
 
     new_tape.tape[1].reverse()
     new_tape.displace = 0
