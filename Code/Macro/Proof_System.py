@@ -12,7 +12,7 @@ import Turing_Machine
 
 parent_dir = sys.path[0][:sys.path[0].rfind("/")] # pwd path with last directory removed
 sys.path.insert(1, parent_dir)
-from Numbers.Algebraic_Expression import Algebraic_Expression, Variable, NewVariableExpression, VariableToExpression, ConstantToExpression, is_scalar
+from Numbers.Algebraic_Expression import Algebraic_Expression, Variable, NewVariableExpression, VariableToExpression, ConstantToExpression, is_scalar, BadOperation
 
 class Rule(object):
   """Base type for Proof_System rules."""
@@ -489,10 +489,10 @@ class Proof_System(object):
                     self.print_this("Rule initial block:", init_block)
                     self.print_this("Rule diff block:", diff_block)
                     self.print_this("")
-                  return False, "Init_Expression"
-            except TypeError, e:
+                  return False, "Multiple_Diff"
+            except BadOperation, e:
               if self.verbose:
-                self.print_this("++ TypeError ++")
+                self.print_this("++ BadOperation ++")
                 self.print_this(e)
                 self.print_this("From: num_reps = min(%r, (%r // -%r)  + 1)" % (num_reps, init_value[x], delta_value[x]))
               return False, 2
