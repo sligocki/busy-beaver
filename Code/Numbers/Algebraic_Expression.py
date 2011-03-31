@@ -10,55 +10,108 @@ def is_scalar(value):
 class Variable(object):
   """A distinct variable in an algebraic expression"""
   num_vars = 0
-  def __init__(self):
-    self.id = Variable.num_vars
-    Variable.num_vars += 1
+
+  def __init__(self, id = None):
+    if id == None:
+      self.id = Variable.num_vars
+      Variable.num_vars += 1
+    else:
+      self.id = id
+
   def __repr__(self):
     # Variables are initially printed as letters and thereafter as <x#>
     if self.id <= 25:
       return "%c" % (self.id + 97)
     else:
       return "<x%d>" % self.id
+
   def __eq__(self, other):
     return self.id == other.id
+
   def __hash__(self):
     return hash(self.id)
+
+def Variable_from_string(input):
+  if input[0] == '<' and input[1] == 'x':
+    retval = Variable(int(input[2:-1]))
+  elif len(input) == 1:
+    if string.find(string.ascii_lowercase,input) != -1:
+      retval = Variable(ord(input[0]) - ord('a'))
+    else:
+      raise ValueError,"Unable to interpret '%s' as a Term" % (input,)
+  else:
+    raise ValueError,"Unable to interpret '%s' as a Term" % (input,)
+
+  return retval
 
 class Var_Power(object):
   """A variable raised to some power (eg: a^3)"""
   def __init__(self, variable, power):
     self.var = variable
     self.pow = power
+
   def __repr__(self):
     if self.pow == 1:
       return repr(self.var)
     else:
-      return "(%s^%s)" % (repr(self.var), repr(self.pow))
+      return "%s^%s" % (repr(self.var), repr(self.pow))
+
   def substitute(self, subs):
     """Substitute values from dict 'subs' to get an int."""
     # TODO: What should we do if it's not in dict?
     return subs[self.var]**self.pow
 
+def Var_Power_from_string(input):
+  input = input.split('^')
+
+  vari = Variable_from_string(input[0])
+
+  if len(input) == 2:
+    power = int(input[1])
+  else:
+    power = 1
+    
+  return Var_Power(vari,power)
+
 class Term(object):
-  """A term in a (multi-variable) polynomial (eg: 4 x^3 * y^2)"""
-  def __init__(self, var_powers, coeficient):
+  """A term in a (multi-variable) polynomial (eg: 4 x^3 y^2)"""
+  def __init__(self, var_powers, coefficient):
     self.vars = var_powers # Always assumed to be a non-empty tuple
-    self.coef = coeficient
+    self.coef = coefficient
+
   def __repr__(self):
-    r = string.join([repr(v) for v in self.vars], "")
+    r = string.join([repr(v) for v in self.vars], " ")
     if self.coef == 1:
       return r
     elif self.coef == -1:
       return "-"+r
     else:
-      return repr(self.coef)+r
+      return repr(self.coef)+" "+r
+
   def substitute(self, subs):
     """Substitute values from dict 'subs' to get an int."""
     return reduce(operator.mul, [vp.substitute(subs) for vp in self.vars]) * self.coef
 
+def Term_from_string(input):
+  input_split = input.split()
+
+  try:
+    coef = int(input_split[0])
+    var_powers = input_split[1:]
+  except ValueError:
+    if input_split[0][0] == "-":
+      coef = -1
+      input_split[0] = input_split[0][1:]
+    else:
+      coef = 1
+    var_powers = input_split
+
+  var_powers = tuple([Var_Power_from_string(var_power) for var_power in var_powers])
+
+  return Term(var_powers,coef)
+
 class Expression(Number):
   """An algebraic expression, i.e. a multi-variable polynomial."""
-  
   def __init__(self, terms, constant):
     self.terms = terms
     self.const = constant
@@ -69,6 +122,8 @@ class Expression(Number):
     r = string.join([repr(t) for t in self.terms], " + ")
     if self.const == 0:
       return "("+r+")"
+    elif self.const < 0:
+      return "("+r+" - "+repr(-self.const)+")"
     else:
       return "("+r+" + "+repr(self.const)+")"
   
@@ -91,7 +146,7 @@ class Expression(Number):
   def __div__(self, other):
     """Divide the expression by a scalar.
     
-    If the scalar does not perfectly divide all the coeficients and constant,
+    If the scalar does not perfectly divide all the coefficients and constant,
     we raise BadOperation
     """
     # TODO: Implement some way of dealing with situations like (d + d^2) / 2
@@ -150,8 +205,10 @@ class Expression(Number):
       return len(self.terms) == 0 and self.const == other
     else:
       raise BadOperation
+
   def __ne__(self, other):
     return not self == other
+
   def __cmp__(self, other):
     if is_scalar(other) and len(self.terms) == 0:
       return cmp(self.const, other)
@@ -164,6 +221,34 @@ class Expression(Number):
       return self.terms[0].vars[0].var
     else:
       raise BadOperation, "This expression does not have exactly 1 variable!"
+
+def Expression_from_string(input):
+  if input[0] == '(':
+    input = input[1:-1]
+
+  terms = input.split('+')
+  terms = [term.strip() for term in terms]
+
+  last_terms = terms[-1].split('-')
+  last_terms = [last_term.strip() for last_term in last_terms]
+
+  if len(last_terms) == 2:
+    last_terms[1] = '-'+last_terms[1]
+
+  if last_terms[0] == '':
+    last_terms = last_terms[1:]
+
+  terms[-1:] = last_terms
+
+  try:
+    coef = int(terms[-1])
+    terms = terms[:-1]
+  except ValueError:
+    coef = 0
+
+  terms = tuple([Term_from_string(term) for term in terms])
+
+  return Expression(terms,coef)
 
 def term_sum(terms1, terms2):
   """Add 2 lists of terms"""
