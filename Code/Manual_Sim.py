@@ -319,6 +319,7 @@ class BBConsole(cmd.Cmd):
                                       verbose_prefix="")
 
     self.sim.state = new_state
+    self.sim.dir   = tape_dir
     self.sim.tape  = new_tape
 
     self.stdout.write("\n")
