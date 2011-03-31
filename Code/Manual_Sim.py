@@ -395,7 +395,7 @@ if __name__ == "__main__":
   options.verbose = True
   options.manual  = True
 
-  options.compute_steps = False
+  options.compute_steps = True
 
   options.print_loops = 1
   
