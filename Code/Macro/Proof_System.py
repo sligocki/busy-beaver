@@ -490,11 +490,11 @@ class Proof_System(object):
                     self.print_this("Rule diff block:", diff_block)
                     self.print_this("")
                   return False, "Multiple_Diff"
-            except BadOperation, e:
+            except BadOperation:
               if self.verbose:
                 self.print_this("++ BadOperation ++")
-                self.print_this(e)
                 self.print_this("From: num_reps = min(%r, (%r // -%r)  + 1)" % (num_reps, init_value[x], delta_value[x]))
+                self.print_this("")
               return False, 2
     
     # If none of the diffs are negative, this will repeat forever.
