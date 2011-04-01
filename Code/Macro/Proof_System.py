@@ -4,6 +4,7 @@ Proof System which observes and attempts to prove patterns in computation.
 
 import copy
 from collections import defaultdict
+from optparse import OptionParser, OptionGroup
 import sys
 
 import Simulator
@@ -13,6 +14,25 @@ import Turing_Machine
 parent_dir = sys.path[0][:sys.path[0].rfind("/")] # pwd path with last directory removed
 sys.path.insert(1, parent_dir)
 from Numbers.Algebraic_Expression import Algebraic_Expression, Variable, NewVariableExpression, VariableToExpression, ConstantToExpression, is_scalar, BadOperation
+
+
+def add_option_group(parser):
+  """Add Block_Finder options group to an OptParser parser object."""
+  assert isinstance(parser, OptionParser)
+
+  group = OptionGroup(parser, "Proof System options")
+
+  group.add_option("--verbose-prover", action="store_true")
+  group.add_option("-p", "--no-prover", dest="prover",
+                   action="store_false", default=True, 
+                   help="Turn OFF proof system.")
+  group.add_option("-r", "--recursive", action="store_true", default=False, 
+                   help="Turn ON recursive proof system.")
+  group.add_option("--allow-collatz", action="store_true", default=False,
+                   help="Allow Collatz-style recursive proofs. [Experimental]")
+
+  parser.add_option_group(group)
+
 
 class Rule(object):
   """Base type for Proof_System rules."""

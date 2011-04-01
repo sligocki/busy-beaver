@@ -145,36 +145,15 @@ if __name__ == "__main__":
   parser.add_option("-v", "--verbose", action="store_true",
                     help="Print step-by-step informaion from simulator "
                     "and prover.")
-  parser.add_option("--verbose-prover", action="store_true",
-                    help="Provide debugging output from prover.")
-  parser.add_option("--verbose-simulator", action="store_true",
-                    help="Provide debugging output from simulator.")
   parser.add_option("--print-loops", type=int, default=10000, metavar="LOOPS",
                     help="Print every LOOPS loops [Default %default].")
   
-  parser.add_option("-b", "--no-backsymbol", dest="backsymbol",
-                    action="store_false", default=True,
-                    help="Turn off backsymbol macro machine")
-  parser.add_option("-p", "--no-prover", dest="prover",
-                    action="store_false", default=True,
-                    help="Turn off proof system")
-  parser.add_option("-r", "--recursive", action="store_true", default=False, 
-                    help="Turn on recursive proof system")
-  parser.add_option("--allow-collatz", action="store_true", default=False,
-                    help="Allow Collatz-style recursive proofs.")
-  parser.add_option("--no-steps", dest="compute_steps",
-                    action="store_false", default=True,
-                    help="Don't keep track of base step count (can be expensive"
-                    " to calculate especially with recursive proofs).")
   parser.add_option("--manual", action="store_true",
                     help="Don't run any simulation, just set up simulator "
                     "and quit. (Run as python -i Quick_Sim.py to interactively "
                     "run simulation.)")
-  
-  parser.add_option("-n", "--block-size", type=int,
-                    help="Block size to use in macro machine simulator "
-                    "(default is to guess with the block_finder algorithm)")
 
+  Simulator.add_option_group(parser)
   Block_Finder.add_option_group(parser)
   
   (options, args) = parser.parse_args()

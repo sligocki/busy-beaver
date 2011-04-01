@@ -269,39 +269,12 @@ if __name__ == "__main__":
   parser.add_option_group(req_parser)
 
   enum_parser = OptionGroup(parser, "Enumeration Options")
-  enum_parser.add_option("--steps", type=int, default=10000,
-                         help="Max simulation steps to run each machine "
-                         "(0 for infinite) [Default: %default]")
-  enum_parser.add_option("--time", type=float, default=15.0,
-                         help="Max (real) time (in seconds) to run each "
-                         "machine [Default: %default]")
   enum_parser.add_option("--randomize", action="store_true", default=False,
                          help="Randomize the order of enumeration.")
   enum_parser.add_option("--seed", type=int, help="Seed to randomize with.")
-
-  enum_parser.add_option("-b", "--no-backsymbol", dest="backsymbol",
-                         action="store_false", default=True,
-                         help="Turn off backsymbol macro machine")
-  enum_parser.add_option("-p", "--no-prover", dest="prover",
-                         action="store_false", default=True,
-                         help="Turn off proof system")
-  enum_parser.add_option("-r", "--recursive",
-                         action="store_true", default=False,
-                         help="Turn on recursive proof system")
-  enum_parser.add_option("--no-steps", dest="compute_steps",
-                         action="store_false", default=True,
-                         help="Don't keep track of base step count "
-                         "(can be expensive to calculate especially with "
-                         "recursive proofs).")
-
-  enum_parser.add_option("--block-size", type=int, metavar="SIZE",
-                         help="Block size to use in macro machine simulator "
-                         "(default is to guess with the block_finder "
-                         "algorithm)")
-
   parser.add_option_group(enum_parser)
 
-  Block_Finder.add_option_group(parser)
+  Macro_Simulator.add_option_group(parser)
 
   out_parser = OptionGroup(parser, "Output Options")
   out_parser.add_option("--outfile", dest="outfilename", metavar="OUTFILE",

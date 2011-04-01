@@ -17,8 +17,7 @@ def add_option_group(parser):
 
   group = OptionGroup(parser, "Block Finder options")
 
-  group.add_option("--verbose-block-finder", action="store_true",
-                   help="Provide debugging output from block_finder.")
+  group.add_option("--verbose-block-finder", action="store_true")
 
   group.add_option("--bf-limit1", type=int, default=200, metavar="LIMIT",
                    help="Number of steps to run the first half of the "
@@ -38,7 +37,7 @@ def add_option_group(parser):
   group.add_option("--bf-no-run2", action="store_false", dest="bf_run2",
                    help="Don't run second half of block finder.")
 
-  group.add_option("--bf-extra-mult", type=int, default=2, metavar="MULT",
+  group.add_option("--bf-extra-mult", type=int, default=2, metavar="N",
                    help="How far ahead to search in second half of the "
                    " block finder.")
 
