@@ -1,10 +1,11 @@
 #! /usr/bin/env python
 
-import sys, string
+import string
+import sys
 
+import IO
 from Macro import Turing_Machine, Simulator, Block_Finder, Tape
 from Numbers.Algebraic_Expression import Expression_from_string
-import IO
 
 # White, Red, Blue, Green, Magenta, Cyan, Brown/Yellow
 color = [49, 41, 44, 42, 45, 46, 43]
@@ -384,26 +385,14 @@ if __name__ == "__main__":
   usage = "usage: %prog [options] machine_file [line_number]"
   parser = OptionParser(usage=usage)
   # TODO: One variable for different levels of verbosity.
-  # TODO: Combine optparsers from MacroMachine, Enumerate and here.
-  parser.add_option("-b", "--no-backsymbol", dest="backsymbol",
-                    action="store_false", default=True,
-                    help="Turn off backsymbol macro machine")
-  parser.add_option("-p", "--no-prover", dest="prover",
-                    action="store_false", default=True,
-                    help="Turn off proof system")
-  parser.add_option("-r", "--recursive", action="store_true", default=False, 
-                    help="Turn on recursive proof system")
-  parser.add_option("-n", "--block-size", type=int,
-                    help="Block size to use in macro machine simulator "
-                    "(default is to guess with the block_finder algorithm)")
-  
+  Simulator.add_option_group(parser)
   (options, args) = parser.parse_args()
 
   options.quiet   = False
   options.verbose = True
   options.manual  = True
 
-  options.compute_steps = True
+  #options.compute_steps = True
 
   options.print_loops = 1
   

@@ -1,14 +1,33 @@
 """
-Turing Machine Simulator with considerable accelleration due to tape compression,
-chain moves and a proof system.
+Turing Machine Simulator with considerable accelleration due to tape
+compression, chain moves and a proof system.
 """
 
 import math
+from optparse import OptionParser, OptionGroup
 import time
 
 import Proof_System
 import Tape
 import Turing_Machine
+
+def add_option_group(parser):
+  """Add Block_Finder options group to an OptParser parser object."""
+  assert isinstance(parser, OptionParser)
+
+  Turing_Machine.add_option_group(parser)
+  Proof_System.add_option_group(parser)
+
+  group = OptionGroup(parser, "Simulator options")
+
+  group.add_option("--verbose-simulator", action="store_true")
+  group.add_option("--no-steps", dest="compute_steps",
+                    action="store_false", default=True,
+                    help="Don't keep track of base step count (can be "
+                   "expensive to calculate especially with recursive proofs).")
+
+  parser.add_option_group(group)
+
 
 # Infinite Reasons
 PROOF_SYSTEM = "Proof_System"
@@ -17,6 +36,8 @@ CHAIN_MOVE = "Chain_Move"
 
 class Simulator(object):
   """Turing machine simulator using chain-tape optimization."""
+  # TODO(shawn): Stop passing in all options separately, just pass in options
+  # object.
   def __init__(self, machine, recursive=False, enable_prover=True,
                init_tape=True, compute_steps=True, verbose_simulator=False,
                verbose_prover=False, verbose_prefix="", allow_collatz=False):

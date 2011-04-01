@@ -2,7 +2,25 @@
 Abstract Turing Machine model with basic NxM TM and Macro-Machine derivatives
 """
 
+from optparse import OptionParser, OptionGroup
 import string
+
+
+def add_option_group(parser):
+  """Add Block_Finder options group to an OptParser parser object."""
+  assert isinstance(parser, OptionParser)
+
+  group = OptionGroup(parser, "Macro Machine options")
+
+  group.add_option("-n", "--block-size", type=int, metavar="SIZE",
+                   help="Block size to use in macro machine simulator "
+                   "(default is to guess with the block_finder algorithm).")
+  group.add_option("-b", "--no-backsymbol", dest="backsymbol",
+                   action="store_false", default=True, 
+                   help="Turn OFF backsymbol macro machine.")
+
+  parser.add_option_group(group)
+
 
 LEFT = 0
 RIGHT = 1

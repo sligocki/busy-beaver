@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 
 import copy
+from optparse import OptionParser, OptionGroup
 import sys
 
 from Alarm import ALARM, AlarmException
@@ -11,6 +12,25 @@ import IO
 from Macro import Turing_Machine, Simulator, Block_Finder
 from Macro.Tape import INF
 import Reverse_Engineer_Filter
+
+def add_option_group(parser):
+  """Add Block_Finder options group to an OptParser parser object."""
+  assert isinstance(parser, OptionParser)
+
+  group = OptionGroup(parser, "Macro Simulator options")
+
+  group.add_option("--steps", type=int, default=0,
+                   help="Max steps to run each simulation (0 for infinite). "
+                   "[Default: infinite]")
+  group.add_option("--time", type=int, default=15,
+                   help="Max seconds to run each simulation. "
+                   "[Default: %default]")
+
+  parser.add_option_group(group)
+
+  Simulator.add_option_group(parser)
+  Block_Finder.add_option_group(parser)
+
 
 class GenContainer(object):
   """Generic Container class"""
@@ -94,7 +114,9 @@ def run(TTable, options, steps=INF, runtime=None, block_size=None,
 
       ## Set up the simulator
       #global sim # Useful for Debugging
-      sim = Simulator.Simulator(m, rec, enable_prover=prover, compute_steps=options.compute_steps)
+      sim = Simulator.Simulator(m, rec, enable_prover=prover,
+                                compute_steps=options.compute_steps,
+                                allow_collatz=options.allow_collatz)
 
       try:
         if runtime:
@@ -133,26 +155,10 @@ def run(TTable, options, steps=INF, runtime=None, block_size=None,
 
 # Main script
 if __name__ == "__main__":
-  from optparse import OptionParser, OptionGroup
   # Parse command line options.
   usage = "usage: %prog [options] machine_file [line_number]"
   parser = OptionParser(usage=usage)
-  parser.add_option("-s", "--steps", type=int, default=0, help="Maximum number of steps to simulate for use 0 for infinite [Default: infinite]")
-  parser.add_option("-t", "--time", type=int, default=15, help="Maximum number of seconds to simulate for [Default: %default]")
-  
-  parser.add_option("-b", "--no-backsymbol", action="store_false", dest="backsymbol", default=True, 
-                    help="Turn off backsymbol macro machine")
-  parser.add_option("-p", "--no-prover", action="store_false", dest="prover", default=True, 
-                    help="Turn off proof system")
-  parser.add_option("-r", "--recursive", action="store_true", default=False, 
-                    help="Turn ON recursive proof system [Experimental]")
-  parser.add_option("--no-steps", action="store_false", dest="compute_steps", default=True,
-                    help="Don't keep track of base step count (can be expensive to calculate especially with recursive proofs).")
-  
-  parser.add_option("-n", "--block-size", type=int, help="Block size to use in macro machine simulator (default is to guess with the block_finder algorithm)")
-  
-  Block_Finder.add_option_group(parser)
-  
+  add_option_group(parser)
   (options, args) = parser.parse_args()
   
   
