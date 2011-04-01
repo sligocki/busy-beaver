@@ -1,13 +1,49 @@
 from __future__ import division
 
 import copy
+from optparse import OptionParser, OptionGroup
 import sys
 import time
 
 from Simulator import Simulator
 import Turing_Machine
 
+# TODO(shawn): Get rid of global DEBUG flag.
 DEBUG = False
+
+def add_option_group(parser):
+  """Add Block_Finder options group to an OptParser parser object."""
+  assert isinstance(parser, OptionParser)
+
+  group = OptionGroup(parser, "Block Finder options")
+
+  group.add_option("--verbose-block-finder", action="store_true",
+                   help="Provide debugging output from block_finder.")
+
+  group.add_option("--bf-limit1", type=int, default=200, metavar="LIMIT",
+                   help="Number of steps to run the first half of the "
+                   "block finder [Default: %default].")
+
+  group.add_option("--bf-limit2", type=int, default=200, metavar="LIMIT",
+                   help="Number of steps to run the second half of the "
+                   "block finder [Default: %default].")
+
+  group.add_option("--bf-run1", action="store_true", default=True,
+                   help="In first half, find worst tape before limit.")
+  group.add_option("--bf-no-run1", action="store_false", dest="bf_run1",
+                   help="In first half, just run to limit.")
+
+  group.add_option("--bf-run2", action="store_true", default=True,
+                   help="Run second half of block finder.")
+  group.add_option("--bf-no-run2", action="store_false", dest="bf_run2",
+                   help="Don't run second half of block finder.")
+
+  group.add_option("--bf-extra-mult", type=int, default=2, metavar="MULT",
+                   help="How far ahead to search in second half of the "
+                   " block finder.")
+
+  parser.add_option_group(group)
+
 
 def block_finder(machine, limit1=200, limit2=200, run1=True, run2=True, extra_mult=2):
   """Tries to find the optimal block-size for macro machines"""
