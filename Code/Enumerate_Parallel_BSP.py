@@ -19,11 +19,12 @@ import cPickle as pickle
 
 from Scientific.BSP import *
 
-from Common import Exit_Condition
-from Turing_Machine import Turing_Machine
-from IO import IO
-import Macro_Simulator
 from Alarm import AlarmException
+from Common import Exit_Condition
+from IO import IO
+from Macro import Block_Finder
+import Macro_Simulator
+from Turing_Machine import Turing_Machine
 
 def long_to_eng_str(number, left, right):
   if number != 0:
@@ -520,18 +521,14 @@ if __name__ == "__main__":
   enum_parser.add_option("-r", "--recursive", action="store_true", default=False,
                     help="Turn ON recursive proof system [Very Experimental]")
 
+  enum_parser.add_option("--block-size", type=int, metavar="SIZE",
+                         help="Block size to use in macro machine simulator "
+                         "(default is to guess with the block_finder "
+                         "algorithm)")
+
   parser.add_option_group(enum_parser)
 
-  block_options = OptionGroup(parser, "Block Finder options")
-  block_options.add_option("--block-size", type=int, help="Block size to use in macro machine simulator (default is to guess with the block_finder algorithm)")
-  block_options.add_option("--bf-limit1", type=int, default=200, metavar="LIMIT", help="Number of steps to run the first half of block finder [Default: %default].")
-  block_options.add_option("--bf-limit2", type=int, default=200, metavar="LIMIT", help="Number of stpes to run the second half of block finder [Default: %default].")
-  block_options.add_option("--bf-run1", action="store_true", default=True, help="In first half, find worst tape before limit.")
-  block_options.add_option("--bf-no-run1", action="store_false", dest="bf_run1", help="In first half, just run to limit.")
-  block_options.add_option("--bf-run2", action="store_true", default=True, help="Run second half of block finder.")
-  block_options.add_option("--bf-no-run2", action="store_false", dest="bf_run2", help="Don't run second half of block finder.")
-  block_options.add_option("--bf-extra-mult", type=int, default=2, metavar="MULT", help="How far ahead to search in second half of block finder.")
-  parser.add_option_group(block_options)
+  Block_Finder.add_option_group(parser)
 
   out_parser = OptionGroup(parser, "Output Options")
   out_parser.add_option("--outfile", dest="outfilename", metavar="OUTFILE", help="Output file name [Default: Enum.STATES.SYMBOLS.STEPS.out]")
