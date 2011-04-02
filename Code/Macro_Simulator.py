@@ -14,7 +14,7 @@ from Macro.Tape import INF
 import Reverse_Engineer_Filter
 
 def add_option_group(parser):
-  """Add Block_Finder options group to an OptParser parser object."""
+  """Add Macro_Simulator options group to an OptParser parser object."""
   assert isinstance(parser, OptionParser)
 
   group = OptionGroup(parser, "Macro Simulator options")

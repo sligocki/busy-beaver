@@ -7,7 +7,7 @@ import string
 
 
 def add_option_group(parser):
-  """Add Block_Finder options group to an OptParser parser object."""
+  """Add Turing_Machine options group to an OptParser parser object."""
   assert isinstance(parser, OptionParser)
 
   group = OptionGroup(parser, "Macro Machine options")

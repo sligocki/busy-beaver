@@ -12,7 +12,7 @@ import Tape
 import Turing_Machine
 
 def add_option_group(parser):
-  """Add Block_Finder options group to an OptParser parser object."""
+  """Add Simulator options group to an OptParser parser object."""
   assert isinstance(parser, OptionParser)
 
   Turing_Machine.add_option_group(parser)
