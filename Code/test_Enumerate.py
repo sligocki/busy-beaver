@@ -2,6 +2,7 @@
 
 import Enumerate
 
+import os
 import subprocess
 import unittest
 
@@ -13,9 +14,13 @@ class GoldTest(unittest.TestCase):
     pass
 
   def test_goldfiles(self):
+    # Clear out test directory to start fresh.
+    test_dir = "/tmp/test_Enumerate/"
+    # TODO(shawn): pythonify this
+    subprocess.call(["rm", "-rf", test_dir])
+    os.makedirs(test_dir)
     for states, symbols in [(2, 2), (2, 3), (3, 2)]:
-      # TODO(shawn): Put this in a dir so we can just rm -rf it.
-      outfile = "/tmp/Enum.%d.%d.out" % (states, symbols)
+      outfile = os.path.join(test_dir, "Enum.%d.%d.out" % (states, symbols))
       # TODO(shawn): Make these path agnostic.
       goldfile = "Testdata/Enum.%d.%d.out.gold" % (states, symbols)
       Enumerate.main(["--states=%d" % states,
@@ -25,8 +30,9 @@ class GoldTest(unittest.TestCase):
                       ])
       retvalue = subprocess.call(["diff", outfile, goldfile])
       self.assertEqual(0, retvalue)
-      # TODO(shawn): Clean up after ourselves
-      
+    # Clean up after ourselves.
+    # TODO(shawn): pythonify this
+    subprocess.call(["rm", "-rf", test_dir])
 
 
 if __name__ == "__main__":
