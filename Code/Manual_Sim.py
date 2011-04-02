@@ -80,7 +80,7 @@ class BBConsole(cmd.Cmd):
     cmd.Cmd.__init__(self)
     self.cmdnum = 1
     self.prompt = "%d> " % (self.cmdnum,)
-    self.hist = True
+    self.record_hist = True
 
     self.TTable = TTable
 
@@ -152,30 +152,41 @@ class BBConsole(cmd.Cmd):
 
   def do_step(self,args):
     """Take on step of the current machine"""
-    self.sim.step()
+    steps = 1
 
-    if self.sim.op_state == Turing_Machine.HALT:
-      print
-      print "Turing Machine Halted!"
-      print
-      if options.compute_steps:
-        print "Steps:   ", self.sim.step_num
-      print "Nonzeros:", self.sim.get_nonzeros()
-      print
-    elif self.sim.op_state == Turing_Machine.INF_REPEAT:
-      print
-      print "Turing Machine proven Infinite!"
-      print "Reason:", self.sim.inf_reason
-    elif self.sim.op_state == Turing_Machine.UNDEFINED:
-      print
-      print "Turing Machine reached Undefined transition!"
-      print "State: ", self.sim.op_details[0][1]
-      print "Symbol:", self.sim.op_details[0][0]
-      print
-      if options.compute_steps:
-        print "Steps:   ", self.sim.step_num
-      print "Nonzeros:", self.sim.get_nonzeros()
-      print
+    if args != '':
+      try:
+        steps = int(args)
+      except ValueError:
+        print "'%s' is not an integer" % (args,)
+        self.record_hist = False
+        return
+
+    for step in xrange(steps):
+      self.sim.step()
+
+      if self.sim.op_state == Turing_Machine.HALT:
+        print
+        print "Turing Machine Halted!"
+        print
+        if options.compute_steps:
+          print "Steps:   ", self.sim.step_num
+        print "Nonzeros:", self.sim.get_nonzeros()
+        print
+      elif self.sim.op_state == Turing_Machine.INF_REPEAT:
+        print
+        print "Turing Machine proven Infinite!"
+        print "Reason:", self.sim.inf_reason
+      elif self.sim.op_state == Turing_Machine.UNDEFINED:
+        print
+        print "Turing Machine reached Undefined transition!"
+        print "State: ", self.sim.op_details[0][1]
+        print "Symbol:", self.sim.op_details[0][0]
+        print
+        if options.compute_steps:
+          print "Steps:   ", self.sim.step_num
+        print "Nonzeros:", self.sim.get_nonzeros()
+        print
 
   def do_tape(self, args):
     """Enter a new tape and state - same format as output"""
@@ -363,11 +374,11 @@ class BBConsole(cmd.Cmd):
     """
     self.cmdnum += 1
     self.prompt = "%d> " % (self.cmdnum,)
-    if self.hist:
+    if self.record_hist:
       self._hist += [ line.strip() ]
     else:
       self._hist += [ "" ]
-      self.hist = True
+      self.record_hist = True
     return stop
 
   def default(self, line):       
@@ -375,7 +386,7 @@ class BBConsole(cmd.Cmd):
        In that case we execute the line as Python code.
     """
     print "Unknown command:",line
-    self.hist = False
+    self.record_hist = False
     self.do_help(None)
 
 
