@@ -19,10 +19,10 @@ def add_option_group(parser):
 
   group = OptionGroup(parser, "Macro Simulator options")
 
-  group.add_option("--steps", type=int, default=0,
+  group.add_option("--steps", type=int, default=INF,
                    help="Max steps to run each simulation (0 for infinite). "
                    "[Default: infinite]")
-  group.add_option("--time", type=int, default=15,
+  group.add_option("--time", type=float, default=15.0,
                    help="Max seconds to run each simulation. "
                    "[Default: %default]")
 
@@ -53,10 +53,15 @@ def setup_CTL(m, cutoff):
   config = GenContainer(state=sim.state, dir=sim.dir, tape=tape)
   return config
 
-def run(TTable, options, steps=INF, runtime=None, block_size=None, 
-                back=True, prover=True, rec=False):
+def run_options(ttable, options):
   """Run the Accelerated Turing Machine Simulator, running a few simple filters
   first and using intelligent blockfinding."""
+  return run(ttable, options, options.steps, options.time, options.block_size,
+             options.backsymbol, options.prover, options.recursive)
+
+def run(TTable, options, steps=INF, runtime=None, block_size=None, 
+                back=True, prover=True, rec=False):
+  """Legacy interface, use run_options."""
   for do_over in xrange(0,4):
     try:
       ## Test for quickly for infinite machine
