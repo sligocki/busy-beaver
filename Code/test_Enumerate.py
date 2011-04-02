@@ -4,6 +4,7 @@ import Enumerate
 
 import os
 import subprocess
+import sys
 import unittest
 
 
@@ -11,7 +12,10 @@ class GoldTest(unittest.TestCase):
   # Test that Enumerator produces consistent results.
   # Note
   def setUp(self):
-    pass
+    # Get busy-beaver root directory.
+    test_dir = os.path.dirname(sys.argv[0])
+    self.root_dir = os.path.join(test_dir, os.pardir)
+    self.root_dir = os.path.normpath(self.root_dir)
 
   def test_goldfiles(self):
     # Clear out test directory to start fresh.
@@ -21,8 +25,8 @@ class GoldTest(unittest.TestCase):
     os.makedirs(test_dir)
     for states, symbols in [(2, 2), (2, 3), (3, 2)]:
       outfile = os.path.join(test_dir, "Enum.%d.%d.out" % (states, symbols))
-      # TODO(shawn): Make these path agnostic.
-      goldfile = "Testdata/Enum.%d.%d.out.gold" % (states, symbols)
+      goldfile = os.path.join(
+          self.root_dir, "Testdata/Enum.%d.%d.out.gold" % (states, symbols))
       Enumerate.main(["--states=%d" % states,
                       "--symbols=%d" % symbols,
                       "--outfile=%s" % outfile,
