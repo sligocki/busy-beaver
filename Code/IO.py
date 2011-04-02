@@ -81,7 +81,8 @@ class Record(object):
       #assert obj[0] not in string.digits
       return obj
     else:
-      assert isinstance(obj, (int, long, float))
+      assert isinstance(obj, (int, long, float)), \
+          "Object %r is invalid type %s" % (obj, type(obj))
       return str(obj)
 
   def read_generic(self, s):

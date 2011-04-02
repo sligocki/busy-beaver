@@ -7,11 +7,16 @@
 # It enumerates all Busy Beavers for given # of states and symbols,
 # runs the Macro Machine simulator, gathers statistics, and outputs all of the
 # machines like Generate does.
-#
 
-import copy, sys, time, math, random, os, shutil
-
+import copy
 import cPickle as pickle
+import math
+from optparse import OptionParser, OptionGroup
+import os
+import random
+import shutil
+import sys
+import time
 
 from Alarm import AlarmException
 from Common import Exit_Condition
@@ -226,7 +231,7 @@ class Enumerator(object):
     io_record.ttable = tm.get_TTable()
     io_record.category = Exit_Condition.HALT
     io_record.category_reason = (score, steps)
-    io.write_record(io_record)
+    self.io.write_record(io_record)
 
   def add_infinite(self, tm, reason):
     """Note an infinite TM. Add statistics and output it with reason."""
@@ -238,9 +243,9 @@ class Enumerator(object):
     io_record.ttable = tm.get_TTable()
     io_record.category = Exit_Condition.INFINITE
     io_record.category_reason = (reason,)
-    io.write_record(io_record)
+    self.io.write_record(io_record)
 
-  def add_unresolved(self, tm, reason, steps, runtime=None):
+  def add_unresolved(self, tm, reason, steps, runtime=0):
     """Note an unresolved TM. Add statistics and output it with reason."""
     self.num_unresolved += 1
     if reason == Exit_Condition.MAX_STEPS:
@@ -254,12 +259,9 @@ class Enumerator(object):
     io_record.ttable = tm.get_TTable()
     io_record.category = Exit_Condition.UNKNOWN
     io_record.category_reason = (Exit_Condition.name(reason), steps, runtime)
-    io.write_record(io_record)
+    self.io.write_record(io_record)
 
-# Command line interpretter code
-if __name__ == "__main__":
-  from optparse import OptionParser, OptionGroup
-
+def main(args):
   ## Parse command line options.
   usage = "usage: %prog --states= --symbols= [options]"
   parser = OptionParser(usage=usage)
@@ -289,7 +291,7 @@ if __name__ == "__main__":
                         help="Freq to save checkpoints [Default: %default]")
   parser.add_option_group(out_parser)
 
-  (options, args) = parser.parse_args()
+  (options, args) = parser.parse_args(args)
 
   ## Enforce required parameters
   if not options.states or not options.symbols:
@@ -300,7 +302,7 @@ if __name__ == "__main__":
     options.seed = long(1000*time.time())
 
   if not options.outfilename:
-    options.outfilename = "Enum.%d.%d.%d.out" % (options.states, options.symbols, options.steps)
+    options.outfilename = "Enum.%d.%d.%s.out" % (options.states, options.symbols, options.steps)
 
   if not options.checkpoint:
     options.checkpoint = options.outfilename + ".check"
@@ -315,7 +317,7 @@ if __name__ == "__main__":
   io = IO.IO(None, outfile, options.log_number)
 
   ## Print command line
-  print "Enumerate.py --states=%d --symbols=%d --steps=%d --time=%f" \
+  print "Enumerate.py --states=%d --symbols=%d --steps=%s --time=%f" \
     % (options.states, options.symbols, options.steps, options.time),
   if options.randomize:
     print "--randomize --seed=%d" % options.seed,
@@ -335,3 +337,6 @@ if __name__ == "__main__":
                           options.checkpoint, options.randomize, options.seed,
                           options)
   enumerator.enum()
+
+if __name__ == "__main__":
+  main(sys.argv[1:])
