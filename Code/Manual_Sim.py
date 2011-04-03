@@ -1,11 +1,10 @@
 #! /usr/bin/env python
 
-import string
-import sys
+import sys, string, os, cmd
 
-import IO
 from Macro import Turing_Machine, Simulator, Block_Finder, Tape
 from Numbers.Algebraic_Expression import Expression_from_string
+import IO
 
 # White, Red, Blue, Green, Magenta, Cyan, Brown/Yellow
 color = [49, 41, 44, 42, 45, 46, 43]
@@ -66,13 +65,6 @@ def print_machine(machine):
 
   sys.stdout.flush()
 
-
-import os
-import cmd
-import rlcompleter
-import readline
-
-readline.parse_and_bind ("bind ^I rl_complete")
 
 class BBConsole(cmd.Cmd):
 
@@ -391,6 +383,29 @@ class BBConsole(cmd.Cmd):
 
 
 if __name__ == "__main__":
+#  import rlcompleter
+#  import readline
+#
+#  readline.parse_and_bind ("bind ^I rl_complete")
+
+  try:
+    import readline
+  except ImportError:
+    try:
+      import pyreadline as readline
+    # throw open a browser if we fail both readline and pyreadline
+    except ImportError:
+      import webbrowser
+      webbrowser.open("http://ipython.scipy.org/moin/PyReadline/Intro#line-36")
+      # throw open a browser
+    #pass
+  else:
+    import rlcompleter
+    if sys.platform == 'darwin':
+      readline.parse_and_bind ("bind ^I rl_complete")
+    else:
+      readline.parse_and_bind("tab: complete")
+
   from optparse import OptionParser, OptionGroup
   # Parse command line options.
   usage = "usage: %prog [options] machine_file [line_number]"
@@ -403,7 +418,7 @@ if __name__ == "__main__":
   options.verbose = True
   options.manual  = True
 
-  #options.compute_steps = True
+  options.compute_steps = True
 
   options.print_loops = 1
   
