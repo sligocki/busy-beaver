@@ -1,11 +1,10 @@
 #! /usr/bin/env python
 
-import string
-import sys
+import sys, string, os, cmd
 
-import IO
 from Macro import Turing_Machine, Simulator, Block_Finder, Tape
 from Numbers.Algebraic_Expression import Expression_from_string
+import IO
 
 # White, Red, Blue, Green, Magenta, Cyan, Brown/Yellow
 color = [49, 41, 44, 42, 45, 46, 43]
@@ -67,20 +66,13 @@ def print_machine(machine):
   sys.stdout.flush()
 
 
-import os
-import cmd
-import rlcompleter
-import readline
-
-readline.parse_and_bind ("bind ^I rl_complete")
-
 class BBConsole(cmd.Cmd):
 
   def __init__(self, TTable, options):
     cmd.Cmd.__init__(self)
     self.cmdnum = 1
     self.prompt = "%d> " % (self.cmdnum,)
-    self.hist = True
+    self.record_hist = True
 
     self.TTable = TTable
 
@@ -152,30 +144,41 @@ class BBConsole(cmd.Cmd):
 
   def do_step(self,args):
     """Take on step of the current machine"""
-    self.sim.step()
+    steps = 1
 
-    if self.sim.op_state == Turing_Machine.HALT:
-      print
-      print "Turing Machine Halted!"
-      print
-      if options.compute_steps:
-        print "Steps:   ", self.sim.step_num
-      print "Nonzeros:", self.sim.get_nonzeros()
-      print
-    elif self.sim.op_state == Turing_Machine.INF_REPEAT:
-      print
-      print "Turing Machine proven Infinite!"
-      print "Reason:", self.sim.inf_reason
-    elif self.sim.op_state == Turing_Machine.UNDEFINED:
-      print
-      print "Turing Machine reached Undefined transition!"
-      print "State: ", self.sim.op_details[0][1]
-      print "Symbol:", self.sim.op_details[0][0]
-      print
-      if options.compute_steps:
-        print "Steps:   ", self.sim.step_num
-      print "Nonzeros:", self.sim.get_nonzeros()
-      print
+    if args != '':
+      try:
+        steps = int(args)
+      except ValueError:
+        print "'%s' is not an integer" % (args,)
+        self.record_hist = False
+        return
+
+    for step in xrange(steps):
+      self.sim.step()
+
+      if self.sim.op_state == Turing_Machine.HALT:
+        print
+        print "Turing Machine Halted!"
+        print
+        if options.compute_steps:
+          print "Steps:   ", self.sim.step_num
+        print "Nonzeros:", self.sim.get_nonzeros()
+        print
+      elif self.sim.op_state == Turing_Machine.INF_REPEAT:
+        print
+        print "Turing Machine proven Infinite!"
+        print "Reason:", self.sim.inf_reason
+      elif self.sim.op_state == Turing_Machine.UNDEFINED:
+        print
+        print "Turing Machine reached Undefined transition!"
+        print "State: ", self.sim.op_details[0][1]
+        print "Symbol:", self.sim.op_details[0][0]
+        print
+        if options.compute_steps:
+          print "Steps:   ", self.sim.step_num
+        print "Nonzeros:", self.sim.get_nonzeros()
+        print
 
   def do_tape(self, args):
     """Enter a new tape and state - same format as output"""
@@ -363,11 +366,11 @@ class BBConsole(cmd.Cmd):
     """
     self.cmdnum += 1
     self.prompt = "%d> " % (self.cmdnum,)
-    if self.hist:
+    if self.record_hist:
       self._hist += [ line.strip() ]
     else:
       self._hist += [ "" ]
-      self.hist = True
+      self.record_hist = True
     return stop
 
   def default(self, line):       
@@ -375,11 +378,34 @@ class BBConsole(cmd.Cmd):
        In that case we execute the line as Python code.
     """
     print "Unknown command:",line
-    self.hist = False
+    self.record_hist = False
     self.do_help(None)
 
 
 if __name__ == "__main__":
+#  import rlcompleter
+#  import readline
+#
+#  readline.parse_and_bind ("bind ^I rl_complete")
+
+  try:
+    import readline
+  except ImportError:
+    try:
+      import pyreadline as readline
+    # throw open a browser if we fail both readline and pyreadline
+    except ImportError:
+      import webbrowser
+      webbrowser.open("http://ipython.scipy.org/moin/PyReadline/Intro#line-36")
+      # throw open a browser
+    #pass
+  else:
+    import rlcompleter
+    if sys.platform == 'darwin':
+      readline.parse_and_bind ("bind ^I rl_complete")
+    else:
+      readline.parse_and_bind("tab: complete")
+
   from optparse import OptionParser, OptionGroup
   # Parse command line options.
   usage = "usage: %prog [options] machine_file [line_number]"
@@ -392,7 +418,7 @@ if __name__ == "__main__":
   options.verbose = True
   options.manual  = True
 
-  #options.compute_steps = True
+  options.compute_steps = True
 
   options.print_loops = 1
   
