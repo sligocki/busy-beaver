@@ -1,6 +1,8 @@
 #! /usr/bin/env python
 
-import sys, string, os, cmd
+import sys, string, os
+import cmd
+# import cmd2 as cmd
 
 from Macro import Turing_Machine, Simulator, Block_Finder, Tape
 from Numbers.Algebraic_Expression import Expression_from_string
@@ -44,12 +46,13 @@ for which help is available\n
   def help_mark(self):
     print "\nMark the starting configuration for a rule (not implemented)\n"
 
+  def do_prover(self, args):
+    """\nTurn prover on or off\n"""
+    self.prover_code(args)
+
   def do_quit(self, args):
     """\nExits from the console\n"""
     return self.do_exit(args)
-
-  def help_prover(self):
-    print "\nTurn prover on or off (not implemented)\n"
 
   def help_rule(self):
     print "\nGenerate a rule with name, if specified (not implemented)\n"
@@ -168,6 +171,7 @@ In that case we execute the line as Python code.\n
                                       verbose_simulator=self.sim_options.verbose_simulator,
                                       verbose_prover=self.sim_options.verbose_prover,
                                       verbose_prefix="")
+    self.sim_prover_save = None
 
     self.num_states  = self.sim.machine.num_states
     self.num_symbols = self.sim.machine.num_symbols
@@ -193,6 +197,46 @@ In that case we execute the line as Python code.\n
         com_prev = com
       num += 1
 
+  def complete_prover(self, text, line, begidx, endidx):
+    choices = ['off','on']
+    if not text:
+      completions = choices
+    else:
+      completions = [opt for opt in choices if opt.startswith(text)]
+
+    return completions
+
+  def prover_code(self, args):
+    error = False
+    if args == '':
+      if self.sim.prover:
+        state = "on"
+      else:
+        state = "off"
+      print "\nProver is %s\n" % (state,)
+    elif args == 'on':
+      if self.sim.prover == None:
+        if self.sim_prover_save == None:
+          import Macro.Proof_System
+          self.sim.prover = Macro.Proof_System.Proof_System(self.sim.machine,
+                                                            recursive=self.sim.recursive,
+                                                            compute_steps=self.sim.compute_steps,
+                                                            verbose=self.sim.verbose_prover,
+                                                            verbose_prefix=self.sim.verbose_prefix)
+          self.sim.prover.allow_collatz = False 
+        else:
+          self.sim.prover = self.sim_prover_save
+    elif args == 'off':
+      if self.sim.prover != None:
+        self.sim_prover_save = self.sim.prover
+      self.sim.prover = None
+    else:
+      error = True
+
+    if error:
+      print "\n'%s' must be 'on' or 'off'\n" % (args,)
+      self.record_hist = False
+
   def step_code(self, args):
     steps = 1
 
@@ -202,7 +246,6 @@ In that case we execute the line as Python code.\n
       except ValueError:
         print "\n'%s' is not an integer\n" % (args,)
         self.record_hist = False
-        return
 
     for step in xrange(steps):
       self.sim.step()
