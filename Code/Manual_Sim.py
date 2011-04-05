@@ -6,70 +6,135 @@ from Macro import Turing_Machine, Simulator, Block_Finder, Tape
 from Numbers.Algebraic_Expression import Expression_from_string
 import IO
 
-# White, Red, Blue, Green, Magenta, Cyan, Brown/Yellow
-color = [49, 41, 44, 42, 45, 46, 43]
-# Characters to use for states (end in "Z" so that halt is Z)
-states = string.ascii_uppercase + string.ascii_lowercase + string.digits + "!@#$%^&*" + "Z"
-symbols = string.digits + "-"
-dirs = "LRS-"
-
-def print_machine(machine):
-  """
-  Pretty-print the contents of the Turing machine.
-  This method prints the state transition information
-  (number to print, direction to move, next state) for each state
-  but not the contents of the tape.
-  """
-
-  sys.stdout.write("\n")
-  sys.stdout.write("Transition table:\n")
-  sys.stdout.write("\n")
-
-  TTable = machine.trans_table
-
-  sys.stdout.write("       ")
-  for j in xrange(len(TTable[0])):
-    sys.stdout.write("+-----")
-  sys.stdout.write("+\n")
-
-  sys.stdout.write("       ")
-  for j in xrange(len(TTable[0])):
-    sys.stdout.write("|  %d  " % j)
-  sys.stdout.write("|\n")
-
-  sys.stdout.write("   +---")
-  for j in xrange(len(TTable[0])):
-    sys.stdout.write("+-----")
-  sys.stdout.write("+\n")
-
-  for i in xrange(len(TTable)):
-    sys.stdout.write("   | %c " % states[i])
-    for j in xrange(len(TTable[i])):
-      sys.stdout.write("| ")
-      if TTable[i][j][0] == -1 and \
-         TTable[i][j][1] == -1 and \
-         TTable[i][j][2] == -1:
-        sys.stdout.write("--- ")
-      else:
-        sys.stdout.write("%c"   % symbols[TTable[i][j][0]])
-        sys.stdout.write("%c"   % dirs   [TTable[i][j][1]])
-        sys.stdout.write("%c "  % states [TTable[i][j][2]])
-    sys.stdout.write("|\n")
-
-    sys.stdout.write("   +---")
-    for j in xrange(len(TTable[0])):
-      sys.stdout.write("+-----")
-    sys.stdout.write("+\n")
-
-  sys.stdout.write("\n\n")
-
-  sys.stdout.flush()
-
-
 class BBConsole(cmd.Cmd):
 
   def __init__(self, TTable, options):
     cmd.Cmd.__init__(self)
+    self.init_code(TTable, options)
+
+  ## Command definitions ##
+  def help_apply(self):
+    print "\nTry to apply the specified rule or all rules if not specified (not implemented)\n"
+
+  def do_EOF(self, args):
+    """\nExit on system end of file character\n"""
+    return self.EOF_code(args)
+
+  def do_exit(self, args):
+    """\nExits from the console\n"""
+    return self.exit_code(args)
+
+  def do_help(self, args):
+    """\nGet help on commands 'help' or '?' with no arguments prints a list of commands
+for which help is available\n
+'help <command>' or '? <command>' gives help on <command>\n"""
+    ## The only reason to define this method is for the help text in the doc string
+    cmd.Cmd.do_help(self, args)
+
+  def do_hist(self, args):
+    """\nPrint a list of commands that have been entered\n"""
+    self.hist_code(args)
+
+  def help_list(self):
+    print "\nPrint the specified rule or all rules if not specified (not implemented)\n"
+
+  def help_load(self):
+    print "\nLoad the rules from the specified file (not implemented)\n"
+
+  def help_mark(self):
+    print "\nMark the starting configuration for a rule (not implemented)\n"
+
+  def do_quit(self, args):
+    """\nExits from the console\n"""
+    return self.do_exit(args)
+
+  def help_prover(self):
+    print "\nTurn prover on or off (not implemented)\n"
+
+  def help_rule(self):
+    print "\nGenerate a rule with name, if specified (not implemented)\n"
+
+  def help_save(self):
+    print "\nSave the rules to the specified file (not implemented)\n"
+
+  def do_step(self, args):
+    """\nTake n steps of the current machine (default: n = 1)\n"""
+    self.step_code(args)
+
+  def do_tape(self, args):
+    """\nEnter a new tape and state - same format as output\n"""
+    self.tape_code(args)
+
+  def default(self, line):       
+    """\nCalled on an input line when the command prefix is not recognized.
+In that case we execute the line as Python code.\n
+    """
+    print "\nUnknown command:",line
+    self.record_hist = False
+    self.do_help(None)
+
+  def precmd(self, line):
+    """ This method is called after the line has been input but before
+        it has been interpreted. If you want to modifdy the input line
+        before execution (for example, variable substitution) do it here.
+    """
+    return line
+
+  def postcmd(self, stop, line):
+    """If you want to stop the console, return something that evaluates to true.
+       If you want to do some post command processing, do it here.
+    """
+    #rl_length = readline.get_current_history_length()
+    #print "readline history length (post): %d" % (rl_length,)
+    #for i in xrange(rl_length):
+    #  print "   %d: '%s'" % (i,readline.get_history_item(i))
+    self.cmdnum += 1
+    self.prompt = "%d> " % (self.cmdnum,)
+    if self.record_hist:
+      self._hist += [ line.strip() ]
+    else:
+      self._hist += [ "" ]
+      if self.readline:
+        last_entry = self.readline.get_current_history_length() - 1
+        self.readline.remove_history_item(last_entry)
+      self.record_hist = True
+    return stop
+
+  def preloop(self):
+    """Initialization before prompting user for commands.
+       Despite the claims in the Cmd documentaion, Cmd.preloop() is not a stub.
+    """
+    cmd.Cmd.preloop(self)   ## sets up command completion
+    self._hist    = []      ## No history yet
+    self._locals  = {}      ## Initialize execution namespace for user
+    self._globals = {}
+
+  def postloop(self):
+    """Take care of any unfinished business.
+       Despite the claims in the Cmd documentaion, Cmd.postloop() is not a stub.
+    """
+    cmd.Cmd.postloop(self)   ## Clean up command completion
+    print "Powering down...\n"
+
+  def init_code(self, TTable, options):
+    self.readline = False
+    try:
+      import readline
+      self.readline = readline
+    except ImportError:
+      try:
+        import pyreadline as readline
+        self.readline = readline
+      # if we fail both readline and pyreadline
+      except ImportError:
+        print "Unable to import 'readline', line editing will be limited"
+    else:
+      import rlcompleter
+      if sys.platform == 'darwin':
+        readline.parse_and_bind ("bind ^I rl_complete")
+      else:
+        readline.parse_and_bind("tab: complete")
+
     self.cmdnum = 1
     self.prompt = "%d> " % (self.cmdnum,)
     self.record_hist = True
@@ -111,30 +176,15 @@ class BBConsole(cmd.Cmd):
 
     self.sim.verbose_print()
 
-  ## Command definitions ##
-  def help_apply(self):
-    print "Try to apply the specified rule or all rules if not specified (not implemented)"
-
-  def do_EOF(self, args):
-    """Exit on system end of file character"""
+  def EOF_code(self, args):
     print
     return self.do_exit(args)
 
-  def do_exit(self, args):
-    """Exits from the console"""
+  def exit_code(self, args):
     print
     return -1
 
-  def do_help(self, args):
-    """Get help on commands
-       'help' or '?' with no arguments prints a list of commands for which help is available
-       'help <command>' or '? <command>' gives help on <command>
-    """
-    ## The only reason to define this method is for the help text in the doc string
-    cmd.Cmd.do_help(self, args)
-
-  def do_hist(self, args):
-    """Print a list of commands that have been entered"""
+  def hist_code(self, args):
     num = 1
     com_prev = ""
     for com in self._hist:
@@ -143,37 +193,14 @@ class BBConsole(cmd.Cmd):
         com_prev = com
       num += 1
 
-  def help_list(self):
-    print "Print the specified rule or all rules if not specified (not implemented)"
-
-  def help_load(self):
-    print "Load the rules from the specified file (not implemented)"
-
-  def help_mark(self):
-    print "Mark the starting configuration for a rule (not implemented)"
-
-  def do_quit(self, args):
-    """Exits from the console"""
-    return self.do_exit(args)
-
-  def help_prover(self):
-    print "Turn prover on or off (not implemented)"
-
-  def help_rule(self):
-    print "Generate a rule with name, if specified (not implemented)"
-
-  def help_save(self):
-    print "Save the rules to the specified file (not implemented)"
-
-  def do_step(self,args):
-    """Take n steps of the current machine (default: n = 1)"""
+  def step_code(self, args):
     steps = 1
 
     if args != '':
       try:
         steps = int(args)
       except ValueError:
-        print "'%s' is not an integer" % (args,)
+        print "\n'%s' is not an integer\n" % (args,)
         self.record_hist = False
         return
 
@@ -203,13 +230,10 @@ class BBConsole(cmd.Cmd):
         print "Nonzeros:", self.sim.get_nonzeros()
         print
 
-  def do_tape(self, args):
-    """Enter a new tape and state - same format as output"""
+  def tape_code(self, args):
     self.stdout.write("\n")
-    # self.stdout.write("   Tape: ")
-    # self.stdout.flush()
+    self.stdout.flush()
 
-    # tape_state_string = self.stdin.readline()
     tape_state_string = raw_input("   Tape: ")
 
     tape_state_tokens = tape_state_string.split()
@@ -360,77 +384,68 @@ class BBConsole(cmd.Cmd):
     self.stdout.write("\n")
     self.sim.verbose_print()
 
-  ## Override methods in Cmd object ##
-  def preloop(self):
-    """Initialization before prompting user for commands.
-       Despite the claims in the Cmd documentaion, Cmd.preloop() is not a stub.
-    """
-    cmd.Cmd.preloop(self)   ## sets up command completion
-    self._hist    = []      ## No history yet
-    self._locals  = {}      ## Initialize execution namespace for user
-    self._globals = {}
 
-  def postloop(self):
-    """Take care of any unfinished business.
-       Despite the claims in the Cmd documentaion, Cmd.postloop() is not a stub.
-    """
-    cmd.Cmd.postloop(self)   ## Clean up command completion
-    print "Powering down...\n"
+# White, Red, Blue, Green, Magenta, Cyan, Brown/Yellow
+color = [49, 41, 44, 42, 45, 46, 43]
+# Characters to use for states (end in "Z" so that halt is Z)
+states = string.ascii_uppercase + string.ascii_lowercase + string.digits + "!@#$%^&*" + "Z"
+symbols = string.digits + "-"
+dirs = "LRS-"
 
-  def precmd(self, line):
-    """ This method is called after the line has been input but before
-        it has been interpreted. If you want to modifdy the input line
-        before execution (for example, variable substitution) do it here.
-    """
-    return line
+def print_machine(machine):
+  """
+  Pretty-print the contents of the Turing machine.
+  This method prints the state transition information
+  (number to print, direction to move, next state) for each state
+  but not the contents of the tape.
+  """
+  sys.stdout.write("\n")
+  sys.stdout.write("Transition table:\n")
+  sys.stdout.write("\n")
 
-  def postcmd(self, stop, line):
-    """If you want to stop the console, return something that evaluates to true.
-       If you want to do some post command processing, do it here.
-    """
-    #rl_length = readline.get_current_history_length()
-    #print "readline history length (post): %d" % (rl_length,)
-    #for i in xrange(rl_length):
-    #  print "   %d: '%s'" % (i,readline.get_history_item(i))
-    self.cmdnum += 1
-    self.prompt = "%d> " % (self.cmdnum,)
-    if self.record_hist:
-      self._hist += [ line.strip() ]
-    else:
-      self._hist += [ "" ]
-      self.record_hist = True
-    return stop
+  TTable = machine.trans_table
 
-  def default(self, line):       
-    """Called on an input line when the command prefix is not recognized.
-       In that case we execute the line as Python code.
-    """
-    print "Unknown command:",line
-    self.record_hist = False
-    self.do_help(None)
+  sys.stdout.write("       ")
+  for j in xrange(len(TTable[0])):
+    sys.stdout.write("+-----")
+  sys.stdout.write("+\n")
+
+  sys.stdout.write("       ")
+  for j in xrange(len(TTable[0])):
+    sys.stdout.write("|  %d  " % j)
+  sys.stdout.write("|\n")
+
+  sys.stdout.write("   +---")
+  for j in xrange(len(TTable[0])):
+    sys.stdout.write("+-----")
+  sys.stdout.write("+\n")
+
+  for i in xrange(len(TTable)):
+    sys.stdout.write("   | %c " % states[i])
+    for j in xrange(len(TTable[i])):
+      sys.stdout.write("| ")
+      if TTable[i][j][0] == -1 and \
+         TTable[i][j][1] == -1 and \
+         TTable[i][j][2] == -1:
+        sys.stdout.write("--- ")
+      else:
+        sys.stdout.write("%c"   % symbols[TTable[i][j][0]])
+        sys.stdout.write("%c"   % dirs   [TTable[i][j][1]])
+        sys.stdout.write("%c "  % states [TTable[i][j][2]])
+    sys.stdout.write("|\n")
+
+    sys.stdout.write("   +---")
+    for j in xrange(len(TTable[0])):
+      sys.stdout.write("+-----")
+    sys.stdout.write("+\n")
+
+  sys.stdout.write("\n\n")
+
+  sys.stdout.flush()
+
 
 
 if __name__ == "__main__":
-#  import rlcompleter
-#  import readline
-#
-#  readline.parse_and_bind ("bind ^I rl_complete")
-
-  try:
-    import readline
-  except ImportError:
-    try:
-      import pyreadline as readline
-    # if we fail both readline and pyreadline
-    except ImportError:
-      print "Unable to import 'readline', line editing will be limited"
-  else:
-    import rlcompleter
-    if sys.platform == 'darwin':
-      readline.parse_and_bind ("bind ^I rl_complete")
-    else:
-      readline.parse_and_bind("tab: complete")
-
   from optparse import OptionParser, OptionGroup
   # Parse command line options.
   usage = "usage: %prog [options] machine_file [line_number]"
