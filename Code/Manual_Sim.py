@@ -74,6 +74,8 @@ class BBConsole(cmd.Cmd):
     self.prompt = "%d> " % (self.cmdnum,)
     self.record_hist = True
 
+    self.misc_header = "Unimplemented commands"
+
     self.TTable = TTable
 
     self.sim_options = options
@@ -110,6 +112,9 @@ class BBConsole(cmd.Cmd):
     self.sim.verbose_print()
 
   ## Command definitions ##
+  def help_apply(self):
+    print "Try to apply the specified rule or all rules if not specified (not implemented)"
+
   def do_EOF(self, args):
     """Exit on system end of file character"""
     print
@@ -138,12 +143,24 @@ class BBConsole(cmd.Cmd):
         com_prev = com
       num += 1
 
+  def help_list(self):
+    print "Print the specified rule or all rules if not specified (not implemented)"
+
+  def help_mark(self):
+    print "Mark the starting configuration for a rule (not implemented)"
+
   def do_quit(self, args):
     """Exits from the console"""
     return self.do_exit(args)
 
+  def help_prover(self):
+    print "Turn prover on or off (not implemented)"
+
+  def help_rule(self):
+    print "Generate a rule with name, if specified (not implemented)"
+
   def do_step(self,args):
-    """Take on step of the current machine"""
+    """Take n steps of the current machine (default: n = 1)"""
     steps = 1
 
     if args != '':
