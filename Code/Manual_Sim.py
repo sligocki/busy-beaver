@@ -146,6 +146,9 @@ class BBConsole(cmd.Cmd):
   def help_list(self):
     print "Print the specified rule or all rules if not specified (not implemented)"
 
+  def help_load(self):
+    print "Load the rules from the specified file (not implemented)"
+
   def help_mark(self):
     print "Mark the starting configuration for a rule (not implemented)"
 
@@ -158,6 +161,9 @@ class BBConsole(cmd.Cmd):
 
   def help_rule(self):
     print "Generate a rule with name, if specified (not implemented)"
+
+  def help_save(self):
+    print "Save the rules to the specified file (not implemented)"
 
   def do_step(self,args):
     """Take n steps of the current machine (default: n = 1)"""
@@ -200,10 +206,11 @@ class BBConsole(cmd.Cmd):
   def do_tape(self, args):
     """Enter a new tape and state - same format as output"""
     self.stdout.write("\n")
-    self.stdout.write("   Tape: ")
-    self.stdout.flush()
+    # self.stdout.write("   Tape: ")
+    # self.stdout.flush()
 
-    tape_state_string = self.stdin.readline()
+    # tape_state_string = self.stdin.readline()
+    tape_state_string = raw_input("   Tape: ")
 
     tape_state_tokens = tape_state_string.split()
 
@@ -381,6 +388,10 @@ class BBConsole(cmd.Cmd):
     """If you want to stop the console, return something that evaluates to true.
        If you want to do some post command processing, do it here.
     """
+    #rl_length = readline.get_current_history_length()
+    #print "readline history length (post): %d" % (rl_length,)
+    #for i in xrange(rl_length):
+    #  print "   %d: '%s'" % (i,readline.get_history_item(i))
     self.cmdnum += 1
     self.prompt = "%d> " % (self.cmdnum,)
     if self.record_hist:
@@ -410,12 +421,9 @@ if __name__ == "__main__":
   except ImportError:
     try:
       import pyreadline as readline
-    # throw open a browser if we fail both readline and pyreadline
+    # if we fail both readline and pyreadline
     except ImportError:
-      import webbrowser
-      webbrowser.open("http://ipython.scipy.org/moin/PyReadline/Intro#line-36")
-      # throw open a browser
-    #pass
+      print "Unable to import 'readline', line editing will be limited"
   else:
     import rlcompleter
     if sys.platform == 'darwin':
