@@ -37,8 +37,9 @@ for which help is available.\n
     """\nPrint a list of commands that have been entered.\n"""
     self.hist_code(args)
 
-  def help_list(self):
-    print "\nPrint the specified rule or all rules if not specified (not implemented).\n"
+  def do_list(self, args):
+    """\nPrint the specified rule or all rules if not specified.\n"""
+    self.list_code(args)
 
   def help_load(self):
     print "\nLoad the rules from the specified file (not implemented).\n"
@@ -226,6 +227,10 @@ In that case we execute the line as Python code.\n
         print "%4d  %s" % (num,com)
         com_prev = com
       num += 1
+
+  def list_code(self, args):
+    if self.sim.prover:
+      self.sim.prover.print_rules(args)
 
   def complete_prover(self, text, line, begidx, endidx):
     choices = ['off','on']
