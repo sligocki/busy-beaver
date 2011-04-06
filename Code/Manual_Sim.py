@@ -16,56 +16,56 @@ class BBConsole(cmd.Cmd):
 
   ## Command definitions ##
   def help_apply(self):
-    print "\nTry to apply the specified rule or all rules if not specified (not implemented)\n"
+    print "\nTry to apply the specified rule or all rules if not specified (not implemented).\n"
 
   def do_EOF(self, args):
-    """\nExit on system end of file character\n"""
+    """\nExit on system end of file character.\n"""
     return self.EOF_code(args)
 
   def do_exit(self, args):
-    """\nExits from the console\n"""
+    """\nExits from the console.\n"""
     return self.exit_code(args)
 
   def do_help(self, args):
     """\nGet help on commands 'help' or '?' with no arguments prints a list of commands
-for which help is available\n
-'help <command>' or '? <command>' gives help on <command>\n"""
+for which help is available.\n
+'help <command>' or '? <command>' gives help on <command>.\n"""
     ## The only reason to define this method is for the help text in the doc string
     cmd.Cmd.do_help(self, args)
 
   def do_hist(self, args):
-    """\nPrint a list of commands that have been entered\n"""
+    """\nPrint a list of commands that have been entered.\n"""
     self.hist_code(args)
 
   def help_list(self):
-    print "\nPrint the specified rule or all rules if not specified (not implemented)\n"
+    print "\nPrint the specified rule or all rules if not specified (not implemented).\n"
 
   def help_load(self):
-    print "\nLoad the rules from the specified file (not implemented)\n"
+    print "\nLoad the rules from the specified file (not implemented).\n"
 
   def help_mark(self):
-    print "\nMark the starting configuration for a rule (not implemented)\n"
+    print "\nMark the starting configuration for a rule (not implemented).\n"
 
   def do_prover(self, args):
-    """\nTurn prover on or off\n"""
+    """\nTurn prover on or off.\n"""
     self.prover_code(args)
 
   def do_quit(self, args):
-    """\nExits from the console\n"""
+    """\nExits from the console.\n"""
     return self.do_exit(args)
 
   def help_rule(self):
-    print "\nGenerate a rule with name, if specified (not implemented)\n"
+    print "\nGenerate a rule with name, if specified (not implemented).\n"
 
   def help_save(self):
-    print "\nSave the rules to the specified file (not implemented)\n"
+    print "\nSave the rules to the specified file (not implemented).\n"
 
   def do_step(self, args):
-    """\nTake n steps of the current machine (default: n = 1)\n"""
+    """\nTake n steps of the current machine (default: n = 1).\n"""
     self.step_code(args)
 
   def do_tape(self, args):
-    """\nEnter a new tape and state - same format as output\n"""
+    """\nEnter a new tape and state - same format as output.\n"""
     self.tape_code(args)
 
   def default(self, line):       
@@ -91,12 +91,12 @@ In that case we execute the line as Python code.\n
     #print "readline history length (post): %d" % (rl_length,)
     #for i in xrange(rl_length):
     #  print "   %d: '%s'" % (i,readline.get_history_item(i))
-    self.cmdnum += 1
-    self.prompt = "%d> " % (self.cmdnum,)
+    self.set_cmdnum(self.cmdnum + 1)
+
     if self.record_hist:
-      self._hist += [ line.strip() ]
+      self._hist_cmd += [ line.strip() ]
     else:
-      self._hist += [ "" ]
+      self._hist_cmd += [ "" ]
       if self.readline:
         last_entry = self.readline.get_current_history_length() - 1
         self.readline.remove_history_item(last_entry)
@@ -107,16 +107,46 @@ In that case we execute the line as Python code.\n
     """Initialization before prompting user for commands.
        Despite the claims in the Cmd documentaion, Cmd.preloop() is not a stub.
     """
-    cmd.Cmd.preloop(self)   ## sets up command completion
-    self._hist    = []      ## No history yet
-    self._locals  = {}      ## Initialize execution namespace for user
-    self._globals = {}
+    cmd.Cmd.preloop(self) ## Sets up command completion
+    self._hist_cmd  = []  ## No command history yet
+    self._hist_save = []  ## No saved history yet
+    self._locals    = {}  ## Initialize execution namespace for user
+    self._globals   = {}
+
+    if self.readline:
+      save_history_cmd = os.path.expanduser("~/.bb_ms_history_cmd")
+      try:
+        self.readline.read_history_file(save_history_cmd)
+      except IOError:
+        pass
+
+      self.swap_history()
+      self._hist_cmd = self._hist_save
+
+      save_history_tape = os.path.expanduser("~/.bb_ms_history_tape")
+      try:
+        self.readline.read_history_file(save_history_tape)
+      except IOError:
+        pass
+
+      self.swap_history()
+
+      self.set_cmdnum(len(self._hist_cmd) + 1)
 
   def postloop(self):
     """Take care of any unfinished business.
        Despite the claims in the Cmd documentaion, Cmd.postloop() is not a stub.
     """
     cmd.Cmd.postloop(self)   ## Clean up command completion
+
+    if self.readline:
+      save_history_cmd = os.path.expanduser("~/.bb_ms_history_cmd")
+      self.readline.write_history_file(save_history_cmd)
+
+      self.swap_history()
+      save_history_tape = os.path.expanduser("~/.bb_ms_history_tape")
+      self.readline.write_history_file(save_history_tape)
+
     print "Powering down...\n"
 
   def init_code(self, TTable, options):
@@ -130,7 +160,7 @@ In that case we execute the line as Python code.\n
         self.readline = readline
       # if we fail both readline and pyreadline
       except ImportError:
-        print "Unable to import 'readline', line editing will be limited"
+        print "Unable to import 'readline', line editing will be limited."
     else:
       import rlcompleter
       if sys.platform == 'darwin':
@@ -138,8 +168,8 @@ In that case we execute the line as Python code.\n
       else:
         readline.parse_and_bind("tab: complete")
 
-    self.cmdnum = 1
-    self.prompt = "%d> " % (self.cmdnum,)
+    self.set_cmdnum(1)
+
     self.record_hist = True
 
     self.misc_header = "Unimplemented commands"
@@ -191,7 +221,7 @@ In that case we execute the line as Python code.\n
   def hist_code(self, args):
     num = 1
     com_prev = ""
-    for com in self._hist:
+    for com in self._hist_cmd:
       if com != "" and com != com_prev:
         print "%4d  %s" % (num,com)
         com_prev = com
@@ -213,7 +243,7 @@ In that case we execute the line as Python code.\n
         state = "on"
       else:
         state = "off"
-      print "\nProver is %s\n" % (state,)
+      print "\nProver is %s.\n" % (state,)
     elif args == 'on':
       if self.sim.prover == None:
         if self.sim_prover_save == None:
@@ -234,7 +264,7 @@ In that case we execute the line as Python code.\n
       error = True
 
     if error:
-      print "\n'%s' must be 'on' or 'off'\n" % (args,)
+      print "\n'%s' must be 'on' or 'off'.\n" % (args,)
       self.record_hist = False
 
   def step_code(self, args):
@@ -244,40 +274,47 @@ In that case we execute the line as Python code.\n
       try:
         steps = int(args)
       except ValueError:
-        print "\n'%s' is not an integer\n" % (args,)
+        print "\n'%s' is not an integer.\n" % (args,)
         self.record_hist = False
 
-    for step in xrange(steps):
-      self.sim.step()
+    if self.sim.op_state != Turing_Machine.RUNNING:
+      print "\nTuring Machine is no longer running.\n"
+    else:
+      for step in xrange(steps):
+        if self.sim.op_state == Turing_Machine.RUNNING:
+          self.sim.step()
 
-      if self.sim.op_state == Turing_Machine.HALT:
-        print
-        print "Turing Machine Halted!"
-        print
-        if options.compute_steps:
-          print "Steps:   ", self.sim.step_num
-        print "Nonzeros:", self.sim.get_nonzeros()
-        print
-      elif self.sim.op_state == Turing_Machine.INF_REPEAT:
-        print
-        print "Turing Machine proven Infinite!"
-        print "Reason:", self.sim.inf_reason
-      elif self.sim.op_state == Turing_Machine.UNDEFINED:
-        print
-        print "Turing Machine reached Undefined transition!"
-        print "State: ", self.sim.op_details[0][1]
-        print "Symbol:", self.sim.op_details[0][0]
-        print
-        if options.compute_steps:
-          print "Steps:   ", self.sim.step_num
-        print "Nonzeros:", self.sim.get_nonzeros()
-        print
+          if self.sim.op_state == Turing_Machine.HALT:
+            print
+            print "Turing Machine Halted!"
+            print
+            if options.compute_steps:
+              print "Steps:   ", self.sim.step_num
+            print "Nonzeros:", self.sim.get_nonzeros()
+            print
+          elif self.sim.op_state == Turing_Machine.INF_REPEAT:
+            print
+            print "Turing Machine proven Infinite!"
+            print "Reason:", self.sim.inf_reason
+            print
+          elif self.sim.op_state == Turing_Machine.UNDEFINED:
+            print
+            print "Turing Machine reached Undefined transition!"
+            print "State: ", self.sim.op_details[0][1]
+            print "Symbol:", self.sim.op_details[0][0]
+            print
+            if options.compute_steps:
+              print "Steps:   ", self.sim.step_num
+            print "Nonzeros:", self.sim.get_nonzeros()
+            print
 
   def tape_code(self, args):
     self.stdout.write("\n")
     self.stdout.flush()
 
+    self.swap_history()
     tape_state_string = raw_input("   Tape: ")
+    self.swap_history()
 
     tape_state_tokens = tape_state_string.split()
 
@@ -296,10 +333,10 @@ In that case we execute the line as Python code.\n
       if len(token) == 2:
         tape_length += 1
         if len(token[0]) != symbol_length:
-          print "Tape symbol lengths don't match\n"
+          print "\nTape symbol lengths don't match.\n"
           return
         if token[0].translate(None,string.digits[:self.num_symbols]) != "":
-          print "Some of '%s' isn't in '%s'\n" % (token[0],string.digits[:self.num_symbols])
+          print "\nSome of '%s' isn't in '%s'.\n" % (token[0],string.digits[:self.num_symbols])
           return
         if symbol_length == 1:
           new_symbol = int(token[0])
@@ -308,7 +345,7 @@ In that case we execute the line as Python code.\n
         token[0] = new_symbol
       elif token[0][0] == "(":
         if len(token[0]) != symbol_length + 2:
-          print "Back symbol length doesn't match tape symbol length\n"
+          print "\nBack symbol length doesn't match tape symbol length.\n"
           return
         back_index = i
       elif token[0][0] == "<":
@@ -318,27 +355,27 @@ In that case we execute the line as Python code.\n
         state_index = i
         tape_dir = 1
       else:
-        print "Unrecognized tape entry: %s\n" % (token,)
+        print "\nUnrecognized tape entry, '%s'.\n" % (token,)
         return
 
     if back_index > -1:
       if tape_dir == 0:
         if state_index > back_index:
-          print "State and backsymbol are out of order\n"
+          print "\nState and backsymbol are out of order.\n"
           return
         elif state_index + 1 != back_index:
-          print "State and backsymbol aren't together\n"
+          print "\nState and backsymbol aren't together.\n"
           return
       else:
         if state_index < back_index:
-          print "State and backsymbol are out of order\n"
+          print "\nState and backsymbol are out of order.\n"
           return
         elif state_index - 1 != back_index:
-          print "State and backsymbol aren't together\n"
+          print "\nState and backsymbol aren't together.\n"
           return
       new_back_symbol = tape_parse[back_index][0][1:-1]
       if new_back_symbol.translate(None,string.digits[:self.num_symbols]) != "":
-        print "Some of back symbol, '%s', isn't in '%s'\n" % (new_back_symbol,string.digits[:self.num_symbols])
+        print "\nSome of back symbol, '%s', isn't in '%s'.\n" % (new_back_symbol,string.digits[:self.num_symbols])
         return
       if symbol_length == 1:
         new_back_symbol = int(new_back_symbol)
@@ -359,7 +396,7 @@ In that case we execute the line as Python code.\n
           expo = Expression_from_string(tape_parse[i][1])
         else:
           if not tape_parse[i][1].isdigit():
-            print "Tape exponent '%s' isn't a number\n" % (token[1],)
+            print "\nTape exponent, '%s', isn't a number.\n" % (token[1],)
             return
           expo = int(tape_parse[i][1])
         new_tape.tape[0].append(Tape.Repeated_Symbol(tape_parse[i][0],expo))
@@ -370,7 +407,7 @@ In that case we execute the line as Python code.\n
           expo = Expression_from_string(tape_parse[i][1])
         else:
           if not tape_parse[i][1].isdigit():
-            print "Tape exponent '%s' isn't a number\n" % (token[1],)
+            print "\nTape exponent, '%s', isn't a number.\n" % (token[1],)
             return
           expo = int(tape_parse[i][1])
         new_tape.tape[1].append(Tape.Repeated_Symbol(tape_parse[i][0],expo))
@@ -391,7 +428,7 @@ In that case we execute the line as Python code.\n
       new_state = tape_parse[state_index][0][0]
         
     if new_state.translate(None,states[:self.num_states]) != "":
-      print "State, '%s', not one of '%s'\n" % (new_state,states[:self.num_states])
+      print "\nState, '%s', not one of '%s'.\n" % (new_state,states[:self.num_states])
       return
 
     new_state = Turing_Machine.Simple_Machine_State(states.index(new_state))
@@ -412,6 +449,11 @@ In that case we execute the line as Python code.\n
     if self.sim_options.backsymbol:
       m = Turing_Machine.Backsymbol_Macro_Machine(m)
 
+    if self.sim.prover == None:
+      self.sim_options.prover = False
+    else:
+      self.sim_options.prover = True
+
     self.sim = Simulator.Simulator(m, self.sim_options.recursive,
                                       enable_prover=self.sim_options.prover,
                                       init_tape=True,
@@ -426,6 +468,25 @@ In that case we execute the line as Python code.\n
 
     self.stdout.write("\n")
     self.sim.verbose_print()
+
+  def set_cmdnum(self, value):
+    self.cmdnum = value
+    self.prompt = "%d> " % (self.cmdnum,)
+
+  def swap_history(self):
+    if self.readline:
+      rl_size_history = self.readline.get_current_history_length()
+
+      temp = []
+      for line_num in xrange(rl_size_history):
+        temp.append(self.readline.get_history_item(line_num+1))
+
+      self.readline.clear_history()
+
+      for line in self._hist_save:
+        self.readline.add_history(line)
+
+      self._hist_save = temp
 
 
 # White, Red, Blue, Green, Magenta, Cyan, Brown/Yellow
@@ -500,10 +561,12 @@ if __name__ == "__main__":
   options.quiet   = False
   options.verbose = True
   options.manual  = True
+  options.prover  = False
 
   options.compute_steps = True
 
   options.print_loops = 1
+
   
   if options.verbose:
     options.verbose_simulator = True
