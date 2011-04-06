@@ -374,6 +374,7 @@ In that case we execute the line as Python code.\n
         else:
           new_symbol = Turing_Machine.Block_Symbol([int(c) for c in token[0]])
         token[0] = new_symbol
+      # TODO(shawn): Allow "(1)A>" rather than "(1) A>"
       elif token[0][0] == "(":
         if len(token[0]) != symbol_length + 2:
           print "\nBack symbol length doesn't match tape symbol length.\n"
