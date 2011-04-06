@@ -170,7 +170,7 @@ class Proof_System(object):
     sorted_keys = sorted([[self.rules[key].name, key] for key in self.rules.keys()])
     for rule_name, key in sorted_keys:
       rule = self.rules[key]
-      if args and args != "":
+      if args:
         if rule.name != args:
           continue
       print
