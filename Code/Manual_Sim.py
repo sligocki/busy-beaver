@@ -55,6 +55,9 @@ for which help is available.\n
     """\nExits from the console.\n"""
     return self.do_exit(args)
 
+  def help_rename(self):
+    print "\nRename a specified rule with specified name (not implemented).\n"
+
   def help_rule(self):
     print "\nGenerate a rule with name, if specified (not implemented).\n"
 
