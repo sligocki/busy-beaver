@@ -167,7 +167,9 @@ class Proof_System(object):
     print
   
   def print_rules(self, args=None):
-    for key, rule in self.rules.items():
+    sorted_keys = sorted([[self.rules[key].num, key] for key in self.rules.keys()])
+    for rule_num, key in sorted_keys:
+      rule = self.rules[key]
       if args and args != "":
         if str(rule.num) != args:
           continue
