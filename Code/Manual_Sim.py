@@ -326,6 +326,10 @@ In that case we execute the line as Python code.\n
     back_index = -1
 
     token_length = len(tape_parse)
+    if token_length == 0:
+      print
+      return
+
     symbol_length = len(tape_parse[0][0])
 
     for i in xrange(token_length):
