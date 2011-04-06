@@ -18,6 +18,9 @@ class BBConsole(cmd.Cmd):
   def help_apply(self):
     print "\nTry to apply the specified rule or all rules if not specified (not implemented).\n"
 
+  def help_delete(self):
+    print "\nDelete a rule with the specified name (not implemented).\n"
+
   def do_EOF(self, args):
     """\nExit on system end of file character.\n"""
     return self.EOF_code(args)
@@ -48,7 +51,7 @@ for which help is available.\n
     print "\nMark the starting configuration for a rule (not implemented).\n"
 
   def do_prover(self, args):
-    """\nTurn prover on or off.\n"""
+    """\nGet (no args), set ('on' or 'off'), or 'reset' the prover's state.\n"""
     self.prover_code(args)
 
   def do_quit(self, args):
@@ -252,6 +255,15 @@ In that case we execute the line as Python code.\n
       else:
         state = "off"
       print "\nProver is %s.\n" % (state,)
+    elif args == 'reset':
+      import Macro.Proof_System
+      self.sim.prover = Macro.Proof_System.Proof_System(self.sim.machine,
+                                                        recursive=self.sim.recursive,
+                                                        compute_steps=self.sim.compute_steps,
+                                                        verbose=self.sim.verbose_prover,
+                                                        verbose_prefix=self.sim.verbose_prefix)
+      self.sim.prover.allow_collatz = False 
+      self.sim_prover_save = None
     elif args == 'on':
       if self.sim.prover == None:
         if self.sim_prover_save == None:
