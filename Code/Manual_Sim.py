@@ -560,22 +560,23 @@ def print_machine(machine):
 
 if __name__ == "__main__":
   from optparse import OptionParser, OptionGroup
+
   # Parse command line options.
   usage = "usage: %prog [options] machine_file [line_number]"
   parser = OptionParser(usage=usage)
+
   # TODO: One variable for different levels of verbosity.
   Simulator.add_option_group(parser)
+
   (options, args) = parser.parse_args()
 
   options.quiet   = False
   options.verbose = True
   options.manual  = True
-  options.prover  = False
 
   options.compute_steps = True
 
   options.print_loops = 1
-
   
   if options.verbose:
     options.verbose_simulator = True
