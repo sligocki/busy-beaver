@@ -58,8 +58,9 @@ for which help is available.\n
     """\nExits from the console.\n"""
     return self.do_exit(args)
 
-  def help_rename(self):
-    print "\nRename a specified rule with specified name (not implemented).\n"
+  def do_rename(self, args):
+    """\nRename a specified rule with specified name (not implemented).\n"""
+    self.rename_code(args)
 
   def help_rule(self):
     print "\nGenerate a rule with name, if specified (not implemented).\n"
@@ -148,10 +149,12 @@ In that case we execute the line as Python code.\n
 
     if self.readline:
       save_history_cmd = os.path.expanduser("~/.bb_ms_history_cmd")
+      self.readline.set_history_length(99)
       self.readline.write_history_file(save_history_cmd)
 
       self.swap_history()
       save_history_tape = os.path.expanduser("~/.bb_ms_history_tape")
+      self.readline.set_history_length(99)
       self.readline.write_history_file(save_history_tape)
 
     print "Powering down...\n"
@@ -239,7 +242,7 @@ In that case we execute the line as Python code.\n
       self.sim.prover.print_rules(args)
 
   def complete_prover(self, text, line, begidx, endidx):
-    choices = ['off','on']
+    choices = ['','off','on','reset']
     if not text:
       completions = choices
     else:
@@ -284,8 +287,12 @@ In that case we execute the line as Python code.\n
       error = True
 
     if error:
-      print "\n'%s' must be 'on' or 'off'.\n" % (args,)
+      print "\n'%s' must be empty, 'on', 'off', 'reset'.\n" % (args,)
       self.record_hist = False
+
+  def rename_code(self, args):
+    print '\nNot implemented yet...\n'
+    pass
 
   def step_code(self, args):
     steps = 1

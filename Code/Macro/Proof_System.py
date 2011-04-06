@@ -37,7 +37,7 @@ def add_option_group(parser):
 class Rule(object):
   """Base type for Proof_System rules."""
   def __str__(self):
-    return "Rule %d" % self.num
+    return "Rule %s" % self.name
 
 class Diff_Rule(Rule):
   """A rule that specifies constant deltas for each tape block' repetition count."""
@@ -52,7 +52,7 @@ class Diff_Rule(Rule):
     self.diff_tape = diff_tape
     self.num_steps = num_steps
     self.num_loops = num_loops
-    self.num = rule_num  # Unique identifier.
+    self.name = str(rule_num)  # Unique identifier.
     self.num_uses = 0  # Number of times this rule has been applied.
 
 class General_Rule(Rule):
@@ -65,7 +65,7 @@ class General_Rule(Rule):
     self.result_list = [block.num for block in result_tape.tape[0] + result_tape.tape[1]]
     self.num_steps = num_steps
     self.num_loops = num_loops
-    self.num = rule_num
+    self.name = str(rule_num)
     self.num_uses = 0
     
     # Is this an infinite rule?
@@ -167,14 +167,14 @@ class Proof_System(object):
     print
   
   def print_rules(self, args=None):
-    sorted_keys = sorted([[self.rules[key].num, key] for key in self.rules.keys()])
-    for rule_num, key in sorted_keys:
+    sorted_keys = sorted([[self.rules[key].name, key] for key in self.rules.keys()])
+    for rule_name, key in sorted_keys:
       rule = self.rules[key]
       if args and args != "":
-        if str(rule.num) != args:
+        if rule.name != args:
           continue
       print
-      self.print_this("Rule", rule.num)
+      self.print_this("Rule", rule.name)
       state = key[0]
       self.print_this("Initial:", state, rule.initial_tape)
       self.print_this("Diff:", rule.diff_tape)
@@ -442,7 +442,7 @@ class Proof_System(object):
       start_state, start_tape, start_step_num, start_loop_num = start_config
       print
       self.print_this("++ Applying Rule ++")
-      self.print_this("Loop:", start_loop_num, "Rule ID:", rule.num)
+      self.print_this("Loop:", start_loop_num, "Rule ID:", rule.name)
       self.print_this("Rule:", rule)
       self.print_this("Config:", start_state, start_tape)
     
