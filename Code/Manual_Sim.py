@@ -297,7 +297,7 @@ In that case we execute the line as Python code.\n
   def step_code(self, args):
     steps = 1
 
-    if args != '':
+    if args:
       try:
         steps = int(args)
       except ValueError:
