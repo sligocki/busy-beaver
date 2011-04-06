@@ -166,8 +166,11 @@ class Proof_System(object):
       print arg,
     print
   
-  def print_rules(self):
+  def print_rules(self, args=None):
     for key, rule in self.rules.items():
+      if args and args != "":
+        if str(rule.num) != args:
+          continue
       print
       self.print_this("Rule", rule.num)
       state = key[0]
@@ -175,6 +178,7 @@ class Proof_System(object):
       self.print_this("Diff:", rule.diff_tape)
       self.print_this("Loops:", rule.num_loops, "Steps:", rule.num_steps)
       self.print_this("Num uses:", rule.num_uses)
+    print
   
   def log(self, tape, state, step_num, loop_num):
     """Log this configuration into the memory and check if it is similar to a past one.
