@@ -172,7 +172,7 @@ class Simulator(object):
   def print_self(self):
     self.print_steps()
     print "Time:", time.clock()
-    print self.state, self.tape
+    print self.tape.print_with_state(self.state)
     print "Num Nonzeros:", with_power(self.get_nonzeros())
   
   def print_steps(self):
