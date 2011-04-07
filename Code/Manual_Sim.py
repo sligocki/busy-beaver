@@ -128,7 +128,7 @@ In that case we execute the line as Python code.\n
       except IOError:
         pass
 
-      self.swap_history()
+      self.swap_history(self.readline_save)
       self._hist_cmd = self._hist_save
 
       save_history_tape = os.path.expanduser("~/.bb_ms_history_tape")
@@ -137,7 +137,7 @@ In that case we execute the line as Python code.\n
       except IOError:
         pass
 
-      self.swap_history()
+      self.swap_history(self.readline_save)
 
       self.set_cmdnum(len(self._hist_cmd) + 1)
 
@@ -149,17 +149,19 @@ In that case we execute the line as Python code.\n
 
     if self.readline:
       save_history_cmd = os.path.expanduser("~/.bb_ms_history_cmd")
-      self.readline.set_history_length(99)
+      self.readline.set_history_length(self.readline_save)
       self.readline.write_history_file(save_history_cmd)
 
       self.swap_history()
       save_history_tape = os.path.expanduser("~/.bb_ms_history_tape")
-      self.readline.set_history_length(99)
+      self.readline.set_history_length(self.readline_save)
       self.readline.write_history_file(save_history_tape)
 
     print "Powering down...\n"
 
   def init_code(self, TTable, options):
+    self.readline_save = 99
+
     self.readline = False
     try:
       import readline
@@ -339,9 +341,9 @@ In that case we execute the line as Python code.\n
     self.stdout.write("\n")
     self.stdout.flush()
 
-    #self.swap_history()
+    self.swap_history()
     tape_state_string = raw_input("   Tape: ")
-    #self.swap_history()
+    self.swap_history()
 
     tape_state_string = tape_state_string.replace("("," (")
     tape_state_string = tape_state_string.replace(")",") ")
@@ -507,13 +509,17 @@ In that case we execute the line as Python code.\n
     self.cmdnum = value
     self.prompt = "%d> " % (self.cmdnum,)
 
-  def swap_history(self):
+  def swap_history(self, max_num = None):
     if self.readline:
       rl_size_history = self.readline.get_current_history_length()
-
+      if max_num:
+        rl_size_history = max_num
+      
       temp = []
-      for line_num in xrange(rl_size_history):
-        temp.append(self.readline.get_history_item(line_num+1))
+      for line_num in xrange(rl_size_history+1):
+        item = self.readline.get_history_item(line_num)
+        if item:
+          temp.append(item)
 
       self.readline.clear_history()
 
