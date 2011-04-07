@@ -71,11 +71,7 @@ def run(TTable, block_size, back, prover, recursive, options):
 
   # If no explicit block-size given, use inteligent software to find one
   if not block_size:
-    if options.quiet:
-      Block_Finder.DEBUG = False
-    else:
-      Block_Finder.DEBUG = True
-    block_size = Block_Finder.block_finder(m, options.bf_limit1, options.bf_limit2, options.bf_run1, options.bf_run2, options.bf_extra_mult)
+    block_size = Block_Finder.block_finder(m, options)
 
   if not options.quiet:
     print_machine(m)
@@ -144,7 +140,7 @@ if __name__ == "__main__":
   parser.add_option("-q", "--quiet", action="store_true", help="Brief output")
   parser.add_option("-v", "--verbose", action="store_true",
                     help="Print step-by-step informaion from simulator "
-                    "and prover.")
+                    "and prover (Overrides other --verbose-* flags).")
   parser.add_option("--print-loops", type=int, default=10000, metavar="LOOPS",
                     help="Print every LOOPS loops [Default %default].")
   
@@ -157,14 +153,15 @@ if __name__ == "__main__":
   Block_Finder.add_option_group(parser)
   
   (options, args) = parser.parse_args()
-  
-  if options.verbose:
+
+  if options.quiet:
+    options.verbose_simulator = False
+    options.verbose_prover = False
+    options.verbose_block_finder = False
+  elif options.verbose:
     options.verbose_simulator = True
     options.verbose_prover = True
     options.verbose_block_finder = True
-  
-  # Verbose block finder
-  Block_Finder.DEBUG = options.verbose_block_finder
   
   if len(args) < 1:
     parser.error("Must have at least one argument, machine_file")
