@@ -78,7 +78,7 @@ def run(TTable, options, steps=INF, runtime=None, block_size=None,
             ALARM.set_alarm(runtime/10.0)  # Set timer
 
           # If no explicit block-size given, use inteligent software to find one
-          block_size = Block_Finder.block_finder(m, options.bf_limit1, options.bf_limit2, options.bf_run1, options.bf_run2, options.bf_extra_mult)
+          block_size = Block_Finder.block_finder(m, options)
 
           ALARM.cancel_alarm()
 
