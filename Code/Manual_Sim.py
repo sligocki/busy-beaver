@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 
-import sys, string, os
+import sys, string, os, re
 import cmd
 # import cmd2 as cmd
 
@@ -345,10 +345,19 @@ In that case we execute the line as Python code.\n
     tape_state_string = raw_input("   Tape: ")
     self.swap_history()
 
-    tape_state_string = tape_state_string.replace("("," (")
-    tape_state_string = tape_state_string.replace(")",") ")
-
     tape_state_tokens = tape_state_string.split()
+    num_tokens = len(tape_state_tokens)
+
+    for i in xrange(num_tokens):
+      token = tape_state_tokens[i]
+      if token[0] == "(" and token[-1] == ">":
+        temp = token.replace(")",") ")
+        tape_state_tokens[i:i+1] = temp.split()
+        break
+      elif token[0] == "<" and token[-1] == ")":
+        temp = token.replace("("," (")
+        tape_state_tokens[i:i+1] = temp.split()
+        break
 
     tape_parse = [tape_state_token.split("^") for tape_state_token in tape_state_tokens]
 
