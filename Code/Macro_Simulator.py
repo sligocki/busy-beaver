@@ -37,7 +37,6 @@ def create_default_options():
   add_option_group(parser)
   options, args = parser.parse_args([])
   return options
-DEFAULT_OPTIONS = create_default_options()
 
 class GenContainer(object):
   """Generic Container class"""
@@ -46,7 +45,9 @@ class GenContainer(object):
       self.__dict__[atr] = args[atr]
 
 def setup_CTL(m, cutoff):
-  sim = Simulator.Simulator(m, DEFAULT_OPTIONS)
+  options = create_default_options()
+  options.prover = False
+  sim = Simulator.Simulator(m, options)
   sim.seek(cutoff)
 
   if sim.op_state != Turing_Machine.RUNNING:
