@@ -101,5 +101,20 @@ class SystemTest(unittest.TestCase):
         raise
       self.assertEqual(expected_result, simulated_result)
 
+  def test_non_halting(self):
+    self.options.recursive = True
+    self.options.time = 1.0
+    data = [("1RB --- 2LA  2LB 2RA 0LB", (4, ('CTL_A*',))),
+            ]
+    for ttable_text, expected_result in data:
+      ttable = IO.parse_ttable(ttable_text)
+      try:
+        simulated_result = Macro_Simulator.run_options(ttable, self.options)
+      except:
+        print "Error"
+        print name
+        raise
+      self.assertEqual(expected_result, simulated_result)
+
 if __name__ == '__main__':
   unittest.main()
