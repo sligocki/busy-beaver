@@ -33,24 +33,28 @@ def add_option_group(parser):
 
 class Rule(object):
   """Base type for Proof_System rules."""
-  def __str__(self):
-    return "Rule %s" % self.name
 
 class Diff_Rule(Rule):
   """A rule that specifies constant deltas for each tape block' repetition count."""
   def __init__(self, initial_tape, diff_tape, num_steps, num_loops, rule_num):
     # TODO: Use basic lists instead of tapes, we never use the symbols.
-    # TODO: Have a variable list and a min list instead of packing both into init_tape.
-    # TOOD: Or maybe we don't even need variables, we could just have the things that
-    # depend on variables index directly into the tapes?
-    # TODO: Actually, variables only appear in num_steps, so we don't even need them
-    # if we are not computing steps.
+    # TODO: Have a variable list and a min list instead of packing both
+    # into init_tape.
+    # TOOD: Or maybe we don't even need variables, we could just have the
+    # things that depend on variables index directly into the tapes?
+    # TODO: Actually, variables only appear in num_steps, so we don't even
+    # need them if we are not computing steps.
     self.initial_tape = initial_tape
     self.diff_tape = diff_tape
     self.num_steps = num_steps
     self.num_loops = num_loops
     self.name = str(rule_num)  # Unique identifier.
     self.num_uses = 0  # Number of times this rule has been applied.
+
+  def __str__(self):
+    return ("Diff Rule %s\nInitial Tape: %s\nDiff Tape: %s\nSteps: %s Loops: %s"
+            % (self.name, self.initial_tape, self.diff_tape, self.num_steps,
+               self.num_loops))
 
 class General_Rule(Rule):
   """A general rule that specifies any general end configuration."""
@@ -75,6 +79,12 @@ class General_Rule(Rule):
           # If any exponent can decrease, this is not an infinite rule.
           self.infinite = False
           break
+
+  def __str__(self):
+    return ("General Rule %s\nVar List: %s\nMin List: %s\nResult List: %s\n"
+            "Steps %s Loops %s"
+            % (self.name, self.var_list, self.min_list, self.result_list,
+               self.num_steps, self.num_loops))
 
 # TODO: Try out some other stripped_configs
 def stripped_info(block):
@@ -239,20 +249,21 @@ class Proof_System(object):
     
     Returns rule if successful or None.
     """
+    # Unpack configurations
+    new_state, new_tape, new_step_num, new_loop_num = full_config
+    
     if self.verbose:
       print
       self.print_this("** Testing new rule **")
-      self.print_this("From: ", full_config)
-      self.print_this("Loops:", delta_loop)
-    
-    # Unpack configurations
-    new_state, new_tape, new_step_num, new_loop_num = full_config
+      self.print_this("Original config:", new_tape.print_with_state(new_state))
+      self.print_this("Start loop:", new_loop_num, "Loops:", delta_loop)
     
     # Create the limited simulator with limited or no prover.
     new_options = copy.copy(self.options)
     new_options.recursive = False
     new_options.prover = False  # We'll create our own prover if needed.
     new_options.verbose_prover=False
+    new_options.verbose_simulator=self.verbose
     gen_sim = Simulator.Simulator(self.machine,
                                   new_options,
                                   init_tape=False,
@@ -295,7 +306,7 @@ class Proof_System(object):
         if self.verbose:
           print
           self.print_this("** Failed: Exponent below min **")
-          self.print_this(gen_sim.tape)
+          self.print_this(gen_sim.tape.print_with_state(gen_sim.state))
         return False
       gen_sim.step()
       self.num_loops += 1
@@ -440,8 +451,10 @@ class Proof_System(object):
       print
       self.print_this("++ Applying Rule ++")
       self.print_this("Loop:", start_loop_num, "Rule ID:", rule.name)
-      self.print_this("Rule:", rule)
-      self.print_this("Config:", start_state, start_tape)
+      self.print_this("Rule:", str(rule).replace("\n",
+                                                  "\n" + self.verbose_prefix +
+                                                  "       "))
+      self.print_this("Config:", start_tape.print_with_state(start_state))
     
     if isinstance(rule, Diff_Rule):
       return self.apply_diff_rule(rule, start_config)
@@ -564,7 +577,7 @@ class Proof_System(object):
     if self.verbose:
       self.print_this("++ Rule successfully applied ++")
       self.print_this("Times applied:", num_reps)
-      self.print_this("Resulting tape:", return_tape)
+      self.print_this("Resulting tape:", return_tape.print_with_state(new_state))
       print
     return True, ((Turing_Machine.RUNNING, return_tape, diff_steps), large_delta)
 
