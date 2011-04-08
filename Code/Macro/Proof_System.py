@@ -218,13 +218,14 @@ class Proof_System(object):
           if self.past_configs is not None:
             self.past_configs.clear()
         rule.num_uses += 1
+        assert len(trans) == 4
         return trans
-      return False, None, None
+      return False, None, None, None
     
     # If we are not trying to prove new rules, quit
     if self.past_configs is None:
       # TODO: Just return False for fail and object for success.
-      return False, None, None
+      return False, None, None, None
     
     # Otherwise log it into past_configs and see if we should try and prove a new rule.
     past_config = self.past_configs[stripped_config]
@@ -241,8 +242,9 @@ class Proof_System(object):
         if is_good:
           trans, large_delta = res
           rule.num_uses += 1
+          assert len(trans) == 4
           return trans
-    return False, None, None
+    return False, None, None, None
   
   def prove_rule(self, stripped_config, full_config, delta_loop):
     """Try to prove a general rule based upon specific example.
@@ -312,6 +314,10 @@ class Proof_System(object):
       self.num_loops += 1
       # TODO(shawn): Perhaps we should check in applying a rule failed this
       # step and if so cancel the proof?
+
+      if gen_sim.replace_vars:
+        # TODO(shawn): Actually do something (replace chars).
+        assert False
       
       if gen_sim.op_state is not Turing_Machine.RUNNING:
         if self.verbose:
@@ -473,14 +479,14 @@ class Proof_System(object):
     # We keep track because even recursive proofs cannot contain rules with large_deltas.
     large_delta = False
     has_variable = False
-    replace_vars = {}  # Variables to replace if collatz proofs are allowed.
-    # TODO(shawn): We gotta do something with this.
+    replace_vars = {}  # Dict of variable substitutions made by Collatz applier.
     for dir in range(2):
       for init_block, diff_block, new_block in zip(rule.initial_tape.tape[dir], rule.diff_tape.tape[dir], new_tape.tape[dir]):
         # The constant term in init_block.num represents the minimum required value.
         if isinstance(init_block.num, Algebraic_Expression):
           # Calculate the initial and change in value for each variable.
           x = init_block.num.unknown()
+          # init_block.num.const == min_value for this exponent.
           init_value[x] = new_block.num - init_block.num.const
           if (not isinstance(init_value[x], Algebraic_Expression) and
               init_value[x] < 0):
@@ -508,6 +514,10 @@ class Proof_System(object):
                   new_var = NewVariableExpression()  # k
                   # 1) Record that we are replacing x with 3k.
                   replace_vars[old_var] = new_var * -delta_value[x]
+                  # TODO(sligocki): We might need to replace more places.
+                  # Or maybe less places and just let outside prover replace.
+                  new_block.num = new_block.num.substitute(replace_vars)
+                  # Note: this substitution is actually unnecessary.
                   init_value[x] = init_value[x].substitute(replace_vars)
                   # 2) num_reps = (3k + 12) // 3 + 1 = k + (12//3) + 1
                   num_reps = new_var + (old_const // -delta_value[x])  + 1
@@ -557,7 +567,7 @@ class Proof_System(object):
     if num_reps is None:
       if self.verbose:
         self.print_this("++ Rules applies infinitely ++")
-      return True, ((Turing_Machine.INF_REPEAT, None, None), large_delta)
+      return True, ((Turing_Machine.INF_REPEAT, None, None, {}), large_delta)
     
     # If we cannot even apply this transition once, we're done.
     if (not isinstance(num_reps, Algebraic_Expression) and
@@ -599,7 +609,7 @@ class Proof_System(object):
       self.print_this("Times applied:", num_reps)
       self.print_this("Resulting tape:", return_tape.print_with_state(new_state))
       print
-    return True, ((Turing_Machine.RUNNING, return_tape, diff_steps), large_delta)
+    return True, ((Turing_Machine.RUNNING, return_tape, diff_steps, replace_vars), large_delta)
 
   # Diff rules can be applied any number of times in a single evaluation.
   # But we can only apply a general rule once at a time.
@@ -618,7 +628,7 @@ class Proof_System(object):
                                              current_list):
       if self.verbose:
         self.print_this("++ Rules applies infinitely ++")
-      return True, ((Turing_Machine.INF_REPEAT, None, None), large_delta)
+      return True, ((Turing_Machine.INF_REPEAT, None, None, {}), large_delta)
     
     # Keep applying rule till we fail can't any more
     # TODO: Maybe we can use some intelligence when all negative rules are constants
@@ -654,7 +664,7 @@ class Proof_System(object):
         self.print_this("++ Recursive rule applied ++")
         self.print_this("Times applied", num_reps)
         self.print_this("Resulting tape:", tape)
-      return True, ((Turing_Machine.RUNNING, tape, diff_steps), large_delta)
+      return True, ((Turing_Machine.RUNNING, tape, diff_steps, {}), large_delta)
     else:
       if self.verbose:
         self.print_this("++ Current config is below rule minimum ++")
