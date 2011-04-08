@@ -173,14 +173,46 @@ class Proof_System(object):
     for arg in args:
       print arg,
     print
+
+  def delete_rule(self, name):
+    found = False
+
+    for key, rule in self.rules.iteritems():
+      if name == rule.name:
+        found = True
+        del self.rules[key]
+        break
+
+    if not found:
+      print "\nRule %s not found\n" % (name,)
+  
+  def rename_rule(self, src, dest):
+    found_src  = False
+    found_dest = False
+
+    for key, rule in self.rules.iteritems():
+      if src == rule.name:
+        key_src = key
+        found_src = True
+      if dest == rule.name:
+        found_dest = True
+
+    if not found_src:
+      print "\nRule %s not found\n" % (src,)
+    elif found_dest:
+      print "\nRule %s already exists\n" % (dest,)
+    else:
+      self.rules[key_src].name = dest
   
   def print_rules(self, args=None):
     sorted_keys = sorted([[self.rules[key].name, key] for key in self.rules.keys()])
+    found_rule = False
     for rule_name, key in sorted_keys:
       rule = self.rules[key]
       if args:
         if rule.name != args:
           continue
+      found_rule = True
       print
       self.print_this("Rule", rule.name)
       state = key[0]
@@ -188,7 +220,9 @@ class Proof_System(object):
       self.print_this("Diff:", rule.diff_tape)
       self.print_this("Loops:", rule.num_loops, "Steps:", rule.num_steps)
       self.print_this("Num uses:", rule.num_uses)
-    print
+
+    if found_rule:
+      print
   
   def log(self, tape, state, step_num, loop_num):
     """Log this configuration into the memory and check if it is similar to a past one.
