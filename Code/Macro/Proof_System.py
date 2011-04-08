@@ -136,8 +136,9 @@ class Proof_System(object):
   """Stores past information, looks for patterns and tries to prove general
   rules when it finds patterns.
   """
-  def __init__(self, machine, recursive, compute_steps, verbose, verbose_prefix):
+  def __init__(self, machine, options, recursive, compute_steps, verbose, verbose_prefix):
     self.machine = machine
+    self.options = options
     # Should we try to prove recursive rules? (Rules which use previous rules as steps.)
     self.recursive = recursive
     # Allow Collatz-style recursive rules. These are rules which depend upon
@@ -250,15 +251,14 @@ class Proof_System(object):
     # Unpack configurations
     new_state, new_tape, new_step_num, new_loop_num = full_config
     
-    # Create the serogate simulator with the apm only able to use proven trans.
+    # Create the limited simulator with limited or no prover.
+    new_options = copy.copy(self.options)
+    new_options.recursive = False
+    new_options.prover = False  # We'll create our own prover if needed.
+    new_options.verbose_prover=False
     gen_sim = Simulator.Simulator(self.machine,
-                                  recursive=False,
-                                  # We'll create our own prover if needed.
-                                  enable_prover=False,
+                                  new_options,
                                   init_tape=False,
-                                  compute_steps=self.compute_steps,
-                                  verbose_simulator=self.verbose,
-                                  verbose_prover=False,
                                   verbose_prefix=self.verbose_prefix + "  ")
     gen_sim.state = new_state
     gen_sim.step_num = ConstantToExpression(0)

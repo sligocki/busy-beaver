@@ -82,13 +82,9 @@ def run(TTable, block_size, back, prover, recursive, options):
   if back:
     m = Turing_Machine.Backsymbol_Macro_Machine(m)
 
-  global sim
-  sim = Simulator.Simulator(m, recursive, enable_prover=prover, init_tape=True,
-                            compute_steps=options.compute_steps,
-                            verbose_simulator=options.verbose_simulator,
-                            verbose_prover=options.verbose_prover,
-                            verbose_prefix="",
-                            allow_collatz=options.allow_collatz)
+  global sim  # For debugging, especially with --manual
+  sim = Simulator.Simulator(m, options)
+
   if options.manual:
     return  # Let's us run the machine manually. Must be run as python -i Quick_Sim.py
   try:

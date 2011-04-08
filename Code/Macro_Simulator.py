@@ -31,6 +31,13 @@ def add_option_group(parser):
   Simulator.add_option_group(parser)
   Block_Finder.add_option_group(parser)
 
+def create_default_options():
+  """Returns a set of default options."""
+  parser = OptionParser()
+  add_option_group(parser)
+  options, args = parser.parse_args([])
+  return options
+DEFAULT_OPTIONS = create_default_options()
 
 class GenContainer(object):
   """Generic Container class"""
@@ -39,7 +46,7 @@ class GenContainer(object):
       self.__dict__[atr] = args[atr]
 
 def setup_CTL(m, cutoff):
-  sim = Simulator.Simulator(m, enable_prover=False)
+  sim = Simulator.Simulator(m, DEFAULT_OPTIONS)
   sim.seek(cutoff)
 
   if sim.op_state != Turing_Machine.RUNNING:
@@ -119,9 +126,7 @@ def run(TTable, options, steps=INF, runtime=None, block_size=None,
 
       ## Set up the simulator
       #global sim # Useful for Debugging
-      sim = Simulator.Simulator(m, rec, enable_prover=prover,
-                                compute_steps=options.compute_steps,
-                                allow_collatz=options.allow_collatz)
+      sim = Simulator.Simulator(m, options)
 
       try:
         if runtime:
