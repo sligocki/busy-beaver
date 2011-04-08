@@ -34,8 +34,10 @@ def add_option_group(parser):
 def block_finder(machine, options):
   """Tries to find the optimal block-size for macro machines"""
 
-  ## First find the minimum efficient tape compression size
-  sim = Simulator(machine, enable_prover=False)  # Disable proof system for block finding.
+  ## First find the minimum efficient tape compression size.
+  new_options = copy.copy(options)
+  new_options.prover = False  # Disable proof system for block finding.
+  sim = Simulator(machine, new_options)
   
   if options.verbose_block_finder:
     print ""
@@ -64,7 +66,7 @@ def block_finder(machine, options):
       print ""
     
     # TODO: Instead of re-seeking, keep going till next bigger tape?
-    sim = Simulator(machine, enable_prover=False)
+    sim = Simulator(machine, new_options)
     sim.loop_seek(worst_loop)
       
   ## Or just find the best compression at time limit
@@ -109,7 +111,7 @@ def block_finder(machine, options):
   while mult <= opt_mult + options.bf_extra_mult:
     block_machine = Turing_Machine.Block_Macro_Machine(machine, mult*opt_size)
     back_machine = Turing_Machine.Backsymbol_Macro_Machine(block_machine)
-    sim = Simulator(back_machine, enable_prover=False)
+    sim = Simulator(back_machine, new_options)
     sim.loop_seek(options.bf_limit2)
     if sim.op_state != Turing_Machine.RUNNING:
       return mult*opt_size

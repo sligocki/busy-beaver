@@ -28,6 +28,12 @@ def add_option_group(parser):
 
   parser.add_option_group(group)
 
+def create_default_options():
+  """Returns a set of default options."""
+  parser = OptionParser()
+  add_option_group(parser)
+  options, args = parser.parse_args([])
+  return options
 
 # Infinite Reasons
 PROOF_SYSTEM = "Proof_System"
@@ -36,16 +42,13 @@ CHAIN_MOVE = "Chain_Move"
 
 class Simulator(object):
   """Turing machine simulator using chain-tape optimization."""
-  # TODO(shawn): Stop passing in all options separately, just pass in options
-  # object.
-  def __init__(self, machine, recursive=False, enable_prover=True,
-               init_tape=True, compute_steps=True, verbose_simulator=False,
-               verbose_prover=False, verbose_prefix="", allow_collatz=False):
+  def __init__(self, machine, options, verbose_prefix="", init_tape=True):
     self.machine = machine
-    self.recursive = recursive
-    self.compute_steps = compute_steps
-    self.verbose = verbose_simulator
-    self.verbose_prover = verbose_prover
+    self.options = options
+    self.recursive = options.recursive
+    self.compute_steps = options.compute_steps
+    self.verbose = options.verbose_simulator
+    self.verbose_prover = options.verbose_prover
     self.verbose_prefix = verbose_prefix
     self.state = machine.init_state
     self.dir = machine.init_dir
@@ -56,13 +59,14 @@ class Simulator(object):
     if init_tape:
       self.tape = Tape.Chain_Tape()
       self.tape.init(self.machine.init_symbol, self.machine.init_dir)
-    if enable_prover:
+    if options.prover:
       self.prover = Proof_System.Proof_System(self.machine,
+                                              options=self.options,
                                               recursive=self.recursive,
                                               compute_steps=self.compute_steps,
                                               verbose=self.verbose_prover,
                                               verbose_prefix=self.verbose_prefix + "  ")
-      self.prover.allow_collatz = allow_collatz
+      self.prover.allow_collatz = options.allow_collatz
     else:
       self.prover = None  # We will run the simulation without a proof system.
     
