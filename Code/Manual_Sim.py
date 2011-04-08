@@ -18,8 +18,9 @@ class BBConsole(cmd.Cmd):
   def help_apply(self):
     print "\nTry to apply the specified rule or all rules if not specified (not implemented).\n"
 
-  def help_delete(self):
-    print "\nDelete a rule with the specified name (not implemented).\n"
+  def do_delete(self, args):
+    """\nDelete a rule with the specified name (not implemented).\n"""
+    self.delete_code(args)
 
   def do_EOF(self, args):
     """\nExit on system end of file character.\n"""
@@ -222,6 +223,10 @@ In that case we execute the line as Python code.\n
 
     self.sim.verbose_print()
 
+  def delete_code(self, args):
+    if args and self.sim.prover:
+      self.sim.prover.delete_rule(args)
+
   def EOF_code(self, args):
     print
     return self.do_exit(args)
@@ -245,6 +250,7 @@ In that case we execute the line as Python code.\n
 
   def complete_prover(self, text, line, begidx, endidx):
     choices = ['','off','on','reset']
+
     if not text:
       completions = choices
     else:
@@ -293,8 +299,14 @@ In that case we execute the line as Python code.\n
       self.record_hist = False
 
   def rename_code(self, args):
-    print '\nNot implemented yet...\n'
-    pass
+    if args and self.sim.prover:
+      names = args.split()
+      if len(names) != 2:
+        print "\nrename src dest\n"
+      else:
+        src = names[0]
+        dest = names[1]
+        self.sim.prover.rename_rule(src,dest)
 
   def step_code(self, args):
     steps = 1
