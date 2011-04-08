@@ -496,8 +496,17 @@ class Proof_System(object):
           if delta_value[x] < 0:
             if delta_value[x] != -1:
               large_delta = True
-            try:
-              if num_reps is None:
+            if num_reps is None:
+              if (isinstance(init_value[x], Algebraic_Expression) and
+                  delta_value[x] != -1):
+                # TODO(shawn): Generate Collatz proofs!
+                if self.verbose:
+                  self.print_this("++ Collatz diff ++")
+                  self.print_this("From: num_reps = (%r // -%r)  + 1"
+                                  % (init_value[x], delta_value[x]))
+                  self.print_this("")
+                return False, 2
+              else:
                 # First one is safe.
                 # For example, if we have a rule:
                 #   Initial: 0^Inf 2^(d + 1)  (0)B>  2^(f + 2) 0^Inf 
@@ -507,32 +516,26 @@ class Proof_System(object):
                 # goes to:
                 #   0^Inf 2^(s + 12)  (0)B> 2^2 0^Inf
                 num_reps = (init_value[x] // -delta_value[x])  + 1
+            else:
+              if not isinstance(init_value[x], Algebraic_Expression):
+                # As long as init_value[x] >= 0 we can apply proof
+                num_reps = min(num_reps, (init_value[x] // -delta_value[x])  + 1)
               else:
-                if not isinstance(init_value[x], Algebraic_Expression):
-                  # As long as init_value[x] >= 0 we can apply proof
-                  num_reps = min(num_reps, (init_value[x] // -delta_value[x])  + 1)
-                else:
-                  # Example Rule:
-                  #   Initial: 0^Inf 2^a+1 0^1 1^b+3 B> 0^1 1^c+1 0^Inf
-                  #   Diff:    0^Inf 2^-1  0^0 1^+2  B> 0^0 1^-1  0^Inf
-                  # Applied to tape:
-                  #   0^Inf 2^d+5 0^1 1^3 B> 0^1 1^e+3 0^Inf
-                  # We shoud apply the rule either d+4 or e+2 times depending
-                  # on which is smaller. Too complicated, we fail.
-                  if self.verbose:
-                    self.print_this("++ Multiple negative diffs for expressions ++")
-                    self.print_this("Config block:", new_block)
-                    self.print_this("Rule initial block:", init_block)
-                    self.print_this("Rule diff block:", diff_block)
-                    self.print_this("")
-                  return False, "Multiple_Diff"
-            except BadOperation:
-              if self.verbose:
-                self.print_this("++ BadOperation ++")
-                self.print_this("From: num_reps = min(%r, (%r // -%r)  + 1)" % (num_reps, init_value[x], delta_value[x]))
-                self.print_this("")
-              return False, 2
-    
+                # Example Rule:
+                #   Initial: 0^Inf 2^a+1 0^1 1^b+3 B> 0^1 1^c+1 0^Inf
+                #   Diff:    0^Inf 2^-1  0^0 1^+2  B> 0^0 1^-1  0^Inf
+                # Applied to tape:
+                #   0^Inf 2^d+5 0^1 1^3 B> 0^1 1^e+3 0^Inf
+                # We shoud apply the rule either d+4 or e+2 times depending
+                # on which is smaller. Too complicated, we fail.
+                if self.verbose:
+                  self.print_this("++ Multiple negative diffs for expressions ++")
+                  self.print_this("Config block:", new_block)
+                  self.print_this("Rule initial block:", init_block)
+                  self.print_this("Rule diff block:", diff_block)
+                  self.print_this("")
+                return False, "Multiple_Diff"
+   
     # If none of the diffs are negative, this will repeat forever.
     if num_reps is None:
       if self.verbose:
