@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 
-import sys, string, os
+import sys, string, os, re
 import cmd
 # import cmd2 as cmd
 
@@ -18,8 +18,9 @@ class BBConsole(cmd.Cmd):
   def help_apply(self):
     print "\nTry to apply the specified rule or all rules if not specified (not implemented).\n"
 
-  def help_delete(self):
-    print "\nDelete a rule with the specified name (not implemented).\n"
+  def do_delete(self, args):
+    """\nDelete a rule with the specified name (not implemented).\n"""
+    self.delete_code(args)
 
   def do_EOF(self, args):
     """\nExit on system end of file character.\n"""
@@ -128,7 +129,7 @@ In that case we execute the line as Python code.\n
       except IOError:
         pass
 
-      self.swap_history()
+      self.swap_history(self.readline_save)
       self._hist_cmd = self._hist_save
 
       save_history_tape = os.path.expanduser("~/.bb_ms_history_tape")
@@ -137,7 +138,7 @@ In that case we execute the line as Python code.\n
       except IOError:
         pass
 
-      self.swap_history()
+      self.swap_history(self.readline_save)
 
       self.set_cmdnum(len(self._hist_cmd) + 1)
 
@@ -149,17 +150,19 @@ In that case we execute the line as Python code.\n
 
     if self.readline:
       save_history_cmd = os.path.expanduser("~/.bb_ms_history_cmd")
-      self.readline.set_history_length(99)
+      self.readline.set_history_length(self.readline_save)
       self.readline.write_history_file(save_history_cmd)
 
       self.swap_history()
       save_history_tape = os.path.expanduser("~/.bb_ms_history_tape")
-      self.readline.set_history_length(99)
+      self.readline.set_history_length(self.readline_save)
       self.readline.write_history_file(save_history_tape)
 
     print "Powering down...\n"
 
   def init_code(self, TTable, options):
+    self.readline_save = 99
+
     self.readline = False
     try:
       import readline
@@ -220,6 +223,10 @@ In that case we execute the line as Python code.\n
 
     self.sim.verbose_print()
 
+  def delete_code(self, args):
+    if args and self.sim.prover:
+      self.sim.prover.delete_rule(args)
+
   def EOF_code(self, args):
     print
     return self.do_exit(args)
@@ -243,6 +250,7 @@ In that case we execute the line as Python code.\n
 
   def complete_prover(self, text, line, begidx, endidx):
     choices = ['','off','on','reset']
+
     if not text:
       completions = choices
     else:
@@ -291,8 +299,14 @@ In that case we execute the line as Python code.\n
       self.record_hist = False
 
   def rename_code(self, args):
-    print '\nNot implemented yet...\n'
-    pass
+    if args and self.sim.prover:
+      names = args.split()
+      if len(names) != 2:
+        print "\nrename src dest\n"
+      else:
+        src = names[0]
+        dest = names[1]
+        self.sim.prover.rename_rule(src,dest)
 
   def step_code(self, args):
     steps = 1
@@ -344,6 +358,18 @@ In that case we execute the line as Python code.\n
     self.swap_history()
 
     tape_state_tokens = tape_state_string.split()
+    num_tokens = len(tape_state_tokens)
+
+    for i in xrange(num_tokens):
+      token = tape_state_tokens[i]
+      if token[0] == "(" and token[-1] == ">":
+        temp = token.replace(")",") ")
+        tape_state_tokens[i:i+1] = temp.split()
+        break
+      elif token[0] == "<" and token[-1] == ")":
+        temp = token.replace("("," (")
+        tape_state_tokens[i:i+1] = temp.split()
+        break
 
     tape_parse = [tape_state_token.split("^") for tape_state_token in tape_state_tokens]
 
@@ -374,7 +400,6 @@ In that case we execute the line as Python code.\n
         else:
           new_symbol = Turing_Machine.Block_Symbol([int(c) for c in token[0]])
         token[0] = new_symbol
-      # TODO(shawn): Allow "(1)A>" rather than "(1) A>"
       elif token[0][0] == "(":
         if len(token[0]) != symbol_length + 2:
           print "\nBack symbol length doesn't match tape symbol length.\n"
@@ -505,13 +530,17 @@ In that case we execute the line as Python code.\n
     self.cmdnum = value
     self.prompt = "%d> " % (self.cmdnum,)
 
-  def swap_history(self):
+  def swap_history(self, max_num = None):
     if self.readline:
       rl_size_history = self.readline.get_current_history_length()
-
+      if max_num:
+        rl_size_history = max_num
+      
       temp = []
-      for line_num in xrange(rl_size_history):
-        temp.append(self.readline.get_history_item(line_num+1))
+      for line_num in xrange(rl_size_history+1):
+        item = self.readline.get_history_item(line_num)
+        if item:
+          temp.append(item)
 
       self.readline.clear_history()
 
