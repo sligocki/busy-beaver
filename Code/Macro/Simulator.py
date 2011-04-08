@@ -25,6 +25,9 @@ def add_option_group(parser):
                     action="store_false", default=True,
                     help="Don't keep track of base step count (can be "
                    "expensive to calculate especially with recursive proofs).")
+  group.add_option("-p", "--no-prover", dest="prover",
+                   action="store_false", default=True, 
+                   help="Turn OFF proof system.")
 
   parser.add_option_group(group)
 
@@ -60,13 +63,9 @@ class Simulator(object):
       self.tape = Tape.Chain_Tape()
       self.tape.init(self.machine.init_symbol, self.machine.init_dir)
     if options.prover:
-      self.prover = Proof_System.Proof_System(self.machine,
+      self.prover = Proof_System.Proof_System(machine=self.machine,
                                               options=self.options,
-                                              recursive=self.recursive,
-                                              compute_steps=self.compute_steps,
-                                              verbose=self.verbose_prover,
                                               verbose_prefix=self.verbose_prefix + "  ")
-      self.prover.allow_collatz = options.allow_collatz
     else:
       self.prover = None  # We will run the simulation without a proof system.
     

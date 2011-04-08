@@ -23,9 +23,6 @@ def add_option_group(parser):
   group = OptionGroup(parser, "Proof System options")
 
   group.add_option("--verbose-prover", action="store_true")
-  group.add_option("-p", "--no-prover", dest="prover",
-                   action="store_false", default=True, 
-                   help="Turn OFF proof system.")
   group.add_option("-r", "--recursive", action="store_true", default=False, 
                    help="Turn ON recursive proof system.")
   group.add_option("--allow-collatz", action="store_true", default=False,
@@ -136,18 +133,18 @@ class Proof_System(object):
   """Stores past information, looks for patterns and tries to prove general
   rules when it finds patterns.
   """
-  def __init__(self, machine, options, recursive, compute_steps, verbose, verbose_prefix):
+  def __init__(self, machine, options, verbose_prefix):
     self.machine = machine
     self.options = options
     # Should we try to prove recursive rules? (Rules which use previous rules as steps.)
-    self.recursive = recursive
+    self.recursive = options.recursive
     # Allow Collatz-style recursive rules. These are rules which depend upon
     # the parity (or remainder mod n) of exponents.
     # E.g. 1^(2k+1) 0 2 B>  -->  1^(3k+3) 0 2 B>
     # Note: Very experimental, may well break your simulation.
-    self.allow_collatz = False
-    self.compute_steps = compute_steps
-    self.verbose = verbose  # Step-by-step state printing
+    self.allow_collatz = options.allow_collatz
+    self.compute_steps = options.compute_steps
+    self.verbose = options.verbose_prover  # Step-by-step state printing
     self.verbose_prefix = verbose_prefix
     # Memory of past stripped configurations with enough extra information to
     # try to prove rules. Set to None to disable proving new rules (for example
