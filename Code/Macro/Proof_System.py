@@ -473,6 +473,8 @@ class Proof_System(object):
     # We keep track because even recursive proofs cannot contain rules with large_deltas.
     large_delta = False
     has_variable = False
+    replace_vars = {}  # Variables to replace if collatz proofs are allowed.
+    # TODO(shawn): We gotta do something with this.
     for dir in range(2):
       for init_block, diff_block, new_block in zip(rule.initial_tape.tape[dir], rule.diff_tape.tape[dir], new_tape.tape[dir]):
         # The constant term in init_block.num represents the minimum required value.
@@ -499,13 +501,28 @@ class Proof_System(object):
             if num_reps is None:
               if (isinstance(init_value[x], Algebraic_Expression) and
                   delta_value[x] != -1):
-                # TODO(shawn): Generate Collatz proofs!
-                if self.verbose:
-                  self.print_this("++ Collatz diff ++")
-                  self.print_this("From: num_reps = (%r // -%r)  + 1"
-                                  % (init_value[x], delta_value[x]))
-                  self.print_this("")
-                return False, 2
+                if self.allow_collatz:
+                  # We should have something like (x + 12)
+                  old_var = init_value[x].unknown()  # x
+                  old_const = init_value[x].const    # 12
+                  new_var = NewVariableExpression()  # k
+                  # 1) Record that we are replacing x with 3k.
+                  replace_vars[old_var] = new_var * -delta_value[x]
+                  init_value[x] = init_value[x].substitute(replace_vars)
+                  # 2) num_reps = (3k + 12) // 3 + 1 = k + (12//3) + 1
+                  num_reps = new_var + (old_const // -delta_value[x])  + 1
+                  if self.verbose:
+                    self.print_this("++ Experimental Collatz diff ++")
+                    self.print_this("From: num_reps = (%r // -%r)  + 1"
+                                    % (init_value[x], delta_value[x]))
+                    self.print_this("")
+                else:
+                  if self.verbose:
+                    self.print_this("++ Collatz diff ++")
+                    self.print_this("From: num_reps = (%r // -%r)  + 1"
+                                    % (init_value[x], delta_value[x]))
+                    self.print_this("")
+                  return False, 2
               else:
                 # First one is safe.
                 # For example, if we have a rule:
