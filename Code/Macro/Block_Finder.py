@@ -37,6 +37,7 @@ def block_finder(machine, options):
   ## First find the minimum efficient tape compression size.
   new_options = copy.copy(options)
   new_options.prover = False  # Disable proof system for block finding.
+  new_options.compute_steps = True  # Even if --no-steps, we need steps here.
   sim = Simulator(machine, new_options)
   
   if options.verbose_block_finder:

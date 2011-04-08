@@ -48,11 +48,10 @@ class Simulator(object):
   def __init__(self, machine, options, verbose_prefix="", init_tape=True):
     self.machine = machine
     self.options = options
-    self.recursive = options.recursive
     self.compute_steps = options.compute_steps
     self.verbose = options.verbose_simulator
-    self.verbose_prover = options.verbose_prover
     self.verbose_prefix = verbose_prefix
+
     self.state = machine.init_state
     self.dir = machine.init_dir
     self.old_step_num = 0
