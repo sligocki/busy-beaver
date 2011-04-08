@@ -28,7 +28,7 @@ class SystemTest(unittest.TestCase):
 
   def test_small_machines(self):
     self.options.time = 1.0  # These guys should be quick.
-    # TODO(shawn): Should we just list the machines directly instead?
+    # TODO(shawn): Should we just list the machine ttables directly instead?
     data = [("Machines/2x2-6-4", (Exit_Condition.HALT, (6, 4))),
             ("Machines/2x3-38-9", (Exit_Condition.HALT, (38, 9))),
             ("Machines/2x4-3932964-2050",
@@ -54,7 +54,12 @@ class SystemTest(unittest.TestCase):
     for name, expected_result in data:
       filename = os.path.join(self.root_dir, name)
       ttable = IO.load_TTable_filename(filename)
-      simulated_result = Macro_Simulator.run_options(ttable, self.options)
+      try:
+        simulated_result = Macro_Simulator.run_options(ttable, self.options)
+      except:
+        print "Error"
+        print name
+        raise
       self.assertEqual(expected_result, simulated_result)
 
   def test_medium_machines(self):
@@ -67,7 +72,12 @@ class SystemTest(unittest.TestCase):
     for name, expected_result in data:
       filename = os.path.join(self.root_dir, name)
       ttable = IO.load_TTable_filename(filename)
-      simulated_result = Macro_Simulator.run_options(ttable, self.options)
+      try:
+        simulated_result = Macro_Simulator.run_options(ttable, self.options)
+      except:
+        print "Error"
+        print name
+        raise
       self.assertEqual(expected_result, simulated_result)
 
   def test_large_machines(self):
@@ -83,7 +93,12 @@ class SystemTest(unittest.TestCase):
     for name, expected_result in data:
       filename = os.path.join(self.root_dir, name)
       ttable = IO.load_TTable_filename(filename)
-      simulated_result = Macro_Simulator.run_options(ttable, self.options)
+      try:
+        simulated_result = Macro_Simulator.run_options(ttable, self.options)
+      except:
+        print "Error"
+        print name
+        raise
       self.assertEqual(expected_result, simulated_result)
 
 if __name__ == '__main__':
