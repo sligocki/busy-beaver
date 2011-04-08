@@ -67,6 +67,10 @@ class Simulator(object):
                                               verbose_prefix=self.verbose_prefix + "  ")
     else:
       self.prover = None  # We will run the simulation without a proof system.
+
+    # Set of variables to replace (needed for Simulator in Proof_System when
+    # Collatz-style rules are allowed.
+    self.replace_vars = {}
     
     # Operation state (e.g. running, halted, proven-infinite, ...)
     self.op_state = Turing_Machine.RUNNING
@@ -113,7 +117,7 @@ class Simulator(object):
     self.num_loops += 1
     if self.prover:
       # Log the configuration and see if we can apply a rule.
-      cond, new_tape, num_steps = self.prover.log(self.tape, self.state, self.step_num, self.num_loops-1)
+      cond, new_tape, num_steps, replace_vars = self.prover.log(self.tape, self.state, self.step_num, self.num_loops-1)
       # Proof system says that machine will repeat forever
       if cond == Turing_Machine.INF_REPEAT:
         self.op_state = Turing_Machine.INF_REPEAT
@@ -122,6 +126,10 @@ class Simulator(object):
         return
       # Proof system says that we can apply a rule
       elif cond == Turing_Machine.RUNNING:
+        # We don't want the update below to overwrite things.
+        assert not frozenset(self.replace_vars.keys()).intersection(
+                   frozenset(replace_vars.keys()))
+        self.replace_vars.update(replace_vars)
         self.tape = new_tape
         self.num_rule_moves += 1
         if self.compute_steps:
