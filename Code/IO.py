@@ -225,6 +225,9 @@ def load_TTable(infile, line_num = 1):
       raise Exception, "Not enough lines in file"
     line_num -= 1
   line = infile.readline()
+  return parse_ttable(line)
+
+def parse_ttable(line):
   result = Record()
   result.read(line)
   return result.ttable
