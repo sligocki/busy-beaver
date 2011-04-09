@@ -207,13 +207,8 @@ In that case we execute the line as Python code.\n
     if self.sim_options.backsymbol:
       m = Turing_Machine.Backsymbol_Macro_Machine(m)
 
-    self.sim = Simulator.Simulator(m, self.sim_options.recursive,
-                                      enable_prover=self.sim_options.prover,
-                                      init_tape=True,
-                                      compute_steps=self.sim_options.compute_steps,
-                                      verbose_simulator=self.sim_options.verbose_simulator,
-                                      verbose_prover=self.sim_options.verbose_prover,
-                                      verbose_prefix="")
+    self.sim = Simulator.Simulator(m, options = self.sim_options, verbose_prefix="", init_tape=True)
+
     self.sim_prover_save = None
 
     self.num_states  = self.sim.machine.num_states
@@ -511,13 +506,7 @@ In that case we execute the line as Python code.\n
     else:
       self.sim_options.prover = True
 
-    self.sim = Simulator.Simulator(m, self.sim_options.recursive,
-                                      enable_prover=self.sim_options.prover,
-                                      init_tape=True,
-                                      compute_steps=self.sim_options.compute_steps,
-                                      verbose_simulator=self.sim_options.verbose_simulator,
-                                      verbose_prover=self.sim_options.verbose_prover,
-                                      verbose_prefix="")
+    self.sim = Simulator.Simulator(m, options = self.sim_options, verbose_prefix="", init_tape=True)
 
     self.sim.state = new_state
     self.sim.dir   = tape_dir
