@@ -378,25 +378,25 @@ In that case we execute the line as Python code.\n
       print
       return
 
-    symbol_length = len(tape_parse[0][0])
+    block_size = len(tape_parse[0][0])
 
     for i in xrange(token_length):
       token = tape_parse[i]
       if len(token) == 2:
         tape_length += 1
-        if len(token[0]) != symbol_length:
+        if len(token[0]) != block_size:
           print "\nTape symbol lengths don't match.\n"
           return
         if token[0].translate(None,string.digits[:self.num_symbols]) != "":
           print "\nSome of '%s' isn't in '%s'.\n" % (token[0],string.digits[:self.num_symbols])
           return
-        if symbol_length == 1:
+        if block_size == 1:
           new_symbol = int(token[0])
         else:
           new_symbol = Turing_Machine.Block_Symbol([int(c) for c in token[0]])
         token[0] = new_symbol
       elif token[0][0] == "(":
-        if len(token[0]) != symbol_length + 2:
+        if len(token[0]) != block_size + 2:
           print "\nBack symbol length doesn't match tape symbol length.\n"
           return
         back_index = i
@@ -429,7 +429,7 @@ In that case we execute the line as Python code.\n
       if new_back_symbol.translate(None,string.digits[:self.num_symbols]) != "":
         print "\nSome of back symbol, '%s', isn't in '%s'.\n" % (new_back_symbol,string.digits[:self.num_symbols])
         return
-      if symbol_length == 1:
+      if block_size == 1:
         new_back_symbol = int(new_back_symbol)
       else:
         new_back_symbol = Turing_Machine.Block_Symbol([int(c) for c in new_back_symbol])
@@ -467,12 +467,17 @@ In that case we execute the line as Python code.\n
     new_tape.tape[1].reverse()
     new_tape.displace = 0
 
-    self.sim_options.block_size = symbol_length
-
     if back_index >= 0:
-      self.sim_options.backsymbol = True
+      backsymbol = True
     else:
-      self.sim_options.backsymbol = False
+      backsymbol = False
+
+    if self.sim_options.block_size == block_size and self.sim_options.backsymbol == backsymbol:
+      same_sim = True
+    else:
+      self.sim_options.block_size = block_size
+      self.sim_options.backsymbol = backsymbol
+      same_sim = False
 
     if tape_dir == 0:
       new_state = tape_parse[state_index][0][1]
@@ -506,11 +511,19 @@ In that case we execute the line as Python code.\n
     else:
       self.sim_options.prover = True
 
+    if same_sim:
+      self.sim_prover_save = self.sim.prover
+
     self.sim = Simulator.Simulator(m, options = self.sim_options, verbose_prefix="", init_tape=True)
+
+    if same_sim:
+      self.sim.prover = self.sim_prover_save
 
     self.sim.state = new_state
     self.sim.dir   = tape_dir
     self.sim.tape  = new_tape
+
+    self.sim_prover_save = None
 
     self.stdout.write("\n")
     self.sim.verbose_print()
