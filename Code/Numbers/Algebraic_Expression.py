@@ -21,7 +21,7 @@ class Variable(object):
   def __repr__(self):
     # Variables are initially printed as letters and thereafter as <x#>
     if self.id <= 25:
-      return "%c" % (self.id + 97)
+      return "%c" % (self.id + ord('a'))
     else:
       return "<x%d>" % self.id
 
