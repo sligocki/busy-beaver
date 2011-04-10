@@ -35,7 +35,7 @@ class Rule(object):
   """Base type for Proof_System rules."""
 
 class Diff_Rule(Rule):
-  """A rule that specifies constant deltas for each tape block' repetition count."""
+  """A rule that specifies constant deltas for each tape block's exponent."""
   def __init__(self, initial_tape, diff_tape, num_steps, num_loops, rule_num):
     # TODO: Use basic lists instead of tapes, we never use the symbols.
     # TODO: Have a variable list and a min list instead of packing both
@@ -85,6 +85,10 @@ class General_Rule(Rule):
             "Steps %s Loops %s"
             % (self.name, self.var_list, self.min_list, self.result_list,
                self.num_steps, self.num_loops))
+
+class Collatz_Rule(Rule):
+  """General rule that only applies if exponents have certain parity."""
+  pass
 
 # TODO: Try out some other stripped_configs
 def stripped_info(block):
