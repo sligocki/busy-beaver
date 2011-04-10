@@ -8,6 +8,7 @@ from optparse import OptionParser, OptionGroup
 import time
 
 import Proof_System
+from Proof_System import Algebraic_Expression
 import Tape
 import Turing_Machine
 
@@ -126,10 +127,21 @@ class Simulator(object):
         return
       # Proof system says that we can apply a rule
       elif cond == Turing_Machine.RUNNING:
-        # We don't want the update below to overwrite things.
-        assert not frozenset(self.replace_vars.keys()).intersection(
-                   frozenset(replace_vars.keys()))
-        self.replace_vars.update(replace_vars)
+        # TODO(shawn): This seems out of place here and is the only place in
+        # the Simulator where we distinguish Algebraic_Expressions.
+        # We should clean it up in some way.
+        if replace_vars:
+          assert self.options.allow_collatz
+          # We don't want the update below to overwrite things.
+          assert not frozenset(self.replace_vars.keys()).intersection(
+                     frozenset(replace_vars.keys()))
+          self.replace_vars.update(replace_vars)
+          # Update all instances of old variable (should just be in steps).
+          assert isinstance(self.step_num, Algebraic_Expression)
+          self.step_num.substitute(replace_vars)
+          assert isinstance(self.old_step_num, Algebraic_Expression)
+          self.old_step_num.substitute(replace_vars)
+          assert not isinstance(self.num_loops, Algebraic_Expression)
         self.tape = new_tape
         self.num_rule_moves += 1
         if self.compute_steps:

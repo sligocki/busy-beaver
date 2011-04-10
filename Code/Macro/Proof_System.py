@@ -350,8 +350,18 @@ class Proof_System(object):
       # step and if so cancel the proof?
 
       if gen_sim.replace_vars:
-        # TODO(shawn): Actually do something (replace chars).
-        assert False
+        assert self.allow_collatz
+        # Replace the variables in various places.
+        for init_block in initial_tape.tape[0]+initial_tape.tape[1]:
+          if isinstance(init_block.num, Algebraic_Expression):
+            if init_block.num.variable_restricted() in gen_sim.replace_vars:
+              init_block.num = init_block.num.substitute(gen_sim.replace_vars)
+        for old_var, new_expr in gen_sim.replace_vars.items():
+          new_var = new_expr.variable()
+          min_val[new_var] = min_val[old_var]
+          del min_val[old_var]
+        # TODO(shawn): We might not want to clear this ...
+        gen_sim.replace_vars.clear()
       
       if gen_sim.op_state is not Turing_Machine.RUNNING:
         if self.verbose:
@@ -366,7 +376,7 @@ class Proof_System(object):
         for block in gen_sim.tape.tape[dir]:
           if isinstance(block.num, Algebraic_Expression):
             if len(block.num.terms) == 1:
-              x = block.num.unknown()
+              x = block.num.variable()
               min_val[x] = min(min_val[x], block.num.const)
             # If more than one variable is clumped into a single term, it will fail.
             elif len(block.num.terms) > 1:
@@ -400,7 +410,7 @@ class Proof_System(object):
         if diff_block.num != Tape.INF:
           diff_block.num -= initial_block.num
           if isinstance(diff_block.num, Algebraic_Expression):
-            if len(diff_block.num.terms) == 0:
+            if diff_block.num.is_const():
               diff_block.num = diff_block.num.const
             else:
               is_recursive_rule = True
@@ -413,7 +423,7 @@ class Proof_System(object):
       assignment = {}
       for init_block in initial_tape.tape[0]+initial_tape.tape[1]:
         if isinstance(init_block.num, Algebraic_Expression):
-          x = init_block.num.unknown()
+          x = init_block.num.variable_restricted()
           var_list.append(x)
           min_list.append(init_block.num.const - min_val[x] + 1)
           # Hackish: If exponent was x + 5 we want to replace all x with x - 5.
@@ -453,7 +463,7 @@ class Proof_System(object):
     for dir in range(2):
       for init_block in initial_tape.tape[dir]:
         if isinstance(init_block.num, Algebraic_Expression):
-          x = init_block.num.unknown()
+          x = init_block.num.variable_restricted()
           new_value = VariableToExpression(x) - min_val[x] + 1
           init_block.num = init_block.num.substitute({x: new_value})
           replaces[x] = new_value
@@ -519,7 +529,7 @@ class Proof_System(object):
         # The constant term in init_block.num represents the minimum required value.
         if isinstance(init_block.num, Algebraic_Expression):
           # Calculate the initial and change in value for each variable.
-          x = init_block.num.unknown()
+          x = init_block.num.variable_restricted()
           # init_block.num.const == min_value for this exponent.
           init_value[x] = new_block.num - init_block.num.const
           if (not isinstance(init_value[x], Algebraic_Expression) and
@@ -543,7 +553,7 @@ class Proof_System(object):
                   delta_value[x] != -1):
                 if self.allow_collatz:
                   # We should have something like (x + 12)
-                  old_var = init_value[x].unknown()  # x
+                  old_var = init_value[x].variable_restricted()  # x
                   old_const = init_value[x].const    # 12
                   new_var = NewVariableExpression()  # k
                   # 1) Record that we are replacing x with 3k.
@@ -557,6 +567,8 @@ class Proof_System(object):
                   num_reps = new_var + (old_const // -delta_value[x])  + 1
                   if self.verbose:
                     self.print_this("++ Experimental Collatz diff ++")
+                    self.print_this("Substituting:", old_var, "=",
+                                    replace_vars[old_var])
                     self.print_this("From: num_reps = (%r // -%r)  + 1"
                                     % (init_value[x], delta_value[x]))
                     self.print_this("")
@@ -618,8 +630,8 @@ class Proof_System(object):
       for term in rule.num_steps.terms:
         assert len(term.vars) == 1
         coef = term.coef; x = term.vars[0].var
-        # We don't factor out the coef, because it might make this work better for
-        # some recursive rules.
+        # We don't factor out the coef, because it might make this work
+        # better for some recursive rules.
         try:
           diff_steps += series_sum(coef * init_value[x], coef * delta_value[x], num_reps)
         except TypeError:
@@ -635,6 +647,9 @@ class Proof_System(object):
       for diff_block, return_block in zip(rule.diff_tape.tape[dir], return_tape.tape[dir]):
         if return_block.num is not Tape.INF:
           return_block.num += num_reps * diff_block.num
+          if isinstance(return_block.num, Algebraic_Expression) and \
+                return_block.num.is_const():
+            return_block.num = return_block.num.const
       return_tape.tape[dir] = [x for x in return_tape.tape[dir] if x.num != 0]
     
     ## Return the pertinent info

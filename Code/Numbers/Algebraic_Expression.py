@@ -215,12 +215,24 @@ class Expression(Number):
     else:
       raise BadOperation
 
-  def unknown(self):
+  def variable_restricted(self):
+    """Returns the single variable in this expression of form x + 12."""
+    if (len(self.terms) == 1 and self.terms[0].coef == 1 and
+        len(self.terms[0].vars) == 1 and self.terms[0].vars[0].pow == 1):
+      return self.terms[0].vars[0].var
+    else:
+      raise BadOperation, "Expression %s is not of correct form" % self
+
+  def variable(self):
     """Returns the single variable in this expression if it exists."""
     if len(self.terms) == 1 and len(self.terms[0].vars) == 1:
       return self.terms[0].vars[0].var
     else:
-      raise BadOperation, "This expression does not have exactly 1 variable!"
+      raise BadOperation, "Expression %s is not of correct form" % self
+
+  def is_const(self):
+    """Returns true if this expression has not variables."""
+    return (len(self.terms) == 0)
 
 def Expression_from_string(input):
   if input[0] == '(':
