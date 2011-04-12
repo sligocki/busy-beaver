@@ -124,6 +124,7 @@ In that case we execute the line as Python code.\n
 
     if self.readline:
       save_history_cmd = os.path.expanduser("~/.bb_ms_history_cmd")
+      print save_history_cmd
       try:
         self.readline.read_history_file(save_history_cmd)
       except IOError:
@@ -149,13 +150,25 @@ In that case we execute the line as Python code.\n
     cmd.Cmd.postloop(self)   ## Clean up command completion
 
     if self.readline:
+      self.swap_history()
+      len_hist = len(self._hist_save)
+      if len_hist > self.readline_save:
+        self._hist_save = self._hist_save[len_hist-self.readline_save:len_hist]
+      self.swap_history()
+
       save_history_cmd = os.path.expanduser("~/.bb_ms_history_cmd")
-      self.readline.set_history_length(self.readline_save)
+      self.readline.set_history_length(self.readline_save+1)
       self.readline.write_history_file(save_history_cmd)
 
       self.swap_history()
+
+      self.swap_history()
+      len_hist = len(self._hist_save)
+      if len_hist > self.readline_save:
+        self._hist_save = self._hist_save[len_hist-self.readline_save:len_hist]
+      self.swap_history()
       save_history_tape = os.path.expanduser("~/.bb_ms_history_tape")
-      self.readline.set_history_length(self.readline_save)
+      self.readline.set_history_length(self.readline_save+1)
       self.readline.write_history_file(save_history_tape)
 
     print "Powering down...\n"
