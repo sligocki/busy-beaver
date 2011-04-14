@@ -38,10 +38,11 @@ def block_finder(machine, options):
   new_options = copy.copy(options)
   new_options.prover = False  # Disable proof system for block finding.
   new_options.compute_steps = True  # Even if --no-steps, we need steps here.
+  new_options.verbose_simulator = options.verbose_block_finder
   sim = Simulator(machine, new_options)
   
   if options.verbose_block_finder:
-    print ""
+    print
     print "Block finder start time:", time.clock()
   ## Find the least compressed time in before limit
   if options.bf_limit1 > 0:
