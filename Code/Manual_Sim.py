@@ -124,7 +124,6 @@ In that case we execute the line as Python code.\n
 
     if self.readline:
       save_history_cmd = os.path.expanduser("~/.bb_ms_history_cmd")
-      print save_history_cmd
       try:
         self.readline.read_history_file(save_history_cmd)
       except IOError:
