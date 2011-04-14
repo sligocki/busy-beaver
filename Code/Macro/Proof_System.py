@@ -36,7 +36,7 @@ class Rule(object):
 
 class Diff_Rule(Rule):
   """A rule that specifies constant deltas for each tape block's exponent."""
-  def __init__(self, initial_tape, diff_tape, num_steps, num_loops, rule_num):
+  def __init__(self, initial_tape, diff_tape, initial_state, num_steps, num_loops, rule_num):
     # TODO: Use basic lists instead of tapes, we never use the symbols.
     # TODO: Have a variable list and a min list instead of packing both
     # into init_tape.
@@ -47,13 +47,14 @@ class Diff_Rule(Rule):
     self.initial_tape = initial_tape
     self.diff_tape = diff_tape
     self.num_steps = num_steps
+    self.initial_state = initial_state
     self.num_loops = num_loops
     self.name = str(rule_num)  # Unique identifier.
     self.num_uses = 0  # Number of times this rule has been applied.
 
   def __str__(self):
-    return ("Diff Rule %s\nInitial Tape: %s\nDiff Tape: %s\nSteps: %s Loops: %s"
-            % (self.name, self.initial_tape, self.diff_tape, self.num_steps,
+    return ("Diff Rule %s\nInitial Config: %s\nDiff Config:    %s\nSteps: %s, Loops: %s"
+            % (self.name, self.initial_tape.print_with_state(self.initial_state), self.diff_tape.print_with_state(self.initial_state), self.num_steps,
                self.num_loops))
 
 class General_Rule(Rule):
@@ -220,7 +221,7 @@ class Proof_System(object):
       print
       self.print_this("Rule", rule.name)
       state = key[0]
-      self.print_this("Initial:", state, rule.initial_tape)
+      self.print_this("Initial:", rule.initial_tape.print_with_state(state))
       self.print_this("Diff:", rule.diff_tape)
       self.print_this("Loops:", rule.num_loops, "Steps:", rule.num_steps)
       self.print_this("Num uses:", rule.num_uses)
@@ -489,12 +490,12 @@ class Proof_System(object):
     if self.verbose:
       print
       self.print_this("** New rule proven **")
-      self.print_this("Initial:", initial_tape)
-      self.print_this("Diff:   ", diff_tape)
-      self.print_this("In steps:", num_steps)
+      self.print_this("Initial Config:", initial_tape.print_with_state(new_state))
+      self.print_this("Diff Config:   ", diff_tape.print_with_state(new_state))
+      self.print_this("Steps:", num_steps)
       print
     
-    return Diff_Rule(initial_tape, diff_tape, num_steps, gen_sim.num_loops, len(self.rules))
+    return Diff_Rule(initial_tape, diff_tape, new_state, num_steps, gen_sim.num_loops, len(self.rules))
   
   def apply_rule(self, rule, start_config):
     """Try to apply a rule to a given configuration."""
@@ -586,8 +587,8 @@ class Proof_System(object):
               else:
                 # First one is safe.
                 # For example, if we have a rule:
-                #   Initial: 0^Inf 2^(d + 1)  (0)B>  2^(f + 2) 0^Inf 
-                #   Diff:    0^Inf 2^1  (0)B>  2^-1 0^Inf 
+                #   Initial: 0^Inf 2^(d + 1) (0) B> 2^(f + 2) 0^Inf 
+                #   Diff:    0^Inf 2^1 (0) B> 2^-1 0^Inf 
                 # then:
                 #   0^Inf 2^3  (0)B> 2^(s + 11) 0^Inf
                 # goes to:
