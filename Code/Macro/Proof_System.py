@@ -59,7 +59,9 @@ class Diff_Rule(Rule):
 
 class General_Rule(Rule):
   """A general rule that specifies any general end configuration."""
-  def __init__(self, var_list, min_list, result_tape, num_steps, num_loops, rule_num):
+  def __init__(self, var_list, min_list,
+               result_tape, num_steps, num_loops, rule_num):
+    assert len(var_list) == len(min_list)
     self.var_list = var_list  # List of variables (or None) to assign repetition counts to.
     self.min_list = min_list  # List of minimum values for variables.
     # TODO: result_list and force output tape to be the same stripped config as input tape.
@@ -89,7 +91,42 @@ class General_Rule(Rule):
 
 class Collatz_Rule(Rule):
   """General rule that only applies if exponents have certain parity."""
-  pass
+  def __init__(self, var_list, coef_list, parity_list, min_list,
+               result_list, num_steps, num_loops, rule_num):
+    # *_lists are parallel lists for each exponent in the configuration.
+    # If one exponent goes from 2k+1 -> 3k+5 for all 2k+1 >= 5, then
+    # var = k, coef = 2, parity = 1, min = 5 and result = 3k+5
+    assert len(var_list) == len(coef_list) == len(parity_list) == len(min_list)
+    self.var_list = var_list
+    self.coef_list = coef_list
+    self.parity_list = parity_list
+    self.min_list = min_list
+
+    self.result_list = result_list
+    self.num_steps = num_steps
+    self.num_loops = num_loops
+    self.name = str(rule_num)
+
+    self.num_uses = 0
+    
+    # Is this an infinite rule?
+    self.infinite = True
+    for var, coef, parity, result in zip(self.var_list, self.coef_list,
+                                         self.parity_list, self.result_list):
+      if var:  # If this exponent changes in this rule (has a variable)
+        # TODO: This is a bit heavy-handed, but we probably don't prove
+        #   too many recursive rules :)
+        start_expr = coef * VariableToExpression(var) + parity
+        if is_scalar(result) or not result.always_greater_than(start_expr):
+          # If any exponent can decrease, this is not an infinite rule.
+          self.infinite = False
+          break
+
+  def __str__(self):
+    return ("Collatz Rule %s\nVar List: %s\nCoef List: %s\nParity List: %s"
+            "\nMin List: %s\nResult List: %s\nSteps %s Loops %s"
+            % (self.name, self.var_list, self.coef_list, self.parity_list,
+               self.min_list, self.result_list, self.num_steps, self.num_loops))
 
 # TODO: Try out some other stripped_configs
 def stripped_info(block):
