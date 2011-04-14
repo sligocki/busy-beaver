@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 
-import sys, string, os, re
+import sys, string, os, re, cPickle
 import cmd
 # import cmd2 as cmd
 
@@ -19,7 +19,7 @@ class BBConsole(cmd.Cmd):
     print "\nTry to apply the specified rule or all rules if not specified (not implemented).\n"
 
   def do_delete(self, args):
-    """\nDelete a rule with the specified name (not implemented).\n"""
+    """\nDelete a rule with the specified name.\n"""
     self.delete_code(args)
 
   def do_EOF(self, args):
@@ -45,8 +45,9 @@ for which help is available.\n
     """\nPrint the specified rule or all rules if not specified.\n"""
     self.list_code(args)
 
-  def help_load(self):
-    print "\nLoad the rules from the specified file (not implemented).\n"
+  def do_load(self, args):
+    """\nLoad the rules from the specified file.\n"""
+    self.load_code(args)
 
   def help_mark(self):
     print "\nMark the starting configuration for a rule (not implemented).\n"
@@ -60,14 +61,15 @@ for which help is available.\n
     return self.do_exit(args)
 
   def do_rename(self, args):
-    """\nRename a specified rule with specified name (not implemented).\n"""
+    """\nRename a specified rule with specified name.\n"""
     self.rename_code(args)
 
   def help_rule(self):
     print "\nGenerate a rule with name, if specified (not implemented).\n"
 
-  def help_save(self):
-    print "\nSave the rules to the specified file (not implemented).\n"
+  def do_save(self, args):
+    """\nSave the rules to the specified file.\n"""
+    self.save_code(args)
 
   def do_step(self, args):
     """\nTake n steps of the current machine (default: n = 1).\n"""
@@ -255,6 +257,12 @@ In that case we execute the line as Python code.\n
     if self.sim.prover:
       self.sim.prover.print_rules(args)
 
+  def load_code(self, args):
+    print "\nNot completely implemented\n"
+    save_file = open("rules","rb")
+    self.sim.prover.rules = cPickle.load(save_file)
+    save_file.close()
+
   def complete_prover(self, text, line, begidx, endidx):
     choices = ['','off','on','reset']
 
@@ -314,6 +322,12 @@ In that case we execute the line as Python code.\n
         src = names[0]
         dest = names[1]
         self.sim.prover.rename_rule(src,dest)
+
+  def save_code(self, args):
+    print "\nNot completely implemented\n"
+    save_file = open("rules","wb")
+    cPickle.dump(self.sim.prover.rules,save_file)
+    save_file.close()
 
   def step_code(self, args):
     steps = 1
