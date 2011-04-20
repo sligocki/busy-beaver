@@ -136,6 +136,32 @@ class Collatz_Rule(Rule):
             % (self.name, self.var_list, self.coef_list, self.parity_list,
                self.min_list, self.result_list, self.num_steps, self.num_loops))
 
+class Limited_Diff_Rule(Diff_Rule):
+  """A rule that specifies constant deltas for each tape block's exponent."""
+  def __init__(self, initial_tape, left_dist, right_dist, diff_tape, initial_state, num_steps, num_loops, rule_num):
+    # TODO: Use basic lists instead of tapes, we never use the symbols.
+    # TODO: Have a variable list and a min list instead of packing both
+    # into init_tape.
+    # TOOD: Or maybe we don't even need variables, we could just have the
+    # things that depend on variables index directly into the tapes?
+    # TODO: Actually, variables only appear in num_steps, so we don't even
+    # need them if we are not computing steps.
+    self.initial_tape = initial_tape
+    self.left_dist = left_dist
+    self.right_dist = right_dist
+    self.rule_len = left_dist + right_dist
+    self.diff_tape = diff_tape
+    self.num_steps = num_steps
+    self.initial_state = initial_state
+    self.num_loops = num_loops
+    self.name = str(rule_num)  # Unique identifier.
+    self.num_uses = 0  # Number of times this rule has been applied.
+
+  def __str__(self):
+    return ("Diff Rule %s\nInitial Config: %s (%d,%d)\nDiff Config:    %s\nSteps: %s, Loops: %s"
+            % (self.name, self.initial_tape.print_with_state(self.initial_state),self.left_dist,self.right_dist,self.diff_tape.print_with_state(self.initial_state), self.num_steps,
+               self.num_loops))
+
 # TODO: Try out some other stripped_configs
 def stripped_info(block):
   """Get an abstraction of a tape block. We try to prove rules between
