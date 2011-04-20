@@ -234,6 +234,15 @@ class Expression(Number):
     """Returns true if this expression has not variables."""
     return (len(self.terms) == 0)
 
+  def get_coef(self):
+    """If expression is linear, say m*x + k, returns coefficient m.
+    Otherwise returns None."""
+    if (len(self.terms) == 1 and len(self.terms[0].vars) == 1 and
+        self.terms[0].vars[0].pow == 1):
+      return self.terms[0].coef
+    else:
+      return None
+
 def Expression_from_string(input):
   if input[0] == '(':
     input = input[1:-1]

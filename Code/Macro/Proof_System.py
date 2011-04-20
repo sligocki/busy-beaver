@@ -303,7 +303,8 @@ class Proof_System(object):
       # TODO: Just return False for fail and object for success.
       return False, None, None, None
     
-    # Otherwise log it into past_configs and see if we should try and prove a new rule.
+    # Otherwise log it into past_configs and see if we should try and prove
+    # a new rule.
     past_config = self.past_configs[stripped_config]
     if past_config.log_config(step_num, loop_num):
       # We see enough of a pattern to try and prove a rule.
@@ -349,8 +350,8 @@ class Proof_System(object):
     gen_sim.state = new_state
     gen_sim.step_num = ConstantToExpression(0)
     
-    # If prover can run recursively, we let it simulate with a lazy proof system.
-    # That is, one that cannot prove new rules.
+    # If prover can run recursively, we let it simulate with a lazy prover.
+    # That is, one that cannot prove new rules, only use already proven ones.
     if self.recursive:
       gen_sim.prover = copy.copy(self)
       gen_sim.prover.past_configs = None
@@ -379,7 +380,8 @@ class Proof_System(object):
       # We cannot step onto/over a block with 0 repetitions.
       block = gen_sim.tape.get_top_block()
       if isinstance(block.num, Algebraic_Expression) and block.num.const <= 0:
-        # TODO: A more sophisticated system might try to make this block fixed sized.
+        # TODO: A more sophisticated system might try to make this block
+        # fixed sized.
         # For now we just fail. It may not be worth implimenting this anyway
         if self.verbose:
           print
@@ -420,7 +422,8 @@ class Proof_System(object):
             if len(block.num.terms) == 1:
               x = block.num.variable()
               min_val[x] = min(min_val[x], block.num.const)
-            # If more than one variable is clumped into a single term, it will fail.
+            # If more than one variable is clumped into a single term,
+            # it will fail.
             elif len(block.num.terms) > 1:
               if self.verbose:
                 print
@@ -431,7 +434,8 @@ class Proof_System(object):
     gen_sim.verbose_print()
     
     # Make sure finishing tape has the same stripped config as original.
-    gen_stripped_config = strip_config(gen_sim.state, gen_sim.tape.dir, gen_sim.tape.tape)
+    gen_stripped_config = strip_config(gen_sim.state, gen_sim.tape.dir,
+                                       gen_sim.tape.tape)
     if gen_stripped_config != stripped_config:
       if self.verbose:
         print
@@ -444,20 +448,27 @@ class Proof_System(object):
     # If machine has run delta_steps without error, it is a general rule.
     # Compute the diff_tape and find out if this is a recursive rule.
     # TODO: There should be a better way to find out if this is recursive.
-    is_recursive_rule = False
+    rule_type = Diff_Rule
     #diff_tape = new_tape.copy()
     diff_tape = gen_sim.tape.copy()
     for dir in range(2):
-      for diff_block, initial_block in zip(diff_tape.tape[dir], initial_tape.tape[dir]):
+      for diff_block, initial_block in zip(diff_tape.tape[dir],
+                                           initial_tape.tape[dir]):
         if diff_block.num != Tape.INF:
           diff_block.num -= initial_block.num
           if isinstance(diff_block.num, Algebraic_Expression):
             if diff_block.num.is_const():
               diff_block.num = diff_block.num.const
             else:
-              is_recursive_rule = True
+              coef = initial_block.num.get_coef()
+              assert coef != None, (initial_block, initial_tape)
+              if coef == 1:
+                rule_type = General_Rule
+              else:
+                # TODO(shawn): We should record this during simulation time.
+                rule_type = Collatz_Rule
     
-    if is_recursive_rule:
+    if rule_type == General_Rule:
       # TODO: Don't do all the work above if we not going to use it
       # Get everything in the right form for a General_Rule.
       var_list = []
@@ -497,42 +508,51 @@ class Proof_System(object):
         self.print_this("In steps:", num_steps)
         print
       self.num_recursive_rules += 1
-      return General_Rule(var_list, min_list, result_tape, num_steps, gen_sim.num_loops, len(self.rules))
-    
-    # Else if a normal diff rule:
-    # Tighten up rule to be as general as possible (e.g. by replacing x+5 with x+1).
-    replaces = {}
-    for dir in range(2):
-      for init_block in initial_tape.tape[dir]:
-        if isinstance(init_block.num, Algebraic_Expression):
-          x = init_block.num.variable_restricted()
-          new_value = VariableToExpression(x) - min_val[x] + 1
-          init_block.num = init_block.num.substitute({x: new_value})
-          replaces[x] = new_value
-    # Fix diff_tape.  # TODO: rm, only happens for recursive_rules
-    for dir in range(2):
-      for diff_block in diff_tape.tape[dir]:
-        if isinstance(diff_block.num, Algebraic_Expression):
-          diff_block.num = diff_block.num.substitute(replaces)
-    # Fix num_steps.
-    if self.compute_steps:
-      num_steps = gen_sim.step_num.substitute(replaces)
+      return General_Rule(var_list, min_list, result_tape, num_steps,
+                          gen_sim.num_loops, len(self.rules))
+
+    elif rule_type == Collatz_Rule:
+      assert False
+
     else:
-      num_steps = 0
+      # Else if a normal diff rule:
+      # Tighten up rule to be as general as possible
+      # (e.g. by replacing x+5 with x+1 if the rule holds for 1).
+      replaces = {}
+      for dir in range(2):
+        for init_block in initial_tape.tape[dir]:
+          if isinstance(init_block.num, Algebraic_Expression):
+            x = init_block.num.variable_restricted()
+            new_value = VariableToExpression(x) - min_val[x] + 1
+            init_block.num = init_block.num.substitute({x: new_value})
+            replaces[x] = new_value
+      # Fix diff_tape.  # TODO: rm, only happens for recursive_rules
+      for dir in range(2):
+        for diff_block in diff_tape.tape[dir]:
+          if isinstance(diff_block.num, Algebraic_Expression):
+            diff_block.num = diff_block.num.substitute(replaces)
+      # Fix num_steps.
+      if self.compute_steps:
+        num_steps = gen_sim.step_num.substitute(replaces)
+      else:
+        num_steps = 0
     
-    # Cast num_steps as an Algebraic Expression (if it somehow got through as simply an int)
-    if not isinstance(num_steps, Algebraic_Expression):
-      num_steps = ConstantToExpression(num_steps)
+      # Cast num_steps as an Algebraic Expression (if it somehow got through
+      # as simply an int)
+      if not isinstance(num_steps, Algebraic_Expression):
+        num_steps = ConstantToExpression(num_steps)
     
-    if self.verbose:
-      print
-      self.print_this("** New rule proven **")
-      self.print_this("Initial Config:", initial_tape.print_with_state(new_state))
-      self.print_this("Diff Config:   ", diff_tape.print_with_state(new_state))
-      self.print_this("Steps:", num_steps)
-      print
+      if self.verbose:
+        print
+        self.print_this("** New rule proven **")
+        self.print_this("Initial Config:",
+                        initial_tape.print_with_state(new_state))
+        self.print_this("Diff Config:   ",
+                        diff_tape.print_with_state(new_state))
+        self.print_this("Steps:", num_steps)
+        print
     
-    return Diff_Rule(initial_tape, diff_tape, new_state, num_steps, gen_sim.num_loops, len(self.rules))
+      return Diff_Rule(initial_tape, diff_tape, new_state, num_steps, gen_sim.num_loops, len(self.rules))
   
   def apply_rule(self, rule, start_config):
     """Try to apply a rule to a given configuration."""
@@ -562,13 +582,15 @@ class Proof_System(object):
     init_value = {}
     delta_value = {}
     # large_delta == True  iff there is a negative delta != -1
-    # We keep track because even recursive proofs cannot contain rules with large_deltas.
+    # We keep track because even recursive proofs cannot contain rules
+    # with large_deltas, unless we allow Collatz proofs.
     large_delta = False
     has_variable = False
     replace_vars = {}  # Dict of variable substitutions made by Collatz applier.
     for dir in range(2):
       for init_block, diff_block, new_block in zip(rule.initial_tape.tape[dir], rule.diff_tape.tape[dir], new_tape.tape[dir]):
-        # The constant term in init_block.num represents the minimum required value.
+        # The constant term in init_block.num represents the minimum
+        # required value.
         if isinstance(init_block.num, Algebraic_Expression):
           # Calculate the initial and change in value for each variable.
           x = init_block.num.variable_restricted()
@@ -686,7 +708,8 @@ class Proof_System(object):
     ## Alter the tape to account for applying rule.
     return_tape = new_tape.copy()
     for dir in range(2):
-      for diff_block, return_block in zip(rule.diff_tape.tape[dir], return_tape.tape[dir]):
+      for diff_block, return_block in zip(rule.diff_tape.tape[dir],
+                                          return_tape.tape[dir]):
         if return_block.num is not Tape.INF:
           return_block.num += num_reps * diff_block.num
           if isinstance(return_block.num, Algebraic_Expression) and \
@@ -698,9 +721,11 @@ class Proof_System(object):
     if self.verbose:
       self.print_this("++ Rule successfully applied ++")
       self.print_this("Times applied:", num_reps)
-      self.print_this("Resulting tape:", return_tape.print_with_state(new_state))
+      self.print_this("Resulting tape:",
+                      return_tape.print_with_state(new_state))
       print
-    return True, ((Turing_Machine.RUNNING, return_tape, diff_steps, replace_vars), large_delta)
+    return True, ((Turing_Machine.RUNNING, return_tape, diff_steps,
+                   replace_vars), large_delta)
 
   # Diff rules can be applied any number of times in a single evaluation.
   # But we can only apply a general rule once at a time.
@@ -722,8 +747,8 @@ class Proof_System(object):
       return True, ((Turing_Machine.INF_REPEAT, None, None, {}), large_delta)
     
     # Keep applying rule till we fail can't any more
-    # TODO: Maybe we can use some intelligence when all negative rules are constants
-    # becuase, then we know how many time we can apply the rule.
+    # TODO: Maybe we can use some intelligence when all negative rules are
+    # constants becuase, then we know how many time we can apply the rule.
     success = False  # If we fail before doing anything, return false
     num_reps = 0
     diff_steps = 0
@@ -737,7 +762,9 @@ class Proof_System(object):
       if self.compute_steps:
         diff_steps += rule.num_steps.substitute(assignment)
       # Stop using substitute and make this a tuple-to-tuple function?
-      current_list = [val.substitute(assignment) if isinstance(val, Algebraic_Expression) else val for val in rule.result_list]
+      current_list = [val.substitute(assignment)
+                      if isinstance(val, Algebraic_Expression) else val
+                      for val in rule.result_list]
       num_reps += 1
       success = True
       assignment = {}
@@ -773,10 +800,12 @@ def config_is_above_min(var_list, min_list, current_list, assignment={}):
 
 def series_sum(V0, dV, n):
   """Sums the arithmetic series V0, V0+dV, ... V0+(n-1)*dV."""
-  # = sum(V0 + p*dV for p in range(n)) = V0*Sum(1) + dV*Sum(p) = V0*n + dV*(n*(n-1)/2)
+  # = sum(V0 + p*dV for p in range(n)) = V0*Sum(1) + dV*Sum(p)
+  # = V0*n + dV*(n*(n-1)/2)
   # TODO: The '/' acts as integer division, this is dangerous. It should
   # always work out because either n or n-1 is even. However, if n is an
   # Algebraic_Expression, this is more complicated. We don't want to use
   # __truediv__ because then we'd get a float output for ints.
-  # TODO: Don't crash when we get NotImplemented exception from Algebraic_Expression.__div__.
+  # TODO: Don't crash when we get NotImplemented exception from
+  # Algebraic_Expression.__div__.
   return V0*n + (dV*n*(n-1))/2
