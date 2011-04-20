@@ -505,18 +505,16 @@ class Proof_System(object):
         num_steps = gen_sim.step_num.substitute(assignment)
       else:
         num_steps = 0
-      
+
+      self.num_recursive_rules += 1
+      rule = General_Rule(var_list, min_list, result_tape, num_steps,
+                          gen_sim.num_loops, len(self.rules))
       if self.verbose:
         print
         self.print_this("** New recursive rule proven **")
-        self.print_this("Variables:", var_list)
-        self.print_this("Minimums:", min_list)
-        self.print_this("Result: ", result_tape)
-        self.print_this("In steps:", num_steps)
+        self.print_this(str(rule).replace("\n", "\n " + self.verbose_prefix))
         print
-      self.num_recursive_rules += 1
-      return General_Rule(var_list, min_list, result_tape, num_steps,
-                          gen_sim.num_loops, len(self.rules))
+      return rule
 
     elif rule_type == Collatz_Rule:
       # Get everything in the right form for a Collatz_Rule.
