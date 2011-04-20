@@ -110,17 +110,23 @@ class Collatz_Rule(Rule):
     self.num_uses = 0
     
     # Is this an infinite rule?
+    self.infinite = False
+    '''
     self.infinite = True
     for var, coef, parity, result in zip(self.var_list, self.coef_list,
                                          self.parity_list, self.result_list):
       if var:  # If this exponent changes in this rule (has a variable)
         # TODO: This is a bit heavy-handed, but we probably don't prove
         #   too many recursive rules :)
-        start_expr = coef * VariableToExpression(var) + parity
-        if is_scalar(result) or not result.always_greater_than(start_expr):
-          # If any exponent can decrease, this is not an infinite rule.
+        if is_scalar(result):
           self.infinite = False
           break
+
+        start_expr = coef * VariableToExpression(var) + parity
+        if not result always greater than start_expression and a subset of it
+          self.infinite = False
+          break
+    '''
 
   def __str__(self):
     return ("Collatz Rule %s\nVar List: %s\nCoef List: %s\nParity List: %s"
