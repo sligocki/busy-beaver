@@ -199,12 +199,12 @@ class Expression(Number):
     return True
   
   # Temporary methods
-  # TODO(shawn): Allow these for self.terms == other.terms.
   def __eq__(self, other):
-    if not isinstance(other, Algebraic_Expression):
-      return len(self.terms) == 0 and self.const == other
+    if isinstance(other, Algebraic_Expression):
+      # Is this a hack?
+      return repr(self) == repr(other)
     else:
-      raise BadOperation
+      return len(self.terms) == 0 and self.const == other
 
   def __ne__(self, other):
     return not self == other

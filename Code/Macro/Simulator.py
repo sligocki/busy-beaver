@@ -138,9 +138,9 @@ class Simulator(object):
           self.replace_vars.update(replace_vars)
           # Update all instances of old variable (should just be in steps).
           assert isinstance(self.step_num, Algebraic_Expression)
-          self.step_num.substitute(replace_vars)
+          self.step_num = self.step_num.substitute(replace_vars)
           assert isinstance(self.old_step_num, Algebraic_Expression)
-          self.old_step_num.substitute(replace_vars)
+          self.old_step_num = self.old_step_num.substitute(replace_vars)
           assert not isinstance(self.num_loops, Algebraic_Expression)
         self.tape = new_tape
         self.num_rule_moves += 1
