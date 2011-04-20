@@ -213,7 +213,8 @@ class Proof_System(object):
     # Stat
     self.num_loops = 0
     self.num_recursive_rules = 0
-    # TODO: Record how many steps are taken by recursive rules in simulator!
+    self.num_collatz_rules = 0
+    # TODO: Record how many steps are taken by recursive rules in simulator.
   
   def print_this(self, *args):
     """Print with prefix."""
@@ -518,7 +519,66 @@ class Proof_System(object):
                           gen_sim.num_loops, len(self.rules))
 
     elif rule_type == Collatz_Rule:
-      assert False
+      # Get everything in the right form for a Collatz_Rule.
+      var_list = []
+      coef_list = []
+      parity_list = []
+      min_list = []
+      assignment = {}
+
+      for init_block in initial_tape.tape[0]+initial_tape.tape[1]:
+        if isinstance(init_block.num, Algebraic_Expression):
+          var = init_block.num.variable()
+          coef = init_block.num.get_coef()
+          const = init_block.num.const
+          parity = const % coef
+
+          var_list.append(var)
+          assert coef != None
+          coef_list.append(coef)
+          parity_list.append(parity)
+          min_list.append(const)
+
+          # Update var so that: ceof * var + const -> coef * var + parity
+          assignment[var] = VariableToExpression(var) - (const // coef)
+          assert (init_block.num.substitute(assignment) ==
+                  coef * VariableToExpression(var) + parity)
+        else:
+          var_list.append(None)
+          coef_list.append(None)
+          parity_list.append(None)
+          min_list.append(init_block.num)
+
+      result_list = []
+      result_tape = gen_sim.tape
+      for result_block in result_tape.tape[0]+result_tape.tape[1]:
+        if isinstance(result_block.num, Algebraic_Expression):
+          result_list.append(result_block.num.substitute(assignment))
+        else:
+          result_list.append(result_block.num)
+      
+      # Fix num_steps.
+      if self.compute_steps:
+        print gen_sim.tape
+        print gen_sim.step_num, assignment
+        num_steps = gen_sim.step_num.substitute(assignment)
+      else:
+        num_steps = 0
+      
+      if self.verbose:
+        print
+        self.print_this("** New collatz rule proven **")
+        self.print_this("Variables:", var_list)
+        self.print_this("Coefficients:", coef_list)
+        self.print_this("Parities:", parity_list)
+        self.print_this("Minimums:", min_list)
+        self.print_this("Result: ", result_list)
+        self.print_this("In steps:", num_steps)
+        print
+      self.num_collatz_rules += 1
+      return Collatz_Rule(var_list, coef_list, parity_list, min_list,
+                          result_list, num_steps, gen_sim.num_loops,
+                          len(self.rules))
 
     else:
       # Else if a normal diff rule:
@@ -576,8 +636,12 @@ class Proof_System(object):
     
     if isinstance(rule, Diff_Rule):
       return self.apply_diff_rule(rule, start_config)
-    if isinstance(rule, General_Rule):
+    elif isinstance(rule, General_Rule):
       return self.apply_general_rule(rule, start_config)
+    elif isinstance(rule, Collatz_Rule):
+      assert False
+    else:
+      assert False, (type(rule), repr(rule))
     
   def apply_diff_rule(self, rule, start_config):
     ## Unpack input
