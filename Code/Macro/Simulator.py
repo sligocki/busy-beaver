@@ -70,7 +70,7 @@ class Simulator(object):
       self.prover = None  # We will run the simulation without a proof system.
 
     # Set of variables to replace (needed for Simulator in Proof_System when
-    # Collatz-style rules are allowed.
+    # Collatz-style rules are allowed).
     self.replace_vars = {}
     
     # Operation state (e.g. running, halted, proven-infinite, ...)
