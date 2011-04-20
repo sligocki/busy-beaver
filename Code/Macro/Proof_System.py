@@ -27,6 +27,8 @@ def add_option_group(parser):
                    help="Turn ON recursive proof system.")
   group.add_option("--allow-collatz", action="store_true", default=False,
                    help="Allow Collatz-style recursive proofs. [Experimental]")
+  group.add_option("--limited-length", action="store_true", default=False,
+                   help="Rules are saved and applied based on the maximum they effect the tape to the left and right. [Experimental]")
 
   parser.add_option_group(group)
 
