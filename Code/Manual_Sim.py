@@ -202,6 +202,7 @@ In that case we execute the line as Python code.\n
     self.set_cmdnum(1)
 
     self.record_hist = True
+    self.hist_cmd = False
 
     self.misc_header = "Unimplemented commands"
 
@@ -295,7 +296,6 @@ In that case we execute the line as Python code.\n
                                                         compute_steps=self.sim.compute_steps,
                                                         verbose=self.sim.verbose_prover,
                                                         verbose_prefix=self.sim.verbose_prefix)
-      self.sim.prover.allow_collatz = False 
       self.sim_prover_save = None
     elif args == 'on':
       if self.sim.prover == None:
@@ -306,7 +306,6 @@ In that case we execute the line as Python code.\n
                                                             compute_steps=self.sim.compute_steps,
                                                             verbose=self.sim.verbose_prover,
                                                             verbose_prefix=self.sim.verbose_prefix)
-          self.sim.prover.allow_collatz = False 
         else:
           self.sim.prover = self.sim_prover_save
     elif args == 'off':
