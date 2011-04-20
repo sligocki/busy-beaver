@@ -504,7 +504,7 @@ class Proof_System(object):
                 rule_type = Collatz_Rule
     
     if rule_type == General_Rule:
-      # TODO: Don't do all the work above if we not going to use it
+      # TODO: Don't do all the work above if we're not going to use it
       # Get everything in the right form for a General_Rule.
       var_list = []
       min_list = []
