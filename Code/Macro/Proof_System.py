@@ -564,21 +564,17 @@ class Proof_System(object):
         num_steps = gen_sim.step_num.substitute(assignment)
       else:
         num_steps = 0
-      
+
+      self.num_collatz_rules += 1
+      rule = Collatz_Rule(var_list, coef_list, parity_list, min_list,
+                          result_list, num_steps, gen_sim.num_loops,
+                          len(self.rules))
       if self.verbose:
         print
         self.print_this("** New collatz rule proven **")
-        self.print_this("Variables:", var_list)
-        self.print_this("Coefficients:", coef_list)
-        self.print_this("Parities:", parity_list)
-        self.print_this("Minimums:", min_list)
-        self.print_this("Result: ", result_list)
-        self.print_this("In steps:", num_steps)
+        self.print_this(str(rule).replace("\n", "\n " + self.verbose_prefix))
         print
-      self.num_collatz_rules += 1
-      return Collatz_Rule(var_list, coef_list, parity_list, min_list,
-                          result_list, num_steps, gen_sim.num_loops,
-                          len(self.rules))
+      return rule
 
     else:
       # Else if a normal diff rule:
