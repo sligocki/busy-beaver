@@ -105,13 +105,17 @@ In that case we execute the line as Python code.\n
     self.set_cmdnum(self.cmdnum + 1)
 
     if self.record_hist:
-      self._hist_cmd += [ line.strip() ]
+      if not self.hist_cmd:
+        self._cmd_hist += [ line.strip() ]
+      else:
+        self.hist_cmd = False
     else:
-      self._hist_cmd += [ "" ]
+      self._cmd_hist += [ "" ]
       if self.readline:
         last_entry = self.readline.get_current_history_length() - 1
         self.readline.remove_history_item(last_entry)
       self.record_hist = True
+
     return stop
 
   def preloop(self):
@@ -119,7 +123,7 @@ In that case we execute the line as Python code.\n
        Despite the claims in the Cmd documentaion, Cmd.preloop() is not a stub.
     """
     cmd.Cmd.preloop(self) ## Sets up command completion
-    self._hist_cmd  = []  ## No command history yet
+    self._cmd_hist  = []  ## No command history yet
     self._hist_save = []  ## No saved history yet
     self._locals    = {}  ## Initialize execution namespace for user
     self._globals   = {}
@@ -132,7 +136,7 @@ In that case we execute the line as Python code.\n
         pass
 
       self.swap_history(self.readline_save)
-      self._hist_cmd = self._hist_save
+      self._cmd_hist = self._hist_save
 
       save_history_tape = os.path.expanduser("~/.bb_ms_history_tape")
       try:
@@ -142,7 +146,7 @@ In that case we execute the line as Python code.\n
 
       self.swap_history(self.readline_save)
 
-      self.set_cmdnum(len(self._hist_cmd) + 1)
+      self.set_cmdnum(len(self._cmd_hist) + 1)
 
   def postloop(self):
     """Take care of any unfinished business.
@@ -245,9 +249,12 @@ In that case we execute the line as Python code.\n
     return -1
 
   def hist_code(self, args):
+    self._cmd_hist += [ "hist" ]
+    self.hist_cmd = True
+
     num = 1
     com_prev = ""
-    for com in self._hist_cmd:
+    for com in self._cmd_hist:
       if com != "" and com != com_prev:
         print "%4d  %s" % (num,com)
         com_prev = com
@@ -258,7 +265,7 @@ In that case we execute the line as Python code.\n
       self.sim.prover.print_rules(args)
 
   def load_code(self, args):
-    print "\nNot completely implemented\n"
+    print "\nNot completely implemented - loading from 'rules'\n"
     save_file = open("rules","rb")
     self.sim.prover.rules = cPickle.load(save_file)
     save_file.close()
@@ -324,7 +331,7 @@ In that case we execute the line as Python code.\n
         self.sim.prover.rename_rule(src,dest)
 
   def save_code(self, args):
-    print "\nNot completely implemented\n"
+    print "\nNot completely implemented - saving to 'rules'\n"
     save_file = open("rules","wb")
     cPickle.dump(self.sim.prover.rules,save_file)
     save_file.close()
