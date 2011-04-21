@@ -37,6 +37,29 @@ def add_option_group(parser):
 class Rule(object):
   """Base type for Proof_System rules."""
 
+class Diff_Rule(Rule):
+  """A rule that specifies constant deltas for each tape block's exponent."""
+  def __init__(self, initial_tape, diff_tape, initial_state, num_steps, num_loops, rule_num):
+    # TODO: Use basic lists instead of tapes, we never use the symbols.
+    # TODO: Have a variable list and a min list instead of packing both
+    # into init_tape.
+    # TOOD: Or maybe we don't even need variables, we could just have the
+    # things that depend on variables index directly into the tapes?
+    # TODO: Actually, variables only appear in num_steps, so we don't even
+    # need them if we are not computing steps.
+    self.initial_tape = initial_tape
+    self.diff_tape = diff_tape
+    self.num_steps = num_steps
+    self.initial_state = initial_state
+    self.num_loops = num_loops
+    self.name = str(rule_num)  # Unique identifier.
+    self.num_uses = 0  # Number of times this rule has been applied.
+
+  def __str__(self):
+    return ("Diff Rule %s\nInitial Config: %s\nDiff Config:    %s\nSteps: %s, Loops: %s"
+            % (self.name, self.initial_tape.print_with_state(self.initial_state), self.diff_tape.print_with_state(self.initial_state), self.num_steps,
+               self.num_loops))
+
 class General_Rule(Rule):
   """A general rule that specifies any general end configuration."""
   def __init__(self, var_list, min_list,
@@ -68,29 +91,6 @@ class General_Rule(Rule):
             "Steps %s Loops %s"
             % (self.name, self.var_list, self.min_list, self.result_list,
                self.num_steps, self.num_loops))
-
-class Diff_Rule(Rule):
-  """A rule that specifies constant deltas for each tape block's exponent."""
-  def __init__(self, initial_tape, diff_tape, initial_state, num_steps, num_loops, rule_num):
-    # TODO: Use basic lists instead of tapes, we never use the symbols.
-    # TODO: Have a variable list and a min list instead of packing both
-    # into init_tape.
-    # TOOD: Or maybe we don't even need variables, we could just have the
-    # things that depend on variables index directly into the tapes?
-    # TODO: Actually, variables only appear in num_steps, so we don't even
-    # need them if we are not computing steps.
-    self.initial_tape = initial_tape
-    self.diff_tape = diff_tape
-    self.num_steps = num_steps
-    self.initial_state = initial_state
-    self.num_loops = num_loops
-    self.name = str(rule_num)  # Unique identifier.
-    self.num_uses = 0  # Number of times this rule has been applied.
-
-  def __str__(self):
-    return ("Diff Rule %s\nInitial Config: %s\nDiff Config:    %s\nSteps: %s, Loops: %s"
-            % (self.name, self.initial_tape.print_with_state(self.initial_state), self.diff_tape.print_with_state(self.initial_state), self.num_steps,
-               self.num_loops))
 
 class Collatz_Rule(Rule):
   """General rule that only applies if exponents have certain parity."""
