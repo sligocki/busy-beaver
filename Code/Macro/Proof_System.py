@@ -137,6 +137,7 @@ class Collatz_Rule(Rule):
                self.min_list, self.result_list, self.num_steps, self.num_loops))
 
 class Limited_Diff_Rule(Diff_Rule):
+  # TODO(terry): Update comments.
   """A rule that specifies constant deltas for each tape block's exponent."""
   def __init__(self, initial_tape, left_dist, right_dist, diff_tape, initial_state, num_steps, num_loops, rule_num):
     # TODO: Use basic lists instead of tapes, we never use the symbols.
