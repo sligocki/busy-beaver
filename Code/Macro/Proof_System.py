@@ -137,14 +137,14 @@ class Collatz_Rule(Rule):
             % (self.name, self.var_list, self.coef_list, self.parity_list,
                self.min_list, self.result_list, self.num_steps, self.num_loops))
 
-class Limited_Diff_Rule(Diff_Rule):
+class Limited_Diff_Rule(Rule):
   # TODO(terry): Update comments.
   """A rule that specifies constant deltas for each tape block's exponent."""
   def __init__(self, initial_tape, left_dist, right_dist, diff_tape, initial_state, num_steps, num_loops, rule_num):
     # TODO: Use basic lists instead of tapes, we never use the symbols.
     # TODO: Have a variable list and a min list instead of packing both
     # into init_tape.
-    # TOOD: Or maybe we don't even need variables, we could just have the
+    # TODO: Or maybe we don't even need variables, we could just have the
     # things that depend on variables index directly into the tapes?
     # TODO: Actually, variables only appear in num_steps, so we don't even
     # need them if we are not computing steps.
@@ -160,7 +160,7 @@ class Limited_Diff_Rule(Diff_Rule):
     self.num_uses = 0  # Number of times this rule has been applied.
 
   def __str__(self):
-    return ("Diff Rule %s\nInitial Config: %s (%d,%d)\nDiff Config:    %s\nSteps: %s, Loops: %s"
+    return ("Limited Diff Rule %s\nInitial Config: %s (%d,%d)\nDiff Config:    %s\nSteps: %s, Loops: %s"
             % (self.name, self.initial_tape.print_with_state(self.initial_state),self.left_dist,self.right_dist,self.diff_tape.print_with_state(self.initial_state), self.num_steps,
                self.num_loops))
 
@@ -666,165 +666,34 @@ class Proof_System(object):
     elif isinstance(rule, Collatz_Rule):
       return self.apply_collatz_rule(rule, start_config)
     elif isinstance(rule, Limited_Diff_Rule):
-      return self.apply_limited_diff_rule(rule, start_config)
+      start_state, start_tape, start_step_num, start_loop_num = start_config
+
+      limited_start_tape = start_tape.copy()
+
+      save_left  = limited_start_tape.tape[0][rule.left_dist:]
+      save_right = limited_start_tape.tape[1][rule.right_dist:]
+
+      limited_start_tape.tape[0] = limited_start_tape.tape[0][0:rule.left_dist]
+      limited_start_tape.tape[1] = limited_start_tape.tape[1][0:rule.right_dist]
+
+      limited_start_config = (start_start, limited_start_tape, start_step_num, start_loop_num)
+
+      success, other = self.apply_diff_rule(rule, limited_start_config)
+
+      if success:
+        (machine_state, final_tape, diff_steps, replace_vars), large_delta = other
+
+        if machine_state == Turing_Machine.RUNNING:
+          final_tape.tape[0].extend(save_left)
+          final_tape.tape[1].extend(save_right)
+        else:
+          return success, other
+      else:
+        return success, other
     else:
       assert False, (type(rule), repr(rule))
     
   def apply_diff_rule(self, rule, start_config):
-    ## Unpack input
-    new_state, new_tape, new_step_num, new_loop_num = start_config
-    
-    ## Calculate number of repetitions allowable and other tape-based info.
-    num_reps = None
-    init_value = {}
-    delta_value = {}
-    # large_delta == True  iff there is a negative delta != -1
-    # We keep track because even recursive proofs cannot contain rules
-    # with large_deltas, unless we allow Collatz proofs.
-    large_delta = False
-    has_variable = False
-    replace_vars = {}  # Dict of variable substitutions made by Collatz applier.
-    for dir in range(2):
-      for init_block, diff_block, new_block in zip(rule.initial_tape.tape[dir], rule.diff_tape.tape[dir], new_tape.tape[dir]):
-        # The constant term in init_block.num represents the minimum
-        # required value.
-        if isinstance(init_block.num, Algebraic_Expression):
-          # Calculate the initial and change in value for each variable.
-          x = init_block.num.variable_restricted()
-          # init_block.num.const == min_value for this exponent.
-          init_value[x] = new_block.num - init_block.num.const
-          if (not isinstance(init_value[x], Algebraic_Expression) and
-              init_value[x] < 0):
-            if self.verbose:
-              self.print_this("++ Current config is below rule minimum ++")
-              self.print_this("Config block:", new_block)
-              self.print_this("Rule initial block:", init_block)
-              self.print_this("")
-            return False, 1
-          delta_value[x] = diff_block.num
-          assert(isinstance(delta_value[x], (int, long)))
-          # If this block's repetitions will be depleted during this transition,
-          #   count the number of repetitions that it can allow while staying
-          #   above the minimum requirement.
-          if delta_value[x] < 0:
-            if delta_value[x] != -1:
-              large_delta = True
-            if num_reps is None:
-              if (isinstance(init_value[x], Algebraic_Expression) and
-                  delta_value[x] != -1):
-                if self.allow_collatz:
-                  # We should have something like (x + 12)
-                  old_var = init_value[x].variable_restricted()  # x
-                  old_const = init_value[x].const    # 12
-                  new_var = NewVariableExpression()  # k
-                  # 1) Record that we are replacing x with 3k.
-                  replace_vars[old_var] = new_var * -delta_value[x]
-                  # TODO(sligocki): We might need to replace more places.
-                  # Or maybe less places and just let outside prover replace.
-                  new_block.num = new_block.num.substitute(replace_vars)
-                  # Note: this substitution is actually unnecessary.
-                  init_value[x] = init_value[x].substitute(replace_vars)
-                  # 2) num_reps = (3k + 12) // 3 + 1 = k + (12//3) + 1
-                  num_reps = new_var + (old_const // -delta_value[x])  + 1
-                  if self.verbose:
-                    self.print_this("++ Experimental Collatz diff ++")
-                    self.print_this("Substituting:", old_var, "=",
-                                    replace_vars[old_var])
-                    self.print_this("From: num_reps = (%r // -%r)  + 1"
-                                    % (init_value[x], delta_value[x]))
-                    self.print_this("")
-                else:
-                  if self.verbose:
-                    self.print_this("++ Collatz diff ++")
-                    self.print_this("From: num_reps = (%r // -%r)  + 1"
-                                    % (init_value[x], delta_value[x]))
-                    self.print_this("")
-                  return False, 2
-              else:
-                # First one is safe.
-                # For example, if we have a rule:
-                #   Initial: 0^Inf 2^(d + 1) (0) B> 2^(f + 2) 0^Inf 
-                #   Diff:    0^Inf 2^1 (0) B> 2^-1 0^Inf 
-                # then:
-                #   0^Inf 2^3  (0)B> 2^(s + 11) 0^Inf
-                # goes to:
-                #   0^Inf 2^(s + 12)  (0)B> 2^2 0^Inf
-                num_reps = (init_value[x] // -delta_value[x])  + 1
-            else:
-              if not isinstance(init_value[x], Algebraic_Expression):
-                # As long as init_value[x] >= 0 we can apply proof
-                num_reps = min(num_reps, (init_value[x] // -delta_value[x])  + 1)
-              else:
-                # Example Rule:
-                #   Initial: 0^Inf 2^a+1 0^1 1^b+3 B> 0^1 1^c+1 0^Inf
-                #   Diff:    0^Inf 2^-1  0^0 1^+2  B> 0^0 1^-1  0^Inf
-                # Applied to tape:
-                #   0^Inf 2^d+5 0^1 1^3 B> 0^1 1^e+3 0^Inf
-                # We shoud apply the rule either d+4 or e+2 times depending
-                # on which is smaller. Too complicated, we fail.
-                if self.verbose:
-                  self.print_this("++ Multiple negative diffs for expressions ++")
-                  self.print_this("Config block:", new_block)
-                  self.print_this("Rule initial block:", init_block)
-                  self.print_this("Rule diff block:", diff_block)
-                  self.print_this("")
-                return False, "Multiple_Diff"
-   
-    # If none of the diffs are negative, this will repeat forever.
-    if num_reps is None:
-      if self.verbose:
-        self.print_this("++ Rules applies infinitely ++")
-      return True, ((Turing_Machine.INF_REPEAT, None, None, {}), large_delta)
-    
-    # If we cannot even apply this transition once, we're done.
-    if (not isinstance(num_reps, Algebraic_Expression) and
-        num_reps <= 0):
-      if self.verbose:
-        self.print_this("++ Cannot even apply transition once ++")
-      return False, 3
-    
-    ## Determine number of base steps taken by applying rule.
-    if self.compute_steps:
-      # Effect of the constant factor:
-      diff_steps = rule.num_steps.const * num_reps
-      # Effects of each variable in the formula:
-      for term in rule.num_steps.terms:
-        assert len(term.vars) == 1
-        coef = term.coef; x = term.vars[0].var
-        # We don't factor out the coef, because it might make this work
-        # better for some recursive rules.
-        try:
-          diff_steps += series_sum(coef * init_value[x], coef * delta_value[x], num_reps)
-        except TypeError:
-          if self.verbose:
-            self.print_this("++ Cannot divide expression by 2 ++")
-          return False, 4
-    else:
-      diff_steps = 0 # TODO: Make it None instead of a lie
-    
-    ## Alter the tape to account for applying rule.
-    return_tape = new_tape.copy()
-    for dir in range(2):
-      for diff_block, return_block in zip(rule.diff_tape.tape[dir],
-                                          return_tape.tape[dir]):
-        if return_block.num is not Tape.INF:
-          return_block.num += num_reps * diff_block.num
-          if isinstance(return_block.num, Algebraic_Expression) and \
-                return_block.num.is_const():
-            return_block.num = return_block.num.const
-      return_tape.tape[dir] = [x for x in return_tape.tape[dir] if x.num != 0]
-    
-    ## Return the pertinent info
-    if self.verbose:
-      self.print_this("++ Rule successfully applied ++")
-      self.print_this("Times applied:", num_reps)
-      self.print_this("Resulting tape:",
-                      return_tape.print_with_state(new_state))
-      print
-    return True, ((Turing_Machine.RUNNING, return_tape, diff_steps,
-                   replace_vars), large_delta)
-
-  def apply_limited_diff_rule(self, rule, start_config):
     ## Unpack input
     new_state, new_tape, new_step_num, new_loop_num = start_config
     
