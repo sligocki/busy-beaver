@@ -1067,14 +1067,16 @@ class Proof_System(object):
       # Check that we are above the minimums and set assignments.
       above_min = True
       for current_val, var, coef, parity, min_val in \
-            zip(curent_list, rule.var_list, rule.coef_list, rule.parity_list,
+            zip(current_list, rule.var_list, rule.coef_list, rule.parity_list,
                 rule.min_list):
-        # TODO(shawn): Allow rules with all parities.
-        # TODO(shawn): This will crash if current_val is an Algebraic_Expression
-        if current_val < min_val or current_val % coef != parity:
-          above_min = False
-          break
-        assignment[var] = current_val // coef
+        if var:
+          # TODO(shawn): Allow rules with all parities.
+          # TODO(shawn): This will crash if current_val is an
+          # Algebraic_Expression.
+          if current_val < min_val or current_val % coef != parity:
+            above_min = False
+            break
+          assignment[var] = current_val // coef
 
       # TODO(shawn): This looks kludgey.
       if not above_min:
@@ -1112,7 +1114,7 @@ class Proof_System(object):
       if self.verbose:
         self.print_this("++ Current config is below rule minimum ++")
         self.print_this("Config tape:", start_tape)
-        self.print_this("Rule min vals:", min_list)
+        self.print_this("Rule min vals:", rule.min_list)
       return False, 1
 
 def config_is_above_min(var_list, min_list, current_list, assignment={}):
