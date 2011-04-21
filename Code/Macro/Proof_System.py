@@ -670,13 +670,13 @@ class Proof_System(object):
 
       limited_start_tape = start_tape.copy()
 
-      save_left  = limited_start_tape.tape[0][rule.left_dist:]
-      save_right = limited_start_tape.tape[1][rule.right_dist:]
+      save_left  = limited_start_tape.tape[0][:-rule.left_dist]
+      save_right = limited_start_tape.tape[1][:-rule.right_dist]
 
-      limited_start_tape.tape[0] = limited_start_tape.tape[0][0:rule.left_dist]
-      limited_start_tape.tape[1] = limited_start_tape.tape[1][0:rule.right_dist]
+      limited_start_tape.tape[0] = limited_start_tape.tape[0][-rule.left_dist:]
+      limited_start_tape.tape[1] = limited_start_tape.tape[1][-rule.right_dist:]
 
-      limited_start_config = (start_start, limited_start_tape, start_step_num, start_loop_num)
+      limited_start_config = (start_state, limited_start_tape, start_step_num, start_loop_num)
 
       success, other = self.apply_diff_rule(rule, limited_start_config)
 
@@ -684,12 +684,12 @@ class Proof_System(object):
         (machine_state, final_tape, diff_steps, replace_vars), large_delta = other
 
         if machine_state == Turing_Machine.RUNNING:
-          final_tape.tape[0].extend(save_left)
-          final_tape.tape[1].extend(save_right)
-        else:
-          return success, other
-      else:
-        return success, other
+          final_tape.tape[0] = save_left  + final_tape.tape[0]
+          final_tape.tape[1] = save_right + final_tape.tape[1]
+
+          other = ((machine_state, final_tape, diff_steps, replace_vars), large_delta)
+
+      return success, other
     else:
       assert False, (type(rule), repr(rule))
     
