@@ -664,7 +664,7 @@ class Proof_System(object):
     elif isinstance(rule, General_Rule):
       return self.apply_general_rule(rule, start_config)
     elif isinstance(rule, Collatz_Rule):
-      assert False
+      return self.apply_collatz_rule(rule, start_config)
     elif isinstance(rule, Limited_Diff_Rule):
       return self.apply_limited_diff_rule(rule, start_config)
     else:
@@ -985,7 +985,7 @@ class Proof_System(object):
     # Unpack input
     start_state, start_tape, start_step_num, start_loop_num = start_config
 
-    large_delta = True  # TODO: Does this make sense? Should we rename this?
+    large_delta = True  # Not editted in this function.
     # Current list of all block exponents. We will update it in place repeatedly
     # rather than creating new tapes.
     current_list = [block.num for block in start_tape.tape[0] + start_tape.tape[1]]
@@ -994,13 +994,13 @@ class Proof_System(object):
     if rule.infinite and config_is_above_min(rule.var_list, rule.min_list,
                                              current_list):
       if self.verbose:
-        self.print_this("++ Rules applies infinitely ++")
+        self.print_this("++ Rule applies infinitely ++")
       return True, ((Turing_Machine.INF_REPEAT, None, None, {}), large_delta)
     
-    # Keep applying rule till we fail can't any more
+    # Keep applying rule until we can't anymore.
     # TODO: Maybe we can use some intelligence when all negative rules are
     # constants becuase, then we know how many time we can apply the rule.
-    success = False  # If we fail before doing anything, return false
+    success = False  # If we fail before doing anything, return false.
     num_reps = 0
     diff_steps = 0
     # Get variable assignments for this case and check minimums.
@@ -1012,7 +1012,7 @@ class Proof_System(object):
       # Apply variable assignment to update number of steps and tape config.
       if self.compute_steps:
         diff_steps += rule.num_steps.substitute(assignment)
-      # Stop using substitute and make this a tuple-to-tuple function?
+      # TODO: Stop using substitute and make this a tuple-to-tuple function?
       current_list = [val.substitute(assignment)
                       if isinstance(val, Algebraic_Expression) else val
                       for val in rule.result_list]
@@ -1031,6 +1031,80 @@ class Proof_System(object):
         tape.tape[dir] = [x for x in tape.tape[dir] if x.num != 0]
       if self.verbose:
         self.print_this("++ Recursive rule applied ++")
+        self.print_this("Times applied", num_reps)
+        self.print_this("Resulting tape:", tape)
+      return True, ((Turing_Machine.RUNNING, tape, diff_steps, {}), large_delta)
+    else:
+      if self.verbose:
+        self.print_this("++ Current config is below rule minimum ++")
+        self.print_this("Config tape:", start_tape)
+        self.print_this("Rule min vals:", min_list)
+      return False, 1
+
+  def apply_collatz_rule(self, rule, start_config):
+    # Unpack input
+    start_state, start_tape, start_step_num, start_loop_num = start_config
+
+    large_delta = True  # Not edited in this function.
+    # Current list of all block exponents. We will update it in place repeatedly
+    # rather than creating new tapes.
+    current_list = [block.num for block in start_tape.tape[0] + start_tape.tape[1]]
+    
+    # If this recursive rule is infinite.
+    if rule.infinite and config_is_above_min(rule.var_list, rule.min_list,
+                                             current_list):
+      if self.verbose:
+        self.print_this("++ Rule applies infinitely ++")
+      return True, ((Turing_Machine.INF_REPEAT, None, None, {}), large_delta)
+    
+    # Keep applying rule until we can't anymore.
+    success = False  # If we fail before doing anything, return false.
+    num_reps = 0
+    diff_steps = 0
+    # Get variable assignments for this case and check minimums.
+    assignment = {}
+    while True:
+      # Check that we are above the minimums and set assignments.
+      above_min = True
+      for current_val, var, coef, parity, min_val in \
+            zip(curent_list, rule.var_list, rule.coef_list, rule.parity_list,
+                rule.min_list):
+        # TODO(shawn): Allow rules with all parities.
+        # TODO(shawn): This will crash if current_val is an Algebraic_Expression
+        if current_val < min_val or current_val % coef != parity:
+          above_min = False
+          break
+        assignment[var] = current_val // coef
+
+      # TODO(shawn): This looks kludgey.
+      if not above_min:
+        break
+
+      # Apply rule
+      if self.verbose:
+        self.print_this(num_reps, current_list)
+      # Apply variable assignment to update number of steps and tape config.
+      if self.compute_steps:
+        diff_steps += rule.num_steps.substitute(assignment)
+      # TODO: Stop using substitute and make this a tuple-to-tuple function?
+      current_list = [val.substitute(assignment)
+                      if isinstance(val, Algebraic_Expression) else val
+                      for val in rule.result_list]
+      num_reps += 1
+      success = True
+      assignment = {}
+    
+    # We cannot apply rule any more.
+    # Make sure there are no zero's in tape exponents.
+    if success:
+      tape = start_tape.copy()
+      for block, current_val in zip(tape.tape[0] + tape.tape[1], current_list):
+        block.num = current_val
+      # TODO: Perhaps do this in one step?
+      for dir in range(2):
+        tape.tape[dir] = [x for x in tape.tape[dir] if x.num != 0]
+      if self.verbose:
+        self.print_this("++ Collatz rule applied ++")
         self.print_this("Times applied", num_reps)
         self.print_this("Resulting tape:", tape)
       return True, ((Turing_Machine.RUNNING, tape, diff_steps, {}), large_delta)
