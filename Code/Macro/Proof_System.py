@@ -138,7 +138,7 @@ class Collatz_Rule(Rule):
                self.min_list, self.result_list, self.num_steps, self.num_loops))
 
 class Limited_Diff_Rule(Rule):
-  # TODO(terry): Update comments.
+  # TODO(TJL): Update comments.
   """A rule that specifies constant deltas for each tape block's exponent."""
   def __init__(self, initial_tape, left_dist, right_dist, diff_tape, initial_state, num_steps, num_loops, rule_num):
     # TODO: Use basic lists instead of tapes, we never use the symbols.
@@ -742,7 +742,7 @@ class Proof_System(object):
                   new_var = NewVariableExpression()  # k
                   # 1) Record that we are replacing x with 3k.
                   replace_vars[old_var] = new_var * -delta_value[x]
-                  # TODO(sligocki): We might need to replace more places.
+                  # TODO(shawn): We might need to replace more places.
                   # Or maybe less places and just let outside prover replace.
                   new_block.num = new_block.num.substitute(replace_vars)
                   # Note: this substitution is actually unnecessary.
