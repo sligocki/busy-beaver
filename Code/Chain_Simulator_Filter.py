@@ -94,7 +94,7 @@ if __name__ == "__main__":
   usage = "usage: %prog --infile= --outfile= --log_number= [options]"
   parser = OptionParser(usage=usage)
 
-  # TODO(sligocki): Collect into Generic Filter options.
+  # TODO(shawn): Collect into Generic Filter options.
   parser.add_option("--infile", dest="infilename", metavar="INFILE", help="Input file name (required, no default)")
   parser.add_option("--outfile", dest="outfilename", metavar="OUTFILE", help="Output file name (required, no default)")
   parser.add_option("--log_number", help="Number in the log file of this run (required, no default)")
