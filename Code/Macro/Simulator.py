@@ -8,7 +8,7 @@ from optparse import OptionParser, OptionGroup
 import time
 
 import Proof_System
-from Proof_System import Algebraic_Expression
+from Numbers import Algebraic_Expression
 import Tape
 import Turing_Machine
 
