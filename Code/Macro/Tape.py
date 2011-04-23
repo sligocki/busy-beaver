@@ -55,6 +55,12 @@ class Chain_Tape(object):
     self.tape[1].append(Repeated_Symbol(init_symbol, INF))
     # Measures head displacement from initial position
     self.displace = 0
+
+  def __cmp__(self, other):
+    return (isinstance(other, self.__class__) and
+            other.dir      == self.dir        and
+            other.tape     == self.tape       and
+            other.displace == self.displace)
   
   def __repr__(self):
     return self.print_with_state(None)
