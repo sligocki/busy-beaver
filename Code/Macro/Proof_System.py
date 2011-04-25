@@ -327,7 +327,7 @@ class Proof_System(object):
         # we cannot apply the rule in a proof (yet) becuase
         # e.g. (x + 3 // 2) is unresolvable
         # TODO: Enable Collatz proofs!
-        if not self.recursive  or  (large_delta and not self.allow_collatz):
+        if not self.recursive or (large_delta and not self.allow_collatz):
           if self.past_configs is not None:
             self.past_configs.clear()
         rule.num_uses += 1
@@ -346,7 +346,7 @@ class Proof_System(object):
     if past_config.log_config(step_num, loop_num):
       # We see enough of a pattern to try and prove a rule.
       rule = self.prove_rule(stripped_config, full_config, past_config.delta_loop)
-      if rule:  # If we successfully proved a rule:
+      if rule: # If we successfully proved a rule:
         # Remember rule
         self.rules[stripped_config] = rule
         # Clear our memory (couldn't use it anyway).
@@ -398,7 +398,10 @@ class Proof_System(object):
     gen_sim.tape = new_tape.copy()
     min_val = {} # Notes the minimum value exponents with each unknown take.
     for direction in range(2):
+      offset = len(gen_sim.tape.tape[direction])
       for block in gen_sim.tape.tape[direction]:
+        block.id = offset
+        offset -= 1
         # Generalize, eg. (abc)^5 -> (abc)^(n+5)
         # Blocks with one rep are not generalized, eg. (abc)^1 -> (abc)^1
         if block.num not in (Tape.INF, 1):
@@ -408,9 +411,14 @@ class Proof_System(object):
           min_val[x] = block.num.const
     initial_tape = gen_sim.tape.copy()
     gen_sim.dir = gen_sim.tape.dir
-    
+
     # Run the simulator
+    dist = [0,0]
     gen_sim.step()
+    cur_dir = gen_sim.tape.dir
+    cur_dist = gen_sim.tape.tape[cur_dir][-1].id
+    if cur_dist and cur_dist > dist[cur_dir]:
+      dist[cur_dir] = cur_dist
     self.num_loops += 1
     #for i in xrange(delta_loop):
     while gen_sim.num_loops < (delta_loop):
@@ -426,6 +434,10 @@ class Proof_System(object):
           self.print_this(gen_sim.tape.print_with_state(gen_sim.state))
         return False
       gen_sim.step()
+      cur_dir = gen_sim.tape.dir
+      cur_dist = gen_sim.tape.tape[cur_dir][-1].id
+      if cur_dist and cur_dist > dist[cur_dir]:
+        dist[cur_dir] = cur_dist
       self.num_loops += 1
       # TODO(shawn): Perhaps we should check in applying a rule failed this
       # step and if so cancel the proof?
