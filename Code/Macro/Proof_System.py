@@ -599,7 +599,7 @@ class Proof_System(object):
                           len(self.rules))
       if self.verbose:
         print
-        self.print_this("** New collatz rule proven **")
+        self.print_this("** New Collatz rule proven **")
         self.print_this(str(rule).replace("\n", "\n " + self.verbose_prefix))
         print
       return rule
@@ -933,6 +933,10 @@ class Proof_System(object):
     # Get variable assignments for this case and check minimums.
     assignment = {}
     while True:
+      # Print current state.
+      if self.verbose:
+        self.print_this(num_reps, current_list)
+
       # Check that we are above the minimums and set assignments.
       above_min = True
       for current_val, var, coef, parity, min_val in \
@@ -951,9 +955,6 @@ class Proof_System(object):
       if not above_min:
         break
 
-      # Apply rule
-      if self.verbose:
-        self.print_this(num_reps, current_list)
       # Apply variable assignment to update number of steps and tape config.
       if self.compute_steps:
         diff_steps += rule.num_steps.substitute(assignment)
@@ -978,12 +979,15 @@ class Proof_System(object):
         self.print_this("++ Collatz rule applied ++")
         self.print_this("Times applied", num_reps)
         self.print_this("Resulting tape:", tape)
+        print
       return True, ((Turing_Machine.RUNNING, tape, diff_steps, {}), large_delta)
     else:
       if self.verbose:
-        self.print_this("++ Current config is below rule minimum ++")
+        self.print_this("++ Current config is below rule minimum or Collatz parity is wrong ++")
         self.print_this("Config tape:", start_tape)
         self.print_this("Rule min vals:", rule.min_list)
+        self.print_this("Rule parity vals:", rule.parity_list)
+        print
       return False, 1
 
 def config_is_above_min(var_list, min_list, current_list, assignment={}):
