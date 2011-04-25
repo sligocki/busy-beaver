@@ -178,7 +178,7 @@ def strip_config(state, dir, tape):
   """"Return a generalized configuration removing the non-1 repetition counts from the tape."""
   # Optimization: Strip off Infinity blocks before we run the map (see tape[x][1:]).
   # Turns out Infinity.__cmp__ is expensive when run millions of times.
-  # It used to spend up to 25% ot time here.
+  # It used to spend up to 25% of time here.
   # TODO: This map is expensive upwards of 10% of time is spend here.
   return (state, dir, tuple(map(stripped_info, tape[0][1:])),
                       tuple(map(stripped_info, tape[1][1:])))
@@ -410,6 +410,7 @@ class Proof_System(object):
     gen_sim.dir = gen_sim.tape.dir
     
     # Run the simulator
+    gen_sim.verbose_print()
     gen_sim.step()
     self.num_loops += 1
     #for i in xrange(delta_loop):
@@ -424,6 +425,7 @@ class Proof_System(object):
           print
           self.print_this("** Failed: Exponent below min **")
           self.print_this(gen_sim.tape.print_with_state(gen_sim.state))
+          print
         return False
       gen_sim.step()
       self.num_loops += 1
@@ -449,6 +451,7 @@ class Proof_System(object):
           print
           self.print_this("** Failed: Machine stopped running **")
           self.print_this(gen_sim.op_state)
+          print
         return False
       # Update min_val for each expression.
       # TODO: We only need to update for the blocks on each side of head.
@@ -466,9 +469,8 @@ class Proof_System(object):
                 print
                 self.print_this("** Failed: Multiple vars in one term **")
                 self.print_this(gen_sim.tape)
+                print
               return False
-    
-    gen_sim.verbose_print()
     
     # Make sure finishing tape has the same stripped config as original.
     gen_stripped_config = strip_config(gen_sim.state, gen_sim.tape.dir,
@@ -480,8 +482,9 @@ class Proof_System(object):
         self.print_this(gen_sim.tape)
         self.print_this(gen_stripped_config)
         self.print_this(stripped_config)
+        print
       return False
-        
+
     # If machine has run delta_steps without error, it is a general rule.
     # Compute the diff_tape and find out if this is a recursive rule.
     # TODO: There should be a better way to find out if this is recursive.
@@ -797,6 +800,7 @@ class Proof_System(object):
     if num_reps is None:
       if self.verbose:
         self.print_this("++ Rules applies infinitely ++")
+        print
       return True, ((Turing_Machine.INF_REPEAT, None, None, {}), large_delta)
     
     # If we cannot even apply this transition once, we're done.
@@ -804,6 +808,7 @@ class Proof_System(object):
         num_reps <= 0):
       if self.verbose:
         self.print_this("++ Cannot even apply transition once ++")
+        print
       return False, 3
     
     ## Determine number of base steps taken by applying rule.
@@ -821,6 +826,7 @@ class Proof_System(object):
         except TypeError:
           if self.verbose:
             self.print_this("++ Cannot divide expression by 2 ++")
+            print
           return False, 4
     else:
       diff_steps = 0 # TODO: Make it None instead of a lie
@@ -864,6 +870,7 @@ class Proof_System(object):
                                              current_list):
       if self.verbose:
         self.print_this("++ Rule applies infinitely ++")
+        print
       return True, ((Turing_Machine.INF_REPEAT, None, None, {}), large_delta)
     
     # Keep applying rule until we can't anymore.
@@ -902,12 +909,14 @@ class Proof_System(object):
         self.print_this("++ Recursive rule applied ++")
         self.print_this("Times applied", num_reps)
         self.print_this("Resulting tape:", tape)
+        print
       return True, ((Turing_Machine.RUNNING, tape, diff_steps, {}), large_delta)
     else:
       if self.verbose:
         self.print_this("++ Current config is below rule minimum ++")
         self.print_this("Config tape:", start_tape)
         self.print_this("Rule min vals:", min_list)
+        print
       return False, 1
 
   def apply_collatz_rule(self, rule, start_config):
@@ -924,6 +933,7 @@ class Proof_System(object):
                                              current_list):
       if self.verbose:
         self.print_this("++ Rule applies infinitely ++")
+        print
       return True, ((Turing_Machine.INF_REPEAT, None, None, {}), large_delta)
     
     # Keep applying rule until we can't anymore.
