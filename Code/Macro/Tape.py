@@ -30,9 +30,10 @@ def reverse(in_list):
 
 class Repeated_Symbol(object):
   """Slice of tape with repatitions."""
-  def __init__(self, symbol, number_of_repetitions):
+  def __init__(self, symbol, number_of_repetitions, id = None):
     self.symbol = symbol
     self.num = number_of_repetitions
+    self.id = id
   
   def __repr__(self):
     if type(self.num) not in (int, long) or self.num < 1000000:
@@ -42,7 +43,7 @@ class Repeated_Symbol(object):
     return "%s^%s" % (str(self.symbol), num_string)
   
   def copy(self):
-    return Repeated_Symbol(self.symbol, self.num)
+    return Repeated_Symbol(self.symbol, self.num, self.id)
 
 class Chain_Tape(object):
   """Stores the turing machine tape with repetition compression."""
