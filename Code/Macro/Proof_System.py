@@ -554,13 +554,14 @@ class Proof_System(object):
       self.num_recursive_rules += 1
       rule = General_Rule(var_list, min_list, result_tape, num_steps,
                           gen_sim.num_loops, len(self.rules))
+
       if self.verbose:
         print
         self.print_this("** New recursive rule proven **")
         self.print_this(str(rule).replace("\n", "\n " + self.verbose_prefix))
         print
-      return rule
 
+      return rule
     elif rule_type == Collatz_Rule:
       # Get everything in the right form for a Collatz_Rule.
       var_list = []
@@ -612,13 +613,14 @@ class Proof_System(object):
       rule = Collatz_Rule(var_list, coef_list, parity_list, min_list,
                           result_list, num_steps, gen_sim.num_loops,
                           len(self.rules))
+
       if self.verbose:
         print
         self.print_this("** New Collatz rule proven **")
         self.print_this(str(rule).replace("\n", "\n " + self.verbose_prefix))
-        print
-      return rule
+        print 
 
+      return rule
     else:
       # Else if a normal diff rule:
       # Tighten up rule to be as general as possible
@@ -647,17 +649,27 @@ class Proof_System(object):
       if not isinstance(num_steps, Algebraic_Expression):
         num_steps = ConstantToExpression(num_steps)
     
+      if self.options.limited_rules:
+        left_dist = dist[0]
+        right_dist = dist[1]
+
+        initial_tape.tape[0] = initial_tape.tape[0][-left_dist:]
+        initial_tape.tape[1] = initial_tape.tape[1][-right_dist:]
+
+        diff_tape.tape[0] = diff_tape.tape[0][-left_dist:]
+        diff_tape.tape[1] = diff_tape.tape[1][-right_dist:]
+
+        rule = Limited_Diff_Rule(initial_tape, left_dist, right_dist, diff_tape, new_state, num_steps, gen_sim.num_loops, len(self.rules))
+      else:
+        rule = Diff_Rule(initial_tape, diff_tape, new_state, num_steps, gen_sim.num_loops, len(self.rules))
+
       if self.verbose:
         print
         self.print_this("** New rule proven **")
-        self.print_this("Initial Config:",
-                        initial_tape.print_with_state(new_state))
-        self.print_this("Diff Config:   ",
-                        diff_tape.print_with_state(new_state))
-        self.print_this("Steps:", num_steps)
+        self.print_this(str(rule).replace("\n", "\n " + self.verbose_prefix))
         print
     
-      return Diff_Rule(initial_tape, diff_tape, new_state, num_steps, gen_sim.num_loops, len(self.rules))
+      return rule
   
   def apply_rule(self, rule, start_config):
     """Try to apply a rule to a given configuration."""
