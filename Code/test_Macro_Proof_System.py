@@ -55,11 +55,11 @@ class SystemTest(unittest.TestCase):
     current_tape.tape[0] = [Tape.Repeated_Symbol(0,INF),
                             Tape.Repeated_Symbol(1,10),
                             Tape.Repeated_Symbol(2,10),
-                            Tape.Repeated_Symbol(0, 9),
+                            Tape.Repeated_Symbol(0,10),
                            ]
     current_tape.tape[1] = [Tape.Repeated_Symbol(0,INF),
                             Tape.Repeated_Symbol(2,10),
-                            Tape.Repeated_Symbol(1,10),
+                            Tape.Repeated_Symbol(1,15),
                             Tape.Repeated_Symbol(0,15),
                            ]
 
@@ -72,7 +72,7 @@ class SystemTest(unittest.TestCase):
     # "initial_tape", "left_dist", "right_dist", "diff_tape", "initial_state",
     # "num_steps", "num_loops", and "rule_num"
     expr_a = Algebraic_Expression.Expression_from_string("(a+3)")
-    expr_b = Algebraic_Expression.Expression_from_string("(b+1)")
+    expr_b = Algebraic_Expression.Expression_from_string("(b+3)")
     expr_c = Algebraic_Expression.Expression_from_string("(c+2)")
 
     initial_tape = Tape.Chain_Tape()
@@ -108,7 +108,27 @@ class SystemTest(unittest.TestCase):
     print success
     print "  ",results
 
+    final_tape = Tape.Chain_Tape()
+    final_tape.init(0,0)
+    final_tape.tape[0] = [Tape.Repeated_Symbol(0,INF),
+                          Tape.Repeated_Symbol(1,10),
+                          Tape.Repeated_Symbol(2,10),
+                          Tape.Repeated_Symbol(0, 2),
+                         ]
+    final_tape.tape[1] = [Tape.Repeated_Symbol(0,INF),
+                          Tape.Repeated_Symbol(2,10),
+                          Tape.Repeated_Symbol(1,11),
+                          Tape.Repeated_Symbol(0,19),
+                         ]
+
+    final_num_steps = 44
+
+    (running, tape, num_steps, var_sub), large_delta = results
+
     self.assertEqual(success, True)
+    self.assertEqual(running, Turing_Machine.RUNNING)
+    self.assertEqual(tape, final_tape)
+    self.assertEqual(num_steps, final_num_steps)
 
 if __name__ == '__main__':
   unittest.main()
