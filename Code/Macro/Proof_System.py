@@ -751,6 +751,7 @@ class Proof_System(object):
               if (isinstance(init_value[x], Algebraic_Expression) and
                   delta_value[x] != -1):
                 if self.allow_collatz:
+                  # TODO(shawn): Deal with Collatz expressions here.
                   # We should have something like (x + 12)
                   old_var = init_value[x].variable_restricted()  # x
                   old_const = init_value[x].const    # 12
