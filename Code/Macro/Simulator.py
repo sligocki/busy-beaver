@@ -8,7 +8,7 @@ from optparse import OptionParser, OptionGroup
 import time
 
 import Proof_System
-from Numbers import Algebraic_Expression
+from Numbers.Algebraic_Expression import Algebraic_Expression
 import Tape
 import Turing_Machine
 
@@ -115,10 +115,23 @@ class Simulator(object):
       return
     if self.compute_steps:
       self.old_step_num = self.step_num
+    # Note: We increment the number of loops early to take care of all the
+    # places step() could early-return.
     self.num_loops += 1
     if self.prover:
       # Log the configuration and see if we can apply a rule.
       cond, new_tape, num_steps, replace_vars = self.prover.log(self.tape, self.state, self.step_num, self.num_loops-1)
+
+      # If the prover has been printing, give us a newline and remind us
+      # what the current configuration is.
+      # TODO(sligocki): Figure out how to get this to happen only when prover
+      # actually printed something (it doesn't if it just logged).
+      #if self.prover.verbose:
+      #  print
+      #  self.num_loops -= 1  # Kludgey :/
+      #  self.verbose_print()
+      #  self.num_loops += 1
+
       # Proof system says that machine will repeat forever
       if cond == Turing_Machine.INF_REPEAT:
         self.op_state = Turing_Machine.INF_REPEAT
