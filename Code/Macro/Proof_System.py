@@ -240,6 +240,7 @@ class Proof_System(object):
     self.past_configs = defaultdict(Past_Config)
     # Colection of proven rules indexed by stripped configurations.
     self.rules = {}
+    self.rule_num = 1
     # Stat
     self.num_loops = 0
     self.num_recursive_rules = 0
@@ -256,52 +257,101 @@ class Proof_System(object):
   def delete_rule(self, name):
     found = False
 
-    for key, rule in self.rules.iteritems():
-      if name == rule.name:
-        found = True
-        del self.rules[key]
-        break
+    if self.options.limited_rules:
+      for key, rules in self.rules.iteritems():
+        for rule in rules:
+          if name == rule.name:
+            rules.remove(rule)
+            found = True
+            break
 
-    if not found:
-      print "\nRule %s not found\n" % (name,)
+      if not found:
+        print "\nRule %s not found\n" % (name,)
+    else:
+      for key, rule in self.rules.iteritems():
+        if name == rule.name:
+          del self.rules[key]
+          found = True
+          break
+
+      if not found:
+        print "\nRule %s not found\n" % (name,)
   
   def rename_rule(self, src, dest):
     found_src  = False
     found_dest = False
 
-    for key, rule in self.rules.iteritems():
-      if src == rule.name:
-        key_src = key
-        found_src = True
-      if dest == rule.name:
-        found_dest = True
+    if self.options.limited_rules:
+      for key, rules in self.rules.iteritems():
+        for rule in rules:
+          if src == rule.name:
+            found_src = True
+          if dest == rule.name:
+            found_dest = True
 
-    if not found_src:
-      print "\nRule %s not found\n" % (src,)
-    elif found_dest:
-      print "\nRule %s already exists\n" % (dest,)
+      if not found_src:
+        print "\nRule %s not found\n" % (src,)
+      elif found_dest:
+        print "\nRule %s already exists\n" % (dest,)
+      else:
+        for key, rules in self.rules.iteritems():
+          for rule in rules:
+            if src == rule.name:
+              rule.name = dest
     else:
-      self.rules[key_src].name = dest
+      for key, rule in self.rules.iteritems():
+        if src == rule.name:
+          key_src = key
+          found_src = True
+        if dest == rule.name:
+          found_dest = True
+
+      if not found_src:
+        print "\nRule %s not found\n" % (src,)
+      elif found_dest:
+        print "\nRule %s already exists\n" % (dest,)
+      else:
+        self.rules[key_src].name = dest
   
   def print_rules(self, args=None):
-    sorted_keys = sorted([[self.rules[key].name, key] for key in self.rules.keys()])
-    found_rule = False
-    for rule_name, key in sorted_keys:
-      rule = self.rules[key]
-      if args:
-        if rule.name != args:
-          continue
-      found_rule = True
-      print
-      self.print_this("Rule", rule.name)
-      state = key[0]
-      self.print_this("Initial:", rule.initial_tape.print_with_state(state))
-      self.print_this("Diff:", rule.diff_tape)
-      self.print_this("Loops:", rule.num_loops, "Steps:", rule.num_steps)
-      self.print_this("Num uses:", rule.num_uses)
+    if self.options.limited_rules:
+      rules = list(set([(rule.name, rule) for key in self.rules.keys() for rule in self.rules[key]]))
+      sorted_rules = sorted(rules)
+      found_rule = False
+      for rule_name, rule in sorted_rules:
+        if args:
+          if rule.name != args:
+            continue
+        found_rule = True
+        print
+        self.print_this("Rule", rule.name)
+        state = rule.initial_state
+        self.print_this("Initial:", rule.initial_tape.print_with_state(state))
+        self.print_this("Diff:", rule.diff_tape)
+        self.print_this("Loops:", rule.num_loops, "Steps:", rule.num_steps)
+        self.print_this("Num uses:", rule.num_uses)
 
-    if found_rule:
-      print
+      if found_rule:
+        print
+    else:
+      sorted_keys = sorted([[self.rules[key].name, key] for key in self.rules.keys()])
+      found_rule = False
+      for rule_name, key in sorted_keys:
+        rule = self.rules[key]
+        if args:
+          if rule.name != args:
+            continue
+        found_rule = True
+        print
+        self.print_this("Rule", rule.name)
+        state = rule.initial_state
+        self.print_this("Initial:", rule.initial_tape.print_with_state(state))
+        self.print_this("Diff:", rule.diff_tape)
+        self.print_this("Loops:", rule.num_loops, "Steps:", rule.num_steps)
+        self.print_this("Num uses:", rule.num_uses)
+
+      if found_rule:
+        print
   
   def log(self, tape, state, step_num, loop_num):
     """Log this configuration into the memory and check if it is similar to a past one.
@@ -315,25 +365,59 @@ class Proof_System(object):
     
     ## If we're already proven a rule for this stripped_config, try to apply it.
     # TODO: stripped_config in self.rules.
-    if stripped_config in self.rules:
-      rule = self.rules[stripped_config]
-      is_good, res = self.apply_rule(rule, full_config)
-      if is_good:
-        trans, large_delta = res
-        # Optimization: If we apply a rule and we are not trying to perform
-        # recursive proofs, clear past configuration memory.
-        # Likewise, even recursive proofs cannot use every subrule as a step.
-        # Specifically, if there are any negative deltas other than -1,
-        # we cannot apply the rule in a proof (yet) becuase
-        # e.g. (x + 3 // 2) is unresolvable
-        # TODO: Enable Collatz proofs!
-        if not self.recursive or (large_delta and not self.allow_collatz):
-          if self.past_configs is not None:
-            self.past_configs.clear()
-        rule.num_uses += 1
-        assert len(trans) == 4
-        return trans
-      return False, None, None, None
+    if self.options.limited_rules:
+      (state, dir, stripped_tape_left, stripped_tape_right) = stripped_config
+
+      stripped_tape_left = (Tape.Repeated_Symbol(0,-1),) + stripped_tape_left
+      stripped_configs_left = [(0, state, dir, (), 0),] + [(0, state, dir, stripped_tape_left[-i:], i) for i in xrange(1,len(stripped_tape_left)+1)]
+
+      list_left = [rule for config in stripped_configs_left if config in self.rules for rule in self.rules[config]]
+
+      stripped_tape_right = (Tape.Repeated_Symbol(0,-1),) + stripped_tape_right
+      stripped_configs_right = [(1, state, dir, (), 0),] + [(1, state, dir, stripped_tape_right[-i:], i) for i in xrange(1,len(stripped_tape_right)+1)]
+
+      list_right = [rule for config in stripped_configs_right if config in self.rules for rule in self.rules[config]]
+
+      rules = list(set(list_left) & set(list_right))
+
+      for rule in rules:
+        is_good, res = self.apply_rule(rule, full_config)
+        if is_good:
+          trans, large_delta = res
+          # Optimization: If we apply a rule and we are not trying to perform
+          # recursive proofs, clear past configuration memory.
+          # Likewise, even recursive proofs cannot use every subrule as a step.
+          # Specifically, if there are any negative deltas other than -1,
+          # we cannot apply the rule in a proof (yet) becuase
+          # e.g. (x + 3 // 2) is unresolvable
+          # TODO: Enable Collatz proofs!
+          if not self.recursive or (large_delta and not self.allow_collatz):
+            if self.past_configs is not None:
+              self.past_configs.clear()
+          rule.num_uses += 1
+          assert len(trans) == 4
+          return trans
+        # return False, None, None, None
+    else:
+      if stripped_config in self.rules:
+        rule = self.rules[stripped_config]
+        is_good, res = self.apply_rule(rule, full_config)
+        if is_good:
+          trans, large_delta = res
+          # Optimization: If we apply a rule and we are not trying to perform
+          # recursive proofs, clear past configuration memory.
+          # Likewise, even recursive proofs cannot use every subrule as a step.
+          # Specifically, if there are any negative deltas other than -1,
+          # we cannot apply the rule in a proof (yet) becuase
+          # e.g. (x + 3 // 2) is unresolvable
+          # TODO: Enable Collatz proofs!
+          if not self.recursive or (large_delta and not self.allow_collatz):
+            if self.past_configs is not None:
+              self.past_configs.clear()
+          rule.num_uses += 1
+          assert len(trans) == 4
+          return trans
+        return False, None, None, None
     
     # If we are not trying to prove new rules, quit
     if self.past_configs is None:
@@ -348,9 +432,34 @@ class Proof_System(object):
       rule = self.prove_rule(stripped_config, full_config, past_config.delta_loop)
       if rule:  # If we successfully proved a rule:
         # Remember rule
-        self.rules[stripped_config] = rule
+        if self.options.limited_rules:
+          (state, dir, stripped_tape_left, stripped_tape_right) = stripped_config
+          stripped_tape_left = (Tape.Repeated_Symbol(0,-1),) + stripped_tape_left
+          stripped_config_left  = (0, state, dir, stripped_tape_left[-rule.left_dist:],  rule.left_dist )
+
+          stripped_tape_right = (Tape.Repeated_Symbol(0,-1),) + stripped_tape_right
+          stripped_config_right = (1, state, dir, stripped_tape_right[-rule.right_dist:], rule.right_dist)
+
+          if stripped_config_left in self.rules:
+            self.rules[stripped_config_left].append(rule)
+          else:
+            self.rules[stripped_config_left] = [rule,]
+
+          if stripped_config_right in self.rules:
+            self.rules[stripped_config_right].append(rule)
+          else:
+            self.rules[stripped_config_right] = [rule,]
+
+          print self.rules
+
+          self.rule_num += 1
+        else:
+          self.rules[stripped_config] = rule
+          self.rule_num += 1
+
         # Clear our memory (couldn't use it anyway).
         self.past_configs.clear()
+
         # Try to apply transition
         is_good, res = self.apply_rule(rule, full_config)
         if is_good:
@@ -358,6 +467,7 @@ class Proof_System(object):
           rule.num_uses += 1
           assert len(trans) == 4
           return trans
+
     return False, None, None, None
   
   def prove_rule(self, stripped_config, full_config, delta_loop):
@@ -553,7 +663,7 @@ class Proof_System(object):
 
       self.num_recursive_rules += 1
       rule = General_Rule(var_list, min_list, result_tape, num_steps,
-                          gen_sim.num_loops, len(self.rules))
+                          gen_sim.num_loops, self.rule_num)
 
       if self.verbose:
         print
@@ -612,7 +722,7 @@ class Proof_System(object):
       self.num_collatz_rules += 1
       rule = Collatz_Rule(var_list, coef_list, parity_list, min_list,
                           result_list, num_steps, gen_sim.num_loops,
-                          len(self.rules))
+                          self.rule_num)
 
       if self.verbose:
         print
@@ -659,9 +769,9 @@ class Proof_System(object):
         diff_tape.tape[0] = diff_tape.tape[0][-left_dist:]
         diff_tape.tape[1] = diff_tape.tape[1][-right_dist:]
 
-        rule = Limited_Diff_Rule(initial_tape, left_dist, right_dist, diff_tape, new_state, num_steps, gen_sim.num_loops, len(self.rules))
+        rule = Limited_Diff_Rule(initial_tape, left_dist, right_dist, diff_tape, new_state, num_steps, gen_sim.num_loops, self.rule_num)
       else:
-        rule = Diff_Rule(initial_tape, diff_tape, new_state, num_steps, gen_sim.num_loops, len(self.rules))
+        rule = Diff_Rule(initial_tape, diff_tape, new_state, num_steps, gen_sim.num_loops, self.rule_num)
 
       if self.verbose:
         print
