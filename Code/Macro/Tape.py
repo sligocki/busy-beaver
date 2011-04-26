@@ -15,10 +15,13 @@ class Infinity(object):
       return 0  # Inf == Inf
     else:
       return 1  # Inf > (anything other than Inf)
+
   def __repr__(self):
     return "Infinity()"
+
   def __str__(self):
     return "Inf"
+
 # Serves as numerical infinity
 INF = Infinity()
 
@@ -34,7 +37,16 @@ class Repeated_Symbol(object):
     self.symbol = symbol
     self.num = number_of_repetitions
     self.id = id
+
+  def __eq__(self, other):
+    return (isinstance(other, self.__class__) and
+            other.symbol   == self.symbol     and
+            other.num      == self.num        and
+            other.id       == self.id)
   
+  def __hash__(self):
+    return self.symbol + self.num
+
   def __repr__(self):
     if type(self.num) not in (int, long) or self.num < 1000000:
       num_string = str(self.num)
@@ -57,7 +69,7 @@ class Chain_Tape(object):
     # Measures head displacement from initial position
     self.displace = 0
 
-  def __cmp__(self, other):
+  def __eq__(self, other):
     return (isinstance(other, self.__class__) and
             other.dir      == self.dir        and
             other.tape     == self.tape       and
