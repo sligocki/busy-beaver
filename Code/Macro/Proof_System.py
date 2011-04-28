@@ -617,16 +617,18 @@ class Proof_System(object):
         if diff_block.num != Tape.INF:
           diff_block.num -= initial_block.num
           if isinstance(diff_block.num, Algebraic_Expression):
-            if diff_block.num.is_const():
-              diff_block.num = diff_block.num.const
+            coef = initial_block.num.get_coef()
+            if coef != None and coef != 1:
+              # TODO(shawn): We should record this during simulation time.
+              rule_type = Collatz_Rule
+              # TODO(shawn): If the diff is constant (say 2x+1 -> 2x+3),
+              # perhaps we could prove a diff-rule?
             else:
-              coef = initial_block.num.get_coef()
-              assert coef != None, (initial_block, initial_tape)
-              if coef == 1:
-                rule_type = General_Rule
+              if diff_block.num.is_const():
+                diff_block.num = diff_block.num.const
               else:
-                # TODO(shawn): We should record this during simulation time.
-                rule_type = Collatz_Rule
+                assert coef != None, (initial_block, initial_tape)
+                rule_type = General_Rule
     
     if rule_type == General_Rule:
       # TODO: Don't do all the work above if we're not going to use it
