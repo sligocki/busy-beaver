@@ -369,12 +369,12 @@ class Proof_System(object):
       (state, dir, stripped_tape_left, stripped_tape_right) = stripped_config
 
       stripped_tape_left = (Tape.Repeated_Symbol(0,-1),) + stripped_tape_left
-      stripped_configs_left = [(0, state, dir, (), 0),] + [(0, state, dir, stripped_tape_left[-i:], i) for i in xrange(1,len(stripped_tape_left)+1)]
+      stripped_configs_left = [(0, state, dir, stripped_tape_left[-i:], i) for i in xrange(1,len(stripped_tape_left)+1)]
 
       list_left = [rule for config in stripped_configs_left if config in self.rules for rule in self.rules[config]]
 
       stripped_tape_right = (Tape.Repeated_Symbol(0,-1),) + stripped_tape_right
-      stripped_configs_right = [(1, state, dir, (), 0),] + [(1, state, dir, stripped_tape_right[-i:], i) for i in xrange(1,len(stripped_tape_right)+1)]
+      stripped_configs_right = [(1, state, dir, stripped_tape_right[-i:], i) for i in xrange(1,len(stripped_tape_right)+1)]
 
       list_right = [rule for config in stripped_configs_right if config in self.rules for rule in self.rules[config]]
 
@@ -432,7 +432,7 @@ class Proof_System(object):
       rule = self.prove_rule(stripped_config, full_config, past_config.delta_loop)
       if rule:  # If we successfully proved a rule:
         # Remember rule
-        if self.options.limited_rules:
+        if isinstance(rule, Limited_Diff_Rule):
           (state, dir, stripped_tape_left, stripped_tape_right) = stripped_config
           stripped_tape_left = (Tape.Repeated_Symbol(0,-1),) + stripped_tape_left
           stripped_config_left  = (0, state, dir, stripped_tape_left[-rule.left_dist:],  rule.left_dist )
@@ -449,8 +449,6 @@ class Proof_System(object):
             self.rules[stripped_config_right].append(rule)
           else:
             self.rules[stripped_config_right] = [rule,]
-
-          print self.rules
 
           self.rule_num += 1
         else:
@@ -525,7 +523,7 @@ class Proof_System(object):
     # Run the simulator
     gen_sim.verbose_print()
     gen_sim.step()
-    dist = [0, 0]
+    dist = [1, 1]
     cur_dir = gen_sim.tape.dir
     cur_dist = gen_sim.tape.tape[cur_dir][-1].id
     if cur_dist and cur_dist > dist[cur_dir]:
@@ -760,7 +758,7 @@ class Proof_System(object):
         num_steps = ConstantToExpression(num_steps)
     
       if self.options.limited_rules:
-        left_dist = dist[0]
+        left_dist  = dist[0]
         right_dist = dist[1]
 
         initial_tape.tape[0] = initial_tape.tape[0][-left_dist:]
