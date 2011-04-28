@@ -58,8 +58,10 @@ class Var_Power(object):
 
   def substitute(self, subs):
     """Substitute values from dict 'subs' to get an int."""
-    # TODO: What should we do if it's not in dict?
-    return subs[self.var]**self.pow
+    if self.var in subs:
+      return subs[self.var]**self.pow
+    else:
+      return VariableToExpression(self.var)**self.pow
 
 def Var_Power_from_string(input):
   input = input.split('^')
