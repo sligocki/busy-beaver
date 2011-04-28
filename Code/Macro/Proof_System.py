@@ -873,32 +873,40 @@ class Proof_System(object):
               if (isinstance(init_value[x], Algebraic_Expression) and
                   delta_value[x] != -1):
                 if self.allow_collatz:
-                  # TODO(shawn): Deal with Collatz expressions here.
-                  # We should have something like (x + 12)
-                  old_var = init_value[x].variable_restricted()  # x
-                  old_const = init_value[x].const    # 12
-                  new_var = NewVariableExpression()  # k
-                  # 1) Record that we are replacing x with 3k.
-                  replace_vars[old_var] = new_var * -delta_value[x]
-                  # TODO(shawn): We might need to replace more places.
-                  # Or maybe less places and just let outside prover replace.
-                  new_block.num = new_block.num.substitute(replace_vars)
-                  # Note: this substitution is actually unnecessary.
-                  init_value[x] = init_value[x].substitute(replace_vars)
-                  # 2) num_reps = (3k + 12) // 3 + 1 = k + (12//3) + 1
-                  num_reps = new_var + (old_const // -delta_value[x])  + 1
-                  if self.verbose:
-                    self.print_this("++ Experimental Collatz diff ++")
-                    self.print_this("Substituting:", old_var, "=",
-                                    replace_vars[old_var])
-                    self.print_this("From: num_reps = (%r // -%r)  + 1"
-                                    % (init_value[x], delta_value[x]))
-                    self.print_this("")
+                  if not init_value[x].is_var_plus_const():
+                    if self.verbose:
+                      self.print_this("++ Unsupported big-delta on Collatz expression ++")
+                      self.print_this("%r // %r"
+                                      % (init_value[x], -delta_value[x]))
+                      self.print_this("")
+                    return False, 2
+                  else:
+                    # TODO(shawn): Deal with Collatz expressions here.
+                    # We should have something like (x + 12)
+                    old_var = init_value[x].variable_restricted()  # x
+                    old_const = init_value[x].const    # 12
+                    new_var = NewVariableExpression()  # k
+                    # 1) Record that we are replacing x with 3k.
+                    replace_vars[old_var] = new_var * -delta_value[x]
+                    # TODO(shawn): We might need to replace more places.
+                    # Or maybe less places and just let outside prover replace.
+                    new_block.num = new_block.num.substitute(replace_vars)
+                    # Note: this substitution is actually unnecessary.
+                    init_value[x] = init_value[x].substitute(replace_vars)
+                    # 2) num_reps = (3k + 12) // 3 + 1 = k + (12//3) + 1
+                    num_reps = new_var + (old_const // -delta_value[x])  + 1
+                    if self.verbose:
+                      self.print_this("++ Experimental Collatz diff ++")
+                      self.print_this("Substituting:", old_var, "=",
+                                      replace_vars[old_var])
+                      self.print_this("From: num_reps = (%r // %r)  + 1"
+                                      % (init_value[x], -delta_value[x]))
+                      self.print_this("")
                 else:
                   if self.verbose:
                     self.print_this("++ Collatz diff ++")
-                    self.print_this("From: num_reps = (%r // -%r)  + 1"
-                                    % (init_value[x], delta_value[x]))
+                    self.print_this("From: num_reps = (%r // %r)  + 1"
+                                    % (init_value[x], -delta_value[x]))
                     self.print_this("")
                   return False, 2
               else:
