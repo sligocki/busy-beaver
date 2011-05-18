@@ -92,13 +92,21 @@ def run(TTable, block_size, back, prover, recursive, options):
       if options.verbose:
         sim.verbose_print()
 
-      while sim.op_state == Turing_Machine.RUNNING:
+      total_loops = 0;
+
+      while (sim.op_state == Turing_Machine.RUNNING and
+             (options.loops == 0 or total_loops < options.loops)):
         sim.step()
+        total_loops += 1;
     else:
       # TODO: maybe print based on time
-      while sim.op_state == Turing_Machine.RUNNING:
+      total_loops = 0;
+
+      while (sim.op_state == Turing_Machine.RUNNING and
+             (options.loops == 0 or total_loops < options.loops)):
         sim.print_self()
         sim.loop_run(options.print_loops)
+        total_loops += options.print_loops;
   finally:
     sim.print_self()
 
@@ -137,6 +145,8 @@ if __name__ == "__main__":
   parser.add_option("-v", "--verbose", action="store_true",
                     help="Print step-by-step informaion from simulator "
                     "and prover (Overrides other --verbose-* flags).")
+  parser.add_option("-l", "--loops", type=int, default=0,
+                    help="Specify a maximum number of loops.")
   parser.add_option("--print-loops", type=int, default=10000, metavar="LOOPS",
                     help="Print every LOOPS loops [Default %default].")
   
