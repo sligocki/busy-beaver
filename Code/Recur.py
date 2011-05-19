@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 
-import sys, string
+import sys, string, copy
 
 from Macro import Turing_Machine, Simulator, Block_Finder
 import IO
@@ -65,6 +65,26 @@ def print_machine(machine):
   sys.stdout.flush()
 
 
+def stripped_info(block):
+  """Get an abstraction of a tape block. We try to prove rules between
+  configuration which have the same abstraction.
+  """
+  #if block.num == 1:
+  #  return block.symbol, 1
+  #else:
+  return block.symbol
+
+def strip_config(state, dir, tape):
+  """"Return a generalized configuration removing the non-1 repetition counts from the tape."""
+  # Optimization: Strip off Infinity blocks before we run the map (see tape[x][1:]).
+  # Turns out Infinity.__cmp__ is expensive when run millions of times.
+  # It used to spend up to 25% of time here.
+  # TODO: This map is expensive upwards of 10% of time is spend here.
+  return (tuple(map(stripped_info, tape[0])),
+          state, dir,
+          tuple(reversed(map(stripped_info, tape[1]))))
+
+
 def run(TTable, block_size, back, prover, recursive, options):
   # Construct Machine (Backsymbol-k-Block-Macro-Machine)
   m = Turing_Machine.make_machine(TTable)
@@ -87,51 +107,41 @@ def run(TTable, block_size, back, prover, recursive, options):
 
   if options.manual:
     return  # Let's us run the machine manually. Must be run as python -i Quick_Sim.py
-  try:
-    if options.quiet or options.verbose:  # Note verbose prints inside sim.step()
-      if options.verbose:
-        sim.verbose_print()
 
-      total_loops = 0;
+  groups = {}
 
-      while (sim.op_state == Turing_Machine.RUNNING and
-             (options.loops == 0 or total_loops < options.loops)):
-        sim.step()
-        total_loops += 1;
-    else:
-      # TODO: maybe print based on time
-      total_loops = 0;
+  total_loops = 0;
 
-      while (sim.op_state == Turing_Machine.RUNNING and
-             (options.loops == 0 or total_loops < options.loops)):
-        sim.print_self()
-        sim.loop_run(options.print_loops)
-        total_loops += options.print_loops;
-  finally:
-    sim.print_self()
+  while (sim.op_state == Turing_Machine.RUNNING and
+         (options.loops == 0 or total_loops <= options.loops)):
+    # print "%10d" % sim.step_num,"  ",sim.tape.print_with_state(sim.state)
 
-  if sim.op_state == Turing_Machine.HALT:
-    print
-    print "Turing Machine Halted!"
-    print
-    if options.compute_steps:
-      print "Steps:   ", sim.step_num
-    print "Nonzeros:", sim.get_nonzeros()
-    print
-  elif sim.op_state == Turing_Machine.INF_REPEAT:
-    print
-    print "Turing Machine proven Infinite!"
-    print "Reason:", sim.inf_reason
-  elif sim.op_state == Turing_Machine.UNDEFINED:
-    print
-    print "Turing Machine reached Undefined transition!"
-    print "State: ", sim.op_details[0][1]
-    print "Symbol:", sim.op_details[0][0]
-    print
-    if options.compute_steps:
-      print "Steps:   ", sim.step_num
-    print "Nonzeros:", sim.get_nonzeros()
-    print
+    if len(sim.tape.tape[0]) == 1 or len(sim.tape.tape[1]) == 1:
+      min_config = strip_config(sim.state,sim.dir,sim.tape.tape)
+
+      if min_config in groups:
+        groups[min_config].append([copy.deepcopy(sim.tape.tape),sim.step_num])
+      else:
+        groups[min_config] = [[copy.deepcopy(sim.tape.tape),sim.step_num],]
+
+    sim.step()
+
+    total_loops += 1;
+
+  print
+
+  sorted_keys = sorted(groups,key=lambda item: len(item[0])+len(item[3]))
+
+  for min_config in sorted_keys:
+    print "%10d" % len(groups[min_config]),"  ",min_config
+
+    #group = groups[min_config]
+    #for elem in group:
+    #  print "   ",elem
+
+    #print
+
+  print len(groups)
 
 
 if __name__ == "__main__":
