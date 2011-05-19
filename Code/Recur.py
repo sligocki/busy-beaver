@@ -113,8 +113,10 @@ def run(TTable, block_size, back, prover, recursive, options):
   total_loops = 0;
 
   while (sim.op_state == Turing_Machine.RUNNING and
-         (options.loops == 0 or total_loops <= options.loops)):
+         (options.loops == 0 or total_loops < options.loops)):
     # print "%10d" % sim.step_num,"  ",sim.tape.print_with_state(sim.state)
+
+    sim.step()
 
     if len(sim.tape.tape[0]) == 1 or len(sim.tape.tape[1]) == 1:
       min_config = strip_config(sim.state,sim.dir,sim.tape.tape)
@@ -124,23 +126,25 @@ def run(TTable, block_size, back, prover, recursive, options):
       else:
         groups[min_config] = [[copy.deepcopy(sim.tape.tape),sim.step_num],]
 
-    sim.step()
-
     total_loops += 1;
 
+  # print "%10d" % sim.step_num,"  ",sim.tape.print_with_state(sim.state)
   print
 
   sorted_keys = sorted(groups,key=lambda item: len(item[0])+len(item[3]))
 
   for min_config in sorted_keys:
-    print "%10d" % len(groups[min_config]),"  ",min_config
+    group = groups[min_config]
 
-    #group = groups[min_config]
-    #for elem in group:
-    #  print "   ",elem
+    if len(group) > 1:
+      print "%5d" % len(groups[min_config]),"  ",min_config
 
-    #print
+      for elem in group:
+        print elem
 
+      break
+
+  print
   print len(groups)
 
 
