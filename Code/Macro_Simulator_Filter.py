@@ -10,7 +10,7 @@ from Alarm import ALARM, AlarmException
 max_step2inf = 0
 max_loop2inf = 0
 
-def run(TTable, block_size, steps, runtime, recursive, progress):
+def run(TTable, block_size, steps, runtime, recursive, progress, options):
   # Get and initialize a new simulator object.
   m1 = Turing_Machine.Simple_Machine(TTable)
   if not block_size:
@@ -19,7 +19,7 @@ def run(TTable, block_size, steps, runtime, recursive, progress):
   m2 = Turing_Machine.Block_Macro_Machine(m1, block_size)
   m3 = Turing_Machine.Backsymbol_Macro_Machine(m2)
 
-  sim = Simulator.Simulator(m3, recursive)
+  sim = Simulator.Simulator(m3, options)
 
   # Run with an optional timer.
   try:
@@ -84,25 +84,25 @@ if __name__ == "__main__":
   # Parse command line options
   usage = "usage: %prog --infile= --outfile= [options]"
   parser = OptionParser(usage=usage)
+
   # General options:
   parser.add_option("--infile", help="Input file name.")
   parser.add_option("--outfile", help="Output file name.")
   parser.add_option("--log_number", type=int, metavar="NUM",
                     help="Log number to use in output file.")
+
   # Macro_Simulator specific:
-  parser.add_option("-n", "--block-size", type=int,
-                    help="Block size to use in macro machine simulator "
-                    "(default is to guess with the block_finder algorithm).")
   parser.add_option("--steps", type=int, default=10000,
                     help="Max simulation loops to run each machine for "
                     "(0 for infinite) [Default: %default].")
   parser.add_option("--time", type=float,
                     help="Max (real) time (in seconds) to run each simulation "
                     "for (default is no time limit).")
-  parser.add_option("-r", "--recursive", action="store_true", default=False,
-                    help="Turn on recursive proof system.")
   parser.add_option("--progress", action="store_true", default=False,
                     help="Print progress to stdout.")
+
+  Block_Finder.add_option_group(parser)
+  Simulator.add_option_group(parser)
 
   (options, args) = parser.parse_args()
 
@@ -121,7 +121,8 @@ if __name__ == "__main__":
   for io_record in io:
     # Run the simulator/filter on this machine.
     sim_results = run(io_record.ttable, options.block_size, options.steps, 
-                      options.time, options.recursive, options.progress)
+                      options.time, options.recursive, options.progress,
+                      options)
 
     # If we could not decide anything, leave the old io_record alone.
     if sim_results[0] in Exit_Condition.UNKNOWN_SET:
