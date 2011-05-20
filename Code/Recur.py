@@ -4,6 +4,7 @@ import sys, string, copy
 
 from Macro import Turing_Machine, Simulator, Block_Finder
 import IO
+import Output_Machine
 
 # White, Red, Blue, Green, Magenta, Cyan, Brown/Yellow
 color = [49, 41, 44, 42, 45, 46, 43]
@@ -93,8 +94,8 @@ def run(TTable, block_size, back, prover, recursive, options):
   if not block_size:
     block_size = Block_Finder.block_finder(m, options)
 
-  if not options.quiet:
-    print_machine(m)
+  #if not options.quiet:
+  #  print_machine(m)
 
   # Do not create a 1-Block Macro-Machine (just use base machine)
   if block_size != 1:
@@ -128,28 +129,31 @@ def run(TTable, block_size, back, prover, recursive, options):
 
     total_loops += 1;
 
-  # print "%10d" % sim.step_num,"  ",sim.tape.print_with_state(sim.state)
-  print
+  #print "%10d" % sim.step_num,"  ",sim.tape.print_with_state(sim.state)
+  #print
 
   sorted_keys = sorted(groups,key=lambda item: len(item[0])+len(item[3]))
 
   for min_config in sorted_keys:
     group = groups[min_config]
 
-    if len(group) > 1:
-      print "%5d" % len(groups[min_config]),"  ",min_config
+    if len(group) > 2:
+      print Output_Machine.display_ttable(TTable),"  ",
+      print "%5d" % len(group),"  ",
+      print "(%5d)" % len(groups),"  ",
+      print min_config
 
-      for elem in group:
-        print elem
+      # for elem in group:
+      #   print elem
 
       break
-
-  print
-  print len(groups)
 
 
 if __name__ == "__main__":
   from optparse import OptionParser, OptionGroup
+
+  from Option_Parser import open_infile
+
   # Parse command line options.
   usage = "usage: %prog [options] machine_file [line_number]"
   parser = OptionParser(usage=usage)
@@ -184,21 +188,25 @@ if __name__ == "__main__":
     options.verbose_block_finder = True
   
   if len(args) < 1:
-    parser.error("Must have at least one argument, machine_file")
-  filename = args[0]
-  
-  if len(args) >= 2:
-    try:
-      line = int(args[1])
-    except ValueError:
-      parser.error("line_number must be an integer.")
-    if line < 1:
-      parser.error("line_number must be >= 1")
-  else:
-    line = 1
-  
-  ttable = IO.load_TTable_filename(filename, line)
-  
-  run(ttable, options.block_size, options.backsymbol, options.prover, 
-              options.recursive, options)
+    parser.error("Must have one argument, machine_file")
+  infilename = args[0]
 
+  infile = open_infile(infilename)
+  
+  # if len(args) >= 2:
+  #   try:
+  #     line = int(args[1])
+  #   except ValueError:
+  #     parser.error("line_number must be an integer.")
+  #   if line < 1:
+  #     parser.error("line_number must be >= 1")
+  # else:
+  #   line = 1
+  
+  io = IO.IO(infile, None, None)
+
+  for io_record in io:
+    ttable = io_record.ttable
+    
+    run(ttable, options.block_size, options.backsymbol, options.prover, 
+                options.recursive, options)
