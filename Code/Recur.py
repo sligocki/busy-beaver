@@ -181,50 +181,99 @@ def run(TTable, block_size, back, prover, recursive, options):
           B = numpy.array(b)
 
           [x,residue,rank,sv] = numpy.linalg.lstsq(A,B)
-          residue = residue[0]
+          if len(residue) > 0:
+            residue = residue[0]
           print "        ",n,residue,
 
-          if residue < 1e-12:
-            print "successful",
+          if residue:
+            if residue < 1e-12:
+              print "success",
 
-            int_coefs = [int(round(coef[0])) for coef in x]
-            int_coefs.reverse()
+              int_coefs = [int(round(coef[0])) for coef in x]
+              int_coefs.reverse()
 
-            constant = int_coefs[-1]
-            int_coefs = int_coefs[:-1]
+              constant = int_coefs[-1]
+              int_coefs = int_coefs[:-1]
 
-            print " F(n) =",
+              print " F(n) =",
 
-            for i in xrange(len(int_coefs)):
-              if i == 0:
-                if int_coefs[i] == 1:
-                  print "F(n-%d)" % (i+1,),
-                else:
-                  print int_coefs[i],"F(n-%d)" % (i+1,),
-              else:
-                if int_coefs[i] != 0:
-                  if int_coefs[i] > 0:
-                    if int_coefs[i] == 1:
-                      print "+","F(n-%d)" % (i+1,),
-                    else:
-                      print "+",int_coefs[i],"F(n-%d)" % (i+1,),
+              for i in xrange(len(int_coefs)):
+                if i == 0:
+                  if int_coefs[i] == 1:
+                    print "F(n-%d)" % (i+1,),
                   else:
-                    if int_coefs[i] == -1:
-                      print "-","F(n-%d)" % (i+1,),
+                    print int_coefs[i],"F(n-%d)" % (i+1,),
+                else:
+                  if int_coefs[i] != 0:
+                    if int_coefs[i] > 0:
+                      if int_coefs[i] == 1:
+                        print "+","F(n-%d)" % (i+1,),
+                      else:
+                        print "+",int_coefs[i],"F(n-%d)" % (i+1,),
                     else:
-                      print "-",-int_coefs[i],"F(n-%d)" % (i+1,),
+                      if int_coefs[i] == -1:
+                        print "-","F(n-%d)" % (i+1,),
+                      else:
+                        print "-",-int_coefs[i],"F(n-%d)" % (i+1,),
 
-            if len(int_coefs) > 0:
-              print "+",
+              if len(int_coefs) > 0:
+                if constant > 0:
+                  print "+",
+                elif constant < 0:
+                  print "-",
 
-            print constant
+              if constant > 0:
+                print constant
+              elif constant < 0:
+                print -constant
 
-            recur_this = True
-            break
+              recur_this = True
+              break
+            else:
+              print "failure",
+
+              int_coefs = [coef[0] for coef in x]
+              int_coefs.reverse()
+
+              constant = int_coefs[-1]
+              int_coefs = int_coefs[:-1]
+
+              print " F(n) =",
+
+              for i in xrange(len(int_coefs)):
+                if i == 0:
+                  if int_coefs[i] == 1.0:
+                    print "F(n-%d)" % (i+1,),
+                  else:
+                    print "%.3f" % int_coefs[i],"F(n-%d)" % (i+1,),
+                else:
+                  if int_coefs[i] != 0.0:
+                    if int_coefs[i] > 0:
+                      if int_coefs[i] == 1.0:
+                        print "+","F(n-%d)" % (i+1,),
+                      else:
+                        print "+","%.3f" % int_coefs[i],"F(n-%d)" % (i+1,),
+                    else:
+                      if int_coefs[i] == -1.0:
+                        print "-","F(n-%d)" % (i+1,),
+                      else:
+                        print "-","%.3f" % -int_coefs[i],"F(n-%d)" % (i+1,),
+
+              if len(int_coefs) > 0:
+                if constant > 0.0:
+                  print "+",
+                elif constant < 0.0:
+                  print "-",
+
+              if constant > 0.0:
+                print "%.3f" % constant
+              elif constant < 0.0:
+                print "%.3f" % -constant
           else:
             print
 
         recur_all = recur_all and recur_this
+        print
 
       # for elem in group:
       #   print elem
