@@ -243,46 +243,52 @@ def run(TTable, block_size, back, prover, recursive, options):
               else:
                 print "failure",
 
+                int_coefs = [coef[0] for coef in x]
+                int_coefs.reverse()
+
+                constant = int_coefs[-1]
+                int_coefs = int_coefs[:-1]
+
                 print " F(n) =",
 
                 first = True
                 for i in xrange(len(int_coefs)):
                   if first:
-                    if int_coefs[i] != 0:
+                    if int_coefs[i] != 0.0:
                       first = False
-                      if int_coefs[i] > 0:
-                        if int_coefs[i] == 1:
+                      if int_coefs[i] > 0.0:
+                        if int_coefs[i] == 1.0:
                           print "F(n-%d)" % (i+1,),
                         else:
-                          print int_coefs[i],"F(n-%d)" % (i+1,),
+                          print "%.3f" % int_coefs[i],"F(n-%d)" % (i+1,),
                       else:
-                        if int_coefs[i] == -1:
+                        if int_coefs[i] == -1.0:
                           print "-F(n-%d)" % (i+1,),
                         else:
-                          print int_coefs[i],"F(n-%d)" % (i+1,),
+                          print "%.3f" % int_coefs[i],"F(n-%d)" % (i+1,),
                   else:
-                    if int_coefs[i] != 0:
-                      if int_coefs[i] > 0:
-                        if int_coefs[i] == 1:
+                    if int_coefs[i] != 0.0:
+                      if int_coefs[i] > 0.0:
+                        if int_coefs[i] == 1.0:
                           print "+","F(n-%d)" % (i+1,),
                         else:
-                          print "+",int_coefs[i],"F(n-%d)" % (i+1,),
+                          print "+","%.3f" % int_coefs[i],"F(n-%d)" % (i+1,),
                       else:
-                        if int_coefs[i] == -1:
+                        if int_coefs[i] == -1.0:
                           print "-","F(n-%d)" % (i+1,),
                         else:
-                          print "-",-int_coefs[i],"F(n-%d)" % (i+1,),
+                          print "-","%.3f" % -int_coefs[i],"F(n-%d)" % (i+1,),
 
-                if len(int_coefs) > 0:
-                  if constant > 0:
+                if len(int_coefs) > 0.0:
+                  if constant > 0.0:
                     print "+",
-                  elif constant < 0:
+                  elif constant < 0.0:
                     print "-",
 
-                if constant > 0:
-                  print constant
-                elif constant < 0:
-                  print -constant
+                if constant > 0.0:
+                  print "%.3f" % constant
+                elif constant < 0.0:
+                  print "%.3f" % -constant
 
                 break
             else:
