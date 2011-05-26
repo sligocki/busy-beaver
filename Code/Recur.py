@@ -360,7 +360,7 @@ if __name__ == "__main__":
   from Option_Parser import open_infile
 
   # Parse command line options.
-  usage = "usage: %prog [options] machine_file [line_number]"
+  usage = "usage: %prog [options] machine_file"
   parser = OptionParser(usage=usage)
   # TODO: One variable for different levels of verbosity.
   # TODO: Combine optparsers from MacroMachine, Enumerate and here.
@@ -368,8 +368,8 @@ if __name__ == "__main__":
   parser.add_option("-v", "--verbose", action="store_true",
                     help="Print step-by-step informaion from simulator "
                     "and prover (Overrides other --verbose-* flags).")
-  parser.add_option("-l", "--loops", type=int, default=0,
-                    help="Specify a maximum number of loops.")
+  parser.add_option("-l", "--loops", type=int, default=1000,
+                    help="Specify a maximum number of loops [Default %default].")
   parser.add_option("--print-loops", type=int, default=10000, metavar="LOOPS",
                     help="Print every LOOPS loops [Default %default].")
   
