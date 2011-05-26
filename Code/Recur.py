@@ -181,12 +181,12 @@ def run(TTable, block_size, back, prover, recursive, options):
           B = numpy.array(b)
 
           [x,residue,rank,sv] = numpy.linalg.lstsq(A,B)
+
           if len(residue) > 0:
             residue = residue[0]
 
-          print "        ",n,residue,
+            print "        ",n,residue,
 
-          if residue:
             if residue < 1e-12:
               int_coefs = [int(round(coef[0])) for coef in x]
               int_coefs.reverse()
@@ -341,6 +341,7 @@ def run(TTable, block_size, back, prover, recursive, options):
               elif constant < 0.0:
                 print "%.3f" % -constant
           else:
+            print "        ",n,residue,"failure"
             print
 
         recur_all = recur_all and recur_this
