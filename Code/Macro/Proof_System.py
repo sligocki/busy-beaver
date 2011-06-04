@@ -137,9 +137,16 @@ class Collatz_Rule(Rule):
             % (self.name, self.var_list, self.coef_list, self.parity_list,
                self.min_list, self.result_list, self.num_steps, self.num_loops))
 
+class Collatz_Rule_Group(Rule):
+  """
+  A set of Collatz_Rules which all come from the same stripped config,
+  but have different initial parities.
+  """
+  def __init__(self):
+    self.rules = []
+
 class Limited_Diff_Rule(Rule):
-  # TODO(TJL): Update comments.
-  """A rule that specifies constant deltas for each tape block's exponent."""
+  """A Diff_Rule that only refers to a sub-section of the tape."""
   def __init__(self, initial_tape, left_dist, right_dist, diff_tape, initial_state, num_steps, num_loops, rule_num):
     # TODO: Use basic lists instead of tapes, we never use the symbols.
     # TODO: Have a variable list and a min list instead of packing both
@@ -354,8 +361,9 @@ class Proof_System(object):
         print
   
   def log(self, tape, state, step_num, loop_num):
-    """Log this configuration into the memory and check if it is similar to a past one.
-    Returned boolean answers question: Rule applies?
+    """
+    Log this configuration into the memory and check if it is similar to a
+    past one. Returned boolean answers question: Rule applies?
     """
     # Stores state, direction pointed, and list of symbols on tape.
     # Note: we ignore the number of repetitions of these sequences so that we
@@ -406,11 +414,8 @@ class Proof_System(object):
           trans, large_delta = res
           # Optimization: If we apply a rule and we are not trying to perform
           # recursive proofs, clear past configuration memory.
-          # Likewise, even recursive proofs cannot use every subrule as a step.
-          # Specifically, if there are any negative deltas other than -1,
-          # we cannot apply the rule in a proof (yet) becuase
-          # e.g. (x + 3 // 2) is unresolvable
-          # TODO: Enable Collatz proofs!
+          # Likewise, if we apply a rule with a negative diff < -1 and we
+          # don't allow collatz rules, clear past configs.
           if not self.recursive or (large_delta and not self.allow_collatz):
             if self.past_configs is not None:
               self.past_configs.clear()
@@ -419,7 +424,7 @@ class Proof_System(object):
           return trans
         return False, None, None, None
     
-    # If we are not trying to prove new rules, quit
+    # If we are not trying to prove new rules, quit.
     if self.past_configs is None:
       # TODO: Just return False for fail and object for success.
       return False, None, None, None
@@ -431,7 +436,7 @@ class Proof_System(object):
       # We see enough of a pattern to try and prove a rule.
       rule = self.prove_rule(stripped_config, full_config, past_config.delta_loop)
       if rule:  # If we successfully proved a rule:
-        # Remember rule
+        # Remember rule.
         if isinstance(rule, Limited_Diff_Rule):
           (state, dir, stripped_tape_left, stripped_tape_right) = stripped_config
           stripped_tape_left = (Tape.Repeated_Symbol(0,-1),) + stripped_tape_left
