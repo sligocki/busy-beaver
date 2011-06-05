@@ -35,6 +35,8 @@ def add_option_group(parser):
   parser.add_option_group(group)
 
 
+UNPROVEN_PARITY = "Unproven parity"
+
 class Rule(object):
   """Base type for Proof_System rules."""
 
@@ -151,7 +153,7 @@ class Collatz_Rule_Group(Rule):
     # TODO(shawn): Check if this partial rule is infinite, say: 1^2k -> 1^2k+2
 
     self.name = str(rule_num)
-    subrule.name = self.name + ".1"
+    subrule.name = "%s.%d" % (self.name, len(self.rules))
     self.num_uses = 0
 
   def add_rule(self, rule):
@@ -163,13 +165,14 @@ class Collatz_Rule_Group(Rule):
     # We only say a Collatz Group is infinite if we have all the subrules.
     # TODO(shawn): Check if partial rule groups are infinite.
     if len(self.rules) == self.total_subrules:
-      non_increasing_rules = [r for r in self.rules if not r.increasing]
+      non_increasing_rules = [rule for rule in self.rules.values()
+                              if not rule.increasing]
       if len(non_increasing_rules) == 0:
         self.infinite = True
 
   def __str__(self):
     s = "Collatz Rule Group %s\n" % self.name
-    for rule in self.rules:
+    for rule in self.rules.values():
       s += str(rule).replace("\n", "\n  ")
       s += "\n\n"
     return s
@@ -399,7 +402,7 @@ class Proof_System(object):
     #   can get a very general view of the tape.
     stripped_config = strip_config(state, tape.dir, tape.tape)
     full_config = (state, tape, step_num, loop_num)
-    
+
     ## If we're already proven a rule for this stripped_config, try to apply it.
     # TODO: stripped_config in self.rules.
     if self.options.limited_rules:
@@ -451,7 +454,8 @@ class Proof_System(object):
           rule.num_uses += 1
           assert len(trans) == 4
           return trans
-        return False, None, None, None
+        if res != UNPROVEN_PARITY:
+          return False, None, None, None
     
     # If we are not trying to prove new rules, quit.
     if self.past_configs is None:
@@ -465,6 +469,15 @@ class Proof_System(object):
       # We see enough of a pattern to try and prove a rule.
       rule = self.prove_rule(stripped_config, full_config, past_config.delta_loop)
       if rule:  # If we successfully proved a rule:
+        # Collatz_Rules need to be stored inside Collatz_Rule_Groups.
+        if isinstance(rule, Collatz_Rule):
+          if stripped_config in self.rules:
+            group = self.rules[stripped_config]
+            group.add_rule(rule)
+          else:
+            group = Collatz_Rule_Group(rule, self.rule_num)
+          rule = group
+
         # Remember rule.
         if isinstance(rule, Limited_Diff_Rule):
           (state, dir, stripped_tape_left, stripped_tape_right) = stripped_config
@@ -754,9 +767,8 @@ class Proof_System(object):
         num_steps = 0
 
       self.num_collatz_rules += 1
-      subrule = Collatz_Rule(var_list, coef_list, parity_list, min_list,
-                             result_list, num_steps, gen_sim.num_loops)
-      rule = Collatz_Rule_Group(subrule, self.rule_num)
+      rule = Collatz_Rule(var_list, coef_list, parity_list, min_list,
+                          result_list, num_steps, gen_sim.num_loops)
 
       if self.verbose:
         print
@@ -1107,12 +1119,12 @@ class Proof_System(object):
     
     # If this recursive rule is infinite.
     if group.infinite:
-      # TODO(shawn): This will crash because we have not defined rule.
-      if config_is_above_min(rule.var_list, rule.min_list, current_list):
-        if self.verbose:
-          self.print_this("++ Rule applies infinitely ++")
-          print
-        return True, ((Turing_Machine.INF_REPEAT, None, None, {}), large_delta)
+      # TODO(shawn): Check that we are above min! This is broken.
+      #if config_is_above_min(rule.var_list, rule.min_list, current_list):
+      if self.verbose:
+        self.print_this("++ Rule applies infinitely ++")
+        print
+      return True, ((Turing_Machine.INF_REPEAT, None, None, {}), large_delta)
     
     # Keep applying rule until we can't anymore.
     success = False  # If we fail before doing anything, return false.
@@ -1126,22 +1138,25 @@ class Proof_System(object):
         self.print_this(num_reps, current_list)
 
       # Find out which collatz sub-rule applies here (figure out parities).
+      # TODO(shawn): This will crash if current_val is an Algebraic_Expression.
       parity_list = (val % coef for val, coef in zip(current_list,
                                                      group.coef_list))
       if parity_list not in group.rules:
-        assert False, "TODO: Do something :)"
+        if self.verbose:
+          self.print_this("++ Reached unproven Collatz parity ++")
+          self.print_this("Config tape:", start_tape)
+          self.print_this("Parities:", parity_list)
+          print
+        return False, UNPROVEN_PARITY
       rule = group.rules[parity_list]
 
       # Check that we are above the minimums and set assignments.
       above_min = True
-      for current_val, var, coef, parity, min_val in \
-            zip(current_list, rule.var_list, rule.coef_list, rule.parity_list,
-                rule.min_list):
+      for current_val, var, coef, min_val in \
+            zip(current_list, rule.var_list, rule.coef_list, rule.min_list):
         if var:
           # TODO(shawn): Allow rules with all parities.
-          # TODO(shawn): This will crash if current_val is an
-          # Algebraic_Expression.
-          if current_val < min_val or current_val % coef != parity:
+          if current_val < min_val:
             above_min = False
             break
           assignment[var] = current_val // coef
@@ -1178,12 +1193,11 @@ class Proof_System(object):
       return True, ((Turing_Machine.RUNNING, tape, diff_steps, {}), large_delta)
     else:
       if self.verbose:
-        self.print_this("++ Current config is below rule minimum or Collatz parity is wrong ++")
+        self.print_this("++ Current config is below rule minimum ++")
         self.print_this("Config tape:", start_tape)
         self.print_this("Rule min vals:", rule.min_list)
-        self.print_this("Rule parity vals:", rule.parity_list)
         print
-      return False, 1
+      return False, "Bellow min"
 
 def config_is_above_min(var_list, min_list, current_list, assignment={}):
   """Tests if current_list is above min_list setting assignment along the way"""
