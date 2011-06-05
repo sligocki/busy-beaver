@@ -473,8 +473,6 @@ class Proof_System(object):
         if isinstance(rule, Collatz_Rule):
           if stripped_config in self.rules:
             group = self.rules[stripped_config]
-            print stripped_config
-            print full_config
             group.add_rule(rule)
           else:
             group = Collatz_Rule_Group(rule, self.rule_num)
