@@ -4,6 +4,7 @@ Proof System which observes and attempts to prove patterns in computation.
 
 import copy
 from collections import defaultdict
+import operator
 from optparse import OptionParser, OptionGroup
 import sys
 
@@ -79,8 +80,6 @@ class General_Rule(Rule):
     self.infinite = True
     for var, result in zip(self.var_list, self.result_list):
       if var:  # If this exponent changes in this rule (has a variable)
-        # TODO: This is a bit heavy-handed, but we probably don't prove
-        #   too many recursive rules :)
         if is_scalar(result) or not result.always_greater_than(VariableToExpression(var)):
           # If any exponent can decrease, this is not an infinite rule.
           self.infinite = False
@@ -95,7 +94,7 @@ class General_Rule(Rule):
 class Collatz_Rule(Rule):
   """General rule that only applies if exponents have certain parity."""
   def __init__(self, var_list, coef_list, parity_list, min_list,
-               result_list, num_steps, num_loops, rule_num):
+               result_list, num_steps, num_loops):
     # *_lists are parallel lists for each exponent in the configuration.
     # If one exponent goes from 2k+1 -> 3k+5 for all 2k+1 >= 5, then
     # var = k, coef = 2, parity = 1, min = 5 and result = 3k+5
@@ -108,32 +107,30 @@ class Collatz_Rule(Rule):
     self.result_list = result_list
     self.num_steps = num_steps
     self.num_loops = num_loops
-    self.name = str(rule_num)
+    self.name = ""  # Name will be set in Collatz_Rule_Group.
 
     self.num_uses = 0
     
-    # Is this an infinite rule?
-    self.infinite = False
-    '''
-    self.infinite = True
+    # Is this rule increasing? If all Collatz rules in a group are increasing
+    # then the group is infinite.
+    self.increasing = True
     for var, coef, parity, result in zip(self.var_list, self.coef_list,
                                          self.parity_list, self.result_list):
       if var:  # If this exponent changes in this rule (has a variable)
-        # TODO: This is a bit heavy-handed, but we probably don't prove
-        #   too many recursive rules :)
-        if is_scalar(result):
-          self.infinite = False
-          break
-
         start_expr = coef * VariableToExpression(var) + parity
-        if not result always greater than start_expression and a subset of it
+        if is_scalar(result) or not result.always_greater_than(start_expr):
+          # If any exponents can decrease, this isn't an increasing rule.
           self.infinite = False
           break
-    '''
 
   def __str__(self):
-    return ("Collatz Rule %s\nVar List: %s\nCoef List: %s\nParity List: %s"
-            "\nMin List: %s\nResult List: %s\nSteps %s Loops %s"
+    return ("Collatz Rule %s\n"
+            "Var List: %s\n"
+            "Coef List: %s\n"
+            "Parity List: %s\n"
+            "Min List: %s\n"
+            "Result List: %s\n"
+            "Steps %s Loops %s"
             % (self.name, self.var_list, self.coef_list, self.parity_list,
                self.min_list, self.result_list, self.num_steps, self.num_loops))
 
@@ -142,8 +139,40 @@ class Collatz_Rule_Group(Rule):
   A set of Collatz_Rules which all come from the same stripped config,
   but have different initial parities.
   """
-  def __init__(self):
-    self.rules = []
+  def __init__(self, subrule, rule_num):
+    self.coef_list = subrule.coef_list
+    self.total_subrules = 1  # = product(self.coef_list)
+    for coef in self.coef_list:
+      if coef:
+        self.total_subrules *= coef
+
+    self.rules = { tuple(subrule.parity_list): subrule }
+    self.infinite = False
+    # TODO(shawn): Check if this partial rule is infinite, say: 1^2k -> 1^2k+2
+
+    self.name = str(rule_num)
+    subrule.name = self.name + ".1"
+    self.num_uses = 0
+
+  def add_rule(self, rule):
+    """Add a Collatz_Rule to this group."""
+    assert rule.coef_list == self.coef_list, (rule, self.rules)
+    assert tuple(rule.parity_list) not in self.rules, (rule, self.rules)
+    self.rules[tuple(rule.parity_list)] = rule
+    rule.name = "%s.%d" % (self.name, len(self.rules))
+    # We only say a Collatz Group is infinite if we have all the subrules.
+    # TODO(shawn): Check if partial rule groups are infinite.
+    if len(self.rules) == self.total_subrules:
+      non_increasing_rules = [r for r in self.rules if not r.increasing]
+      if len(non_increasing_rules) == 0:
+        self.infinite = True
+
+  def __str__(self):
+    s = "Collatz Rule Group %s\n" % self.name
+    for rule in self.rules:
+      s += str(rule).replace("\n", "\n  ")
+      s += "\n\n"
+    return s
 
 class Limited_Diff_Rule(Rule):
   """A Diff_Rule that only refers to a sub-section of the tape."""
@@ -725,9 +754,9 @@ class Proof_System(object):
         num_steps = 0
 
       self.num_collatz_rules += 1
-      rule = Collatz_Rule(var_list, coef_list, parity_list, min_list,
-                          result_list, num_steps, gen_sim.num_loops,
-                          self.rule_num)
+      subrule = Collatz_Rule(var_list, coef_list, parity_list, min_list,
+                             result_list, num_steps, gen_sim.num_loops)
+      rule = Collatz_Rule_Group(subrule, self.rule_num)
 
       if self.verbose:
         print
@@ -805,7 +834,7 @@ class Proof_System(object):
       return self.apply_diff_rule(rule, start_config)
     elif isinstance(rule, General_Rule):
       return self.apply_general_rule(rule, start_config)
-    elif isinstance(rule, Collatz_Rule):
+    elif isinstance(rule, Collatz_Rule_Group):
       return self.apply_collatz_rule(rule, start_config)
     elif isinstance(rule, Limited_Diff_Rule):
       start_state, start_tape, start_step_num, start_loop_num = start_config
@@ -1067,7 +1096,7 @@ class Proof_System(object):
         print
       return False, 1
 
-  def apply_collatz_rule(self, rule, start_config):
+  def apply_collatz_rule(self, group, start_config):
     # Unpack input
     start_state, start_tape, start_step_num, start_loop_num = start_config
 
@@ -1077,12 +1106,13 @@ class Proof_System(object):
     current_list = [block.num for block in start_tape.tape[0] + start_tape.tape[1]]
     
     # If this recursive rule is infinite.
-    if rule.infinite and config_is_above_min(rule.var_list, rule.min_list,
-                                             current_list):
-      if self.verbose:
-        self.print_this("++ Rule applies infinitely ++")
-        print
-      return True, ((Turing_Machine.INF_REPEAT, None, None, {}), large_delta)
+    if group.infinite:
+      # TODO(shawn): This will crash because we have not defined rule.
+      if config_is_above_min(rule.var_list, rule.min_list, current_list):
+        if self.verbose:
+          self.print_this("++ Rule applies infinitely ++")
+          print
+        return True, ((Turing_Machine.INF_REPEAT, None, None, {}), large_delta)
     
     # Keep applying rule until we can't anymore.
     success = False  # If we fail before doing anything, return false.
@@ -1094,6 +1124,13 @@ class Proof_System(object):
       # Print current state.
       if self.verbose:
         self.print_this(num_reps, current_list)
+
+      # Find out which collatz sub-rule applies here (figure out parities).
+      parity_list = (val % coef for val, coef in zip(current_list,
+                                                     group.coef_list))
+      if parity_list not in group.rules:
+        assert False, "TODO: Do something :)"
+      rule = group.rules[parity_list]
 
       # Check that we are above the minimums and set assignments.
       above_min = True
