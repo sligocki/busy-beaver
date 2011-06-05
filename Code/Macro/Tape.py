@@ -48,7 +48,7 @@ class Repeated_Symbol(object):
     return self.symbol + self.num
 
   def __repr__(self):
-    if type(self.num) not in (int, long) or self.num < 1000000:
+    if type(self.num) not in (int, long) or self.num < 100000000:
       num_string = str(self.num)
     else:
       num_string = "(~10^%.1f)" % math.log10(self.num)

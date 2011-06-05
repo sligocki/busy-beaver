@@ -58,7 +58,7 @@ class Diff_Rule(Rule):
     self.name = str(rule_num)  # Unique identifier.
     self.num_uses = 0  # Number of times this rule has been applied.
 
-  def __str__(self):
+  def __repr__(self):
     return ("Diff Rule %s\nInitial Config: %s\nDiff Config:    %s\nSteps: %s, Loops: %s"
             % (self.name, self.initial_tape.print_with_state(self.initial_state), self.diff_tape.print_with_state(self.initial_state), self.num_steps,
                self.num_loops))
@@ -87,7 +87,7 @@ class General_Rule(Rule):
           self.infinite = False
           break
 
-  def __str__(self):
+  def __repr__(self):
     return ("General Rule %s\nVar List: %s\nMin List: %s\nResult List: %s\n"
             "Steps %s Loops %s"
             % (self.name, self.var_list, self.min_list, self.result_list,
@@ -125,7 +125,7 @@ class Collatz_Rule(Rule):
           self.infinite = False
           break
 
-  def __str__(self):
+  def __repr__(self):
     return ("Collatz Rule %s\n"
             "Var List: %s\n"
             "Coef List: %s\n"
@@ -170,7 +170,7 @@ class Collatz_Rule_Group(Rule):
       if len(non_increasing_rules) == 0:
         self.infinite = True
 
-  def __str__(self):
+  def __repr__(self):
     s = "Collatz Rule Group %s\n" % self.name
     for rule in self.rules.values():
       s += str(rule).replace("\n", "\n  ")
@@ -198,7 +198,7 @@ class Limited_Diff_Rule(Rule):
     self.name = str(rule_num)  # Unique identifier.
     self.num_uses = 0  # Number of times this rule has been applied.
 
-  def __str__(self):
+  def __repr__(self):
     return ("Limited Diff Rule %s\nInitial Config: %s (%d,%d)\nDiff Config:    %s\nSteps: %s, Loops: %s"
             % (self.name, self.initial_tape.print_with_state(self.initial_state),self.left_dist,self.right_dist,self.diff_tape.print_with_state(self.initial_state), self.num_steps,
                self.num_loops))
@@ -473,6 +473,8 @@ class Proof_System(object):
         if isinstance(rule, Collatz_Rule):
           if stripped_config in self.rules:
             group = self.rules[stripped_config]
+            print stripped_config
+            print full_config
             group.add_rule(rule)
           else:
             group = Collatz_Rule_Group(rule, self.rule_num)
@@ -1125,7 +1127,16 @@ class Proof_System(object):
         self.print_this("++ Rule applies infinitely ++")
         print
       return True, ((Turing_Machine.INF_REPEAT, None, None, {}), large_delta)
-    
+
+    # We cannot apply Collatz rules with general expressions.
+    for val in current_list:
+      if isinstance(val, Algebraic_Expression):
+        if self.verbose:
+          self.print_this("++ Cannot apply Collatz rule to expressions ++")
+          self.print_this("Config tape:", start_tape)
+          print
+        return False, "Cannot apply Collatz rule to general expression"
+
     # Keep applying rule until we can't anymore.
     success = False  # If we fail before doing anything, return false.
     num_reps = 0
@@ -1138,16 +1149,17 @@ class Proof_System(object):
         self.print_this(num_reps, current_list)
 
       # Find out which collatz sub-rule applies here (figure out parities).
-      # TODO(shawn): This will crash if current_val is an Algebraic_Expression.
-      parity_list = (val % coef for val, coef in zip(current_list,
-                                                     group.coef_list))
+      # Note that we already checked above that we current_list is scalar.
+      parity_list = tuple(val % coef if coef else None
+                          for val, coef in zip(current_list, group.coef_list))
       if parity_list not in group.rules:
         if self.verbose:
           self.print_this("++ Reached unproven Collatz parity ++")
           self.print_this("Config tape:", start_tape)
           self.print_this("Parities:", parity_list)
           print
-        return False, UNPROVEN_PARITY
+        reason = UNPROVEN_PARITY
+        break
       rule = group.rules[parity_list]
 
       # Check that we are above the minimums and set assignments.
@@ -1163,6 +1175,7 @@ class Proof_System(object):
 
       # TODO(shawn): This looks kludgey.
       if not above_min:
+        reason = "Bellow min"
         break
 
       # Apply variable assignment to update number of steps and tape config.
@@ -1192,12 +1205,12 @@ class Proof_System(object):
         print
       return True, ((Turing_Machine.RUNNING, tape, diff_steps, {}), large_delta)
     else:
-      if self.verbose:
+      if self.verbose and reason != UNPROVEN_PARITY:
         self.print_this("++ Current config is below rule minimum ++")
         self.print_this("Config tape:", start_tape)
         self.print_this("Rule min vals:", rule.min_list)
         print
-      return False, "Bellow min"
+      return False, reason
 
 def config_is_above_min(var_list, min_list, current_list, assignment={}):
   """Tests if current_list is above min_list setting assignment along the way"""
