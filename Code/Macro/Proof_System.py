@@ -607,8 +607,7 @@ class Proof_System(object):
         # Replace the variables in various places.
         for init_block in initial_tape.tape[0]+initial_tape.tape[1]:
           if isinstance(init_block.num, Algebraic_Expression):
-            if init_block.num.variable_restricted() in gen_sim.replace_vars:
-              init_block.num = init_block.num.substitute(gen_sim.replace_vars)
+            init_block.num = init_block.num.substitute(gen_sim.replace_vars)
         for old_var, new_expr in gen_sim.replace_vars.items():
           new_var = new_expr.variable()
           min_val[new_var] = min_val[old_var]
@@ -936,7 +935,11 @@ class Proof_System(object):
                     new_var = NewVariableExpression()  # k
                     # 1) Record that we are replacing x with 3k.
                     replace_vars[old_var] = new_var * -delta_value[x]
-                    new_block.num = new_block.num.substitute(replace_vars)
+                    # Update all the tape cells right away.
+                    for dir in range(2):
+                      for block in new_tape.tape[dir]:
+                        if isinstance(block.num, Algebraic_Expression):
+                          block.num = block.num.substitute(replace_vars)
                     # Note: this substitution is actually unnecessary.
                     init_value[x] = init_value[x].substitute(replace_vars)
                     # 2) num_reps = (3k + 12) // 3 + 1 = k + (12//3) + 1
