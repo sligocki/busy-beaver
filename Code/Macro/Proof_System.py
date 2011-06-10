@@ -5,6 +5,7 @@ Proof System which observes and attempts to prove patterns in computation.
 import copy
 from collections import defaultdict
 import operator
+import optparse
 from optparse import OptionParser, OptionGroup
 import sys
 
@@ -261,6 +262,8 @@ class Proof_System(object):
   rules when it finds patterns.
   """
   def __init__(self, machine, options, verbose_prefix):
+    assert isinstance(options, optparse.Values)
+
     self.machine = machine
     self.options = options
     # Should we try to prove recursive rules? (Rules which use previous rules as steps.)
@@ -760,8 +763,6 @@ class Proof_System(object):
       
       # Fix num_steps.
       if self.compute_steps:
-        print gen_sim.tape
-        print gen_sim.step_num, assignment
         num_steps = gen_sim.step_num.substitute(assignment)
       else:
         num_steps = 0
@@ -879,6 +880,7 @@ class Proof_System(object):
   def apply_diff_rule(self, rule, start_config):
     ## Unpack input
     new_state, new_tape, new_step_num, new_loop_num = start_config
+    new_tape = new_tape.copy()  # Make a clean copy that we can edit here.
     
     ## Calculate number of repetitions allowable and other tape-based info.
     num_reps = None
@@ -934,8 +936,6 @@ class Proof_System(object):
                     new_var = NewVariableExpression()  # k
                     # 1) Record that we are replacing x with 3k.
                     replace_vars[old_var] = new_var * -delta_value[x]
-                    # TODO(shawn): We might need to replace more places.
-                    # Or maybe less places and just let outside prover replace.
                     new_block.num = new_block.num.substitute(replace_vars)
                     # Note: this substitution is actually unnecessary.
                     init_value[x] = init_value[x].substitute(replace_vars)
@@ -982,6 +982,9 @@ class Proof_System(object):
                   self.print_this("Config block:", new_block)
                   self.print_this("Rule initial block:", init_block)
                   self.print_this("Rule diff block:", diff_block)
+                  self.print_this("Config tape:", new_tape)
+                  self.print_this("Initial tape:", rule.initial_tape)
+                  self.print_this("Rule diff tape:", rule.diff_tape)
                   self.print_this("")
                 return False, "Multiple_Diff"
    
