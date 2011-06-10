@@ -43,7 +43,10 @@ max_steps = -1
 for result in io.catch_error_iter():
   if result:
     num_total += 1
-    count[result.category] += 1
+    try:
+      count[result.category] += 1
+    except KeyError:
+      count[Exit_Condition.ERROR] += 1
     if result.category == Exit_Condition.HALT:
       symbols, steps = result.category_reason
       max_symbols = max(max_symbols, symbols)
