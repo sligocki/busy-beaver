@@ -15,7 +15,7 @@ def run(TTable, block_size, steps, runtime, recursive, progress, options):
   m1 = Turing_Machine.Simple_Machine(TTable)
   if not block_size:
     # Find optimal macro block size automatically.
-    block_size = Block_Finder.block_finder(m1, steps // 10)
+    block_size = Block_Finder.block_finder(m1, options)
   m2 = Turing_Machine.Block_Macro_Machine(m1, block_size)
   m3 = Turing_Machine.Backsymbol_Macro_Machine(m2)
 

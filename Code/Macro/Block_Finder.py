@@ -1,6 +1,7 @@
 from __future__ import division
 
 import copy
+import optparse
 from optparse import OptionParser, OptionGroup
 import sys
 import time
@@ -33,6 +34,7 @@ def add_option_group(parser):
 
 def block_finder(machine, options):
   """Tries to find the optimal block-size for macro machines"""
+  assert isinstance(options, optparse.Values)
 
   ## First find the minimum efficient tape compression size.
   new_options = copy.copy(options)
