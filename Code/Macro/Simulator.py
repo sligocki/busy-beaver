@@ -4,6 +4,7 @@ compression, chain moves and a proof system.
 """
 
 import math
+import optparse
 from optparse import OptionParser, OptionGroup
 import time
 
@@ -47,6 +48,8 @@ CHAIN_MOVE = "Chain_Move"
 class Simulator(object):
   """Turing machine simulator using chain-tape optimization."""
   def __init__(self, machine, options, verbose_prefix="", init_tape=True):
+    assert isinstance(options, optparse.Values)
+
     self.machine = machine
     self.options = options
     self.compute_steps = options.compute_steps
