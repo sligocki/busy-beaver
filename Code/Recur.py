@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 
 import sys, string, copy, numpy
+from guppy import hpy
 
 from Macro import Turing_Machine, Simulator, Block_Finder
 import IO
@@ -112,6 +113,7 @@ def run(TTable, block_size, back, prover, recursive, options):
   groups = {}
 
   total_loops = 0;
+  max_term_size = 100000000
 
   while (sim.op_state == Turing_Machine.RUNNING and
          (options.loops == 0 or total_loops < options.loops)):
@@ -119,17 +121,24 @@ def run(TTable, block_size, back, prover, recursive, options):
 
     sim.step()
 
+    if sim.step_num > max_term_size:
+      break
+
     if len(sim.tape.tape[0]) == 1 or len(sim.tape.tape[1]) == 1:
       min_config = strip_config(sim.state,sim.dir,sim.tape.tape)
 
-      if min_config in groups:
-        groups[min_config].append([copy.deepcopy(sim.tape.tape[0][1:]),
-                                   copy.deepcopy(sim.tape.tape[1][1:]),
-                                   sim.step_num])
-      else:
-        groups[min_config] = [[copy.deepcopy(sim.tape.tape[0][1:]),
-                               copy.deepcopy(sim.tape.tape[1][1:]),
-                               sim.step_num],]
+      if len(min_config) <= 10:
+        if min_config in groups:
+          if len(groups[min_config]) >= 100:
+            groups[min_config].pop(0)
+
+          groups[min_config].append([copy.deepcopy(sim.tape.tape[0][1:]),
+                                     copy.deepcopy(sim.tape.tape[1][1:]),
+                                     sim.step_num])
+        else:
+          groups[min_config] = [[copy.deepcopy(sim.tape.tape[0][1:]),
+                                 copy.deepcopy(sim.tape.tape[1][1:]),
+                                 sim.step_num],]
 
     total_loops += 1;
 
@@ -138,14 +147,16 @@ def run(TTable, block_size, back, prover, recursive, options):
 
   sorted_keys = sorted(groups,key=lambda item: len(item[0])+len(item[3]))
 
+  print Output_Machine.display_ttable(TTable),"|",
+  print "%5d" % len(groups)
+
   for min_config in sorted_keys:
     group = groups[min_config]
 
+    recur_all = False
+
     if len(group) >= 4:
-      print Output_Machine.display_ttable(TTable),"  ",
-      print "%5d" % len(group),"  ",
-      print "(%5d)" % len(groups),"  ",
-      print min_config
+      print "  ","%3d" % len(group),min_config
 
       growth = [[] for i in xrange(len(group[0][0]) + len(group[0][1]) + 1)]
       for config in group:
@@ -161,7 +172,7 @@ def run(TTable, block_size, back, prover, recursive, options):
       recur_all = True
 
       for series in growth:
-        series = [term for term in series if term < 100000000]
+        series = [term for term in series if term < max_term_size]
         if len(series) > 20:
           series = series[len(series)-20:]
 
@@ -342,17 +353,16 @@ def run(TTable, block_size, back, prover, recursive, options):
                 print "%.3f" % -constant
           else:
             print "        ",n,residue,"failure"
-            print
 
         recur_all = recur_all and recur_this
+
         print
 
-      # for elem in group:
-      #   print elem
-      print "     ",recur_all
-      print
+      if recur_all:
+        break
 
-      break
+  print "  ",recur_all
+  print
 
 
 if __name__ == "__main__":
