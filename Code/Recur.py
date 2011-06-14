@@ -1,7 +1,6 @@
 #! /usr/bin/env python
 
 import sys, string, copy, numpy
-from guppy import hpy
 
 from Macro import Turing_Machine, Simulator, Block_Finder
 import IO
@@ -127,10 +126,10 @@ def run(TTable, block_size, back, prover, recursive, options):
     if len(sim.tape.tape[0]) == 1 or len(sim.tape.tape[1]) == 1:
       min_config = strip_config(sim.state,sim.dir,sim.tape.tape)
 
-      if len(min_config) <= 10:
+      if len(min_config[0]) + len(min_config[-1]) <= 100:
         if min_config in groups:
-          if len(groups[min_config]) >= 100:
-            groups[min_config].pop(0)
+          # if len(groups[min_config]) >= 100:
+          #   groups[min_config].pop(0)
 
           groups[min_config].append([copy.deepcopy(sim.tape.tape[0][1:]),
                                      copy.deepcopy(sim.tape.tape[1][1:]),
