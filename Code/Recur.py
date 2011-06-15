@@ -247,6 +247,8 @@ def run(TTable, block_size, back, prover, recursive, options):
                   print constant
                 elif constant < 0:
                   print -constant
+                else:
+                  print
 
                 recur_this = True
                 break
@@ -299,6 +301,8 @@ def run(TTable, block_size, back, prover, recursive, options):
                   print "%.3f" % constant
                 elif constant < 0.0:
                   print "%.3f" % -constant
+                else:
+                  print
 
                 break
             else:
@@ -350,6 +354,8 @@ def run(TTable, block_size, back, prover, recursive, options):
                 print "%.3f" % constant
               elif constant < 0.0:
                 print "%.3f" % -constant
+              else:
+                print
           else:
             print "        ",n,residue,"failure"
 
