@@ -1,0 +1,2 @@
+#!/bin/csh -f
+sed -e 's/^.*,//' -e 's/)//' $* | tr '\012' ' ' | ../Code/Fit_Recur.py
