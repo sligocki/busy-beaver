@@ -1,0 +1,2 @@
+#!/bin/csh -f
+sed -e "s/$1 /$2 /g" $argv[3-] | awk -f replace.awk
