@@ -6,8 +6,8 @@ def fit(series):
   max_term_size = 100000000
 
   series = [term for term in series if term < max_term_size]
-  if len(series) > 20:
-    series = series[len(series)-20:]
+  # if len(series) > 20:
+  #   series = series[len(series)-20:]
 
   print series
 
