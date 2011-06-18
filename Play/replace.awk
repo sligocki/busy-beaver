@@ -16,14 +16,26 @@
         cur_base = parts[1];
         cur_expo = parts[2];
         if (cur_base == save_base) {
-          save_expo += cur_expo;
+          if (save_expo == "Inf" || cur_expo == "Inf") {
+            save_expo = "Inf";
+          } else {
+            save_expo += cur_expo;
+          }
         } else {
-          printf(" %s^%d",save_base,save_expo);
+          if (save_expo == "Inf") {
+            printf(" %s^%s",save_base,save_expo);
+          } else {
+            printf(" %s^%d",save_base,save_expo);
+          }
           save_base = cur_base;
           save_expo = cur_expo;
         }
       } else {
-        printf(" %s^%d",save_base,save_expo);
+        if (save_expo == "Inf") {
+          printf(" %s^%s",save_base,save_expo);
+        } else {
+          printf(" %s^%d",save_base,save_expo);
+        }
         printf(" %s",$i);
         found = 0;
       }
@@ -31,7 +43,11 @@
   }
 
   if (found == 1) {
-    printf(" %s^%d",save_base,save_expo);
+    if (save_expo == "Inf") {
+      printf(" %s^%s",save_base,save_expo);
+    } else {
+      printf(" %s^%d",save_base,save_expo);
+    }
   }
 
   printf("\n");
