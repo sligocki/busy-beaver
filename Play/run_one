@@ -10,4 +10,5 @@ set line=$2
 set loops=$3
 set blocksize=$4
 
-../Code/Quick_Sim.py -n $blocksize -b -p -v -l $loops $infile $line | grep ' 0^Inf <A '
+../../Code/Quick_Sim.py -n $blocksize -b -p -v -l $loops $infile $line | grep ' 00*^Inf <[A-Z] \
+[A-Z]> 00*^Inf'
