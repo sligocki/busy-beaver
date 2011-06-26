@@ -55,3 +55,13 @@ setup(name='signalPlus',
       version='1.0',
       description='Signal module plus ualarm',
       ext_modules=[module6])
+
+module7 = Extension('Turing_Machine_Recur',
+                    sources=['Turing_Machine_Recur.c','Turing_Machine.c'],
+                    extra_compile_args=['-pedantic-errors','-Wno-long-long'])
+
+setup(name='Turing_Machine_Recur',
+      version='1.0',
+      description='C speedups to Turing machine simulation',
+      ext_modules=[module7])
+
