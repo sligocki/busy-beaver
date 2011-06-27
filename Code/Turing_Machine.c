@@ -58,6 +58,81 @@ inline int step_TM(TM* m)
   return RESULT_STEPPED;
 }
 
+inline int step_recur_TM(TM* m)
+{
+  if (m->symbol == -1)
+  {
+    int i;
+    int* scanTape;
+
+    scanTape = m->tape;
+    for (i = 0; i < m->tape_length; i++)
+    {
+      int symbol = *(scanTape++);
+
+      if (symbol != -1)
+      {
+        printf("%1d",symbol);
+      }
+    }
+    printf("\n");
+
+    m->symbol = 0;
+  }
+
+  m->new_symbol = m->machine[m->state].t[m->symbol].w;
+  m->new_delta  = m->machine[m->state].t[m->symbol].d;
+  m->new_state  = m->machine[m->state].t[m->symbol].s;
+
+  m->total_steps++;
+
+  if (m->new_symbol == -1)
+  {
+    if (m->symbol == 0) {
+      m->total_symbols++;
+    }
+
+    return RESULT_UNDEFINED;
+  }
+
+  if (m->symbol == 0 && m->new_symbol != 0) {
+    m->total_symbols++;
+  }
+
+  if (m->symbol != 0 && m->new_symbol == 0)
+  {
+    m->total_symbols--;
+  }
+
+  m->tape[m->position] = m->new_symbol;
+  m->position += m->new_delta;
+
+  if (m->new_state == -1)
+  {
+    return RESULT_HALTED;
+  }
+
+  if (m->position < 1 || m->position >= m->tape_length - 1)
+  {
+    return RESULT_NOTAPE;
+  }
+
+  if (m->position < m->max_left)
+  {
+    m->max_left = m->position;
+  }
+  
+  if (m->position > m->max_right)
+  {
+    m->max_right = m->position;
+  }
+  
+  m->symbol = m->tape[m->position];
+  m->state = m->new_state;
+
+  return RESULT_STEPPED;
+}
+
 inline void print_TM(TM* m)
 {
   int state,symbol;
