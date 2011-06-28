@@ -58,23 +58,161 @@ inline int step_TM(TM* m)
   return RESULT_STEPPED;
 }
 
-inline int step_recur_TM(TM* m)
+inline int step_recur_TM(TM* m, int step_num)
 {
   if (m->symbol == -1)
   {
     int i;
     int* scanTape;
+    int place = -1; 
+    int prev_symbol = -2;
+    int rep_count = 0;
+
+    printf("%7d ",step_num);
 
     scanTape = m->tape;
     for (i = 0; i < m->tape_length; i++)
     {
       int symbol = *(scanTape++);
 
-      if (symbol != -1)
+      if (i == m->position)
       {
-        printf("%1d",symbol);
+        if (m->new_delta == 1)
+        {
+          if (place == -1)
+          {
+            printf(" 0^Inf");
+            place = 0;
+          }
+          else
+          {
+            if (rep_count > 0)
+            {
+              printf(" %d^%d",prev_symbol,rep_count);
+            }
+          }
+
+          printf(" %c>",m->state + 'A');
+
+          if (symbol != -1)
+          {
+            prev_symbol = symbol;
+            rep_count = 1;
+          }
+          else
+          {
+            if (place == 0) {
+              printf(" 0^Inf");
+              place = 1;
+            }
+
+            prev_symbol = -2;
+            rep_count = 0;
+          }
+        }
+        else if (m->new_delta == -1)
+        {
+          if (symbol != -1)
+          {
+            if (place == -1)
+            {
+              printf(" 0^Inf");
+              place = 0;
+            }
+
+            if (symbol != prev_symbol)
+            {
+              if (prev_symbol != -2)
+              {
+                printf(" %d^%d",prev_symbol,rep_count);
+              }
+
+              prev_symbol = symbol;
+              rep_count = 1;
+            }
+            else
+            {
+              rep_count++;
+            }
+
+            printf(" %d^%d",prev_symbol,rep_count);
+          }
+          else
+          {
+            if (place == -1)
+            {
+              printf(" 0^Inf");
+              place = 0;
+            }
+          }
+
+          printf(" <%c",m->state + 'A');
+
+          prev_symbol = -2;
+          rep_count = 0;
+        }
+        else
+        {
+          printf(" Unknown-delta");
+        }
+      }
+      else
+      {
+        if (symbol != -1)
+        {
+          if (place == -1)
+          {
+            printf(" 0^Inf");
+            place = 0;
+          }
+
+          if (symbol != prev_symbol)
+          {
+            if (rep_count > 0)
+            {
+              printf(" %1d^%d",prev_symbol,rep_count);
+            }
+
+            prev_symbol = symbol;
+            rep_count = 1;
+          }
+          else
+          {
+            rep_count++;
+          }
+        }
+        else
+        {
+          if (rep_count != 0)
+          {
+            printf(" %1d^%d",prev_symbol,rep_count);
+
+            prev_symbol = -1;
+            rep_count = 0;
+          }
+
+          if (place == 0) {
+            printf(" 0^Inf");
+            place = 1;
+          }
+        }
       }
     }
+
+    if (rep_count != 0)
+    {
+      printf(" %1d^%d",prev_symbol,rep_count);
+    }
+
+    if (step_num == 0)
+    {
+      printf("  (0, 0)");
+    }
+    else
+    {
+      printf("  (1, %d)",step_num);
+    }
+
     printf("\n");
 
     m->symbol = 0;
@@ -102,6 +240,15 @@ inline int step_recur_TM(TM* m)
   if (m->symbol != 0 && m->new_symbol == 0)
   {
     m->total_symbols--;
+  }
+
+  if (m->new_symbol == 0)
+  {
+    if (m->tape[m->position - 1] == -1 ||
+        m->tape[m->position + 1] == -1)
+    {
+      m->new_symbol = -1;
+    }
   }
 
   m->tape[m->position] = m->new_symbol;
