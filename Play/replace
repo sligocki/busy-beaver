@@ -1,2 +1,3 @@
 #!/bin/csh -f
-sed -e "s/$1 /$2 /g" $argv[3-] | awk -f replace.awk
+set cmddir=`dirname $0`
+sed -e "s/$1 /$2 /g" $argv[3-] | awk -f $cmddir/replace.awk
