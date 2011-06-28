@@ -228,11 +228,13 @@ static PyObject* Turing_Machine_Recur(PyObject* self,
   tm.total_symbols = 0;
   tm.total_steps   = 0;
 
+  tm.new_delta = 1;
+
   result = RESULT_INVALID;
 
   for (i = 0; i < max_steps; i++)
   {
-    result = step_recur_TM(&tm);
+    result = step_recur_TM(&tm,i);
 
     if (result != RESULT_STEPPED)
     {
