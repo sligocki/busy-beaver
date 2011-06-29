@@ -58,7 +58,7 @@ inline int step_TM(TM* m)
   return RESULT_STEPPED;
 }
 
-inline int step_recur_TM(TM* m, int step_num)
+inline int step_recur_TM(TM* m, unsigned long long step_num)
 {
   if (m->symbol == -1)
   {
@@ -68,7 +68,7 @@ inline int step_recur_TM(TM* m, int step_num)
     int prev_symbol = -2;
     int rep_count = 0;
 
-    printf("%7d ",step_num);
+    printf("%7llu ",step_num);
 
     scanTape = m->tape;
     for (i = 0; i < m->tape_length; i++)
@@ -210,7 +210,7 @@ inline int step_recur_TM(TM* m, int step_num)
     }
     else
     {
-      printf("  (1, %d)",step_num);
+      printf("  (1, %llu)",step_num);
     }
 
     printf("\n");
@@ -244,8 +244,8 @@ inline int step_recur_TM(TM* m, int step_num)
 
   if (m->new_symbol == 0)
   {
-    if (m->tape[m->position - 1] == -1 ||
-        m->tape[m->position + 1] == -1)
+    if ((m->new_delta == -1 && m->tape[m->position + 1] == -1) ||
+        (m->new_delta ==  1 && m->tape[m->position - 1] == -1))
     {
       m->new_symbol = -1;
     }
