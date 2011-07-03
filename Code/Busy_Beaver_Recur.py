@@ -2,9 +2,12 @@
 #
 # Busy_Beaver_Recur.py
 #
-# This module contains the Busy_Beaver class, which runs a Turing machine
-# simulator in C which outputs the TM tape when the head is at one extreme
-# of the tape or the other.
+"""
+This module contains the Busy_Beaver class, which runs a Turing machine
+simulator in C which outputs the TM tape when the head is at one extreme
+of the tape or the other.  This is then used to try to find a repeating
+pattern and a recurrence relation for the number of steps in that pattern.
+"""
 
 import string
 import sys

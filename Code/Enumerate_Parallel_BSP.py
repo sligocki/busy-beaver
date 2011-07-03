@@ -2,16 +2,17 @@
 #
 # Enumerate_Parallel_BSP.py
 #
-# This is a Busy Beaver Turing machine enumerator that runs in parallel (using
-# ScientificPython and BSP).  It enumerates a representative set of all Busy
-# Beavers for given of states and symbols, runs the accelerated simulator,
-# and records all results.
-#
-# This code generates an initial seed population using one processor and a
-# breath first search.  When this population is large enough, it distributes
-# it evenly to all the processors and then they all run until they are done
-# with their work or time runs out - no further load balancing.
-#
+"""
+This is a Busy Beaver Turing machine enumerator that runs in parallel (using
+ScientificPython and BSP).  It enumerates a representative set of all Busy
+Beavers for given of states and symbols, runs the accelerated simulator,
+and records all results.
+
+This code generates an initial seed population using one processor and a
+breath first search.  When this population is large enough, it distributes
+it evenly to all the processors and then they all run until they are done
+with their work or time runs out - no further load balancing.
+"""
 
 import copy, sys, time, math, random, os, shutil, operator
 # import bz2

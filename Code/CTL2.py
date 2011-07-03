@@ -1,6 +1,10 @@
 #! /usr/bin/env python
 #
-# Runs the CTL (A* B) on a machine to discover infinite behavior
+# CTL2.py
+#
+"""
+Runs the CTL (A* B) on a machine to discover infinite behavior
+"""
 
 import IO
 from Macro import Turing_Machine, Simulator

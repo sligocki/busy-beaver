@@ -1,8 +1,15 @@
 #! /usr/bin/env python
+#
+# Alarm.py
+#
+"""
+A class to manipulate alarms down the the millisecond level if SignalPlus
+is available...
+"""
 
 import signal
 
-# SignalPlus allows milisecond alarm, but needs to be compiled seperately.
+# SignalPlus allows millisecond alarm, but needs to be compiled seperately.
 # Fall back to inferior signal.alarm if we have to.
 try:
   from signalPlus import alarm

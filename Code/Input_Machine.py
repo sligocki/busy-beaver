@@ -1,4 +1,7 @@
 #! /usr/bin/env python
+#
+# Input_Machine.py
+#
 """
 Library for reading Turing Machine transition tables from human readable format.
 

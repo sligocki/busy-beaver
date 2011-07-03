@@ -1,6 +1,10 @@
 #! /usr/bin/env python
 #
-# Enumerate all adjacent machines to an input one.
+# Adjacent.py
+#
+"""
+Enumerate all adjacent machines to an input one.
+"""
 
 import copy
 

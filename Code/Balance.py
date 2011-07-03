@@ -1,9 +1,10 @@
 #! /usr/bin/env python
 #
-# Balance_Parallel.py
+# Balance.py
 #
-# Balance the unknown machines resulting from a parallel run of "Enumerate..."
-#
+"""
+Balance the unknown machines resulting from a parallel run of "Enumerate..."
+"""
 
 import sys, random
 

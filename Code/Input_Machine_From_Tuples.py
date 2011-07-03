@@ -1,8 +1,9 @@
 #! /usr/bin/env python
-
+#
+# Input_Machines_From_Tuples.py
+#
 """
-Input machine from a set of tuples like on:
-http://morethanazillion.blogspot.com/
+Input machine from a set of tuples, see: http://morethanazillion.blogspot.com/
 """
 
 import sys

@@ -2,11 +2,13 @@
 #
 # Enumerate.py
 #
-# This is a Busy Beaver Turing machine enumerator.
-#
-# It enumerates all Busy Beavers for given # of states and symbols,
-# runs the Macro Machine simulator, gathers statistics, and outputs all of the
-# machines like Generate does.
+"""
+This is a Busy Beaver Turing machine enumerator.
+
+It enumerates all Busy Beavers for given # of states and symbols, runs the
+Macro Machine simulator, gathers statistics, and outputs all of the machines
+like Generate does.
+"""
 
 import copy
 import cPickle as pickle

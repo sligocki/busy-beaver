@@ -2,8 +2,9 @@
 #
 # GrowthFit.py
 #
-# Collects data on tape used vs. steps taken and fits curves to the data.
-#
+"""
+Collects data on tape used vs. steps taken and fits curves to the data.
+"""
 
 import sys
 import time

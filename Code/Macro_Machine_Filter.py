@@ -2,9 +2,10 @@
 #
 # Macro_Machine_Filter.py
 #
-# This runs Busy Beaver Turing machines using macro steps and detects
-# infinite left or right movement in one macro step.
-#
+"""
+This runs Busy Beaver Turing machines using macro steps and detects
+infinite left or right movement in one macro step.
+"""
 
 import sys
 

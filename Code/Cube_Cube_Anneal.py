@@ -1,6 +1,10 @@
 #! /usr/bin/env python
+#
+# Cube_Cube_Anneal.py
+#
 """
-A generalized Rupert problem computation using Simulated Annealing optimization.
+A generalized Rupert problem computation using Simulated Annealing
+optimization.
 """
 
 import random, copy, math, time, getopt, sys

@@ -1,8 +1,11 @@
 #! /usr/bin/env python
 #
-# A Busy Beaver finder using Simulated Annealing optimization and regular TM
-# simulation.
+# BB_Anneal_Regular.py
 #
+"""
+A Busy Beaver finder using Simulated Annealing optimization and regular TM
+simulation.
+"""
 
 class TM_Object:
   def __init__(self,num_states,num_symbols,step_limit,tape_limit,seed):

@@ -1,4 +1,12 @@
 #! /usr/bin/env python
+#
+# Chain_Simulator_Filter.py
+#
+"""
+Use a TM simulator to run a TM for a given number of steps and report the
+outcome - halted, proved infinite, came to an undefined entry, reached
+the maximum number of steps, or reached the maximum runtime allowed.
+"""
 
 import copy
 import os
