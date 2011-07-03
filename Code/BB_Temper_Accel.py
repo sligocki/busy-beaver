@@ -1,4 +1,11 @@
 #! /usr/bin/env python
+#
+# BB_Temper_Accel.py
+#
+"""
+Experiments using parallel tempering to get Busy Beaver candidates, i.e.
+search for a halting TM with maximum steps or non-zero tape entries.
+"""
 
 import math
 

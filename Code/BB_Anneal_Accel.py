@@ -1,4 +1,7 @@
 #! /usr/bin/env python
+#
+# BB_Anneal_Accel.py
+#
 """
 A Busy Beaver finder using Simulated Annealing optimization and accelerated 
 TM simulation.

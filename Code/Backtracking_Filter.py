@@ -1,7 +1,11 @@
 #! /usr/bin/env python
 #
-# Filters out machines whose halt states obviously cannot be reached based
-# on backtracking.
+# Backtracking_Filter.py
+#
+"""
+Filters out machines whose halt states obviously cannot be reached based
+on backtracking.
+"""
 
 from __future__ import division
 import copy

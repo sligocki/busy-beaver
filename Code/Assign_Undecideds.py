@@ -1,8 +1,11 @@
 #! /usr/bin/env python
 #
-# Continues enumeration of machines which reach undefined states after being
-# enumerated (say during a simulation filter).
+# Assign_Undecideds.py
 #
+"""
+Continues enumeration of machines which reach undefined states after being
+enumerated (say during a simulation filter).
+"""
 
 import copy
 import sys

@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 #
 # Dual_Machine_Filter.py
+#
 """
 This runs Turing machines that did not halt at two different speeds and
 detects whether they match exactly (i.e. detects repeating).

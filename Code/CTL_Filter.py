@@ -1,5 +1,10 @@
 #! /usr/bin/env python
-"""Run one of the CTL algorithms - CTL1, CTL2, CTL3, CTL4."""
+#
+# CTL_Filter.py
+#
+"""
+Run one of the CTL algorithms - CTL1, CTL2, CTL3, CTL4.
+"""
 
 import sys
 

@@ -2,8 +2,10 @@
 #
 # Busy_Beaver_Sim.py
 #
-# This module contains the Busy_Beaver class, which runs a Turing machine
-# simulator (either in C or Python) with an initially blank tape.
+"""
+This module contains the Busy_Beaver class, which runs a Turing machine
+simulator (either in C or Python) with an initially blank tape.
+"""
 
 import string
 import sys

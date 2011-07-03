@@ -1,6 +1,10 @@
 #! /usr/bin/env python
 #
-# Runs the trivial CTL (A*) on a machine to discover infinite behavior
+# CTL1.py
+#
+"""
+Runs the trivial CTL (A*) on a machine to discover infinite behavior
+"""
 
 import IO
 from Macro import Turing_Machine, Simulator

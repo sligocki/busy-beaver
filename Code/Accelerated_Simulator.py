@@ -1,4 +1,10 @@
 #! /usr/bin/env python
+#
+# Accelerated_Simulator.py
+#
+"""
+An accelerated TM simulator - details unremembered.
+"""
 
 import os
 import math

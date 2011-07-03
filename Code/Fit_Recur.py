@@ -1,4 +1,11 @@
 #! /usr/bin/env python
+#
+# Fit_Recur.py
+#
+"""
+For each input line, attempt to fit a recurrence relation to a list of integers
+for that input line.  Integers are space separated.
+"""
 
 import sys, string, copy, numpy
 
