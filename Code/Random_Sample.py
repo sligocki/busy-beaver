@@ -1,6 +1,10 @@
 #! /usr/bin/env python
 #
-# Get a random sample from a very large set of machines
+# Random_Sample.py
+#
+"""
+Get a random sample from a very large set of machines.
+"""
 
 import sys, random
 

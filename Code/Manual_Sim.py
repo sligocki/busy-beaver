@@ -1,4 +1,10 @@
 #! /usr/bin/env python
+#
+# Manual_Sim.py
+#
+"""
+An interactive TM simulator.
+"""
 
 import sys, string, os, re, cPickle
 import cmd

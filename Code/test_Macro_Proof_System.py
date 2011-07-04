@@ -1,4 +1,10 @@
 #! /usr/bin/env python
+#
+# test_Macro_Proof_System.py
+#
+"""
+Unit test for "Macro/Proof_System.py".
+"""
 
 from Macro import Proof_System, Turing_Machine, Tape
 

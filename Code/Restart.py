@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 #
 # Restart.py
+#
 """
 Continues earlier incomplete runs of Generate.py.  Takes output from
 Generate.py as input.

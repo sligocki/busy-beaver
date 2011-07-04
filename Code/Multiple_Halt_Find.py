@@ -1,9 +1,12 @@
 #! /usr/bin/env python
+#
+# Multiple_Halt_Find.py
+#
 """
 Find how many halt (or undefined cells) all TMs in a file have.
 
-Prints out all TMs with more than one halt state and lists the number of TMs that
-have each number of halts.
+Prints out all TMs with more than one halt state and lists the number of TMs
+that have each number of halts.
 """
 
 from __future__ import division

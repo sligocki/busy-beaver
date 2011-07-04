@@ -1,4 +1,11 @@
 #! /usr/bin/env python
+#
+# Recur.py
+#
+"""
+Attempt to find repeating patterns in the tape and fit a recurrence relation
+to the exponents and number of step in the repeating pattern.
+"""
 
 import sys, string, copy, numpy
 

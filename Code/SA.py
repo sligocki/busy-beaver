@@ -1,7 +1,8 @@
 #! /usr/bin/env python
+#
+# SA.py
+#
 """
-SA.py
-
 Simulated annealing - general class.
 """
 
