@@ -1,3 +1,11 @@
+#! /usr/bin/env python
+#
+# PT.py
+#
+"""
+Parallel Tempering implementation and example.
+"""
+
 from __future__ import division
 import random, math, sys
 from copy import deepcopy
@@ -150,4 +158,3 @@ if __name__ == "__main__":
         print ('X' if C[k][0][0][x][y] else ' '),
       print
     print
-

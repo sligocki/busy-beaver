@@ -1,3 +1,11 @@
+#
+# Option_Parser.py
+#
+"""
+One of the option parsers we have used in our code.  We are migating toward
+the use of the Python module "optparse".
+"""
+
 import getopt
 import os
 import string

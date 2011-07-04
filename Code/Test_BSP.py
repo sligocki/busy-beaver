@@ -2,8 +2,9 @@
 #
 # Test_BSP.py
 #
-# Some communication timing tests for BSP from ScientificPython.
-#
+"""
+Some communication timing tests for BSP from ScientificPython.
+"""
 
 import copy, sys, time, math, random, os, shutil, operator
 import cPickle as pickle

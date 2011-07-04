@@ -3,6 +3,7 @@
 # Macro_Simulator.py
 #
 """
+Run a given TM for a given number of steps and the result.
 """
 
 import copy

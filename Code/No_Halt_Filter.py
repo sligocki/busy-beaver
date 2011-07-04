@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 #
 # No_Halt_Filter.py
+#
 """
 This detects some cases where the current transition table can
 never be extended to include a halt.

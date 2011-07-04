@@ -1,4 +1,11 @@
 #! /usr/bin/env python
+#
+# Restart_Enumerate.py
+#
+"""
+Simple code to restart TM enumeration started be "Enumerate.py".
+"""
+
 import sys, pickle
 from Enumerate import *
 from IO import IO

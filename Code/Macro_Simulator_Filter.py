@@ -1,5 +1,10 @@
 #! /usr/bin/env python
-"""Tree Filter which uses the Macro Machine Simulator."""
+#
+# Macro_Simulator_Filter.py
+#
+"""
+Tree Filter which uses the Macro Machine Simulator.
+"""
 
 from Common import Exit_Condition
 import IO

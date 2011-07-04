@@ -1,4 +1,11 @@
 #! /usr/bin/env python
+#
+# Quick_Sim.py
+#
+"""
+A TM simulator with a variety of advanced features, options, and output
+formats.
+"""
 
 import sys, string
 

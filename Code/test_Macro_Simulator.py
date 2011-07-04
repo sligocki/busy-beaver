@@ -1,4 +1,10 @@
 #! /usr/bin/env python
+#
+# test_Macro_Simulator.py
+#
+"""
+Unit test for "Macro_Simulator.py"
+"""
 
 import Macro_Simulator
 

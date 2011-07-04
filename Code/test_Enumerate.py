@@ -1,4 +1,10 @@
 #! /usr/bin/env python
+#
+# test_Enumerate.py
+#
+"""
+Unit test for "Enumerate.py".
+"""
 
 import Enumerate
 

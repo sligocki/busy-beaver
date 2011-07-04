@@ -1,4 +1,7 @@
 #! /usr/bin/env python
+#
+# Prune_File.py
+#
 """
 Read two files - a reference file and a completed file - and output the
 TTables in the reference file that were not in the completed file.
