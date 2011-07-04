@@ -1,4 +1,14 @@
 #! /usr/bin/env python
+#
+# Analyzer_Old_Base.py
+#
+"""
+Analyze a set of turing machine files generated as TMs are categorized.
+
+Counts the number of Halting, Infinite, Unknown and Undefined machines.
+Also finds maximum steps and symbols.
+"""
+
 import math
 
 from Format_Old_Base import FIELD
@@ -66,10 +76,10 @@ if __name__ == "__main__":
   print "Number Total      = ", format_string % num_total
   print "Number Halt       = ", format_string % num_halt
   print "Number Infinite   = ", format_string % num_infinite
-  print "Number Undecided  = ", format_string % num_undecided
   print "Number Unknown    = ", format_string % num_unknown
+  print "Number Undecided  = ", format_string % num_undecided
   print ""
   print "Percent Halt      =", "%10.6f" % percent_halt
   print "Percent Infinite  =", "%10.6f" % percent_infinite
-  print "Percent Undecided =", "%10.6f" % percent_undecided
   print "Percent Unknown   =", "%10.6f" % percent_unknown
+  print "Percent Undecided =", "%10.6f" % percent_undecided

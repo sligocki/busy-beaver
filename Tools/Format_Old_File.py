@@ -1,3 +1,10 @@
+#
+# Format_Old_File.py
+#
+"""
+Old classes to support storing TMs and information about them.
+"""
+
 class field_data:
   def __init__(self, num, type_func):
     self.num = num

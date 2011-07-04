@@ -1,3 +1,6 @@
+#
+# Tape.py
+#
 """
 Turing Machine tape which compresses repeating symbols.
 

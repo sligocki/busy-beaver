@@ -1,4 +1,7 @@
 #! /usr/bin/env python
+#
+# Analyzer.py
+#
 """
 Analyze a turing machine file.
 

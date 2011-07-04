@@ -1,4 +1,10 @@
 #! /usr/bin/env python
+#
+# Analyzer.py
+#
+"""
+Analyze a turing machine file - old file format.
+"""
 
 from Format_Old_File import FIELD, TEST
 
@@ -32,7 +38,7 @@ def filter_lines(lines, field, test):
 # Main Program
 import getopt, sys
 
-usage = "Analyzer.py [--help] [--max=] [--number=] [--percentage=] data-filename"
+usage = "Analyzer_Old_File.py [--help] [--max=] [--number=] [--percentage=] data-filename"
 
 # Get arguments
 try:

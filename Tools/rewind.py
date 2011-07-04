@@ -1,4 +1,11 @@
 #! /usr/bin/env python
+#
+# rewind.py
+#
+"""
+Go back to an earlier point in the analysis of a set of TMs using the current
+output files and the log of events.
+"""
 
 import sys, os
 

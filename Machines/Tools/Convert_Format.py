@@ -1,4 +1,11 @@
 #! /usr/bin/env python
+#
+# Convert_Format.py
+#
+"""
+Convert various TM formats.  Currently this only reads "Marxen2" format and
+outputs in our current format.
+"""
 
 import sys, string
 

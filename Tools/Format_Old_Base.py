@@ -1,7 +1,12 @@
-"""Contains current Busy Beaver output file format.
+#
+# Format_Old_Base.py
+#
+"""
+Contains old Busy Beaver output file format.
 
 FIELD: functions to retreive field data from an outfile line.
-TEST:  functions to test BB related parameters (currently exit condition)."""
+TEST:  functions to test BB related parameters (currently exit condition).
+"""
 
 def _field_data(num, type_func):
   """Field retreival generator."""

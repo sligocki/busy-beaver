@@ -2,9 +2,10 @@
 #
 # Generate.py
 #
-# This is a Busy Beaver Turing machine generator.  It enumerates a 
-# representative set of all Busy Beavers for given # of states and symbols.
-#
+"""
+This is a Busy Beaver Turing machine generator.  It enumerates a 
+representative set of all Busy Beavers for given # of states and symbols.
+"""
 
 import copy
 

@@ -1,3 +1,6 @@
+#
+# __init__.py
+#
 """
 Simulation code for Heiner Marxen's Macro Machine/Chain Tape representation.
 

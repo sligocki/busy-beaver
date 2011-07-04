@@ -1,3 +1,9 @@
+#
+# Block_Finder.py
+#
+"""
+Search for a good block size for the TM simulator.
+"""
 from __future__ import division
 
 import copy
