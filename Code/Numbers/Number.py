@@ -1,3 +1,10 @@
+#
+# Number.py
+#
+"""
+Abstract the idea of a number.
+"""
+
 from __future__ import division
 
 class Number(object):

@@ -1,8 +1,12 @@
 #! /usr/bin/env python
-
+#
+# Read_Profile.py
+#
 """
 Reads profiling information produced by:
-> python -m cProfile -o FILE PROGRAM
+
+    > python -m cProfile -o FILE PROGRAM
+
 and prints a few useful bits of info.
 """
 

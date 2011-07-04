@@ -1,3 +1,11 @@
+#
+# Algebraic_Expression.py
+#
+"""
+Classes to do various algebraic operations on different abstract expression
+which contain number and variables.
+"""
+
 import string, operator
 from Number import Number, Rational
 

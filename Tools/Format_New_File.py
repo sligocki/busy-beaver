@@ -1,9 +1,16 @@
+#
+# Format_New_File.py 
+#
+"""
+Classes to support storing TMs and information about them.
+"""
+
 class field_data:
   def __init__(self, num, type_func):
     self.num = num
     self.type = type_func
 
-# m# states symbols tape_length max_steps end_condition [symbols steps]
+# machine_num states symbols tape_length max_steps end_condition [symbols steps]
 class fields_container:
   def __init__(self):
     self.LOG_NUM     = field_data(0, int)

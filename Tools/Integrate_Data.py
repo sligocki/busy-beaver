@@ -1,13 +1,16 @@
 #! /usr/bin/env python
 #
-# Categorizes each entree in the output of a filter into 1 of 3 files
-# associated with this run:
-#   1) Halt_file for machines proven to halt.
-#   2) Infinite_file for machines proven to run infinitely.
-#   3) Unknown_file for machines still uncategorized and of unknown type.
-#   4) Error_file for machines with unexpected (weird) return conditions.
-# Should be called automatically by 'update'.
+# Integrate_Data.py
 #
+"""
+Categorizes each entree in the output of a filter into 1 of 3 files
+associated with this run:
+  1) Halt_file for machines proven to halt.
+  2) Infinite_file for machines proven to run infinitely.
+  3) Unknown_file for machines still uncategorized and of unknown type.
+  4) Error_file for machines with unexpected (weird) return conditions.
+Should be called automatically by 'update'.
+"""
 
 from Format_New_File import FIELD, TEST
 
