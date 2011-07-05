@@ -6,7 +6,7 @@ Abstract Turing Machine model with basic NxM TM and Macro-Machine derivatives
 """
 
 from optparse import OptionParser, OptionGroup
-import string
+import sys,string
 
 
 def add_option_group(parser):
@@ -36,6 +36,7 @@ INF_REPEAT = "Inf_Repeat" # Machine proven not to halt within move
 UNDEFINED  = "Undefined"  # Machine encountered undefined transition
 TIME_OUT   = "Timeout"    # A timer expired
 
+
 class Turing_Machine(object):
   """Abstract base for all specific Turing Machines
 
@@ -58,6 +59,67 @@ def make_machine(trans_table):
         return Block_Macro_Machine(machine, 1)
   # Otherwise return the simple machine
   return machine
+
+
+# White, Red, Blue, Green, Magenta, Cyan, Brown/Yellow
+color = [49, 41, 44, 42, 45, 46, 43]
+# Characters to use for states (end in "Z" so that halt is Z)
+states = string.ascii_uppercase + string.ascii_lowercase + string.digits + "!@#$%^&*" + "Z"
+symbols = string.digits + "-"
+dirs = "LRS-"
+
+def print_machine(machine):
+  """
+  Pretty-print the contents of the Turing machine.
+  This method prints the state transition information
+  (number to print, direction to move, next state) for each state
+  but not the contents of the tape.
+  """
+
+  sys.stdout.write("\n")
+  sys.stdout.write("Transition table:\n")
+  sys.stdout.write("\n")
+
+  TTable = machine.trans_table
+
+  sys.stdout.write("       ")
+  for j in xrange(len(TTable[0])):
+    sys.stdout.write("+-----")
+  sys.stdout.write("+\n")
+
+  sys.stdout.write("       ")
+  for j in xrange(len(TTable[0])):
+    sys.stdout.write("|  %d  " % j)
+  sys.stdout.write("|\n")
+
+  sys.stdout.write("   +---")
+  for j in xrange(len(TTable[0])):
+    sys.stdout.write("+-----")
+  sys.stdout.write("+\n")
+
+  for i in xrange(len(TTable)):
+    sys.stdout.write("   | %c " % states[i])
+    for j in xrange(len(TTable[i])):
+      sys.stdout.write("| ")
+      if TTable[i][j][0] == -1 and \
+         TTable[i][j][1] == -1 and \
+         TTable[i][j][2] == -1:
+        sys.stdout.write("--- ")
+      else:
+        sys.stdout.write("%c"   % symbols[TTable[i][j][0]])
+        sys.stdout.write("%c"   % dirs   [TTable[i][j][1]])
+        sys.stdout.write("%c "  % states [TTable[i][j][2]])
+    sys.stdout.write("|\n")
+
+    sys.stdout.write("   +---")
+    for j in xrange(len(TTable[0])):
+      sys.stdout.write("+-----")
+    sys.stdout.write("+\n")
+
+  sys.stdout.write("\n")
+
+  sys.stdout.flush()
+
 
 # Characters to use for states.
 states = string.ascii_uppercase + string.ascii_lowercase + string.digits + "!@#$%^&*" + "Z"

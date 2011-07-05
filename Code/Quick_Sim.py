@@ -12,66 +12,6 @@ import sys, string
 from Macro import Turing_Machine, Simulator, Block_Finder
 import IO
 
-# White, Red, Blue, Green, Magenta, Cyan, Brown/Yellow
-color = [49, 41, 44, 42, 45, 46, 43]
-# Characters to use for states (end in "Z" so that halt is Z)
-states = string.ascii_uppercase + string.ascii_lowercase + string.digits + "!@#$%^&*" + "Z"
-symbols = string.digits + "-"
-dirs = "LRS-"
-
-def print_machine(machine):
-  """
-  Pretty-print the contents of the Turing machine.
-  This method prints the state transition information
-  (number to print, direction to move, next state) for each state
-  but not the contents of the tape.
-  """
-
-  sys.stdout.write("\n")
-  sys.stdout.write("Transition table:\n")
-  sys.stdout.write("\n")
-
-  TTable = machine.trans_table
-
-  sys.stdout.write("       ")
-  for j in xrange(len(TTable[0])):
-    sys.stdout.write("+-----")
-  sys.stdout.write("+\n")
-
-  sys.stdout.write("       ")
-  for j in xrange(len(TTable[0])):
-    sys.stdout.write("|  %d  " % j)
-  sys.stdout.write("|\n")
-
-  sys.stdout.write("   +---")
-  for j in xrange(len(TTable[0])):
-    sys.stdout.write("+-----")
-  sys.stdout.write("+\n")
-
-  for i in xrange(len(TTable)):
-    sys.stdout.write("   | %c " % states[i])
-    for j in xrange(len(TTable[i])):
-      sys.stdout.write("| ")
-      if TTable[i][j][0] == -1 and \
-         TTable[i][j][1] == -1 and \
-         TTable[i][j][2] == -1:
-        sys.stdout.write("--- ")
-      else:
-        sys.stdout.write("%c"   % symbols[TTable[i][j][0]])
-        sys.stdout.write("%c"   % dirs   [TTable[i][j][1]])
-        sys.stdout.write("%c "  % states [TTable[i][j][2]])
-    sys.stdout.write("|\n")
-
-    sys.stdout.write("   +---")
-    for j in xrange(len(TTable[0])):
-      sys.stdout.write("+-----")
-    sys.stdout.write("+\n")
-
-  sys.stdout.write("\n\n")
-
-  sys.stdout.flush()
-
-
 def run(TTable, block_size, back, prover, recursive, options):
   # Construct Machine (Backsymbol-k-Block-Macro-Machine)
   m = Turing_Machine.make_machine(TTable)
@@ -81,7 +21,7 @@ def run(TTable, block_size, back, prover, recursive, options):
     block_size = Block_Finder.block_finder(m, options)
 
   if not options.quiet:
-    print_machine(m)
+    Turing_Machine.print_machine(m)
 
   # Do not create a 1-Block Macro-Machine (just use base machine)
   if block_size != 1:
