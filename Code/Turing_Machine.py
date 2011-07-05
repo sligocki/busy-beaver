@@ -5,7 +5,7 @@
 Contains Busy Beaver Turing_Machine class.
 """
 
-import sys
+import sys, string
 
 class Turing_Machine_Runtime_Error:
   """
@@ -19,6 +19,7 @@ class Turing_Machine_Runtime_Error:
   def __repr__(self):
     return `self.value`
 
+
 class Filter_Unexpected_Return:
   """
   This exception class is raised if an unexpected value is returned from a
@@ -30,6 +31,67 @@ class Filter_Unexpected_Return:
 
   def __repr__(self):
     return `self.value`
+
+
+# White, Red, Blue, Green, Magenta, Cyan, Brown/Yellow
+color = [49, 41, 44, 42, 45, 46, 43]
+# Characters to use for states (end in "Z" so that halt is Z)
+states = string.ascii_uppercase + string.ascii_lowercase + string.digits + "!@#$%^&*" + "Z"
+symbols = string.digits + "-"
+dirs = "LRS-"
+
+def print_machine(machine):
+  """
+  Pretty-print the contents of the Turing machine.
+  This method prints the state transition information
+  (number to print, direction to move, next state) for each state
+  but not the contents of the tape.
+  """
+
+  sys.stdout.write("\n")
+  sys.stdout.write("Transition table:\n")
+  sys.stdout.write("\n")
+
+  TTable = machine.trans_table
+
+  sys.stdout.write("       ")
+  for j in xrange(len(TTable[0])):
+    sys.stdout.write("+-----")
+  sys.stdout.write("+\n")
+
+  sys.stdout.write("       ")
+  for j in xrange(len(TTable[0])):
+    sys.stdout.write("|  %d  " % j)
+  sys.stdout.write("|\n")
+
+  sys.stdout.write("   +---")
+  for j in xrange(len(TTable[0])):
+    sys.stdout.write("+-----")
+  sys.stdout.write("+\n")
+
+  for i in xrange(len(TTable)):
+    sys.stdout.write("   | %c " % states[i])
+    for j in xrange(len(TTable[i])):
+      sys.stdout.write("| ")
+      if TTable[i][j][0] == -1 and \
+         TTable[i][j][1] == -1 and \
+         TTable[i][j][2] == -1:
+        sys.stdout.write("--- ")
+      else:
+        sys.stdout.write("%c"   % symbols[TTable[i][j][0]])
+        sys.stdout.write("%c"   % dirs   [TTable[i][j][1]])
+        sys.stdout.write("%c "  % states [TTable[i][j][2]])
+    sys.stdout.write("|\n")
+
+    sys.stdout.write("   +---")
+    for j in xrange(len(TTable[0])):
+      sys.stdout.write("+-----")
+    sys.stdout.write("+\n")
+
+  sys.stdout.write("\n")
+
+  sys.stdout.flush()
+
 
 class Turing_Machine:
   """
@@ -53,19 +115,20 @@ class Turing_Machine:
     self.num_states  = num_states
     self.num_symbols = num_symbols
 
-    self._TTable = [None] * self.num_states
+    self.trans_table = [None] * self.num_states
     for state in range(self.num_states):
-      self._TTable[state] = [(-1, 0, -1)] * num_symbols
-    self._TTable[0][0] = (1, 1, 1)
+      self.trans_table[state] = [(-1, 0, -1)] * num_symbols
+    self.trans_table[0][0] = (1, 1, 1)
     self.max_state  = 1
     self.max_symbol = 1
     self.num_empty_cells = self.num_states * self.num_symbols - 1
 
   def __repr__(self):
-    return "Turing_Machine(%s)" % repr(self._TTable)
+    return "Turing_Machine(%s)" % repr(self.trans_table)
+
   def __str__(self):
     string = ""
-    for state in self._TTable:
+    for state in self.trans_table:
       for symbol in state:
         string += "%-12s" % str(symbol)
       string += "\n"
@@ -75,14 +138,14 @@ class Turing_Machine:
     """
     Returns the transition table in tuple format.
     """
-    return self._TTable
+    return self.trans_table
 
   def set_TTable(self, table):
     """
     Sets the transition table in tuple format and updates object to be
     consistent with transition table
     """
-    self._TTable = table
+    self.trans_table = table
 
     self.num_states  = len(table)
     self.num_symbols = len(table[0])
@@ -124,16 +187,16 @@ class Turing_Machine:
       return largest
 
   def get_cell(self, state_in, symbol_in):
-    return self._TTable[state_in][symbol_in]
+    return self.trans_table[state_in][symbol_in]
 
   def add_cell(self, *args):
     return self.set_cell(*args)
   def set_cell(self, state_in, symbol_in, state_out, symbol_out, direction_out):
     # If this cell was empty, decriment num_empty_cells
-    if self._TTable[state_in][symbol_in][0] == -1:
+    if self.trans_table[state_in][symbol_in][0] == -1:
       self.num_empty_cells -= 1
     # Actually add the cell information.
-    self._TTable[state_in][symbol_in] = (symbol_out, direction_out, state_out)
+    self.trans_table[state_in][symbol_in] = (symbol_out, direction_out, state_out)
     # Update max value information.
     self.max_state = max(self.max_state, state_out)
     self.max_symbol = max(self.max_symbol, symbol_out)

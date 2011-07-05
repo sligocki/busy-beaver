@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 #
-# GrowthFit.py
+# Growth_Fit.py
 #
 """
 Collects data on tape used vs. steps taken and fits curves to the data.
@@ -23,8 +23,6 @@ def count(infile, num = 1):
   while line:
     parts = line.split()
 
-    sys.stdout.write("%-12d     " % linenum)
-
     start_index = 0
     start_found = False
     for item in parts:
@@ -45,6 +43,7 @@ def count(infile, num = 1):
       end_index += 1
 
     if start_found and end_found:
+      sys.stdout.write("%-12d     " % linenum)
       TTable = eval(string.join(parts[start_index:end_index]))
     else:
       sys.stderr.write("Turing machine not found in input file\n")
@@ -200,30 +199,6 @@ def load_old(file):
   machine.set_TTable(TTable)
 
   return machine
-
-
-def print_machine(machine):
-  """
-  Pretty-print the contents of the Turing machine.
-  This method prints the state transition information
-  (number to print, direction to move, next state) for each state
-  but not the contents of the tape.
-  """
-
-  sys.stdout.write("Transition table:\n")
-
-  TTable = machine.get_TTable()
-
-  for i in xrange(len(TTable)):
-    sys.stdout.write("  State %d:\n" % i)
-    for j in xrange(len(TTable[i])):
-      sys.stdout.write("    %d: (" % j)
-      for k in TTable[i][j]:
-        sys.stdout.write(" %2d" % k)
-      sys.stdout.write(" )\n")
-    sys.stdout.write("\n")
-        
-  sys.stdout.flush()
 
 
 def run(machine, tape_length, num_steps, silent=False):
