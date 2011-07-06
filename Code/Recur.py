@@ -12,6 +12,38 @@ import sys, string, copy, numpy
 from Macro import Simulator, Block_Finder, Turing_Machine
 import Output_Machine
 
+def integer_solve(a,b):
+  residue = 0
+
+  num_var = len(a[0])
+  num_eqn = len(b)
+
+  num_steps = min(num_var,num_eqn)
+
+  for step in xrange(num_steps):
+    for eqn in xrange(step+1,num_eqn):
+      c1 = a[step][step]
+      c2 = a[eqn][step]
+
+      a[eqn] = [c2*a_step - c1*a_eqn for [a_step,a_eqn] in zip(a[step],a[eqn])]
+      b[eqn][0] = c2*b[step][0] - c1*b[eqn][0]
+
+  print "---",num_var,num_eqn
+  print "---",num_steps
+  print "---",a
+  print "---",b
+
+  all_zeros = num_var * [0]
+  for eqn in xrange(num_steps+1,num_eqn):
+    if a[eqn] != all_zeros or b[eqn] != [0,]:
+      print "...","bad"
+      residue = 1
+      break
+
+  print "+++"
+
+  return b,[residue,]
+
 def recur_print(coefs,residue):
   recur_found = False
   recur_stop = False;
@@ -208,10 +240,13 @@ def recur_fit(series,prefix=None):
 
     b = [[series[i],] for i in xrange(n,len(series))]
 
-    A = numpy.array(a)
-    B = numpy.array(b)
+    if True:
+      A = numpy.array(a)
+      B = numpy.array(b)
 
-    [x,residue,rank,sv] = numpy.linalg.lstsq(A,B)
+      [x,residue,rank,sv] = numpy.linalg.lstsq(A,B)
+    else:
+      [x,residue] = integer_solve(a,b)
 
     if prefix:
       print prefix,
