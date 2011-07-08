@@ -1,2 +1,3 @@
 #!/bin/csh -f
-sed -e 's/^.*,//' -e 's/)//' $* | tr '\012' ' ' | ../Code/Fit_Recur.py
+set cmddir=`dirname $0`
+sed -e 's/^.*,//' -e 's/)//' $* | tr '\012' ' ' | ${cmddir}/../Code/Recur_Fit.py

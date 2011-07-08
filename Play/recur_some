@@ -1,5 +1,6 @@
 #!/bin/csh -f
-####
+set cmddir=`dirname $0`
+
 set argc="$#argv"
 if ("$argc" < 2) then
   echo "Usage: recur_some infile loops"
@@ -16,8 +17,8 @@ wc -l ${file_base}.$ll.0
 set lastn=0
 foreach n (1 2 3 4 5 6)
   echo "--- $n ---"
-  (time ../Code/Recur.py -n $n -b -p -l $2 ${file_base}.$ll.$lastn) > ${file_base}.recur.$ll.$n
-  ../Tools/cull_recur ${file_base}.$ll.$lastn ${file_base}.recur.$ll.$n > ${file_base}.$ll.$n
+  (time ${cmddir}/../Code/Recur_TM.py -n $n -b -p -l $2 ${file_base}.$ll.$lastn) > ${file_base}.recur.$ll.$n
+  ${cmddir}/../Tools/cull_recur ${file_base}.$ll.$lastn ${file_base}.recur.$ll.$n > ${file_base}.$ll.$n
   wc -l ${file_base}.$ll.$n
   set lastn=$n
 end
