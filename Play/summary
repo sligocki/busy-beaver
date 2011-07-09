@@ -1,2 +1,3 @@
 #!/bin/csh -f
-awk -f summary.awk $*
+set cmddir=`dirname $0`
+awk -f $cmddir/summary.awk $*
