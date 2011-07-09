@@ -1,0 +1,48 @@
+Recurrence relations are found for 60 of the 127 unknown 2x4 TMs using
+  a block sizes for 1 to 6 and 100,000 steps/loops (1,000,000 steps/loops
+  didn't yield better results).  Here is the breakdown by block size:
+
+      1    41
+      2    19
+      3-6   0  
+
+  I attempted to manually find repeating pattern in the tape that leads to
+  a recurrence relation for the number of step in the remaining 67 TMs.  So
+  far, I have done this in 46 cases and in 16 cases I have a guess.  There
+  are 5 TMs for which I have no guess about a repeating pattern in the tape.
+
+
+Description of files:
+
++ recur.block - The original output of "Recur_TM.py" (run by
+    "../recur_some").  This was then used to generate "found.block" and
+    "remain.block".
+
++ found.block - The TMs for which a recurrence relation was found with a
+    block size "block".  They also contain the sequence of steps used to
+    find the recurrence relation and the recurrence relation itself.
+
++ remain.block - The TMs for which no recurrence relation could be found
+    using block sizes from 1 to "block".  If "block" = 0, this is a list
+    of original "unknown" TMs and if "block" = 6, this is a list of TMs
+    for which no recurrence relation was found for any block size.
+
++ remain.block.#.final - For TM "#" from "remain.block", the final guess
+    at a repeating pattern in the tape that leads to the recurrence relation
+    for the number steps which is in "remain.block.#.recur".
+
++ remain.block.#.recur - For TM "#" from "remain.block", the recurrence
+    relation for the number of steps from the final guess at a repeating
+    pattern in the tape which is in "remain.block.#.final".
+
++ remain.block.#.guess -  For TM "#" from "remain.block", a guess
+    at a repeating pattern in the tape.  This doesn't yet lead to a recurrence
+    relation of the number of steps.
+
++ remain.block.#.noguess -  For TM "#" from "remain.block", where I have no
+    guess for a repeating pattern in the tape.
+
++ remain.block.#.gz -  For TM "#" from "remain.block", the output of
+    "Quick_Sim.py -v ..." or "Busy_Beaver_Recur.py ..." with the tape shown
+    each time the tape head is all the way left or right.
+
