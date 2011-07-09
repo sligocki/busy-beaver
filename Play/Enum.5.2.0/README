@@ -1,0 +1,31 @@
+Recurrence relations are found for 5,022 of the 8,031 unknown 5x2 TMs using
+  a block sizes for 1 to 6 and 100,000 steps/loops.  Here is the breakdown
+  by block size:
+
+      1   3,827
+      2     829
+      3     108
+      4     186
+      5      12
+      6      60
+
+
+Description of directories and files:
+
++ Loops.num (directories) - Contain files generated using "../recur_some" with
+    "num" steps/loops.  In each directory:
+  
+    + recur.block - The original output of "Recur_TM.py" (run by
+        "../recur_some").  This was then used to generate "found.block" and
+        "remain.block".
+
+    + found.block - The TMs for which a recurrence relation was found with a
+        block size "block".  They also contain the sequence of steps used to
+        find the recurrence relation and the recurrence relation itself.
+  
+    + remain.block - The TMs for which no recurrence relation could be found
+        using block sizes from 1 to "block".  If "block" = 0, this is a list
+        of original "unknown" TMs and if "block" = 6, this is a list of TMs
+        for which no recurrence relation was found for any block size.
+
++ unknown* (file) - The original file with the unclassified TMs.
