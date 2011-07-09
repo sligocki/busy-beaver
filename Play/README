@@ -27,6 +27,10 @@ Description of directories and files:
 
     + unknown* (file) - The original file with the unclassified TMs.
 
++ checksum (csh script) - In the "Enum.<n>.<m>", sum various quantities for
+    each "Loops.num" subdirectory to check that overall the sum is always
+    equal to the original number of unknown TMs.
+
 + leastsquare (csh script) - Intended to be run on a file containing
     "Quick_Sim.py -v" or "Busy_Beaver_Recur.py" output which has been edited
     to contain lines that represent a repeating pattern.  It modifies these
