@@ -1,0 +1,35 @@
+Recurrence relations are found for 60 of the 127 unknown 2x4 TMs using
+  a block sizes for 1 to 6 and 100,000 steps/loops (1,000,000 steps/loops
+  didn't yield better results).  Here is the breakdown by block size:
+
+      1   41
+      2   19
+      3-6  0  
+
+  More extensive investigations of the 67 remaining TMs were done in the
+  "Loops.0100000" directory.
+
+
+Description of directories and files:
+
++ Loops.0100000 (directory) - In addition to the general form given next, this
+    directory contains much more extensive investigations - see README file
+    there more more details.
+
++ Loops.num (directories) - Contain files generated using "../recur_some" with
+    "num" steps/loops.  In each directory:
+  
+    + recur.block - The original output of "Recur_TM.py" (run by
+        "../recur_some").  This was then used to generate "found.block" and
+        "remain.block".
+
+    + found.block - The TMs for which a recurrence relation was found with a
+        block size "block".  They also contain the sequence of steps used to
+        find the recurrence relation and the recurrence relation itself.
+  
+    + remain.block - The TMs for which no recurrence relation could be found
+        using block sizes from 1 to "block".  If "block" = 0, this is a list
+        of original "unknown" TMs and if "block" = 6, this is a list of TMs
+        for which no recurrence relation was found for any block size.
+
++ unknown* (file) - The original file with the unclassified TMs.

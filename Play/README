@@ -1,14 +1,39 @@
 Description of directories and files:
 
-  Enum.<n>.<m>.0 (directories) - Experiments with unclassified <n>x<m> TMs.
++ Enum.2.4.0/Loops.0100000 (directory) - In addition to the general form given
+    next, this directory contains much more extensive investigations - see
+    README file there more more details.
 
-  leastsquare (csh script) - Intended to be run on a file containing
++ Enum.<n>.<m>.0 (directories) - Experiments with unclassified <n>x<m> TMs.
+    In each directory:
+
+    + Loops.num (directories) - Contain files generated using "recur_some"
+        with "num" steps/loops.  In each directory:
+    
+        + recur.block - The original output of "Recur_TM.py" (run by
+            "recur_some").  This was then used to generate "found.block" and
+            "remain.block".
+
+        + found.block - The TMs for which a recurrence relation was found with
+            a block size "block".  They also contain the sequence of steps
+            used to find the recurrence relation and the recurrence relation
+            itself.
+    
+        + remain.block - The TMs for which no recurrence relation could be
+            found using block sizes from 1 to "block".  If "block" = 0, this
+            is a list of original "unknown" TMs and if "block" = 6, this is
+            a list of TMs for which no recurrence relation was found for any
+            block size.
+
+    + unknown* (file) - The original file with the unclassified TMs.
+
++ leastsquare (csh script) - Intended to be run on a file containing
     "Quick_Sim.py -v" or "Busy_Beaver_Recur.py" output which has been edited
     to contain lines that represent a repeating pattern.  It modifies these
     lines to provide input to "Recur_Fit.py" for finding a recurrence relation
     for the number of steps.
 
-  recur_some (csh script) - take an input file, "infile", and a number of
++ recur_some (csh script) - take an input file, "infile", and a number of
     steps/loops, "loops", and run "Recur_TM.py" with block sizes from 1 to 6
     (and "-b -p") for the specified number "loops".  For each block size,
     try the TMs from the previous block size for which no recurrence relation
@@ -16,21 +41,21 @@ Description of directories and files:
     output for block size # and the files "infile.loop.#" contain the TMs that
     have no recurrence relation up to and including block size #.
 
-  replace (csh script) - Uses "sed" to replace the first argument (regexp)
++ replace (csh script) - Uses "sed" to replace the first argument (regexp)
     with the second argument (regexp) on a line and then combine all instances
     of "a^b0" ... "a^bn" to "a^b0+...+bn" using "replace.awk".
 
-  replace.awk (awk script) - See above.
++ replace.awk (awk script) - See above.
 
-  run_one (csh script) - Run "Quick_Sim.py -v -b -p" on the specified input
++ run_one (csh script) - Run "Quick_Sim.py -v -b -p" on the specified input
     file and line for the given number of steps/loops and with the given
     blocksize.  Only output steps where the tape head is all the way to the
     left or right.
 
-  summary (csh script) - Read the "recur" files generated via "recur_some"
++ summary (csh script) - Read the "recur" files generated via "recur_some"
     and produce summary files (stored as "infile.sum.loop.#") using
     "summary.awk".  These summary files only contain the TMs which have
     a recurrence relation.  Also, only the recurrence relation for the
     number of steps is saved (along with the sequence that generated it).
 
-  summary.awk (awk script) - See above.
++ summary.awk (awk script) - See above.
