@@ -13,12 +13,12 @@ set tmp_file="/tmp/cull_recur$$"
 set ref_file="$argv[1]"
 set recur_file="$argv[2]"
 
-cat ${ref_file}                                  > ${tmp_file}
-awk -f ${cmd_dir}/cull_recur1.awk ${recur_file} >> ${tmp_file}
+set width=`head -1 ${ref_file} | awk -f ${cmd_dir}/cull_recur2.awk`
+
+cat ${ref_file}                                 | sed -e 's/|.*$//' >  ${tmp_file}
+awk -f ${cmd_dir}/cull_recur1.awk ${recur_file} | sed -e 's/|.*$//' >> ${tmp_file}
 
 sort -o ${tmp_file} ${tmp_file}
-
-set width=`head -1 ${ref_file} | awk -f ${cmd_dir}/cull_recur2.awk`
-uniq -w ${width} -u ${tmp_file}
+uniq -u ${tmp_file}
 
 /bin/rm ${tmp_file}
