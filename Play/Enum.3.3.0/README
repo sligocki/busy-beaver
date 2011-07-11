@@ -1,17 +1,13 @@
-Recurrence relations are found for 5,203 of the 9,291 unknown 3x3 TMs using
+Recurrence relations are found for 5,199 of the 9,291 unknown 3x3 TMs using
   a block sizes for 1 to 6 and 100,000 steps/loops.  Here is the breakdown
   by block size:
 
       1   3,656
-      2   1,408
+      2   1,404
       3      80
       4      38
       5       2
       6      19
-
-  There is a problem because the sum of the number of "found" and "remain"
-  TMs don't add up to the original number of TMs - this needs to be
-  investigated.
 
 
 Description of directories and files:
