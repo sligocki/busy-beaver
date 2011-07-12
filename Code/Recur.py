@@ -20,9 +20,9 @@ def integer_solve(a,b):
 
   num_steps = min(num_var,num_eqn)
 
-  print "---",a
-  print "---",b
-  print ""
+  #print "---",a
+  #print "---",b
+  #print ""
 
   for step in xrange(num_steps):
     if a[step][step] == 0:
@@ -52,15 +52,15 @@ def integer_solve(a,b):
       a[eqn] = [c1*a_eqn - c2*a_step for [a_step,a_eqn] in zip(a[step],a[eqn])]
       b[eqn][0] = c1*b[eqn][0] - c2*b[step][0]
 
-      print "-----",a
-      print "-----",b
-      print ""
+      #print "-----",a
+      #print "-----",b
+      #print ""
 
   #print "---",num_var,num_eqn
   #print "---",num_steps
-  print "---",a
-  print "---",b
-  print ""
+  #print "---",a
+  #print "---",b
+  #print ""
 
   if residue == 0:
     all_zeros = num_var * [0]
