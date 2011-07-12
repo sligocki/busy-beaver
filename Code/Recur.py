@@ -20,8 +20,9 @@ def integer_solve(a,b):
 
   num_steps = min(num_var,num_eqn)
 
-  #print "---",a
-  #print "---",b
+  print "---",a
+  print "---",b
+  print ""
 
   for step in xrange(num_steps):
     if a[step][step] == 0:
@@ -48,16 +49,18 @@ def integer_solve(a,b):
       c2 = a[eqn][step]
       #print "-----",step,eqn,c1,c2
 
-      a[eqn] = [c2*a_step - c1*a_eqn for [a_step,a_eqn] in zip(a[step],a[eqn])]
-      b[eqn][0] = c2*b[step][0] - c1*b[eqn][0]
+      a[eqn] = [c1*a_eqn - c2*a_step for [a_step,a_eqn] in zip(a[step],a[eqn])]
+      b[eqn][0] = c1*b[eqn][0] - c2*b[step][0]
 
-      #print "-----",a
-      #print "-----",b
+      print "-----",a
+      print "-----",b
+      print ""
 
   #print "---",num_var,num_eqn
   #print "---",num_steps
-  #print "---",a
-  #print "---",b
+  print "---",a
+  print "---",b
+  print ""
 
   if residue == 0:
     all_zeros = num_var * [0]
@@ -265,8 +268,8 @@ def recur_print(coefs,residue):
 
 def recur_fit(series,prefix=None):
   """Try to find a recurrence relation that fits the input series and print it"""
-  #max_term_size = 100000000
-  #series = [term for term in series if term < max_term_size]
+  # max_term_size = 100000000
+  # series = [term for term in series if term < max_term_size]
 
   if len(series) > 20:
     series = series[len(series)-20:]
@@ -286,13 +289,12 @@ def recur_fit(series,prefix=None):
 
     b = [[series[i],] for i in xrange(n,len(series))]
 
-    if False:
-      A = numpy.array(a)
-      B = numpy.array(b)
+    # A = numpy.array(a)
+    # B = numpy.array(b)
+    #
+    #  [x,residue,rank,sv] = numpy.linalg.lstsq(A,B)
 
-      [x,residue,rank,sv] = numpy.linalg.lstsq(A,B)
-    else:
-      [x,residue] = integer_solve(a,b)
+    [x,residue] = integer_solve(a,b)
 
     if prefix:
       print prefix,
@@ -353,7 +355,7 @@ def recur_TM(TTable, block_size, back, prover, recursive, options):
   groups = {}
 
   total_loops = 0;
-  max_term_size = 100000000
+  # max_term_size = 100000000
 
   while (sim.op_state == Turing_Machine.RUNNING and
          (options.loops == 0 or total_loops < options.loops)):
@@ -361,8 +363,8 @@ def recur_TM(TTable, block_size, back, prover, recursive, options):
 
     sim.step()
 
-    if sim.step_num > max_term_size:
-      break
+    # if sim.step_num > max_term_size:
+    #   break
 
     if len(sim.tape.tape[0]) == 1 or len(sim.tape.tape[1]) == 1:
       min_config = strip_config(sim.state,sim.dir,sim.tape.tape)
