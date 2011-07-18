@@ -57,20 +57,14 @@ if __name__ == "__main__":
 
   infile = open_infile(infilename)
   
-  # if len(args) >= 2:
-  #   try:
-  #     line = int(args[1])
-  #   except ValueError:
-  #     parser.error("line_number must be an integer.")
-  #   if line < 1:
-  #     parser.error("line_number must be >= 1")
-  # else:
-  #   line = 1
-  
   io = IO.IO(infile, None, None)
 
+  # For each TM, try to find a recurrence relation for the powers in a
+  # recurring stripped configuration and the number of steps
   for io_record in io:
+    # Get the current TM transition table
     ttable = io_record.ttable
     
+    # Attempt to find the recurrence relations
     recur_TM(ttable, options.block_size, options.backsymbol, options.prover, 
                      options.recursive, options)
