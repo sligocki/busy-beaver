@@ -11,16 +11,16 @@ import sys, string, copy, numpy
 from Recur import recur_fit
 
 if __name__ == "__main__":
-  # Read each sequence - a line of input
+  # Read each series - a line of input
   for line in sys.stdin:
-    # Generate the sequence by splitting the line and making everything
+    # Generate the series by splitting the line and making everything
     # an integer
-    sequence = map(int,line.split())
+    series = map(int,line.split())
 
-    # Attempt to get a recurrence relation for the sequence (and print
+    # Attempt to get a recurrence relation for the series (and print
     # it out)
-    recur_fit(sequence)
+    recur_fit(series)
 
-    # Put blank lines between sequences
+    # Put blank lines between series
     print
 
