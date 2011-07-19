@@ -7,305 +7,271 @@ hopefully, prove things about them.  Currently this is a collect of functions
 and not a class.  This may change as more is understood about this approach.
 """
 
-import sys, string, copy, numpy
+import sys, string, copy
+# import numpy
 
 from Macro import Simulator, Block_Finder, Turing_Machine
 import Output_Machine
 
-def integer_solve(a,b):
-  residue = 0
+# Solve a system of linear equations with integer coefficients for an integer
+# solution.  This uses Gaussian elimination and back-substitution.  Pivoting
+# isn't important because the arithmetic is exact.
+#
+# This handles underdetermined, determined, and overdetermined systems.
+# Currently, underdetermined systems are always flagged as unsuccessful.
+#
+# "a" is a list of lists representing a matrix.  Each sub-list is a row in the
+# matrix.  "b" is a list representing a column vector.  The solution is a list
+# representing a column vector such that "a x = b".
+#
+# The function return a boolean which is True if a solution is found and "x".
+# If unsuccessful, x is the empty list.
+def integer_solve(a,b,verbose=0):
+  # Assume success
+  success = True
 
+  # Get the number of variable and equations
   num_var = len(a[0])
   num_eqn = len(b)
 
+  # This is the number of steps in the Gaussian elimination
   num_steps = min(num_var,num_eqn)
 
-  #print "---",a
-  #print "---",b
-  #print ""
+  # Print diagnostics
+  if verbose >= 1:
+    print "---",a
+    print "---",b
+    print ""
 
-  for step in xrange(num_steps):
-    if a[step][step] == 0:
-      found = False
-      for eqn in xrange(step+1,num_eqn):
-        if a[eqn][step] != 0:
-          temp    = a[step]
-          a[step] = a[eqn]
-          a[eqn]  = temp
+  # See if the system is underdetermined
+  if num_var > num_eqn:
+    # Underdetermined systems are not solved (currently)
+    success = False
+  else:
+    # Do Gaussian elimination on equation at a time
+    for step in xrange(num_steps):
+      # If the current diagonal entry is zero, find an equation that doesn't
+      # have this problem and swap it for this current equation.
+      if a[step][step] == 0:
+        # Go through the remaining equations look for a suitable one.
+        found = False
+        for eqn in xrange(step+1,num_eqn):
+          # If one is found swap the equations and the RHS
+          if a[eqn][step] != 0:
+            temp    = a[step]
+            a[step] = a[eqn]
+            a[eqn]  = temp
 
-          temp    = b[step]
-          b[step] = b[eqn]
-          b[eqn]  = temp
+            temp    = b[step]
+            b[step] = b[eqn]
+            b[eqn]  = temp
 
-          found = True
+            found = True
+            break
+
+        # If nothing is found, the solve is unsuccessful
+        if not found:
+          success = False
           break
 
-      if not found:
-        residue = 1
-        break
+      # Perform a step of Gaussian elimination
+      c1 = a[step][step]
+      for eqn in xrange(step+1,num_eqn):
+        c2 = a[eqn][step]
 
-    c1 = a[step][step]
-    for eqn in xrange(step+1,num_eqn):
-      c2 = a[eqn][step]
-      #print "-----",step,eqn,c1,c2
+        if verbose >= 2:
+          print "-----",step,eqn,c1,c2
 
-      a[eqn] = [c1*a_eqn - c2*a_step for [a_step,a_eqn] in zip(a[step],a[eqn])]
-      b[eqn][0] = c1*b[eqn][0] - c2*b[step][0]
+        a[eqn] = [c1*a_eqn - c2*a_step for [a_step,a_eqn] in zip(a[step],a[eqn])]
+        b[eqn] = c1*b[eqn] - c2*b[step]
 
-      #print "-----",a
-      #print "-----",b
-      #print ""
+        if verbose >= 2:
+          print "-----",a
+          print "-----",b
+          print ""
 
-  #print "---",num_var,num_eqn
-  #print "---",num_steps
-  #print "---",a
-  #print "---",b
-  #print ""
+    if verbose >= 1:
+      print "---",num_var,num_eqn
+      print "---",num_steps
+      print "---",a
+      print "---",b
+      print ""
 
-  if residue == 0:
-    all_zeros = num_var * [0]
-    for eqn in xrange(num_steps,num_eqn):
-      if a[eqn] != all_zeros or b[eqn] != [0,]:
-        #print "...","bad"
-        residue = 1
-        break
+    # If the Gaussian elimination was successful, check that any extra
+    # equations now say "0 = 0" - meaning the original system was consistent.
+    if success:
+      all_zeros = num_var * [0]
 
-  x = [[0] for i in xrange(0,num_var)]
-  #print "---",x
-  if residue == 0:
-    for eqn in xrange(num_steps-1,-1,-1):
-      #print "---",eqn
-      [xcur,r] = divmod(b[eqn][0],a[eqn][eqn])
-      #print "-----",xcur,r
-      if r == 0:
-        x[eqn][0] = xcur
-        #print "-----",x
-        for eqn2 in xrange(0,eqn):
-          b[eqn2][0] -= a[eqn2][eqn]*x[eqn][0]
-          a[eqn2][eqn] = 0
-          #print "-----",a
-          #print "-----",b
-      else:
-        residue = 1
-        break
+      for eqn in xrange(num_steps,num_eqn):
+        if a[eqn] != all_zeros or b[eqn] != 0:
+          if verbose >= 1:
+            print "...","bad"
 
-  #print "+++"
+          success = False
+          break
 
-  return x,[residue,]
+    # If all is well, start doing backsubstitution.
+    if success:
+      # "x" is originally all zeros
+      x = [0 for i in xrange(0,num_var)]
+      if verbose >= 1:
+        print "---",x
 
-def recur_print(coefs,residue):
-  recur_found = False
-  recur_stop = False;
+      # Go through the equations from bottom to top computing entries of x.
+      for eqn in xrange(num_steps-1,-1,-1):
+        if verbose >= 1:
+          print "---",eqn
 
-  if len(residue) > 0:
-    residue = residue[0]
+        # Do the appropriate, integer division
+        [xcur,r] = divmod(b[eqn],a[eqn][eqn])
 
-    print residue,
+        if verbose >= 2:
+          print "-----",xcur,r
 
-    if residue < 1e-12:
-      int_coefs = [int(round(coef[0])) for coef in coefs]
-      int_coefs.reverse()
+        # If there is no remainder this step is successful
+        if r == 0:
+          # Record this part of the solution
+          x[eqn] = xcur
 
-      constant = int_coefs[-1]
-      int_coefs = int_coefs[:-1]
+          if verbose >= 2:
+            print "-----",x
 
-      if not int_coefs or int_coefs[-1] != 0:
-        recur_found = True
+          # Remove this variable from all the other equations
+          for eqn2 in xrange(0,eqn):
+            b[eqn2] -= a[eqn2][eqn]*x[eqn]
+            a[eqn2][eqn] = 0
 
-        print "success",
-
-        print " F(n) =",
-
-        first = True
-        for i in xrange(len(int_coefs)):
-          if first:
-            if int_coefs[i] != 0:
-              first = False
-              if int_coefs[i] > 0:
-                if int_coefs[i] == 1:
-                  print "F(n-%d)" % (i+1,),
-                else:
-                  print int_coefs[i],"F(n-%d)" % (i+1,),
-              else:
-                if int_coefs[i] == -1:
-                  print "-F(n-%d)" % (i+1,),
-                else:
-                  print int_coefs[i],"F(n-%d)" % (i+1,),
-          else:
-            if int_coefs[i] != 0:
-              if int_coefs[i] > 0:
-                if int_coefs[i] == 1:
-                  print "+","F(n-%d)" % (i+1,),
-                else:
-                  print "+",int_coefs[i],"F(n-%d)" % (i+1,),
-              else:
-                if int_coefs[i] == -1:
-                  print "-","F(n-%d)" % (i+1,),
-                else:
-                  print "-",-int_coefs[i],"F(n-%d)" % (i+1,),
-
-        if len(int_coefs) > 0:
-          if constant > 0:
-            print "+",
-          elif constant < 0:
-            print "-",
-
-        if constant > 0:
-          print constant
-        elif constant < 0:
-          print -constant
+            if verbose >= 2:
+              print "-----",a
+              print "-----",b
         else:
-          print
-      else:
-        recur_stop = True
+          # The computation is unsuccessfuly if the remainder isn't zero
+          success = False
+          break
 
-        print "failure",
+    if verbose >= 1:
+      print "+++"
 
-        int_coefs = [coef[0] for coef in coefs]
-        int_coefs.reverse()
+  if not success:
+    x = []
 
-        constant = int_coefs[-1]
-        int_coefs = int_coefs[:-1]
+  return success,x
 
-        print " F(n) =",
 
-        first = True
-        for i in xrange(len(int_coefs)):
-          if first:
-            if int_coefs[i] != 0.0:
-              first = False
-              if int_coefs[i] > 0.0:
-                if int_coefs[i] == 1.0:
-                  print "F(n-%d)" % (i+1,),
-                else:
-                  print "%.3f" % int_coefs[i],"F(n-%d)" % (i+1,),
-              else:
-                if int_coefs[i] == -1.0:
-                  print "-F(n-%d)" % (i+1,),
-                else:
-                  print "%.3f" % int_coefs[i],"F(n-%d)" % (i+1,),
+def recur_print(coefs):
+  print " F(n) =",
+
+  int_coefs = coefs
+  int_coefs.reverse()
+
+  constant  = int_coefs[-1]
+  int_coefs = int_coefs[:-1]
+
+  first = True
+  for i in xrange(len(int_coefs)):
+    if first:
+      if int_coefs[i] != 0:
+        first = False
+        if int_coefs[i] > 0:
+          if int_coefs[i] == 1:
+            print "F(n-%d)" % (i+1,),
           else:
-            if int_coefs[i] != 0.0:
-              if int_coefs[i] > 0.0:
-                if int_coefs[i] == 1.0:
-                  print "+","F(n-%d)" % (i+1,),
-                else:
-                  print "+","%.3f" % int_coefs[i],"F(n-%d)" % (i+1,),
-              else:
-                if int_coefs[i] == -1.0:
-                  print "-","F(n-%d)" % (i+1,),
-                else:
-                  print "-","%.3f" % -int_coefs[i],"F(n-%d)" % (i+1,),
-
-        if len(int_coefs) > 0.0:
-          if constant > 0.0:
-            print "+",
-          elif constant < 0.0:
-            print "-",
-
-        if constant > 0.0:
-          print "%.3f" % constant
-        elif constant < 0.0:
-          print "%.3f" % -constant
+            print int_coefs[i],"F(n-%d)" % (i+1,),
         else:
-          print
+          if int_coefs[i] == -1:
+            print "-F(n-%d)" % (i+1,),
+          else:
+            print int_coefs[i],"F(n-%d)" % (i+1,),
     else:
-      print "failure",
-
-      int_coefs = [coef[0] for coef in coefs]
-      int_coefs.reverse()
-
-      constant = int_coefs[-1]
-      int_coefs = int_coefs[:-1]
-
-      print " F(n) =",
-
-      first = True
-      for i in xrange(len(int_coefs)):
-        if first:
-          if int_coefs[i] != 0.0:
-            first = False
-            if int_coefs[i] > 0.0:
-              if int_coefs[i] == 1.0:
-                print "F(n-%d)" % (i+1,),
-              else:
-                print "%.3f" % int_coefs[i],"F(n-%d)" % (i+1,),
-            else:
-              if int_coefs[i] == -1.0:
-                print "-F(n-%d)" % (i+1,),
-              else:
-                print "%.3f" % int_coefs[i],"F(n-%d)" % (i+1,),
+      if int_coefs[i] != 0:
+        if int_coefs[i] > 0:
+          if int_coefs[i] == 1:
+            print "+","F(n-%d)" % (i+1,),
+          else:
+            print "+",int_coefs[i],"F(n-%d)" % (i+1,),
         else:
-          if int_coefs[i] != 0.0:
-            if int_coefs[i] > 0.0:
-              if int_coefs[i] == 1.0:
-                print "+","F(n-%d)" % (i+1,),
-              else:
-                print "+","%.3f" % int_coefs[i],"F(n-%d)" % (i+1,),
-            else:
-              if int_coefs[i] == -1.0:
-                print "-","F(n-%d)" % (i+1,),
-              else:
-                print "-","%.3f" % -int_coefs[i],"F(n-%d)" % (i+1,),
+          if int_coefs[i] == -1:
+            print "-","F(n-%d)" % (i+1,),
+          else:
+            print "-",-int_coefs[i],"F(n-%d)" % (i+1,),
 
-      if len(int_coefs) > 0.0:
-        if constant > 0.0:
-          print "+",
-        elif constant < 0.0:
-          print "-",
+  if len(int_coefs) > 0:
+    if constant > 0:
+      print "+",
+    elif constant < 0:
+      print "-",
 
-      if constant > 0.0:
-        print "%.3f" % constant
-      elif constant < 0.0:
-        print "%.3f" % -constant
-      else:
-        print
+  if constant > 0:
+    print constant
+  elif constant < 0:
+    print -constant
   else:
-    print residue,"failure"
-
-  return recur_found,recur_stop
+    print
 
 
 def recur_fit(series,prefix=None):
   """Try to find a recurrence relation that fits the input series and print it"""
-  # max_term_size = 100000000
-  # series = [term for term in series if term < max_term_size]
-
+  # Use the twenty largest entries
   if len(series) > 20:
     series = series[len(series)-20:]
 
+  # Print a prefix if given
   if prefix:
     print prefix,
 
+  # Print the series
   print series
 
+  # Assume the worst
   recur_found = False
 
+  # Try longer and longer recurrence relations starting with a constant
   for n in xrange(0,len(series)/2):
+    # The coefficient of the constant is always one
     a = [[1,] for i in xrange(len(series)-n)]
+
+    # Generate the rest of the matrix
     for m in xrange(0,n):
       for i in xrange(len(series)-n):
         a[i].append(series[m+i])
 
-    b = [[series[i],] for i in xrange(n,len(series))]
+    # Generate the RHS
+    b = series[n:]
 
+    # See if "a x = b" has an integer solution
+    [success,x] = integer_solve(a,b)
+
+    # b = [[series[i],] for i in xrange(n,len(series))]
+    #
     # A = numpy.array(a)
     # B = numpy.array(b)
     #
-    #  [x,residue,rank,sv] = numpy.linalg.lstsq(A,B)
-
-    [x,residue] = integer_solve(a,b)
-
+    # [xm,residue,rank,sv] = numpy.linalg.lstsq(A,B)
+    #
+    # success = True
+    # if not residue or residue[0] <= 1e-12:
+    #   success = False
+    #
+    # x = [xe[0] for xe in xm]
+    
     if prefix:
       print prefix,
 
     print " ",n,
-    (recur_found,recur_stop) = recur_print(x,residue)
 
-    if recur_found or recur_stop:
+    # Print out result(s)
+    if success:
+      print "success",
+      recur_print(x)
+    else:
+      print "failure"
+
+    # On success, stop
+    if success:
       break
 
-  return recur_found
+  # Report success
+  return success
 
 
 def stripped_info(block):
