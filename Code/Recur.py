@@ -158,44 +158,38 @@ def integer_solve(a,b,verbose=0):
   return success,x
 
 
-def recur_print(coefs):
+def recur_print(coefs,constant):
   print " F(n) =",
 
-  int_coefs = coefs
-  int_coefs.reverse()
-
-  constant  = int_coefs[-1]
-  int_coefs = int_coefs[:-1]
-
   first = True
-  for i in xrange(len(int_coefs)):
+  for i in xrange(len(coefs)):
     if first:
-      if int_coefs[i] != 0:
+      if coefs[i] != 0:
         first = False
-        if int_coefs[i] > 0:
-          if int_coefs[i] == 1:
+        if coefs[i] > 0:
+          if coefs[i] == 1:
             print "F(n-%d)" % (i+1,),
           else:
-            print int_coefs[i],"F(n-%d)" % (i+1,),
+            print coefs[i],"F(n-%d)" % (i+1,),
         else:
-          if int_coefs[i] == -1:
+          if coefs[i] == -1:
             print "-F(n-%d)" % (i+1,),
           else:
-            print int_coefs[i],"F(n-%d)" % (i+1,),
+            print coefs[i],"F(n-%d)" % (i+1,),
     else:
-      if int_coefs[i] != 0:
-        if int_coefs[i] > 0:
-          if int_coefs[i] == 1:
+      if coefs[i] != 0:
+        if coefs[i] > 0:
+          if coefs[i] == 1:
             print "+","F(n-%d)" % (i+1,),
           else:
-            print "+",int_coefs[i],"F(n-%d)" % (i+1,),
+            print "+",coefs[i],"F(n-%d)" % (i+1,),
         else:
-          if int_coefs[i] == -1:
+          if coefs[i] == -1:
             print "-","F(n-%d)" % (i+1,),
           else:
-            print "-",-int_coefs[i],"F(n-%d)" % (i+1,),
+            print "-",-coefs[i],"F(n-%d)" % (i+1,),
 
-  if len(int_coefs) > 0:
+  if len(coefs) > 0:
     if constant > 0:
       print "+",
     elif constant < 0:
@@ -209,21 +203,20 @@ def recur_print(coefs):
     print
 
 
-def recur_fit(series,prefix=None):
-  """Try to find a recurrence relation that fits the input series and print it"""
-  # Use the twenty largest entries
+def recur_fit(series):
+  """
+  Try to find a recurrence relation that fits the input series.  If
+  successful, return True, the coefficients for the recurrence relation, and
+  the constant term.  If not, return False, None, None.
+  """
+  # Use last 20 entries
   if len(series) > 20:
     series = series[len(series)-20:]
 
-  # Print a prefix if given
-  if prefix:
-    print prefix,
-
-  # Print the series
-  print series
-
-  # Assume the worst
-  recur_found = False
+  # Unsuccessful return values
+  success = False
+  coefs = None
+  constant = None
 
   # Try longer and longer recurrence relations starting with a constant
   for n in xrange(0,len(series)/2):
@@ -254,24 +247,16 @@ def recur_fit(series,prefix=None):
     #
     # x = [xe[0] for xe in xm]
     
-    if prefix:
-      print prefix,
-
-    print " ",n,
-
-    # Print out result(s)
+    # On success, stop and return recurrence relation imformation
     if success:
-      print "success",
-      recur_print(x)
-    else:
-      print "failure"
+      constant = x[0]
 
-    # On success, stop
-    if success:
+      coefs = x[1:]
+      coefs.reverse()
       break
 
   # Report success
-  return success
+  return success,coefs,constant
 
 
 def stripped_info(block):
@@ -380,7 +365,16 @@ def recur_TM(TTable, block_size, back, prover, recursive, options):
       recur_all = True
 
       for series in growth:
-        recur_found = recur_fit(series,"    ")
+        print "     ",series
+
+        (recur_found,coefs,constant) = recur_fit(series)
+
+        if recur_found:
+          print "         success",
+          recur_print(coefs,constant)
+        else:
+          print "         failure"
+          
         recur_all = recur_all and recur_found
         print
 
