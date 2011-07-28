@@ -4,6 +4,7 @@ NF > 0 && substr($0,1,1) != " " {
 }
 substr($2,1,2) == "((" {
   stripped = $0;
+  nums = 0;
   next
 }
 substr($1,1,1) == "[" {
@@ -11,13 +12,16 @@ substr($1,1,1) == "[" {
   next
 }
 $0 ~ "success" {
-  success = $0;
+  success[nums] = $0;
+  nums++;
   next;
 }
 $1 == "True" {
   print tm;
   print stripped;
   print sequence;
-  print success;
+  for (n = 0; n < nums; n++) {
+    print success[n];
+  }
   print "";
 }
