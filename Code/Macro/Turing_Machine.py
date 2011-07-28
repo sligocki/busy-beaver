@@ -61,8 +61,6 @@ def make_machine(trans_table):
   return machine
 
 
-# White, Red, Blue, Green, Magenta, Cyan, Brown/Yellow
-color = [49, 41, 44, 42, 45, 46, 43]
 # Characters to use for states (end in "Z" so that halt is Z)
 states = string.ascii_uppercase + string.ascii_lowercase + string.digits + "!@#$%^&*" + "Z"
 symbols = string.digits + "-"
