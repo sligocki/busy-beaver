@@ -14,6 +14,9 @@ from Macro import Turing_Machine, Simulator, Block_Finder, Tape
 from Numbers.Algebraic_Expression import Expression_from_string
 import IO
 
+# Characters to use for states (end in "Z" so that halt is Z)
+states = string.ascii_uppercase + string.ascii_lowercase + string.digits + "!@#$%^&*" + "Z"
+
 class BBConsole(cmd.Cmd):
 
   def __init__(self, TTable, options):

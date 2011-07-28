@@ -79,6 +79,10 @@ def run(machine, tape_length, num_steps, silent=False):
   return (num_syms, num_steps)
 
 
+# White, Red, Blue, Green, Magenta, Cyan, Brown/Yellow
+color = [49, 41, 44, 42, 45, 46, 43]
+# Characters to use for states (end in "Z" so that halt is Z)
+states = string.ascii_uppercase + string.ascii_lowercase + string.digits + "!@#$%^&*" + "Z"
 def run_visual(machine, tape_length, num_steps, print_width=79, silent=False, start_tape=None):
   """
   Start the tape and run it until it halts with visual output.
