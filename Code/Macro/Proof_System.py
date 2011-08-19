@@ -290,6 +290,7 @@ class Proof_System(object):
     self.num_loops = 0
     self.num_recursive_rules = 0
     self.num_collatz_rules = 0
+    self.num_failed_proofs = 0
     # TODO: Record how many steps are taken by recursive rules in simulator.
   
   def print_this(self, *args):
@@ -474,7 +475,9 @@ class Proof_System(object):
     if past_config.log_config(step_num, loop_num):
       # We see enough of a pattern to try and prove a rule.
       rule = self.prove_rule(stripped_config, full_config, past_config.delta_loop)
-      if rule:  # If we successfully proved a rule:
+      if not rule:
+        self.num_failed_proofs += 1
+      else:  # If we successfully proved a rule:
         # Collatz_Rules need to be stored inside Collatz_Rule_Groups.
         if isinstance(rule, Collatz_Rule):
           if stripped_config in self.rules:

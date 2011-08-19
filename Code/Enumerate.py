@@ -15,13 +15,14 @@ import cPickle as pickle
 import math
 from optparse import OptionParser, OptionGroup
 import os
+from pprint import pprint
 import random
 import shutil
 import sys
 import time
 
 from Alarm import AlarmException
-from Common import Exit_Condition
+from Common import Exit_Condition, GenContainer
 import IO
 from Macro import Block_Finder
 import Macro_Simulator
@@ -88,6 +89,12 @@ class Enumerator(object):
     self.best_steps = self.best_score = 0
     self.inf_type = DefaultDict(0)
     self.num_over_time = self.num_over_steps = 0
+    # Passed into and updated in Macro_Simulator
+    self.stats = GenContainer()
+    self.stats.num_rules = 0
+    self.stats.num_recursive_rules = 0
+    self.stats.num_collatz_rules = 0
+    self.stats.num_failed_proofs = 0
 
   def __getstate__(self):
     """Gets state of TM for checkpoint file."""
@@ -169,6 +176,8 @@ class Enumerator(object):
     print long_to_eng_str(self.best_steps,1,3),
     print long_to_eng_str(self.best_score,1,3),
     print "(%.2f)" % (self.end_time - self.start_time)
+    if self.options.print_stats:
+      pprint(self.stats.__dict__)
     sys.stdout.flush()
 
     # Backup old checkpoint file (in case the new checkpoint is interrupted in mid-write)
@@ -186,7 +195,8 @@ class Enumerator(object):
     """Simulate TM"""
     return Macro_Simulator.run(tm.get_TTable(), self.options, self.max_steps, self.max_time,
                                self.options.block_size, self.options.backsymbol,
-                               self.options.prover, self.options.recursive)
+                               self.options.prover, self.options.recursive,
+                               self.stats)
 
   def add_transitions(self, old_tm, state_in, symbol_in):
     """Push Turing Machines with each possible transition at this state and symbol"""
@@ -291,6 +301,9 @@ def main(args):
                         help="Checkpoint file name [Default: OUTFILE.check]")
   out_parser.add_option("--save_freq", type=int, default=100000, metavar="FREQ",
                         help="Freq to save checkpoints [Default: %default]")
+  out_parser.add_option("--print-stats", action="store_true", default=False,
+                        help="Print aggregate statistics every time we "
+                        "checkpoint.")
   parser.add_option_group(out_parser)
 
   (options, args) = parser.parse_args(args)
@@ -339,6 +352,9 @@ def main(args):
                           options.checkpoint, options.randomize, options.seed,
                           options)
   enumerator.enum()
+
+  if options.print_stats:
+    pprint(enumerator.stats.__dict__)
 
 if __name__ == "__main__":
   main(sys.argv[1:])
