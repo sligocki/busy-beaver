@@ -11,7 +11,7 @@ from optparse import OptionParser, OptionGroup
 import sys
 
 from Alarm import ALARM, AlarmException
-from Common import Exit_Condition
+from Common import Exit_Condition, GenContainer
 import CTL1
 import CTL2
 import IO
@@ -44,12 +44,6 @@ def create_default_options():
   options, args = parser.parse_args([])
   return options
 
-class GenContainer(object):
-  """Generic Container class"""
-  def __init__(self, **args):
-    for atr in args:
-      self.__dict__[atr] = args[atr]
-
 def setup_CTL(m, cutoff):
   options = create_default_options()
   options.prover = False
@@ -74,7 +68,7 @@ def run_options(ttable, options):
              options.backsymbol, options.prover, options.recursive)
 
 def run(TTable, options, steps=INF, runtime=None, block_size=None, 
-                back=True, prover=True, rec=False):
+                back=True, prover=True, rec=False, stats=None):
   """Legacy interface, use run_options."""
   for do_over in xrange(0,4):
     try:
@@ -143,6 +137,13 @@ def run(TTable, options, steps=INF, runtime=None, block_size=None,
         sim.loop_seek(steps)
 
         ALARM.cancel_alarm()
+
+        # TODO(shawn): pass the stats object into sim so we don't have to copy.
+        if stats:
+          stats.num_rules += len(sim.prover.rules)
+          stats.num_recursive_rules += sim.prover.num_recursive_rules
+          stats.num_collatz_rules += sim.prover.num_collatz_rules
+          stats.num_failed_proofs += sim.prover.num_failed_proofs
 
       except AlarmException: # Catch Timer
         ALARM.cancel_alarm()

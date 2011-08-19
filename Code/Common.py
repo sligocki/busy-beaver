@@ -5,6 +5,12 @@
 Shared constants and constructs.
 """
 
+class GenContainer(object):
+  """Generic container class"""
+  def __init__(self, **args):
+    for atr in args:
+      self.__dict__[atr] = args[atr]
+
 class Exit_Condition(object):
   """Basically an enum of Turing machine exit conditions."""
   # TODO(shawn): It'd be nice to convert these to strings or something less

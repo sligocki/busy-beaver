@@ -229,6 +229,9 @@ class Simulator(object):
       print "Rules proven:", len(self.prover.rules)
       if self.prover.recursive:
         print "Recursive rules proven:", self.prover.num_recursive_rules
+        if self.prover.allow_collatz:
+          print "Collatz rules proven:", self.prover.num_collatz_rules
+      print "Failed proofs:", self.prover.num_failed_proofs
     print "Tape copies:", Tape.Chain_Tape.num_copies
 
   def verbose_print(self):
