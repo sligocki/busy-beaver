@@ -44,7 +44,7 @@ def Macro_Machine_Recursive(machine_num,
                             tape_length, max_steps,
                             old_results, old_tape_length, old_max_steps, io):
   results = run(machine.get_TTable(), num_states, num_symbols, macro_size,
-                   tape_length, max_steps)
+                tape_length, max_steps)
 
   exit_condition = results[0]
 
