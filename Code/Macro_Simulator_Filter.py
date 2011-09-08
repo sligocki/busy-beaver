@@ -6,7 +6,8 @@
 Tree Filter which uses the Macro Machine Simulator.
 """
 
-from Common import Exit_Condition
+from pprint import pprint
+from Common import Exit_Condition, GenContainer
 import IO
 from Macro import Simulator, Turing_Machine, Block_Finder
 from Alarm import ALARM, AlarmException
@@ -15,7 +16,8 @@ from Alarm import ALARM, AlarmException
 max_step2inf = 0
 max_loop2inf = 0
 
-def run(TTable, block_size, steps, runtime, recursive, progress, options):
+def run(TTable, block_size, steps, runtime, recursive, progress, options,
+        stats):
   # Get and initialize a new simulator object.
   m1 = Turing_Machine.Simple_Machine(TTable)
   if not block_size:
@@ -39,9 +41,17 @@ def run(TTable, block_size, steps, runtime, recursive, progress, options):
     ALARM.cancel_alarm()
     sim.op_state = Turing_Machine.TIME_OUT
 
+  stats.num_rules += len(sim.prover.rules)
+  stats.num_recursive_rules += sim.prover.num_recursive_rules
+  stats.num_collatz_rules += sim.prover.num_collatz_rules
+  stats.num_failed_proofs += sim.prover.num_failed_proofs
+
+  if progress:
+    pprint(stats.__dict__)
+
   if sim.op_state == Turing_Machine.RUNNING:
     if progress:
-      pass #print "\tUnknown", block_size, sim.step_num, sim.num_loops
+      print "\tUnknown", block_size, sim.step_num, sim.num_loops
     # TODO(shawn): Return time taken.
     return Exit_Condition.UNKNOWN, "Max_Steps", sim.get_nonzeros(), sim.step_num
 
@@ -123,11 +133,18 @@ if __name__ == "__main__":
   num_halt = 0
   num_undefined = 0
 
+  # Stats
+  stats = GenContainer()
+  stats.num_rules = 0
+  stats.num_recursive_rules = 0
+  stats.num_collatz_rules = 0
+  stats.num_failed_proofs = 0
+
   for io_record in io:
     # Run the simulator/filter on this machine.
     sim_results = run(io_record.ttable, options.block_size, options.steps, 
                       options.time, options.recursive, options.progress,
-                      options)
+                      options, stats)
 
     # If we could not decide anything, leave the old io_record alone.
     if sim_results[0] in Exit_Condition.UNKNOWN_SET:
@@ -151,6 +168,8 @@ if __name__ == "__main__":
 
       io.write_record(io_record)
 
+  # Print stats
+  pprint(stats.__dict__)
   # Print number of TMs that halted.
   if num_halt > 0:
     print >>sys.stderr, num_halt, "in file:", options.infile, "- halted!"
