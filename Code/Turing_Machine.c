@@ -304,15 +304,15 @@ inline int step_recur_2_4_054_TM(TM* m, unsigned long long step_num)
 
     place = 0;
 
-    scanTape = m->tape;
-    prev_symbol = *scanTape;
+    scanTape = m->tape + m->max_left-1;
+    prev_symbol = *(scanTape++);
 
     rep_count1 = 0;
     rep_count2 = 0;
 
     good_tape = 1;
 
-    for (i = 0; i < m->tape_length; i++)
+    for (i = m->max_left; i <= m->max_right+1; i++)
     {
       int symbol = *(scanTape++);
 
