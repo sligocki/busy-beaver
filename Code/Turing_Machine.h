@@ -54,5 +54,6 @@ typedef struct
 
 extern inline int  step_TM (TM* m);
 extern inline int  step_recur_TM (TM* m, unsigned long long step_num);
+extern inline int  step_recur_2_4_054_TM (TM* m, unsigned long long step_num);
 extern inline void print_TM(TM* m);
 extern inline void free_TM (TM* m);
