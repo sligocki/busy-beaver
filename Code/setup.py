@@ -65,3 +65,12 @@ setup(name='Turing_Machine_Recur',
       description='C speedups to Turing machine simulation',
       ext_modules=[module7])
 
+module8 = Extension('Turing_Machine_Recur_2_4_054',
+                    sources=['Turing_Machine_Recur_2_4_054.c','Turing_Machine.c'],
+                    extra_compile_args=['-pedantic-errors','-Wno-long-long'])
+
+setup(name='Turing_Machine_Recur_2_4_054',
+      version='1.0',
+      description='C speedups to Turing machine simulation',
+      ext_modules=[module8])
+
