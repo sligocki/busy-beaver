@@ -9,12 +9,16 @@ compression, chain moves and a proof system.
 import math
 import optparse
 from optparse import OptionParser, OptionGroup
+import sys
 import time
 
 import Proof_System
-from Numbers.Algebraic_Expression import Algebraic_Expression
 import Tape
 import Turing_Machine
+
+parent_dir = sys.path[0][:sys.path[0].rfind("/")] # pwd path with last directory removed
+sys.path.insert(1, parent_dir)
+from Numbers.Algebraic_Expression import Algebraic_Expression
 
 def add_option_group(parser):
   """Add Simulator options group to an OptParser parser object."""

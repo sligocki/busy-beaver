@@ -67,7 +67,7 @@ def run_options(ttable, options):
   return run(ttable, options, options.steps, options.time, options.block_size,
              options.backsymbol, options.prover, options.recursive)
 
-def run(TTable, options, steps=INF, runtime=None, block_size=None, 
+def run(TTable, options, steps=INF, runtime=None, block_size=None,
                 back=True, prover=True, rec=False, stats=None):
   """Legacy interface, use run_options."""
   for do_over in xrange(0,4):
