@@ -52,6 +52,14 @@ class MPI_Worker_Work_Queue(Work_Queue.Work_Queue):
   def push_job(self, job):
     #print "Worker %d: Pushing job %r." % (rank, job)
     self.local_queue.append(job)
+    send_extra()
+
+  def push_jobs(self, jobs):
+    self.local_queue += jobs
+    send_extra()
+
+  def send_extra(self):
+    """Not for external use. Sends extra jobs back to master."""
     if len(self.local_queue) > MAX_LOCAL_JOBS:
       # TODO(shawn): Should we send the bottom jobs back to master instead of
       # the top jobs?
