@@ -12,6 +12,10 @@ class Work_Queue(object):
     to a central server if there are enough local jobs buffered."""
     raise NotImplemented
 
+  def push_jobs(self, jobs):
+    """Add several jobs into the queue at once."""
+    raise NotImplemented
+
 class Single_Process_Work_Queue(Work_Queue):
   """Single process implementation of Work_Queue using a single queue."""
 
@@ -26,3 +30,6 @@ class Single_Process_Work_Queue(Work_Queue):
 
   def push_job(self, job):
     return self.queue.append(job)
+
+  def push_jobs(self, jobs):
+    return self.queue.extend(jobs)

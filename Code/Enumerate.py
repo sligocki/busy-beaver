@@ -27,6 +27,7 @@ import IO
 from Macro import Block_Finder
 import Macro_Simulator
 from Turing_Machine import Turing_Machine
+import Work_Queue
 
 def long_to_eng_str(number, left, right):
   if number != 0:
@@ -43,11 +44,6 @@ def long_to_eng_str(number, left, right):
                             expo)
   else:
     return "0.%se+00" % ("0" * right)
-
-class Stack(list):
-  """A simple FILO type. Has push(x) and pop()"""
-  def push(self, item):
-    return self.append(item)
 
 class DefaultDict(dict):
   """Dictionary that defaults to a value."""
@@ -75,7 +71,8 @@ class Enumerator(object):
     self.options = options # Has options for things such as block_finder ...
 
     # Stack of TM descriptions to simulate
-    self.stack = Stack()
+    # TODO(shawn): Allow arbitrary Work_Queue implementations.
+    self.stack = Work_Queue.Single_Process_Work_Queue()
 
     # If we are randomizing the stack order
     self.randomize = randomize
@@ -116,7 +113,9 @@ class Enumerator(object):
   def enum(self):
     """Enumerate all num_states, num_symbols TMs in Tree-Normal Form"""
     blank_tm = Turing_Machine(self.num_states, self.num_symbols)
-    self.stack.push(blank_tm)
+    # TODO(shawn): In parrallel code, this needs to be done only in
+    # master process.
+    self.stack.push_job(blank_tm)
     self.continue_enum()
 
   def continue_enum(self):
@@ -125,12 +124,15 @@ class Enumerator(object):
     machines to push back onto the stack.
     """
     self.start_time = time.time()
-    while len(self.stack) > 0:
+    while True:
+      # While we have machines to run, pop one off the stack ...
+      tm = self.stack.pop_job()
+      if not tm:
+        # tm == None is the indication that we have no more machines to run.
+        break
       # Periodically save state
       if (self.tm_num % self.save_freq) == 0:
         self.save()
-      # While we have machines to run, pop one off the stack ...
-      tm = self.stack.pop()
       for do_over in xrange(0,4):
         try:
           # ... and run it
@@ -222,7 +224,7 @@ class Enumerator(object):
         self.random.shuffle(new_tms)
 
       # Push the list of TMs onto the stack
-      self.stack.extend(new_tms)
+      self.stack.push_jobs(new_tms)
 
   def add_halt_trans(self, tm, on_state, on_symbol, steps, score):
     """Edit the TM to have a halt at on_stat/on_symbol and save the result."""
