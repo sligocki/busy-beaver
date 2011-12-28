@@ -1,14 +1,14 @@
-#! /usr/bin/env python
 """
 Test for "MPI_Work_Queue.py".
 
 To test, run:
-$ mpirun -np 8 test_MPI_Work_Queue.py
+$ mpirun -np 8 python Code/test_MPI_Work_Queue.py
 """
 
 import MPI_Work_Queue
 
 if __name__ == "__main__":
+  assert MPI_Work_Queue.num_proc > 1, "Must have at least 2 processes."
   if MPI_Work_Queue.rank == 0:
     master = MPI_Work_Queue.Master()
     for n in range(100):
