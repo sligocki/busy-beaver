@@ -36,11 +36,17 @@ class MPI_Worker_Work_Queue(Work_Queue.Work_Queue):
       # request type to distingush workers which have no jobs and are thus
       # waiting and workers which are simply pre-emptively requesting new jobs.
       #print "Worker %d: Waiting for pop." % rank
-      comm.send(rank, dest=self.master, tag=WAITING_FOR_POP)
+
+      # Tell master that we are waiting.
+      # Note: The contents of this message are ignored, only the fact that it
+      # was sent and the tag matter.
+      comm.send(None, dest=self.master, tag=WAITING_FOR_POP)
+      # And wait for more work in response.
       self.local_queue += comm.recv(source=self.master, tag=POP_JOBS)
       if self.local_queue:
         return self.local_queue.pop()
       else:
+        # If server sent us no work, we are done.
         return None
 
   def push_job(self, job):
@@ -76,7 +82,9 @@ class Master(object):
 
       # Update worker state.
       while comm.Iprobe(source=MPI.ANY_SOURCE, tag=WAITING_FOR_POP):
-        rank_waiting = comm.recv(source=MPI.ANY_SOURCE, tag=WAITING_FOR_POP)
+        status = MPI.Status()
+        comm.recv(source=MPI.ANY_SOURCE, tag=WAITING_FOR_POP, status=status)
+        rank_waiting = status.Get_source()
         worker_state[rank_waiting] = False
         #print "Master: Worker %d is waiting for a job: %r" % (rank_waiting, worker_state)
 
