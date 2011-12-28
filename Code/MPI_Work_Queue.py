@@ -6,6 +6,7 @@ import Work_Queue
 
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
+num_proc = comm.Get_size()
 
 # MPI tags
 PUSH_JOB = 1
@@ -23,6 +24,9 @@ class MPI_Worker_Work_Queue(Work_Queue.Work_Queue):
   def pop_job(self):
     # Naive implementation just pulls every job directly from master.
     # TODO(shawn): We should buffer a larger number of jobs locally.
+    # TODO(shawn): If we pre-emptively request jobs we will need a new
+    # request type to distingush workers which have no jobs and are thus
+    # waiting and workers which are simply pre-emptively requesting new jobs.
     #print "Worker %d: Waiting for pop." % rank
     comm.send(rank, dest=self.master, tag=WAITING_FOR_POP)
     job = comm.recv(source=self.master, tag=POP_JOB)
@@ -44,7 +48,6 @@ class Master(object):
   run_master() to run the select loop for listening for workers."""
 
   def __init__(self):
-    # Queue for storing jobs from all workers and waiting to be sent back to them.
     self.master_queue = []
 
   def push_job(self, job):
@@ -52,7 +55,7 @@ class Master(object):
 
   def run_master(self):
     # States of all workers. False iff that worker is WAITING_FOR_POP.
-    worker_state = [True] * comm.Get_size()
+    worker_state = [True] * num_proc
     worker_state[0] = None  # Proc 0 is not a worker.
     while True:
       # Wait for a worker to push us work or request to pop work.
@@ -73,7 +76,7 @@ class Master(object):
       # Quit when all workers are waiting for work.
       if not self.master_queue and True not in worker_state:
         #print "Master: All jobs waiting for work, shutting down."
-        for n in range(1, comm.Get_size()):
+        for n in range(1, num_proc):
           comm.send(None, dest=n, tag=POP_JOB)
         return True
 
