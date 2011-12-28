@@ -1,17 +1,25 @@
 #! /usr/bin/env python
 """
-Unit test for "MPI_Work_Queue.py".
+Test for "MPI_Work_Queue.py".
+
+To test, run:
+$ mpirun -np 8 test_MPI_Work_Queue.py
 """
 
 import MPI_Work_Queue
 
 if __name__ == "__main__":
-  queue = MPI_Work_Queue.MPI_Work_Queue()
-  if MPI_Work_Queue.rank == 1:
+  if MPI_Work_Queue.rank == 0:
+    master = MPI_Work_Queue.Master()
     for n in range(100):
-      queue.push_job(n)
-  while True:
-    job = queue.pop_job()
-    if job == None:
-      break
-    print "Process %d recieved job %d" % (MPI_Work_Queue.rank, job)
+      master.push_job(n)
+    success = master.run_master()
+    if not success:
+      sys.exit(1)
+  else:
+    queue = MPI_Work_Queue.MPI_Worker_Work_Queue(master_proc_num=0)
+    while True:
+      job = queue.pop_job()
+      if job == None:
+        break
+      print "Process %d recieved job %d" % (MPI_Work_Queue.rank, job)
