@@ -8,10 +8,14 @@ comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
 num_proc = comm.Get_size()
 
-# MPI tags
-PUSH_JOB = 1
+# MPI tags. Values are arbitrary, but distinct.
+PUSH_JOBS = 1
 WAITING_FOR_POP = 2
-POP_JOB = 3
+POP_JOBS = 3
+
+# Optimization parameters
+NUM_JOBS_PER_BATCH = 100
+MAX_LOCAL_JOBS = 200
 
 # Worker code
 class MPI_Worker_Work_Queue(Work_Queue.Work_Queue):
@@ -20,25 +24,34 @@ class MPI_Worker_Work_Queue(Work_Queue.Work_Queue):
 
   def __init__(self, master_proc_num):
     self.master = master_proc_num
+    self.local_queue = []  # Used to buffer up jobs locally.
 
   def pop_job(self):
-    # Naive implementation just pulls every job directly from master.
-    # TODO(shawn): We should buffer a larger number of jobs locally.
-    # TODO(shawn): If we pre-emptively request jobs we will need a new
-    # request type to distingush workers which have no jobs and are thus
-    # waiting and workers which are simply pre-emptively requesting new jobs.
-    #print "Worker %d: Waiting for pop." % rank
-    comm.send(rank, dest=self.master, tag=WAITING_FOR_POP)
-    job = comm.recv(source=self.master, tag=POP_JOB)
-    #print "Worker %d: Recieved job %r." % (rank, job)
-    return job
+    if self.local_queue:
+      # Perform all jobs in the local queue first.
+      return self.local_queue.pop()
+    else:
+      # When local queue is empty, request more work from the master.
+      # TODO(shawn): If we pre-emptively request jobs we will need a new
+      # request type to distingush workers which have no jobs and are thus
+      # waiting and workers which are simply pre-emptively requesting new jobs.
+      #print "Worker %d: Waiting for pop." % rank
+      comm.send(rank, dest=self.master, tag=WAITING_FOR_POP)
+      self.local_queue += comm.recv(source=self.master, tag=POP_JOBS)
+      if self.local_queue:
+        return self.local_queue.pop()
+      else:
+        return None
 
   def push_job(self, job):
-    # Naive implementation just pushes every job directly to master.
-    # TODO(shawn): We should store a local queue of tasks and only push to
-    # master when we get too many jobs locally (or when master wants more jobs).
     #print "Worker %d: Pushing job %r." % (rank, job)
-    comm.send(job, dest=self.master, tag=PUSH_JOB)
+    self.local_queue.append(job)
+    if len(self.local_queue) > MAX_LOCAL_JOBS:
+      # TODO(shawn): Should we send the bottom jobs back to master instead of
+      # the top jobs?
+      extra_jobs = self.local_queue[NUM_JOBS_PER_BATCH:]
+      self.local_queue = self.local_queue[:NUM_JOBS_PER_BATCH]
+      comm.send(extra_jobs, dest=self.master, tag=PUSH_JOBS)
 
 
 # Master code
@@ -68,22 +81,24 @@ class Master(object):
         #print "Master: Worker %d is waiting for a job: %r" % (rank_waiting, worker_state)
 
       # Collect all jobs pushed from workers.
-      while comm.Iprobe(source=MPI.ANY_SOURCE, tag=PUSH_JOB):
-        job = comm.recv(source=MPI.ANY_SOURCE, tag=PUSH_JOB)
-        #print "Master: Recieved job %r." % job
-        self.master_queue.append(job)
+      while comm.Iprobe(source=MPI.ANY_SOURCE, tag=PUSH_JOBS):
+        self.master_queue += comm.recv(source=MPI.ANY_SOURCE, tag=PUSH_JOBS)
 
       # Quit when all workers are waiting for work.
       if not self.master_queue and True not in worker_state:
         #print "Master: All jobs waiting for work, shutting down."
         for n in range(1, num_proc):
-          comm.send(None, dest=n, tag=POP_JOB)
+          # Sending [] tells workers there is no work left and they should quit.
+          comm.send([], dest=n, tag=POP_JOBS)
         return True
 
       # Send top job to first worker who requests it.
       while self.master_queue and False in worker_state:
-        job = self.master_queue.pop()
+        # TODO(shawn): Should we send jobs from the top rather than bottom of
+        # the queue.
+        jobs_block = self.master_queue[:NUM_JOBS_PER_BATCH]
+        self.master_queue = self.master_queue[NUM_JOBS_PER_BATCH:]
         rank_waiting = worker_state.index(False)
         #print "Master: Sent job %r to worker %d." % (job, rank_waiting)
-        comm.send(job, dest=rank_waiting, tag=POP_JOB)
+        comm.send(jobs_block, dest=rank_waiting, tag=POP_JOBS)
         worker_state[rank_waiting] = True
