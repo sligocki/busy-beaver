@@ -29,6 +29,13 @@ import Macro_Simulator
 from Turing_Machine import Turing_Machine
 import Work_Queue
 
+try:
+  import MPI_Work_Queue
+  num_proc = MPI_Work_Queue.num_proc
+except ImportError:
+  # Allow this to work even if mpy4py is not installed.
+  num_proc = 1
+
 def long_to_eng_str(number, left, right):
   if number != 0:
     expo = int(math.log(abs(number), 10))
@@ -54,12 +61,10 @@ class DefaultDict(dict):
 
 class Enumerator(object):
   """Holds enumeration state information for checkpointing."""
-  def __init__(self, num_states, num_symbols, max_steps, max_time, io,
+  def __init__(self, max_steps, max_time, stack, io,
                      save_freq=100000, checkpoint_filename="checkpoint",
                      randomize=False, seed=None, options=None):
     # Main TM attributes
-    self.num_states = num_states
-    self.num_symbols = num_symbols
     self.max_steps = max_steps
     self.max_time = max_time
     # I/O info
@@ -71,8 +76,8 @@ class Enumerator(object):
     self.options = options # Has options for things such as block_finder ...
 
     # Stack of TM descriptions to simulate
-    # TODO(shawn): Allow arbitrary Work_Queue implementations.
-    self.stack = Work_Queue.Single_Process_Work_Queue()
+    assert isinstance(stack, Work_Queue.Work_Queue)
+    self.stack = stack
 
     # If we are randomizing the stack order
     self.randomize = randomize
@@ -109,14 +114,6 @@ class Enumerator(object):
       d["random"].setstate(d["random_state"])
       del d["random_state"]
     self.__dict__ = d
-
-  def enum(self):
-    """Enumerate all num_states, num_symbols TMs in Tree-Normal Form"""
-    blank_tm = Turing_Machine(self.num_states, self.num_symbols)
-    # TODO(shawn): In parrallel code, this needs to be done only in
-    # master process.
-    self.stack.push_job(blank_tm)
-    self.continue_enum()
 
   def continue_enum(self):
     """
@@ -321,11 +318,18 @@ def main(args):
   if not options.outfilename:
     options.outfilename = "Enum.%d.%d.%s.out" % (options.states, options.symbols, options.steps)
 
+  if num_proc > 1:
+    field_size = len(str(num_proc - 1))
+    field_format = ".%0" + str(field_size) + "d"
+    options.outfilename += field_format % MPI_Work_Queue.rank
+
   if not options.checkpoint:
     options.checkpoint = options.outfilename + ".check"
 
   ## Set up I/O
   if os.path.exists(options.outfilename):
+    if num_proc > 1:
+      parser.error("Output file %r already exists" % options.outfilename)
     reply = raw_input("File '%s' exists, overwrite it? " % options.outfilename)
     if reply.lower() not in ("y", "yes"):
       parser.error("Choose different outfilename")
@@ -348,12 +352,30 @@ def main(args):
   if options.steps == 0:
     options.steps = Macro_Simulator.INF
 
+  # Set up work queue and populate with blank machine.
+  if num_proc == 1:
+    stack = Work_Queue.Single_Process_Work_Queue()
+    # TODO(shawn): Allow populating with a set of input machines.
+    blank_tm = Turing_Machine(options.states, options.symbols)
+    stack.push_job(blank_tm)
+  else:
+    if MPI_Work_Queue.rank == 0:
+      master = MPI_Work_Queue.Master()
+      # TODO(shawn): Allow populating with a set of input machines.
+      blank_tm = Turing_Machine(options.states, options.symbols)
+      master.push_job(blank_tm)
+      if master.run_master():
+        sys.exit(0)
+      else:
+        sys.exit(1)
+    else:
+      stack = MPI_Work_Queue.MPI_Worker_Work_Queue(master_proc_num=0)
+
   ## Enumerate machines
-  enumerator = Enumerator(options.states, options.symbols, options.steps,
-                          options.time, io, options.save_freq,
-                          options.checkpoint, options.randomize, options.seed,
-                          options)
-  enumerator.enum()
+  enumerator = Enumerator(options.steps, options.time, stack, io,
+                          options.save_freq, options.checkpoint,
+                          options.randomize, options.seed, options)
+  enumerator.continue_enum()
 
   if options.print_stats:
     pprint(enumerator.stats.__dict__)
