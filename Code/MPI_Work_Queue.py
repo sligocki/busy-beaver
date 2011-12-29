@@ -52,11 +52,11 @@ class MPI_Worker_Work_Queue(Work_Queue.Work_Queue):
   def push_job(self, job):
     #print "Worker %d: Pushing job %r." % (rank, job)
     self.local_queue.append(job)
-    send_extra()
+    self.send_extra()
 
   def push_jobs(self, jobs):
     self.local_queue += jobs
-    send_extra()
+    self.send_extra()
 
   def send_extra(self):
     """Not for external use. Sends extra jobs back to master."""
