@@ -329,6 +329,7 @@ def main(args):
   ## Set up I/O
   if os.path.exists(options.outfilename):
     if num_proc > 1:
+      # TODO(shawn): MPI abort here and other failure places.
       parser.error("Output file %r already exists" % options.outfilename)
     reply = raw_input("File '%s' exists, overwrite it? " % options.outfilename)
     if reply.lower() not in ("y", "yes"):
