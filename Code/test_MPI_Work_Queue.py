@@ -5,6 +5,8 @@ To test, run:
 $ mpirun -np 8 python Code/test_MPI_Work_Queue.py
 """
 
+import time
+
 import MPI_Work_Queue
 
 if __name__ == "__main__":
@@ -15,15 +17,18 @@ if __name__ == "__main__":
 
   if MPI_Work_Queue.rank == 0:
     master = MPI_Work_Queue.Master()
-    for n in range(100):
+    for n in range(1000):
       master.push_job(n)
     success = master.run_master()
     if not success:
       sys.exit(1)
   else:
     queue = MPI_Work_Queue.MPI_Worker_Work_Queue(master_proc_num=0)
+    file = open("test_MPI_Work_Queue_%d" % (MPI_Work_Queue.rank,),"w")
     while True:
       job = queue.pop_job()
       if job == None:
+        file.close()
         break
-      print "Process %d recieved job %d" % (MPI_Work_Queue.rank, job)
+      file.write("Process %d recieved job %d\n" % (MPI_Work_Queue.rank, job))
+      time.sleep(0.0001 * job)
