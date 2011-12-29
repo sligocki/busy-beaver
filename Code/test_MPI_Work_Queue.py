@@ -17,7 +17,7 @@ if __name__ == "__main__":
 
   if MPI_Work_Queue.rank == 0:
     master = MPI_Work_Queue.Master()
-    for n in range(1000):
+    for n in range(100 * MPI_Work_Queue.num_proc):
       master.push_job(n)
     success = master.run_master()
     if not success:

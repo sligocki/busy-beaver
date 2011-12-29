@@ -9,13 +9,15 @@ rank = comm.Get_rank()
 num_proc = comm.Get_size()
 
 # MPI tags. Values are arbitrary, but distinct.
-PUSH_JOBS = 1
+PUSH_JOBS       = 1
 WAITING_FOR_POP = 2
-POP_JOBS = 3
+POP_JOBS        = 3
 
 # Optimization parameters
-NUM_JOBS_PER_BATCH = 100
-MAX_LOCAL_JOBS = 200
+MIN_NUM_JOBS_PER_BATCH =  10
+MAX_NUM_JOBS_PER_BATCH = 100
+
+MAX_LOCAL_JOBS         = 200
 
 # Worker code
 class MPI_Worker_Work_Queue(Work_Queue.Work_Queue):
@@ -108,13 +110,26 @@ class Master(object):
           comm.send([], dest=n, tag=POP_JOBS)
         return True
 
+      num_waiting = worker_state.count(False)
+      queue_length = len(self.master_queue)
+
+      num_jobs_per_batch = min(max(MIN_NUM_JOBS_PER_BATCH,
+                                   queue_length / num_waiting),
+                               MAX_NUM_JOBS_PER_BATCH)
+
+      increase_num_per_batch = (num_jobs_per_batch + 1) * num_waiting - queue_length
+
       # Send top job to first worker who requests it.
+      count = 0
       while self.master_queue and False in worker_state:
         # TODO(shawn): Should we send jobs from the top rather than bottom of
         # the queue.
-        jobs_block = self.master_queue[:NUM_JOBS_PER_BATCH]
-        self.master_queue = self.master_queue[NUM_JOBS_PER_BATCH:]
+        jobs_block = self.master_queue[:num_jobs_per_batch]
+        self.master_queue = self.master_queue[num_jobs_per_batch:]
         rank_waiting = worker_state.index(False)
         #print "Master: Sent job %r to worker %d." % (job, rank_waiting)
         comm.send(jobs_block, dest=rank_waiting, tag=POP_JOBS)
         worker_state[rank_waiting] = True
+        count += 1
+        if count == increase_num_per_batch:
+          num_jobs_per_batch += 1
