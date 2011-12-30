@@ -276,6 +276,20 @@ class Enumerator(object):
     io_record.category_reason = (Exit_Condition.name(reason), steps, runtime)
     self.io.write_record(io_record)
 
+def initialize_stack(io, options, stack):
+  if io.input_file:
+    # Initialize with all machines from infile.
+    for record in io:
+      # TODO(shawn): Allow these TMs to be expanded from read size to
+      # options size. Ex: if record.ttable is 2x2, but options are 2x3.
+      # Currently that will be treated like a normal 2x2 machine here.
+      tm = Turing_Machine(record.ttable)
+      stack.push_job(tm)
+  else:
+    # If no infile is specified, then default to the NxM blank TM.
+    blank_tm = Turing_Machine(options.states, options.symbols)
+    stack.push_job(blank_tm)
+
 def main(args):
   ## Parse command line options.
   usage = "usage: %prog --states= --symbols= [options]"
@@ -297,7 +311,10 @@ def main(args):
   out_parser.add_option("--outfile", dest="outfilename", metavar="OUTFILE",
                         help="Output file name "
                         "[Default: Enum.STATES.SYMBOLS.STEPS.out]")
-  out_parser.add_option("--infile", help="Ignored (For script compatibility)")
+  out_parser.add_option("--infile", dest="infilename",
+                        help="If specified, enumeration is started from "
+                        "these input machines instead of the single empty "
+                        "Turing Machine.")
   out_parser.add_option("--log_number", type=int, metavar="NUM",
                         help="Log number to use in output file")
   out_parser.add_option("--checkpoint", metavar="FILE",
@@ -331,6 +348,10 @@ def main(args):
     options.checkpoint = options.outfilename + ".check"
 
   ## Set up I/O
+  infile = None
+  if options.infilename:
+    infile = open(options.infilename, "r")
+
   if os.path.exists(options.outfilename):
     if num_proc > 1:
       # TODO(shawn): MPI abort here and other failure places.
@@ -340,7 +361,7 @@ def main(args):
       parser.error("Choose different outfilename")
   outfile = open(options.outfilename, "w")
 
-  io = IO.IO(None, outfile, options.log_number)
+  io = IO.IO(infile, outfile, options.log_number)
 
   ## Print command line
   print "Enumerate.py --states=%d --symbols=%d --steps=%s --time=%f" \
@@ -360,15 +381,11 @@ def main(args):
   # Set up work queue and populate with blank machine.
   if num_proc == 1:
     stack = Work_Queue.Single_Process_Work_Queue()
-    # TODO(shawn): Allow populating with a set of input machines.
-    blank_tm = Turing_Machine(options.states, options.symbols)
-    stack.push_job(blank_tm)
+    initialize_stack(io, options, stack)
   else:
     if MPI_Work_Queue.rank == 0:
       master = MPI_Work_Queue.Master()
-      # TODO(shawn): Allow populating with a set of input machines.
-      blank_tm = Turing_Machine(options.states, options.symbols)
-      master.push_job(blank_tm)
+      initialize_stack(io, options, stack)
       if master.run_master():
         sys.exit(0)
       else:
