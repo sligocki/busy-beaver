@@ -161,7 +161,7 @@ class Turing_Machine:
         if element[2] > self.max_state:
           self.max_state = element[2]
 
-        if element == (-1, 0, -1):
+        if element[0] == -1:
           self.num_empty_cells += 1
 
   def get_num_states_available(self):
