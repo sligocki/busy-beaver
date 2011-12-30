@@ -5,3 +5,4 @@ syntax: glob
 *.dll
 build
 cvs2hg_stuff
+Data
