@@ -385,7 +385,7 @@ def main(args):
   else:
     if MPI_Work_Queue.rank == 0:
       master = MPI_Work_Queue.Master()
-      initialize_stack(io, options, stack)
+      initialize_stack(io, options, master)
       if master.run_master():
         sys.exit(0)
       else:
