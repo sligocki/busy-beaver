@@ -121,6 +121,7 @@ class Enumerator(object):
     machines to push back onto the stack.
     """
     self.start_time = time.time()
+    self.start_clock = time.clock()
     while True:
       # While we have machines to run, pop one off the stack ...
       tm = self.stack.pop_job()
@@ -168,13 +169,15 @@ class Enumerator(object):
   def save(self):
     """Save a checkpoint file so that computation can be restarted if it fails."""
     self.end_time = time.time()
+    self.end_clock = time.clock()
 
     # Print out statistical data
     print self.tm_num, "-",
     print self.num_halt, self.num_infinite, self.num_unresolved, "-",
     print long_to_eng_str(self.best_steps,1,3),
     print long_to_eng_str(self.best_score,1,3),
-    print "(%.2f)" % (self.end_time - self.start_time)
+    print "(%.2f - %.2f)" % (self.end_time - self.start_time,
+                             self.end_clock - self.start_clock)
     if self.options.print_stats:
       pprint(self.stats.__dict__)
     sys.stdout.flush()
@@ -189,6 +192,7 @@ class Enumerator(object):
 
     # Restart timer
     self.start_time = time.time()
+    self.start_clock = time.clock()
 
   def run(self, tm):
     """Simulate TM"""
