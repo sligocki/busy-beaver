@@ -65,8 +65,8 @@ class MPI_Worker_Work_Queue(Work_Queue.Work_Queue):
     if len(self.local_queue) > MAX_LOCAL_JOBS:
       # TODO(shawn): Should we send the bottom jobs back to master instead of
       # the top jobs?
-      extra_jobs = self.local_queue[NUM_JOBS_PER_BATCH:]
-      self.local_queue = self.local_queue[:NUM_JOBS_PER_BATCH]
+      extra_jobs = self.local_queue[MAX_NUM_JOBS_PER_BATCH:]
+      self.local_queue = self.local_queue[:MAX_NUM_JOBS_PER_BATCH]
       comm.send(extra_jobs, dest=self.master, tag=PUSH_JOBS)
 
 
