@@ -111,25 +111,27 @@ class Master(object):
         return True
 
       num_waiting = worker_state.count(False)
-      queue_length = len(self.master_queue)
 
-      num_jobs_per_batch = min(max(MIN_NUM_JOBS_PER_BATCH,
-                                   queue_length / num_waiting),
-                               MAX_NUM_JOBS_PER_BATCH)
+      if num_waiting > 0:
+        queue_length = len(self.master_queue)
 
-      increase_num_per_batch = (num_jobs_per_batch + 1) * num_waiting - queue_length
+        num_jobs_per_batch = min(max(MIN_NUM_JOBS_PER_BATCH,
+                                     queue_length / num_waiting),
+                                 MAX_NUM_JOBS_PER_BATCH)
 
-      # Send top job to first worker who requests it.
-      count = 0
-      while self.master_queue and False in worker_state:
-        # TODO(shawn): Should we send jobs from the top rather than bottom of
-        # the queue.
-        jobs_block = self.master_queue[:num_jobs_per_batch]
-        self.master_queue = self.master_queue[num_jobs_per_batch:]
-        rank_waiting = worker_state.index(False)
-        #print "Master: Sent job %r to worker %d." % (job, rank_waiting)
-        comm.send(jobs_block, dest=rank_waiting, tag=POP_JOBS)
-        worker_state[rank_waiting] = True
-        count += 1
-        if count == increase_num_per_batch:
-          num_jobs_per_batch += 1
+        increase_num_per_batch = (num_jobs_per_batch + 1) * num_waiting - queue_length
+
+        # Send top job to first worker who requests it.
+        count = 0
+        while self.master_queue and False in worker_state:
+          # TODO(shawn): Should we send jobs from the top rather than bottom of
+          # the queue.
+          jobs_block = self.master_queue[:num_jobs_per_batch]
+          self.master_queue = self.master_queue[num_jobs_per_batch:]
+          rank_waiting = worker_state.index(False)
+          #print "Master: Sent job %r to worker %d." % (job, rank_waiting)
+          comm.send(jobs_block, dest=rank_waiting, tag=POP_JOBS)
+          worker_state[rank_waiting] = True
+          count += 1
+          if count == increase_num_per_batch:
+            num_jobs_per_batch += 1
