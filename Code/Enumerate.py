@@ -123,6 +123,8 @@ class Enumerator(object):
     self.start_time = time.time()
     self.start_clock = time.clock()
     while True:
+      if self.options.num_enum and self.tm_num >= self.options.num_enum:
+        break
       # While we have machines to run, pop one off the stack ...
       tm = self.stack.pop_job()
       if not tm:
@@ -133,7 +135,7 @@ class Enumerator(object):
         self.save()
       for do_over in xrange(0,4):
         try:
-          # ... and run it
+          # ... and run it.
           cond, info = self.run(tm)
 
           # If it hits an undefined transition ...
@@ -163,6 +165,12 @@ class Enumerator(object):
         except AlarmException:
           sys.stderr.write("Weird2 (%d): %s\n" % (do_over,tm))
 
+    # Save any remaining machines on the stack.
+    tm = self.stack.pop_job()
+    while tm:
+      self.add_unresolved(tm, Exit_Condition.NOT_RUN)
+      tm = self.stack.pop_job()
+      
     # Done
     self.save()
 
@@ -260,14 +268,15 @@ class Enumerator(object):
     io_record.category_reason = (reason,)
     self.io.write_record(io_record)
 
-  def add_unresolved(self, tm, reason, steps, runtime=0):
+  def add_unresolved(self, tm, reason, steps=0, runtime=0):
     """Note an unresolved TM. Add statistics and output it with reason."""
     self.num_unresolved += 1
     if reason == Exit_Condition.MAX_STEPS:
       self.num_over_steps += 1
-    else:
-      assert reason == Exit_Condition.TIME_OUT, "Invalid reason (%r)" % reason
+    elif reason == Exit_Condition.TIME_OUT:
       self.num_over_time += 1
+    else:
+      assert reason == Exit_Condition.NOT_RUN, "Invalid reason (%r)" % reason
     self.tm_num += 1
 
     io_record = IO.Record()
@@ -294,12 +303,19 @@ def main(args):
   ## Parse command line options.
   usage = "usage: %prog --states= --symbols= [options]"
   parser = OptionParser(usage=usage)
-  req_parser = OptionGroup(parser, "Required Parameters") # Oxymoron?
+  req_parser = OptionGroup(parser, "Required Parameters")  # Oxymoron?
   req_parser.add_option("--states",  type=int, help="Number of states")
   req_parser.add_option("--symbols", type=int, help="Number of symbols")
   parser.add_option_group(req_parser)
 
   enum_parser = OptionGroup(parser, "Enumeration Options")
+  enum_parser.add_option("--breadth-first", action="store_true", default=False,
+                         help="Run search breadth first (only works in single "
+                         "process mode).")
+  enum_parser.add_option("--num-enum", type=int, metavar="NUM",
+                         help="Number of machines to enumerate all unfinished "
+                         "machines from queue are also output so that you can "
+                         "continue with --infile.")
   enum_parser.add_option("--randomize", action="store_true", default=False,
                          help="Randomize the order of enumeration.")
   enum_parser.add_option("--seed", type=int, help="Seed to randomize with.")
@@ -380,7 +396,10 @@ def main(args):
 
   # Set up work queue and populate with blank machine.
   if num_proc == 1:
-    stack = Work_Queue.Single_Process_Work_Queue()
+    if options.breadth_first:
+      stack = Work_Queue.Basic_FIFO_Work_Queue()
+    else:
+      stack = Work_Queue.Basic_LIFO_Work_Queue()
     initialize_stack(io, options, stack)
   else:
     if MPI_Work_Queue.rank == 0:
