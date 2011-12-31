@@ -28,7 +28,7 @@ class Exit_Condition(object):
   OVER_TAPE = 1
   MAX_STEPS = 2
   TIME_OUT = 5
-  NOT_RUN = 6
+  NOT_RUN = 7
   # Set of all unkown conditions
   UNKNOWN_SET = (UNKNOWN, OVER_TAPE, MAX_STEPS, TIME_OUT, NOT_RUN)
 
