@@ -28,9 +28,14 @@ class MPI_Worker_Work_Queue(Work_Queue.Work_Queue):
     self.master = master_proc_num
     self.local_queue = []  # Used to buffer up jobs locally.
 
+    # Stats
+    self.jobs_popped = 0
+    self.jobs_pushed = 0
+
   def pop_job(self):
     if self.local_queue:
       # Perform all jobs in the local queue first.
+      self.jobs_popped += 1
       return self.local_queue.pop()
     else:
       # When local queue is empty, request more work from the master.
@@ -38,6 +43,7 @@ class MPI_Worker_Work_Queue(Work_Queue.Work_Queue):
       # request type to distingush workers which have no jobs and are thus
       # waiting and workers which are simply pre-emptively requesting new jobs.
       #print "Worker %d: Waiting for pop." % rank
+      #print "Worker %d: Popped %d, Pushed %d." % (rank, self.jobs_popped, self.jobs_pushed)
 
       # Tell master that we are waiting.
       # Note: The contents of this message are ignored, only the fact that it
@@ -46,6 +52,7 @@ class MPI_Worker_Work_Queue(Work_Queue.Work_Queue):
       # And wait for more work in response.
       self.local_queue += comm.recv(source=self.master, tag=POP_JOBS)
       if self.local_queue:
+        self.jobs_popped += 1
         return self.local_queue.pop()
       else:
         # If server sent us no work, we are done.
@@ -53,10 +60,12 @@ class MPI_Worker_Work_Queue(Work_Queue.Work_Queue):
 
   def push_job(self, job):
     #print "Worker %d: Pushing job %r." % (rank, job)
+    self.jobs_pushed += 1
     self.local_queue.append(job)
     self.send_extra()
 
   def push_jobs(self, jobs):
+    self.jobs_pushed += len(jobs)
     self.local_queue += jobs
     self.send_extra()
 
