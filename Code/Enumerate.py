@@ -286,15 +286,17 @@ class Enumerator(object):
     io_record.category_reason = (Exit_Condition.name(reason), steps, runtime)
     self.io.write_record(io_record)
 
-def initialize_stack(io, options, stack):
-  if io.input_file:
+def initialize_stack(options, stack):
+  if options.infilename:
     # Initialize with all machines from infile.
-    for record in io:
+    infile = open(options.infilename, "r")
+    for record in IO.IO(infile, None, None):
       # TODO(shawn): Allow these TMs to be expanded from read size to
       # options size. Ex: if record.ttable is 2x2, but options are 2x3.
       # Currently that will be treated like a normal 2x2 machine here.
       tm = Turing_Machine(record.ttable)
       stack.push_job(tm)
+    infile.close()
   else:
     # If no infile is specified, then default to the NxM blank TM.
     blank_tm = Turing_Machine(options.states, options.symbols)
@@ -365,10 +367,6 @@ def main(args):
     options.checkpoint = options.outfilename + ".check"
 
   ## Set up I/O
-  infile = None
-  if options.infilename:
-    infile = open(options.infilename, "r")
-
   if os.path.exists(options.outfilename):
     if num_proc > 1:
       # TODO(shawn): MPI abort here and other failure places.
@@ -378,7 +376,7 @@ def main(args):
       parser.error("Choose different outfilename")
   outfile = open(options.outfilename, "w")
 
-  io = IO.IO(infile, outfile, options.log_number)
+  io = IO.IO(None, outfile, options.log_number)
 
   ## Print command line
   print "Enumerate.py --states=%d --symbols=%d --steps=%s --time=%f" \
@@ -401,13 +399,13 @@ def main(args):
       stack = Work_Queue.Basic_FIFO_Work_Queue()
     else:
       stack = Work_Queue.Basic_LIFO_Work_Queue()
-    initialize_stack(io, options, stack)
+    initialize_stack(options, stack)
   else:
     if options.num_enum:
       parser.error("--num-enum cannot be used in parallel runs.")
     if MPI_Work_Queue.rank == 0:
       master = MPI_Work_Queue.Master()
-      initialize_stack(io, options, master)
+      initialize_stack(options, master)
       if master.run_master():
         sys.exit(0)
       else:

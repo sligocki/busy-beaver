@@ -24,7 +24,7 @@ def read_ttable(line):
     cells = row.split()
     ttable_row = []
     for cell in cells:
-      assert len(cell) == 3
+      assert len(cell) == 3, (cell, row, rows, line)
       # Could be more efficient as a lookup table, rather than list find.
       # But number of symbols is pretty small, so it probably doesn't matter.
       symb_out = symbols.find(cell[0])
