@@ -166,10 +166,11 @@ class Enumerator(object):
           sys.stderr.write("Weird2 (%d): %s\n" % (do_over,tm))
 
     # Save any remaining machines on the stack.
-    tm = self.stack.pop_job()
-    while tm:
-      self.add_unresolved(tm, Exit_Condition.NOT_RUN)
+    if self.options.num_enum:
       tm = self.stack.pop_job()
+      while tm:
+        self.add_unresolved(tm, Exit_Condition.NOT_RUN)
+        tm = self.stack.pop_job()
       
     # Done
     self.save()
@@ -402,6 +403,8 @@ def main(args):
       stack = Work_Queue.Basic_LIFO_Work_Queue()
     initialize_stack(io, options, stack)
   else:
+    if options.num_enum:
+      parser.error("--num-enum cannot be used in parallel runs.")
     if MPI_Work_Queue.rank == 0:
       master = MPI_Work_Queue.Master()
       initialize_stack(io, options, master)
