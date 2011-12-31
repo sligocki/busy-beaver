@@ -1,3 +1,5 @@
+import collections
+
 class Work_Queue(object):
   """A generic interface for sending and recieving work."""
 
@@ -16,8 +18,8 @@ class Work_Queue(object):
     """Add several jobs into the queue at once."""
     raise NotImplemented
 
-class Single_Process_Work_Queue(Work_Queue):
-  """Single process implementation of Work_Queue using a single queue."""
+class Basic_LIFO_Work_Queue(Work_Queue):
+  """Single process implementation of Work_Queue using stack-order."""
 
   def __init__(self):
     self.queue = []
@@ -25,6 +27,24 @@ class Single_Process_Work_Queue(Work_Queue):
   def pop_job(self):
     if self.queue:
       return self.queue.pop()
+    else:
+      return None
+
+  def push_job(self, job):
+    return self.queue.append(job)
+
+  def push_jobs(self, jobs):
+    return self.queue.extend(jobs)
+
+class Basic_FIFO_Work_Queue(Work_Queue):
+  """Single process implementation of Work_Queue using queue-order."""
+
+  def __init__(self):
+    self.queue = collections.deque()
+
+  def pop_job(self):
+    if self.queue:
+      return self.queue.popleft()
     else:
       return None
 

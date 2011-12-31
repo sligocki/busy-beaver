@@ -28,8 +28,9 @@ class Exit_Condition(object):
   OVER_TAPE = 1
   MAX_STEPS = 2
   TIME_OUT = 5
+  NOT_RUN = 6
   # Set of all unkown conditions
-  UNKNOWN_SET = (UNKNOWN, OVER_TAPE, MAX_STEPS, TIME_OUT)
+  UNKNOWN_SET = (UNKNOWN, OVER_TAPE, MAX_STEPS, TIME_OUT, NOT_RUN)
 
   names = { ERROR: "Error",
             HALT: "Halt",
@@ -40,6 +41,7 @@ class Exit_Condition(object):
             OVER_TAPE: "Over_Tape",
             MAX_STEPS: "Max_Steps",
             TIME_OUT: "Time_Out",
+            NOT_RUN: "Not_Run",
             }
   condition_from_name = dict((name, cond) for (cond, name) in names.items())
 
