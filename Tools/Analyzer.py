@@ -40,7 +40,8 @@ count = {Exit_Condition.HALT: 0,
          Exit_Condition.UNKNOWN: 0,
          Exit_Condition.MAX_STEPS: 0,
          Exit_Condition.OVER_TAPE: 0,
-         Exit_Condition.TIME_OUT: 0}
+         Exit_Condition.TIME_OUT: 0,
+         Exit_Condition.NOT_RUN: 0}
 max_symbols = -1
 max_steps = -1
 for result in io.catch_error_iter():
@@ -61,8 +62,8 @@ num_unknown = sum(count[x] for x in Exit_Condition.UNKNOWN_SET)
 num_undecided = count[Exit_Condition.UNDEF_CELL]
 num_error = count[Exit_Condition.ERROR]
 
-digits = int(math.ceil(math.log10(num_total)))
-format_string = "%%%dd" % digits
+digits = len(str(num_total))
+format_string = "%" + str(digits) + "d"
 
 print filename
 print
