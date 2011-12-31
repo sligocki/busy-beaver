@@ -15,9 +15,9 @@ POP_JOBS        = 3
 
 # Optimization parameters
 MIN_NUM_JOBS_PER_BATCH =  10
-MAX_NUM_JOBS_PER_BATCH = 100
+MAX_NUM_JOBS_PER_BATCH =  10
 
-MAX_LOCAL_JOBS         = 200
+MAX_LOCAL_JOBS         =  20
 
 # Worker code
 class MPI_Worker_Work_Queue(Work_Queue.Work_Queue):
