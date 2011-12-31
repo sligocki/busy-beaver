@@ -109,6 +109,8 @@ class IO(object):
   """
   def __init__(self, input_file, output_file, log_number = None,
                compressed = True):
+    assert input_file == None or isinstance(input_file, file), type(input_file)
+    assert output_file == None or isinstance(output_file, file), type(output_file)
     self.input_file  = input_file
     self.output_file = output_file
     self.log_number  = log_number
