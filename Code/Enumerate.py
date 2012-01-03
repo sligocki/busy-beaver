@@ -393,6 +393,8 @@ def main(args):
   if options.steps == 0:
     options.steps = Macro_Simulator.INF
 
+  pout = None
+
   # Set up work queue and populate with blank machine.
   if num_proc == 1:
     if options.breadth_first:
@@ -401,17 +403,20 @@ def main(args):
       stack = Work_Queue.Basic_LIFO_Work_Queue()
     initialize_stack(options, stack)
   else:
+    pout = open("pout.%d" % MPI_Work_Queue.rank,"w")
     if options.num_enum:
       parser.error("--num-enum cannot be used in parallel runs.")
     if MPI_Work_Queue.rank == 0:
-      master = MPI_Work_Queue.Master()
+      master = MPI_Work_Queue.Master(pout)
       initialize_stack(options, master)
       if master.run_master():
+        pout.close()
         sys.exit(0)
       else:
+        pout.close()
         sys.exit(1)
     else:
-      stack = MPI_Work_Queue.MPI_Worker_Work_Queue(master_proc_num=0)
+      stack = MPI_Work_Queue.MPI_Worker_Work_Queue(master_proc_num=0,pout=pout)
 
   ## Enumerate machines
   enumerator = Enumerator(options.steps, options.time, stack, io,
@@ -421,6 +426,9 @@ def main(args):
 
   if options.print_stats:
     pprint(enumerator.stats.__dict__)
+
+  if pout:
+    pout.close()
 
 if __name__ == "__main__":
   main(sys.argv[1:])

@@ -1,4 +1,4 @@
-import sys
+import sys, time
 
 from mpi4py import MPI
 
@@ -24,15 +24,27 @@ class MPI_Worker_Work_Queue(Work_Queue.Work_Queue):
   """Work queue based on mpi4py MPI libary. Allows maintaining a global work
   queue for many processes possibly distributed across many machines."""
 
-  def __init__(self, master_proc_num):
+  def __init__(self, master_proc_num, pout = sys.stdout, sample_time = 1.0):
     self.master = master_proc_num
     self.local_queue = []  # Used to buffer up jobs locally.
+    self.pout = pout
+    self.sample_time = sample_time
+    self.last_time = time.time()
+    self.min_queue = 0
+    self.max_queue = 0
+
+  def __getstate__(self):
+    d = self.__dict__.copy()
+    del d["pout"]
+    return d
 
     # Stats
     self.jobs_popped = 0
     self.jobs_pushed = 0
 
   def pop_job(self):
+    self.queue_stats()
+
     if self.local_queue:
       # Perform all jobs in the local queue first.
       self.jobs_popped += 1
@@ -59,12 +71,16 @@ class MPI_Worker_Work_Queue(Work_Queue.Work_Queue):
         return None
 
   def push_job(self, job):
+    self.queue_stats()
+
     #print "Worker %d: Pushing job %r." % (rank, job)
     self.jobs_pushed += 1
     self.local_queue.append(job)
     self.send_extra()
 
   def push_jobs(self, jobs):
+    self.queue_stats()
+
     self.jobs_pushed += len(jobs)
     self.local_queue += jobs
     self.send_extra()
@@ -78,6 +94,18 @@ class MPI_Worker_Work_Queue(Work_Queue.Work_Queue):
       self.local_queue = self.local_queue[:MAX_NUM_JOBS_PER_BATCH]
       comm.send(extra_jobs, dest=self.master, tag=PUSH_JOBS)
 
+  def queue_stats(self):
+    size = len(self.local_queue)
+    self.min_queue = min(self.min_queue,size)
+    self.max_queue = max(self.max_queue,size)
+
+    cur_time = time.time()
+    if cur_time - self.last_time >= self.sample_time:
+      self.pout.write("Worker queue size: %d (%d %d)\n" % (size,self.min_queue,self.max_queue))
+      self.last_time = cur_time
+      self.min_queue = size
+      self.max_queue = size
+
 
 # Master code
 class Master(object):
@@ -85,10 +113,22 @@ class Master(object):
   Should refer to it. You can use push_job() to add initial jobs and then
   run_master() to run the select loop for listening for workers."""
 
-  def __init__(self):
+  def __init__(self, pout = sys.stdout, sample_time = 1.0):
     self.master_queue = []
+    self.pout = pout
+    self.sample_time = sample_time
+    self.last_time = time.time()
+    self.min_queue = 0
+    self.max_queue = 0
+
+  def __getstate__(self):
+    d = self.__dict__.copy()
+    del d["pout"]
+    return d
 
   def push_job(self, job):
+    self.queue_stats()
+
     self.master_queue.append(job)
 
   def run_master(self):
@@ -96,6 +136,8 @@ class Master(object):
     worker_state = [True] * num_proc
     worker_state[0] = None  # Proc 0 is not a worker.
     while True:
+      self.queue_stats()
+
       # Wait for a worker to push us work or request to pop work.
       comm.Probe(source=MPI.ANY_SOURCE, tag=MPI.ANY_TAG)
 
@@ -144,3 +186,15 @@ class Master(object):
           count += 1
           if count == increase_num_per_batch:
             num_jobs_per_batch += 1
+
+  def queue_stats(self):
+    size = len(self.master_queue)
+    self.min_queue = min(self.min_queue,size)
+    self.max_queue = max(self.max_queue,size)
+
+    cur_time = time.time()
+    if cur_time - self.last_time >= self.sample_time:
+      self.pout.write("Master queue size: %d (%d %d)\n" % (size,self.min_queue,self.max_queue))
+      self.last_time = cur_time
+      self.min_queue = size
+      self.max_queue = size
