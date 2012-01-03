@@ -353,6 +353,8 @@ def main(args):
   if options.steps == 0:
     options.steps = Macro_Simulator.INF
 
+  pout = None
+
   # Set up work queue and populate with blank machine.
   if num_proc == 1:
     stack = Work_Queue.Single_Process_Work_Queue()
@@ -360,17 +362,20 @@ def main(args):
     blank_tm = Turing_Machine(options.states, options.symbols)
     stack.push_job(blank_tm)
   else:
+    pout = open("pout.%d" % MPI_Work_Queue.rank,"w")
     if MPI_Work_Queue.rank == 0:
-      master = MPI_Work_Queue.Master()
+      master = MPI_Work_Queue.Master(pout)
       # TODO(shawn): Allow populating with a set of input machines.
       blank_tm = Turing_Machine(options.states, options.symbols)
       master.push_job(blank_tm)
       if master.run_master():
+        pout.close()
         sys.exit(0)
       else:
+        pout.close()
         sys.exit(1)
     else:
-      stack = MPI_Work_Queue.MPI_Worker_Work_Queue(master_proc_num=0)
+      stack = MPI_Work_Queue.MPI_Worker_Work_Queue(master_proc_num=0,pout=pout)
 
   ## Enumerate machines
   enumerator = Enumerator(options.steps, options.time, stack, io,
@@ -380,6 +385,9 @@ def main(args):
 
   if options.print_stats:
     pprint(enumerator.stats.__dict__)
+
+  if pout:
+    pout.close()
 
 if __name__ == "__main__":
   main(sys.argv[1:])
