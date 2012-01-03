@@ -17,7 +17,7 @@ POP_JOBS        = 3
 MIN_NUM_JOBS_PER_BATCH =  10
 MAX_NUM_JOBS_PER_BATCH =  10
 
-MAX_LOCAL_JOBS         =  20
+MAX_LOCAL_JOBS         =  30
 
 # Worker code
 class MPI_Worker_Work_Queue(Work_Queue.Work_Queue):
@@ -33,14 +33,14 @@ class MPI_Worker_Work_Queue(Work_Queue.Work_Queue):
     self.min_queue = 0
     self.max_queue = 0
 
+    # Stats
+    self.jobs_popped = 0
+    self.jobs_pushed = 0
+
   def __getstate__(self):
     d = self.__dict__.copy()
     del d["pout"]
     return d
-
-    # Stats
-    self.jobs_popped = 0
-    self.jobs_pushed = 0
 
   def pop_job(self):
     self.queue_stats()
