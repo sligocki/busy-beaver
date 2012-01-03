@@ -15,9 +15,9 @@ POP_JOBS        = 3
 
 # Optimization parameters
 MIN_NUM_JOBS_PER_BATCH =  10
-MAX_NUM_JOBS_PER_BATCH =  10
+MAX_NUM_JOBS_PER_BATCH =  25
 
-MAX_LOCAL_JOBS         =  30
+MAX_LOCAL_JOBS         =  50
 
 # Worker code
 class MPI_Worker_Work_Queue(Work_Queue.Work_Queue):
@@ -88,10 +88,8 @@ class MPI_Worker_Work_Queue(Work_Queue.Work_Queue):
   def send_extra(self):
     """Not for external use. Sends extra jobs back to master."""
     if len(self.local_queue) > MAX_LOCAL_JOBS:
-      # TODO(shawn): Should we send the bottom jobs back to master instead of
-      # the top jobs?
-      extra_jobs = self.local_queue[MAX_NUM_JOBS_PER_BATCH:]
-      self.local_queue = self.local_queue[:MAX_NUM_JOBS_PER_BATCH]
+      extra_jobs = self.local_queue[:len(self.local_queue)-MAX_NUM_JOBS_PER_BATCH]
+      self.local_queue = self.local_queue[len(self.local_queue)-MAX_NUM_JOBS_PER_BATCH:]
       comm.send(extra_jobs, dest=self.master, tag=PUSH_JOBS)
 
   def queue_stats(self):
@@ -102,6 +100,7 @@ class MPI_Worker_Work_Queue(Work_Queue.Work_Queue):
     cur_time = time.time()
     if cur_time - self.last_time >= self.sample_time:
       self.pout.write("Worker queue size: %d (%d %d)\n" % (size,self.min_queue,self.max_queue))
+      # self.pout.flush()
       self.last_time = cur_time
       self.min_queue = size
       self.max_queue = size
@@ -176,7 +175,7 @@ class Master(object):
         count = 0
         while self.master_queue and False in worker_state:
           # TODO(shawn): Should we send jobs from the top rather than bottom of
-          # the queue.
+          # the queue?
           jobs_block = self.master_queue[:num_jobs_per_batch]
           self.master_queue = self.master_queue[num_jobs_per_batch:]
           rank_waiting = worker_state.index(False)
@@ -195,6 +194,7 @@ class Master(object):
     cur_time = time.time()
     if cur_time - self.last_time >= self.sample_time:
       self.pout.write("Master queue size: %d (%d %d)\n" % (size,self.min_queue,self.max_queue))
+      # self.pout.flush()
       self.last_time = cur_time
       self.min_queue = size
       self.max_queue = size
