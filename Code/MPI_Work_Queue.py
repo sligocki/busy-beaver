@@ -29,9 +29,12 @@ class MPI_Worker_Work_Queue(Work_Queue.Work_Queue):
     self.local_queue = []  # Used to buffer up jobs locally.
     self.pout = pout
     self.sample_time = sample_time
+    self.start_time = time.time()
     self.last_time = time.time()
     self.min_queue = 0
     self.max_queue = 0
+    self.get_time = 0.0
+    self.put_time = 0.0
 
     # Stats
     self.jobs_popped = 0
@@ -57,12 +60,17 @@ class MPI_Worker_Work_Queue(Work_Queue.Work_Queue):
       #print "Worker %d: Waiting for pop." % rank
       #print "Worker %d: Popped %d, Pushed %d." % (rank, self.jobs_popped, self.jobs_pushed)
 
+      start_time = time.time()
+
       # Tell master that we are waiting.
       # Note: The contents of this message are ignored, only the fact that it
       # was sent and the tag matter.
       comm.send(None, dest=self.master, tag=WAITING_FOR_POP)
       # And wait for more work in response.
       self.local_queue += comm.recv(source=self.master, tag=POP_JOBS)
+
+      self.get_time += time.time() - start_time
+
       if self.local_queue:
         self.jobs_popped += 1
         return self.local_queue.pop()
@@ -88,9 +96,14 @@ class MPI_Worker_Work_Queue(Work_Queue.Work_Queue):
   def send_extra(self):
     """Not for external use. Sends extra jobs back to master."""
     if len(self.local_queue) > MAX_LOCAL_JOBS:
+
+      start_time = time.time()
+
       extra_jobs = self.local_queue[:len(self.local_queue)-MAX_NUM_JOBS_PER_BATCH]
       self.local_queue = self.local_queue[len(self.local_queue)-MAX_NUM_JOBS_PER_BATCH:]
       comm.send(extra_jobs, dest=self.master, tag=PUSH_JOBS)
+
+      self.put_time += time.time() - start_time
 
   def queue_stats(self):
     size = len(self.local_queue)
@@ -99,7 +112,7 @@ class MPI_Worker_Work_Queue(Work_Queue.Work_Queue):
 
     cur_time = time.time()
     if cur_time - self.last_time >= self.sample_time:
-      self.pout.write("Worker queue size: %d (%d %d)\n" % (size,self.min_queue,self.max_queue))
+      self.pout.write("%.3f Worker queue size: %d (%d %d), time get, put: %.3f %.3f\n" % (cur_time-self.start_time,size,self.min_queue,self.max_queue,self.get_time,self.put_time))
       # self.pout.flush()
       self.last_time = cur_time
       self.min_queue = size
@@ -116,6 +129,7 @@ class Master(object):
     self.master_queue = []
     self.pout = pout
     self.sample_time = sample_time
+    self.start_time = time.time()
     self.last_time = time.time()
     self.min_queue = 0
     self.max_queue = 0
@@ -193,7 +207,7 @@ class Master(object):
 
     cur_time = time.time()
     if cur_time - self.last_time >= self.sample_time:
-      self.pout.write("Master queue size: %d (%d %d)\n" % (size,self.min_queue,self.max_queue))
+      self.pout.write("%.3f  Master queue size: %d (%d %d)\n" % (cur_time-self.start_time,size,self.min_queue,self.max_queue))
       # self.pout.flush()
       self.last_time = cur_time
       self.min_queue = size
