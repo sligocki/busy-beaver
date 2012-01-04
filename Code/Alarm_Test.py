@@ -9,7 +9,7 @@ Test the Python alarms...
 from Alarm import ALARM, AlarmException
 
 try:
-  ALARM.set_alarm(0.5)
+  ALARM.set_alarm(1.5)
 
   count = 0
   while True:
