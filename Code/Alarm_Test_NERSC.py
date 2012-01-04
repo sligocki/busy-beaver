@@ -6,7 +6,7 @@
 Test the Python alarms...
 """
 
-# from mpi4py import MPI
+from mpi4py import MPI
 
 import signal
 
