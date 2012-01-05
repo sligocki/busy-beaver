@@ -1086,13 +1086,21 @@ class Proof_System(object):
                               current_list, assignment):
       if self.verbose:
         self.print_this(num_reps, current_list)
+
       # Apply variable assignment to update number of steps and tape config.
       if self.compute_steps:
         diff_steps += rule.num_steps.substitute(assignment)
+
       # TODO: Stop using substitute and make this a tuple-to-tuple function?
-      current_list = [val.substitute(assignment)
-                      if isinstance(val, Algebraic_Expression) else val
-                      for val in rule.result_list]
+      next_list = [val.substitute(assignment)
+                   if isinstance(val, Algebraic_Expression) else val
+                   for val in rule.result_list]
+
+      if next_list == current_list:
+        return True, ((Turing_Machine.INF_REPEAT, None, None, {}), large_delta)
+      else:
+        current_list = next_list
+
       num_reps += 1
       success = True
       assignment = {}
