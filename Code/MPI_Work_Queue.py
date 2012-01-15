@@ -17,20 +17,17 @@ POP_JOBS        = 3
 MIN_NUM_JOBS_PER_BATCH =  10
 MAX_NUM_JOBS_PER_BATCH =  25
 
-MAX_LOCAL_JOBS         =  50
+MAX_LOCAL_JOBS         =  30
 
 # Worker code
 class MPI_Worker_Work_Queue(Work_Queue.Work_Queue):
   """Work queue based on mpi4py MPI libary. Allows maintaining a global work
   queue for many processes possibly distributed across many machines."""
 
-  def __init__(self, master_proc_num, pout = sys.stdout, sample_time = 1.0):
+  def __init__(self, master_proc_num, sample_time = 1.0):
     self.master = master_proc_num
     self.local_queue = []  # Used to buffer up jobs locally.
-    self.pout = pout
-    self.sample_time = sample_time
-    self.start_time = time.time()
-    self.last_time = time.time()
+    self.size_queue = 0
     self.min_queue = 0
     self.max_queue = 0
     self.get_time = 0.0
@@ -40,13 +37,8 @@ class MPI_Worker_Work_Queue(Work_Queue.Work_Queue):
     self.jobs_popped = 0
     self.jobs_pushed = 0
 
-  def __getstate__(self):
-    d = self.__dict__.copy()
-    del d["pout"]
-    return d
-
   def pop_job(self):
-    self.queue_stats()
+    self.save_stats()
 
     if self.local_queue:
       # Perform all jobs in the local queue first.
@@ -79,7 +71,7 @@ class MPI_Worker_Work_Queue(Work_Queue.Work_Queue):
         return None
 
   def push_job(self, job):
-    self.queue_stats()
+    self.save_stats()
 
     #print "Worker %d: Pushing job %r." % (rank, job)
     self.jobs_pushed += 1
@@ -87,7 +79,7 @@ class MPI_Worker_Work_Queue(Work_Queue.Work_Queue):
     self.send_extra()
 
   def push_jobs(self, jobs):
-    self.queue_stats()
+    self.save_stats()
 
     self.jobs_pushed += len(jobs)
     self.local_queue += jobs
@@ -105,18 +97,21 @@ class MPI_Worker_Work_Queue(Work_Queue.Work_Queue):
 
       self.put_time += time.time() - start_time
 
-  def queue_stats(self):
-    size = len(self.local_queue)
-    self.min_queue = min(self.min_queue,size)
-    self.max_queue = max(self.max_queue,size)
+  def save_stats(self):
+    self.size_queue = len(self.local_queue)
+    self.min_queue  = min(self.min_queue, self.size_queue)
+    self.max_queue  = max(self.max_queue, self.size_queue)
 
-    cur_time = time.time()
-    if cur_time - self.last_time >= self.sample_time:
-      self.pout.write("%.3f Worker queue size: %d (%d %d), time get, put: %.3f %.3f\n" % (cur_time-self.start_time,size,self.min_queue,self.max_queue,self.get_time,self.put_time))
-      # self.pout.flush()
-      self.last_time = cur_time
-      self.min_queue = size
-      self.max_queue = size
+  def get_stats(self):
+    size_queue = self.size_queue
+    min_queue  = self.min_queue
+    max_queue  = self.max_queue
+
+    self.size_queue = len(self.local_queue)
+    self.min_queue  = self.size_queue
+    self.max_queue  = self.size_queue
+
+    return (size_queue, min_queue, max_queue, self.get_time, self.put_time)
 
 
 # Master code
@@ -127,12 +122,13 @@ class Master(object):
 
   def __init__(self, pout = sys.stdout, sample_time = 1.0):
     self.master_queue = []
+    self.size_queue = 0
+    self.min_queue = 0
+    self.max_queue = 0
     self.pout = pout
     self.sample_time = sample_time
     self.start_time = time.time()
-    self.last_time = time.time()
-    self.min_queue = 0
-    self.max_queue = 0
+    self.last_time  = self.start_time
 
   def __getstate__(self):
     d = self.__dict__.copy()
@@ -140,8 +136,6 @@ class Master(object):
     return d
 
   def push_job(self, job):
-    self.queue_stats()
-
     self.master_queue.append(job)
 
   def run_master(self):
@@ -149,7 +143,8 @@ class Master(object):
     worker_state = [True] * num_proc
     worker_state[0] = None  # Proc 0 is not a worker.
     while True:
-      self.queue_stats()
+      self.save_stats()
+      self.print_stats()
 
       # Wait for a worker to push us work or request to pop work.
       comm.Probe(source=MPI.ANY_SOURCE, tag=MPI.ANY_TAG)
@@ -200,15 +195,26 @@ class Master(object):
           if count == increase_num_per_batch:
             num_jobs_per_batch += 1
 
-  def queue_stats(self):
-    size = len(self.master_queue)
-    self.min_queue = min(self.min_queue,size)
-    self.max_queue = max(self.max_queue,size)
+  def save_stats(self):
+    self.size_queue = len(self.master_queue)
+    self.min_queue  = min(self.min_queue, self.size_queue)
+    self.max_queue  = max(self.max_queue, self.size_queue)
 
+  def get_stats(self):
+    size_queue = self.size_queue
+    min_queue  = self.min_queue
+    max_queue  = self.max_queue
+
+    self.size_queue = len(self.master_queue)
+    self.min_queue  = self.size_queue
+    self.max_queue  = self.size_queue
+
+    return (size_queue, min_queue, max_queue)
+
+  def print_stats(self):
     cur_time = time.time()
     if cur_time - self.last_time >= self.sample_time:
-      self.pout.write("%.3f  Master queue size: %d (%d %d)\n" % (cur_time-self.start_time,size,self.min_queue,self.max_queue))
+      self.pout.write("Master queue info: %s\n" % (self.get_stats(),))
       # self.pout.flush()
+
       self.last_time = cur_time
-      self.min_queue = size
-      self.max_queue = size

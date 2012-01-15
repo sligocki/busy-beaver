@@ -115,24 +115,35 @@ class Enumerator(object):
       del d["random_state"]
     self.__dict__ = d
 
-  def continue_enum(self):
+  def continue_enum(self, pout = sys.stdout, sample_time = 1.0):
     """
     Pull one machine off of the stack and simulate it, perhaps creating more
     machines to push back onto the stack.
     """
     self.start_time = time.time()
+    last_time = self.start_time
+
     self.start_clock = time.clock()
+
     while True:
+      cur_time = time.time()
+      if cur_time - last_time > sample_time:
+        pout.write("Worker queue info: %s %s\n" % (self.stack.get_stats(),self.io.get_stats()))
+
       if self.options.num_enum and self.tm_num >= self.options.num_enum:
         break
+
       # While we have machines to run, pop one off the stack ...
       tm = self.stack.pop_job()
+
       if not tm:
         # tm == None is the indication that we have no more machines to run.
         break
+
       # Periodically save state
       if (self.tm_num % self.save_freq) == 0:
-        self.save()
+        self.save(pout=pout)
+
       for do_over in xrange(0,4):
         try:
           # ... and run it.
@@ -173,23 +184,23 @@ class Enumerator(object):
         tm = self.stack.pop_job()
       
     # Done
-    self.save()
+    self.save(pout=pout)
 
-  def save(self):
+  def save(self, pout=sys.stdout):
     """Save a checkpoint file so that computation can be restarted if it fails."""
     self.end_time = time.time()
     self.end_clock = time.clock()
 
     # Print out statistical data
-    print self.tm_num, "-",
-    print self.num_halt, self.num_infinite, self.num_unresolved, "-",
-    print long_to_eng_str(self.best_steps,1,3),
-    print long_to_eng_str(self.best_score,1,3),
-    print "(%.2f - %.2f)" % (self.end_time - self.start_time,
-                             self.end_clock - self.start_clock)
+    pout.write("%s -" % self.tm_num)
+    pout.write(" %s %s %s -" % (self.num_halt, self.num_infinite, self.num_unresolved))
+    pout.write(" %s" % (long_to_eng_str(self.best_steps,1,3),))
+    pout.write(" %s" % (long_to_eng_str(self.best_score,1,3),))
+    pout.write("(%.2f - %.2f)\n" % (self.end_time - self.start_time,
+                                    self.end_clock - self.start_clock))
     if self.options.print_stats:
       pprint(self.stats.__dict__)
-    sys.stdout.flush()
+    pout.flush()
 
     # Backup old checkpoint file (in case the new checkpoint is interrupted in mid-write)
     if os.path.exists(self.checkpoint_filename):
@@ -378,22 +389,29 @@ def main(args):
 
   io = IO.IO(None, outfile, options.log_number)
 
-  ## Print command line
-  print "Enumerate.py --states=%d --symbols=%d --steps=%s --time=%f" \
-    % (options.states, options.symbols, options.steps, options.time),
-  if options.randomize:
-    print "--randomize --seed=%d" % options.seed,
+  pout = None
 
-  print "--outfile=%s" % options.outfilename,
+  if num_proc == 1:
+    pout = sys.stdout
+  else:
+    pout = open("pout.%d" % MPI_Work_Queue.rank,"w")
+
+  ## Print command line
+  pout.write("Enumerate.py --states=%d --symbols=%d --steps=%s --time=%f" \
+    % (options.states, options.symbols, options.steps, options.time))
+  if options.randomize:
+    pout.write(" --randomize --seed=%d" % options.seed)
+
+  pout.write(" --outfile=%s" % options.outfilename)
   if options.log_number:
-    print "--log_number=%d" % options.log_number,
-  print "--checkpoint=%s --save_freq=%d" % (options.checkpoint, options.save_freq),
-  print
+    pout.write(" --log_number=%d" % options.log_number)
+  pout.write(" --checkpoint=%s --save_freq=%d" % (options.checkpoint, options.save_freq))
+  pout.write("\n")
 
   if options.steps == 0:
     options.steps = Macro_Simulator.INF
 
-  pout = None
+  sample_time = 1.0
 
   # Set up work queue and populate with blank machine.
   if num_proc == 1:
@@ -403,11 +421,10 @@ def main(args):
       stack = Work_Queue.Basic_LIFO_Work_Queue()
     initialize_stack(options, stack)
   else:
-    pout = open("pout.%d" % MPI_Work_Queue.rank,"w")
     if options.num_enum:
       parser.error("--num-enum cannot be used in parallel runs.")
     if MPI_Work_Queue.rank == 0:
-      master = MPI_Work_Queue.Master(pout)
+      master = MPI_Work_Queue.Master(pout=pout, sample_time=sample_time)
       initialize_stack(options, master)
       if master.run_master():
         pout.close()
@@ -416,13 +433,13 @@ def main(args):
         pout.close()
         sys.exit(1)
     else:
-      stack = MPI_Work_Queue.MPI_Worker_Work_Queue(master_proc_num=0,pout=pout)
+      stack = MPI_Work_Queue.MPI_Worker_Work_Queue(master_proc_num=0)
 
   ## Enumerate machines
   enumerator = Enumerator(options.steps, options.time, stack, io,
                           options.save_freq, options.checkpoint,
                           options.randomize, options.seed, options)
-  enumerator.continue_enum()
+  enumerator.continue_enum(pout=pout, sample_time=sample_time)
 
   if options.print_stats:
     pprint(enumerator.stats.__dict__)

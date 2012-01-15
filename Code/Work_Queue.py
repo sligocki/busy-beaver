@@ -21,13 +21,11 @@ class Work_Queue(object):
 class Basic_LIFO_Work_Queue(Work_Queue):
   """Single process implementation of Work_Queue using stack-order."""
 
-  def __init__(self, pout = sys.stdout, sample_time = 1.0):
+  def __init__(self):
     self.queue = []
-    self.pout = pout
-    self.sample_time = sample_time
-    self.last_time = time.time()
-    self.min_queue = 0
-    self.max_queue = 0
+    self.size_queue = 0
+    self.min_queue  = 0
+    self.max_queue  = 0
 
   def __getstate__(self):
     d = self.__dict__.copy()
@@ -35,7 +33,7 @@ class Basic_LIFO_Work_Queue(Work_Queue):
     return d
 
   def pop_job(self):
-    self.queue_stats()
+    self.save_stats()
 
     if self.queue:
       return self.queue.pop()
@@ -43,26 +41,30 @@ class Basic_LIFO_Work_Queue(Work_Queue):
       return None
 
   def push_job(self, job):
-    self.queue_stats()
+    self.save_stats()
 
     return self.queue.append(job)
 
   def push_jobs(self, jobs):
-    self.queue_stats()
+    self.save_stats()
 
     return self.queue.extend(jobs)
 
-  def queue_stats(self):
-    size = len(self.queue)
-    self.min_queue = min(self.min_queue,size)
-    self.max_queue = max(self.max_queue,size)
+  def save_stats(self):
+    self.size_queue = len(self.queue)
+    self.min_queue  = min(self.min_queue, self.size_queue)
+    self.max_queue  = max(self.max_queue, self.size_queue)
 
-    cur_time = time.time()
-    if cur_time - self.last_time >= self.sample_time:
-      self.pout.write("Queue size: %d (%d %d)\n" % (size,self.min_queue,self.max_queue))
-      self.last_time = cur_time
-      self.min_queue = size
-      self.max_queue = size
+  def get_stats(self):
+    size_queue = self.size_queue
+    min_queue  = self.min_queue
+    max_queue  = self.max_queue
+
+    self.size_queue = length(self.queue)
+    self.min_queue  = self.size_queue
+    self.max_queue  = self.size_queue
+
+    return (size_queue, min_queue, max_queue)
 
 
 class Basic_FIFO_Work_Queue(Work_Queue):
