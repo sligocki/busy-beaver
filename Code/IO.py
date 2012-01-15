@@ -13,8 +13,7 @@ Format looks like:
 <transition table> | <log num> <category> <category specific attributes> ... [| <extended attributes>]
 """
 
-import string
-import sys
+import string, sys, time
 
 from Common import Exit_Condition
 import Input_Machine
@@ -31,12 +30,15 @@ class Record(object):
     self.category_reason = []   # a generic list of attributes
     self.extended = None        # Halt, Infinite, Unknown, Undecided (extended)
     self.extended_reason = []   # a generic list of attributes (extended)
+    self.io_time = 0.0
 
   def __str__(self):
     return "[IO.Record: %s ]" % str(self.__dict__)
 
   def write(self, out):
     """Write out a Record object result."""
+    start_time = time.time()
+
     out.write(Output_Machine.display_ttable(self.ttable))
     if self.category != None:
       out.write(" | %r %s" % (self.log_number, Exit_Condition.name(self.category)))
@@ -46,12 +48,22 @@ class Record(object):
         self.write_list(self.extended_reason, out)
     out.write("\n")
 
+    end_time = time.time()
+    self.io_time += (end_time - start_time)
+
   def write_list(self, objs, out):
+    start_time = time.time()
+
     for obj in objs:
       out.write(" %s" % self.str_generic(obj))
 
+    end_time = time.time()
+    self.io_time += (end_time - start_time)
+
   def read(self, line):
     """Read a result off of a line from a file."""
+    start_time = time.time()
+
     parts = line.split("|", 2)
     self.ttable = Input_Machine.read_ttable(parts[0])
     if len(parts) >= 2:
@@ -67,10 +79,19 @@ class Record(object):
       self.extended = Exit_Condition.read(subparts[0])
       self.extended_reason = self.read_list(subparts[1:])
 
+    end_time = time.time()
+    self.io_time += (end_time - start_time)
+
   def read_list(self, strs):
+    start_time = time.time()
+
     res = []
     for s in strs:
       res.append(self.read_generic(s))
+
+    end_time = time.time()
+    self.io_time += (end_time - start_time)
+
     return res
 
   def str_generic(self, obj):
@@ -95,6 +116,10 @@ class Record(object):
     else:
       return s
 
+  def get_stats(self):
+    return (self.io_time,)
+
+
 class IO(object):
   """
   Reads and writes Busy Beaver results:
@@ -115,9 +140,12 @@ class IO(object):
     self.output_file = output_file
     self.log_number  = log_number
     self.flush_each  = not compressed
+    self.io_time = 0.0
 
   def write_record(self, result):
     """New interface for writing an IO.Record object."""
+    start_time = time.time()
+
     if result.log_number == None:
       result.log_number = self.log_number
     result.write(self.output_file)
@@ -126,6 +154,9 @@ class IO(object):
       # Flushing every machine is expensive
       self.output_file.flush()
 
+    end_time = time.time()
+    self.io_time += (end_time - start_time)
+
   def read_record(self):
     """
     New interface for reading an IO.Record object.
@@ -133,11 +164,20 @@ class IO(object):
     Returns the next result in input_file unless it reaches end of file or
     incorrectly formatted line, which returns None.
     """
+    start_time = time.time()
+
     line = self.input_file.readline()
     if line.strip():
       result = Record()
       result.read(line)
+
+      end_time = time.time()
+      self.io_time += (end_time - start_time)
+
       return result
+
+    end_time = time.time()
+    self.io_time += (end_time - start_time)
 
   def __iter__(self):
     """
@@ -183,6 +223,8 @@ class IO(object):
                        max_steps, results, machine_TTable, log_number = None,
                        old_results = []):
     """Legacy interface used by IO_old to write a single result."""
+    start_time = time.time()
+
     if self.output_file:
       result = Record()
 
@@ -203,8 +245,13 @@ class IO(object):
 
       self.write_record(result)
 
+    end_time = time.time()
+    self.io_time += (end_time - start_time)
+
   def read_result(self):
     """Legacy interface used by IO_old to read a single result."""
+    start_time = time.time()
+
     if self.input_file:
       result = self.read_record()
       if result:
@@ -213,6 +260,11 @@ class IO(object):
                 result.ttable, result.log_number,
                 [result.extended] + result.extended_reason)
 
+    end_time = time.time()
+    self.io_time += (end_time - start_time)
+
+  def get_stats(self):
+    return (self.io_time,)
 
 def load_TTable_filename(filename, line_num = 1):
   """Load a transition table from a filename w/ optional line number."""
