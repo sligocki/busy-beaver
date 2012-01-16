@@ -315,6 +315,8 @@ def initialize_stack(options, stack):
 
 def main(args):
   ## Parse command line options.
+  start_time = time.time()
+
   usage = "usage: %prog --states= --symbols= [options]"
   parser = OptionParser(usage=usage)
   req_parser = OptionGroup(parser, "Required Parameters")  # Oxymoron?
@@ -378,13 +380,13 @@ def main(args):
     options.checkpoint = options.outfilename + ".check"
 
   ## Set up I/O
-  if os.path.exists(options.outfilename):
-    if num_proc > 1:
-      # TODO(shawn): MPI abort here and other failure places.
-      parser.error("Output file %r already exists" % options.outfilename)
-    reply = raw_input("File '%s' exists, overwrite it? " % options.outfilename)
-    if reply.lower() not in ("y", "yes"):
-      parser.error("Choose different outfilename")
+  # if os.path.exists(options.outfilename):
+  #   if num_proc > 1:
+  #     # TODO(shawn): MPI abort here and other failure places.
+  #     parser.error("Output file %r already exists" % options.outfilename)
+  #   reply = raw_input("File '%s' exists, overwrite it? " % options.outfilename)
+  #   if reply.lower() not in ("y", "yes"):
+  #     parser.error("Choose different outfilename")
   #outfile = open(options.outfilename, "w")
   outfile = sys.stdout
 
@@ -446,8 +448,15 @@ def main(args):
   if options.print_stats:
     pprint(enumerator.stats.__dict__)
 
-  if pout:
-    pout.close()
+  end_time = time.time()
+  if num_proc == 1:
+    print "Total time: %.3f" % (end_time - start_time,)
+  else:
+    if MPI_Work_Queue.rank == 1:
+      print "Total time: %.3f" % (end_time - start_time,)
+
+  # if pout:
+  #   pout.close()
 
 if __name__ == "__main__":
   main(sys.argv[1:])
