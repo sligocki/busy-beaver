@@ -166,7 +166,7 @@ class Enumerator(object):
             self.add_infinite(tm, reason, pout)
           elif cond == Exit_Condition.MAX_STEPS:
             steps, = info
-            self.add_unresolved(tm, Exit_Condition.MAX_STEPS, steps, pout)
+            self.add_unresolved(tm, Exit_Condition.MAX_STEPS, pout, steps)
           elif cond == Exit_Condition.TIME_OUT:
             runtime, steps = info
             self.add_unresolved(tm, Exit_Condition.TIME_OUT, pout, steps, runtime)
