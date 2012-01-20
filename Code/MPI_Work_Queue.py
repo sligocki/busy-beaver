@@ -214,7 +214,8 @@ class Master(object):
   def print_stats(self):
     cur_time = time.time()
     if cur_time - self.last_time >= self.sample_time:
-      self.pout.write("Master queue info: %s\n" % (self.get_stats(),))
-      # self.pout.flush()
+      if self.pout:
+        self.pout.write("Master queue info: %s\n" % (self.get_stats(),))
+        # self.pout.flush()
 
       self.last_time = cur_time
