@@ -27,11 +27,6 @@ class Basic_LIFO_Work_Queue(Work_Queue):
     self.min_queue  = 0
     self.max_queue  = 0
 
-  def __getstate__(self):
-    d = self.__dict__.copy()
-    del d["pout"]
-    return d
-
   def pop_job(self):
     self.save_stats()
 
@@ -60,7 +55,7 @@ class Basic_LIFO_Work_Queue(Work_Queue):
     min_queue  = self.min_queue
     max_queue  = self.max_queue
 
-    self.size_queue = length(self.queue)
+    self.size_queue = len(self.queue)
     self.min_queue  = self.size_queue
     self.max_queue  = self.size_queue
 
