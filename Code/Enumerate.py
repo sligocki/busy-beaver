@@ -128,7 +128,8 @@ class Enumerator(object):
     while True:
       cur_time = time.time()
       if cur_time - last_time > sample_time:
-        pout.write("Worker queue info: %s %s\n" % (self.stack.get_stats(),self.io.get_stats()))
+        if pout:
+          pout.write("Worker queue info: %s %s\n" % (self.stack.get_stats(),self.io.get_stats()))
 
       if self.options.num_enum and self.tm_num >= self.options.num_enum:
         break
@@ -155,20 +156,20 @@ class Enumerator(object):
             # ... push all the possible non-halting transitions onto the stack ...
             self.add_transitions(tm, on_state, on_symbol)
             # ... and make this TM the halting one (mutates tm)
-            self.add_halt_trans(tm, on_state, on_symbol, steps, score)
+            self.add_halt_trans(tm, on_state, on_symbol, steps, score, pout)
           # Otherwise record defined result
           elif cond == Exit_Condition.HALT:
             steps, score = info
-            self.add_halt(tm, steps, score)
+            self.add_halt(tm, steps, score, pout)
           elif cond == Exit_Condition.INFINITE:
             reason, = info
-            self.add_infinite(tm, reason)
+            self.add_infinite(tm, reason, pout)
           elif cond == Exit_Condition.MAX_STEPS:
             steps, = info
-            self.add_unresolved(tm, Exit_Condition.MAX_STEPS, steps)
+            self.add_unresolved(tm, Exit_Condition.MAX_STEPS, steps, pout)
           elif cond == Exit_Condition.TIME_OUT:
             runtime, steps = info
-            self.add_unresolved(tm, Exit_Condition.TIME_OUT, steps, runtime)
+            self.add_unresolved(tm, Exit_Condition.TIME_OUT, pout, steps, runtime)
           else:
             raise Exception, "Enumerator.enum() - unexpected condition (%r)" % cond
           break
@@ -180,7 +181,7 @@ class Enumerator(object):
     if self.options.num_enum:
       tm = self.stack.pop_job()
       while tm:
-        self.add_unresolved(tm, Exit_Condition.NOT_RUN)
+        self.add_unresolved(tm, Exit_Condition.NOT_RUN, pout)
         tm = self.stack.pop_job()
       
     # Done
@@ -191,24 +192,25 @@ class Enumerator(object):
     self.end_time = time.time()
     self.end_clock = time.clock()
 
-    # Print out statistical data
-    pout.write("%s -" % self.tm_num)
-    pout.write(" %s %s %s -" % (self.num_halt, self.num_infinite, self.num_unresolved))
-    pout.write(" %s" % (long_to_eng_str(self.best_steps,1,3),))
-    pout.write(" %s" % (long_to_eng_str(self.best_score,1,3),))
-    pout.write("(%.2f - %.2f)\n" % (self.end_time - self.start_time,
-                                    self.end_clock - self.start_clock))
-    if self.options.print_stats:
-      pprint(self.stats.__dict__)
-    pout.flush()
+    if pout:
+      # Print out statistical data
+      pout.write("%s -" % self.tm_num)
+      pout.write(" %s %s %s -" % (self.num_halt, self.num_infinite, self.num_unresolved))
+      pout.write(" %s" % (long_to_eng_str(self.best_steps,1,3),))
+      pout.write(" %s" % (long_to_eng_str(self.best_score,1,3),))
+      pout.write("(%.2f - %.2f)\n" % (self.end_time - self.start_time,
+                                      self.end_clock - self.start_clock))
+      if self.options.print_stats:
+        pprint(self.stats.__dict__)
+      pout.flush()
 
-    # Backup old checkpoint file (in case the new checkpoint is interrupted in mid-write)
-    if os.path.exists(self.checkpoint_filename):
-      shutil.move(self.checkpoint_filename, self.backup_checkpoint_filename)
-    # Save checkpoint file
-    f = file(self.checkpoint_filename, "wb")
-    pickle.dump(self, f)
-    f.close()
+      # Backup old checkpoint file (in case the new checkpoint is interrupted in mid-write)
+      if os.path.exists(self.checkpoint_filename):
+        shutil.move(self.checkpoint_filename, self.backup_checkpoint_filename)
+      # Save checkpoint file
+      f = file(self.checkpoint_filename, "wb")
+      pickle.dump(self, f)
+      f.close()
 
     # Restart timer
     self.start_time = time.time()
@@ -247,14 +249,14 @@ class Enumerator(object):
       # Push the list of TMs onto the stack
       self.stack.push_jobs(new_tms)
 
-  def add_halt_trans(self, tm, on_state, on_symbol, steps, score):
+  def add_halt_trans(self, tm, on_state, on_symbol, steps, score, pout):
     """Edit the TM to have a halt at on_stat/on_symbol and save the result."""
     #   1) Add the halt state
     tm.add_cell(on_state, on_symbol, -1, 1, 1)
     #   2) Save this machine
-    self.add_halt(tm, steps, score)
+    self.add_halt(tm, steps, score, pout)
 
-  def add_halt(self, tm, steps, score):
+  def add_halt(self, tm, steps, score, pout):
     """Note a halting TM. Add statistics and output it with score/steps."""
     self.num_halt += 1
     if steps > self.best_steps or score > self.best_score:
@@ -262,25 +264,27 @@ class Enumerator(object):
       self.best_score = max(self.best_score, score)
     self.tm_num += 1
 
-    io_record = IO.Record()
-    io_record.ttable = tm.get_TTable()
-    io_record.category = Exit_Condition.HALT
-    io_record.category_reason = (score, steps)
-    self.io.write_record(io_record)
+    if pout:
+      io_record = IO.Record()
+      io_record.ttable = tm.get_TTable()
+      io_record.category = Exit_Condition.HALT
+      io_record.category_reason = (score, steps)
+      self.io.write_record(io_record)
 
-  def add_infinite(self, tm, reason):
+  def add_infinite(self, tm, reason, pout):
     """Note an infinite TM. Add statistics and output it with reason."""
     self.num_infinite += 1
     self.inf_type[reason] += 1
     self.tm_num += 1
 
-    io_record = IO.Record()
-    io_record.ttable = tm.get_TTable()
-    io_record.category = Exit_Condition.INFINITE
-    io_record.category_reason = (reason,)
-    self.io.write_record(io_record)
+    if pout:
+      io_record = IO.Record()
+      io_record.ttable = tm.get_TTable()
+      io_record.category = Exit_Condition.INFINITE
+      io_record.category_reason = (reason,)
+      self.io.write_record(io_record)
 
-  def add_unresolved(self, tm, reason, steps=0, runtime=0):
+  def add_unresolved(self, tm, reason, pout, steps=0, runtime=0):
     """Note an unresolved TM. Add statistics and output it with reason."""
     self.num_unresolved += 1
     if reason == Exit_Condition.MAX_STEPS:
@@ -291,11 +295,12 @@ class Enumerator(object):
       assert reason == Exit_Condition.NOT_RUN, "Invalid reason (%r)" % reason
     self.tm_num += 1
 
-    io_record = IO.Record()
-    io_record.ttable = tm.get_TTable()
-    io_record.category = Exit_Condition.UNKNOWN
-    io_record.category_reason = (Exit_Condition.name(reason), steps, runtime)
-    self.io.write_record(io_record)
+    if pout:
+      io_record = IO.Record()
+      io_record.ttable = tm.get_TTable()
+      io_record.category = Exit_Condition.UNKNOWN
+      io_record.category_reason = (Exit_Condition.name(reason), steps, runtime)
+      self.io.write_record(io_record)
 
 def initialize_stack(options, stack):
   if options.infilename:
@@ -338,6 +343,8 @@ def main(args):
   Macro_Simulator.add_option_group(parser)
 
   out_parser = OptionGroup(parser, "Output Options")
+  enum_parser.add_option("--no-output", action="store_true", default=False,
+                         help="Done generate any output.")
   out_parser.add_option("--outfile", dest="outfilename", metavar="OUTFILE",
                         help="Output file name "
                         "[Default: Enum.STATES.SYMBOLS.STEPS.out]")
@@ -377,36 +384,41 @@ def main(args):
   if not options.checkpoint:
     options.checkpoint = options.outfilename + ".check"
 
+  pout = None
+
+  if not options.no_output:
+    if num_proc == 1:
+      pout = sys.stdout
+    else:
+      pout = open("pout.%d" % MPI_Work_Queue.rank,"w")
+
   ## Set up I/O
-  if os.path.exists(options.outfilename):
-    if num_proc > 1:
-      # TODO(shawn): MPI abort here and other failure places.
-      parser.error("Output file %r already exists" % options.outfilename)
-    reply = raw_input("File '%s' exists, overwrite it? " % options.outfilename)
-    if reply.lower() not in ("y", "yes"):
-      parser.error("Choose different outfilename")
-  outfile = open(options.outfilename, "w")
+  if pout:
+    if os.path.exists(options.outfilename):
+      if num_proc > 1:
+        # TODO(shawn): MPI abort here and other failure places.
+        parser.error("Output file %r already exists" % options.outfilename)
+      reply = raw_input("File '%s' exists, overwrite it? " % options.outfilename)
+      if reply.lower() not in ("y", "yes"):
+        parser.error("Choose different outfilename")
+    outfile = open(options.outfilename, "w")
+  else:
+    outfile = sys.stdout
 
   io = IO.IO(None, outfile, options.log_number)
 
-  pout = None
-
-  if num_proc == 1:
-    pout = sys.stdout
-  else:
-    pout = open("pout.%d" % MPI_Work_Queue.rank,"w")
-
   ## Print command line
-  pout.write("Enumerate.py --states=%d --symbols=%d --steps=%s --time=%f" \
-    % (options.states, options.symbols, options.steps, options.time))
-  if options.randomize:
-    pout.write(" --randomize --seed=%d" % options.seed)
+  if pout:
+    pout.write("Enumerate.py --states=%d --symbols=%d --steps=%s --time=%f" \
+      % (options.states, options.symbols, options.steps, options.time))
+    if options.randomize:
+      pout.write(" --randomize --seed=%d" % options.seed)
 
-  pout.write(" --outfile=%s" % options.outfilename)
-  if options.log_number:
-    pout.write(" --log_number=%d" % options.log_number)
-  pout.write(" --checkpoint=%s --save_freq=%d" % (options.checkpoint, options.save_freq))
-  pout.write("\n")
+    pout.write(" --outfile=%s" % options.outfilename)
+    if options.log_number:
+      pout.write(" --log_number=%d" % options.log_number)
+    pout.write(" --checkpoint=%s --save_freq=%d" % (options.checkpoint, options.save_freq))
+    pout.write("\n")
 
   if options.steps == 0:
     options.steps = Macro_Simulator.INF
@@ -427,10 +439,12 @@ def main(args):
       master = MPI_Work_Queue.Master(pout=pout, sample_time=sample_time)
       initialize_stack(options, master)
       if master.run_master():
-        pout.close()
+        if pout:
+          pout.close()
         sys.exit(0)
       else:
-        pout.close()
+        if pout:
+          pout.close()
         sys.exit(1)
     else:
       stack = MPI_Work_Queue.MPI_Worker_Work_Queue(master_proc_num=0)
