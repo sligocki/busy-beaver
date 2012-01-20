@@ -319,6 +319,8 @@ def initialize_stack(options, stack):
     stack.push_job(blank_tm)
 
 def main(args):
+  start_time = time.time()
+
   ## Parse command line options.
   usage = "usage: %prog --states= --symbols= [options]"
   parser = OptionParser(usage=usage)
@@ -438,13 +440,22 @@ def main(args):
     if MPI_Work_Queue.rank == 0:
       master = MPI_Work_Queue.Master(pout=pout, sample_time=sample_time)
       initialize_stack(options, master)
+
       if master.run_master():
+        end_time = time.time()
         if pout:
+          pout.write("Total time %.3f\n" % (end_time - start_time,))
           pout.close()
+        else:
+          print "Total time %.3f\n" % (end_time - start_time,)
         sys.exit(0)
       else:
+        end_time = time.time()
         if pout:
+          pout.write("Total time %.3f\n" % (end_time - start_time,))
           pout.close()
+        else:
+          print "Total time %.3f\n" % (end_time - start_time,)
         sys.exit(1)
     else:
       stack = MPI_Work_Queue.MPI_Worker_Work_Queue(master_proc_num=0)
