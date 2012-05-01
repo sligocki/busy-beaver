@@ -33,7 +33,7 @@ try:
   import MPI_Work_Queue
   num_proc = MPI_Work_Queue.num_proc
 except ImportError:
-  # Allow this to work even if mpy4py is not installed.
+  # Allow this to work even if mpi4py is not installed.
   num_proc = 1
 
 def long_to_eng_str(number, left, right):
