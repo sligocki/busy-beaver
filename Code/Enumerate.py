@@ -425,7 +425,7 @@ def main(args):
   if options.steps == 0:
     options.steps = Macro_Simulator.INF
 
-  sample_time = 1.0
+  sample_time = 100.0
 
   # Set up work queue and populate with blank machine.
   if num_proc == 1:
