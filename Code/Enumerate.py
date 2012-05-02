@@ -127,9 +127,9 @@ class Enumerator(object):
 
     while True:
       cur_time = time.time()
-      if cur_time - last_time > sample_time:
-        if pout:
-          pout.write("Worker queue info: %s %s\n" % (self.stack.get_stats(),self.io.get_stats()))
+      # if cur_time - last_time > sample_time:
+      #   if pout:
+      #     pout.write("Worker queue info: %s %s\n" % (self.stack.get_stats(),self.io.get_stats()))
 
       if self.options.num_enum and self.tm_num >= self.options.num_enum:
         break
