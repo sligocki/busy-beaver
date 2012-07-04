@@ -469,8 +469,5 @@ def main(args):
   if options.print_stats:
     pprint(enumerator.stats.__dict__)
 
-  if pout:
-    pout.close()
-
 if __name__ == "__main__":
   main(sys.argv[1:])
