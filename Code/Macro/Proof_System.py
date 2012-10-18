@@ -162,7 +162,12 @@ class Collatz_Rule_Group(Rule):
 
   def add_rule(self, rule):
     """Add a Collatz_Rule to this group."""
-    assert rule.coef_list == self.coef_list, (rule, self.rules)
+    if rule.coef_list != self.coef_list:
+      # Note: This happens, for example for Machines/3x3-Collatz-Breaker,
+      # where one path proves the rule for 2k + 0 and another for 4k + 3.
+      # TODO(sligocki): Deal with these situations.
+      #Log.error (rule, self.rules)
+      return
     assert tuple(rule.parity_list) not in self.rules, (rule, self.rules)
     self.rules[tuple(rule.parity_list)] = rule
     rule.name = "%s.%d" % (self.name, len(self.rules))
@@ -985,7 +990,8 @@ class Proof_System(object):
                 #   0^Inf 2^(s + 12)  (0)B> 2^2 0^Inf
                 num_reps = (init_value[x] // -delta_value[x])  + 1
             else:
-              if not isinstance(init_value[x], Algebraic_Expression):
+              if (not isinstance(init_value[x], Algebraic_Expression) and
+                  not isinstance(num_reps, Algebraic_Expression)):
                 # As long as init_value[x] >= 0 we can apply proof
                 num_reps = min(num_reps, (init_value[x] // -delta_value[x])  + 1)
               else:
