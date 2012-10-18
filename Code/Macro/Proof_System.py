@@ -28,7 +28,7 @@ def add_option_group(parser):
   group = OptionGroup(parser, "Proof System options")
 
   group.add_option("--verbose-prover", action="store_true")
-  group.add_option("-r", "--recursive", action="store_true", default=False, 
+  group.add_option("-r", "--recursive", action="store_true", default=False,
                    help="Turn ON recursive proof system.")
   group.add_option("--allow-collatz", action="store_true", default=False,
                    help="Allow Collatz-style recursive proofs. [Experimental]")
@@ -81,7 +81,7 @@ class General_Rule(Rule):
     self.num_loops = num_loops
     self.name = str(rule_num)
     self.num_uses = 0
-    
+
     # Is this an infinite rule?
     self.infinite = True
     for var, result in zip(self.var_list, self.result_list):
@@ -116,7 +116,7 @@ class Collatz_Rule(Rule):
     self.name = ""  # Name will be set in Collatz_Rule_Group.
 
     self.num_uses = 0
-    
+
     # Is this rule increasing? If all Collatz rules in a group are increasing
     # then the group is infinite.
     self.increasing = True
@@ -231,7 +231,7 @@ class Past_Config(object):
   def __init__(self):
     self.times_seen = 0
     self.last_loop_num = None
-    self.delta_loop = None
+    self.delta_loops = set()
 
   def __repr__(self):
     return repr(self.__dict__)
@@ -239,24 +239,26 @@ class Past_Config(object):
   def log_config(self, step_num, loop_num):
     """Decide whether we should try to prove a rule.
 
-    Currently, we try to prove a rule we've seen happen twice consecutively
-    with the same delta_loop.
+    Currently, we try to prove a rule we've seen happen twice (not necessarily
+    consecutive) with the same num of loops (delta_loops).
     """
     # First time we see stripped_config, store loop_num.
     if self.last_loop_num == None:
       self.last_loop_num = loop_num
       self.times_seen += 1
       return False
-    
-    # Next store delta_loop. If we have a delta_loop but it hasn't repeated,
-    # then update the new delta.
-    # (Note: We can only prove rules that take the same number of loops each time.)
-    if self.delta_loop == None or loop_num - self.last_loop_num != self.delta_loop:
-      self.delta_loop = loop_num - self.last_loop_num
+
+    # Next store delta_loops. If we have a delta_loops but it hasn't repeated,
+    # then update the new delta. (Note: We can only prove rules that take
+    # the same number of loops each time.)
+    if not (self.delta_loops and
+            loop_num - self.last_loop_num in self.delta_loops):
+      self.delta_loops = set()
+      self.delta_loops.add(loop_num - self.last_loop_num)
       self.last_loop_num = loop_num
       self.times_seen += 1
       return False
-    
+
     # Now we can finally try a proof.
     return True
 
@@ -292,7 +294,7 @@ class Proof_System(object):
     self.num_collatz_rules = 0
     self.num_failed_proofs = 0
     # TODO: Record how many steps are taken by recursive rules in simulator.
-  
+
   def print_this(self, *args):
     """Print with prefix."""
     print self.verbose_prefix,
@@ -322,7 +324,7 @@ class Proof_System(object):
 
       if not found:
         print "\nRule %s not found\n" % (name,)
-  
+
   def rename_rule(self, src, dest):
     found_src  = False
     found_dest = False
@@ -358,7 +360,7 @@ class Proof_System(object):
         print "\nRule %s already exists\n" % (dest,)
       else:
         self.rules[key_src].name = dest
-  
+
   def print_rules(self, args=None):
     if self.options.limited_rules:
       rules = list(set([(rule.name, rule) for key in self.rules.keys() for rule in self.rules[key]]))
@@ -398,7 +400,7 @@ class Proof_System(object):
 
       if found_rule:
         print
-  
+
   def log(self, tape, state, step_num, loop_num):
     """
     Log this configuration into the memory and check if it is similar to a
@@ -433,11 +435,11 @@ class Proof_System(object):
           trans, large_delta = res
           # Optimization: If we apply a rule and we are not trying to perform
           # recursive proofs, clear past configuration memory.
-          # Likewise, even recursive proofs cannot use every subrule as a step.
-          # Specifically, if there are any negative deltas other than -1,
-          # we cannot apply the rule in a proof (yet) becuase
-          # e.g. (x + 3 // 2) is unresolvable
-          # TODO: Enable Collatz proofs!
+          # Likewise, even normal recursive proofs cannot use every subrule
+          # as a step. Specifically, if there are any negative deltas other
+          # than -1, we cannot apply the rule in a proof because
+          # e.g. (x + 3 // 2) is unresolvable. However, Collatz proofs can
+          # include such large negative deltas.
           if not self.recursive or (large_delta and not self.allow_collatz):
             if self.past_configs is not None:
               self.past_configs.clear()
@@ -463,18 +465,19 @@ class Proof_System(object):
           return trans
         if res != UNPROVEN_PARITY:
           return False, None, None, None
-    
+
     # If we are not trying to prove new rules, quit.
     if self.past_configs is None:
       # TODO: Just return False for fail and object for success.
       return False, None, None, None
-    
+
     # Otherwise log it into past_configs and see if we should try and prove
     # a new rule.
     past_config = self.past_configs[stripped_config]
     if past_config.log_config(step_num, loop_num):
       # We see enough of a pattern to try and prove a rule.
-      rule = self.prove_rule(stripped_config, full_config, past_config.delta_loop)
+      rule = self.prove_rule(stripped_config, full_config,
+                             loop_num - past_config.last_loop_num)
       if not rule:
         self.num_failed_proofs += 1
       else:  # If we successfully proved a rule:
@@ -511,8 +514,15 @@ class Proof_System(object):
           self.rules[stripped_config] = rule
           self.rule_num += 1
 
-        # Clear our memory (couldn't use it anyway).
+        # Clear our memory. We cannot use it for future rules because the
+        # number of steps will be wrong now that we have proven this rule.
+        #
+        # Note: We save the past_config for this stripped_config so that
+        # information for Collatz rules is not lost.
+        saved = self.past_configs[stripped_config]
         self.past_configs.clear()
+        saved.last_loop_num = None
+        self.past_configs[stripped_config] = saved
 
         # Try to apply transition
         is_good, res = self.apply_rule(rule, full_config)
@@ -523,21 +533,21 @@ class Proof_System(object):
           return trans
 
     return False, None, None, None
-  
+
   def prove_rule(self, stripped_config, full_config, delta_loop):
     """Try to prove a general rule based upon specific example.
-    
+
     Returns rule if successful or None.
     """
     # Unpack configurations
     new_state, new_tape, new_step_num, new_loop_num = full_config
-    
+
     if self.verbose:
       print
       self.print_this("** Testing new rule **")
       self.print_this("Original config:", new_tape.print_with_state(new_state))
       self.print_this("Start loop:", new_loop_num, "Loops:", delta_loop)
-    
+
     # Create the limited simulator with limited or no prover.
     new_options = copy.copy(self.options)
     new_options.recursive = False
@@ -550,14 +560,14 @@ class Proof_System(object):
                                   verbose_prefix=self.verbose_prefix + "  ")
     gen_sim.state = new_state
     gen_sim.step_num = ConstantToExpression(0)
-    
+
     # If prover can run recursively, we let it simulate with a lazy prover.
     # That is, one that cannot prove new rules, only use already proven ones.
     if self.recursive:
       gen_sim.prover = copy.copy(self)
       gen_sim.prover.past_configs = None
       gen_sim.prover.verbose_prefix = gen_sim.verbose_prefix + "  "
-    
+
     # Create a new tape which we will use to simulate general situation.
     gen_sim.tape = new_tape.copy()
     min_val = {} # Notes the minimum value exponents with each unknown take.
@@ -1172,6 +1182,7 @@ class Proof_System(object):
                           for val, coef in zip(current_list, group.coef_list))
       if parity_list not in group.rules:
         if self.verbose:
+          # TODO(shawn): Just try to prove a rule for this parity right now.
           self.print_this("++ Reached unproven Collatz parity ++")
           self.print_this("Config tape:", start_tape)
           self.print_this("Parities:", parity_list)
