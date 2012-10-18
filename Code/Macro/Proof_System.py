@@ -980,7 +980,8 @@ class Proof_System(object):
                 #   0^Inf 2^(s + 12)  (0)B> 2^2 0^Inf
                 num_reps = (init_value[x] // -delta_value[x])  + 1
             else:
-              if not isinstance(init_value[x], Algebraic_Expression):
+              if (not isinstance(init_value[x], Algebraic_Expression) and
+                  not isinstance(num_reps, Algebraic_Expression)):
                 # As long as init_value[x] >= 0 we can apply proof
                 num_reps = min(num_reps, (init_value[x] // -delta_value[x])  + 1)
               else:

@@ -51,7 +51,7 @@ def run(TTable, block_size, steps, runtime, recursive, progress, options,
 
   if sim.op_state == Turing_Machine.RUNNING:
     if progress:
-      print "\tUnknown", block_size, sim.step_num, sim.num_loops
+      print "\tMax_Steps", block_size, sim.step_num, sim.num_loops
     # TODO(shawn): Return time taken.
     return Exit_Condition.UNKNOWN, "Max_Steps", sim.get_nonzeros(), sim.step_num
 
