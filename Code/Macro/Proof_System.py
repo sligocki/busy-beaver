@@ -162,7 +162,12 @@ class Collatz_Rule_Group(Rule):
 
   def add_rule(self, rule):
     """Add a Collatz_Rule to this group."""
-    assert rule.coef_list == self.coef_list, (rule, self.rules)
+    if rule.coef_list != self.coef_list:
+      # Note: This happens, for example for Machines/3x3-Collatz-Breaker,
+      # where one path proves the rule for 2k + 0 and another for 4k + 3.
+      # TODO(sligocki): Deal with these situations.
+      #Log.error (rule, self.rules)
+      return
     assert tuple(rule.parity_list) not in self.rules, (rule, self.rules)
     self.rules[tuple(rule.parity_list)] = rule
     rule.name = "%s.%d" % (self.name, len(self.rules))
