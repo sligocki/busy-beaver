@@ -258,7 +258,7 @@ class Past_Config(object):
     # the same number of loops each time.)
     if not (self.delta_loops and
             loop_num - self.last_loop_num in self.delta_loops):
-      self.delta_loops = set()
+      #self.delta_loops = set()
       self.delta_loops.add(loop_num - self.last_loop_num)
       self.last_loop_num = loop_num
       self.times_seen += 1
