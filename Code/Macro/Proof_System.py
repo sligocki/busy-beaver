@@ -293,6 +293,11 @@ class Proof_System(object):
     # Colection of proven rules indexed by stripped configurations.
     self.rules = {}
     self.rule_num = 1
+
+    # After proving a part of a Collatz rule, do not try to log any other
+    # rules until we have a chance to prove the rest of the Collatz rule.
+    self.pause_until_loop = None
+
     # Stat
     self.num_loops = 0
     self.num_recursive_rules = 0
@@ -478,64 +483,67 @@ class Proof_System(object):
 
     # Otherwise log it into past_configs and see if we should try and prove
     # a new rule.
-    past_config = self.past_configs[stripped_config]
-    if past_config.log_config(step_num, loop_num):
-      # We see enough of a pattern to try and prove a rule.
-      rule = self.prove_rule(stripped_config, full_config,
-                             loop_num - past_config.last_loop_num)
-      if not rule:
-        self.num_failed_proofs += 1
-      else:  # If we successfully proved a rule:
-        # Collatz_Rules need to be stored inside Collatz_Rule_Groups.
-        if isinstance(rule, Collatz_Rule):
-          if stripped_config in self.rules:
-            group = self.rules[stripped_config]
-            group.add_rule(rule)
+    if (self.pause_until_loop == None or loop_num >= self.pause_until_loop or
+        stripped_config in self.past_configs):
+      past_config = self.past_configs[stripped_config]
+      if past_config.log_config(step_num, loop_num):
+        # We see enough of a pattern to try and prove a rule.
+        rule = self.prove_rule(stripped_config, full_config,
+                               loop_num - past_config.last_loop_num)
+        if not rule:
+          self.num_failed_proofs += 1
+        else:  # If we successfully proved a rule:
+          # Collatz_Rules need to be stored inside Collatz_Rule_Groups.
+          if isinstance(rule, Collatz_Rule):
+            self.pause_until_loop = loop_num + 100 * rule.num_loops
+            if stripped_config in self.rules:
+              group = self.rules[stripped_config]
+              group.add_rule(rule)
+            else:
+              group = Collatz_Rule_Group(rule, self.rule_num)
+            rule = group
+
+          # Remember rule.
+          if isinstance(rule, Limited_Diff_Rule):
+            (state, dir, stripped_tape_left, stripped_tape_right) = stripped_config
+            stripped_tape_left = (Tape.Repeated_Symbol(0,-1),) + stripped_tape_left
+            stripped_config_left  = (0, state, dir, stripped_tape_left[-rule.left_dist:],  rule.left_dist )
+
+            stripped_tape_right = (Tape.Repeated_Symbol(0,-1),) + stripped_tape_right
+            stripped_config_right = (1, state, dir, stripped_tape_right[-rule.right_dist:], rule.right_dist)
+
+            if stripped_config_left in self.rules:
+              self.rules[stripped_config_left].append(rule)
+            else:
+              self.rules[stripped_config_left] = [rule,]
+
+            if stripped_config_right in self.rules:
+              self.rules[stripped_config_right].append(rule)
+            else:
+              self.rules[stripped_config_right] = [rule,]
+
+            self.rule_num += 1
           else:
-            group = Collatz_Rule_Group(rule, self.rule_num)
-          rule = group
+            self.rules[stripped_config] = rule
+            self.rule_num += 1
 
-        # Remember rule.
-        if isinstance(rule, Limited_Diff_Rule):
-          (state, dir, stripped_tape_left, stripped_tape_right) = stripped_config
-          stripped_tape_left = (Tape.Repeated_Symbol(0,-1),) + stripped_tape_left
-          stripped_config_left  = (0, state, dir, stripped_tape_left[-rule.left_dist:],  rule.left_dist )
+          # Clear our memory. We cannot use it for future rules because the
+          # number of steps will be wrong now that we have proven this rule.
+          #
+          # Note: We save the past_config for this stripped_config so that
+          # information for Collatz rules is not lost.
+          saved = self.past_configs[stripped_config]
+          self.past_configs.clear()
+          saved.last_loop_num = None
+          self.past_configs[stripped_config] = saved
 
-          stripped_tape_right = (Tape.Repeated_Symbol(0,-1),) + stripped_tape_right
-          stripped_config_right = (1, state, dir, stripped_tape_right[-rule.right_dist:], rule.right_dist)
-
-          if stripped_config_left in self.rules:
-            self.rules[stripped_config_left].append(rule)
-          else:
-            self.rules[stripped_config_left] = [rule,]
-
-          if stripped_config_right in self.rules:
-            self.rules[stripped_config_right].append(rule)
-          else:
-            self.rules[stripped_config_right] = [rule,]
-
-          self.rule_num += 1
-        else:
-          self.rules[stripped_config] = rule
-          self.rule_num += 1
-
-        # Clear our memory. We cannot use it for future rules because the
-        # number of steps will be wrong now that we have proven this rule.
-        #
-        # Note: We save the past_config for this stripped_config so that
-        # information for Collatz rules is not lost.
-        saved = self.past_configs[stripped_config]
-        self.past_configs.clear()
-        saved.last_loop_num = None
-        self.past_configs[stripped_config] = saved
-
-        # Try to apply transition
-        is_good, res = self.apply_rule(rule, full_config)
-        if is_good:
-          trans, large_delta = res
-          rule.num_uses += 1
-          assert len(trans) == 4
-          return trans
+          # Try to apply transition
+          is_good, res = self.apply_rule(rule, full_config)
+          if is_good:
+            trans, large_delta = res
+            rule.num_uses += 1
+            assert len(trans) == 4
+            return trans
 
     return False, None, None, None
 
