@@ -969,8 +969,10 @@ class Proof_System(object):
                       for block in new_tape.tape[dir]:
                         if isinstance(block.num, Algebraic_Expression):
                           block.num = block.num.substitute(replace_vars)
-                    # Note: this substitution is actually unnecessary.
-                    init_value[x] = init_value[x].substitute(replace_vars)
+                    # Update all initial values as well.
+                    for y in init_value.keys():
+                      if isinstance(init_value[y], Algebraic_Expression):
+                        init_value[y] = init_value[y].substitute(replace_vars)
                     # 2) num_reps = (3k + 12) // 3 + 1 = k + (12//3) + 1
                     num_reps = new_var + (old_const // -delta_value[x])  + 1
                     if self.verbose:
@@ -1072,6 +1074,7 @@ class Proof_System(object):
     if self.verbose:
       self.print_this("++ Rule successfully applied ++")
       self.print_this("Times applied:", num_reps)
+      self.print_this("Diff steps:", diff_steps)
       self.print_this("Resulting tape:",
                       return_tape.print_with_state(new_state))
       print
