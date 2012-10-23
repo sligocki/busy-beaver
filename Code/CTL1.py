@@ -53,7 +53,7 @@ def CTL(machine, config):
       if cond[0] != Turing_Machine.RUNNING:
         return False
       new_symb, new_state, new_dir = trans
-      # Ex: (1|5)* A> 0 -> (1|5)* <B 2 
+      # Ex: (1|5)* A> 0 -> (1|5)* <B 2
       new_table[new_state, new_dir][not dir].update(table[state, dir][not dir])
       new_table[new_state, new_dir][not new_dir].add(new_symb)
     # Make new_table complete by unioning it with table

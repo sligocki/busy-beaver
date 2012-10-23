@@ -35,7 +35,7 @@ def add_option_group(parser):
                     help="Don't keep track of base step count (can be "
                    "expensive to calculate especially with recursive proofs).")
   group.add_option("-p", "--no-prover", dest="prover",
-                   action="store_false", default=True, 
+                   action="store_false", default=True,
                    help="Turn OFF proof system.")
 
   parser.add_option_group(group)
@@ -67,7 +67,7 @@ class Simulator(object):
     self.dir = machine.init_dir
     self.old_step_num = 0
     self.step_num = 0
-    
+
     # Init tape and prover (if needed).
     if init_tape:
       self.tape = Tape.Chain_Tape()
@@ -82,11 +82,11 @@ class Simulator(object):
     # Set of variables to replace (needed for Simulator in Proof_System when
     # Collatz-style rules are allowed).
     self.replace_vars = {}
-    
+
     # Operation state (e.g. running, halted, proven-infinite, ...)
     self.op_state = Turing_Machine.RUNNING
     self.op_details = ()
-    
+
     # Stats
     self.num_loops = 0
     self.num_macro_moves = 0
@@ -116,7 +116,7 @@ class Simulator(object):
   def loop_seek(self, cutoff):
     while self.num_loops < cutoff and self.op_state == Turing_Machine.RUNNING:
       self.step()
-  
+
   # TODO: true_loop_run which captures cost of prover, etc. also.
 
   def step(self):
@@ -208,18 +208,18 @@ class Simulator(object):
         self.inf_reason = REPEAT_IN_PLACE
     if self.op_state != Turing_Machine.UNDEFINED:
       self.verbose_print()
-  
+
   def get_nonzeros(self):
     """Get Busy Beaver score, number of non-zero symbols on tape."""
     return self.tape.get_nonzeros(self.machine.eval_symbol,
                                   self.machine.eval_state(self.state))
-  
+
   def print_self(self):
     self.print_steps()
     print "Time:", time.clock()
     print self.tape.print_with_state(self.state)
     print "Num Nonzeros:", with_power(self.get_nonzeros())
-  
+
   def print_steps(self):
     print
     print "         Steps:                     Times Applied:"
@@ -253,7 +253,7 @@ def template(title, steps, loops):
 def with_power(value, max_width=60):
   """Pretty print log(value) and value (if it's not too big)"""
   output = format_power(value) + "  "
-  
+
   value_string = str(value)
   if len(output) + len(value_string) < max_width:
     output += value_string
@@ -261,7 +261,7 @@ def with_power(value, max_width=60):
     margin = (max_width - len(output) - 2) // 2
     if margin > 0:
       output += value_string[:margin] + ".." + value_string[-margin:]
-  
+
   return output
 
 def format_power(value):

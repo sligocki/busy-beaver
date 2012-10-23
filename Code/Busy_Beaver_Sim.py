@@ -87,20 +87,20 @@ def run_visual(machine, tape_length, num_steps, print_width=79, silent=False, st
   """
   Start the tape and run it until it halts with visual output.
   """
-  
+
   start_time = time.time()
 
   num_syms = 0
 
   tape = [0] * tape_length
   start_pos = tape_length // 2  # Default to middle
-  
+
   if start_tape:
     n = len(start_tape)
     tape[start_pos : start_pos + n] = start_tape
-  
+
   position = start_pos
-  
+
   position_left  = position
   position_right = position
 
@@ -165,7 +165,7 @@ def run_visual(machine, tape_length, num_steps, print_width=79, silent=False, st
         position += 1
         if position > position_right:
           position_right = position
-      
+
       # Print configuration
       if not silent:
         if position > start_pos - half_width - 2 and position < start_pos + half_width +1:

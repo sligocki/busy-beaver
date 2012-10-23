@@ -24,15 +24,15 @@ class Alarm(object):
   """Singleton class that takes care of setting and turning off timer."""
   def __init__(self):
     self.is_alarm_on = False
-  
+
   def set_alarm(self, time):
     self.is_alarm_on = True
     alarm(time)
-  
+
   def cancel_alarm(self):
     self.is_alarm_on = False
     alarm(0)
-  
+
   def alarm_handler(self, signum, frame):
     if self.is_alarm_on:
       raise AlarmException, "Timeout!"

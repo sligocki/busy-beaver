@@ -12,7 +12,7 @@ import signal
 
 class AlarmException(Exception):
   """An exception to be tied to a timer running out."""
-  
+
 def alarm_handler(signum, frame):
   raise AlarmException, "Timeout!"
 

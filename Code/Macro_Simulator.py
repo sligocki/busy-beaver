@@ -152,16 +152,16 @@ def run(TTable, options, steps=INF, runtime=None, block_size=None,
       ## Resolve end conditions and return relevent info.
       if sim.op_state == Turing_Machine.RUNNING:
         return Exit_Condition.MAX_STEPS, (sim.step_num,)
-      
+
       elif sim.op_state == Turing_Machine.HALT:
         return Exit_Condition.HALT, (sim.step_num, sim.get_nonzeros())
-      
+
       elif sim.op_state == Turing_Machine.INF_REPEAT:
         return Exit_Condition.INFINITE, (sim.inf_reason,)
-      
+
       elif sim.op_state == Turing_Machine.UNDEFINED:
         on_symbol, on_state = sim.op_details[0][:2]
-        return Exit_Condition.UNDEF_CELL, (on_state, on_symbol, 
+        return Exit_Condition.UNDEF_CELL, (on_state, on_symbol,
                                            sim.step_num, sim.get_nonzeros())
 
     except AlarmException: # Catch Timer (unexpected!)
@@ -178,15 +178,15 @@ if __name__ == "__main__":
   parser = OptionParser(usage=usage)
   add_option_group(parser)
   (options, args) = parser.parse_args()
-  
-  
+
+
   if options.steps == 0:
     options.steps = INF
 
   if len(args) < 1:
     parser.error("Must have at least one argument, machine_file")
   filename = args[0]
-  
+
   if len(args) >= 2:
     try:
       line = int(args[1])
@@ -196,8 +196,8 @@ if __name__ == "__main__":
       parser.error("line_number must be >= 1")
   else:
     line = 1
-  
+
   ttable = IO.load_TTable_filename(filename, line)
-  
-  print run(ttable, options, options.steps, options.time, options.block_size, 
+
+  print run(ttable, options, options.steps, options.time, options.block_size,
                     options.backsymbol, options.prover, options.recursive)

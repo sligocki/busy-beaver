@@ -643,7 +643,7 @@ class Proof_System(object):
           del min_val[old_var]
         # TODO(shawn): We might not want to clear this ...
         gen_sim.replace_vars.clear()
-      
+
       if gen_sim.op_state is not Turing_Machine.RUNNING:
         if self.verbose:
           print
@@ -669,7 +669,7 @@ class Proof_System(object):
                 self.print_this(gen_sim.tape)
                 print
               return False
-    
+
     # Make sure finishing tape has the same stripped config as original.
     gen_stripped_config = strip_config(gen_sim.state, gen_sim.tape.dir,
                                        gen_sim.tape.tape)
@@ -707,7 +707,7 @@ class Proof_System(object):
               else:
                 assert coef != None, (initial_block, initial_tape)
                 rule_type = General_Rule
-    
+
     if rule_type == General_Rule:
       # TODO: Don't do all the work above if we're not going to use it
       # Get everything in the right form for a General_Rule.
@@ -725,14 +725,14 @@ class Proof_System(object):
         else:
           var_list.append(None)
           min_list.append(init_block.num)
-      
+
       # TODO: result_list = []
       result_tape = gen_sim.tape
       # Fix up result_tape to by applying variable substitution.
       for result_block in result_tape.tape[0]+result_tape.tape[1]:
         if isinstance(result_block.num, Algebraic_Expression):
           result_block.num = result_block.num.substitute(assignment)
-      
+
       # Fix num_steps.
       if self.compute_steps:
         num_steps = gen_sim.step_num.substitute(assignment)
@@ -788,7 +788,7 @@ class Proof_System(object):
           result_list.append(result_block.num.substitute(assignment))
         else:
           result_list.append(result_block.num)
-      
+
       # Fix num_steps.
       if self.compute_steps:
         num_steps = gen_sim.step_num.substitute(assignment)
@@ -803,7 +803,7 @@ class Proof_System(object):
         print
         self.print_this("** New Collatz rule proven **")
         self.print_this(str(rule).replace("\n", "\n " + self.verbose_prefix))
-        print 
+        print
 
       return rule
     else:
@@ -828,12 +828,12 @@ class Proof_System(object):
         num_steps = gen_sim.step_num.substitute(replaces)
       else:
         num_steps = 0
-    
+
       # Cast num_steps as an Algebraic Expression (if it somehow got through
       # as simply an int)
       if not isinstance(num_steps, Algebraic_Expression):
         num_steps = ConstantToExpression(num_steps)
-    
+
       if self.options.limited_rules:
         left_dist  = dist[0]
         right_dist = dist[1]
@@ -853,9 +853,9 @@ class Proof_System(object):
         self.print_this("** New rule proven **")
         self.print_this(str(rule).replace("\n", "\n " + self.verbose_prefix))
         print
-    
+
       return rule
-  
+
   def apply_rule(self, rule, start_config):
     """Try to apply a rule to a given configuration."""
     # TODO: Currently this returns a new tape and does not mutate the input.
@@ -870,7 +870,7 @@ class Proof_System(object):
                                                   "\n" + self.verbose_prefix +
                                                   "       "))
       self.print_this("Config:", start_tape.print_with_state(start_state))
-    
+
     if isinstance(rule, Diff_Rule):
       return self.apply_diff_rule(rule, start_config)
     elif isinstance(rule, General_Rule):
@@ -904,12 +904,12 @@ class Proof_System(object):
       return success, other
     else:
       assert False, (type(rule), repr(rule))
-    
+
   def apply_diff_rule(self, rule, start_config):
     ## Unpack input
     new_state, new_tape, new_step_num, new_loop_num = start_config
     new_tape = new_tape.copy()  # Make a clean copy that we can edit here.
-    
+
     ## Calculate number of repetitions allowable and other tape-based info.
     num_reps = None
     init_value = {}
@@ -990,8 +990,8 @@ class Proof_System(object):
               else:
                 # First one is safe.
                 # For example, if we have a rule:
-                #   Initial: 0^Inf 2^(d + 1) (0) B> 2^(f + 2) 0^Inf 
-                #   Diff:    0^Inf 2^1 (0) B> 2^-1 0^Inf 
+                #   Initial: 0^Inf 2^(d + 1) (0) B> 2^(f + 2) 0^Inf
+                #   Diff:    0^Inf 2^1 (0) B> 2^-1 0^Inf
                 # then:
                 #   0^Inf 2^3  (0)B> 2^(s + 11) 0^Inf
                 # goes to:
@@ -1020,14 +1020,14 @@ class Proof_System(object):
                   self.print_this("Rule diff tape:", rule.diff_tape)
                   self.print_this("")
                 return False, "Multiple_Diff"
-   
+
     # If none of the diffs are negative, this will repeat forever.
     if num_reps is None:
       if self.verbose:
         self.print_this("++ Rules applies infinitely ++")
         print
       return True, ((Turing_Machine.INF_REPEAT, None, None, {}), large_delta)
-    
+
     # If we cannot even apply this transition once, we're done.
     if (not isinstance(num_reps, Algebraic_Expression) and
         num_reps <= 0):
@@ -1035,7 +1035,7 @@ class Proof_System(object):
         self.print_this("++ Cannot even apply transition once ++")
         print
       return False, 3
-    
+
     ## Determine number of base steps taken by applying rule.
     if self.compute_steps:
       # Effect of the constant factor:
@@ -1055,7 +1055,7 @@ class Proof_System(object):
           return False, 4
     else:
       diff_steps = 0 # TODO: Make it None instead of a lie
-    
+
     ## Alter the tape to account for applying rule.
     return_tape = new_tape.copy()
     for dir in range(2):
@@ -1067,7 +1067,7 @@ class Proof_System(object):
                 return_block.num.is_const():
             return_block.num = return_block.num.const
       return_tape.tape[dir] = [x for x in return_tape.tape[dir] if x.num != 0]
-    
+
     ## Return the pertinent info
     if self.verbose:
       self.print_this("++ Rule successfully applied ++")
@@ -1089,7 +1089,7 @@ class Proof_System(object):
     # Current list of all block exponents. We will update it in place repeatedly
     # rather than creating new tapes.
     current_list = [block.num for block in start_tape.tape[0] + start_tape.tape[1]]
-    
+
     # If this recursive rule is infinite.
     if rule.infinite and config_is_above_min(rule.var_list, rule.min_list,
                                              current_list):
@@ -1097,7 +1097,7 @@ class Proof_System(object):
         self.print_this("++ Rule applies infinitely ++")
         print
       return True, ((Turing_Machine.INF_REPEAT, None, None, {}), large_delta)
-    
+
     # Keep applying rule until we can't anymore.
     # TODO: Maybe we can use some intelligence when all negative rules are
     # constants becuase, then we know how many time we can apply the rule.
@@ -1128,7 +1128,7 @@ class Proof_System(object):
       num_reps += 1
       success = True
       assignment = {}
-    
+
     # We cannot apply rule any more.
     # Make sure there are no zero's in tape exponents.
     if success:
@@ -1160,7 +1160,7 @@ class Proof_System(object):
     # Current list of all block exponents. We will update it in place repeatedly
     # rather than creating new tapes.
     current_list = [block.num for block in start_tape.tape[0] + start_tape.tape[1]]
-    
+
     # If this recursive rule is infinite.
     if group.infinite:
       # TODO(shawn): Check that we are above min! This is broken.
@@ -1231,7 +1231,7 @@ class Proof_System(object):
       num_reps += 1
       success = True
       assignment = {}
-    
+
     # We cannot apply rule any more.
     # Make sure there are no zero's in tape exponents.
     if success:

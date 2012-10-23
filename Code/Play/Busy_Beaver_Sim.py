@@ -119,7 +119,7 @@ def print_machine(machine):
         sys.stdout.write(" %2d" % k)
       sys.stdout.write(" )\n")
     sys.stdout.write("\n")
-        
+
   sys.stdout.flush()
 
 

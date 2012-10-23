@@ -5,7 +5,7 @@ Does IO of Busy Beaver results (IO class).
 import sys
 import string
 
-from Turing_Machine import Turing_Machine 
+from Turing_Machine import Turing_Machine
 
 class IO_Error(Exception): pass
 
@@ -60,7 +60,7 @@ class IO:
 
       if log_number is not None and old_results:
         self.output_file.write("%d " % log_number)
-      
+
         for item in old_results:
           if type(item) in [int, long]:
             self.output_file.write("%d " % item)

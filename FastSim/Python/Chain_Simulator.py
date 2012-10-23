@@ -140,7 +140,7 @@ def template(s, m, x, n):
   except:
     log_m = "         "
   m_str = "%-20s" % (("%%%dr" % x) % m)
-    
+
   if len(m_str) > 20:
     m_str = " "*20
   n_str = "%12d" % n

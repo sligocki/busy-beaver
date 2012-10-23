@@ -25,7 +25,7 @@ def optimize(Ti, Tf, pt_loops, n, seed, print_freq, steps, time, states, symbols
   LTf = math.log(Tf)
   LT = [LTi + (LTf - LTi)*k/(num-1) for k in range(num)]
   B = [1.0/math.exp(LT[k]) for k in range(num)]
-  
+
   obj = TM_Object(states, symbols, steps, time, seed)
   C = [obj.init_config() for i in range(n)]
   energy_func = lambda tm: obj.energy_func(tm)
@@ -100,7 +100,7 @@ if __name__ == "__main__":
   print "BB_Temper_Accel.py --T0=%f --Tf=%f --iter=%d --num=%d --seed=%s --freq=%d --steps=%d --time=%d --states=%d --symbols=%d" % \
         (T0, Tf, loops, num, seed, freq, steps, time, states, symbols)
   print
-  
+
   res = optimize(T0, Tf, loops, num, seed, freq, steps, time, states, symbols)
   print [x[1] for x in res]
   print

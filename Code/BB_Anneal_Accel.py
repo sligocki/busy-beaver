@@ -3,7 +3,7 @@
 # BB_Anneal_Accel.py
 #
 """
-A Busy Beaver finder using Simulated Annealing optimization and accelerated 
+A Busy Beaver finder using Simulated Annealing optimization and accelerated
 TM simulation.
 """
 
@@ -53,12 +53,12 @@ class TM_Object:
     if exit_cond == Macro_Simulator.OVERSTEPS or \
        exit_cond == Macro_Simulator.INFINITE  or \
        exit_cond == Macro_Simulator.TIMEOUT:
-      num_symbols = 0 
-      num_steps   = 0 
+      num_symbols = 0
+      num_steps   = 0
 
     elif exit_cond == Macro_Simulator.HALT:
-      num_symbols = result[1][1] 
-      num_steps   = result[1][0] 
+      num_symbols = result[1][1]
+      num_steps   = result[1][0]
 
     elif exit_cond == Macro_Simulator.UNDEFINED:
       print "TM sim error: %s" % result[2]

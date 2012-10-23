@@ -14,25 +14,25 @@ setup(name='Turing_Machine_Sim',
 # module2 = Extension('Dual_Machine',
 #                     sources=['Dual_Machine.c','Turing_Machine.c'],
 #                     extra_compile_args=['-pedantic-errors','-Wno-long-long'])
-# 
+#
 # setup(name='Dual_Machine',
 #       version='1.0',
 #       description='Run one TM at two different speeds',
 #       ext_modules=[module2])
-# 
+#
 # module3 = Extension('Macro_Machine',
 #                     sources=['Macro_Machine.c','Turing_Machine.c'],
 #                     extra_compile_args=['-pedantic-errors','-Wno-long-long'])
-# 
+#
 # setup(name='Macro_Machine',
 #       version='1.0',
 #       description='Run one TM using macro steps',
 #       ext_modules=[module3])
-# 
+#
 # module4 = Extension('Tree_Identify',
 #                     sources=['Tree_Identify.c','Turing_Machine.c'],
 #                     extra_compile_args=['-pedantic-errors','-Wno-long-long'])
-# 
+#
 # setup(name='Tree_Identify',
 #       version='1.0',
 #       description='Identify a possible infinite tree',

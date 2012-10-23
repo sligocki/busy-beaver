@@ -80,7 +80,7 @@ def Var_Power_from_string(input):
     power = int(input[1])
   else:
     power = 1
-    
+
   return Var_Power(vari,power)
 
 class Term(object):
@@ -125,7 +125,7 @@ class Expression(Number):
   def __init__(self, terms, constant):
     self.terms = terms
     self.const = constant
-  
+
   def __repr__(self):
     if len(self.terms) == 0:
       return repr(self.const)
@@ -136,13 +136,13 @@ class Expression(Number):
       return "("+r+" - "+repr(-self.const)+")"
     else:
       return "("+r+" + "+repr(self.const)+")"
-  
+
   def __add__(self, other):
     if is_scalar(other):
       return Expression(self.terms, self.const + other)
     else:
       return Expression(term_sum(self.terms, other.terms), self.const + other.const)
-  
+
   def __mul__(self, other):
     if is_scalar(other):
       if other == 0:
@@ -152,10 +152,10 @@ class Expression(Number):
         return Expression(new_terms, self.const*other)
     else:
       return expr_prod(self, other)
-  
+
   def __div__(self, other):
     """Divide the expression by a scalar.
-    
+
     If the scalar does not perfectly divide all the coefficients and constant,
     we raise BadOperation
     """
@@ -176,7 +176,7 @@ class Expression(Number):
     else:
       ### TODO: We could (actually) divide, say (8x+8) / (x+1) = 8 !
       raise BadOperation
-  
+
   def __truediv__(self, other):
     if other == 1:
       return self
@@ -186,18 +186,18 @@ class Expression(Number):
     else:
       ### TODO: We could (actually) divide, say (8x+8) / (x+1) = 8 !
       raise BadOperation
-  
+
   def __floordiv__(self, other):
     if other == 1:
       return self
     else:
       ### TODO: We could (actually) divide, say (8x+8) // 8 = (x+1) !
       raise BadOperation
-  
+
   def substitute(self, subs):
     """Substitute values from dict 'subs' to get an int."""
     return sum([t.substitute(subs) for t in self.terms]) + self.const
-  
+
   def always_greater_than(self, other):
     """True if self > other for any non-negative variable assignment."""
     diff = self - other
@@ -207,7 +207,7 @@ class Expression(Number):
       if not term.coef >= 0:
         return False
     return True
-  
+
   # Temporary methods
   def __eq__(self, other):
     if isinstance(other, Algebraic_Expression):

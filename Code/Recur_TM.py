@@ -31,7 +31,7 @@ if __name__ == "__main__":
                     help="Specify a maximum number of loops [Default %default].")
   parser.add_option("--print-loops", type=int, default=10000, metavar="LOOPS",
                     help="Print every LOOPS loops [Default %default].")
-  
+
   parser.add_option("--manual", action="store_true",
                     help="Don't run any simulation, just set up simulator "
                     "and quit. (Run as python -i Quick_Sim.py to interactively "
@@ -39,7 +39,7 @@ if __name__ == "__main__":
 
   Simulator.add_option_group(parser)
   Block_Finder.add_option_group(parser)
-  
+
   (options, args) = parser.parse_args()
 
   if options.quiet:
@@ -50,13 +50,13 @@ if __name__ == "__main__":
     options.verbose_simulator = True
     options.verbose_prover = True
     options.verbose_block_finder = True
-  
+
   if len(args) < 1:
     parser.error("Must have one argument, machine_file")
   infilename = args[0]
 
   infile = open_infile(infilename)
-  
+
   io = IO.IO(infile, None, None)
 
   # For each TM, try to find a recurrence relation for the powers in a
@@ -64,7 +64,7 @@ if __name__ == "__main__":
   for io_record in io:
     # Get the current TM transition table
     ttable = io_record.ttable
-    
+
     # Attempt to find the recurrence relations
-    recur_TM(ttable, options.block_size, options.backsymbol, options.prover, 
+    recur_TM(ttable, options.block_size, options.backsymbol, options.prover,
                      options.recursive, options)

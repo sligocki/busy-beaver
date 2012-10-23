@@ -19,7 +19,7 @@ def add_option_group(parser):
                    help="Block size to use in macro machine simulator "
                    "(default is to guess with the block_finder algorithm).")
   group.add_option("-b", "--no-backsymbol", dest="backsymbol",
-                   action="store_false", default=True, 
+                   action="store_false", default=True,
                    help="Turn OFF backsymbol macro machine.")
 
   parser.add_option_group(group)

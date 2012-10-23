@@ -67,7 +67,7 @@ def display_line(line):
 
 if __name__ == "__main__":
   import sys
-  
+
   if not (2 <= len(sys.argv) <= 3):
     print >>sys.stderr, "usage: Output_Machine.py filename [line-num]"
     sys.exit(1)
@@ -76,7 +76,7 @@ if __name__ == "__main__":
     infile = sys.stdin
   else:
     infile = open(filename, "r")
-  
+
   if len(sys.argv) >= 3:
     line_num = int(sys.argv[2])
     for n, line in enumerate(infile):

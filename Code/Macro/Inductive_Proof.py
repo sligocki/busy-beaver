@@ -7,7 +7,7 @@ X 0 1^2k+1 B> 0 Y  ->  X 1^2k+3 B> Y  in F(k) steps
 
 X 0 1^2k+1 B> 0 Y
 X 0 1^2k+1 <C 1 Y         1
-X 0 1^2k <D 0 1 Y         1  
+X 0 1^2k <D 0 1 Y         1
 X 0 <D 1^2k 0 1 Y        2k
 X 1 A> 1^2k 0 1 Y         1
 X 1 0 B> 1^2k-1 0 1 Y     1

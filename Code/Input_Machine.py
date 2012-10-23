@@ -69,11 +69,11 @@ if __name__ == "__main__":
   num_states = int(raw_input("Num States? "))
   num_symbols = int(raw_input("Num Symbols? "))
   name = raw_input("Name? ")
-  
+
   # Open first, so we immediately know of any problems.
   filename = "Machines/%dx%d-%s.bb" % (num_states, num_symbols, name)
   table_file = open(filename, "w")
-  
+
   format = """Numeric: symbol-dir-state (e.g. 210 for 2RA, 11- for 1RH)
   or any order with letters (e.g. RA2 or A2R or ... for 2RA)
   symbol must be an integer 0-9 less than num_symbols

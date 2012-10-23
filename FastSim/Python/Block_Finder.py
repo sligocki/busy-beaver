@@ -15,10 +15,10 @@ def block_finder(machine, limit=200):
   sim.init(machine)
   sim.proof = None # Level 2 machine
 
-  # The original method was very time consuming and was originally not 
+  # The original method was very time consuming and was originally not
   #   implemented correctly. Now we just run for limit steps.
   sim.run(limit)
-  
+
   '''
   # Run sim to find when the tape is least compressed with macro size 1
   max_length = len(sim.tape.tape[0]) + len(sim.tape.tape[1])
@@ -55,7 +55,7 @@ def block_finder(machine, limit=200):
     print "Optimal base block size:", opt_size
     sys.stdout.flush()
   return opt_size
-  
+
   ## Then try a couple different multiples of this base size to find best speed
   max_chain_factor = 0
   opt_mult = 1

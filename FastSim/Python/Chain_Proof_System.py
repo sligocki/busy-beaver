@@ -28,14 +28,14 @@ class Proof_System:
     self.proven_transitions = {}
     # Stat
     self.num_loops = 0
-  
+
   def print_rules(self):
     for (state, a, b, c), (init_tape, diff_tape, num_steps) in self.proven_transitions.items():
       print
       print state, init_tape
       print diff_tape
       print num_steps
-  
+
   def log(self, tape, state, step_num, loop_num):
     """Log this configuration into the table and check if it is similar to a past one.
     Returned boolean answers question: General tape action applies?"""
@@ -46,7 +46,7 @@ class Proof_System:
                        tuple(map(stripped_info, tape.tape[0])),
                        tuple(map(stripped_info, tape.tape[1])))
     full_config = (state, tape, step_num, loop_num)
-    
+
     # If this config already has a proven meta-transition return it.
     if self.proven_transitions.has_key(stripped_config):
       is_good, res = self.applies(self.proven_transitions[stripped_config], full_config)
@@ -57,17 +57,17 @@ class Proof_System:
           self.past_configs = {}
         return trans
       return False, None, None
-    
+
     # If we are not trying to prove new rules, quit
     if self.past_configs is None:
       return False, None, None
-    
+
     # Otherwise
     # If this is the first time we see this stripped config, just store the loop number
     if not self.past_configs.has_key(stripped_config):
       self.past_configs[stripped_config] = (1, loop_num)
       return False, None, None
-    
+
     times_seen, rest = self.past_configs[stripped_config]
     # If this is the second time, store more information for verification on third sighting
     if times_seen == 1:
@@ -75,7 +75,7 @@ class Proof_System:
       delta_loop = loop_num - last_loop_num
       self.past_configs[stripped_config] = (2, ((state, tape.copy(), step_num, loop_num), loop_num, delta_loop))
       return False, None, None
-    
+
     # If this is the third (or greater) time (i.e. config is stored) ...
     old_config, old_loop_num, delta_loop = rest
     # ... but loops don't match up, save config again in hope for next time
@@ -83,7 +83,7 @@ class Proof_System:
       delta_loop = loop_num - old_loop_num
       self.past_configs[stripped_config] = (times_seen + 1, ((state, tape.copy(), step_num, loop_num), loop_num, delta_loop))
       return False, None, None
-    
+
     # ... and loops do match up, then try the proof!
     if DEBUG:
       print
@@ -100,7 +100,7 @@ class Proof_System:
         trans, bad_delta = res
         return trans
     return False, None, None
-  
+
   def compare(self, old_config, new_config):
     """Test the generality of a suggested meta-transition."""
     # Unpack configurations
@@ -230,7 +230,7 @@ class Proof_System:
       if show:
         raw_input()
     return initial_tape, diff_tape, num_steps
-  
+
   def applies(self, rule, new_config):
     """Make sure that a meta-transion applies and provide important info"""
     if DEBUG:
