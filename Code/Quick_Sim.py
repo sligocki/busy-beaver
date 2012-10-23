@@ -134,10 +134,9 @@ if __name__ == "__main__":
     machine = Input_CSV_Machine.convert_table_to_machine(table)
   else:
     ttable = IO.load_TTable_filename(filename, line)
-    machine = Turing_Machine.make_machine(TTable)
+    machine = Turing_Machine.make_machine(ttable)
     if not options.quiet:
       Turing_Machine.print_machine(machine)
 
   run(machine, options.block_size, options.backsymbol, options.prover,
                options.recursive, options)
-
