@@ -10,27 +10,24 @@ formats.
 import sys, string
 
 from Macro import Turing_Machine, Simulator, Block_Finder
+import Input_CSV_Machine
 import IO
 
-def run(TTable, block_size, back, prover, recursive, options):
+def run(machine, block_size, back, prover, recursive, options):
   # Construct Machine (Backsymbol-k-Block-Macro-Machine)
-  m = Turing_Machine.make_machine(TTable)
 
   # If no explicit block-size given, use inteligent software to find one
   if not block_size:
-    block_size = Block_Finder.block_finder(m, options)
-
-  if not options.quiet:
-    Turing_Machine.print_machine(m)
+    block_size = Block_Finder.block_finder(machine, options)
 
   # Do not create a 1-Block Macro-Machine (just use base machine)
   if block_size != 1:
-    m = Turing_Machine.Block_Macro_Machine(m, block_size)
+    machine = Turing_Machine.Block_Macro_Machine(machine, block_size)
   if back:
-    m = Turing_Machine.Backsymbol_Macro_Machine(m)
+    machine = Turing_Machine.Backsymbol_Macro_Machine(machine)
 
   global sim  # For debugging, especially with --manual
-  sim = Simulator.Simulator(m, options)
+  sim = Simulator.Simulator(machine, options)
 
   if options.manual:
     return  # Let's us run the machine manually. Must be run as python -i Quick_Sim.py
@@ -96,6 +93,8 @@ if __name__ == "__main__":
                     help="Specify a maximum number of loops.")
   parser.add_option("--print-loops", type=int, default=10000, metavar="LOOPS",
                     help="Print every LOOPS loops [Default %default].")
+  parser.add_option("--csv", action="store_true",
+                    help="Read input file as CSV not standard format.")
   
   parser.add_option("--manual", action="store_true",
                     help="Don't run any simulation, just set up simulator "
@@ -129,9 +128,16 @@ if __name__ == "__main__":
       parser.error("line_number must be >= 1")
   else:
     line = 1
-  
-  ttable = IO.load_TTable_filename(filename, line)
-  
-  run(ttable, options.block_size, options.backsymbol, options.prover, 
-              options.recursive, options)
+
+  if options.csv:
+    table = Input_CSV_Machine.read_csv_to_table(filename)
+    machine = Input_CSV_Machine.convert_table_to_machine(table)
+  else:  
+    ttable = IO.load_TTable_filename(filename, line)
+    machine = Turing_Machine.make_machine(TTable)
+    if not options.quiet:
+      Turing_Machine.print_machine(machine)
+
+  run(machine, options.block_size, options.backsymbol, options.prover, 
+               options.recursive, options)
 
