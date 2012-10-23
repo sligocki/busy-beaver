@@ -10,7 +10,7 @@ Turing_Machine
 
 Tape
     Contains the "chained tape" representation which separates the tape into
-    left and right halves and stores the symbols in run-length encoding, so 
+    left and right halves and stores the symbols in run-length encoding, so
     each tape element is a symbol and a number-of-repetitions. The TM head
     is considered to be pointed towards the left or right half-tape rather than
     sitting on one side or the other.

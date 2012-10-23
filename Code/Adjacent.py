@@ -25,14 +25,14 @@ def adjacent(ttable):
 
 if __name__ == "__main__":
   import sys, IO
-  
+
   if len(sys.argv) >= 3:
     line = int(sys.argv[2])
   else:
     line = 1
 
   ttable = IO.load_TTable_filename(sys.argv[1], line)
-  
+
   for out_ttable in adjacent(ttable):
     print out_ttable
 

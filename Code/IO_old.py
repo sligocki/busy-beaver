@@ -5,15 +5,15 @@
 Old IO for Busy Beaver results.
 
 Format looks like:
-6 2 2 -1 -1 4 Infinite [[(1, 1, 1), (-1, 0, -1)], [(1, 0, 1), (0, 0, 1)]] 
-7 2 2 -1 -1 0 2 4 [[(1, 1, 1), (1, 1, -1)], [(1, 0, 1), (1, 1, 0)]] 
+6 2 2 -1 -1 4 Infinite [[(1, 1, 1), (-1, 0, -1)], [(1, 0, 1), (0, 0, 1)]]
+7 2 2 -1 -1 0 2 4 [[(1, 1, 1), (1, 1, -1)], [(1, 0, 1), (1, 1, 0)]]
 """
 
 import sys
 import string
 
 from Common import Exit_Condition
-from Turing_Machine import Turing_Machine 
+from Turing_Machine import Turing_Machine
 
 class IO_Error(Exception): pass
 
@@ -68,7 +68,7 @@ class IO:
 
       if log_number is not None and old_results:
         self.output_file.write("%d " % log_number)
-      
+
         for item in old_results:
           if type(item) in [int, long]:
             self.output_file.write("%d " % item)

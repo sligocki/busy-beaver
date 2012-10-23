@@ -53,7 +53,7 @@ class InductiveProofTest(unittest.TestCase):
 
     self.assertEqual(True, Inductive_Proof.Inductive_Proof(
         machine, self.options, rule))
-    
+
 
 if __name__ == "__main__":
   unittest.main()

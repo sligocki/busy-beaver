@@ -23,7 +23,7 @@ import Macro_Simulator
 from Macro.Tape import INF
 from Alarm import ALARM, AlarmException
 
-def run(TTable, options, steps=INF, runtime=None, block_size=None, 
+def run(TTable, options, steps=INF, runtime=None, block_size=None,
                 backsymbol=True, prover=True, recursive=False):
   """Run the Accelerated Turing Machine Simulator using intelligent blockfinding if no block_size is given."""
   for do_over in xrange(0,4):
@@ -75,16 +75,16 @@ def run(TTable, options, steps=INF, runtime=None, block_size=None,
       ## Resolve end conditions and return relevent info.
       if sim.op_state == Macro.Turing_Machine.RUNNING:
         return Exit_Condition.MAX_STEPS, (sim.step_num,)
-      
+
       elif sim.op_state == Macro.Turing_Machine.HALT:
         return Exit_Condition.HALT, (sim.step_num, sim.get_nonzeros())
-      
+
       elif sim.op_state == Macro.Turing_Machine.INF_REPEAT:
         return Exit_Condition.INFINITE, (sim.inf_reason,)
-      
+
       elif sim.op_state == Macro.Turing_Machine.UNDEFINED:
         on_symbol, on_state = sim.op_details[0][:2]
-        return Exit_Condition.UNDEF_CELL, (on_state, on_symbol, 
+        return Exit_Condition.UNDEF_CELL, (on_state, on_symbol,
                            sim.step_num, sim.get_nonzeros())
 
     except AlarmException: # Catch Timer (unexpected!)
@@ -121,7 +121,7 @@ if __name__ == "__main__":
     sys.exit(1)
   else:
     outfile = file(options.outfilename, "w")
-  
+
   if options.steps == 0:
     options.steps = INF
 

@@ -95,7 +95,7 @@ if __name__ == "__main__":
                     help="Print every LOOPS loops [Default %default].")
   parser.add_option("--csv", action="store_true",
                     help="Read input file as CSV not standard format.")
-  
+
   parser.add_option("--manual", action="store_true",
                     help="Don't run any simulation, just set up simulator "
                     "and quit. (Run as python -i Quick_Sim.py to interactively "
@@ -103,7 +103,7 @@ if __name__ == "__main__":
 
   Simulator.add_option_group(parser)
   Block_Finder.add_option_group(parser)
-  
+
   (options, args) = parser.parse_args()
 
   if options.quiet:
@@ -114,11 +114,11 @@ if __name__ == "__main__":
     options.verbose_simulator = True
     options.verbose_prover = True
     options.verbose_block_finder = True
-  
+
   if len(args) < 1:
     parser.error("Must have at least one argument, machine_file")
   filename = args[0]
-  
+
   if len(args) >= 2:
     try:
       line = int(args[1])
@@ -132,12 +132,12 @@ if __name__ == "__main__":
   if options.csv:
     table = Input_CSV_Machine.read_csv_to_table(filename)
     machine = Input_CSV_Machine.convert_table_to_machine(table)
-  else:  
+  else:
     ttable = IO.load_TTable_filename(filename, line)
     machine = Turing_Machine.make_machine(TTable)
     if not options.quiet:
       Turing_Machine.print_machine(machine)
 
-  run(machine, options.block_size, options.backsymbol, options.prover, 
+  run(machine, options.block_size, options.backsymbol, options.prover,
                options.recursive, options)
 

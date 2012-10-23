@@ -64,7 +64,7 @@ def CTL(machine, config):
           new_table[new_state, new_dir][not new_dir][0].add(new_symb)
           new_table[new_state, new_dir][new_dir][1].add(machine.init_symbol)
         else: # new_dir != dir
-          # Ex: (3) (1|5)* A> (1) -> (3) (1|5)* <B 2 
+          # Ex: (3) (1|5)* A> (1) -> (3) (1|5)* <B 2
           new_table[new_state, new_dir][not new_dir][1].add(new_symb)
     # Make new_table complete by unioning it with table
     for x in table:

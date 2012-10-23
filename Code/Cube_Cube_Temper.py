@@ -154,7 +154,7 @@ def optimize(Ti, Tf, pt_loops, num, seed, print_freq, m, n, sigma):
   LTf = math.log(Tf)
   LT = [LTi + (LTf - LTi)*k/(num-1) for k in range(num)]
   B = [1.0/math.exp(LT[k]) for k in range(num)]
-  
+
   obj = Cube_Object(m, n, sigma, seed)
   C = [obj.init_config() for i in range(num)]
   energy_func = lambda cube: obj.energy_func(cube)
@@ -220,7 +220,7 @@ if __name__ == "__main__":
   print "Cube_Cube_Temper.py --T0=%f --Tf=%f --iter=%d --num=%d --seed=%s --freq=%d --m=%d --n=%d" % \
         (T0, Tf, loops, num, seed, freq, m, n)
   print
-  
+
   res = optimize(T0, Tf, loops, num, seed, freq, m, n, 1.0)
   print [x[1] for x in res]
   print

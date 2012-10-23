@@ -88,7 +88,7 @@ for which help is available.\n
     """\nEnter a new tape and state - same format as output.\n"""
     self.tape_code(args)
 
-  def default(self, line):       
+  def default(self, line):
     """\nCalled on an input line when the command prefix is not recognized.
 In that case we execute the line as Python code.\n
     """
@@ -476,7 +476,7 @@ In that case we execute the line as Python code.\n
         new_back_symbol = Turing_Machine.Block_Symbol([int(c) for c in new_back_symbol])
     else:
       new_back_symbol = ""
-    
+
     new_tape = Tape.Chain_Tape()
     new_tape.dir = tape_dir
 
@@ -524,7 +524,7 @@ In that case we execute the line as Python code.\n
       new_state = tape_parse[state_index][0][1]
     else:
       new_state = tape_parse[state_index][0][0]
-        
+
     if new_state.translate(None,states[:self.num_states]) != "":
       print "\nState, '%s', not one of '%s'.\n" % (new_state,states[:self.num_states])
       return
@@ -578,7 +578,7 @@ In that case we execute the line as Python code.\n
       rl_size_history = self.readline.get_current_history_length()
       if max_num:
         rl_size_history = max_num
-      
+
       temp = []
       for line_num in xrange(rl_size_history+1):
         item = self.readline.get_history_item(line_num)
@@ -612,19 +612,19 @@ if __name__ == "__main__":
   options.compute_steps = True
 
   options.print_loops = 1
-  
+
   if options.verbose:
     options.verbose_simulator = True
     options.verbose_prover = True
     options.verbose_block_finder = True
-  
+
   # Verbose block finder
   Block_Finder.DEBUG = options.verbose_block_finder
-  
+
   if len(args) < 1:
     parser.error("Must have at least one argument, machine_file")
   filename = args[0]
-  
+
   if len(args) >= 2:
     try:
       line = int(args[1])
@@ -634,8 +634,8 @@ if __name__ == "__main__":
       parser.error("line_number must be >= 1")
   else:
     line = 1
-  
+
   ttable = IO.load_TTable_filename(filename, line)
-  
+
   BBconsole = BBConsole(ttable, options)
-  BBconsole.cmdloop() 
+  BBconsole.cmdloop()

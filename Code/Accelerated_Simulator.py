@@ -161,7 +161,7 @@ class Config:
           self._push(not self.dir, symbol)
       else:
         stack.push(seq_write)
-        
+
   def step(self, symbol_out, dir_out, state_out):
     """Make a single TM transition.
     Write symbol, move in dir, change to state."""

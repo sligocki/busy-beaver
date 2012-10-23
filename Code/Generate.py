@@ -3,7 +3,7 @@
 # Generate.py
 #
 """
-This is a Busy Beaver Turing machine generator.  It enumerates a 
+This is a Busy Beaver Turing machine generator.  It enumerates a
 representative set of all Busy Beavers for given # of states and symbols.
 """
 

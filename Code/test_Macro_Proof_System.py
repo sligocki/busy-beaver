@@ -51,7 +51,7 @@ class SystemTest(unittest.TestCase):
     proof = Proof_System.Proof_System(tm, self.options, "")
 
     # To call "apply_rule", a "rule" and a "start_config" are needed.
-    
+
     # Build the "start_config".  It is a tuple contains a "state", "tape",
     # "step_num", and "loop_num".
     current_state = Turing_Machine.Simple_Machine_State(0)

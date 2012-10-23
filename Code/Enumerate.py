@@ -183,7 +183,7 @@ class Enumerator(object):
       while tm:
         self.add_unresolved(tm, Exit_Condition.NOT_RUN, pout)
         tm = self.stack.pop_job()
-      
+
     # Done
     self.save(pout=pout)
 

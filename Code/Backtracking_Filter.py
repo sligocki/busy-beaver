@@ -96,7 +96,7 @@ def test(TTable, steps, limit):
     max_steps = max(max_steps, this_steps)
   # If all halt states cannot be reached:
   return Exit_Condition.INFINITE, BACKTRACK, max_steps, "Backtrack"
-      
+
 def apply_results(results, old_line, log_number):
   old_results = next[5]
   return next[0:5]+(results, next[6], log_number, old_results)

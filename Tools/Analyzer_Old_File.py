@@ -24,7 +24,7 @@ def best_from_lines(lines, field, test, default):
     field_value = field.type(fields[field.num])
     best_value = test(field_value, best_value)
   return best_value
-  
+
 def filter_lines(lines, field, test):
   new_lines = []
   for line in lines:
@@ -57,7 +57,7 @@ try:
 except IndexError:
   print "No data file provided"
   print usage
-  sys.exit(1)  
+  sys.exit(1)
 except IOError:
   print "No such file: '%s'" % args[0]
   print usage

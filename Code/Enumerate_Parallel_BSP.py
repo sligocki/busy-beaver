@@ -155,7 +155,7 @@ class Enumerator(object):
           break
 
         except AlarmException:
-          sys.stderr.write("Weird2 (%d): %s\n" % (do_over,tm)) 
+          sys.stderr.write("Weird2 (%d): %s\n" % (do_over,tm))
 
     # Done
     # if len(self.stack) == 0:

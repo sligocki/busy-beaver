@@ -48,7 +48,7 @@ def block_finder(machine, options):
   new_options.compute_steps = True  # Even if --no-steps, we need steps here.
   new_options.verbose_simulator = options.verbose_block_finder
   sim = Simulator(machine, new_options)
-  
+
   if options.verbose_block_finder:
     print
     print "Block finder start time:", time.clock()
@@ -69,33 +69,33 @@ def block_finder(machine, options):
           print "Halted, returning base block size: 1"
           print ""
         return 1
-    
+
     if options.verbose_block_finder:
       print "Found least compression time:", time.clock()
       print "Least compression at step:", worst_loop
       print ""
-    
+
     # TODO: Instead of re-seeking, keep going till next bigger tape?
     sim = Simulator(machine, new_options)
     sim.loop_seek(worst_loop)
-      
+
   ## Or just find the best compression at time limit
   else:
     sim.run(options.bf_limit1)
-  
+
   if options.verbose_block_finder:
     print "Reset sim time:", time.clock()
     print ""
-  
+
   # Analyze this time to see which block size provides greatest compression
   tape = uncompress_tape(sim.tape.tape)
-  
+
   if options.verbose_block_finder:
     print "Uncompressed tape time:", time.clock()
     print ""
     print tape
     print ""
-  
+
   min_compr = len(tape) + 1 # Worse than no compression
   opt_size = 1
   for block_size in range(1, len(tape)//2):
@@ -103,17 +103,17 @@ def block_finder(machine, options):
     if compr_size < min_compr:
       min_compr = compr_size
       opt_size = block_size
-  
+
   if options.verbose_block_finder:
     print "Run1 end time:", time.clock()
     print "Optimal base block size:", opt_size
     print ""
     print tape
     print ""
-  
+
   if options.bf_limit2 <= 0:
     return opt_size
-  
+
   ## Then try a couple different multiples of this base size to find best speed
   max_chain_factor = 0
   opt_mult = 1
@@ -126,24 +126,24 @@ def block_finder(machine, options):
     if sim.op_state != Turing_Machine.RUNNING:
       return mult*opt_size
     chain_factor = sim.steps_from_chain / sim.steps_from_macro
-    
+
     if options.verbose_block_finder:
       print mult, chain_factor
-    
+
     # Note that we prefer smaller multiples
     # We only choose larger multiples if they perform much better
     if chain_factor > 2*max_chain_factor:
       max_chain_factor = chain_factor
       opt_mult = mult
     mult += 1
-  
+
   if options.verbose_block_finder:
     print ""
     print "Run2 end time:", time.clock()
     print "Optimal block mult:", opt_mult
     print ""
     sys.stdout.flush()
-  
+
   return opt_mult*opt_size
 
 def uncompress_tape(compr_tape):

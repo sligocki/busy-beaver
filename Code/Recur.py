@@ -246,7 +246,7 @@ def recur_fit(series):
     #   success = False
     #
     # x = [xe[0] for xe in xm]
-    
+
     # On success, stop and return recurrence relation imformation
     if success:
       constant = x[0]
@@ -374,7 +374,7 @@ def recur_TM(TTable, block_size, back, prover, recursive, options):
           recur_print(coefs,constant)
         else:
           print "         failure"
-          
+
         recur_all = recur_all and recur_found
         print
 

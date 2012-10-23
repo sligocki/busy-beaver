@@ -46,7 +46,7 @@ class Repeated_Symbol(object):
             other.symbol   == self.symbol     and
             other.num      == self.num        and
             other.id       == self.id)
-  
+
   def __hash__(self):
     return self.symbol + self.num
 
@@ -56,7 +56,7 @@ class Repeated_Symbol(object):
     else:
       num_string = "(~10^%.1f)" % math.log10(self.num)
     return "%s^%s" % (str(self.symbol), num_string)
-  
+
   def copy(self):
     return Repeated_Symbol(self.symbol, self.num, self.id)
 
@@ -77,7 +77,7 @@ class Chain_Tape(object):
             other.dir      == self.dir        and
             other.tape     == self.tape       and
             other.displace == self.displace)
-  
+
   def __repr__(self):
     return self.print_with_state(None)
 
@@ -99,8 +99,8 @@ class Chain_Tape(object):
       retval = retval + `sym` + " "
 
     return retval
-    
-  
+
+
   def copy(self):
     Chain_Tape.num_copies += 1
     new = Chain_Tape()
@@ -110,7 +110,7 @@ class Chain_Tape(object):
     s1 = [x.copy() for x in self.tape[1]]
     new.tape = [s0, s1]
     return new
-  
+
   def get_nonzeros(self, eval_symbol, state_value):
     """Return number of nonzero symbols on the tape."""
     n = state_value
@@ -119,15 +119,15 @@ class Chain_Tape(object):
         if block.num is not INF:
           n += eval_symbol(block.symbol)*block.num
     return n
-  
+
   def get_top_block(self):
     """Simply returns the current symbol"""
     return self.tape[self.dir][-1]
-  
+
   def get_top_symbol(self):
     """Simply returns the current symbol"""
     return self.tape[self.dir][-1].symbol
-  
+
   def apply_single_move(self, new_symbol, new_dir):
     """Apply a single macro step.  del old symbol, push new one."""
     ## Delete old symbol
@@ -156,7 +156,7 @@ class Chain_Tape(object):
       self.displace += 1
     else:
       self.displace -= 1
-  
+
   def apply_chain_move(self, new_symbol):
     """Apply a chain step which replaces an entire string of symbols.
     Returns the number of symbols replaced."""

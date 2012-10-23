@@ -32,7 +32,7 @@ def run(TTable, block_size, steps, runtime, recursive, progress, options,
   try:
     if runtime:
       ALARM.set_alarm(runtime)
-      
+
     sim.loop_run(steps)
 
     ALARM.cancel_alarm()
@@ -142,7 +142,7 @@ if __name__ == "__main__":
 
   for io_record in io:
     # Run the simulator/filter on this machine.
-    sim_results = run(io_record.ttable, options.block_size, options.steps, 
+    sim_results = run(io_record.ttable, options.block_size, options.steps,
                       options.time, options.recursive, options.progress,
                       options, stats)
 
