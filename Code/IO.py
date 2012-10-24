@@ -64,6 +64,8 @@ class Record(object):
     """Read a result off of a line from a file."""
     start_time = time.time()
 
+    line = line.split("#")[0]  # Cleave off comment.
+
     parts = line.split("|", 2)
     self.ttable = Input_Machine.read_ttable(parts[0])
     if len(parts) >= 2:
