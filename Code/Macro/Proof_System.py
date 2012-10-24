@@ -498,7 +498,13 @@ class Proof_System(object):
             self.pause_until_loop = loop_num + 100 * rule.num_loops
             if stripped_config in self.rules:
               group = self.rules[stripped_config]
-              group.add_rule(rule)
+              if not group.add_rule(rule):
+                if self.verbose:
+                  self.print_this("++ Collatz Rule doesn't match Group ++")
+                  self.print_this("Rule:", str(rule).replace(
+                      "\n", "\n" + self.verbose_prefix + "       "))
+                  self.print_this("Group:", str(group).replace(
+                      "\n", "\n" + self.verbose_prefix + "        "))
             else:
               group = Collatz_Rule_Group(rule, self.rule_num)
             rule = group
