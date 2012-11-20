@@ -116,14 +116,14 @@ def backtrack_ttable(TTable, steps, max_configs):
   return Exit_Condition.INFINITE, BACKTRACK, max_steps, "Backtrack"
 
 def apply_results(results, old_line, log_number):
-  old_results = next[5]
-  return next[0:5]+(results, next[6], log_number, old_results)
+  old_results = old_line[5]
+  return old_line[0:5]+(results, old_line[6], log_number, old_results)
 
-if __name__ == "__main__":
-  import sys
-  from Option_Parser import Filter_Option_Parser
+from Option_Parser import Filter_Option_Parser
+
+def main(argv):
   # Get command line options.
-  opts, args = Filter_Option_Parser(sys.argv, [
+  opts, args = Filter_Option_Parser(argv, [
       ("backsteps" , int, None, True, True),
       ("limit",     int, None, False, True)])
 
@@ -132,13 +132,17 @@ if __name__ == "__main__":
     limit = opts["backsteps"]
   log_number = opts["log_number"]
   io = IO.IO(opts["infile"], opts["outfile"], log_number)
-  next = io.read_result()
-  while next:
-    TTable = next[6]
+  next_entry = io.read_result()
+  while next_entry:
+    TTable = next_entry[6]
     # Run the simulator/filter on this machine
     results = backtrack_ttable(TTable, opts["backsteps"], limit)
     # Deal with result
     if results:
-      next = apply_results(results, next, log_number)
-    io.write_result_raw(*next)
-    next = io.read_result()
+      next_entry = apply_results(results, next_entry, log_number)
+    io.write_result_raw(*next_entry)
+    next_entry = io.read_result()
+
+if __name__ == "__main__":
+  import sys
+  main(sys.argv)
