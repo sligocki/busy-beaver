@@ -24,12 +24,13 @@ class MPI_Worker_Work_Queue(Work_Queue.Work_Queue):
   """Work queue based on mpi4py MPI libary. Allows maintaining a global work
   queue for many processes possibly distributed across many machines."""
 
-  def __init__(self, master_proc_num, sample_time = 1.0):
+  def __init__(self, master_proc_num, pout = sys.stdout, sample_time = 1.0):
     self.master = master_proc_num
     self.local_queue = []  # Used to buffer up jobs locally.
     self.size_queue = 0
     self.min_queue = 0
     self.max_queue = 0
+    self.pout = pout
 
     # Stats
     self.jobs_popped = 0
@@ -44,6 +45,11 @@ class MPI_Worker_Work_Queue(Work_Queue.Work_Queue):
     self.compute_time = 0.0  # Rest of the time.
 
     self.last_time = time.time()
+
+  def __getstate__(self):
+    d = self.__dict__.copy()
+    del d["pout"]
+    return d
 
   def pop_job(self):
     self.save_stats()
@@ -83,10 +89,13 @@ class MPI_Worker_Work_Queue(Work_Queue.Work_Queue):
         self.end_time += now - self.last_time
         self.last_time = now
 
+        # Output timings
+        self.pout.write("Get time:     %6.2f\n" % self.get_time)
+        self.pout.write("Put time:     %6.2f\n" % self.put_time)
+        self.pout.write("Compute time: %6.2f\n" % self.compute_time)
+        self.pout.write("End time:     %6.2f\n" % self.end_time)
+
         # If server sent us no work, we are done.
-        #print "Get time:", self.get_time
-        #print "Put time:", self.put_time
-        #print "Compute time:", self.compute_time
         return None
 
   def push_job(self, job):

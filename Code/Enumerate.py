@@ -198,8 +198,8 @@ class Enumerator(object):
       pout.write(" %s %s %s -" % (self.num_halt, self.num_infinite, self.num_unresolved))
       pout.write(" %s" % (long_to_eng_str(self.best_steps,1,3),))
       pout.write(" %s" % (long_to_eng_str(self.best_score,1,3),))
-      pout.write("(%.2f - %.2f)\n" % (self.end_time - self.start_time,
-                                      self.end_clock - self.start_clock))
+      pout.write(" (%.2f - %.2f)\n" % (self.end_time - self.start_time,
+                                       self.end_clock - self.start_clock))
       if self.options.print_stats:
         pprint(self.stats.__dict__)
       pout.flush()
@@ -346,7 +346,7 @@ def main(args):
 
   out_parser = OptionGroup(parser, "Output Options")
   enum_parser.add_option("--no-output", action="store_true", default=False,
-                         help="Done generate any output.")
+                         help="Don't generate any output.")
   out_parser.add_option("--outfile", dest="outfilename", metavar="OUTFILE",
                         help="Output file name "
                         "[Default: Enum.STATES.SYMBOLS.STEPS.out]")
@@ -458,7 +458,7 @@ def main(args):
           print "Total time %.3f\n" % (end_time - start_time,)
         sys.exit(1)
     else:
-      stack = MPI_Work_Queue.MPI_Worker_Work_Queue(master_proc_num=0)
+      stack = MPI_Work_Queue.MPI_Worker_Work_Queue(master_proc_num=0, pout=pout)
 
   ## Enumerate machines
   enumerator = Enumerator(options.steps, options.time, stack, io,
