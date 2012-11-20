@@ -16,27 +16,26 @@ import IO
 # Constants
 BACKTRACK = "Backtrack"
 
-def init_array(val, num):
-  temp = [None] * num
-  for i in range(num):
-    temp[i] = val[:]
-  return temp
-
-def get_halts_and_backlinks(TTable):
-  """Finds all halt transitions and transitions that could get to 
-  each state."""
+def get_info(TTable):
+  """Finds all halt transitions, transitions that could get to 
+  each state and all of the single-sided symbols."""
   num_states = len(TTable)
   num_symbols = len(TTable[0])
   halts = []
-  to_state = init_array([], num_states)
-  for state in range(num_states):
-    for symbol in range(num_symbols):
-      cell = TTable[state][symbol]
-      if cell[2] == HALT_STATE:
-        halts.append((state, symbol))
+  to_state = [[] for x in range(num_states)]
+  dir_to_symbol = [[False, False] for x in range(num_symbols)]
+  for state_in in range(num_states):
+    for symbol_in in range(num_symbols):
+      symbol_out, dir_out, state_out = cell = TTable[state_in][symbol_in]
+      if state_out == HALT_STATE:
+        halts.append((state_in, symbol_in))
       else:
-        to_state[cell[2]].append(((state, symbol), cell))
-  return halts, to_state
+        # Add this input transition to those that can lead to this state.
+        to_state[state_out].append(((state_in, symbol_in), cell))
+        # And note that that this symbol can be found on the opposite
+        # side of the tape (the direction we are moving away from).
+        dir_to_symbol[symbol_out][not dir_out] = True
+  return halts, to_state, dir_to_symbol
 
 class Partial_Config:
   def __init__(self, state, symbol):
@@ -45,11 +44,10 @@ class Partial_Config:
     self.state = state
 
   def __repr__(self):
-    return "%r %r %r %r" % (self.dir[0], self.state, self.current, 
-                            self.dir[1])
+    return "%r %r %r %r" % (self.dir[0], self.state, self.current, self.dir[1])
 
   def applies(self, (state_in, symbol_in), (symbol_out, dir_out, state_out)):
-    """Tests whether this transition could have been applied to reach 
+    """Tests whether this transition could have been applied to reach
     this configuration."""
     return len(self.dir[not dir_out]) == 0 or \
            self.dir[not dir_out][0] == symbol_out
@@ -69,11 +67,20 @@ class Partial_Config:
     new_config.state = state_in
     return new_config
 
+def is_possible_config(config, dir_to_symbol):
+  """Is this configuration possible? Based solely off of dir_to_symbol
+  which stores which symbols can be on which sides of the tape."""
+  for dir in range(2):
+    for symbol in config.dir[dir]:
+      if not dir_to_symbol[symbol][dir]:
+        return False
+  return True
+
 def backtrack_single_halt((halt_state, halt_symbol),
-                          to_state, steps, max_configs):
-  """Try backtrackying |steps| steps from this specific halting 
-  config. |to_state| and |to_symbol| are lists of transitions that 
-  lead to each state and symbol."""
+                          to_state, dir_to_symbol, steps, max_configs):
+  """Try backtrackying |steps| steps from this specific halting
+  config. |to_state| is a list of transitions that lead to each state.
+  |dir_to_symbol| indicates which direction symbols can be found."""
   # All possible configurations leading to halt in i+1 steps.
   pos_configs = [Partial_Config(halt_state, halt_symbol)]
   for i in range(steps):
@@ -83,7 +90,9 @@ def backtrack_single_halt((halt_state, halt_symbol),
     for config in pos_configs:
       for addr, cell in to_state[config.state]:
         if config.applies(addr, cell):
-          prev_configs.append(config.apply_trans(addr, cell))
+          this_config = config.apply_trans(addr, cell)
+          if is_possible_config(this_config, dir_to_symbol):
+            prev_configs.append(this_config)
     pos_configs = prev_configs
     if len(pos_configs) == 0:
       #print "End", len(pos_configs)
@@ -94,10 +103,10 @@ def backtrack_single_halt((halt_state, halt_symbol),
   return False
 
 def backtrack_ttable(TTable, steps, max_configs):
-  """Try backtracking |steps| steps for each halting config in TTable, 
+  """Try backtracking |steps| steps for each halting config in TTable,
   giving up if there are more than |max_configs| possible configs."""
-  # Get initial stat info
-  halts, to_state = get_halts_and_backlinks(TTable)
+  # Get initial ttable info.
+  halts, to_state, dir_to_symbol = get_info(TTable)
   max_steps = -1
   # See if all halts cannot be reached
   for halt_state, halt_symbol in halts:
@@ -107,7 +116,8 @@ def backtrack_ttable(TTable, steps, max_configs):
       if cell[2] == halt_state:
         return False
     this_steps = backtrack_single_halt((halt_state, halt_symbol),
-                                       to_state, steps, max_configs)
+                                       to_state, dir_to_symbol,
+                                       steps, max_configs)
     # If any of the backtracks fail, the whole thing fails.
     if not this_steps:
       return False
