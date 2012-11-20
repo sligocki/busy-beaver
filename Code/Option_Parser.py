@@ -20,12 +20,12 @@ def open_infile(infilename):
   else:
     return file(infilename, "r")
 
-def open_outfile(outfilename):
+def open_outfile(outfilename, force):
   """Create output file based on filename."""
   if outfilename == "-":
     return sys.stdout
   else:
-    if os.path.exists(outfilename):
+    if not force and os.path.exists(outfilename):
       sys.stderr.write("Output text file, '%s', exists\n" % outfilename)
       if string.lower(raw_input("Overwrite? ")) not in ("y", "yes"):
         return None
@@ -85,6 +85,7 @@ def Filter_Option_Parser(argv, extra_opt, ignore_outfile = False):
           ("steps"     , int, None, False, True),
           ("infile"    , str, None, True , True),
           ("outfile"   , str, None, False, True),
+          ("force"     , bool, False, False, False),
           ("log_number", int, None, False, True)] + extra_opt
   ignore_opts = []
   if ignore_outfile:
@@ -110,7 +111,7 @@ def Filter_Option_Parser(argv, extra_opt, ignore_outfile = False):
       opts["outfile"] = "%dx%d.out" % (opts["states"], opts["symbols"])
 
     opts["outfilename"] = opts["outfile"]
-    opts["outfile"] = open_outfile(opts["outfilename"])
+    opts["outfile"] = open_outfile(opts["outfilename"], opts["force"])
     if not opts["outfile"]:
       sys.exit(1)
 
