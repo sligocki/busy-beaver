@@ -236,7 +236,8 @@ class Past_Config(object):
   def __init__(self):
     self.times_seen = 0
     self.last_loop_num = None
-    self.delta_loops = set()
+    self.last_delta = None
+    #self.delta_loops = set()
 
   def __repr__(self):
     return repr(self.__dict__)
@@ -245,7 +246,7 @@ class Past_Config(object):
     """Decide whether we should try to prove a rule.
 
     Currently, we try to prove a rule we've seen happen twice (not necessarily
-    consecutive) with the same num of loops (delta_loops).
+    consecutive) with the same num of loops (last_delta or delta_loops).
     """
     # First time we see stripped_config, store loop_num.
     if self.last_loop_num == None:
@@ -253,13 +254,14 @@ class Past_Config(object):
       self.times_seen += 1
       return False
 
-    # Next store delta_loops. If we have a delta_loops but it hasn't repeated,
+    # Next store last_delta. If we have a last_delta but it hasn't repeated,
     # then update the new delta. (Note: We can only prove rules that take
     # the same number of loops each time.)
-    if not (self.delta_loops and
-            loop_num - self.last_loop_num in self.delta_loops):
-      self.delta_loops = set()
-      self.delta_loops.add(loop_num - self.last_loop_num)
+    delta = loop_num - self.last_loop_num
+    if not self.last_delta or self.last_delta != delta:
+      self.last_delta = delta
+      #self.delta_loops = set()
+      #self.delta_loops.add(delta)
       self.last_loop_num = loop_num
       self.times_seen += 1
       return False
