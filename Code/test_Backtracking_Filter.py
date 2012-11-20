@@ -32,8 +32,22 @@ class SystemTest(unittest.TestCase):
                               "--backsteps=10"])
     return self.read(outfile.name)
 
-  def test_foo(self):
+  def test_2x2(self):
     self.assertEqual(self.read("Backtracking.2x2.gold"), self.backtrack("2x2"))
+
+  def test_2x3(self):
+    self.assertEqual(self.read("Backtracking.2x3.gold"), self.backtrack("2x3"))
+
+  def test_2x4(self):
+    self.assertEqual(self.read("Backtracking.2x4.gold"),
+                     self.backtrack("2x4.sample"))
+
+  def test_3x2(self):
+    self.assertEqual(self.read("Backtracking.3x2.gold"), self.backtrack("3x2"))
+
+  def test_4x2(self):
+    self.assertEqual(self.read("Backtracking.4x2.gold"),
+                     self.backtrack("4x2.sample"))
 
 if __name__ == "__main__":
   unittest.main()
