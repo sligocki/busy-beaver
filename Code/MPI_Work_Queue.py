@@ -30,12 +30,17 @@ class MPI_Worker_Work_Queue(Work_Queue.Work_Queue):
     self.size_queue = 0
     self.min_queue = 0
     self.max_queue = 0
-    self.get_time = 0.0
-    self.put_time = 0.0
 
     # Stats
     self.jobs_popped = 0
     self.jobs_pushed = 0
+    
+    # Where we spend our time.
+    self.get_time     = 0.0
+    self.put_time     = 0.0
+    self.compute_time = 0.0  # Rest of the time.
+
+    self.last_time = time.time()
 
   def pop_job(self):
     self.save_stats()
@@ -52,7 +57,9 @@ class MPI_Worker_Work_Queue(Work_Queue.Work_Queue):
       #print "Worker %d: Waiting for pop." % rank
       #print "Worker %d: Popped %d, Pushed %d." % (rank, self.jobs_popped, self.jobs_pushed)
 
-      start_time = time.time()
+      now = time.time()
+      self.compute_time += now - self.last_time
+      self.last_time = now
 
       # Tell master that we are waiting.
       # Note: The contents of this message are ignored, only the fact that it
@@ -61,13 +68,18 @@ class MPI_Worker_Work_Queue(Work_Queue.Work_Queue):
       # And wait for more work in response.
       self.local_queue += comm.recv(source=self.master, tag=POP_JOBS)
 
-      self.get_time += time.time() - start_time
+      now = time.time()
+      self.get_time += now - self.last_time
+      self.last_time = now
 
       if self.local_queue:
         self.jobs_popped += 1
         return self.local_queue.pop()
       else:
         # If server sent us no work, we are done.
+        #print "Get time:", self.get_time
+        #print "Put time:", self.put_time
+        #print "Compute time:", self.compute_time
         return None
 
   def push_job(self, job):
@@ -89,13 +101,17 @@ class MPI_Worker_Work_Queue(Work_Queue.Work_Queue):
     """Not for external use. Sends extra jobs back to master."""
     if len(self.local_queue) > MAX_LOCAL_JOBS:
 
-      start_time = time.time()
+      now = time.time()
+      self.compute_time += now - self.last_time
+      self.last_time = now
 
-      extra_jobs = self.local_queue[:len(self.local_queue)-MAX_NUM_JOBS_PER_BATCH]
-      self.local_queue = self.local_queue[len(self.local_queue)-MAX_NUM_JOBS_PER_BATCH:]
+      extra_jobs = self.local_queue[:-MAX_NUM_JOBS_PER_BATCH]
+      self.local_queue = self.local_queue[-MAX_NUM_JOBS_PER_BATCH:]
       comm.send(extra_jobs, dest=self.master, tag=PUSH_JOBS)
 
-      self.put_time += time.time() - start_time
+      now = time.time()
+      self.put_time += now - self.last_time
+      self.last_time = now
 
   def save_stats(self):
     self.size_queue = len(self.local_queue)
