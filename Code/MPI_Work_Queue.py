@@ -90,10 +90,11 @@ class MPI_Worker_Work_Queue(Work_Queue.Work_Queue):
         self.last_time = now
 
         # Output timings
-        self.pout.write("Get time:     %6.2f\n" % self.get_time)
-        self.pout.write("Put time:     %6.2f\n" % self.put_time)
+        self.pout.write("Get     time: %6.2f\n" % self.get_time)
+        self.pout.write("Put     time: %6.2f\n" % self.put_time)
         self.pout.write("Compute time: %6.2f\n" % self.compute_time)
-        self.pout.write("End time:     %6.2f\n" % self.end_time)
+        self.pout.write("End     time: %6.2f\n" % self.end_time)
+        self.pout.write("Total   time: %6.2f\n" % self.get_time+self.put_time+self.compute_time+self.end_time)
 
         # If server sent us no work, we are done.
         return None
