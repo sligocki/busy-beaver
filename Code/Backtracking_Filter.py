@@ -24,10 +24,13 @@ def get_info(TTable):
   halts = []
   to_state = [[] for x in range(num_states)]
   dir_to_symbol = [[False, False] for x in range(num_symbols)]
+  # The zero symbol is in both directions by default.
+  dir_to_symbol[0] = [True, True]
   for state_in in range(num_states):
     for symbol_in in range(num_symbols):
       symbol_out, dir_out, state_out = cell = TTable[state_in][symbol_in]
       if state_out == HALT_STATE:
+        # Counts both halting and undefined transitions.
         halts.append((state_in, symbol_in))
       else:
         # Add this input transition to those that can lead to this state.
@@ -67,6 +70,17 @@ class Partial_Config:
     new_config.state = state_in
     return new_config
 
+def is_init_config(config):
+  """Is this config the start configuration? If so, stop backtracking.
+  We've proven this machine halts (in the most ass-backwards way :/ )."""
+  if config.current != 0 or config.state != 0:
+    return False
+  for side in config.dir:
+    for symbol in side:
+      if symbol != 0:
+        return False
+  return True
+
 def is_possible_config(config, dir_to_symbol):
   """Is this configuration possible? Based solely off of dir_to_symbol
   which stores which symbols can be on which sides of the tape."""
@@ -84,23 +98,26 @@ def backtrack_single_halt((halt_state, halt_symbol),
   # All possible configurations leading to halt in i+1 steps.
   pos_configs = [Partial_Config(halt_state, halt_symbol)]
   for i in range(steps):
-    #print " ", len(pos_configs)
     # All configurations that could lead to pos_configs in one step.
     prev_configs = []
     for config in pos_configs:
       for addr, cell in to_state[config.state]:
         if config.applies(addr, cell):
-          this_config = config.apply_trans(addr, cell)
-          if is_possible_config(this_config, dir_to_symbol):
-            prev_configs.append(this_config)
+          prev_config = config.apply_trans(addr, cell)
+          if is_init_config(prev_config):
+            # We've proven that we can get to halt from the initial config.
+            # Probably this should not happen in practice because we will
+            # simulate all machines for more steps forwards before trying
+            # to simulate them backwards, but we keep this for correctness.
+            return Exit_Condition.HALT, i + 2
+          if is_possible_config(prev_config, dir_to_symbol):
+            prev_configs.append(prev_config)
     pos_configs = prev_configs
     if len(pos_configs) == 0:
-      #print "End", len(pos_configs)
-      return i+1
+      return Exit_Condition.INFINITE, i + 1
     elif len(pos_configs) > max_configs:
       break
-  #print "End", len(pos_configs)
-  return False
+  return Exit_Condition.UNKNOWN, i + 1
 
 def backtrack_ttable(TTable, steps, max_configs):
   """Try backtracking |steps| steps for each halting config in TTable,
@@ -112,15 +129,20 @@ def backtrack_ttable(TTable, steps, max_configs):
   for halt_state, halt_symbol in halts:
     # Initial Criterion: no halt_state transition goes to the halt_state
     # For efficiency esp. in multi-symbol situations
-    for cell in TTable[halt_state]:
-      if cell[2] == halt_state:
+    # TODO(shawn): With new improvements, this initial criterion may be
+    # stifling.
+    # For example, this is why we cannot prove "1RB ---  1LB 1RZ" Halting.
+    for symbol_out, dir_out, state_out in TTable[halt_state]:
+      if state_out == halt_state:
         return False
-    this_steps = backtrack_single_halt((halt_state, halt_symbol),
-                                       to_state, dir_to_symbol,
-                                       steps, max_configs)
+    condition, this_steps = backtrack_single_halt((halt_state, halt_symbol),
+                                                  to_state, dir_to_symbol,
+                                                  steps, max_configs)
     # If any of the backtracks fail, the whole thing fails.
-    if not this_steps:
+    if condition == Exit_Condition.UNKNOWN:
       return False
+    if condition == Exit_Condition.HALT:
+      return Exit_Condition.HALT, "?", this_steps
     max_steps = max(max_steps, this_steps)
   # If all halt states cannot be reached:
   return Exit_Condition.INFINITE, BACKTRACK, max_steps, "Backtrack"
