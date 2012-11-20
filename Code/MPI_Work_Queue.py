@@ -38,6 +38,9 @@ class MPI_Worker_Work_Queue(Work_Queue.Work_Queue):
     # Where we spend our time.
     self.get_time     = 0.0
     self.put_time     = 0.0
+    # Time waiting to get at the end, where we don't actually get 
+    # anything, just waiting for all other workers to finish.
+    self.end_time     = 0.0
     self.compute_time = 0.0  # Rest of the time.
 
     self.last_time = time.time()
@@ -68,14 +71,18 @@ class MPI_Worker_Work_Queue(Work_Queue.Work_Queue):
       # And wait for more work in response.
       self.local_queue += comm.recv(source=self.master, tag=POP_JOBS)
 
-      now = time.time()
-      self.get_time += now - self.last_time
-      self.last_time = now
-
       if self.local_queue:
+        now = time.time()
+        self.get_time += now - self.last_time
+        self.last_time = now
+
         self.jobs_popped += 1
         return self.local_queue.pop()
       else:
+        now = time.time()
+        self.end_time += now - self.last_time
+        self.last_time = now
+
         # If server sent us no work, we are done.
         #print "Get time:", self.get_time
         #print "Put time:", self.put_time
