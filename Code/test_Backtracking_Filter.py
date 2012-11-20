@@ -29,7 +29,7 @@ class SystemTest(unittest.TestCase):
                               "--infile=%s" % filename,
                               "--outfile=%s" % outfile.name,
                               "--force",
-                              "--backsteps=10"])
+                              "--backsteps=5"])
     return self.read(outfile.name)
 
   def test_2x2(self):
