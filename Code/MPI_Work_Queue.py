@@ -62,6 +62,12 @@ class MPI_Worker_Work_Queue(Work_Queue.Work_Queue):
     del d["pout"]
     return d
 
+  def time_diff(self):
+    now = time.time()
+    diff = now - self.last_time
+    self.last_time = now
+    return diff
+
   def pop_job(self):
     self.save_stats()
 
@@ -73,9 +79,7 @@ class MPI_Worker_Work_Queue(Work_Queue.Work_Queue):
       return self.local_queue.pop()
     else:
       # When local queue is empty, request more work from the master.
-      now = time.time()
-      self.compute_time += now - self.last_time
-      self.last_time = now
+      self.compute_time += self.time_diff()
 
       # Tell master that we are waiting.
       # Note: The contents of this message are ignored, only the fact that it
@@ -87,16 +91,12 @@ class MPI_Worker_Work_Queue(Work_Queue.Work_Queue):
       self.local_queue += jobs
 
       if self.local_queue:
-        now = time.time()
-        self.get_time += now - self.last_time
-        self.last_time = now
+        self.get_time += self.time_diff()
 
         self.jobs_popped += 1
         return self.local_queue.pop()
       else:
-        now = time.time()
-        self.end_time += now - self.last_time
-        self.last_time = now
+        sefl.end_time += self.time_diff()
 
         # Output timings
         self.pout.write("Get     time: %6.2f\n" % self.get_time)
@@ -123,28 +123,18 @@ class MPI_Worker_Work_Queue(Work_Queue.Work_Queue):
   def _send_extra(self):
     """Not for external use. Sends extra jobs back to master."""
     if len(self.local_queue) > self.max_local_jobs:
-      now = time.time()
-      self.compute_time += now - self.last_time
-      self.last_time = now
+      self.compute_time += self.time_diff()
 
       extra_jobs = self.local_queue[:-self.target_local_jobs]
       self.local_queue = self.local_queue[-self.target_local_jobs:]
       comm.send(extra_jobs, dest=self.master, tag=PUSH_JOBS)
 
-      now = time.time()
-      self.put_time += now - self.last_time
-      self.last_time = now
+      self.put_time += self.time_diff()
 
   def _report_queue_size(self):
-    now = time.time()
-    self.compute_time += now - self.last_time
-    self.last_time = now
-
+    self.compute_time += self.time_diff()
     comm.send(len(self.local_queue), dest=self.master, tag=REPORT_QUEUE_SIZE)
-
-    now = time.time()
-    self.report_queue_time += now - self.last_time
-    self.last_time = now
+    self.report_queue_time += self.time_diff()
 
   def save_stats(self):
     self.size_queue = len(self.local_queue)
