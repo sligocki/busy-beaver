@@ -8,12 +8,15 @@ comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
 num_proc = comm.Get_size()
 
-# MPI tags. Values are arbitrary, but distinct.
-PUSH_JOBS       = 1
-WAITING_FOR_POP = 2
-POP_JOBS        = 3
+# MPI tags. Values are arbitrary, but must be distinct.
+PUSH_JOBS         = 1  # Workers pushing jobs back to master.
+WAITING_FOR_POP   = 2  # Message workers send to master when waiting for jobs.
+POP_JOBS          = 3  # Master pushes jobs back to workers.
+REPORT_QUEUE_SIZE = 4  # Message workers send to master to report queue size.
 
 # Optimization parameters
+# TODO(shawn): These probably need to increase 5x2 case is spending 96% of time
+# in communication.
 MIN_NUM_JOBS_PER_BATCH =  10
 MAX_NUM_JOBS_PER_BATCH =  25
 
@@ -60,12 +63,6 @@ class MPI_Worker_Work_Queue(Work_Queue.Work_Queue):
       return self.local_queue.pop()
     else:
       # When local queue is empty, request more work from the master.
-      # TODO(shawn): If we pre-emptively request jobs we will need a new
-      # request type to distingush workers which have no jobs and are thus
-      # waiting and workers which are simply pre-emptively requesting new jobs.
-      #print "Worker %d: Waiting for pop." % rank
-      #print "Worker %d: Popped %d, Pushed %d." % (rank, self.jobs_popped, self.jobs_pushed)
-
       now = time.time()
       self.compute_time += now - self.last_time
       self.last_time = now
@@ -100,24 +97,20 @@ class MPI_Worker_Work_Queue(Work_Queue.Work_Queue):
         return None
 
   def push_job(self, job):
-    self.save_stats()
-
-    #print "Worker %d: Pushing job %r." % (rank, job)
-    self.jobs_pushed += 1
-    self.local_queue.append(job)
-    self.send_extra()
+    self.push_jobs([job])
 
   def push_jobs(self, jobs):
     self.save_stats()
 
     self.jobs_pushed += len(jobs)
     self.local_queue += jobs
+    comm.send(len(self.local_queue), dest=self.master, tag=REPORT_QUEUE_SIZE)
+
     self.send_extra()
 
   def send_extra(self):
     """Not for external use. Sends extra jobs back to master."""
     if len(self.local_queue) > MAX_LOCAL_JOBS:
-
       now = time.time()
       self.compute_time += now - self.last_time
       self.last_time = now
@@ -175,6 +168,7 @@ class Master(object):
     # States of all workers. False iff that worker is WAITING_FOR_POP.
     worker_state = [True] * num_proc
     worker_state[0] = None  # Proc 0 is not a worker.
+    worker_queue_size = [None] * num_proc
     while True:
       self.save_stats()
       self.print_stats()
@@ -185,18 +179,29 @@ class Master(object):
       # Update worker state.
       while comm.Iprobe(source=MPI.ANY_SOURCE, tag=WAITING_FOR_POP):
         status = MPI.Status()
+        # We ignore the actual message contents.
         comm.recv(source=MPI.ANY_SOURCE, tag=WAITING_FOR_POP, status=status)
         rank_waiting = status.Get_source()
         worker_state[rank_waiting] = False
-        #print "Master: Worker %d is waiting for a job: %r" % (rank_waiting, worker_state)
+        worker_queue_size[rank_waiting] = 0
+
+      # Update our knowledge of worker queue sizes.
+      while comm.Iprobe(source=MPI.ANY_SOURCE, tag=REPORT_QUEUE_SIZE):
+        status = MPI.Status()
+        size = comm.recv(source=MPI.ANY_SOURCE, tag=REPORT_QUEUE_SIZE,
+                         status=status)
+        rank = status.Get_source()
+        worker_queue_size[rank] = size
 
       # Collect all jobs pushed from workers.
       while comm.Iprobe(source=MPI.ANY_SOURCE, tag=PUSH_JOBS):
         self.master_queue += comm.recv(source=MPI.ANY_SOURCE, tag=PUSH_JOBS)
 
       # Quit when all workers are waiting for work.
+      # TODO(shawn): If we pre-emptively request jobs we will need a new
+      # request type to distingush workers which have no jobs and are thus
+      # waiting and workers which are simply pre-emptively requesting new jobs.
       if not self.master_queue and True not in worker_state:
-        #print "Master: All jobs waiting for work, shutting down."
         for n in range(1, num_proc):
           # Sending [] tells workers there is no work left and they should quit.
           comm.send([], dest=n, tag=POP_JOBS)
