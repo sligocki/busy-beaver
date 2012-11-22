@@ -68,9 +68,8 @@ class MPI_Worker_Work_Queue(Work_Queue.Work_Queue):
   def pop_job(self):
     self.save_stats()
 
-    self._report_queue_size()
-
     if self.local_queue:
+      self._report_queue_size()
       # Perform all jobs in the local queue first.
       self.jobs_popped += 1
       return self.local_queue.pop()
@@ -114,8 +113,8 @@ class MPI_Worker_Work_Queue(Work_Queue.Work_Queue):
 
     self.jobs_pushed += len(jobs)
     self.local_queue += jobs
-    self._report_queue_size()
     self._send_extra()
+    self._report_queue_size()
 
   def _send_extra(self):
     """Not for external use. Sends extra jobs back to master."""
@@ -179,20 +178,16 @@ class Master(object):
         worker_state[rank_waiting] = False
         worker_queue_size[rank_waiting] = 0
 
-      # Update our knowledge of worker queue sizes.
+      # Collect all jobs pushed from workers.
+      while comm.Iprobe(source=MPI.ANY_SOURCE, tag=PUSH_JOBS):
+        self.master_queue += comm.recv(source=MPI.ANY_SOURCE, tag=PUSH_JOBS)
+
       while comm.Iprobe(source=MPI.ANY_SOURCE, tag=REPORT_QUEUE_SIZE):
         status = MPI.Status()
         size = comm.recv(source=MPI.ANY_SOURCE, tag=REPORT_QUEUE_SIZE,
                          status=status)
         rank = status.Get_source()
         worker_queue_size[rank] = size
-
-      # Collect all jobs pushed from workers.
-      while comm.Iprobe(source=MPI.ANY_SOURCE, tag=PUSH_JOBS):
-        jobs = comm.recv(source=MPI.ANY_SOURCE, tag=PUSH_JOBS, status=status)
-        self.master_queue += jobs
-        rank = status.Get_source()
-        worker_queue_size[rank] -= len(jobs)
 
       # Quit when all workers are waiting for work.
       # TODO(shawn): If we pre-emptively request jobs we will need a new
