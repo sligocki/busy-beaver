@@ -28,12 +28,9 @@ class MPI_Worker_Work_Queue(Work_Queue.Work_Queue):
   """Work queue based on mpi4py MPI libary. Allows maintaining a global work
   queue for many processes possibly distributed across many machines."""
 
-  def __init__(self, master_proc_num, pout = sys.stdout, sample_time = 1.0):
+  def __init__(self, master_proc_num, pout = sys.stdout):
     self.master = master_proc_num
     self.local_queue = []  # Used to buffer up jobs locally.
-    self.size_queue = 0
-    self.min_queue = 0
-    self.max_queue = 0
     self.pout = pout
 
     # Parameters
@@ -136,22 +133,6 @@ class MPI_Worker_Work_Queue(Work_Queue.Work_Queue):
     comm.send(len(self.local_queue), dest=self.master, tag=REPORT_QUEUE_SIZE)
     self.report_queue_time += self.time_diff()
 
-  def save_stats(self):
-    self.size_queue = len(self.local_queue)
-    self.min_queue  = min(self.min_queue, self.size_queue)
-    self.max_queue  = max(self.max_queue, self.size_queue)
-
-  def get_stats(self):
-    size_queue = self.size_queue
-    min_queue  = self.min_queue
-    max_queue  = self.max_queue
-
-    self.size_queue = len(self.local_queue)
-    self.min_queue  = self.size_queue
-    self.max_queue  = self.size_queue
-
-    return (size_queue, min_queue, max_queue, self.get_time, self.put_time)
-
 
 # Master code
 class Master(object):
@@ -159,13 +140,10 @@ class Master(object):
   Should refer to it. You can use push_job() to add initial jobs and then
   run_master() to run the select loop for listening for workers."""
 
-  def __init__(self, pout = sys.stdout, sample_time = 1.0):
+  def __init__(self, pout = sys.stdout):
     self.master_queue = []
-    self.size_queue = 0
-    self.min_queue = 0
-    self.max_queue = 0
     self.pout = pout
-    self.sample_time = sample_time
+
     self.start_time = time.time()
     self.last_time  = self.start_time
 
@@ -173,6 +151,12 @@ class Master(object):
     d = self.__dict__.copy()
     del d["pout"]
     return d
+
+  def time_diff(self):
+    now = time.time()
+    diff = now - self.last_time
+    self.last_time = now
+    return diff
 
   def push_job(self, job):
     self.master_queue.append(job)
@@ -183,9 +167,6 @@ class Master(object):
     worker_state[0] = None  # Proc 0 is not a worker.
     worker_queue_size = [None] * num_proc
     while True:
-      self.save_stats()
-      self.print_stats()
-
       # Wait for a worker to push us work or request to pop work.
       comm.Probe(source=MPI.ANY_SOURCE, tag=MPI.ANY_TAG)
 
@@ -208,7 +189,6 @@ class Master(object):
 
       # Collect all jobs pushed from workers.
       while comm.Iprobe(source=MPI.ANY_SOURCE, tag=PUSH_JOBS):
-        status = MPI.Status()
         jobs = comm.recv(source=MPI.ANY_SOURCE, tag=PUSH_JOBS, status=status)
         self.master_queue += jobs
         rank = status.Get_source()
@@ -230,7 +210,7 @@ class Master(object):
         queue_length = len(self.master_queue)
 
         num_jobs_per_batch = min(max(MIN_NUM_JOBS_PER_BATCH,
-                                     queue_length / num_waiting),
+                                     queue_length // num_waiting),
                                  MAX_NUM_JOBS_PER_BATCH)
 
         increase_num_per_batch = (num_jobs_per_batch + 1) * num_waiting - queue_length
@@ -253,28 +233,3 @@ class Master(object):
           count += 1
           if count == increase_num_per_batch:
             num_jobs_per_batch += 1
-
-  def save_stats(self):
-    self.size_queue = len(self.master_queue)
-    self.min_queue  = min(self.min_queue, self.size_queue)
-    self.max_queue  = max(self.max_queue, self.size_queue)
-
-  def get_stats(self):
-    size_queue = self.size_queue
-    min_queue  = self.min_queue
-    max_queue  = self.max_queue
-
-    self.size_queue = len(self.master_queue)
-    self.min_queue  = self.size_queue
-    self.max_queue  = self.size_queue
-
-    return (size_queue, min_queue, max_queue)
-
-  def print_stats(self):
-    cur_time = time.time()
-    if cur_time - self.last_time >= self.sample_time:
-      # if self.pout:
-        # self.pout.write("Master queue info: %s\n" % (self.get_stats(),))
-        # self.pout.flush()
-
-      self.last_time = cur_time
