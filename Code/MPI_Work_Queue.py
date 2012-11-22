@@ -18,7 +18,7 @@ REPORT_QUEUE_SIZE = 4  # Message workers send to master to report queue size.
 # TODO(shawn): These probably need to increase 5x2 case is spending 96% of time
 # in communication.
 MIN_NUM_JOBS_PER_BATCH = 10
-MAX_NUM_JOBS_PER_BATCH = 25
+MAX_NUM_JOBS_PER_BATCH = 1000
 
 DEFAULT_MAX_LOCAL_JOBS    = 30
 DEFAULT_TARGET_LOCAL_JOBS = 25
@@ -235,10 +235,9 @@ class Master(object):
           jobs_block = self.master_queue[:num_jobs_per_batch]
           self.master_queue = self.master_queue[num_jobs_per_batch:]
           rank_waiting = worker_state.index(False)
-          # We don't mess with the max/target local jobs count yet.
-          # TODO(shawn): Vary this.
-          comm.send((jobs_block, DEFAULT_MAX_LOCAL_JOBS,
-                     DEFAULT_TARGET_LOCAL_JOBS),
+          # Push jobs and allow worker queue to grow to 3/2 this size,
+          # but push back excess at that point.
+          comm.send((jobs_block, len(jobs_block) * 3/2, len(jobs_block)),
                     dest=rank_waiting, tag=POP_JOBS)
           worker_state[rank_waiting] = True
           count += 1
