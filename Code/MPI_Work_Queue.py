@@ -49,6 +49,7 @@ class MPI_Worker_Work_Queue(Work_Queue.Work_Queue):
     # Where we spend our time.
     self.get_time     = 0.0
     self.put_time     = 0.0
+    self.report_queue_time = 0.0
     # Time waiting to get at the end, where we don't actually get 
     # anything, just waiting for all other workers to finish.
     self.end_time     = 0.0
@@ -63,6 +64,8 @@ class MPI_Worker_Work_Queue(Work_Queue.Work_Queue):
 
   def pop_job(self):
     self.save_stats()
+
+    self._report_queue_size()
 
     if self.local_queue:
       # Perform all jobs in the local queue first.
@@ -98,9 +101,10 @@ class MPI_Worker_Work_Queue(Work_Queue.Work_Queue):
         # Output timings
         self.pout.write("Get     time: %6.2f\n" % self.get_time)
         self.pout.write("Put     time: %6.2f\n" % self.put_time)
+        self.pout.write("Report Queue time: %6.2f\n" % self.report_queue_time)
         self.pout.write("Compute time: %6.2f\n" % self.compute_time)
         self.pout.write("End     time: %6.2f\n" % self.end_time)
-        self.pout.write("Total   time: %6.2f\n" % (self.get_time+self.put_time+self.compute_time+self.end_time))
+        self.pout.write("Total   time: %6.2f\n" % (self.get_time+self.put_time+self.report_queue_time+self.compute_time+self.end_time))
 
         # If server sent us no work, we are done.
         return None
@@ -111,26 +115,36 @@ class MPI_Worker_Work_Queue(Work_Queue.Work_Queue):
   def push_jobs(self, jobs):
     self.save_stats()
 
+    self.jobs_pushed += len(jobs)
+    self.local_queue += jobs
+    self._report_queue_size()
+    self._send_extra()
+
+  def _send_extra(self):
+    """Not for external use. Sends extra jobs back to master."""
+    if len(self.local_queue) > self.max_local_jobs:
+      now = time.time()
+      self.compute_time += now - self.last_time
+      self.last_time = now
+
+      extra_jobs = self.local_queue[:-self.target_local_jobs]
+      self.local_queue = self.local_queue[-self.target_local_jobs:]
+      comm.send(extra_jobs, dest=self.master, tag=PUSH_JOBS)
+
+      now = time.time()
+      self.put_time += now - self.last_time
+      self.last_time = now
+
+  def _report_queue_size(self):
     now = time.time()
     self.compute_time += now - self.last_time
     self.last_time = now
 
-    self.jobs_pushed += len(jobs)
-    self.local_queue += jobs
     comm.send(len(self.local_queue), dest=self.master, tag=REPORT_QUEUE_SIZE)
 
-    self.send_extra()
-
     now = time.time()
-    self.put_time += now - self.last_time
+    self.report_queue_time += now - self.last_time
     self.last_time = now
-
-  def send_extra(self):
-    """Not for external use. Sends extra jobs back to master."""
-    if len(self.local_queue) > self.max_local_jobs:
-      extra_jobs = self.local_queue[:-self.target_local_jobs]
-      self.local_queue = self.local_queue[-self.target_local_jobs:]
-      comm.send(extra_jobs, dest=self.master, tag=PUSH_JOBS)
 
   def save_stats(self):
     self.size_queue = len(self.local_queue)
@@ -204,7 +218,11 @@ class Master(object):
 
       # Collect all jobs pushed from workers.
       while comm.Iprobe(source=MPI.ANY_SOURCE, tag=PUSH_JOBS):
-        self.master_queue += comm.recv(source=MPI.ANY_SOURCE, tag=PUSH_JOBS)
+        status = MPI.Status()
+        jobs = comm.recv(source=MPI.ANY_SOURCE, tag=PUSH_JOBS, status=status)
+        self.master_queue += jobs
+        rank = status.Get_source()
+        worker_queue_size[rank] -= len(jobs)
 
       # Quit when all workers are waiting for work.
       # TODO(shawn): If we pre-emptively request jobs we will need a new
@@ -239,6 +257,8 @@ class Master(object):
           # but push back excess at that point.
           comm.send((jobs_block, len(jobs_block) * 3/2, len(jobs_block)),
                     dest=rank_waiting, tag=POP_JOBS)
+          worker_queue_size[rank_waiting] += len(jobs_block)
+          
           worker_state[rank_waiting] = True
           count += 1
           if count == increase_num_per_batch:
