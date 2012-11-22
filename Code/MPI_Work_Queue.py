@@ -81,9 +81,7 @@ class MPI_Worker_Work_Queue(Work_Queue.Work_Queue):
       # was sent and the tag matter.
       comm.send(None, dest=self.master, tag=WAITING_FOR_POP)
       # And wait for more work in response.
-      jobs, self.max_local_jobs, self.target_local_jobs = \
-          comm.recv(source=self.master, tag=POP_JOBS)
-      self.local_queue += jobs
+      self.local_queue += comm.recv(source=self.master, tag=POP_JOBS)
 
       if self.local_queue:
         self.get_time += self.time_diff()
@@ -125,6 +123,8 @@ class MPI_Worker_Work_Queue(Work_Queue.Work_Queue):
       self.put_time += self.time_diff()
 
   def _report_queue_size(self):
+    # TODO(shawn): Stop sending this on every pop. Perhaps only send once
+    # every N seconds.
     self.compute_time += self.time_diff()
     comm.send(len(self.local_queue), dest=self.master, tag=REPORT_QUEUE_SIZE)
     self.report_queue_time += self.time_diff()
@@ -175,6 +175,9 @@ class Master(object):
     worker_state[0] = None  # Proc 0 is not a worker.
     worker_queue_size = [None] * num_proc
     while True:
+      # TODO(shawn): Periodicaly broadcast updated max/target local queue
+      # sizes to workers.
+
       # Wait for a worker to push us work or request to pop work.
       comm.Probe(source=MPI.ANY_SOURCE, tag=MPI.ANY_TAG)
       self.waiting_time += self.time_diff()
@@ -233,8 +236,7 @@ class Master(object):
           rank_waiting = worker_state.index(False)
           # Push jobs and allow worker queue to grow to 3/2 this size,
           # but push back excess at that point.
-          comm.send((jobs_block, len(jobs_block) * 3/2, len(jobs_block)),
-                    dest=rank_waiting, tag=POP_JOBS)
+          comm.send(jobs_block, dest=rank_waiting, tag=POP_JOBS)
           worker_queue_size[rank_waiting] += len(jobs_block)
           
           worker_state[rank_waiting] = True
