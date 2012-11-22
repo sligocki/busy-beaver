@@ -17,10 +17,11 @@ REPORT_QUEUE_SIZE = 4  # Message workers send to master to report queue size.
 # Optimization parameters
 # TODO(shawn): These probably need to increase 5x2 case is spending 96% of time
 # in communication.
-MIN_NUM_JOBS_PER_BATCH =  10
-MAX_NUM_JOBS_PER_BATCH =  25
+MIN_NUM_JOBS_PER_BATCH = 10
+MAX_NUM_JOBS_PER_BATCH = 25
 
-MAX_LOCAL_JOBS         =  30
+DEFAULT_MAX_LOCAL_JOBS    = 30
+DEFAULT_TARGET_LOCAL_JOBS = 25
 
 # Worker code
 class MPI_Worker_Work_Queue(Work_Queue.Work_Queue):
@@ -34,6 +35,12 @@ class MPI_Worker_Work_Queue(Work_Queue.Work_Queue):
     self.min_queue = 0
     self.max_queue = 0
     self.pout = pout
+
+    # Parameters
+    # Maximum queue size before pushing back to master.
+    self.max_local_jobs = DEFAULT_MAX_LOCAL_JOBS
+    # Queue size to go down to when pushing back to master.
+    self.target_local_jobs = DEFAULT_TARGET_LOCAL_JOBS
 
     # Stats
     self.jobs_popped = 0
@@ -72,7 +79,9 @@ class MPI_Worker_Work_Queue(Work_Queue.Work_Queue):
       # was sent and the tag matter.
       comm.send(None, dest=self.master, tag=WAITING_FOR_POP)
       # And wait for more work in response.
-      self.local_queue += comm.recv(source=self.master, tag=POP_JOBS)
+      jobs, self.max_local_jobs, self.target_local_jobs = \
+          comm.recv(source=self.master, tag=POP_JOBS)
+      self.local_queue += jobs
 
       if self.local_queue:
         now = time.time()
@@ -102,26 +111,26 @@ class MPI_Worker_Work_Queue(Work_Queue.Work_Queue):
   def push_jobs(self, jobs):
     self.save_stats()
 
+    now = time.time()
+    self.compute_time += now - self.last_time
+    self.last_time = now
+
     self.jobs_pushed += len(jobs)
     self.local_queue += jobs
     comm.send(len(self.local_queue), dest=self.master, tag=REPORT_QUEUE_SIZE)
 
     self.send_extra()
 
+    now = time.time()
+    self.put_time += now - self.last_time
+    self.last_time = now
+
   def send_extra(self):
     """Not for external use. Sends extra jobs back to master."""
-    if len(self.local_queue) > MAX_LOCAL_JOBS:
-      now = time.time()
-      self.compute_time += now - self.last_time
-      self.last_time = now
-
-      extra_jobs = self.local_queue[:-MAX_NUM_JOBS_PER_BATCH]
-      self.local_queue = self.local_queue[-MAX_NUM_JOBS_PER_BATCH:]
+    if len(self.local_queue) > self.max_local_jobs:
+      extra_jobs = self.local_queue[:-self.target_local_jobs]
+      self.local_queue = self.local_queue[-self.target_local_jobs:]
       comm.send(extra_jobs, dest=self.master, tag=PUSH_JOBS)
-
-      now = time.time()
-      self.put_time += now - self.last_time
-      self.last_time = now
 
   def save_stats(self):
     self.size_queue = len(self.local_queue)
@@ -226,8 +235,11 @@ class Master(object):
           jobs_block = self.master_queue[:num_jobs_per_batch]
           self.master_queue = self.master_queue[num_jobs_per_batch:]
           rank_waiting = worker_state.index(False)
-          #print "Master: Sent job %r to worker %d." % (job, rank_waiting)
-          comm.send(jobs_block, dest=rank_waiting, tag=POP_JOBS)
+          # We don't mess with the max/target local jobs count yet.
+          # TODO(shawn): Vary this.
+          comm.send((jobs_block, DEFAULT_MAX_LOCAL_JOBS,
+                     DEFAULT_TARGET_LOCAL_JOBS),
+                    dest=rank_waiting, tag=POP_JOBS)
           worker_state[rank_waiting] = True
           count += 1
           if count == increase_num_per_batch:
