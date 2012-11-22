@@ -52,7 +52,8 @@ class MPI_Worker_Work_Queue(Work_Queue.Work_Queue):
     self.end_time     = 0.0
     self.compute_time = 0.0  # Rest of the time.
 
-    self.last_time = time.time()
+    # Used for keeping track of stat times above.
+    self.last_stat_time = time.time()
 
   def __getstate__(self):
     d = self.__dict__.copy()
@@ -61,13 +62,11 @@ class MPI_Worker_Work_Queue(Work_Queue.Work_Queue):
 
   def time_diff(self):
     now = time.time()
-    diff = now - self.last_time
-    self.last_time = now
+    diff = now - self.last_stat_time
+    self.last_stat_time = now
     return diff
 
   def pop_job(self):
-    self.save_stats()
-
     if self.local_queue:
       self._report_queue_size()
       # Perform all jobs in the local queue first.
@@ -109,8 +108,6 @@ class MPI_Worker_Work_Queue(Work_Queue.Work_Queue):
     self.push_jobs([job])
 
   def push_jobs(self, jobs):
-    self.save_stats()
-
     self.jobs_pushed += len(jobs)
     self.local_queue += jobs
     self._send_extra()
@@ -143,8 +140,20 @@ class Master(object):
     self.master_queue = []
     self.pout = pout
 
-    self.start_time = time.time()
-    self.last_time  = self.start_time
+    # Where we spend our time.
+    # Downtime waiting for message from workers.
+    self.waiting_time = 0.0
+    # Time spent recieving WAITING_FOR_POP messages from workers.
+    self.recieving_waiting_for_pop_time = 0.0
+    # Time spent recieving jobs from workers with PUSH_JOBS tag.
+    self.recieving_jobs_time = 0.0
+    # Time spent recieving REPORT_QUEUE_SIZE messages from workers.
+    self.recieving_queue_size_time = 0.0
+    # Time spent sending jobs to workers with POP_JOBS tag.
+    self.sending_jobs_time = 0.0
+
+    # Used for keeping track of stat times above.
+    self.last_stat_time  = time.time()
 
   def __getstate__(self):
     d = self.__dict__.copy()
@@ -153,8 +162,8 @@ class Master(object):
 
   def time_diff(self):
     now = time.time()
-    diff = now - self.last_time
-    self.last_time = now
+    diff = now - self.last_stat_time
+    self.last_stat_time = now
     return diff
 
   def push_job(self, job):
@@ -168,6 +177,7 @@ class Master(object):
     while True:
       # Wait for a worker to push us work or request to pop work.
       comm.Probe(source=MPI.ANY_SOURCE, tag=MPI.ANY_TAG)
+      self.waiting_time += self.time_diff()
 
       # Update worker state.
       while comm.Iprobe(source=MPI.ANY_SOURCE, tag=WAITING_FOR_POP):
@@ -177,10 +187,12 @@ class Master(object):
         rank_waiting = status.Get_source()
         worker_state[rank_waiting] = False
         worker_queue_size[rank_waiting] = 0
+      self.recieving_waiting_for_pop_time += self.time_diff()
 
       # Collect all jobs pushed from workers.
       while comm.Iprobe(source=MPI.ANY_SOURCE, tag=PUSH_JOBS):
         self.master_queue += comm.recv(source=MPI.ANY_SOURCE, tag=PUSH_JOBS)
+      self.recieving_jobs_time += self.time_diff()
 
       while comm.Iprobe(source=MPI.ANY_SOURCE, tag=REPORT_QUEUE_SIZE):
         status = MPI.Status()
@@ -188,6 +200,7 @@ class Master(object):
                          status=status)
         rank = status.Get_source()
         worker_queue_size[rank] = size
+      self.recieving_queue_size_time += self.time_diff()
 
       # Quit when all workers are waiting for work.
       # TODO(shawn): If we pre-emptively request jobs we will need a new
@@ -228,3 +241,5 @@ class Master(object):
           count += 1
           if count == increase_num_per_batch:
             num_jobs_per_batch += 1
+      self.sending_jobs_time += self.time_diff()
+
