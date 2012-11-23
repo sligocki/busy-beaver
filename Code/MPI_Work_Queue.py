@@ -18,7 +18,7 @@ REPORT_QUEUE_SIZE = 4  # Message workers send to master to report queue size.
 # TODO(shawn): These probably need to increase 5x2 case is spending 96% of time
 # in communication.
 MIN_NUM_JOBS_PER_BATCH = 10
-MAX_NUM_JOBS_PER_BATCH = 1000
+MAX_NUM_JOBS_PER_BATCH = 25
 
 DEFAULT_MAX_LOCAL_JOBS    = 30
 DEFAULT_TARGET_LOCAL_JOBS = 25
