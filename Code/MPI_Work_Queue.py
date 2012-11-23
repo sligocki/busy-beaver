@@ -213,6 +213,17 @@ class Master(object):
         for n in range(1, num_proc):
           # Sending [] tells workers there is no work left and they should quit.
           comm.send([], dest=n, tag=POP_JOBS)
+
+        # Output timings
+        self.pout.write("Waiting time: %6.2f\n" % self.waiting_time)
+        self.pout.write("WAITING_FOR_POP time: %6.2f\n" %
+                        self.recieving_waiting_for_pop_time)
+        self.pout.write("Recieving jobs time: %6.2f\n" %
+                        self.recieving_jobs_time)
+        self.pout.write("Recieving queue size time: %6.2f\n" %
+                        self.recieving_queue_size_time)
+        self.pout.write("Sending jobs time: %6.2f\n" % self.sending_jobs_time)
+        
         return True
 
       num_waiting = worker_state.count(False)
