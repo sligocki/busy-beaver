@@ -106,6 +106,7 @@ class MPI_Worker_Work_Queue(Work_Queue.Work_Queue):
 
   def print_stats(self):
     # Output timings
+    self.pout.write("\n")
     self.pout.write("Get time         : %8.2f\n" % self.get_time)
     self.pout.write("Put time         : %8.2f\n" % self.put_time)
     self.pout.write("Report Queue time: %8.2f\n" % self.report_queue_time)
@@ -179,6 +180,7 @@ class Master(object):
 
   def print_stats(self):
     # Output timings
+    self.pout.write("\n")
     self.pout.write("Waiting time               : %8.2f\n" % self.waiting_time)
     self.pout.write("WAITING_FOR_POP time       : %8.2f\n" %
                     self.recieving_waiting_for_pop_time)
@@ -230,7 +232,7 @@ class Master(object):
       self.recieving_queue_size_time += self.time_diff()
 
       # Push out max queue sizes to workers.
-      if True:
+      if False:
         worker_queue_size[0] = len(self.master_queue)
         max_queue_size = sum(worker_queue_size) // len(worker_queue_size)
         for rank in range(1, num_proc):
