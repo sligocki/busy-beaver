@@ -48,6 +48,7 @@ class MPI_Worker_Work_Queue(Work_Queue.Work_Queue):
     self.get_time     = 0.0
     self.put_time     = 0.0
     self.report_queue_time = 0.0
+    self.update_max_queue_size_time = 0.0
     # Time waiting to get at the end, where we don't actually get 
     # anything, just waiting for all other workers to finish.
     self.end_time     = 0.0
@@ -101,22 +102,33 @@ class MPI_Worker_Work_Queue(Work_Queue.Work_Queue):
   def push_jobs(self, jobs):
     self.jobs_pushed += len(jobs)
     self.local_queue += jobs
+    self._update_max_queue_size()
     self._send_extra()
     self._report_queue_size()
 
   def print_stats(self):
     # Output timings
     self.pout.write("\n")
-    self.pout.write("Get time         : %8.2f\n" % self.get_time)
-    self.pout.write("Put time         : %8.2f\n" % self.put_time)
-    self.pout.write("Report Queue time: %8.2f\n" % self.report_queue_time)
-    self.pout.write("Compute time     : %8.2f\n" % self.compute_time)
-    self.pout.write("End time         : %8.2f\n" % self.end_time)
-    self.pout.write("Total time       : %8.2f\n" % (
+    self.pout.write("Get time             : %8.2f\n" % self.get_time)
+    self.pout.write("Put time             : %8.2f\n" % self.put_time)
+    self.pout.write("Report queue time    : %8.2f\n" % self.report_queue_time)
+    self.pout.write("Update max queue time: %8.2f\n" %
+                    self.update_max_queue_size_time)
+    self.pout.write("Compute time         : %8.2f\n" % self.compute_time)
+    self.pout.write("End time             : %8.2f\n" % self.end_time)
+    self.pout.write("Total time           : %8.2f\n" % (
         self.get_time + self.put_time + self.report_queue_time +
-        self.compute_time + self.end_time))
+        self.update_max_queue_size_time + self.compute_time + self.end_time))
 
     self.pout.flush()
+
+  def _update_max_queue_size(self):
+    self.compute_time += self.time_diff()
+    while comm.Iprobe(source=self.master, tag=UPDATE_MAX_QUEUE_SIZE):
+      self.max_queue_size = comm.recv(source=self.master,
+                                      tag=UPDATE_MAX_QUEUE_SIZE)
+      self.target_queue_size = self.max_queue_size * 3 / 4
+    self.update_max_queue_size_time += self.time_diff()
 
   def _send_extra(self):
     """Not for external use. Sends extra jobs back to master."""
@@ -232,7 +244,7 @@ class Master(object):
       self.recieving_queue_size_time += self.time_diff()
 
       # Push out max queue sizes to workers.
-      if False:
+      if True:
         worker_queue_size[0] = len(self.master_queue)
         max_queue_size = sum(worker_queue_size) // len(worker_queue_size)
         for rank in range(1, num_proc):
