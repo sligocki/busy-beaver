@@ -159,6 +159,10 @@ class Master(object):
     self.master_queue = []
     self.pout = pout
 
+    # Time and interval used for updating worker max queue size.
+    self.last_update_time = 0
+    self.update_interval = 10  # Seconds
+
     # Where we spend our time.
     # Downtime waiting for message from workers.
     self.waiting_time = 0.0
@@ -248,12 +252,13 @@ class Master(object):
       max_queue_size = max(sum(worker_queue_size) // len(worker_queue_size),
                            MAX_NUM_JOBS_PER_BATCH)
       target_queue_size = max_queue_size * 3 / 4
-      if True:
+      if time.time() - self.last_update_time > self.update_interval:
         for rank in range(1, num_proc):
           # Perhaps we should Cancel() the old requests if they have not yet
           # been recieved? Also, are we in danger of deadlocking with the
           # sends below?
           comm.isend(max_queue_size, dest=rank, tag=UPDATE_MAX_QUEUE_SIZE)
+        self.last_update_time = time.time()
       self.update_max_queue_sizes_time += self.time_diff()
 
       # Quit when all workers are waiting for work.
