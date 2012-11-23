@@ -90,15 +90,7 @@ class MPI_Worker_Work_Queue(Work_Queue.Work_Queue):
         return self.local_queue.pop()
       else:
         self.end_time += self.time_diff()
-
-        # Output timings
-        self.pout.write("Get time         : %8.2f\n" % self.get_time)
-        self.pout.write("Put time         : %8.2f\n" % self.put_time)
-        self.pout.write("Report Queue time: %8.2f\n" % self.report_queue_time)
-        self.pout.write("Compute time     : %8.2f\n" % self.compute_time)
-        self.pout.write("End time         : %8.2f\n" % self.end_time)
-        self.pout.write("Total time       : %8.2f\n" % (self.get_time+self.put_time+self.report_queue_time+self.compute_time+self.end_time))
-
+        self.print_stats()
         # If server sent us no work, we are done.
         return None
 
@@ -110,6 +102,19 @@ class MPI_Worker_Work_Queue(Work_Queue.Work_Queue):
     self.local_queue += jobs
     self._send_extra()
     self._report_queue_size()
+
+  def print_stats(self):
+    # Output timings
+    self.pout.write("Get time         : %8.2f\n" % self.get_time)
+    self.pout.write("Put time         : %8.2f\n" % self.put_time)
+    self.pout.write("Report Queue time: %8.2f\n" % self.report_queue_time)
+    self.pout.write("Compute time     : %8.2f\n" % self.compute_time)
+    self.pout.write("End time         : %8.2f\n" % self.end_time)
+    self.pout.write("Total time       : %8.2f\n" % (
+        self.get_time + self.put_time + self.report_queue_time +
+        self.compute_time + self.end_time))
+
+    self.pout.flush()
 
   def _send_extra(self):
     """Not for external use. Sends extra jobs back to master."""
@@ -169,6 +174,22 @@ class Master(object):
   def push_job(self, job):
     self.master_queue.append(job)
 
+  def print_stats(self):
+    # Output timings
+    self.pout.write("Waiting time             : %8.2f\n" % self.waiting_time)
+    self.pout.write("WAITING_FOR_POP time     : %8.2f\n" %
+                    self.recieving_waiting_for_pop_time)
+    self.pout.write("Recieving jobs time      : %8.2f\n" %
+                    self.recieving_jobs_time)
+    self.pout.write("Recieving queue size time: %8.2f\n" %
+                    self.recieving_queue_size_time)
+    self.pout.write("Sending jobs time        : %8.2f\n" %
+                    self.sending_jobs_time)
+    self.pout.write("Total time               : %8.2f\n" %
+                    (self.waiting_time + self.recieving_waiting_for_pop_time +
+                     self.recieving_jobs_time + self.recieving_queue_size_time +
+                     self.sending_jobs_time))
+
   def run_master(self):
     # States of all workers. False iff that worker is WAITING_FOR_POP.
     worker_state = [True] * num_proc
@@ -213,17 +234,7 @@ class Master(object):
         for n in range(1, num_proc):
           # Sending [] tells workers there is no work left and they should quit.
           comm.send([], dest=n, tag=POP_JOBS)
-
-        # Output timings
-        self.pout.write("Waiting time             : %8.2f\n" % self.waiting_time)
-        self.pout.write("WAITING_FOR_POP time     : %8.2f\n" %
-                        self.recieving_waiting_for_pop_time)
-        self.pout.write("Recieving jobs time      : %8.2f\n" %
-                        self.recieving_jobs_time)
-        self.pout.write("Recieving queue size time: %8.2f\n" %
-                        self.recieving_queue_size_time)
-        self.pout.write("Sending jobs time        : %8.2f\n" % self.sending_jobs_time)
-
+        self.print_stats()
         return True
 
       num_waiting = worker_state.count(False)
