@@ -123,7 +123,7 @@ class MPI_Worker_Work_Queue(Work_Queue.Work_Queue):
 
       extra_jobs = self.local_queue[:-self.target_local_jobs]
       self.local_queue = self.local_queue[-self.target_local_jobs:]
-      comm.send(extra_jobs, dest=self.master, tag=PUSH_JOBS)
+      comm.isend(extra_jobs, dest=self.master, tag=PUSH_JOBS)
 
       self.put_time += self.time_diff()
 
@@ -131,7 +131,7 @@ class MPI_Worker_Work_Queue(Work_Queue.Work_Queue):
     # TODO(shawn): Stop sending this on every pop. Perhaps only send once
     # every N seconds.
     self.compute_time += self.time_diff()
-    comm.send(len(self.local_queue), dest=self.master, tag=REPORT_QUEUE_SIZE)
+    comm.isend(len(self.local_queue), dest=self.master, tag=REPORT_QUEUE_SIZE)
     self.report_queue_time += self.time_diff()
 
 
