@@ -13,6 +13,7 @@ PUSH_JOBS         = 1  # Workers pushing jobs back to master.
 WAITING_FOR_POP   = 2  # Message workers send to master when waiting for jobs.
 POP_JOBS          = 3  # Master pushes jobs back to workers.
 REPORT_QUEUE_SIZE = 4  # Message workers send to master to report queue size.
+UPDATE_MAX_QUEUE_SIZE = 5  # Master updating max queue size of workers.
 
 # Optimization parameters
 # TODO(shawn): These probably need to increase 5x2 case is spending 96% of time
@@ -154,6 +155,8 @@ class Master(object):
     self.recieving_jobs_time = 0.0
     # Time spent recieving REPORT_QUEUE_SIZE messages from workers.
     self.recieving_queue_size_time = 0.0
+    # Time spent sending UPDATE_MAX_QUEUE_SIZE messages.
+    self.update_max_queue_sizes_time = 0.0
     # Time spent sending jobs to workers with POP_JOBS tag.
     self.sending_jobs_time = 0.0
 
@@ -176,29 +179,28 @@ class Master(object):
 
   def print_stats(self):
     # Output timings
-    self.pout.write("Waiting time             : %8.2f\n" % self.waiting_time)
-    self.pout.write("WAITING_FOR_POP time     : %8.2f\n" %
+    self.pout.write("Waiting time               : %8.2f\n" % self.waiting_time)
+    self.pout.write("WAITING_FOR_POP time       : %8.2f\n" %
                     self.recieving_waiting_for_pop_time)
-    self.pout.write("Recieving jobs time      : %8.2f\n" %
+    self.pout.write("Recieving jobs time        : %8.2f\n" %
                     self.recieving_jobs_time)
-    self.pout.write("Recieving queue size time: %8.2f\n" %
+    self.pout.write("Recieving queue size time  : %8.2f\n" %
                     self.recieving_queue_size_time)
-    self.pout.write("Sending jobs time        : %8.2f\n" %
+    self.pout.write("Update max queue sizes time: %8.2f\n" %
+                    self.update_max_queue_sizes_time)
+    self.pout.write("Sending jobs time          : %8.2f\n" %
                     self.sending_jobs_time)
-    self.pout.write("Total time               : %8.2f\n" %
+    self.pout.write("Total time                 : %8.2f\n" %
                     (self.waiting_time + self.recieving_waiting_for_pop_time +
                      self.recieving_jobs_time + self.recieving_queue_size_time +
-                     self.sending_jobs_time))
+                     self.update_max_queue_sizes_time + self.sending_jobs_time))
 
   def run_master(self):
     # States of all workers. False iff that worker is WAITING_FOR_POP.
     worker_state = [True] * num_proc
     worker_state[0] = None  # Proc 0 is not a worker.
-    worker_queue_size = [None] * num_proc
+    worker_queue_size = [0] * num_proc
     while True:
-      # TODO(shawn): Periodicaly broadcast updated max/target local queue
-      # sizes to workers.
-
       # Wait for a worker to push us work or request to pop work.
       comm.Probe(source=MPI.ANY_SOURCE, tag=MPI.ANY_TAG)
       self.waiting_time += self.time_diff()
@@ -218,6 +220,7 @@ class Master(object):
         self.master_queue += comm.recv(source=MPI.ANY_SOURCE, tag=PUSH_JOBS)
       self.recieving_jobs_time += self.time_diff()
 
+      # Collect reported queue sizes from workers.
       while comm.Iprobe(source=MPI.ANY_SOURCE, tag=REPORT_QUEUE_SIZE):
         status = MPI.Status()
         size = comm.recv(source=MPI.ANY_SOURCE, tag=REPORT_QUEUE_SIZE,
@@ -225,6 +228,17 @@ class Master(object):
         rank = status.Get_source()
         worker_queue_size[rank] = size
       self.recieving_queue_size_time += self.time_diff()
+
+      # Push out max queue sizes to workers.
+      if True:
+        worker_queue_size[0] = len(self.master_queue)
+        max_queue_size = sum(worker_queue_size) // len(worker_queue_size)
+        for rank in range(1, num_proc):
+          # Perhaps we should Cancel() the old requests if they have not yet
+          # been recieved? Also, are we in danger of deadlocking with the
+          # sends below?
+          comm.isend(max_queue_size, dest=rank, tag=UPDATE_MAX_QUEUE_SIZE)
+      self.update_max_queue_sizes_time += self.time_diff()
 
       # Quit when all workers are waiting for work.
       # TODO(shawn): If we pre-emptively request jobs we will need a new
