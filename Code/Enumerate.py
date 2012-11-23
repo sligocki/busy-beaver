@@ -438,7 +438,7 @@ def main(args):
     if options.num_enum:
       parser.error("--num-enum cannot be used in parallel runs.")
     if MPI_Work_Queue.rank == 0:
-      master = MPI_Work_Queue.Master(pout=pout, sample_time=sample_time)
+      master = MPI_Work_Queue.Master(pout=pout)
       initialize_stack(options, master)
 
       if master.run_master():
