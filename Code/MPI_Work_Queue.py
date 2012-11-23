@@ -244,9 +244,11 @@ class Master(object):
       self.recieving_queue_size_time += self.time_diff()
 
       # Push out max queue sizes to workers.
+      worker_queue_size[0] = len(self.master_queue)
+      max_queue_size = max(sum(worker_queue_size) // len(worker_queue_size),
+                           MAX_NUM_JOBS_PER_BATCH)
+      target_queue_size = max_queue_size * 3 / 4
       if True:
-        worker_queue_size[0] = len(self.master_queue)
-        max_queue_size = sum(worker_queue_size) // len(worker_queue_size)
         for rank in range(1, num_proc):
           # Perhaps we should Cancel() the old requests if they have not yet
           # been recieved? Also, are we in danger of deadlocking with the
@@ -270,11 +272,14 @@ class Master(object):
       if num_waiting > 0:
         queue_length = len(self.master_queue)
 
+        # Number of jobs to send to each worker.
         num_jobs_per_batch = min(max(MIN_NUM_JOBS_PER_BATCH,
-                                     queue_length // num_waiting),
-                                 MAX_NUM_JOBS_PER_BATCH)
+                                      queue_length // num_waiting),
+                                  target_queue_size)
 
-        increase_num_per_batch = (num_jobs_per_batch + 1) * num_waiting - queue_length
+        # When we get down to the end, we want to send all jobs out.
+        # This is the process num after which to send +1 jobs to workers.
+        increase_count = (num_jobs_per_batch + 1) * num_waiting - queue_length
 
         # Send top job to first worker who requests it.
         count = 0
@@ -284,14 +289,12 @@ class Master(object):
           jobs_block = self.master_queue[:num_jobs_per_batch]
           self.master_queue = self.master_queue[num_jobs_per_batch:]
           rank_waiting = worker_state.index(False)
-          # Push jobs and allow worker queue to grow to 3/2 this size,
-          # but push back excess at that point.
           comm.send(jobs_block, dest=rank_waiting, tag=POP_JOBS)
           worker_queue_size[rank_waiting] += len(jobs_block)
           
           worker_state[rank_waiting] = True
           count += 1
-          if count == increase_num_per_batch:
+          if count == increase_count:
             num_jobs_per_batch += 1
       self.sending_jobs_time += self.time_diff()
 
