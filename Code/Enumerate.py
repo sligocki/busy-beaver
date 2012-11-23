@@ -115,7 +115,7 @@ class Enumerator(object):
       del d["random_state"]
     self.__dict__ = d
 
-  def continue_enum(self, pout = sys.stdout, sample_time = 1.0):
+  def continue_enum(self, pout = sys.stdout):
     """
     Pull one machine off of the stack and simulate it, perhaps creating more
     machines to push back onto the stack.
@@ -127,11 +127,20 @@ class Enumerator(object):
 
     while True:
       cur_time = time.time()
-      # if cur_time - last_time > sample_time:
-      #   if pout:
-      #     pout.write("Worker queue info: %s %s\n" % (self.stack.get_stats(),self.io.get_stats()))
+
+      if cur_time - last_time > 10:
+        # Output timings
+        pout.write("Get     time: %6.2f\n" % self.stack.get_time)
+        pout.write("Put     time: %6.2f\n" % self.stack.put_time)
+        pout.write("Compute time: %6.2f\n" % self.stack.compute_time)
+        pout.write("\n")
+
+        pout.flush()
+
+        last_time = cur_time
 
       if self.options.num_enum and self.tm_num >= self.options.num_enum:
+        pout.write("Ran requested number of TMs...\n");
         break
 
       # While we have machines to run, pop one off the stack ...
@@ -139,6 +148,7 @@ class Enumerator(object):
 
       if not tm:
         # tm == None is the indication that we have no more machines to run.
+        pout.write("Ran out of TMs...\n");
         break
 
       # Periodically save state
@@ -425,8 +435,6 @@ def main(args):
   if options.steps == 0:
     options.steps = Macro_Simulator.INF
 
-  sample_time = 100.0
-
   # Set up work queue and populate with blank machine.
   if num_proc == 1:
     if options.breadth_first:
@@ -444,18 +452,18 @@ def main(args):
       if master.run_master():
         end_time = time.time()
         if pout:
-          pout.write("Total time %.3f\n" % (end_time - start_time,))
+          pout.write("\nTotal time %.2f\n" % (end_time - start_time,))
           pout.close()
         else:
-          print "Total time %.3f\n" % (end_time - start_time,)
+          print "\nTotal time %.2f\n" % (end_time - start_time,)
         sys.exit(0)
       else:
         end_time = time.time()
         if pout:
-          pout.write("Total time %.3f\n" % (end_time - start_time,))
+          pout.write("\nTotal time %.2f\n" % (end_time - start_time,))
           pout.close()
         else:
-          print "Total time %.3f\n" % (end_time - start_time,)
+          print "\nTotal time %.2f\n" % (end_time - start_time,)
         sys.exit(1)
     else:
       stack = MPI_Work_Queue.MPI_Worker_Work_Queue(master_proc_num=0, pout=pout)
@@ -464,7 +472,7 @@ def main(args):
   enumerator = Enumerator(options.steps, options.time, stack, io,
                           options.save_freq, options.checkpoint,
                           options.randomize, options.seed, options)
-  enumerator.continue_enum(pout=pout, sample_time=sample_time)
+  enumerator.continue_enum(pout=pout)
 
   if options.print_stats:
     pprint(enumerator.stats.__dict__)
