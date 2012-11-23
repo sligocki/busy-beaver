@@ -18,6 +18,7 @@ REPORT_QUEUE_SIZE = 4  # Message workers send to master to report queue size.
 # TODO(shawn): These probably need to increase 5x2 case is spending 96% of time
 # in communication.
 MIN_NUM_JOBS_PER_BATCH = 10
+#MAX_NUM_JOBS_PER_BATCH = 1000
 MAX_NUM_JOBS_PER_BATCH = 25
 
 DEFAULT_MAX_LOCAL_JOBS    = 30
@@ -89,7 +90,7 @@ class MPI_Worker_Work_Queue(Work_Queue.Work_Queue):
         self.jobs_popped += 1
         return self.local_queue.pop()
       else:
-        self.end_time += self.time_diff()
+        sefl.end_time += self.time_diff()
 
         # Output timings
         self.pout.write("Get     time: %6.2f\n" % self.get_time)
@@ -213,17 +214,6 @@ class Master(object):
         for n in range(1, num_proc):
           # Sending [] tells workers there is no work left and they should quit.
           comm.send([], dest=n, tag=POP_JOBS)
-
-        # Output timings
-        self.pout.write("Waiting time: %6.2f\n" % self.waiting_time)
-        self.pout.write("WAITING_FOR_POP time: %6.2f\n" %
-                        self.recieving_waiting_for_pop_time)
-        self.pout.write("Recieving jobs time: %6.2f\n" %
-                        self.recieving_jobs_time)
-        self.pout.write("Recieving queue size time: %6.2f\n" %
-                        self.recieving_queue_size_time)
-        self.pout.write("Sending jobs time: %6.2f\n" % self.sending_jobs_time)
-        
         return True
 
       num_waiting = worker_state.count(False)
