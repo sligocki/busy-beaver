@@ -89,7 +89,7 @@ class MPI_Worker_Work_Queue(Work_Queue.Work_Queue):
         self.jobs_popped += 1
         return self.local_queue.pop()
       else:
-        sefl.end_time += self.time_diff()
+        self.end_time += self.time_diff()
 
         # Output timings
         self.pout.write("Get     time: %6.2f\n" % self.get_time)
