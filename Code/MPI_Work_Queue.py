@@ -36,9 +36,9 @@ class MPI_Worker_Work_Queue(Work_Queue.Work_Queue):
 
     # Parameters
     # Maximum queue size before pushing back to master.
-    self.max_local_jobs = DEFAULT_MAX_LOCAL_JOBS
+    self.max_queue_size = DEFAULT_MAX_LOCAL_JOBS
     # Queue size to go down to when pushing back to master.
-    self.target_local_jobs = DEFAULT_TARGET_LOCAL_JOBS
+    self.target_queue_size = DEFAULT_TARGET_LOCAL_JOBS
 
     # Stats
     self.jobs_popped = 0
@@ -132,11 +132,11 @@ class MPI_Worker_Work_Queue(Work_Queue.Work_Queue):
 
   def _send_extra(self):
     """Not for external use. Sends extra jobs back to master."""
-    if len(self.local_queue) > self.max_local_jobs:
+    if len(self.local_queue) > self.max_queue_size:
       self.compute_time += self.time_diff()
 
-      extra_jobs = self.local_queue[:-self.target_local_jobs]
-      self.local_queue = self.local_queue[-self.target_local_jobs:]
+      extra_jobs = self.local_queue[:-self.target_queue_size]
+      self.local_queue = self.local_queue[-self.target_queue_size:]
       comm.isend(extra_jobs, dest=self.master, tag=PUSH_JOBS)
 
       self.put_time += self.time_diff()
