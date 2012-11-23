@@ -90,15 +90,15 @@ class MPI_Worker_Work_Queue(Work_Queue.Work_Queue):
         self.jobs_popped += 1
         return self.local_queue.pop()
       else:
-        sefl.end_time += self.time_diff()
+        self.end_time += self.time_diff()
 
         # Output timings
-        self.pout.write("Get     time: %6.2f\n" % self.get_time)
-        self.pout.write("Put     time: %6.2f\n" % self.put_time)
-        self.pout.write("Report Queue time: %6.2f\n" % self.report_queue_time)
-        self.pout.write("Compute time: %6.2f\n" % self.compute_time)
-        self.pout.write("End     time: %6.2f\n" % self.end_time)
-        self.pout.write("Total   time: %6.2f\n" % (self.get_time+self.put_time+self.report_queue_time+self.compute_time+self.end_time))
+        self.pout.write("Get time         : %8.2f\n" % self.get_time)
+        self.pout.write("Put time         : %8.2f\n" % self.put_time)
+        self.pout.write("Report Queue time: %8.2f\n" % self.report_queue_time)
+        self.pout.write("Compute time     : %8.2f\n" % self.compute_time)
+        self.pout.write("End time         : %8.2f\n" % self.end_time)
+        self.pout.write("Total time       : %8.2f\n" % (self.get_time+self.put_time+self.report_queue_time+self.compute_time+self.end_time))
 
         # If server sent us no work, we are done.
         return None
@@ -214,6 +214,17 @@ class Master(object):
         for n in range(1, num_proc):
           # Sending [] tells workers there is no work left and they should quit.
           comm.send([], dest=n, tag=POP_JOBS)
+
+        # Output timings
+        self.pout.write("Waiting time             : %8.2f\n" % self.waiting_time)
+        self.pout.write("WAITING_FOR_POP time     : %8.2f\n" %
+                        self.recieving_waiting_for_pop_time)
+        self.pout.write("Recieving jobs time      : %8.2f\n" %
+                        self.recieving_jobs_time)
+        self.pout.write("Recieving queue size time: %8.2f\n" %
+                        self.recieving_queue_size_time)
+        self.pout.write("Sending jobs time        : %8.2f\n" % self.sending_jobs_time)
+
         return True
 
       num_waiting = worker_state.count(False)
