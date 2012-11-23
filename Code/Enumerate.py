@@ -129,14 +129,7 @@ class Enumerator(object):
       cur_time = time.time()
 
       if cur_time - last_time > 10:
-        # Output timings
-        pout.write("Get     time: %6.2f\n" % self.stack.get_time)
-        pout.write("Put     time: %6.2f\n" % self.stack.put_time)
-        pout.write("Compute time: %6.2f\n" % self.stack.compute_time)
-        pout.write("\n")
-
-        pout.flush()
-
+        self.stack.print_stats()
         last_time = cur_time
 
       if self.options.num_enum and self.tm_num >= self.options.num_enum:

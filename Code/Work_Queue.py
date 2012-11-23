@@ -18,6 +18,10 @@ class Work_Queue(object):
     """Add several jobs into the queue at once."""
     raise NotImplemented
 
+  def print_stats(self):
+    """Hook for printing stats, default implemenation does nothing."""
+    pass
+
 class Basic_LIFO_Work_Queue(Work_Queue):
   """Single process implementation of Work_Queue using stack-order."""
 
