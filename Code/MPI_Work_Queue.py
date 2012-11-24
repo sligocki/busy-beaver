@@ -302,4 +302,3 @@ class Master(object):
           if count == increase_count:
             num_jobs_per_batch += 1
       self.sending_jobs_time += self.time_diff()
-
