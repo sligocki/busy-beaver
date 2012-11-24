@@ -119,6 +119,10 @@ def run(TTable, options, steps=INF, runtime=None, block_size=None,
       except AlarmException:
         ALARM.cancel_alarm()
 
+      # If alarm kills us before we make a backsymbol machine, do it here.
+      if back and not isinstance(m, Turing_Machine.Backsymbol_Macro_Machine):
+        m = Turing_Machine.Backsymbol_Macro_Machine(m)
+
       ## Set up the simulator
       sim = Simulator.Simulator(m, options)
 
@@ -192,5 +196,4 @@ if __name__ == "__main__":
 
   ttable = IO.load_TTable_filename(filename, line)
 
-  print run(ttable, options, options.steps, options.time, options.block_size,
-                    options.backsymbol, options.prover, options.recursive)
+  print run_options(ttable, options)
