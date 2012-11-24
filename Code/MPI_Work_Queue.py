@@ -43,6 +43,10 @@ class MPI_Worker_Work_Queue(Work_Queue.Work_Queue):
     # Stats
     self.jobs_popped = 0
     self.jobs_pushed = 0
+
+    # Time and interval used for reporting queue size.
+    self.last_report_time = time.time()
+    self.report_interval = 10
     
     # Where we spend our time.
     self.get_time     = 0.0
@@ -142,11 +146,11 @@ class MPI_Worker_Work_Queue(Work_Queue.Work_Queue):
       self.put_time += self.time_diff()
 
   def _report_queue_size(self):
-    # TODO(shawn): Stop sending this on every pop. Perhaps only send once
-    # every N seconds.
-    self.compute_time += self.time_diff()
-    comm.send(len(self.local_queue), dest=self.master, tag=REPORT_QUEUE_SIZE)
-    self.report_queue_time += self.time_diff()
+    if time.time() - self.last_report_time > self.report_interval:
+      self.compute_time += self.time_diff()
+      comm.send(len(self.local_queue), dest=self.master, tag=REPORT_QUEUE_SIZE)
+      self.report_queue_time += self.time_diff()
+      self.last_report_time = time.time()
 
 
 # Master code
