@@ -58,7 +58,8 @@ def setup_CTL(m, cutoff):
   tape = [None, None]
 
   for d in range(2):
-    tape[d] = [block.symbol for block in reversed(sim.tape.tape[d]) if block.num != "Inf"]
+    tape[d] = [block.symbol for block in reversed(sim.tape.tape[d])
+               if block.num != "Inf"]
 
   config = GenContainer(state=sim.state, dir=sim.dir, tape=tape)
   return config
@@ -66,26 +67,24 @@ def setup_CTL(m, cutoff):
 def run_options(ttable, options, stats=None):
   """Run the Accelerated Turing Machine Simulator, running a few simple filters
   first and using intelligent blockfinding."""
-  return run(ttable, options, options.steps, options.time, options.block_size,
-             options.backsymbol, options.prover, options.recursive, stats)
+  if options.steps == 0:
+    options.steps = INF
 
-def run(TTable, options, steps=INF, runtime=None, block_size=None,
-                back=True, prover=True, rec=False, stats=None):
-  """Legacy interface, use run_options."""
   for do_over in xrange(0,4):
     try:
       ## Test for quickly for infinite machine
-      if Reverse_Engineer_Filter.test(TTable):
+      if Reverse_Engineer_Filter.test(ttable):
         return Exit_Condition.INFINITE, ("Reverse_Engineer",)
 
       ## Construct the Macro Turing Machine (Backsymbol-k-Block-Macro-Machine)
-      m = Turing_Machine.make_machine(TTable)
+      m = Turing_Machine.make_machine(ttable)
 
       try:
         # Set the timer (if non-zero runtime)
-        if runtime:
-          ALARM.set_alarm(runtime/10.0)  # Set timer
+        if options.time:
+          ALARM.set_alarm(options.time/10.0)  # Set timer
 
+        block_size = options.block_size
         if not block_size:
           # If no explicit block-size given, use inteligent software to find one
           block_size = Block_Finder.block_finder(m, options)
@@ -96,7 +95,7 @@ def run(TTable, options, steps=INF, runtime=None, block_size=None,
         if block_size != 1:
           m = Turing_Machine.Block_Macro_Machine(m, block_size)
 
-        if back:
+        if options.backsymbol:
           m = Turing_Machine.Backsymbol_Macro_Machine(m)
 
         if options.ctl:
@@ -120,18 +119,19 @@ def run(TTable, options, steps=INF, runtime=None, block_size=None,
         ALARM.cancel_alarm()
 
       # If alarm kills us before we make a backsymbol machine, do it here.
-      if back and not isinstance(m, Turing_Machine.Backsymbol_Macro_Machine):
+      if (options.backsymbol and
+          not isinstance(m, Turing_Machine.Backsymbol_Macro_Machine)):
         m = Turing_Machine.Backsymbol_Macro_Machine(m)
 
       ## Set up the simulator
       sim = Simulator.Simulator(m, options)
 
       try:
-        if runtime:
-          ALARM.set_alarm(runtime)  # Set timer
+        if options.time:
+          ALARM.set_alarm(options.time)  # Set timer
 
         ## Run the simulator
-        sim.loop_seek(steps)
+        sim.loop_seek(options.steps)
 
         ALARM.cancel_alarm()
 
@@ -144,7 +144,7 @@ def run(TTable, options, steps=INF, runtime=None, block_size=None,
 
       except AlarmException: # Catch Timer
         ALARM.cancel_alarm()
-        return Exit_Condition.TIME_OUT, (runtime, sim.step_num)
+        return Exit_Condition.TIME_OUT, (options.time, sim.step_num)
 
       ## Resolve end conditions and return relevent info.
       if sim.op_state == Turing_Machine.RUNNING:
@@ -164,9 +164,9 @@ def run(TTable, options, steps=INF, runtime=None, block_size=None,
     except AlarmException:  # Catch Timer (unexpected!)
       ALARM.cancel_alarm()  # Turn off timer and try again
 
-    sys.stderr.write("Weird1 (%d): %s\n" % (do_over,TTable))
+    sys.stderr.write("Weird1 (%d): %s\n" % (do_over, ttable))
 
-  return Exit_Condition.TIME_OUT, (runtime, -1)
+  return Exit_Condition.TIME_OUT, (options.time, -1)
 
 # Main script
 if __name__ == "__main__":
@@ -176,9 +176,6 @@ if __name__ == "__main__":
   add_option_group(parser)
   (options, args) = parser.parse_args()
 
-
-  if options.steps == 0:
-    options.steps = INF
 
   if len(args) < 1:
     parser.error("Must have at least one argument, machine_file")

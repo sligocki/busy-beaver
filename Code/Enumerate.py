@@ -429,9 +429,6 @@ def main(args):
     pout.write(" --checkpoint=%s --save_freq=%d" % (options.checkpoint, options.save_freq))
     pout.write("\n")
 
-  if options.steps == 0:
-    options.steps = Macro_Simulator.INF
-
   # Set up work queue and populate with blank machine.
   if num_proc == 1:
     if options.breadth_first:
