@@ -212,12 +212,12 @@ class Enumerator(object):
       # files.
       # Backup old checkpoint file (in case the new checkpoint is interrupted
       # in mid-write)
-      if os.path.exists(self.checkpoint_filename):
-        shutil.move(self.checkpoint_filename, self.backup_checkpoint_filename)
+      #if os.path.exists(self.checkpoint_filename):
+      #  shutil.move(self.checkpoint_filename, self.backup_checkpoint_filename)
       # Save checkpoint file
-      f = file(self.checkpoint_filename, "wb")
-      pickle.dump(self, f)
-      f.close()
+      #f = file(self.checkpoint_filename, "wb")
+      #pickle.dump(self, f)
+      #f.close()
 
     # Restart timer
     self.start_time = time.time()
