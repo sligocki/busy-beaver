@@ -218,6 +218,7 @@ class Master(object):
     worker_state = [True] * num_proc
     worker_state[0] = None  # Proc 0 is not a worker.
     worker_queue_size = [0] * num_proc
+    update_requests = [None] * num_proc
     while True:
       # Wait for a worker to push us work or request to pop work.
       comm.Probe(source=MPI.ANY_SOURCE, tag=MPI.ANY_TAG)
@@ -254,10 +255,11 @@ class Master(object):
       target_queue_size = max_queue_size * 3 / 4
       if time.time() - self.last_update_time > self.update_interval:
         for rank in range(1, num_proc):
-          # Perhaps we should Cancel() the old requests if they have not yet
-          # been recieved? Also, are we in danger of deadlocking with the
-          # sends below?
-          comm.isend(max_queue_size, dest=rank, tag=UPDATE_MAX_QUEUE_SIZE)
+          if update_requests[rank]:
+            update_requests[rank].Cancel()
+            update_requests[rank].Free()
+          update_requests[rank] = comm.isend(max_queue_size, dest=rank,
+                                             tag=UPDATE_MAX_QUEUE_SIZE)
         self.last_update_time = time.time()
       self.update_max_queue_sizes_time += self.time_diff()
 
