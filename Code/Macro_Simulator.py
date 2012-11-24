@@ -63,11 +63,11 @@ def setup_CTL(m, cutoff):
   config = GenContainer(state=sim.state, dir=sim.dir, tape=tape)
   return config
 
-def run_options(ttable, options):
+def run_options(ttable, options, stats=None):
   """Run the Accelerated Turing Machine Simulator, running a few simple filters
   first and using intelligent blockfinding."""
   return run(ttable, options, options.steps, options.time, options.block_size,
-             options.backsymbol, options.prover, options.recursive)
+             options.backsymbol, options.prover, options.recursive, stats)
 
 def run(TTable, options, steps=INF, runtime=None, block_size=None,
                 back=True, prover=True, rec=False, stats=None):

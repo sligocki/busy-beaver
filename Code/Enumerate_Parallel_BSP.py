@@ -188,9 +188,7 @@ class Enumerator(object):
 
   def run(self, tm):
     """Simulate TM"""
-    return Macro_Simulator.run(tm.get_TTable(), self.options, self.max_steps, self.max_time,
-                               self.options.block_size, self.options.backsymbol,
-                               self.options.prover, self.options.recursive)
+    return Macro_Simulator.run_options(tm.get_TTable(), self.options)
 
   def add_transitions(self, old_tm, state_in, symbol_in):
     """Push Turing Machines with each possible transition at this state and symbol"""
@@ -385,9 +383,7 @@ class Enumerator_Startup(object):
 
   def run(self, tm):
     """Simulate TM"""
-    return Macro_Simulator.run(tm.get_TTable(), self.options, self.max_steps, self.max_time,
-                               self.options.block_size, self.options.backsymbol,
-                               self.options.prover, self.options.recursive)
+    return Macro_Simulator.run_options(tm.get_TTable(), self.option)
 
   def add_transitions(self, old_tm, state_in, symbol_in):
     """Push Turing Machines with each possible transition at this state and symbol"""
