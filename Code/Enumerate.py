@@ -395,7 +395,7 @@ def main(args):
     if num_proc == 1:
       pout = sys.stdout
     else:
-      pout = open("pout.%d" % MPI_Work_Queue.rank,"w")
+      pout = open("pout.%03d" % MPI_Work_Queue.rank,"w")
 
   ## Set up I/O
   if pout:
