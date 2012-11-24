@@ -180,6 +180,9 @@ class Master(object):
     # Used for keeping track of stat times above.
     self.last_stat_time  = time.time()
 
+    self.last_report_time = time.time()
+    self.report_interval = 10
+
   def __getstate__(self):
     d = self.__dict__.copy()
     del d["pout"]
@@ -212,6 +215,8 @@ class Master(object):
                     (self.waiting_time + self.recieving_waiting_for_pop_time +
                      self.recieving_jobs_time + self.recieving_queue_size_time +
                      self.update_max_queue_sizes_time + self.sending_jobs_time))
+
+    self.pout.flush()
 
   def run_master(self):
     # States of all workers. False iff that worker is WAITING_FOR_POP.
@@ -262,6 +267,12 @@ class Master(object):
                                              tag=UPDATE_MAX_QUEUE_SIZE)
         self.last_update_time = time.time()
       self.update_max_queue_sizes_time += self.time_diff()
+
+      # Periodically report info.
+      if time.time() - self.last_report_time > self.report_interval:
+        self.print_stats()
+        self.pout.write("%r\n" % worker_queue_size)
+        self.last_report_time = time.time()
 
       # Quit when all workers are waiting for work.
       # TODO(shawn): If we pre-emptively request jobs we will need a new
