@@ -79,37 +79,28 @@ def run(TTable, options, steps=INF, runtime=None, block_size=None,
       ## Construct the Macro Turing Machine (Backsymbol-k-Block-Macro-Machine)
       m = Turing_Machine.make_machine(TTable)
 
-      if not block_size:
-        try:
-          ## Set the timer (if non-zero runtime)
-          if runtime:
-            ALARM.set_alarm(runtime/10.0)  # Set timer
+      try:
+        ## Set the timer (if non-zero runtime)
+        if runtime:
+          ALARM.set_alarm(runtime/10.0)  # Set timer
 
+        if not block_size:
           # If no explicit block-size given, use inteligent software to find one
           block_size = Block_Finder.block_finder(m, options)
 
           ALARM.cancel_alarm()
 
-        except AlarmException: # Catch Timer
-          ALARM.cancel_alarm()
+        # Do not create a 1-Block Macro-Machine (just use base machine)
+        if block_size != 1:
+          m = Turing_Machine.Block_Macro_Machine(m, block_size)
 
-          block_size = 1
+        if back:
+          m = Turing_Machine.Backsymbol_Macro_Machine(m)
 
-      # Do not create a 1-Block Macro-Machine (just use base machine)
-      if block_size != 1:
-        m = Turing_Machine.Block_Macro_Machine(m, block_size)
+        CTL_config = setup_CTL(m, options.bf_limit1)
 
-      if back:
-        m = Turing_Machine.Backsymbol_Macro_Machine(m)
-
-      CTL_config = setup_CTL(m, options.bf_limit1)
-
-      # Run CTL filters unless machine halted
-      if CTL_config:
-        try:
-          if runtime:
-            ALARM.set_alarm(runtime/10.0)
-
+        # Run CTL filters unless machine halted
+        if CTL_config:
           CTL_config_copy = copy.deepcopy(CTL_config)
           if CTL1.CTL(m, CTL_config_copy):
             ALARM.cancel_alarm()
@@ -122,11 +113,10 @@ def run(TTable, options, steps=INF, runtime=None, block_size=None,
 
           ALARM.cancel_alarm()
 
-        except AlarmException:
-          ALARM.cancel_alarm()
+      except AlarmException:
+        ALARM.cancel_alarm()
 
       ## Set up the simulator
-      #global sim # Useful for Debugging
       sim = Simulator.Simulator(m, options)
 
       try:
@@ -164,7 +154,7 @@ def run(TTable, options, steps=INF, runtime=None, block_size=None,
         return Exit_Condition.UNDEF_CELL, (on_state, on_symbol,
                                            sim.step_num, sim.get_nonzeros())
 
-    except AlarmException: # Catch Timer (unexpected!)
+    except AlarmException:  # Catch Timer (unexpected!)
       ALARM.cancel_alarm()  # Turn off timer and try again
 
     sys.stderr.write("Weird1 (%d): %s\n" % (do_over,TTable))
