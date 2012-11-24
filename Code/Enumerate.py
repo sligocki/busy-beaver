@@ -190,7 +190,7 @@ class Enumerator(object):
     # Done
     self.save(pout=pout)
 
-  def save(self, pout=sys.stdout):
+  def save(self, pout):
     """Save a checkpoint file so that computation can be restarted if it fails."""
     self.end_time = time.time()
     self.end_clock = time.clock()
@@ -210,14 +210,15 @@ class Enumerator(object):
 
       # Note: We are overloading pout = None to mean don't write any output
       # files.
-      # Backup old checkpoint file (in case the new checkpoint is interrupted
-      # in mid-write)
-      #if os.path.exists(self.checkpoint_filename):
-      #  shutil.move(self.checkpoint_filename, self.backup_checkpoint_filename)
-      # Save checkpoint file
-      #f = file(self.checkpoint_filename, "wb")
-      #pickle.dump(self, f)
-      #f.close()
+      if not self.options.no_checkpoint:
+        # Backup old checkpoint file (in case the new checkpoint is interrupted
+        # in mid-write)
+        if os.path.exists(self.checkpoint_filename):
+          shutil.move(self.checkpoint_filename, self.backup_checkpoint_filename)
+        # Save checkpoint file
+        f = file(self.checkpoint_filename, "wb")
+        pickle.dump(self, f)
+        f.close()
 
     # Restart timer
     self.start_time = time.time()
@@ -363,6 +364,8 @@ def main(args):
                         "Turing Machine.")
   out_parser.add_option("--log_number", type=int, metavar="NUM",
                         help="Log number to use in output file")
+  out_parser.add_option("--no-checkpoint", action="store_true", default=False,
+                        help="Don't save a checkpoint file.")
   out_parser.add_option("--checkpoint", metavar="FILE",
                         help="Checkpoint file name [Default: OUTFILE.check]")
   out_parser.add_option("--save_freq", type=int, default=100000, metavar="FREQ",

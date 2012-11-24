@@ -31,6 +31,8 @@ def add_option_group(parser):
   group.add_option("--time", type=float, default=15.0,
                    help="Max seconds to run each simulation. "
                    "[Default: %default]")
+  group.add_option("--no-ctl", dest="ctl", action="store_false", default=True,
+                   help="Don't try CTL optimization.")
 
   parser.add_option_group(group)
 
@@ -80,7 +82,7 @@ def run(TTable, options, steps=INF, runtime=None, block_size=None,
       m = Turing_Machine.make_machine(TTable)
 
       try:
-        ## Set the timer (if non-zero runtime)
+        # Set the timer (if non-zero runtime)
         if runtime:
           ALARM.set_alarm(runtime/10.0)  # Set timer
 
@@ -97,21 +99,22 @@ def run(TTable, options, steps=INF, runtime=None, block_size=None,
         if back:
           m = Turing_Machine.Backsymbol_Macro_Machine(m)
 
-        CTL_config = setup_CTL(m, options.bf_limit1)
+        if options.ctl:
+          CTL_config = setup_CTL(m, options.bf_limit1)
 
-        # Run CTL filters unless machine halted
-        if CTL_config:
-          CTL_config_copy = copy.deepcopy(CTL_config)
-          if CTL1.CTL(m, CTL_config_copy):
-            ALARM.cancel_alarm()
-            return Exit_Condition.INFINITE, ("CTL_A*",)
+          # Run CTL filters unless machine halted
+          if CTL_config:
+            CTL_config_copy = copy.deepcopy(CTL_config)
+            if CTL1.CTL(m, CTL_config_copy):
+              ALARM.cancel_alarm()
+              return Exit_Condition.INFINITE, ("CTL_A*",)
 
-          CTL_config_copy = copy.deepcopy(CTL_config)
-          if CTL2.CTL(m, CTL_config_copy):
-            ALARM.cancel_alarm()
-            return Exit_Condition.INFINITE, ("CTL_A*_B",)
+            CTL_config_copy = copy.deepcopy(CTL_config)
+            if CTL2.CTL(m, CTL_config_copy):
+              ALARM.cancel_alarm()
+              return Exit_Condition.INFINITE, ("CTL_A*_B",)
 
-          ALARM.cancel_alarm()
+        ALARM.cancel_alarm()
 
       except AlarmException:
         ALARM.cancel_alarm()
