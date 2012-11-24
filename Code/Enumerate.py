@@ -61,29 +61,28 @@ class DefaultDict(dict):
 
 class Enumerator(object):
   """Holds enumeration state information for checkpointing."""
-  def __init__(self, max_steps, max_time, stack, io,
-                     save_freq=100000, checkpoint_filename="checkpoint",
-                     randomize=False, seed=None, options=None):
+  def __init__(self, options, stack, io, pout):
+    self.options = options
+
     # Main TM attributes
-    self.max_steps = max_steps
-    self.max_time = max_time
+    self.max_steps = options.steps
+    self.max_time = options.time
     # I/O info
     self.io = io
-    self.save_freq = save_freq
-    self.checkpoint_filename = checkpoint_filename
-    self.backup_checkpoint_filename = checkpoint_filename + ".bak"
-
-    self.options = options # Has options for things such as block_finder ...
+    self.pout = pout
+    self.save_freq = options.save_freq
+    self.checkpoint_filename = options.checkpoint
+    self.backup_checkpoint_filename = self.checkpoint_filename + ".bak"
 
     # Stack of TM descriptions to simulate
     assert isinstance(stack, Work_Queue.Work_Queue)
     self.stack = stack
 
     # If we are randomizing the stack order
-    self.randomize = randomize
-    if randomize:
+    self.randomize = options.randomize
+    if self.randomize:
       self.random = random.Random()
-      self.random.seed(seed)
+      self.random.seed(options.seed)
 
     # Statistics
     self.tm_num = 0
@@ -101,6 +100,7 @@ class Enumerator(object):
   def __getstate__(self):
     """Gets state of TM for checkpoint file."""
     d = self.__dict__.copy()
+    del d["pout"]
     del d["io"]
     if self.randomize:
       del d["random"]
@@ -115,7 +115,7 @@ class Enumerator(object):
       del d["random_state"]
     self.__dict__ = d
 
-  def continue_enum(self, pout = sys.stdout):
+  def continue_enum(self):
     """
     Pull one machine off of the stack and simulate it, perhaps creating more
     machines to push back onto the stack.
@@ -133,7 +133,7 @@ class Enumerator(object):
         last_time = cur_time
 
       if self.options.num_enum and self.tm_num >= self.options.num_enum:
-        pout.write("Ran requested number of TMs...\n");
+        self.pout.write("Ran requested number of TMs...\n");
         break
 
       # While we have machines to run, pop one off the stack ...
@@ -141,12 +141,12 @@ class Enumerator(object):
 
       if not tm:
         # tm == None is the indication that we have no more machines to run.
-        pout.write("Ran out of TMs...\n");
+        self.pout.write("Ran out of TMs...\n");
         break
 
       # Periodically save state
       if (self.tm_num % self.save_freq) == 0:
-        self.save(pout=pout)
+        self.save()
 
       for do_over in xrange(0,4):
         try:
@@ -159,20 +159,20 @@ class Enumerator(object):
             # ... push all the possible non-halting transitions onto the stack ...
             self.add_transitions(tm, on_state, on_symbol)
             # ... and make this TM the halting one (mutates tm)
-            self.add_halt_trans(tm, on_state, on_symbol, steps, score, pout)
+            self.add_halt_trans(tm, on_state, on_symbol, steps, score)
           # Otherwise record defined result
           elif cond == Exit_Condition.HALT:
             steps, score = info
-            self.add_halt(tm, steps, score, pout)
+            self.add_halt(tm, steps, score)
           elif cond == Exit_Condition.INFINITE:
             reason, = info
-            self.add_infinite(tm, reason, pout)
+            self.add_infinite(tm, reason)
           elif cond == Exit_Condition.MAX_STEPS:
             steps, = info
-            self.add_unresolved(tm, Exit_Condition.MAX_STEPS, pout, steps)
+            self.add_unresolved(tm, Exit_Condition.MAX_STEPS, steps)
           elif cond == Exit_Condition.TIME_OUT:
             runtime, steps = info
-            self.add_unresolved(tm, Exit_Condition.TIME_OUT, pout, steps, runtime)
+            self.add_unresolved(tm, Exit_Condition.TIME_OUT, steps, runtime)
           else:
             raise Exception, "Enumerator.enum() - unexpected condition (%r)" % cond
           break
@@ -184,31 +184,31 @@ class Enumerator(object):
     if self.options.num_enum:
       tm = self.stack.pop_job()
       while tm:
-        self.add_unresolved(tm, Exit_Condition.NOT_RUN, pout)
+        self.add_unresolved(tm, Exit_Condition.NOT_RUN)
         tm = self.stack.pop_job()
 
     # Done
-    self.save(pout=pout)
+    self.save()
 
-  def save(self, pout):
+  def save(self):
     """Save a checkpoint file so that computation can be restarted if it fails."""
     self.end_time = time.time()
     self.end_clock = time.clock()
 
-    if pout:
+    if self.pout:
       # Print out statistical data
-      pout.write("%s -" % self.tm_num)
-      pout.write(" %s %s %s -" % (self.num_halt, self.num_infinite,
+      self.pout.write("%s -" % self.tm_num)
+      self.pout.write(" %s %s %s -" % (self.num_halt, self.num_infinite,
                                   self.num_unresolved))
-      pout.write(" %s" % (long_to_eng_str(self.best_steps,1,3),))
-      pout.write(" %s" % (long_to_eng_str(self.best_score,1,3),))
-      pout.write(" (%.2f - %.2f)\n" % (self.end_time - self.start_time,
+      self.pout.write(" %s" % (long_to_eng_str(self.best_steps,1,3),))
+      self.pout.write(" %s" % (long_to_eng_str(self.best_score,1,3),))
+      self.pout.write(" (%.2f - %.2f)\n" % (self.end_time - self.start_time,
                                        self.end_clock - self.start_clock))
       if self.options.print_stats:
         pprint(self.stats.__dict__)
-      pout.flush()
+      self.pout.flush()
 
-      # Note: We are overloading pout = None to mean don't write any output
+      # Note: We are overloading self.pout = None to mean don't write any output
       # files.
       if not self.options.no_checkpoint:
         # Backup old checkpoint file (in case the new checkpoint is interrupted
@@ -254,14 +254,14 @@ class Enumerator(object):
       # Push the list of TMs onto the stack
       self.stack.push_jobs(new_tms)
 
-  def add_halt_trans(self, tm, on_state, on_symbol, steps, score, pout):
+  def add_halt_trans(self, tm, on_state, on_symbol, steps, score):
     """Edit the TM to have a halt at on_stat/on_symbol and save the result."""
     #   1) Add the halt state
     tm.add_cell(on_state, on_symbol, -1, 1, 1)
     #   2) Save this machine
-    self.add_halt(tm, steps, score, pout)
+    self.add_halt(tm, steps, score)
 
-  def add_halt(self, tm, steps, score, pout):
+  def add_halt(self, tm, steps, score):
     """Note a halting TM. Add statistics and output it with score/steps."""
     self.num_halt += 1
     if steps > self.best_steps or score > self.best_score:
@@ -269,27 +269,27 @@ class Enumerator(object):
       self.best_score = max(self.best_score, score)
     self.tm_num += 1
 
-    if pout:
+    if self.pout:
       io_record = IO.Record()
       io_record.ttable = tm.get_TTable()
       io_record.category = Exit_Condition.HALT
       io_record.category_reason = (score, steps)
       self.io.write_record(io_record)
 
-  def add_infinite(self, tm, reason, pout):
+  def add_infinite(self, tm, reason):
     """Note an infinite TM. Add statistics and output it with reason."""
     self.num_infinite += 1
     self.inf_type[reason] += 1
     self.tm_num += 1
 
-    if pout:
+    if self.pout:
       io_record = IO.Record()
       io_record.ttable = tm.get_TTable()
       io_record.category = Exit_Condition.INFINITE
       io_record.category_reason = (reason,)
       self.io.write_record(io_record)
 
-  def add_unresolved(self, tm, reason, pout, steps=0, runtime=0):
+  def add_unresolved(self, tm, reason, steps=0, runtime=0):
     """Note an unresolved TM. Add statistics and output it with reason."""
     self.num_unresolved += 1
     if reason == Exit_Condition.MAX_STEPS:
@@ -300,7 +300,7 @@ class Enumerator(object):
       assert reason == Exit_Condition.NOT_RUN, "Invalid reason (%r)" % reason
     self.tm_num += 1
 
-    if pout:
+    if self.pout:
       io_record = IO.Record()
       io_record.ttable = tm.get_TTable()
       io_record.category = Exit_Condition.UNKNOWN
@@ -463,10 +463,8 @@ def main(args):
       stack = MPI_Work_Queue.MPI_Worker_Work_Queue(master_proc_num=0, pout=pout)
 
   ## Enumerate machines
-  enumerator = Enumerator(options.steps, options.time, stack, io,
-                          options.save_freq, options.checkpoint,
-                          options.randomize, options.seed, options)
-  enumerator.continue_enum(pout=pout)
+  enumerator = Enumerator(options, stack, io, pout)
+  enumerator.continue_enum()
 
   if options.print_stats:
     pprint(enumerator.stats.__dict__)
