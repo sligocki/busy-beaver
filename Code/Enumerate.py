@@ -198,7 +198,8 @@ class Enumerator(object):
     if pout:
       # Print out statistical data
       pout.write("%s -" % self.tm_num)
-      pout.write(" %s %s %s -" % (self.num_halt, self.num_infinite, self.num_unresolved))
+      pout.write(" %s %s %s -" % (self.num_halt, self.num_infinite,
+                                  self.num_unresolved))
       pout.write(" %s" % (long_to_eng_str(self.best_steps,1,3),))
       pout.write(" %s" % (long_to_eng_str(self.best_score,1,3),))
       pout.write(" (%.2f - %.2f)\n" % (self.end_time - self.start_time,
@@ -207,7 +208,10 @@ class Enumerator(object):
         pprint(self.stats.__dict__)
       pout.flush()
 
-      # Backup old checkpoint file (in case the new checkpoint is interrupted in mid-write)
+      # Note: We are overloading pout = None to mean don't write any output
+      # files.
+      # Backup old checkpoint file (in case the new checkpoint is interrupted
+      # in mid-write)
       if os.path.exists(self.checkpoint_filename):
         shutil.move(self.checkpoint_filename, self.backup_checkpoint_filename)
       # Save checkpoint file
