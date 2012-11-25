@@ -266,7 +266,7 @@ class Master(object):
         for rank in range(1, num_proc):
           if update_requests[rank]:
             update_requests[rank].Cancel()
-            update_requests[rank].Free()
+            update_requests[rank].Wait()
           update_requests[rank] = comm.isend(max_queue_size, dest=rank,
                                              tag=UPDATE_MAX_QUEUE_SIZE)
         self.last_update_time = time.time()
