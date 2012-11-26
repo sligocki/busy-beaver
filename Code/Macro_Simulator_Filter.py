@@ -127,7 +127,7 @@ if __name__ == "__main__":
     parser.error("--outfile is a required parameter.")
 
   infile = open_infile(options.infile)
-  outfile = open_outfile(options.outfile)
+  outfile = open_outfile(options.outfile,False)
   io = IO.IO(infile, outfile, options.log_number)
 
   num_halt = 0
