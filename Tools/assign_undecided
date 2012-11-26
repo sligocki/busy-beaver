@@ -16,6 +16,7 @@ set size_undecided=`ls -s ${basename}.undecided | awk '{print $1;}'`
 while (${size_undecided} != 0)
   echo "----- Undecided -----"
   time ${update_cmd} "${basename}" "f" Assign_Undecideds_Filter --next_machine_number=0
+  echo ""
 
   set size_undecided=`ls -s ${basename}.undecided | awk '{print $1;}'`
 end
