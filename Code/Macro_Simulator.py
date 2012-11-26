@@ -31,6 +31,8 @@ def add_option_group(parser):
   group.add_option("--time", type=float, default=15.0,
                    help="Max seconds to run each simulation. "
                    "[Default: %default]")
+  group.add_option("--tape-limit", type=int, default=50,
+                   help="Max tape size to allow.")
   group.add_option("--no-ctl", dest="ctl", action="store_false", default=True,
                    help="Don't try CTL optimization.")
 
@@ -131,7 +133,10 @@ def run_options(ttable, options, stats=None):
           ALARM.set_alarm(options.time)  # Set timer
 
         ## Run the simulator
-        sim.loop_seek(options.steps)
+        while (sim.step_num < options.steps and
+               sim.op_state == Turing_Machine.RUNNING and
+               sim.tape.compressed_size() <= options.tape_limit):
+          sim.step()
 
         ALARM.cancel_alarm()
 
@@ -147,6 +152,8 @@ def run_options(ttable, options, stats=None):
         return Exit_Condition.TIME_OUT, (options.time, sim.step_num)
 
       ## Resolve end conditions and return relevent info.
+      if sim.tape.compressed_size() > options.tape_limit:
+        return Exit_Condition.UNKNOWN, "Over_Tape", sim.tape.compressed_size()
       if sim.op_state == Turing_Machine.RUNNING:
         return Exit_Condition.MAX_STEPS, (sim.step_num,)
 

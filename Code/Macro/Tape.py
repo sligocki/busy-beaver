@@ -72,6 +72,10 @@ class Chain_Tape(object):
     # Measures head displacement from initial position
     self.displace = 0
 
+  def compressed_size(self):
+    """Get compressed length of tape."""
+    return len(self.tape[0]) + len(self.tape[1])
+
   def __eq__(self, other):
     return (isinstance(other, self.__class__) and
             other.dir      == self.dir        and
