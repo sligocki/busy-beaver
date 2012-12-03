@@ -14,6 +14,8 @@ import sys
 import unittest
 
 
+regold = False
+
 class GoldTest(unittest.TestCase):
   # Test that Enumerator produces consistent results.
   # Note
@@ -26,7 +28,6 @@ class GoldTest(unittest.TestCase):
   def test_goldfiles(self):
     # Clear out test directory to start fresh.
     test_dir = "/tmp/test_Enumerate/"
-    # TODO(shawn): pythonify this
     subprocess.call(["rm", "-rf", test_dir])
     os.makedirs(test_dir)
     for states, symbols in [(2, 2), (2, 3), (3, 2)]:
@@ -38,12 +39,17 @@ class GoldTest(unittest.TestCase):
                       "--outfile=%s" % outfile,
                       "--steps=10000",  # Makes tests deterministic.
                       ])
-      retvalue = subprocess.call(["diff", outfile, goldfile])
-      self.assertEqual(0, retvalue)
+      if regold:
+        subprocess.call(["mv", outfile, goldfile])
+      else:
+        retvalue = subprocess.call(["diff", outfile, goldfile])
+        self.assertEqual(0, retvalue)
     # Clean up after ourselves.
-    # TODO(shawn): pythonify this
     subprocess.call(["rm", "-rf", test_dir])
 
 
 if __name__ == "__main__":
+  if "--regold" in sys.argv:
+    regold = True
+    sys.argv.remove("--regold")
   unittest.main()
