@@ -89,7 +89,7 @@ class Enumerator(object):
     self.num_halt = self.num_infinite = self.num_unresolved = 0
     self.best_steps = self.best_score = 0
     self.inf_type = DefaultDict(0)
-    self.num_over_time = self.num_over_steps = 0
+    self.num_over_time = self.num_over_steps = self.num_over_tape = 0
     # Passed into and updated in Macro_Simulator
     self.stats = GenContainer()
     self.stats.num_rules = 0
@@ -167,12 +167,8 @@ class Enumerator(object):
           elif cond == Exit_Condition.INFINITE:
             reason, = info
             self.add_infinite(tm, reason)
-          elif cond == Exit_Condition.MAX_STEPS:
-            steps, = info
-            self.add_unresolved(tm, Exit_Condition.MAX_STEPS, steps)
-          elif cond == Exit_Condition.TIME_OUT:
-            runtime, steps = info
-            self.add_unresolved(tm, Exit_Condition.TIME_OUT, steps, runtime)
+          elif cond in Exit_Condition.UNKNOWN_SET:
+            self.add_unresolved(tm, cond, *info)
           else:
             raise Exception, "Enumerator.enum() - unexpected condition (%r)" % cond
           break
@@ -289,13 +285,15 @@ class Enumerator(object):
       io_record.category_reason = (reason,)
       self.io.write_record(io_record)
 
-  def add_unresolved(self, tm, reason, steps=0, runtime=0):
+  def add_unresolved(self, tm, reason, *args):
     """Note an unresolved TM. Add statistics and output it with reason."""
     self.num_unresolved += 1
     if reason == Exit_Condition.MAX_STEPS:
       self.num_over_steps += 1
     elif reason == Exit_Condition.TIME_OUT:
       self.num_over_time += 1
+    elif reason == Exit_Condition.OVER_TAPE:
+      self.num_over_tape += 1
     else:
       assert reason == Exit_Condition.NOT_RUN, "Invalid reason (%r)" % reason
     self.tm_num += 1
@@ -304,7 +302,7 @@ class Enumerator(object):
       io_record = IO.Record()
       io_record.ttable = tm.get_TTable()
       io_record.category = Exit_Condition.UNKNOWN
-      io_record.category_reason = (Exit_Condition.name(reason), steps, runtime)
+      io_record.category_reason = (Exit_Condition.name(reason),) + args
       self.io.write_record(io_record)
 
 def initialize_stack(options, stack):
