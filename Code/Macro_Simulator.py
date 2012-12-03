@@ -153,7 +153,8 @@ def run_options(ttable, options, stats=None):
 
       ## Resolve end conditions and return relevent info.
       if sim.tape.compressed_size() > options.tape_limit:
-        return Exit_Condition.UNKNOWN, ("Over_Tape", sim.tape.compressed_size())
+        return Exit_Condition.OVER_TAPE, (sim.tape.compressed_size(),)
+
       if sim.op_state == Turing_Machine.RUNNING:
         return Exit_Condition.MAX_STEPS, (sim.step_num,)
 
