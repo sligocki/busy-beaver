@@ -16,14 +16,34 @@ from Format_New_File import FIELD, TEST
 
 import sys, os
 
-usage = "Integrate_Data.py input_filename halt_filename infinite_filename unknown_filename error_filename undecided_filename"
+usage = "Integrate_Data.py basename\n  or\nIntegrate_Data.py input halt infinite unknown error undecided"
 
-input_filename     = sys.argv[1];   input_file     = file(input_filename, "r")
-halt_filename      = sys.argv[2];   halt_file      = file(halt_filename, "a")
-infinite_filename  = sys.argv[3];   infinite_file  = file(infinite_filename, "a")
-unknown_filename   = sys.argv[4];   unknown_file   = file(unknown_filename, "w")
-error_filename     = sys.argv[5];   error_file     = file(error_filename, "a")
-undecided_filename = sys.argv[6];   undecided_file = file(undecided_filename, "a")
+if len(sys.argv) == 2:
+  base_name = sys.argv[1]
+
+  input_filename     = base_name + ".out"
+  halt_filename      = base_name + ".halt"
+  infinite_filename  = base_name + ".infinite"
+  unknown_filename   = base_name + ".unknown"
+  error_filename     = base_name + ".error"
+  undecided_filename = base_name + ".undecided"
+elif len(sys.argv) == 7:
+  input_filename     = sys.argv[1];
+  halt_filename      = sys.argv[2];
+  infinite_filename  = sys.argv[3];
+  unknown_filename   = sys.argv[4];
+  error_filename     = sys.argv[5];
+  undecided_filename = sys.argv[6];
+else:
+  print usage
+  exit(1)
+
+input_file     = file(input_filename, "r")
+halt_file      = file(halt_filename, "a")
+infinite_file  = file(infinite_filename, "a")
+unknown_file   = file(unknown_filename, "w")
+error_file     = file(error_filename, "a")
+undecided_file = file(undecided_filename, "a")
 
 # Error flag:
 #   False means no unexpected (weird) entries.
