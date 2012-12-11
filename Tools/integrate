@@ -1,5 +1,0 @@
-#!/bin/tcsh -f
-setenv PATH ${PATH}:/scratch/users/ligocki/busy-beaver/Tools:/scratch/users/ligocki/busy-beaver/Code
-
-echo -n "Integrate "
-time Integrate_Data.py $1.out $1.halt $1.infinite $1.unknown $1.error $1.undecided
