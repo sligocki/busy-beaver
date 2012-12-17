@@ -47,6 +47,8 @@ set start_date=`\date`
 set commandline=($argv[3-])
 set command=`basename $commandline[1]`
 
+set nprocs=""
+
 # Exit after parallel runs - they are handled differently
 if ("$command" != "integrate") then
   # Run the command
@@ -68,14 +70,15 @@ if ("$command" != "integrate") then
     # Log the running of the command
     echo "$log_number" "$command_type" | awk '{printf("%6d %s ",$1,$2);}' >> "$basename.log"
 
-    set command="$command $commandline[2-]"
+    set nprocs=$commandline[3]
+    set command=($command $commandline[2-])
 
     # Get the end date
     set end_date=`\date`
     set delta_time=`Diff_Date.py "$start_date" "$end_date"`
 
     # Log the rest of the command
-    echo "| s | $command | $start_date | $delta_time | 0 0 0 0" >> "$basename.log"
+    echo "| p $nprocs | $command | $start_date | $delta_time | 0 0 0 0" >> "$basename.log"
 
     echo "Parallel run - results not processed..."
     exit 0
@@ -83,6 +86,12 @@ if ("$command" != "integrate") then
 else
   set commandline=($argv[4-])
   set command=`basename $commandline[1]`
+
+  if ("$command" == "mpirun") then
+    set nprocs=$commandline[3]
+  else
+    set nprocs=""
+  endif
 endif
 
 # Log the running of the command
@@ -118,7 +127,11 @@ if ("$status" != 0) then
   set delta_time=`Diff_Date.py "$start_date" "$end_date"`
 
   # Log the command and print a bit more output
-  echo "| s | $command | $start_date | $delta_time | $count_halt $count_infinite $net_undecided $net_unknown" >> "$basename.log"
+  if ("$nprocs" == "") then
+    echo "| s | $command | $start_date | $delta_time | $count_halt $count_infinite $net_undecided $net_unknown" >> "$basename.log"
+  else
+    echo "| p $nprocs | $command | $start_date | $delta_time | $count_halt $count_infinite $net_undecided $net_unknown" >> "$basename.log"
+  endif
   echo "TM counts: $count_halt $count_infinite $net_undecided $net_unknown"
 
   # Log if all the TMs have been resolved
@@ -135,7 +148,11 @@ else
   set delta_time=`Diff_Date.py "$start_date" "$end_date"`
 
   # Log the command and indicate no change
-  echo "| s | $command | $start_date | $delta_time | 0 0 0 0" >> "$basename.log"
+  if ("$nprocs" == "") then
+    echo "| s | $command | $start_date | $delta_time | 0 0 0 0" >> "$basename.log"
+  else
+    echo "| p $nprocs | $command | $start_date | $delta_time | 0 0 0 0" >> "$basename.log"
+  endif
   echo "TM counts: 0 0 0 0"
 endif
 
