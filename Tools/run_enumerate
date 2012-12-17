@@ -22,9 +22,15 @@ endif
 
 set basename=$1
 
+set enumerate=`which Enumerate.py`
+
 echo "----- Enumerate -----"
 if (${nprocs} == 1) then
-  time update ${basename} "g" Enumerate.py $argv[2-]
+  time update ${basename} "g" ${enumerate} $argv[2-]
 else
-  time update ${basename} "g" Enumerate_Filter_Parallel $nprocs $basename $argv[2-]
+  if (-e machinefile) then
+    time update ${basename} "g" mpirun -np $nprocs -machinefile machinefile ${enumerate} $argv[2-]
+  else
+    time update ${basename} "g" mpirun -np $nprocs ${enumerate} $argv[2-]
+  endif
 endif

@@ -43,29 +43,52 @@ set orig_unknown=`wc -l < $basename.unknown`
 
 # Get the start date and command
 set start_date=`\date`
-set command="$argv[3-]"
 
-# Run the command
-echo "Running: $command"
-$command --infile=$basename.unknown --outfile=$basename.out --log_number=$log_number
+set commandline=($argv[3-])
+set command=`basename $commandline[1]`
 
-# Check for failure
-if ("$status" != 0) then
-  echo "Command failed"
-  exit 1
-endif
-
-# Save the initial output file
-if ("$argv[2]" == "Generate.py") then
-  if (-e "$basename.out") then
-    /bin/cp -f "$basename.out" "$basename.all"
+# Exit after parallel runs - they are handled differently
+if ("$command" != "integrate") then
+  # Run the command
+  echo "Running: $commandline"
+  if ("$command" == "Enumerate.py" || "$command" == "mpirun") then
+    $commandline --outfile=$basename.out --log_number=$log_number
   else
-    touch "$basename.all"
+    $commandline --infile=$basename.unknown --outfile=$basename.out --log_number=$log_number
   endif
+
+  # Check for failure
+  if ("$status" != 0) then
+    echo "Command failed"
+    exit 1
+  endif
+
+  # Exit after parallel runs - they are handled differently
+  if ("$command" == "mpirun") then
+    # Log the running of the command
+    echo "$log_number" "$command_type" | awk '{printf("%6d %s ",$1,$2);}' >> "$basename.log"
+
+    set command="$command $commandline[2-]"
+
+    # Get the end date
+    set end_date=`\date`
+    set delta_time=`Diff_Date.py "$start_date" "$end_date"`
+
+    # Log the rest of the command
+    echo "| s | $command | $start_date | $delta_time | 0 0 0 0" >> "$basename.log"
+
+    echo "Parallel run - results not processed..."
+    exit 0
+  endif
+else
+  set commandline=($argv[4-])
+  set command=`basename $commandline[1]`
 endif
 
 # Log the running of the command
 echo "$log_number" "$command_type" | awk '{printf("%6d %s ",$1,$2);}' >> "$basename.log"
+
+set command="$command $commandline[2-]"
 
 # Check for any change
 cmp -s "$basename.unknown" "$basename.out"
