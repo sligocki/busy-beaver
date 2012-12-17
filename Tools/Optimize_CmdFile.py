@@ -18,24 +18,26 @@ unknowns = 0
 
 for line in sys.stdin:
   pieces = string.split(line,"|")
-  number = string.split(pieces[5])
+  
+  if len(pieces) >= 5:
+    number = string.split(pieces[5])
 
-  commandline = pieces[2]
-  splitline = string.split(commandline)
+    commandline = pieces[2]
+    splitline = string.split(commandline)
 
-  command = splitline[0]
+    command = splitline[0]
 
-  runtime = int(pieces[4])
-  delta_unknowns = int(number[3])
+    runtime = int(pieces[4])
+    delta_unknowns = int(number[3])
 
-  unknowns += delta_unknowns
+    unknowns += delta_unknowns
 
-  if command not in ['Enumerate.py', 'Assign_Undecideds_Filter', 'mpirun']:
-    if commandline in filters:
-      filters[commandline][0] += -delta_unknowns
-      filters[commandline][1] += runtime
-    else:
-      filters[commandline] = [-delta_unknowns,runtime]
+    if command not in ['Enumerate.py', 'Assign_Undecideds_Filter', 'mpirun']:
+      if commandline in filters:
+        filters[commandline][0] += -delta_unknowns
+        filters[commandline][1] += runtime
+      else:
+        filters[commandline] = [-delta_unknowns,runtime]
 
 for (filter,stats) in filters.iteritems():
   delta_unknowns = stats[0]
