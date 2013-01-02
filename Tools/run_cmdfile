@@ -44,3 +44,7 @@ while ($line <= $num_lines)
 
   @ line++
 end
+
+set cur_cmd='Assign_Undecideds_Filter --next_machine_number=0'
+echo "----- $cur_cmd -----"
+time $update_cmd $basename "f" $cur_cmd
