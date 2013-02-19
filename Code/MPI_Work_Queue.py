@@ -46,7 +46,7 @@ class MPI_Worker_Work_Queue(Work_Queue.Work_Queue):
 
     # Time and interval used for reporting queue size.
     self.last_report_time = time.time()
-    self.report_interval = 1
+    self.report_interval = 10
     
     # Where we spend our time.
     self.get_time     = 0.0
@@ -165,7 +165,7 @@ class Master(object):
 
     # Time and interval used for updating worker max queue size.
     self.last_update_time = 0
-    self.update_interval = 1  # Seconds
+    self.update_interval = 10  # Seconds
 
     # Where we spend our time.
     # Downtime waiting for message from workers.
@@ -185,7 +185,7 @@ class Master(object):
     self.last_stat_time  = time.time()
 
     self.last_report_time = time.time()
-    self.report_interval = 10
+    self.report_interval = 120
 
   def __getstate__(self):
     d = self.__dict__.copy()
