@@ -35,6 +35,8 @@ def add_option_group(parser):
   group.add_option("--limited-rules", action="store_true", default=False,
                    help="Rules are saved and applied based on the maximum they "
                    "effect the tape to the left and right. [Experimental]")
+  group.add_option("--max-num-reps", type=int, default=10,
+                    help="Specify a maximum consecutive number of times a rule is applied.")
 
   parser.add_option_group(group)
 
@@ -299,6 +301,8 @@ class Proof_System(object):
     # After proving a part of a Collatz rule, do not try to log any other
     # rules until we have a chance to prove the rest of the Collatz rule.
     self.pause_until_loop = None
+
+    self.max_num_reps = options.max_num_reps
 
     # Stat
     self.num_loops = 0
@@ -617,7 +621,7 @@ class Proof_System(object):
       dist[cur_dir] = cur_dist
     self.num_loops += 1
     #for i in xrange(delta_loop):
-    while gen_sim.num_loops < (delta_loop):
+    while gen_sim.num_loops < delta_loop:
       # We cannot step onto/over a block with 0 repetitions.
       block = gen_sim.tape.get_top_block()
       if isinstance(block.num, Algebraic_Expression) and block.num.const <= 0:
@@ -656,7 +660,6 @@ class Proof_System(object):
         if self.verbose:
           print
           self.print_this("** Failed: Machine stopped running **")
-          self.print_this(gen_sim.op_state)
           print
         return False
       # Update min_val for each expression.
@@ -1117,8 +1120,7 @@ class Proof_System(object):
     diff_steps = 0
     # Get variable assignments for this case and check minimums.
     assignment = {}
-    while config_is_above_min(rule.var_list, rule.min_list,
-                              current_list, assignment):
+    while config_is_above_min(rule.var_list, rule.min_list, current_list, assignment) and num_reps < self.max_num_reps:
       if self.verbose:
         self.print_this(num_reps, current_list)
 
