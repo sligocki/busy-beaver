@@ -128,7 +128,7 @@ class Enumerator(object):
     while True:
       cur_time = time.time()
 
-      if cur_time - last_time > 10:
+      if cur_time - last_time > 120:
         self.stack.print_stats()
         last_time = cur_time
 
