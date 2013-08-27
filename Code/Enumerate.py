@@ -21,7 +21,6 @@ import shutil
 import sys
 import time
 
-from Alarm import AlarmException
 from Common import Exit_Condition, GenContainer
 import IO
 from Macro import Block_Finder
@@ -148,33 +147,27 @@ class Enumerator(object):
       if (self.tm_num % self.save_freq) == 0:
         self.save()
 
-      for do_over in xrange(0,4):
-        try:
-          # ... and run it.
-          cond, info = self.run(tm)
+      # ... and run it.
+      cond, info = self.run(tm)
 
-          # If it hits an undefined transition ...
-          if cond == Exit_Condition.UNDEF_CELL:
-            on_state, on_symbol, steps, score = info
-            # ... push all the possible non-halting transitions onto the stack ...
-            self.add_transitions(tm, on_state, on_symbol)
-            # ... and make this TM the halting one (mutates tm)
-            self.add_halt_trans(tm, on_state, on_symbol, steps, score)
-          # Otherwise record defined result
-          elif cond == Exit_Condition.HALT:
-            steps, score = info
-            self.add_halt(tm, steps, score)
-          elif cond == Exit_Condition.INFINITE:
-            reason, = info
-            self.add_infinite(tm, reason)
-          elif cond in Exit_Condition.UNKNOWN_SET:
-            self.add_unresolved(tm, cond, *info)
-          else:
-            raise Exception, "Enumerator.enum() - unexpected condition (%r)" % cond
-          break
-
-        except AlarmException:
-          sys.stderr.write("Weird2 (%d): %s\n" % (do_over,tm))
+      # If it hits an undefined transition ...
+      if cond == Exit_Condition.UNDEF_CELL:
+        on_state, on_symbol, steps, score = info
+        # ... push all the possible non-halting transitions onto the stack ...
+        self.add_transitions(tm, on_state, on_symbol)
+        # ... and make this TM the halting one (mutates tm)
+        self.add_halt_trans(tm, on_state, on_symbol, steps, score)
+      # Otherwise record defined result
+      elif cond == Exit_Condition.HALT:
+        steps, score = info
+        self.add_halt(tm, steps, score)
+      elif cond == Exit_Condition.INFINITE:
+        reason, = info
+        self.add_infinite(tm, reason)
+      elif cond in Exit_Condition.UNKNOWN_SET:
+        self.add_unresolved(tm, cond, *info)
+      else:
+        raise Exception, "Enumerator.enum() - unexpected condition (%r)" % cond
 
     # Save any remaining machines on the stack.
     if self.options.num_enum:
