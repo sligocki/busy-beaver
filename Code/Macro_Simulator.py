@@ -48,10 +48,10 @@ def create_default_options():
   options, args = parser.parse_args([])
   return options
 
-def setup_CTL(m, cutoff):
+def setup_CTL(m, cutoff, end_time=None):
   options = create_default_options()
   options.prover = False
-  sim = Simulator.Simulator(m, options)
+  sim = Simulator.Simulator(m, options, end_time=end_time)
   sim.seek(cutoff)
 
   if sim.op_state != Turing_Machine.RUNNING:
@@ -74,7 +74,7 @@ def run_options(ttable, options, stats=None):
 
   if options.time:
     start_time = time.time()
-    block_finder_end_time = start_time + (options.time / 10)
+    pre_sim_end_time = start_time + (options.time / 10)
     end_time = start_time + options.time
   else:
     start_time = end_time = None
@@ -83,14 +83,14 @@ def run_options(ttable, options, stats=None):
   if Reverse_Engineer_Filter.test(ttable):
     return Exit_Condition.INFINITE, ("Reverse_Engineer",)
 
-    ## Construct the Macro Turing Machine (Backsymbol-k-Block-Macro-Machine)
+  ## Construct the Macro Turing Machine (Backsymbol-k-Block-Macro-Machine)
   m = Turing_Machine.make_machine(ttable)
 
   block_size = options.block_size
   if not block_size:
     # If no explicit block-size given, use inteligent software to find one
     block_size = Block_Finder.block_finder(m, options,
-                                           end_time=block_finder_end_time)
+                                           end_time=pre_sim_end_time)
 
   # Do not create a 1-Block Macro-Machine (just use base machine)
   if block_size != 1:
@@ -99,17 +99,17 @@ def run_options(ttable, options, stats=None):
     m = Turing_Machine.Backsymbol_Macro_Machine(m)
 
   if options.ctl:
-    CTL_config = setup_CTL(m, options.bf_limit1)
+    CTL_config = setup_CTL(m, options.bf_limit1, end_time=pre_sim_end_time)
 
-  # Run CTL filters unless machine halted
-  if CTL_config:
-    CTL_config_copy = copy.deepcopy(CTL_config)
-    if CTL1.CTL(m, CTL_config_copy):
-      return Exit_Condition.INFINITE, ("CTL_A*",)
+    # Run CTL filters unless machine halted
+    if CTL_config:
+      CTL_config_copy = copy.deepcopy(CTL_config)
+      if CTL1.CTL(m, CTL_config_copy, end_time=pre_sim_end_time):
+        return Exit_Condition.INFINITE, ("CTL_A*",)
 
-    CTL_config_copy = copy.deepcopy(CTL_config)
-    if CTL2.CTL(m, CTL_config_copy):
-      return Exit_Condition.INFINITE, ("CTL_A*_B",)
+      CTL_config_copy = copy.deepcopy(CTL_config)
+      if CTL2.CTL(m, CTL_config_copy, end_time=pre_sim_end_time):
+        return Exit_Condition.INFINITE, ("CTL_A*_B",)
 
   ## Set up the simulator
   sim = Simulator.Simulator(m, options, end_time=end_time)
@@ -132,7 +132,7 @@ def run_options(ttable, options, stats=None):
     return Exit_Condition.OVER_TAPE, (sim.tape.compressed_size(),)
 
   elif sim.op_state == Turing_Machine.TIME_OUT:
-    return Exit_Condition.TIME_OUT, (options.time, sim.step_num)
+    return Exit_Condition.TIME_OUT, (time.time() - start_time, sim.step_num)
 
   elif sim.op_state == Turing_Machine.RUNNING:
     return Exit_Condition.MAX_STEPS, (sim.step_num,)

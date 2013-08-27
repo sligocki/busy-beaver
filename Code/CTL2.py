@@ -6,6 +6,8 @@
 Runs the CTL (A* B) on a machine to discover infinite behavior
 """
 
+import time
+
 import IO
 from Macro import Turing_Machine, Simulator
 
@@ -17,7 +19,7 @@ class CTL_Table(dict):
       self[key] = ((set(), set()), (set(), set()))
     return dict.__getitem__(self, key)
 
-def CTL(machine, config):
+def CTL(machine, config, end_time=None):
   """Runs the CTL on a machine given an advaced tape config"""
   # Initialize the table with the current configuration
   new_table = CTL_Table()
@@ -33,10 +35,14 @@ def CTL(machine, config):
   #   2) The table is unchanged after iteration (Success)
   table = None
   while table != new_table:
+    if end_time and time.time() >= end_time:
+      return False
+
     if VERBOSE:
       for term in new_table:
         print term,":",new_table[term]
       print
+
     table, new_table = new_table, CTL_Table()
     for state, dir in table:
       # We could be looking at any of these symbols in A
