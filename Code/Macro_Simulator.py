@@ -73,6 +73,8 @@ def run_options(ttable, options, stats=None):
     options.steps = INF
 
   if options.time:
+    # Note: We cannot practically use time.clock() because it often
+    # only has 10ms granularity.
     start_time = time.time()
     pre_sim_end_time = start_time + (options.time / 10)
     end_time = start_time + options.time
