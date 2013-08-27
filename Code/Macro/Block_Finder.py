@@ -38,7 +38,7 @@ def add_option_group(parser):
   parser.add_option_group(group)
 
 
-def block_finder(machine, options):
+def block_finder(machine, options, end_time=None):
   """Tries to find the optimal block-size for macro machines"""
   assert isinstance(options, optparse.Values)
 
@@ -67,16 +67,16 @@ def block_finder(machine, options):
       if sim.op_state != Turing_Machine.RUNNING:
         if options.verbose_block_finder:
           print "Halted, returning base block size: 1"
-          print ""
+          print
         return 1
 
     if options.verbose_block_finder:
       print "Found least compression time:", time.clock()
       print "Least compression at step:", worst_loop
-      print ""
+      print
 
     # TODO: Instead of re-seeking, keep going till next bigger tape?
-    sim = Simulator(machine, new_options)
+    sim = Simulator(machine, new_options, end_time=end_time)
     sim.loop_seek(worst_loop)
 
   ## Or just find the best compression at time limit
@@ -85,16 +85,16 @@ def block_finder(machine, options):
 
   if options.verbose_block_finder:
     print "Reset sim time:", time.clock()
-    print ""
+    print
 
   # Analyze this time to see which block size provides greatest compression
   tape = uncompress_tape(sim.tape.tape)
 
   if options.verbose_block_finder:
     print "Uncompressed tape time:", time.clock()
-    print ""
+    print
     print tape
-    print ""
+    print
 
   min_compr = len(tape) + 1 # Worse than no compression
   opt_size = 1
@@ -107,9 +107,9 @@ def block_finder(machine, options):
   if options.verbose_block_finder:
     print "Run1 end time:", time.clock()
     print "Optimal base block size:", opt_size
-    print ""
+    print
     print tape
-    print ""
+    print
 
   if options.bf_limit2 <= 0:
     return opt_size
@@ -138,10 +138,10 @@ def block_finder(machine, options):
     mult += 1
 
   if options.verbose_block_finder:
-    print ""
+    print
     print "Run2 end time:", time.clock()
     print "Optimal block mult:", opt_mult
-    print ""
+    print
     sys.stdout.flush()
 
   return opt_mult*opt_size
@@ -163,4 +163,3 @@ def compression_efficiency(tape, k):
     if tape[i:i + k] == tape[i + k:i + 2*k]:
       compr_size -= k
   return compr_size
-

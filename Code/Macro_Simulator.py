@@ -9,8 +9,8 @@ Run a given TM for a given number of steps and the result.
 import copy
 from optparse import OptionParser, OptionGroup
 import sys
+import time
 
-from Alarm import ALARM, AlarmException
 from Common import Exit_Condition, GenContainer
 import CTL1
 import CTL2
@@ -72,109 +72,83 @@ def run_options(ttable, options, stats=None):
   if options.steps == 0:
     options.steps = INF
 
-  for do_over in xrange(0,4):
-    try:
-      ## Test for quickly for infinite machine
-      if Reverse_Engineer_Filter.test(ttable):
-        return Exit_Condition.INFINITE, ("Reverse_Engineer",)
+  if options.time:
+    start_time = time.time()
+    block_finder_end_time = start_time + (options.time / 10)
+    end_time = start_time + options.time
+  else:
+    start_time = end_time = None
 
-      ## Construct the Macro Turing Machine (Backsymbol-k-Block-Macro-Machine)
-      m = Turing_Machine.make_machine(ttable)
+  ## Test for quickly for infinite machine
+  if Reverse_Engineer_Filter.test(ttable):
+    return Exit_Condition.INFINITE, ("Reverse_Engineer",)
 
-      try:
-        # Set the timer (if non-zero runtime)
-        if options.time:
-          ALARM.set_alarm(options.time/10.0)  # Set timer
+    ## Construct the Macro Turing Machine (Backsymbol-k-Block-Macro-Machine)
+  m = Turing_Machine.make_machine(ttable)
 
-        block_size = options.block_size
-        if not block_size:
-          # If no explicit block-size given, use inteligent software to find one
-          block_size = Block_Finder.block_finder(m, options)
+  block_size = options.block_size
+  if not block_size:
+    # If no explicit block-size given, use inteligent software to find one
+    block_size = Block_Finder.block_finder(m, options,
+                                           end_time=block_finder_end_time)
 
-          ALARM.cancel_alarm()
+  # Do not create a 1-Block Macro-Machine (just use base machine)
+  if block_size != 1:
+    m = Turing_Machine.Block_Macro_Machine(m, block_size)
+  if options.backsymbol:
+    m = Turing_Machine.Backsymbol_Macro_Machine(m)
 
-        # Do not create a 1-Block Macro-Machine (just use base machine)
-        if block_size != 1:
-          m = Turing_Machine.Block_Macro_Machine(m, block_size)
+  if options.ctl:
+    CTL_config = setup_CTL(m, options.bf_limit1)
 
-        if options.backsymbol:
-          m = Turing_Machine.Backsymbol_Macro_Machine(m)
+  # Run CTL filters unless machine halted
+  if CTL_config:
+    CTL_config_copy = copy.deepcopy(CTL_config)
+    if CTL1.CTL(m, CTL_config_copy):
+      return Exit_Condition.INFINITE, ("CTL_A*",)
 
-        if options.ctl:
-          CTL_config = setup_CTL(m, options.bf_limit1)
+    CTL_config_copy = copy.deepcopy(CTL_config)
+    if CTL2.CTL(m, CTL_config_copy):
+      return Exit_Condition.INFINITE, ("CTL_A*_B",)
 
-          # Run CTL filters unless machine halted
-          if CTL_config:
-            CTL_config_copy = copy.deepcopy(CTL_config)
-            if CTL1.CTL(m, CTL_config_copy):
-              ALARM.cancel_alarm()
-              return Exit_Condition.INFINITE, ("CTL_A*",)
+  ## Set up the simulator
+  sim = Simulator.Simulator(m, options, end_time=end_time)
 
-            CTL_config_copy = copy.deepcopy(CTL_config)
-            if CTL2.CTL(m, CTL_config_copy):
-              ALARM.cancel_alarm()
-              return Exit_Condition.INFINITE, ("CTL_A*_B",)
+  ## Run the simulator
+  while (sim.step_num < options.steps and
+         sim.op_state == Turing_Machine.RUNNING and
+         sim.tape.compressed_size() <= options.tape_limit):
+    sim.step()
 
-        ALARM.cancel_alarm()
+  # TODO(shawn): pass the stats object into sim so we don't have to copy.
+  if stats:
+    stats.num_rules += len(sim.prover.rules)
+    stats.num_recursive_rules += sim.prover.num_recursive_rules
+    stats.num_collatz_rules += sim.prover.num_collatz_rules
+    stats.num_failed_proofs += sim.prover.num_failed_proofs
 
-      except AlarmException:
-        ALARM.cancel_alarm()
+  ## Resolve end conditions and return relevent info.
+  if sim.tape.compressed_size() > options.tape_limit:
+    return Exit_Condition.OVER_TAPE, (sim.tape.compressed_size(),)
 
-      # If alarm kills us before we make a backsymbol machine, do it here.
-      if (options.backsymbol and
-          not isinstance(m, Turing_Machine.Backsymbol_Macro_Machine)):
-        m = Turing_Machine.Backsymbol_Macro_Machine(m)
+  elif sim.op_state == Turing_Machine.TIME_OUT:
+    return Exit_Condition.TIME_OUT, (options.time, sim.step_num)
 
-      ## Set up the simulator
-      sim = Simulator.Simulator(m, options)
+  elif sim.op_state == Turing_Machine.RUNNING:
+    return Exit_Condition.MAX_STEPS, (sim.step_num,)
 
-      try:
-        if options.time:
-          ALARM.set_alarm(options.time)  # Set timer
+  elif sim.op_state == Turing_Machine.HALT:
+    return Exit_Condition.HALT, (sim.step_num, sim.get_nonzeros())
 
-        ## Run the simulator
-        while (sim.step_num < options.steps and
-               sim.op_state == Turing_Machine.RUNNING and
-               sim.tape.compressed_size() <= options.tape_limit):
-          sim.step()
+  elif sim.op_state == Turing_Machine.INF_REPEAT:
+    return Exit_Condition.INFINITE, (sim.inf_reason,)
 
-        ALARM.cancel_alarm()
+  elif sim.op_state == Turing_Machine.UNDEFINED:
+    on_symbol, on_state = sim.op_details[0][:2]
+    return Exit_Condition.UNDEF_CELL, (on_state, on_symbol,
+                                       sim.step_num, sim.get_nonzeros())
 
-        # TODO(shawn): pass the stats object into sim so we don't have to copy.
-        if stats:
-          stats.num_rules += len(sim.prover.rules)
-          stats.num_recursive_rules += sim.prover.num_recursive_rules
-          stats.num_collatz_rules += sim.prover.num_collatz_rules
-          stats.num_failed_proofs += sim.prover.num_failed_proofs
-
-      except AlarmException: # Catch Timer
-        ALARM.cancel_alarm()
-        return Exit_Condition.TIME_OUT, (options.time, sim.step_num)
-
-      ## Resolve end conditions and return relevent info.
-      if sim.tape.compressed_size() > options.tape_limit:
-        return Exit_Condition.OVER_TAPE, (sim.tape.compressed_size(),)
-
-      if sim.op_state == Turing_Machine.RUNNING:
-        return Exit_Condition.MAX_STEPS, (sim.step_num,)
-
-      elif sim.op_state == Turing_Machine.HALT:
-        return Exit_Condition.HALT, (sim.step_num, sim.get_nonzeros())
-
-      elif sim.op_state == Turing_Machine.INF_REPEAT:
-        return Exit_Condition.INFINITE, (sim.inf_reason,)
-
-      elif sim.op_state == Turing_Machine.UNDEFINED:
-        on_symbol, on_state = sim.op_details[0][:2]
-        return Exit_Condition.UNDEF_CELL, (on_state, on_symbol,
-                                           sim.step_num, sim.get_nonzeros())
-
-    except AlarmException:  # Catch Timer (unexpected!)
-      ALARM.cancel_alarm()  # Turn off timer and try again
-
-    sys.stderr.write("Weird1 (%d): %s\n" % (do_over, ttable))
-
-  return Exit_Condition.TIME_OUT, (options.time, -1)
+  raise Exception, (sim.op_state, ttable, sim)
 
 # Main script
 if __name__ == "__main__":
