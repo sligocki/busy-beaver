@@ -59,11 +59,14 @@ num_error     = 0
 
 for line in input_file:
   # Split each line by white charactor separation into fields.
-  mainFields = line.split("|")
-  fields = mainFields[1].split()
-  # The condition field describes whether the program halts, is provably
-  # infinite, unknown or error
-  condition = FIELD.CONDITION.type(fields[FIELD.CONDITION.num])
+  main_fields = line.split("|")
+  condition = ""  # Defaults to blank -> Unknown
+  if len(main_fields) > 1:
+    fields = main_fields[1].split()
+    # The condition field describes whether the program halts, is provably
+    # infinite, unknown or error
+    condition = FIELD.CONDITION.type(fields[FIELD.CONDITION.num])
+
   # 'line' halts.
   if TEST.IS_HALT(condition):
     halt_file.write(line)

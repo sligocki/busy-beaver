@@ -26,7 +26,7 @@ class tests_container:
     self.ALL           = lambda x: True
     self.IS_HALT       = lambda x: x == "Halt"
     self.IS_INFINITE   = lambda x: x == "Infinite"
-    self.IS_UNKNOWN    = lambda x: x == "Unknown"
+    self.IS_UNKNOWN    = lambda x: x == "Unknown" or x == ""
     # Note, these should never actually appear in program outputs at time of
     # writing (Dec 26, 2005).
     self.IS_UNDEFINED  = lambda x: x == "Undefined_Cell"
