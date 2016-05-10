@@ -184,6 +184,10 @@ class Turing_Machine:
     else:
       return largest
 
+  def is_cell_empty(self, state_in, symbol_in):
+    # Empty (unset) cells are represented by symbol = -1.
+    return (self.trans_table[state_in][symbol_in][0] == -1)
+
   def get_cell(self, state_in, symbol_in):
     return self.trans_table[state_in][symbol_in]
 
@@ -191,10 +195,14 @@ class Turing_Machine:
     return self.set_cell(*args)
   def set_cell(self, state_in, symbol_in, state_out, symbol_out, direction_out):
     # If this cell was empty, decriment num_empty_cells
-    if self.trans_table[state_in][symbol_in][0] == -1:
+    if self.is_cell_empty(state_in, symbol_in):
       self.num_empty_cells -= 1
     # Actually add the cell information.
     self.trans_table[state_in][symbol_in] = (symbol_out, direction_out, state_out)
     # Update max value information.
     self.max_state = max(self.max_state, state_out)
     self.max_symbol = max(self.max_symbol, symbol_out)
+
+  def set_halt(self, state_in, symbol_in):
+    # Halt is canoncially represented as 1RZ (state = -1, symbol = 1).
+    return self.set_cell(state_in, symbol_in, -1, 1, 1)

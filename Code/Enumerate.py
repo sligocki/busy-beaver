@@ -246,7 +246,7 @@ class Enumerator(object):
   def add_halt_trans(self, tm, on_state, on_symbol, steps, score):
     """Edit the TM to have a halt at on_stat/on_symbol and save the result."""
     #   1) Add the halt state
-    tm.add_cell(on_state, on_symbol, -1, 1, 1)
+    tm.set_halt(on_state, on_symbol)
     #   2) Save this machine
     self.add_halt(tm, steps, score)
 
