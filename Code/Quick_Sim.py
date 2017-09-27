@@ -115,7 +115,7 @@ if __name__ == "__main__":
     options.verbose_prover = True
     options.verbose_block_finder = True
 
-  if options.print_loops > options.loops:
+  if options.loops and options.print_loops > options.loops:
     options.print_loops = options.loops
 
   if len(args) < 1:
