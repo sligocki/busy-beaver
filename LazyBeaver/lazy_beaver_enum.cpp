@@ -6,6 +6,7 @@
 #include <iostream>
 #include <set>
 #include <stack>
+#include <string>
 #include <vector>
 
 #include <ctime>
@@ -36,12 +37,14 @@ class TuringMachine {
   Symbol max_next_symbol() const { return max_next_symbol_; }
   bool next_move_left_ok() const { return next_move_left_ok_; }
   int num_halts() const { return num_halts_; }
+  const std::string& hereditary_name() const { return hereditary_name_; }
 
   // Empty TM
   TuringMachine(int num_states, int num_symbols)
       : num_states_(num_states), num_symbols_(num_symbols),
         max_next_state_(1), max_next_symbol_(1),
-        next_move_left_ok_(false), num_halts_(num_states * num_symbols) {
+        next_move_left_ok_(false), num_halts_(num_states * num_symbols),
+        hereditary_name_() {
     const LookupResult empty_trans = {1, +1, HaltState};
     for (int i = 0; i < num_states; ++i) {
       transitions_.emplace_back(num_symbols, empty_trans);
@@ -51,13 +54,17 @@ class TuringMachine {
   // TM built from a previous TM
   TuringMachine(const TuringMachine& old_tm,
                 const State& last_state, const Symbol& last_symbol,
-                const LookupResult& next_trans)
+                const LookupResult& next_trans,
+                int hereditary_sub_order)
       : num_states_(old_tm.num_states_), num_symbols_(old_tm.num_symbols_),
         next_move_left_ok_(true), num_halts_(old_tm.num_halts_ - 1) {
     max_next_state_ = std::max(old_tm.max_next_state_,
                                std::min(num_states_ - 1, next_trans.state + 1));
     max_next_symbol_ = std::max(old_tm.max_next_symbol_,
                                std::min(num_symbols_ - 1, next_trans.symbol + 1));
+    hereditary_name_ = old_tm.hereditary_name_;
+    hereditary_name_.append(",");
+    hereditary_name_.append(std::to_string(hereditary_sub_order));
     // Initialize ttable to old_tm's ttable.
     transitions_.resize(num_states_);
     for (State state = 0; state < num_states_; ++state) {
@@ -77,6 +84,7 @@ class TuringMachine {
   Symbol max_next_symbol_;
   bool next_move_left_ok_;
   int num_halts_;
+  std::string hereditary_name_;
   std::vector<std::vector<LookupResult>> transitions_;
 };
 
@@ -132,12 +140,14 @@ SimResult DirectSimulate(
 void ExpandTM(const TuringMachine& tm,
               State last_state, Symbol last_symbol,
               std::stack<TuringMachine>* todos) {
+  int order = 0;
   for (State next_state = 0; next_state <= tm.max_next_state(); ++next_state) {
     for (Symbol next_symbol = 0; next_symbol <= tm.max_next_symbol(); ++next_symbol) {
       for (int next_move : {+1, -1}) {
         if (next_move == +1 || tm.next_move_left_ok()) {
           const TuringMachine::LookupResult next = {next_symbol, next_move, next_state};
-          todos->emplace(tm, last_state, last_symbol, next);
+          todos->emplace(tm, last_state, last_symbol, next, order);
+          order += 1;
         }
       }
     }
@@ -189,6 +199,7 @@ int Enumerate(int num_states, int num_symbols, int max_steps) {
     }
     if (num_tms % 10000000 == 0) {
       std::cout << "Progress: TMs simulated: " << num_tms
+                << " Current TM hereditary_order: " << tm.hereditary_name()
                 << " Provisional LB: " << MinMissing(steps_run)
                 << " Stack size: " << todos.size()
                 << " Runtime: " << TimeSince(start_time)
@@ -213,17 +224,21 @@ int Enumerate(int num_states, int num_symbols, int max_steps) {
 }  // namespace lazy_beaver
 
 
-int main() {
-  lazy_beaver::Enumerate(2, 2, 100);
-  lazy_beaver::Enumerate(2, 3, 100);
-  lazy_beaver::Enumerate(2, 4, 100);
-  lazy_beaver::Enumerate(2, 5, 1000);
+int main(int argc, char* argv[]) {
+  if (argc != 4) {
+    std::cerr << "Usage: lazy_beaver_enum num_states num_symbols max_steps" << std::endl;
+    return 1;
+  } else {
+    const int num_states = std::stoi(argv[1]);
+    const int num_symbols = std::stoi(argv[2]);
+    const int max_steps = std::stoi(argv[3]);
 
-  lazy_beaver::Enumerate(3, 2, 100);
-  lazy_beaver::Enumerate(3, 3, 500);
-
-  // lazy_beaver::Enumerate(4, 2, 100);
-  // lazy_beaver::Enumerate(5, 2, 500);
-
-  return 0;
+    if (lazy_beaver::Enumerate(num_states, num_symbols, max_steps) < 0) {
+      // Error/inconclusive
+      return 1;
+    } else {
+      // Success
+      return 0;
+    }
+  }
 }
