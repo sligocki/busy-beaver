@@ -3,6 +3,7 @@ syntax: glob
 *~
 *.so
 *.dll
-build
+Code/build
 cvs2hg_stuff
 Data
+bazel-*
