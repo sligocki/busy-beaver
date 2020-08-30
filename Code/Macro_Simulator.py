@@ -121,6 +121,9 @@ def run_options(ttable, options, stats=None):
          sim.op_state == Turing_Machine.RUNNING and
          sim.tape.compressed_size() <= options.tape_limit):
     sim.step()
+    if sim.op_state == Turing_Machine.TIME_OUT and sim.step_num == 0:
+      sim.op_state = Turing_Machine.RUNNING
+      sim.end_time += options.time
 
   # TODO(shawn): pass the stats object into sim so we don't have to copy.
   if stats:
@@ -131,7 +134,7 @@ def run_options(ttable, options, stats=None):
 
   ## Resolve end conditions and return relevent info.
   if sim.tape.compressed_size() > options.tape_limit:
-    return Exit_Condition.OVER_TAPE, (sim.tape.compressed_size(),)
+    return Exit_Condition.OVER_TAPE, (sim.tape.compressed_size(), sim.step_num)
 
   elif sim.op_state == Turing_Machine.TIME_OUT:
     return Exit_Condition.TIME_OUT, (time.time() - start_time, sim.step_num)
