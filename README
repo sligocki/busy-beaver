@@ -40,12 +40,11 @@ Esoteric:
 
 
 == Forest programs ==
-* Enumerate_All.py - Generates and enumetes all Turing Machines of a give class 
+* Enumerate.py - Generates and enumetes all Turing Machines of a give class 
     and runs them through the Marco_Simulator (which uses state-of-the-art 
     simulation and filtering of non-halting machines). This is now the prefered 
     way of enumerating new classes of machines (used to be Generate.py). After 
     it has finished, our other filters are not likely to change much.
-    (Should be renamed to Enumerate.py)
 
 * Reverse_Engineer_Filter.py - Check a simple condition of transition-table 
     that assures some TMs will never halt. Extremely fast, so it's run before 
@@ -74,15 +73,11 @@ Esoteric:
 
 
 Esoteric:
-* Enumerate_Parallel_*.py - Attempts to make Enumerate_All run on parallel 
+* Enumerate_Parallel_BSP.py - Attempts to make Enumerate_All run on parallel 
     supercomputers.
 
-* Enumerate.py - Originial enumerator, it only printed out best champion 
-    halting machines (originally intended for fast searching, rather than 
-    complete categorizing)
-
 * Generate.py - Generates and enumerates all TMs of a given class and runs them 
-    for a given number of steps in the Direct_Simulator. In-efficient, but a 
+    for a given number of steps in the Direct_Simulator. Inefficient, but a 
     good model for generators.
 
 * Dual_Machine_Filter.py - One of the first filters, this simulates a TM at 2 
