@@ -1,0 +1,6 @@
+CFLAGS = -ansi
+
+all:
+	/bin/rm -rf build *.dll
+	@ PATH="/usr/bin:${PATH}"; export PATH; ./setup_win.py build
+	ln -s build/lib.*/*.dll .
