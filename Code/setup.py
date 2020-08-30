@@ -4,7 +4,7 @@ from distutils.core import setup, Extension
 
 module1 = Extension('Turing_Machine_Sim',
                     sources=['Turing_Machine_Sim.c','Turing_Machine.c'],
-                    extra_compile_args=['-pedantic-errors','-Wno-long-long'])
+                    extra_compile_args=['-Wno-long-long'])
 
 setup(name='Turing_Machine_Sim',
       version='1.0',
@@ -13,7 +13,7 @@ setup(name='Turing_Machine_Sim',
 
 module2 = Extension('Turing_Machine_Count',
                     sources=['Turing_Machine_Count.c','Turing_Machine.c'],
-                    extra_compile_args=['-pedantic-errors','-Wno-long-long'])
+                    extra_compile_args=['-Wno-long-long'])
 
 setup(name='Turing_Machine_Count',
       version='1.0',
@@ -22,7 +22,7 @@ setup(name='Turing_Machine_Count',
 
 module3 = Extension('Dual_Machine',
                     sources=['Dual_Machine.c','Turing_Machine.c'],
-                    extra_compile_args=['-pedantic-errors','-Wno-long-long'])
+                    extra_compile_args=['-Wno-long-long'])
 
 setup(name='Dual_Machine',
       version='1.0',
@@ -31,7 +31,7 @@ setup(name='Dual_Machine',
 
 module4 = Extension('Macro_Machine',
                     sources=['Macro_Machine.c','Turing_Machine.c'],
-                    extra_compile_args=['-pedantic-errors','-Wno-long-long'])
+                    extra_compile_args=['-Wno-long-long'])
 
 setup(name='Macro_Machine',
       version='1.0',
@@ -40,7 +40,7 @@ setup(name='Macro_Machine',
 
 #module5 = Extension('Tree_Identify',
 #                    sources=['Tree_Identify.c','Turing_Machine.c'],
-#                    extra_compile_args=['-pedantic-errors','-Wno-long-long'])
+#                    extra_compile_args=['-Wno-long-long'])
 #
 #setup(name='Tree_Identify',
 #      version='1.0',
@@ -58,7 +58,7 @@ setup(name='signalPlus',
 
 module7 = Extension('Turing_Machine_Recur',
                     sources=['Turing_Machine_Recur.c','Turing_Machine.c'],
-                    extra_compile_args=['-pedantic-errors','-Wno-long-long'])
+                    extra_compile_args=['-Wno-long-long'])
 
 setup(name='Turing_Machine_Recur',
       version='1.0',
@@ -67,7 +67,7 @@ setup(name='Turing_Machine_Recur',
 
 module8 = Extension('Turing_Machine_Recur_2_4_054',
                     sources=['Turing_Machine_Recur_2_4_054.c','Turing_Machine.c'],
-                    extra_compile_args=['-pedantic-errors','-Wno-long-long'])
+                    extra_compile_args=['-Wno-long-long'])
 
 setup(name='Turing_Machine_Recur_2_4_054',
       version='1.0',
