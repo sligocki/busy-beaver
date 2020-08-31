@@ -96,20 +96,20 @@ enum ResultType {
 
 struct SimResult {
   ResultType type;
-  int num_steps;
+  long num_steps;
   State last_state;
   Symbol last_symbol;
 };
 
 // Directly simulate at Turing Machine on a finite tape without tape compression.
 SimResult DirectSimulate(
-    const TuringMachine& tm, const int max_steps) {
+    const TuringMachine& tm, const long max_steps) {
   const int unit_size = 10;
   std::vector<Symbol> tape(unit_size, EmptySymbol);
-  int pos = tape.size() / 2;
+  long pos = tape.size() / 2;
   State state = InitialState;
 
-  int num_steps = 0;
+  long num_steps = 0;
   while (true) {
     State in_state = state;
     Symbol in_symbol = tape[pos];
@@ -154,8 +154,8 @@ void ExpandTM(const TuringMachine& tm,
   }
 }
 
-int MinMissing(const std::set<int> collection) {
-  for (int i = 1;; ++i) {
+long MinMissing(const std::set<long> collection) {
+  for (long i = 1;; ++i) {
     if (collection.count(i) == 0) {
       return i;
     }
@@ -168,7 +168,7 @@ double TimeSince(std::chrono::time_point<std::chrono::system_clock> start_time) 
   return diff.count();
 }
 
-int Enumerate(int num_states, int num_symbols, int max_steps) {
+long Enumerate(int num_states, int num_symbols, long max_steps) {
   const auto start_time = std::chrono::system_clock::now();
   const std::time_t start_time_t = std::chrono::system_clock::to_time_t(start_time);
   std::cout << std::endl;
@@ -178,11 +178,11 @@ int Enumerate(int num_states, int num_symbols, int max_steps) {
   std::stack<TuringMachine> todos;
   TuringMachine empty_tm(num_states, num_symbols);
   todos.push(empty_tm);
-  std::set<int> steps_run;
+  std::set<long> steps_run;
 
   // Stats
-  int num_tms = 0;
-  int num_tms_halt = 0;
+  long num_tms = 0;
+  long num_tms_halt = 0;
 
   while (todos.size() > 0) {
     TuringMachine tm = todos.top();
@@ -199,8 +199,8 @@ int Enumerate(int num_states, int num_symbols, int max_steps) {
     }
     if (num_tms % 10000000 == 0) {
       std::cout << "Progress: TMs simulated: " << num_tms
-                << " Current TM hereditary_order: " << tm.hereditary_name()
                 << " Provisional LB: " << MinMissing(steps_run)
+                << " Current TM hereditary_order: " << tm.hereditary_name()
                 << " Stack size: " << todos.size()
                 << " Runtime: " << TimeSince(start_time)
                 << std::endl;
@@ -211,7 +211,7 @@ int Enumerate(int num_states, int num_symbols, int max_steps) {
   std::cout << "Stat: # TMs halted = " << num_tms_halt << std::endl;
   std::cout << "Stat: Runtime = " << TimeSince(start_time) << std::endl;
 
-  int lb = MinMissing(steps_run);
+  long lb = MinMissing(steps_run);
   if (lb < max_steps) {
     std::cout << "LB(" << num_states << "," << num_symbols << ") = " << lb << std::endl;
     return lb;
@@ -231,7 +231,7 @@ int main(int argc, char* argv[]) {
   } else {
     const int num_states = std::stoi(argv[1]);
     const int num_symbols = std::stoi(argv[2]);
-    const int max_steps = std::stoi(argv[3]);
+    const long max_steps = std::stol(argv[3]);
 
     if (lazy_beaver::Enumerate(num_states, num_symbols, max_steps) < 0) {
       // Error/inconclusive
