@@ -91,10 +91,62 @@ class TuringMachine {
 };
 
 
+// Optimization parameters
+// TODO(shawn or terry): These probably need to increase 5x2 case is spending
+// 96% of time in communication.
+#define MIN_NUM_JOBS_PER_BATCH 10
+#define MAX_NUM_JOBS_PER_BATCH 25
+
+#define DEFAULT_MAX_LOCAL_JOBS    30
+#define DEFAULT_TARGET_LOCAL_JOBS 25
+
+class WorkerWorkQueue {
+  public:
+    WorkerWorkQueue(int master_proc_num) {
+      master_proc_num_ = master_proc_num;
+      
+      max_queue_size_    = DEFAULT_MAX_LOCAL_JOBS;
+      target_queue_size_ = DEFAULT_TARGET_LOCAL_JOBS;
+    }
+
+    ~WorkerWorkQueue() {
+    }
+
+    TuringMachine *pop() {
+      TuringMachine* tm = NULL;
+
+      if (!local_queue_.empty()) {
+        tm = local_queue_.top();
+        local_queue_.pop();
+      } else {
+      }
+
+      return tm;
+    }
+
+  private:
+    int master_proc_num_;
+
+    std::stack<TuringMachine*> local_queue_;
+
+    int max_queue_size_;
+    int target_queue_size_;
+};
+
+
+/*
+class MasterWorkQueue {
+  public:
+    
+};
+*/
+
+
 enum ResultType {
   kHalt,
   kMaxSteps
 };
+
 
 struct SimResult {
   ResultType type;
@@ -103,15 +155,17 @@ struct SimResult {
   Symbol last_symbol;
 };
 
+
 // Directly simulate at Turing Machine on a finite tape without tape compression.
-SimResult DirectSimulate(
-    const TuringMachine& tm, const int max_steps) {
+SimResult DirectSimulate(const TuringMachine& tm,
+                         const int            max_steps) {
   const int unit_size = 10;
   std::vector<Symbol> tape(unit_size, EmptySymbol);
   int pos = tape.size() / 2;
   State state = InitialState;
 
   int num_steps = 0;
+
   while (true) {
     State in_state = state;
     Symbol in_symbol = tape[pos];
@@ -124,6 +178,7 @@ SimResult DirectSimulate(
     if (state == HaltState) {
       return {kHalt, num_steps, in_state, in_symbol};
     }
+
     if (num_steps >= max_steps) {
       return {kMaxSteps, num_steps, in_state, in_symbol};
     }
@@ -143,6 +198,7 @@ void ExpandTM(const TuringMachine& tm,
               State last_state, Symbol last_symbol,
               std::stack<TuringMachine>* todos) {
   int order = 0;
+
   for (State next_state = 0; next_state <= tm.max_next_state(); ++next_state) {
     for (Symbol next_symbol = 0; next_symbol <= tm.max_next_symbol(); ++next_symbol) {
       for (int next_move : {+1, -1}) {
@@ -170,11 +226,14 @@ double TimeSince(std::chrono::time_point<std::chrono::system_clock> start_time) 
   return diff.count();
 }
 
-int Enumerate(int num_states, int num_symbols, int max_steps) {
+int Enumerate(int num_states,
+              int num_symbols,
+              int max_steps) {
   const auto start_time = std::chrono::system_clock::now();
   const std::time_t start_time_t = std::chrono::system_clock::to_time_t(start_time);
+
   std::cout << std::endl;
-  std::cout << "Start: " << num_states << "x" << num_symbols << " : " << std::ctime(&start_time_t);
+  std::cout << "Start: " << num_states << "x" << num_symbols << " : " << std::ctime(&start_time_t) << std::endl;
 
   // Depth-first search of all TMs in TNF (but allowing A0->0RB).
   std::stack<TuringMachine> todos;
@@ -199,6 +258,7 @@ int Enumerate(int num_states, int num_symbols, int max_steps) {
       }
       num_tms_halt += 1;
     }
+
     if (num_tms % 10000000 == 0) {
       std::cout << "Progress: TMs simulated: " << num_tms
                 << " Current TM hereditary_order: " << tm.hereditary_name()
