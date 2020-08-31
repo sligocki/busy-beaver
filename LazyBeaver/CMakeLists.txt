@@ -6,4 +6,4 @@ file(GLOB SOURCES "*.cpp")
 
 add_executable(lazy_beaver_enum ${SOURCES})
 
-target_include_directories(lazy_beaver_enum PRIVATE $ENV{OPENMPI_INC})
+target_include_directories(lazy_beaver_enum PRIVATE $ENV{MPI_INC})
