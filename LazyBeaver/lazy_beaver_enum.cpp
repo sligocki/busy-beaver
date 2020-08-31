@@ -11,6 +11,8 @@
 
 #include <ctime>
 
+#include <mpi.h>
+
 
 namespace lazy_beaver {
 
