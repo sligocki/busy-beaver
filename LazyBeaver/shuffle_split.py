@@ -22,6 +22,6 @@ random.shuffle(lines)
 lines_per_chunk = len(lines) / args.num_chunks
 chunk_breaks = [round(lines_per_chunk * chunk_num) for chunk_num in range(args.num_chunks + 1)]
 for chunk_num in range(args.num_chunks):
-  outfilename = f"{args.infile}.part_{chunk_num}_of_{args.num_chunks}"
+  outfilename = "{}.part_{}_of_{}".format(args.infile,chunk_num,args.num_chunks)
   with open(outfilename, "w") as outfile:
     outfile.writelines(lines[chunk_breaks[chunk_num] : chunk_breaks[chunk_num + 1]])

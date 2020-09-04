@@ -22,7 +22,7 @@ for filename in args.steps_example_files:
       steps_example[int(steps)] = tm.strip()
 
 for n, tm in sorted(steps_example.items()):
-  sys.stdout.write(f"{n}\t{tm}\n")
+  sys.stdout.write(f"{}\t{}\n".format(n,tm))
 
 for n in itertools.count(1):
   if n not in steps_example:
