@@ -64,6 +64,22 @@ class MasterWorkQueue {
 };
 */
 
+void EnumerateAll(int num_states, int num_symbols, long max_steps,
+                  std::ostream* outstream) {
+  const auto start_time = std::chrono::system_clock::now();
+  const std::time_t start_time_t = std::chrono::system_clock::to_time_t(start_time);
+
+  std::cout << std::endl;
+  std::cout << "Start: " << num_states << "x" << num_symbols << " : " << std::ctime(&start_time_t) << std::endl;
+
+  // Depth-first search of all TMs in TNF (but allowing A0->0RB).
+  // Note: These TMs will be deleted by the unique_ptr in the while loop below.
+  std::stack<TuringMachine*> todos;
+  // Start with empty TM.
+  todos.push(new TuringMachine(num_states, num_symbols));
+  Enumerate(&todos, max_steps, outstream);
+}
+
 }  // namespace lazy_beaver
 
 
@@ -82,17 +98,9 @@ int main(int argc, char* argv[]) {
       outstream = new std::ofstream(outfilename, std::ios::out);
     }
 
-    long ret = lazy_beaver::Enumerate(num_states, num_symbols, max_steps, outstream);
+    lazy_beaver::EnumerateAll(num_states, num_symbols, max_steps, outstream);
     if (outstream != nullptr) {
       outstream->close();
-    }
-
-    if (ret < 0) {
-      // Error/inconclusive
-      return 1;
-    } else {
-      // Success
-      return 0;
     }
   }
 }

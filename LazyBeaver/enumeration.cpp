@@ -52,48 +52,39 @@ double TimeSince(std::chrono::time_point<std::chrono::system_clock> start_time) 
 }  // namespace
 
 
-long Enumerate(int num_states, int num_symbols, long max_steps,
+void Enumerate(std::stack<TuringMachine*>* todos,
+               long max_steps,
                std::ostream* outstream) {
   const auto start_time = std::chrono::system_clock::now();
-  const std::time_t start_time_t = std::chrono::system_clock::to_time_t(start_time);
-
-  std::cout << std::endl;
-  std::cout << "Start: " << num_states << "x" << num_symbols << " : " << std::ctime(&start_time_t) << std::endl;
-
-  // Depth-first search of all TMs in TNF (but allowing A0->0RB).
-  // Note: These TMs will be deleted by the unique_ptr in the while loop below.
-  std::stack<TuringMachine*> todos;
-  // Start with empty TM.
-  todos.push(new TuringMachine(num_states, num_symbols));
-  std::set<long> steps_run;
 
   // Stats
   long num_tms = 0;
   long num_tms_halt = 0;
 
-  while (todos.size() > 0) {
-    std::unique_ptr<TuringMachine> tm(todos.top());
-    todos.pop();
+  std::set<long> steps_run;
+  while (todos->size() > 0) {
+    std::unique_ptr<TuringMachine> tm(todos->top());
+    todos->pop();
     auto result = DirectSimulate(*tm, max_steps);
     num_tms += 1;
-
-    if (result.type == kHalt) {
-      steps_run.insert(result.num_steps);
-      if (tm->num_halts() > 1) {
-        ExpandTM(*tm, result.last_state, result.last_symbol, &todos);
-      }
-      num_tms_halt += 1;
-    } else if (outstream != nullptr) {
-      WriteTuringMachine(*tm, outstream);
-    }
 
     if (num_tms % 10000000 == 0) {
       std::cout << "Progress: TMs simulated: " << num_tms
                 << " Provisional LB: " << MinMissing(steps_run)
                 << " Current TM hereditary_order: " << tm->hereditary_name()
-                << " Stack size: " << todos.size()
+                << " Stack size: " << todos->size()
                 << " Runtime: " << TimeSince(start_time)
                 << std::endl;
+    }
+
+    if (result.type == kHalt) {
+      if (tm->num_halts() > 1) {
+        ExpandTM(*tm, result.last_state, result.last_symbol, todos);
+      }
+      steps_run.insert(result.num_steps);
+      num_tms_halt += 1;
+    } else if (outstream != nullptr) {
+      WriteTuringMachine(*tm, outstream);
     }
   }
 
@@ -103,17 +94,11 @@ long Enumerate(int num_states, int num_symbols, long max_steps,
 
   long lb = MinMissing(steps_run);
   if (lb < max_steps) {
-    std::cout << "LB(" << num_states << "," << num_symbols << ") = " << lb << std::endl;
-    return lb;
+    std::cout << "LB = " << lb << std::endl;
+    // std::cout << "LB(" << num_states << "," << num_symbols << ") = " << lb << std::endl;
+  } else {
+    std::cout << "Inconclusive: max_steps too small." << std::endl;
   }
-
-  std::cout << "Inconclusive: max_steps too small." << std::endl;
-  return -1;
-}
-
-
-void ContinueEnumerateFromFile(std::istream* instream) {
-  // TODO
 }
 
 }  // namespace lazy_beaver
