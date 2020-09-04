@@ -46,6 +46,7 @@ class TuringMachine {
 
   // Avoid default copy/assignment constructors.
   TuringMachine() = delete;
+  TuringMachine(const TuringMachine&) = delete;
   TuringMachine& operator=(const TuringMachine&) = delete;
 
  private:
