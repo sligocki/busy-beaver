@@ -3,6 +3,7 @@
 
 #include <fstream>
 #include <iostream>
+#include <map>
 #include <stack>
 #include <string>
 
@@ -77,7 +78,15 @@ void EnumerateAll(int num_states, int num_symbols, long max_steps,
   std::stack<TuringMachine*> todos;
   // Start with empty TM.
   todos.push(new TuringMachine(num_states, num_symbols));
-  Enumerate(&todos, max_steps, outstream);
+  std::map<long, TuringMachine*> steps_example;
+  Enumerate(&todos, max_steps, &steps_example, outstream);
+
+  long lb = MinMissing(steps_example);
+  if (lb < max_steps) {
+    std::cout << "LB(" << num_states << "," << num_symbols << ") = " << lb << std::endl;
+  } else {
+    std::cout << "Inconclusive: max_steps too small." << std::endl;
+  }
 }
 
 }  // namespace lazy_beaver
