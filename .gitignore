@@ -3,6 +3,7 @@ syntax: glob
 *~
 *.so
 *.dll
+*.a
 Code/build
 cvs2hg_stuff
 Data
@@ -10,3 +11,4 @@ bazel-*
 CMakeCache.txt
 CMakeFiles/
 cmake_install.cmake
+LazyBeaver/Makefile
