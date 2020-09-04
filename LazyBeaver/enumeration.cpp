@@ -84,7 +84,7 @@ long Enumerate(int num_states, int num_symbols, long max_steps,
       }
       num_tms_halt += 1;
     } else if (outstream != nullptr) {
-      OutputTuringMachine(*tm, outstream);
+      WriteTuringMachine(*tm, outstream);
     }
 
     if (num_tms % 10000000 == 0) {
