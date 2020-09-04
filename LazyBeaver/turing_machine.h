@@ -51,8 +51,7 @@ class TuringMachine {
                 const LookupResult& next_trans,
                 int hereditary_sub_order);
 
-  // Avoid default copy/assignment constructors.
-  TuringMachine() = delete;
+  // Avoid implicit copy/assignment constructors.
   TuringMachine(const TuringMachine&) = delete;
   TuringMachine& operator=(const TuringMachine&) = delete;
 
