@@ -10,21 +10,21 @@
 
 namespace lazy_beaver {
 
-// Enumerate TMs in TNF starting from tms (up to max_steps).
-// Print a bunch of info.
-// If outstream is non-NULL, write out all the not (yet) halted machines to it.
-//
-// Returns steps_example: a map: num_steps -> example TM that acheives this #.
-//
-// This function will modify tms stack.
+// Enumerates TMs in TNF starting from tms (up to max_steps).
+// Prints a bunch of info.
+// Writes:
+//  * Example TM for every unique num_steps found to out_steps_example_stream.
+//  * Not yet halting machines to out_nonhalt_stream (if non-NULL)
+// This function modifies tms stack.
 void Enumerate(std::stack<TuringMachine*>* tms,
                long max_steps,
-               std::map<long, TuringMachine*>* steps_example,
+               std::set<long>* steps_run,
+               std::ostream* out_steps_example_stream,
                std::ostream* out_nonhalt_stream = nullptr);
 
-// Find minimum positive integer which is not a key to collection.
+// Finds minimum positive integer which is not a key to collection.
 // Useful for calculating Lazy Beaver.
-long MinMissing(const std::map<long, TuringMachine*>& collection);
+long MinMissing(const std::set<long>& collection);
 
 }  // namespace lazy_beaver
 

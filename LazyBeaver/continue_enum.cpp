@@ -18,14 +18,8 @@ void ContinueEnumerateFromFile(std::istream* instream, const long max_steps,
   while ((tm = lazy_beaver::ReadTuringMachine(instream)) != nullptr) {
     tms.push(tm);
   }
-  std::map<long, TuringMachine*> steps_example;
-  Enumerate(&tms, max_steps, &steps_example);
-
-  // Write all steps examples to a file.
-  for (const auto& [steps, tm] : steps_example) {
-    *out_steps_example_stream << steps << "\t";
-    WriteTuringMachine(*tm, out_steps_example_stream);
-  }
+  std::set<long> steps_run;
+  Enumerate(&tms, max_steps, &steps_run, out_steps_example_stream);
 }
 
 }  // namespace lazy_beaver

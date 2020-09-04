@@ -45,7 +45,7 @@ double TimeSince(std::chrono::time_point<std::chrono::system_clock> start_time) 
 }  // namespace
 
 
-long MinMissing(const std::map<long, TuringMachine*>& collection) {
+long MinMissing(const std::set<long>& collection) {
   for (long i = 1;; ++i) {
     if (collection.count(i) == 0) {
       return i;
@@ -55,7 +55,8 @@ long MinMissing(const std::map<long, TuringMachine*>& collection) {
 
 void Enumerate(std::stack<TuringMachine*>* todos,
                long max_steps,
-               std::map<long, TuringMachine*>* steps_example,
+               std::set<long>* steps_run,
+               std::ostream* out_steps_example_stream,
                std::ostream* out_nonhalt_stream) {
   const auto start_time = std::chrono::system_clock::now();
 
@@ -71,7 +72,7 @@ void Enumerate(std::stack<TuringMachine*>* todos,
 
     if (num_tms % 10000000 == 0) {
       std::cout << "Progress: TMs simulated: " << num_tms
-                << " Provisional LB: " << MinMissing(*steps_example)
+                << " Provisional LB: " << MinMissing(*steps_run)
                 << " Current TM hereditary_order: " << tm->hereditary_name()
                 << " Stack size: " << todos->size()
                 << " Runtime: " << TimeSince(start_time)
@@ -82,14 +83,19 @@ void Enumerate(std::stack<TuringMachine*>* todos,
       if (tm->num_halts() > 1) {
         ExpandTM(*tm, result.last_state, result.last_symbol, todos);
       }
-
-      if (steps_example->find(result.num_steps) == steps_example->end()) {
-        (*steps_example)[result.num_steps] = tm.release();
-        // NOTE: Do not use tm after this point!
+      if (steps_run->count(result.num_steps) == 0) {
+        steps_run->insert(result.num_steps);
+        // We found a new run-length, write it to steps_example file.
+        *out_steps_example_stream << result.num_steps << "\t";
+        WriteTuringMachine(*tm, out_steps_example_stream);
+        out_steps_example_stream->flush();
       }
       num_tms_halt += 1;
-    } else if (out_nonhalt_stream != nullptr) {
-      WriteTuringMachine(*tm, out_nonhalt_stream);
+    } else {
+      // Non-halting machine.
+      if (out_nonhalt_stream != nullptr) {
+        WriteTuringMachine(*tm, out_nonhalt_stream);
+      }
     }
   }
 

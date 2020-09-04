@@ -81,17 +81,10 @@ void EnumerateAll(int num_states, int num_symbols, long max_steps,
   std::stack<TuringMachine*> todos;
   // Start with empty TM.
   todos.push(new TuringMachine(num_states, num_symbols));
-  std::map<long, TuringMachine*> steps_example;
-  Enumerate(&todos, max_steps, &steps_example, out_nonhalt_stream);
+  std::set<long> steps_run;
+  Enumerate(&todos, max_steps, &steps_run, out_steps_example_stream, out_nonhalt_stream);
 
-  // Write all steps examples to a file.
-  for (const auto& [steps, tm] : steps_example) {
-    *out_steps_example_stream << steps << "\t";
-    WriteTuringMachine(*tm, out_steps_example_stream);
-  }
-  out_steps_example_stream->flush();
-
-  long lb = MinMissing(steps_example);
+  long lb = MinMissing(steps_run);
   if (lb < max_steps) {
     std::cout << "LB(" << num_states << "," << num_symbols << ") = " << lb << std::endl;
   } else {
