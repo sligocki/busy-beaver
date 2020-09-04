@@ -38,6 +38,13 @@ class TuringMachine {
   // Empty TM
   TuringMachine(int num_states, int num_symbols);
 
+  // TM from transition table.
+  // Note: This inefficiently copies the table. Currently it's only used for
+  // small loads, so it's not critical. But if it's used more places, we should
+  // update this to use unique_ptr or something like that.
+  TuringMachine(const std::vector<std::vector<LookupResult>>& transitions,
+                const std::string& base_name);
+
   // TM built from a previous TM
   TuringMachine(const TuringMachine& old_tm,
                 const State& last_state, const Symbol& last_symbol,
@@ -60,8 +67,12 @@ class TuringMachine {
   std::vector<std::vector<LookupResult>> transitions_;
 };
 
-// Output TM to outstream in a human-readable format.
-void OutputTuringMachine(const TuringMachine& tm, std::ostream* outstream);
+// Write TM to outstream in a human-readable format.
+void WriteTuringMachine(const TuringMachine& tm, std::ostream* outstream);
+
+// Read one TM from file (written in WriteTuringMachine() format).
+// Returns nullptr if there are no TMs left.
+TuringMachine* ReadTuringMachine(std::istream* instream);
 
 
 enum ResultType {

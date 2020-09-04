@@ -1,6 +1,7 @@
 #include "turing_machine.h"
 
 #include <iostream>
+#include <string>
 
 
 namespace lazy_beaver {
@@ -15,6 +16,34 @@ TuringMachine::TuringMachine(int num_states, int num_symbols)
   for (int i = 0; i < num_states; ++i) {
     transitions_.emplace_back(num_symbols, empty_trans);
   }
+}
+
+// TM from transition table.
+TuringMachine::TuringMachine(
+  const std::vector<std::vector<LookupResult>>& transitions,
+  const std::string& base_name)
+    : hereditary_name_(base_name), transitions_(transitions) {
+  // Calculate details about TTable.
+  State max_state = 0;
+  Symbol max_symbol = 0;
+  int num_halts = 0;
+  for (const auto& row : transitions_) {
+    for (const LookupResult& trans : row) {
+      max_state = std::max(max_state, trans.state);
+      max_symbol = std::max(max_symbol, trans.symbol);
+      if (trans.state < 0) {
+        num_halts += 1;
+      }
+    }
+  }
+
+  num_states_ = transitions_.size();
+  num_symbols_ = transitions_[0].size();
+  max_next_state_ = std::min(max_state + 1, num_states_ - 1);
+  max_next_symbol_ = std::min(max_symbol + 1, num_symbols_ - 1);
+  // Assume we aren't starting with completely blank TM.
+  next_move_left_ok_ = true;
+  num_halts_ = num_halts;
 }
 
 // TM built from a previous TM
@@ -44,7 +73,15 @@ TuringMachine::TuringMachine(
 }
 
 
-void OutputTuringMachine(const TuringMachine& tm, std::ostream* outstream) {
+#define ASSERT(expr) \
+  if (!(expr)) { \
+    std::cerr << "ASSERT: " #expr " failed @ " << __FILE__ << ":" << __LINE__ << std::endl; \
+    exit(1); \
+  }
+
+void WriteTuringMachine(const TuringMachine& tm, std::ostream* outstream) {
+  ASSERT(tm.num_states() < 26);
+  ASSERT(tm.num_symbols() < 10);
   for (State in_state = 0; in_state < tm.num_states(); ++in_state) {
     for (Symbol in_symbol = 0; in_symbol < tm.num_symbols(); ++in_symbol) {
       auto trans = tm.Lookup(in_state, in_symbol);
@@ -53,10 +90,12 @@ void OutputTuringMachine(const TuringMachine& tm, std::ostream* outstream) {
       if (trans.move == +1) {
         *outstream << "R";
       } else {
+        ASSERT(trans.move == -1);
         *outstream << "L";
       }
       char out_state_char;
       if (trans.state >= 0) {
+        // 0 -> 'A', 1 -> 'B', ...
         out_state_char = trans.state + 'A';
       } else {
         out_state_char = 'Z';
@@ -70,6 +109,51 @@ void OutputTuringMachine(const TuringMachine& tm, std::ostream* outstream) {
   }
   // Each TM goes on it's own newline.
   *outstream << "\n";
+}
+
+TuringMachine* ReadTuringMachine(std::istream* instream) {
+  std::string line;
+  if (std::getline(*instream, line)) {
+    int i = 0;
+    std::vector<std::vector<TuringMachine::LookupResult>> transitions;
+    while (i < line.size()) {
+      std::vector<TuringMachine::LookupResult> row;
+      // Each trans in a row takes up exactly 4 bytes, Ex: "1RB ".
+      // End of row is indicated by a double space ("  ").
+      for (;line[i] != ' '; i += 4) {
+        TuringMachine::LookupResult trans;
+        // Format: 1RB (write symbol, move dir, next state).
+        // '0' -> 0, '1' -> 1, ...
+        trans.symbol = line[i] - '0';
+        ASSERT(0 <= trans.symbol && trans.symbol <= 9);
+        if (line[i+1] == 'R') {
+          trans.move = +1;
+        } else {
+          ASSERT(line[i+1] == 'L');
+          trans.move = -1;
+        }
+        char state_char = line[i+2];
+        if (state_char == 'Z') {
+          trans.state = -1;
+        } else {
+          // 'A' -> 0, 'B' -> 1, ...
+          trans.state = state_char - 'A';
+          ASSERT(0 <= trans.state && trans.state < 26);
+        }
+        ASSERT(line[i+3] == ' ');
+        row.push_back(trans);
+      }
+      // We've reached "  " which indicates the end of a row.
+      transitions.push_back(row);
+      i += 1;
+    }
+    const std::string base_name = "TODO";
+    return new TuringMachine(transitions, base_name);
+
+  } else {
+    // Couldn't read line, so we're done.
+    return nullptr;
+  }
 }
 
 
