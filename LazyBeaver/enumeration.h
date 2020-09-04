@@ -20,7 +20,7 @@ namespace lazy_beaver {
 void Enumerate(std::stack<TuringMachine*>* tms,
                long max_steps,
                std::map<long, TuringMachine*>* steps_example,
-               std::ostream* outstream = nullptr);
+               std::ostream* out_nonhalt_stream = nullptr);
 
 // Find minimum positive integer which is not a key to collection.
 // Useful for calculating Lazy Beaver.

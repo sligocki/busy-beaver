@@ -56,7 +56,7 @@ long MinMissing(const std::map<long, TuringMachine*>& collection) {
 void Enumerate(std::stack<TuringMachine*>* todos,
                long max_steps,
                std::map<long, TuringMachine*>* steps_example,
-               std::ostream* out_tm_stream) {
+               std::ostream* out_nonhalt_stream) {
   const auto start_time = std::chrono::system_clock::now();
 
   // Stats
@@ -88,8 +88,8 @@ void Enumerate(std::stack<TuringMachine*>* todos,
         // NOTE: Do not use tm after this point!
       }
       num_tms_halt += 1;
-    } else if (out_tm_stream != nullptr) {
-      WriteTuringMachine(*tm, out_tm_stream);
+    } else if (out_nonhalt_stream != nullptr) {
+      WriteTuringMachine(*tm, out_nonhalt_stream);
     }
   }
 
