@@ -27,6 +27,8 @@ class TuringMachine {
   }
 
 
+  int num_states() const { return num_states_; }
+  int num_symbols() const { return num_symbols_; }
   State max_next_state() const { return max_next_state_; }
   Symbol max_next_symbol() const { return max_next_symbol_; }
   bool next_move_left_ok() const { return next_move_left_ok_; }
@@ -53,12 +55,14 @@ class TuringMachine {
   std::vector<std::vector<LookupResult>> transitions_;
 };
 
+// Output TM to outstream in a human-readable format.
+void OutputTuringMachine(const TuringMachine& tm, std::ostream* outstream);
+
 
 enum ResultType {
   kHalt,
   kMaxSteps
 };
-
 
 struct SimResult {
   ResultType type;
@@ -66,7 +70,6 @@ struct SimResult {
   State last_state;
   Symbol last_symbol;
 };
-
 
 // Directly simulate at Turing Machine on a finite tape without tape compression.
 SimResult DirectSimulate(const TuringMachine& tm, const long max_steps);

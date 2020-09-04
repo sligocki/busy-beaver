@@ -50,7 +50,9 @@ double TimeSince(std::chrono::time_point<std::chrono::system_clock> start_time) 
 
 }  // namespace
 
-long Enumerate(int num_states, int num_symbols, long max_steps) {
+
+long Enumerate(int num_states, int num_symbols, long max_steps,
+               std::ostream* outstream) {
   const auto start_time = std::chrono::system_clock::now();
   const std::time_t start_time_t = std::chrono::system_clock::to_time_t(start_time);
 
@@ -79,6 +81,8 @@ long Enumerate(int num_states, int num_symbols, long max_steps) {
         ExpandTM(tm, result.last_state, result.last_symbol, &todos);
       }
       num_tms_halt += 1;
+    } else if (outstream != nullptr) {
+      OutputTuringMachine(tm, outstream);
     }
 
     if (num_tms % 10000000 == 0) {
@@ -103,6 +107,11 @@ long Enumerate(int num_states, int num_symbols, long max_steps) {
 
   std::cout << "Inconclusive: max_steps too small." << std::endl;
   return -1;
+}
+
+
+void ContinueEnumerateFromFile(std::istream* instream) {
+  // TODO
 }
 
 }  // namespace lazy_beaver
