@@ -71,7 +71,7 @@ void WriteTuringMachine(const TuringMachine& tm, std::ostream* outstream);
 
 // Read one TM from file (written in WriteTuringMachine() format).
 // Returns nullptr if there are no TMs left.
-TuringMachine* ReadTuringMachine(std::istream* instream);
+TuringMachine* ReadTuringMachine(std::istream* instream, const std::string& base_name);
 
 
 enum ResultType {

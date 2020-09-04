@@ -111,7 +111,7 @@ void WriteTuringMachine(const TuringMachine& tm, std::ostream* outstream) {
   *outstream << "\n";
 }
 
-TuringMachine* ReadTuringMachine(std::istream* instream) {
+TuringMachine* ReadTuringMachine(std::istream* instream, const std::string& base_name) {
   std::string line;
   if (std::getline(*instream, line)) {
     int i = 0;
@@ -147,7 +147,6 @@ TuringMachine* ReadTuringMachine(std::istream* instream) {
       transitions.push_back(row);
       i += 1;
     }
-    const std::string base_name = "TODO";
     return new TuringMachine(transitions, base_name);
 
   } else {

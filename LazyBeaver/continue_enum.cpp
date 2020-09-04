@@ -14,10 +14,21 @@ namespace lazy_beaver {
 void ContinueEnumerateFromFile(std::istream* instream, const long max_steps,
                                std::ostream* out_steps_example_stream) {
   std::stack<TuringMachine*> tms;
-  lazy_beaver::TuringMachine* tm;
-  while ((tm = lazy_beaver::ReadTuringMachine(instream)) != nullptr) {
-    tms.push(tm);
+
+  for (int i = 0;; ++i) {
+    // For now, we use a dummy base name for TMs which is just the "(4)" for
+    // the TM 4 in the file.
+    std::string tm_base_name("(");
+    tm_base_name.append(std::to_string(i));
+    tm_base_name.append(")");
+    lazy_beaver::TuringMachine* tm = lazy_beaver::ReadTuringMachine(instream, tm_base_name);
+    if (tm == nullptr) {
+      break;
+    } else {
+      tms.push(tm);
+    }
   }
+
   std::set<long> steps_run;
   Enumerate(&tms, max_steps, &steps_run, out_steps_example_stream);
 }
