@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <chrono>
 #include <iostream>
+#include <memory>
 #include <set>
 #include <stack>
 #include <string>
@@ -18,7 +19,7 @@ namespace {
 
 void ExpandTM(const TuringMachine& tm,
               State last_state, Symbol last_symbol,
-              std::stack<TuringMachine>* todos) {
+              std::stack<TuringMachine*>* todos) {
   int order = 0;
 
   for (State next_state = 0; next_state <= tm.max_next_state(); ++next_state) {
@@ -26,7 +27,7 @@ void ExpandTM(const TuringMachine& tm,
       for (int next_move : {+1, -1}) {
         if (next_move == +1 || tm.next_move_left_ok()) {
           const TuringMachine::LookupResult next = {next_symbol, next_move, next_state};
-          todos->emplace(tm, last_state, last_symbol, next, order);
+          todos->push(new TuringMachine(tm, last_state, last_symbol, next, order));
           order += 1;
         }
       }
@@ -60,9 +61,10 @@ long Enumerate(int num_states, int num_symbols, long max_steps,
   std::cout << "Start: " << num_states << "x" << num_symbols << " : " << std::ctime(&start_time_t) << std::endl;
 
   // Depth-first search of all TMs in TNF (but allowing A0->0RB).
-  std::stack<TuringMachine> todos;
-  TuringMachine empty_tm(num_states, num_symbols);
-  todos.push(empty_tm);
+  // Note: These TMs will be deleted by the unique_ptr in the while loop below.
+  std::stack<TuringMachine*> todos;
+  // Start with empty TM.
+  todos.push(new TuringMachine(num_states, num_symbols));
   std::set<long> steps_run;
 
   // Stats
@@ -70,25 +72,25 @@ long Enumerate(int num_states, int num_symbols, long max_steps,
   long num_tms_halt = 0;
 
   while (todos.size() > 0) {
-    TuringMachine tm = todos.top();
+    std::unique_ptr<TuringMachine> tm(todos.top());
     todos.pop();
-    auto result = DirectSimulate(tm, max_steps);
+    auto result = DirectSimulate(*tm, max_steps);
     num_tms += 1;
 
     if (result.type == kHalt) {
       steps_run.insert(result.num_steps);
-      if (tm.num_halts() > 1) {
-        ExpandTM(tm, result.last_state, result.last_symbol, &todos);
+      if (tm->num_halts() > 1) {
+        ExpandTM(*tm, result.last_state, result.last_symbol, &todos);
       }
       num_tms_halt += 1;
     } else if (outstream != nullptr) {
-      OutputTuringMachine(tm, outstream);
+      OutputTuringMachine(*tm, outstream);
     }
 
     if (num_tms % 10000000 == 0) {
       std::cout << "Progress: TMs simulated: " << num_tms
                 << " Provisional LB: " << MinMissing(steps_run)
-                << " Current TM hereditary_order: " << tm.hereditary_name()
+                << " Current TM hereditary_order: " << tm->hereditary_name()
                 << " Stack size: " << todos.size()
                 << " Runtime: " << TimeSince(start_time)
                 << std::endl;
