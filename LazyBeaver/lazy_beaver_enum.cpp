@@ -1,6 +1,7 @@
 // Prototype script for quickly calculating Lazy Beaver by enumerating
 // candidates and directly simulating them on an uncomressed tape.
 
+#include <fstream>
 #include <iostream>
 #include <stack>
 
@@ -66,15 +67,26 @@ class MasterWorkQueue {
 
 
 int main(int argc, char* argv[]) {
-  if (argc != 4) {
-    std::cerr << "Usage: lazy_beaver_enum num_states num_symbols max_steps" << std::endl;
+  if (argc < 4) {
+    std::cerr << "Usage: lazy_beaver_enum num_states num_symbols max_steps [outfile]" << std::endl;
     return 1;
   } else {
     const int num_states = std::stoi(argv[1]);
     const int num_symbols = std::stoi(argv[2]);
     const long max_steps = std::stol(argv[3]);
 
-    if (lazy_beaver::Enumerate(num_states, num_symbols, max_steps) < 0) {
+    std::ofstream* outstream = nullptr;
+    if (argc >= 5) {
+      const std::string outfilename(argv[4]);
+      outstream = new std::ofstream(outfilename, std::ios::out);
+    }
+
+    long ret = lazy_beaver::Enumerate(num_states, num_symbols, max_steps, outstream);
+    if (outstream != nullptr) {
+      outstream->close();
+    }
+
+    if (ret < 0) {
       // Error/inconclusive
       return 1;
     } else {

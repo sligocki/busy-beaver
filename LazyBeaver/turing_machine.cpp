@@ -1,5 +1,7 @@
 #include "turing_machine.h"
 
+#include <iostream>
+
 
 namespace lazy_beaver {
 
@@ -39,6 +41,35 @@ TuringMachine::TuringMachine(
   }
   // Update one trans.
   transitions_[last_state][last_symbol] = next_trans;
+}
+
+
+void OutputTuringMachine(const TuringMachine& tm, std::ostream* outstream) {
+  for (State in_state = 0; in_state < tm.num_states(); ++in_state) {
+    for (Symbol in_symbol = 0; in_symbol < tm.num_symbols(); ++in_symbol) {
+      auto trans = tm.Lookup(in_state, in_symbol);
+      // Output format: 1RB (write symbol, move dir, next state).
+      *outstream << trans.symbol;
+      if (trans.move == +1) {
+        *outstream << "R";
+      } else {
+        *outstream << "L";
+      }
+      char out_state_char;
+      if (trans.state >= 0) {
+        out_state_char = trans.state + 'A';
+      } else {
+        out_state_char = 'Z';
+      }
+      *outstream << out_state_char;
+      // Space separate each cell in a row.
+      *outstream << " ";
+    }
+    // Double space separate each row in the transition table.
+    *outstream << " ";
+  }
+  // Each TM goes on it's own newline.
+  *outstream << "\n";
 }
 
 
