@@ -2,6 +2,7 @@
 
 #include <fstream>
 #include <iostream>
+#include <map>
 #include <string>
 
 #include "enumeration.h"
@@ -16,7 +17,15 @@ void ContinueEnumerateFromFile(std::istream* instream, const long max_steps) {
   while ((tm = lazy_beaver::ReadTuringMachine(instream)) != nullptr) {
     tms.push(tm);
   }
-  Enumerate(&tms, max_steps);
+  std::map<long, TuringMachine*> steps_example;
+  Enumerate(&tms, max_steps, &steps_example);
+
+  long lb = MinMissing(steps_example);
+  if (lb < max_steps) {
+    std::cout << "(of TMs run) LB = " << lb << std::endl;
+  } else {
+    std::cout << "Inconclusive: max_steps too small." << std::endl;
+  }
 }
 
 }  // namespace lazy_beaver
