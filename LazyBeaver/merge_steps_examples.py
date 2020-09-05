@@ -24,7 +24,10 @@ for filename in args.steps_example_files:
 for n, tm in sorted(steps_example.items()):
   sys.stdout.write("{}\t{}\n".format(n,tm))
 
+smallest_holes = []
 for n in itertools.count(1):
   if n not in steps_example:
-    print("Min un-attained steps =", n, file=sys.stderr)
-    break
+    smallest_holes.append(n)
+    if len(smallest_holes) >= 20:
+      break
+print("Min un-attained steps:", *smallest_holes, file=sys.stderr)
