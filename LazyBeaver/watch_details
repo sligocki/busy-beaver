@@ -1,13 +1,26 @@
 #!/bin/csh -f
-watch -n 30                                                                 \
-  '                                                                         \
-    ./merge_steps_examples.py data/6x2/6/steps_* > /dev/null;               \
-    echo "";                                                                \
-    ps agx | grep '\''[0-9] ./continue_enum'\'' | tail -1;                  \
-    echo"";                                                                 \
-    expr `grep "Stat: Runtime" 6.2.384.out | wc -l` - 1;                    \
-    echo"";                                                                 \
-    grep "Stat: Runtime" 6.2.384.out | tail -n +2 | sort +3gr -4 | head -5; \
-    echo "";                                                                \
-    tail -n 20 6.2.384.out                                                  \
+if ($#argv != 4) then
+  echo "Usage:  $0 states symbols init procs"
+  exit 1
+endif
+
+set states=$argv[1]
+set symbols=$argv[2]
+set init=$argv[3]
+set procs=$argv[4]
+
+set example_string="${states}x${symbols}/${init}"
+set output_string="${states}.${symbols}.${procs}.out"
+
+watch -n 30                                                                        \
+  '                                                                                \
+    ./merge_steps_examples.py data/'${example_string}'/steps_* > /dev/null;        \
+    echo "";                                                                       \
+    ps agx | grep '\''[0-9] ./continue_enum'\'' | tail -1;                         \
+    echo"";                                                                        \
+    expr `grep "Stat: Runtime" '${output_string}' | wc -l` - 1;                    \
+    echo"";                                                                        \
+    grep "Stat: Runtime" '${output_string}' | tail -n +2 | sort +3gr -4 | head -5; \
+    echo "";                                                                       \
+    tail -n 20 '${output_string}'                                                  \
   '
