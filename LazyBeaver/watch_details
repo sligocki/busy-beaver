@@ -1,0 +1,13 @@
+#!/bin/csh -f
+watch -n 30                                                                 \
+  '                                                                         \
+    ./merge_steps_examples.py data/6x2/6/steps_* > /dev/null;               \
+    echo "";                                                                \
+    ps agx | grep '\''[0-9] ./continue_enum'\'' | tail -1;                  \
+    echo"";                                                                 \
+    expr `grep "Stat: Runtime" 6.2.384.out | wc -l` - 1;                    \
+    echo"";                                                                 \
+    grep "Stat: Runtime" 6.2.384.out | tail -n +2 | sort +3gr -4 | head -5; \
+    echo "";                                                                \
+    tail -n 20 6.2.384.out                                                  \
+  '

@@ -1,0 +1,6 @@
+#!/bin/csh -f
+while (1)
+  echo ""
+  echo 'date; echo "Number of steps attained: $(./merge_steps_examples.py data/6x2/6/steps_* | wc -l)"' | /bin/bash
+  sleep 10
+end
