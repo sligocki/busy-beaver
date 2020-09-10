@@ -57,7 +57,8 @@ void Enumerate(std::stack<TuringMachine*>* todos,
                long max_steps,
                std::set<long>* steps_run,
                std::ostream* out_steps_example_stream,
-               std::ostream* out_nonhalt_stream) {
+               std::ostream* out_nonhalt_stream,
+               int proc_num) {
   const auto start_time = std::chrono::system_clock::now();
 
   // Stats
@@ -71,7 +72,13 @@ void Enumerate(std::stack<TuringMachine*>* todos,
     num_tms += 1;
 
     if (num_tms % 10000000 == 0) {
-      std::cout << "Progress: TMs simulated: " << num_tms
+      if (proc_num >= 0) {
+        std::cout << "Progress " << proc_num << ":";
+      } else {
+        std::cout << "Progress:";
+      }
+
+      std::cout << " TMs simulated: " << num_tms
                 << " Provisional LB: " << MinMissing(*steps_run)
                 << " Current TM hereditary_order: " << tm->hereditary_name()
                 << " Stack size: " << todos->size()
@@ -99,9 +106,15 @@ void Enumerate(std::stack<TuringMachine*>* todos,
     }
   }
 
-  std::cout << "Stat: # TMs simulated = " << num_tms << std::endl;
-  std::cout << "Stat: # TMs halted = " << num_tms_halt << std::endl;
-  std::cout << "Stat: Runtime = " << TimeSince(start_time) << std::endl;
+  if (proc_num >= 0) {
+    std::cout << "Stat " << proc_num << ": # TMs simulated = " << num_tms << std::endl;
+    std::cout << "Stat " << proc_num << ": # TMs halted = " << num_tms_halt << std::endl;
+    std::cout << "Stat " << proc_num << ": Runtime = " << TimeSince(start_time) << std::endl;
+  } else {
+    std::cout << "Stat: # TMs simulated = " << num_tms << std::endl;
+    std::cout << "Stat: # TMs halted = " << num_tms_halt << std::endl;
+    std::cout << "Stat: Runtime = " << TimeSince(start_time) << std::endl;
+  }
 }
 
 }  // namespace lazy_beaver

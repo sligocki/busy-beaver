@@ -31,7 +31,7 @@ date
 echo "(3) Continue enumeration on each chunk as a separate process in parallel."
 for chunk_num in $(seq 0 $((NUM_PROCESSES - 1))); do
   INPUT_TMS=${DATA_DIR}/tms_init.part_${chunk_num}_of_${NUM_PROCESSES}
-  ./continue_enum $INPUT_TMS $MAX_STEPS ${DATA_DIR}/steps_part_${chunk_num}_of_${NUM_PROCESSES} &
+  ./continue_enum $INPUT_TMS $MAX_STEPS ${DATA_DIR}/steps_part_${chunk_num}_of_${NUM_PROCESSES} ${chunk_num} &
 done
 echo "Waiting for all the enumerations to complete."
 wait

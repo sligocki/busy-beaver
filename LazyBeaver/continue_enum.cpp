@@ -11,8 +11,10 @@
 
 namespace lazy_beaver {
 
-void ContinueEnumerateFromFile(std::istream* instream, const long max_steps,
-                               std::ostream* out_steps_example_stream) {
+void ContinueEnumerateFromFile(std::istream* instream,
+                               const long max_steps,
+                               std::ostream* out_steps_example_stream,
+                               int proc_num) {
   std::stack<TuringMachine*> tms;
 
   for (int i = 0;; ++i) {
@@ -30,23 +32,24 @@ void ContinueEnumerateFromFile(std::istream* instream, const long max_steps,
   }
 
   std::set<long> steps_run;
-  Enumerate(&tms, max_steps, &steps_run, out_steps_example_stream);
+  Enumerate(&tms, max_steps, &steps_run, out_steps_example_stream, nullptr, proc_num);
 }
 
 }  // namespace lazy_beaver
 
 
 int main(int argc, char* argv[]) {
-  if (argc != 4) {
-    std::cerr << "Usage: continue_enum in_tm_file max_steps out_steps_example_file" << std::endl;
+  if (argc != 5) {
+    std::cerr << "Usage: continue_enum in_tm_file max_steps out_steps_example_file proc_num" << std::endl;
     return 1;
   } else {
     const std::string infilename(argv[1]);
     std::ifstream instream(infilename, std::ios::in);
     const long max_steps = std::stol(argv[2]);
     std::ofstream out_steps_example_stream(argv[3], std::ios::out | std::ios::binary);
+    int proc_num = std::stoi(argv[4]);
 
-    lazy_beaver::ContinueEnumerateFromFile(&instream, max_steps, &out_steps_example_stream);
+    lazy_beaver::ContinueEnumerateFromFile(&instream, max_steps, &out_steps_example_stream,proc_num);
 
     out_steps_example_stream.close();
 

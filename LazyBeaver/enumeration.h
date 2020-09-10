@@ -20,7 +20,8 @@ void Enumerate(std::stack<TuringMachine*>* tms,
                long max_steps,
                std::set<long>* steps_run,
                std::ostream* out_steps_example_stream,
-               std::ostream* out_nonhalt_stream = nullptr);
+               std::ostream* out_nonhalt_stream = nullptr,
+               int proc_num = -1);
 
 // Finds minimum positive integer which is not a key to collection.
 // Useful for calculating Lazy Beaver.
