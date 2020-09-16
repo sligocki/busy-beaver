@@ -9,6 +9,7 @@
 #include <stack>
 #include <string>
 #include <vector>
+#include <filesystem>
 
 #include <ctime>
 
@@ -58,6 +59,7 @@ void Enumerate(std::stack<TuringMachine*>* todos,
                std::set<long>* steps_run,
                std::ostream* out_steps_example_stream,
                std::ostream* out_nonhalt_stream,
+               std::ostream* save_stack_stream,
                int proc_num) {
   const auto start_time = std::chrono::system_clock::now();
 
@@ -65,7 +67,8 @@ void Enumerate(std::stack<TuringMachine*>* todos,
   long num_tms = 0;
   long num_tms_halt = 0;
 
-  while (todos->size() > 0) {
+  while (todos->size() > 0 &&
+         (save_stack_stream == nullptr || !std::filesystem::exists("stop.enumeration"))) {
     std::unique_ptr<TuringMachine> tm(todos->top());
     todos->pop();
     auto result = DirectSimulate(*tm, max_steps);
@@ -114,6 +117,14 @@ void Enumerate(std::stack<TuringMachine*>* todos,
     std::cout << "Stat: # TMs simulated = " << num_tms << std::endl;
     std::cout << "Stat: # TMs halted = " << num_tms_halt << std::endl;
     std::cout << "Stat: Runtime = " << TimeSince(start_time) << std::endl;
+  }
+
+  if (save_stack_stream != nullptr) {
+    while (todos->size() > 0) {
+      std::unique_ptr<TuringMachine> tm(todos->top());
+      todos->pop();
+      WriteTuringMachine(*tm, save_stack_stream);
+    }
   }
 }
 

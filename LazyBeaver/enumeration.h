@@ -21,6 +21,7 @@ void Enumerate(std::stack<TuringMachine*>* tms,
                std::set<long>* steps_run,
                std::ostream* out_steps_example_stream,
                std::ostream* out_nonhalt_stream = nullptr,
+               std::ostream* save_stack_stream = nullptr,
                int proc_num = -1);
 
 // Finds minimum positive integer which is not a key to collection.
