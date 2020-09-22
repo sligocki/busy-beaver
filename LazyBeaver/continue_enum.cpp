@@ -51,7 +51,7 @@ int main(int argc, char* argv[]) {
     std::ofstream save_stack_stream(argv[4], std::ios::out | std::ios::binary);
     int proc_num = std::stoi(argv[5]);
 
-    lazy_beaver::ContinueEnumerateFromFile(&instream, max_steps, &out_steps_example_stream,&save_stack_stream,proc_num);
+    lazy_beaver::ContinueEnumerateFromFile(&instream, max_steps, &out_steps_example_stream, &save_stack_stream, proc_num);
 
     out_steps_example_stream.close();
     save_stack_stream.close();

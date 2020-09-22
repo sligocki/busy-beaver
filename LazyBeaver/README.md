@@ -39,7 +39,7 @@ The parallel version can be run as:
 
 Which will enumerate all 5 state, 2 symbol TMs serially for 6 steps, collect all non-halting machines and split them randomly 10 ways and then run 10 processes in parallel extending each of those partial enumerations out to 500 steps.
 
-Checkpointing and restarting is possible but somemwhat clunky at the moment - as this matures more documentation will be added.
+Checkpointing and restarting is possible but somewhat clunky at the moment - as this matures more documentation will be added.
 
 ## Results
 
@@ -60,6 +60,8 @@ With this code we can verify the following values for the Lazy Beaver function:
 |         | 5 ||   956 |      |      |      |      |      |
 |         +---+--------+------+------+------+------+------+
 |         | 6 || 33851 |      |      |      |      |      |
+|         +---+--------+------+------+------+------+------+
+|         | 7 ||       |      |      |      |      |      |
 +---------+---+--------+------+------+------+------+------+
 ```
 
@@ -72,4 +74,3 @@ These computation escalate quickly in runtime:
 * 5x2 takes ~10 min serially or ~2 min with 10x parallelism.
 * 6x2 took __4.5 days__ running in parallel on a __48 core machine__.
 * 2x6 took about __7 days__ running in parallel on a __48 core machine__.
-
