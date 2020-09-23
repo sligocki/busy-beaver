@@ -155,16 +155,39 @@ TuringMachine* ReadTuringMachine(std::istream* instream, const std::string& base
   }
 }
 
+State GuessBeepingState(const long max_steps,
+                        const std::vector<long> state_last_seen) {
+  // BBB: Guess which state is optimal for the beeping state.
+  // The hueristic is to choose the max state among those that have not been
+  // seen since before step (max_steps / 2).
+  // ... sadly this is mostly catching TMs which very rarely (but regularly) hit transitions.
+  const long cuttoff_steps = max_steps / 2;
+  State best_state = -1;
+  long best_state_steps = -1;
+  for (State state = 0; state < state_last_seen.size(); ++state) {
+    if (state_last_seen[state] > best_state_steps &&
+        state_last_seen[state] <= cuttoff_steps) {
+      best_state = state;
+      best_state_steps = state_last_seen[state];
+    }
+  }
+  return best_state;
+}
 
 SimResult DirectSimulate(const TuringMachine& tm, const long max_steps) {
   const int unit_size = 10;
   std::vector<Symbol> tape(unit_size, EmptySymbol);
   long pos = tape.size() / 2;
   State state = InitialState;
+  // BBB: Step at which each state was last seen.
+  std::vector<long> state_last_seen(tm.num_states(), -1);
 
   long num_steps = 0;
 
   while (true) {
+    // Scott seems to use 1-indexing for BBB (to match BB, I guess).
+    state_last_seen[state] = num_steps + 1;
+
     State in_state = state;
     Symbol in_symbol = tape[pos];
     auto lookup_res = tm.Lookup(in_state, in_symbol);
@@ -174,11 +197,22 @@ SimResult DirectSimulate(const TuringMachine& tm, const long max_steps) {
     num_steps += 1;
 
     if (state == HaltState) {
-      return {kHalt, num_steps, in_state, in_symbol};
+      // BBB: If TM halts, then best beeping state is pre-halt state.
+      return {kHalt, num_steps, in_state, in_symbol,
+              in_state, num_steps};
     }
 
     if (num_steps >= max_steps) {
-      return {kMaxSteps, num_steps, in_state, in_symbol};
+      // BBB: If TM hasn't halted, we have to guess the best beeping state.
+      const State beep_state = GuessBeepingState(max_steps, state_last_seen);
+      if (beep_state != -1) {
+        return {kMaxSteps, num_steps, in_state, in_symbol,
+                beep_state, state_last_seen[beep_state]};
+      } else {
+        // No beep state guess.
+        return {kMaxSteps, num_steps, in_state, in_symbol,
+                -1, -1};
+      }
     }
 
     // Extend tape if necessary.

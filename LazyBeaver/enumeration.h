@@ -18,6 +18,7 @@ namespace lazy_beaver {
 // This function modifies tms stack.
 void Enumerate(std::stack<TuringMachine*>* tms,
                long max_steps,
+               // TODO: long bbb_top_count,
                std::set<long>* steps_run,
                std::ostream* out_steps_example_stream,
                std::ostream* out_nonhalt_stream = nullptr,

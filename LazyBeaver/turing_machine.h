@@ -84,6 +84,10 @@ struct SimResult {
   long num_steps;
   State last_state;
   Symbol last_symbol;
+  // BBB: Guess at best beep state.
+  State beep_state;
+  // BBB: Last time beep state was seen.
+  long beep_last_step;
 };
 
 // Directly simulate at Turing Machine on a finite tape without tape compression.
