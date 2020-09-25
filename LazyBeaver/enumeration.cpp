@@ -74,7 +74,7 @@ void Enumerate(std::stack<TuringMachine*>* todos,
     auto result = DirectSimulate(*tm, max_steps);
     num_tms += 1;
 
-    if (num_tms % 10000000 == 0) {
+    if ((num_tms == 1) || ((num_tms % 10000000) == 0)) {
       if (proc_num >= 0) {
         std::cout << "Progress " << proc_num << ":";
       } else {
