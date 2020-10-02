@@ -1,0 +1,15 @@
+#!/bin/csh -f
+if ($#argv != 2) then
+  echo "Usage:  $0 output procs
+  exit 1
+endif
+
+set output=$argv[1]
+set procs=$argv[2]
+
+set n=0
+
+while ($n < $procs)
+  grep " ${n}: " $output | tail -n 1
+  @ n++
+end
