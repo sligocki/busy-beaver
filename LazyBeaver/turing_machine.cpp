@@ -157,7 +157,7 @@ TuringMachine* ReadTuringMachine(std::istream* instream, const std::string& base
 
 
 SimResult DirectSimulate(const TuringMachine& tm, const long max_steps) {
-  const int unit_size = 10;
+  const int unit_size = std::max(max_steps/10,(long)10);
   std::vector<Symbol> tape(unit_size, EmptySymbol);
   long pos = tape.size() / 2;
   State state = InitialState;
