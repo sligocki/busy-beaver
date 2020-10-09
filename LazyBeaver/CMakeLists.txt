@@ -4,7 +4,7 @@ project(LazyBeaver)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
-set(CMAKE_CXX_FLAGS "-O3 -Wall")
+set(CMAKE_CXX_FLAGS "-O3 -Wall -g")
 
 # Libraries
 add_library(all_libs turing_machine.cpp enumeration.cpp)
