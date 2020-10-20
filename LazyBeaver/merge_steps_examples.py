@@ -10,6 +10,7 @@ import sys
 
 
 parser = argparse.ArgumentParser()
+parser.add_argument("-n", type=int, default=20, help="number of holes to print")
 parser.add_argument("steps_example_files", nargs="+")
 args = parser.parse_args()
 
@@ -28,6 +29,7 @@ smallest_holes = []
 for n in itertools.count(1):
   if n not in steps_example:
     smallest_holes.append(n)
-    if len(smallest_holes) >= 20:
+    if len(smallest_holes) >= args.n:
       break
+
 print("Min un-attained steps:", *smallest_holes, file=sys.stderr)
