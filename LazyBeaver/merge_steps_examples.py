@@ -21,13 +21,18 @@ for filename in args.steps_example_files:
       steps, tm = line.split("\t")
       steps_example[int(steps)] = tm.strip()
 
-for n, tm in sorted(steps_example.items()):
+steps_example_sorted = sorted(steps_example.items())
+
+for n, tm in steps_example_sorted:
   sys.stdout.write("{}\t{}\n".format(n,tm))
 
 smallest_holes = []
-for n in itertools.count(1):
-  if n not in steps_example:
-    smallest_holes.append(n)
-    if len(smallest_holes) >= 20:
-      break
+total_holes = 0
+for i in range(len(steps_example_sorted)-1):
+  for j in range(steps_example_sorted[i][0]+1,steps_example_sorted[i+1][0]):
+    total_holes += 1
+    if len(smallest_holes) < 20:
+      smallest_holes.append(j)
+
 print("Min un-attained steps:", *smallest_holes, file=sys.stderr)
+print("Total un-attained steps:", total_holes, file=sys.stderr)
