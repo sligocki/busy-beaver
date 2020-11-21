@@ -27,7 +27,7 @@ echo
 date
 echo "(1) Stopping run."
 /bin/touch stop.enumeration
-#/bin/sleep 60
+/bin/sleep 60
 /bin/rm stop.enumeration
 
 echo
