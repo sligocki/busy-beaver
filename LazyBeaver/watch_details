@@ -12,15 +12,17 @@ set procs=$argv[4]
 set example_string="${states}x${symbols}/${init}"
 set output_string="${states}.${symbols}.${procs}.out"
 
-watch -n 30                                                                        \
-  '                                                                                \
-    ./merge_steps_examples.py data/'${example_string}'/steps_* > /dev/null;        \
-    echo "";                                                                       \
-    ps agx | grep '\''[0-9] ./continue_enum'\'' | tail -1;                         \
-    echo"";                                                                        \
-    expr `grep "Stat: Runtime" '${output_string}' | wc -l` - 1;                    \
-    echo"";                                                                        \
-    grep "Stat: Runtime" '${output_string}' | tail -n +2 | sort +3gr -4 | head -5; \
-    echo "";                                                                       \
-    tail -n 20 '${output_string}'                                                  \
+watch -n 30                                                                                  \
+  '                                                                                          \
+    uptime                                                                                   \
+    echo "";                                                                                 \
+    ./merge_steps_examples.py data/'${example_string}'/steps_* > /dev/null;                  \
+    echo "";                                                                                 \
+    ps agx | grep '\''[0-9] ./continue_enum'\'' | tail -1;                                   \
+    echo"";                                                                                  \
+    expr `grep "Stat [0-9]*: Runtime = " '${output_string}' | wc -l` - 1;                    \
+    echo"";                                                                                  \
+    grep "Stat [0-9]*: Runtime = " '${output_string}' | tail -n +2 | sort +4gr -5 | head -5; \
+    echo "";                                                                                 \
+    tail -n 35 '${output_string}'                                                            \
   '
