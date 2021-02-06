@@ -1,5 +1,5 @@
 // Prototype script for quickly calculating Lazy Beaver by enumerating
-// candidates and directly simulating them on an uncomressed tape.
+// candidates and directly simulating them on an uncompressed tape.
 
 #include <fstream>
 #include <iostream>
