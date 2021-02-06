@@ -34,6 +34,7 @@ void ContinueEnumerateFromFile(std::istream* instream,
 
   std::set<long> steps_run;
   Enumerate(&tms, max_steps, &steps_run, out_steps_example_stream, nullptr, save_stack_stream, proc_num);
+  // Enumerate(&tms, max_steps, &steps_run, nullptr, nullptr, save_stack_stream, proc_num);
 }
 
 }  // namespace lazy_beaver
