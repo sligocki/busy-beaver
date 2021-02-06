@@ -9,7 +9,7 @@
 #include <stack>
 #include <string>
 #include <vector>
-#include <filesystem>
+#include <experimental/filesystem>
 
 #include <ctime>
 
@@ -68,7 +68,7 @@ void Enumerate(std::stack<TuringMachine*>* todos,
   long num_tms_halt = 0;
 
   while (todos->size() > 0 &&
-         (save_stack_stream == nullptr || !std::filesystem::exists("stop.enumeration"))) {
+         (save_stack_stream == nullptr || !std::experimental::filesystem::exists("stop.enumeration"))) {
     std::unique_ptr<TuringMachine> tm(todos->top());
     todos->pop();
     auto result = DirectSimulate(*tm, max_steps);
@@ -96,9 +96,11 @@ void Enumerate(std::stack<TuringMachine*>* todos,
       if (steps_run->count(result.num_steps) == 0) {
         steps_run->insert(result.num_steps);
         // We found a new run-length, write it to steps_example file.
-        *out_steps_example_stream << result.num_steps << "\t";
-        WriteTuringMachine(*tm, out_steps_example_stream);
-        out_steps_example_stream->flush();
+        if (out_steps_example_stream != nullptr) {
+          *out_steps_example_stream << result.num_steps << "\t";
+          WriteTuringMachine(*tm, out_steps_example_stream);
+          out_steps_example_stream->flush();
+        }
       }
       num_tms_halt += 1;
     } else {
