@@ -19,7 +19,7 @@ DATA_DIR="./data/${NUM_STATES}x${NUM_SYMBOLS}/${INIT_STEPS}/"
 rm -rf $DATA_DIR
 mkdir -p $DATA_DIR
 
-make
+#make
 
 echo
 date

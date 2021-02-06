@@ -16,7 +16,7 @@ NUM_PROCESSES=$5
 
 DATA_DIR="./data/${NUM_STATES}x${NUM_SYMBOLS}/${INIT_STEPS}/"
 
-make
+#make
 
 echo
 date
