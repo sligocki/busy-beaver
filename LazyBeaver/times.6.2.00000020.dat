@@ -1,0 +1,13 @@
+   1   1   1 xxxxxx xxxxxx  139261.38 xxxx  xxxx xxxxxxxxxxxx xxxxxxx
+   2   2   1 xxxxxx xxxxxx   68907.17 xxxx  xxxx xxxxxxxxxxxx xxxxxxx
+   4   4   1 xxxxxx xxxxxx   34243.18 xxxx  xxxx xxxxxxxxxxxx xxxxxxx
+   8   8   1 xxxxxx xxxxxx   17929.65 xxxx  xxxx xxxxxxxxxxxx xxxxxxx
+  16  16   1 1.810u 1.614s    9021.75 0.0%  0+0k 16370+6536io 15pf+0w
+  32  32   1 1.682u 1.750s    5193.22 0.0%  0+0k 15178+7176io 14pf+0w
+  64  64   1 1.711u 1.754s    2632.30 0.1%  0+0k 13514+6048io 38pf+0w
+ 128  64   2 1.741u 1.930s    1619.59 0.2%  0+0k 19010+4488io 19pf+0w
+ 256  64   4 1.830u 2.006s    1224.68 0.3%  0+0k 21060+7104io 19pf+0w
+ 512  64   8 1.850u 2.270s     834.82 0.4%  0+0k 20772+6720io 19pf+0w
+1024  64  16 1.830u 2.560s     705.81 0.6%  0+0k 21558+7456io 19pf+0w
+2048  64  32 2.152u 3.014s     482.43 1.0%  0+0k 19626+5240io 20pf+0w
+4096  64  64 2.746u 4.460s     386.77 1.8%  0+0k 19280+5832io 19pf+0w
