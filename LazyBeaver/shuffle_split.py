@@ -6,7 +6,6 @@ Randomly shuffle lines from a file and split them out into N new files.
 import argparse
 import random
 
-
 parser = argparse.ArgumentParser()
 parser.add_argument("infile")
 parser.add_argument("num_chunks", type=int)
