@@ -60,15 +60,18 @@ void Enumerate(std::stack<TuringMachine*>* todos,
                std::ostream* out_steps_example_stream,
                std::ostream* out_nonhalt_stream,
                std::ostream* save_stack_stream,
-               int proc_num) {
+               int proc_num,
+               std::string stop_name) {
   const auto start_time = std::chrono::system_clock::now();
+  auto check_time = start_time;
 
   // Stats
   long num_tms = 0;
   long num_tms_halt = 0;
 
-  while (todos->size() > 0 &&
-         (save_stack_stream == nullptr || !std::experimental::filesystem::exists("stop.enumeration"))) {
+  // while (todos->size() > 0 &&
+  //        (save_stack_stream == nullptr || !std::experimental::filesystem::exists("stop.enumeration"))) {
+  while (todos->size() > 0) {
     std::unique_ptr<TuringMachine> tm(todos->top());
     todos->pop();
     auto result = DirectSimulate(*tm, max_steps);
@@ -99,7 +102,7 @@ void Enumerate(std::stack<TuringMachine*>* todos,
         if (out_steps_example_stream != nullptr) {
           *out_steps_example_stream << result.num_steps << "\t";
           WriteTuringMachine(*tm, out_steps_example_stream);
-          out_steps_example_stream->flush();
+          // out_steps_example_stream->flush();
         }
       }
       num_tms_halt += 1;
@@ -107,6 +110,16 @@ void Enumerate(std::stack<TuringMachine*>* todos,
       // Non-halting machine.
       if (out_nonhalt_stream != nullptr) {
         WriteTuringMachine(*tm, out_nonhalt_stream);
+      }
+    }
+
+    if (save_stack_stream != nullptr) {
+      if (TimeSince(check_time) >= 10.0) {
+        if (std::experimental::filesystem::exists(stop_name.c_str())) {
+          break;
+        }
+
+        check_time = std::chrono::system_clock::now();
       }
     }
   }
