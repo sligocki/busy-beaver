@@ -15,7 +15,8 @@ void ContinueEnumerateFromFile(std::istream* instream,
                                const long max_steps,
                                std::ostream* out_steps_example_stream,
                                std::ostream* save_stack_stream,
-                               int proc_num) {
+                               int proc_num,
+                               std::string stop_name) {
   std::stack<TuringMachine*> tms;
 
   for (int i = 0;; ++i) {
@@ -33,7 +34,7 @@ void ContinueEnumerateFromFile(std::istream* instream,
   }
 
   std::set<long> steps_run;
-  Enumerate(&tms, max_steps, &steps_run, out_steps_example_stream, nullptr, save_stack_stream, proc_num);
+  Enumerate(&tms, max_steps, &steps_run, out_steps_example_stream, nullptr, save_stack_stream, proc_num, stop_name);
   // Enumerate(&tms, max_steps, &steps_run, nullptr, nullptr, save_stack_stream, proc_num);
 }
 
@@ -41,7 +42,7 @@ void ContinueEnumerateFromFile(std::istream* instream,
 
 
 int main(int argc, char* argv[]) {
-  if (argc != 6) {
+  if (argc < 6) {
     std::cerr << "Usage: continue_enum in_tm_file max_steps out_steps_example_file save_stack_file proc_num" << std::endl;
     return 1;
   } else {
@@ -52,7 +53,13 @@ int main(int argc, char* argv[]) {
     std::ofstream save_stack_stream(argv[4], std::ios::out | std::ios::binary);
     int proc_num = std::stoi(argv[5]);
 
-    lazy_beaver::ContinueEnumerateFromFile(&instream, max_steps, &out_steps_example_stream, &save_stack_stream, proc_num);
+    std::string stop_name = "stop.enumeration";
+    if (argc > 6) {
+      stop_name = argv[6];
+    }
+
+    lazy_beaver::ContinueEnumerateFromFile(&instream, max_steps, &out_steps_example_stream, &save_stack_stream, proc_num, stop_name);
+    // lazy_beaver::ContinueEnumerateFromFile(&instream, max_steps, nullptr, &save_stack_stream, proc_num);
 
     out_steps_example_stream.close();
     save_stack_stream.close();
