@@ -19,7 +19,12 @@ steps_example = {}
 for filename in args.steps_example_files:
   with open(filename, "r") as infile:
     for line in infile:
-      steps, tm = line.split("\t")
+      parts = line.split("\t")
+      if len(parts) > 1:
+        steps, tm = line.split("\t")
+      else:
+        steps = line.split("\t")[0]
+        tm = "\n"
       steps_example[int(steps)] = tm.strip()
 
 steps_example_sorted = sorted(steps_example.items())
