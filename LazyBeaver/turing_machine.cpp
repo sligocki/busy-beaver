@@ -158,20 +158,31 @@ TuringMachine* ReadTuringMachine(std::istream* instream, const std::string& base
 State GuessBeepingState(const long max_steps,
                         const std::vector<long> state_last_seen) {
   // BBB: Guess which state is optimal for the beeping state.
-  // The hueristic is to choose the max state among those that have not been
-  // seen since before step (max_steps / 2).
-  // ... sadly this is mostly catching TMs which very rarely (but regularly) hit transitions.
+  // The hueristic is to choose among the states that have not been
+  // seen since before step (max_steps / 2) and specifically to choose the
+  // second most-recent of such states.
+  // Note: If we choose the most recent, we get tons of TMs which very
+  // infrequently (but regularly) hit a specific state.
   const long cuttoff_steps = max_steps / 2;
-  State best_state = -1;
-  long best_state_steps = -1;
+  State gold_state = -1;
+  long gold_state_steps = -1;
+  State silver_state = -1;
+  long silver_state_steps = -1;
   for (State state = 0; state < state_last_seen.size(); ++state) {
-    if (state_last_seen[state] > best_state_steps &&
-        state_last_seen[state] <= cuttoff_steps) {
-      best_state = state;
-      best_state_steps = state_last_seen[state];
+    if (state_last_seen[state] <= cuttoff_steps) {
+      if (state_last_seen[state] > gold_state_steps) {
+        silver_state = gold_state;
+        silver_state_steps = gold_state_steps;
+        gold_state = state;
+        gold_state_steps = state_last_seen[state];
+      } else if (state_last_seen[state] > silver_state_steps) {
+        silver_state = state;
+        silver_state_steps = state_last_seen[state];
+      }
     }
   }
-  return best_state;
+  // Gold is too shiny, stick with the silver.
+  return silver_state;
 }
 
 SimResult DirectSimulate(const TuringMachine& tm, const long max_steps) {
