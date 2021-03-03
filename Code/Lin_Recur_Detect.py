@@ -1,6 +1,6 @@
 #! /usr/bin/env python2
 """
-Search for Lin recurrence (as discussed in https://nickdrozd.github.io/2021/02/24/lin-recurrence-and-lins-algorithm.html)
+Search for Lin Recurrence (as discussed in https://nickdrozd.github.io/2021/02/24/lin-recurrence-and-lins-algorithm.html)
 """
 
 import argparse
@@ -21,7 +21,7 @@ def are_half_tapes_equal(tape1, start_pos1, tape2, start_pos2, dir_offset):
   return True
 
 def lin_search(ttable, initial_steps):
-  """Detect Lin Recurence without knowing the period or start time."""
+  """Detect Lin Recurrence without knowing the period or start time."""
   sim = Direct_Simulator.DirectSimulator(ttable)
   sim.seek(initial_steps)
 
@@ -70,7 +70,7 @@ def main():
   # NOTE: init_steps is not necessarily the earliest time that recurrence
   # starts, it is simply a time after which recurrence is in effect.
   init_step, period = lin_search(ttable, args.initial_steps)
-  print "Found Lin Recurence:", init_step, period
+  print "Found Lin Recurrence:", init_step, period
 
 if __name__ == "__main__":
   main()
