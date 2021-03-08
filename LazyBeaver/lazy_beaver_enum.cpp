@@ -68,8 +68,8 @@ class MasterWorkQueue {
 */
 
 void EnumerateAll(int num_states, int num_symbols, long max_steps,
-                  std::ostream* out_steps_example_stream,
-                  std::ostream* out_nonhalt_stream) {
+                  std::ofstream* out_steps_example_stream,
+                  std::ofstream* out_nonhalt_stream) {
   const auto start_time = std::chrono::system_clock::now();
   const std::time_t start_time_t = std::chrono::system_clock::to_time_t(start_time);
 
