@@ -42,14 +42,7 @@ echo "(3) Set up new run."
 /bin/mkdir -p ${DATA_DIR}
 pushd ${SAVE_DIR}/${NUM_STATES}x${NUM_SYMBOLS}/${INIT_STEPS}
 /bin/cat stack_part_* > ../../../${DATA_DIR}/tms_init
-for f in steps_*.[0-9][0-9]
-  do
-    /bin/cp ${f} ../../../${DATA_DIR}
-  done
-for f in steps_*_192
-  do
-    /bin/cp ${f} ../../../${DATA_DIR}/${f}.${INDEX}
-  done
+/bin/cp steps_final ../../../${DATA_DIR}/steps_init
 popd
 
 echo
