@@ -223,14 +223,15 @@ class Enumerator(object):
     # smallest state/symbol not yet written (i.e. available to add to TTable).
     max_state  = old_tm.get_num_states_available()
     max_symbol = old_tm.get_num_symbols_available()
+    num_dirs = old_tm.num_dirs_available
     # If this is the last undefined cell, then it must be a halt, so only try
     # other values for cell if this is not the last undefined cell.
     if old_tm.num_empty_cells > 1:
       # 'state_out' in [0, 1, ... max_state] == xrange(max_state + 1)
       new_tms = []
-      for state_out in xrange(max_state + 1):
-        for symbol_out in xrange(max_symbol + 1):
-          for direction_out in xrange(2):
+      for state_out in range(max_state + 1):
+        for symbol_out in range(max_symbol + 1):
+          for direction_out in range(2 - num_dirs, 2):  # If only one dir available, default to R.
             new_tm = copy.deepcopy(old_tm)
             new_tm.add_cell(state_in , symbol_in ,
                             state_out, symbol_out, direction_out)
@@ -311,7 +312,7 @@ def initialize_stack(options, stack):
     infile.close()
   else:
     # If no infile is specified, then default to the NxM blank TM.
-    blank_tm = Turing_Machine(options.states, options.symbols)
+    blank_tm = Turing_Machine(options.states, options.symbols, options.first_1rb)
     stack.push_job(blank_tm)
 
 def main(args):
@@ -324,6 +325,9 @@ def main(args):
   req_parser.add_option("--states",  type=int, help="Number of states")
   req_parser.add_option("--symbols", type=int, help="Number of symbols")
   parser.add_option_group(req_parser)
+
+  parser.add_option("--no-first-1rb", dest="first_1rb", action="store_false", default=True,
+                    help="Allow first transition to be anything (not just restricted to A1->1RB).")
 
   enum_parser = OptionGroup(parser, "Enumeration Options")
   enum_parser.add_option("--breadth-first", action="store_true", default=False,

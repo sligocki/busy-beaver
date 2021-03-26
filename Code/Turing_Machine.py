@@ -101,12 +101,12 @@ class Turing_Machine:
     if len(args) == 1:
       self.set_TTable(*args)
     # Turing_Machine(num_states, num_symbols)
-    elif len(args) == 2:
+    elif len(args) in (2, 3):
       self.empty_init(*args)
     else:
       raise ValueError, "Turing_Machine(args) - Takes 1 or 2 args"
 
-  def empty_init(self, num_states, num_symbols):
+  def empty_init(self, num_states, num_symbols, first_1rb=True):
     """
     Creates a machine with all but the first cell empty.
     """
@@ -116,10 +116,15 @@ class Turing_Machine:
     self.trans_table = [None] * self.num_states
     for state in range(self.num_states):
       self.trans_table[state] = [(-1, 0, -1)] * num_symbols
-    self.trans_table[0][0] = (1, 1, 1)
-    self.max_state  = 1
-    self.max_symbol = 1
-    self.num_empty_cells = self.num_states * self.num_symbols - 1
+    self.num_empty_cells = self.num_states * self.num_symbols
+    self.max_state  = 0
+    self.max_symbol = 0
+    # Only allow one direction for the first trans.
+    self.num_dirs_available = 1
+
+    if first_1rb:
+      self.set_cell(0, 0, 1, 1, 1)  # A1 -> 1RB
+      self.trans_table[0][0] = (1, 1, 1)
 
   def __repr__(self):
     return "Turing_Machine(%s)" % repr(self.trans_table)
@@ -202,6 +207,7 @@ class Turing_Machine:
     # Update max value information.
     self.max_state = max(self.max_state, state_out)
     self.max_symbol = max(self.max_symbol, symbol_out)
+    self.num_dirs_available = 2
 
   def set_halt(self, state_in, symbol_in):
     # Halt is canoncially represented as 1RZ (state = -1, symbol = 1).
