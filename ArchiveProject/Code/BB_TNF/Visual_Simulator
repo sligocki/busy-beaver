@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+cmd_dir=`dirname $0`
+if [ -n "$2" ]; then 
+  ${cmd_dir}/Busy_Beaver_Sim.py --visual --infile=$1 --line_num=$2 $3 | less -R -i -c --no-init
+else
+  ${cmd_dir}/Busy_Beaver_Sim.py --visual --infile=$1 | less -R -i -c --no-init
+fi
