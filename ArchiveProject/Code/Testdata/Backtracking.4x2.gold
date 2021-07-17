@@ -1,0 +1,1000 @@
+1RB ---  1RC 1RZ  1RD 0RB  1LD 1LC
+1RB 0LA  1RC ---  1RD 1RD  1LC 1LA | None Infinite Backtrack 3 Backtrack
+1RB 1LC  1RC ---  1RD 1LD  1LC 1RA
+1RB ---  1RC 1RB  1RD 0LD  1LC 1LB | None Infinite Backtrack 1 Backtrack
+1RB ---  1RC 0RD  1RD 0LD  1LC 0LB | None Infinite Backtrack 1 Backtrack
+1RB 0RA  1RC 0LA  1RD 1RB  1LC ---
+1RB 1RD  1RC ---  1RD 1LA  1LC 1LA | None Infinite Backtrack 5 Backtrack
+1RB ---  1RC 0LC  1RD 1LD  0LC 0LB | None Infinite Backtrack 1 Backtrack
+1RB 0RC  1RC ---  1RD 1LC  0LC 0RA
+1RB ---  1RC 0LB  1RD 1LB  0LC 1LD | None Infinite Backtrack 1 Backtrack
+1RB 1RD  1RC 1LA  1RD 0LB  0LC 1RZ
+1RB ---  1RC 1LC  1RD 0LB  1LB 1LB | None Infinite Backtrack 1 Backtrack
+1RB 1RZ  1RC 1LB  1RD 1LC  1LB 0RA
+1RB 0LD  1RC 1LA  1RD ---  1LB 1RA
+1RB 0LD  1RC 0RA  1RD 1RA  1LB ---
+1RB 0RA  1RC 0LA  1RD ---  0LB --- | None Infinite Backtrack 1 Backtrack
+1RB 0LD  1RC 1RB  1RD ---  1LA 1RA
+1RB 1LB  1RC 0LB  1RD ---  1LA 1RZ
+1RB 0RB  1RC 1LD  1RD ---  1LA 1RD | None Infinite Backtrack 3 Backtrack
+1RB 0LB  1RC 0RD  1RD ---  1LA 0LA
+1RB 1RZ  1RC 1LA  1LD 1LB  1LC 1RD
+1RB 0RC  1RC ---  1LD 0RA  1LC 1RD
+1RB 1LC  1RC 0RA  1LD ---  1LB 1RD
+1RB 1LD  1RC ---  1LD 0RA  1RC 1LD
+1RB 0RC  1RC ---  1LD 0RA  1RC 1LD
+1RB ---  1RC 0LA  1LD 0LB  1LB 1LD
+1RB 0LA  1RC ---  1LD 1RA  1LB 1LD
+1RB 1LC  1RC ---  1LD 0LA  1LB 0RD
+1RB ---  1RC 0RB  1LD 0RC  1LB 1RC | None Infinite Backtrack 1 Backtrack
+1RB 0LB  1RC 1LA  1LD 0LB  --- 1RC | None Infinite Backtrack 2 Backtrack
+1RB 1LA  1RC 0RA  1LD 1LA  --- 1RC | None Infinite Backtrack 2 Backtrack
+1RB 1LD  1RC ---  1LD 0LA  1LC 1RC | None Infinite Backtrack 2 Backtrack
+1RB ---  1RC 1RZ  1LD 0RC  1LA 1LC
+1RB ---  1RC 1LC  1LD 1LB  0RD 1LC | None Infinite Backtrack 1 Backtrack
+1RB ---  1RC 0RB  1LD 0RB  1RB 1LC | None Infinite Backtrack 1 Backtrack
+1RB 0RB  1RC 1LA  1LD 0RB  --- 1LC
+1RB 0LD  1RC ---  1LD 0LA  1LC 1LC | None Infinite Backtrack 2 Backtrack
+1RB ---  1RC 0LC  1LD 0RD  0RB 0LC | None Infinite Backtrack 1 Backtrack
+1RB 1RB  1RC ---  1LD 0RD  0RA 0LC
+1RB 1LA  1RC 1RZ  1LD 0RC  0RA 0LC
+1RB ---  1RC 0LC  1LD 0RB  1LA 0LC
+1RB ---  1RC 0LD  1LD 1LA  1RD 0LC
+1RB 1RB  1RC 0LA  1LD 0RA  --- 0LC
+1RB 0RB  1RC 0LA  1LD 0RA  1RZ 0LC
+1RB 1LD  1RC 1LA  1LD 1RZ  0RC 1RB
+1RB ---  1RC 0RD  1LD 1LC  1RB 1LB | None Infinite Backtrack 1 Backtrack
+1RB 1LA  1RC 0LB  1LD 1RA  --- 1LB | None Infinite Backtrack 2 Backtrack
+1RB 1RD  1RC 0LB  1LD 0RA  --- 1LB
+1RB 1LC  1RC 0RA  1LD 1RZ  1RC 1LB
+1RB 1RZ  1RC 1LD  1LD 1LA  1RC 0RB
+1RB ---  1RC 0LD  1LD 0RC  1LC 0RB | None Infinite Backtrack 1 Backtrack
+1RB ---  1RC 1LC  1LD ---  1LC 0LB
+1RB 0LC  1RC 1LB  1LD 0RA  --- 0LB | None Infinite Backtrack 4 Backtrack
+1RB 1LC  1RC ---  1LD 1LC  0RD 1RA
+1RB 0RC  1RC ---  1LD 0LC  1LC 1RA | None Infinite Backtrack 3 Backtrack
+1RB 0RD  1RC 0RA  1LD ---  0LB 1LA
+1RB 0LD  1RC 1RZ  1LD 0LA  0RC 1LA
+1RB 1RC  1RC 0RA  1LD 1LB  --- 1LA | None Infinite Backtrack 2 Backtrack
+1RB 1LC  1RC 1RZ  1LD 0RD  1RC 1LA
+1RB 1LB  1RC 0RB  1LD 0LD  --- 1LA | None Infinite Backtrack 2 Backtrack
+1RB 0LB  1RC 1LC  1LD 1LA  --- 1LA
+1RB 1LA  1RC 1LC  1LD 1RC  --- 1LA | None Infinite Backtrack 3 Backtrack
+1RB 1LA  1RC 0LC  1LD 0RA  --- 1LA | None Infinite Backtrack 3 Backtrack
+1RB 1LC  1RC 1LB  1LD 1RZ  0RB 0RA
+1RB 1LC  1RC 0RA  1LD ---  1LA 0RA
+1RB 1LB  1RC ---  1LD 0LC  0LB 0RA
+1RB 1LD  1RC 0RA  1LD ---  1LA 0LA
+1RB 1RB  1RC ---  1LD 0LC  0RC 0LA | None Infinite Backtrack 2 Backtrack
+1RB 1LA  1RC 0LC  1LD 1RB  --- 0LA | None Infinite Backtrack 3 Backtrack
+1RB ---  1RC 1LB  0RD 0RB  1LD 1RC | None Infinite Backtrack 1 Backtrack
+1RB ---  1RC 0LD  0RD 1RB  1LD 0LC | None Infinite Backtrack 1 Backtrack
+1RB 1RZ  1RC 1RB  0RD 1RA  1LD 0LB
+1RB 1RZ  1RC 1LA  0RD ---  1LD 0LB
+1RB 0LA  1RC ---  0RD 0RC  0LD 1LA
+1RB ---  1RC 0LC  0RD 0LD  1LC 1LB | None Infinite Backtrack 1 Backtrack
+1RB 0LB  1RC 0LD  0RD ---  1LC 1LA
+1RB 0LD  1RC ---  0RD 0LA  1LB 1LC
+1RB 1RB  1RC 0LC  0RD 1RD  1LA --- | None Infinite Backtrack 4 Backtrack
+1RB 0LC  1RC 0LA  0LD ---  0LB 1RD
+1RB 0LC  1RC 0LA  0LD ---  1RB 1LD
+1RB 1LC  1RC 0RB  0LD 1RZ  0RA 1LD
+1RB 1RA  1RC ---  0LD 1LA  1LB 0LD
+1RB ---  1RC 1LC  0LD 0RC  1LB 1LC | None Infinite Backtrack 1 Backtrack
+1RB ---  1RC ---  0LD 0LC  1RZ 1LC
+1RB ---  1RC 1LC  0LD 1LB  0RD 1LC | None Infinite Backtrack 1 Backtrack
+1RB ---  1RC 1RC  0LD 0RB  0RD 1LC | None Infinite Backtrack 1 Backtrack
+1RB 1RB  1RC 1LA  0LD ---  0LB 0RC | None Infinite Backtrack 3 Backtrack
+1RB ---  1RC 0RC  0LD 0LC  0RD 1LB | None Infinite Backtrack 1 Backtrack
+1RB 0LD  1RC 1RA  0LD 1RA  --- 1LB | None Infinite Backtrack 2 Backtrack
+1RB 1LD  1RC 1LA  0LD ---  1RA 1LA | None Infinite Backtrack 5 Backtrack
+1RB 1RB  1RC 0LC  0LD 1LA  --- 1LA | None Infinite Backtrack 3 Backtrack
+1RB 1LB  1RC 0LD  0LD 1RB  1RZ 0LA
+1RB 1LA  1RC 1RZ  0LD ---  --- 0LA
+1RB 0LA  1RC ---  0LD ---  --- 0LA | None Infinite Backtrack 2 Backtrack
+1RB 0RC  1RC ---  1LC 1LD  1RA 1RA | None Infinite Backtrack 3 Backtrack
+1RB ---  1RC 1LB  1LC 0RD  0LB 0LD | None Infinite Backtrack 1 Backtrack
+1RB ---  1RC 1LC  1LC 0LD  1RB 1RD | None Infinite Backtrack 1 Backtrack
+1RB ---  1RC 0RD  1LC 0LD  1RA 1RA
+1RB 1LB  1RC 1LD  1LC 1RB  --- 1LA
+1RB 1RD  1RC 0LA  1LC 1RB  0LA --- | None Infinite Backtrack 2 Backtrack
+1RB 0LD  1RC 0LA  1LC 1RB  --- 0RC
+1RB 1LA  1RC 1RA  1LC 1LB  --- --- | None Infinite Backtrack 1 Backtrack
+1RB ---  1RC 1LD  1LC 0LB  0RD 1RZ
+1RB ---  1RC 0LD  1LC 0LB  0RD 1RB | None Infinite Backtrack 1 Backtrack
+1RB 1LD  1RC 1RC  1LC 1RA  --- 0RB | None Infinite Backtrack 2 Backtrack
+1RB 0LD  1RC ---  1LC 1RA  0LB 0LD
+1RB 1LB  1RC 0LD  1LC 1RA  --- 1RB
+1RB 0LD  1RC 1RA  1LC 1LA  1RC 1RZ
+1RB 0LB  1RC 1LD  1LC 0LA  1LB ---
+1RB 1LD  1RC ---  0LC 1RD  0LD 1LA
+1RB ---  1RC ---  0LC 1RD  0RB --- | None Infinite Backtrack 1 Backtrack
+1RB ---  1RC 1RB  0LC 1LD  0RB 1RD | None Infinite Backtrack 1 Backtrack
+1RB 1RZ  1RC 1LA  0LC 1LD  1LA 0LB
+1RB 0LC  1RC ---  0LC 1LD  0LA 1RA | None Infinite Backtrack 3 Backtrack
+1RB 0LD  1RC 0RA  0LC 1LD  1RZ 1LA
+1RB ---  1RC 0RB  0LC 0LD  1LC 1LA
+1RB ---  1RC 1RD  0LC 1LB  1LD 0LD | None Infinite Backtrack 1 Backtrack
+1RB 0RB  1RC 1LD  0LC 1LB  0RA ---
+1RB ---  1RC 0LD  0LC 1LB  1LA 1RA
+1RB 1LD  1RC 0RA  0LC 1LB  1RB --- | None Infinite Backtrack 2 Backtrack
+1RB 0LB  1RC 1LD  0LC 1LA  1RZ 0LA
+1RB 1RD  1RC 1RD  1LB ---  1RZ 0LA
+1RB 1LB  1RC 1RD  1LB 1RC  --- 0LA | None Infinite Backtrack 3 Backtrack
+1RB 0LB  1RC 1LD  1LB 1RZ  0RD 1RA
+1RB ---  1RC 0RD  1LB 1RB  0RC 1LA | None Infinite Backtrack 2 Backtrack
+1RB 1RZ  1RC 0LD  1LB 0LA  1LB 1LD
+1RB ---  1RC 0LD  1LB 1RD  0LC 0LD | None Infinite Backtrack 1 Backtrack
+1RB 0LA  1RC 0LD  1LB 0RA  --- 0RC | None Infinite Backtrack 4 Backtrack
+1RB 0RA  1RC 1RC  1LB 1LD  --- 0LA | None Infinite Backtrack 2 Backtrack
+1RB 0RB  1RC 1LC  1LB 0RD  --- 1RA
+1RB ---  1RC 1LC  1LB 0LD  1LC 1RC | None Infinite Backtrack 1 Backtrack
+1RB ---  1RC 0RC  1LB 1LD  1RD 0RC | None Infinite Backtrack 1 Backtrack
+1RB 1RZ  1RC 0RC  1LB 0LD  1LB 1LA
+1RB 1RA  1RC 0RC  1LB 0LD  1LA ---
+1RB ---  1RC 0LC  1LB 0RD  1LB 0LD | None Infinite Backtrack 1 Backtrack
+1RB 1RZ  1RC 1LB  1LB 0LD  1LA 1RD
+1RB ---  1RC 1LB  1LB 0LD  0LC 1LD | None Infinite Backtrack 1 Backtrack
+1RB 1LB  1RC 1LB  1LB 0LA  --- --- | None Infinite Backtrack 1 Backtrack
+1RB 1LC  1RC 1RA  1LB 0LD  1RZ 0RB
+1RB 0LD  1RC 1LA  1LB 1LB  0LC ---
+1RB 1LB  1RC 1LA  1LB 1LB  --- --- | None Infinite Backtrack 1 Backtrack
+1RB 1LD  1RC 0RA  1LB 0LA  1RC 1RZ
+1RB 1RZ  1RC 1LD  0LB 0RC  0LA 0RC
+1RB 1RC  1RC 1LD  0LB ---  1RA 0LB | None Infinite Backtrack 4 Backtrack
+1RB 0LB  1RC 0LD  0LB ---  0LA 1RD | None Infinite Backtrack 1 Backtrack
+1RB 0RB  1RC 0LD  0LB ---  1RA 1LD
+1RB ---  1RC 0LD  0LB 0LD  1RA 0LC | None Infinite Backtrack 1 Backtrack
+1RB ---  1RC 1LC  0LB 0LD  0RB 1RD | None Infinite Backtrack 1 Backtrack
+1RB ---  1RC 0LC  0LB 0LD  1RA 1RD | None Infinite Backtrack 1 Backtrack
+1RB ---  1RC 1LB  0LB 1LD  0RD 0RC | None Infinite Backtrack 1 Backtrack
+1RB 1RD  1RC 1LA  0LB 1RZ  1RC 1LD
+1RB 0LD  1RC 1LA  0LB ---  1RA 1RC | None Infinite Backtrack 5 Backtrack
+1RB 0RC  1RC 1LA  0LB 0RC  --- --- | None Infinite Backtrack 1 Backtrack
+1RB 1RA  1RC 1LA  0LB ---  --- ---
+1RB 1RD  1RC ---  1LA 1RA  0LD 1LC
+1RB 1RD  1RC 1LB  1LA 0RB  --- 0RC | None Infinite Backtrack 2 Backtrack
+1RB 1RD  1RC 1RA  1LA 1RZ  1LC 1LB
+1RB 1LD  1RC 1LD  1LA 0LC  --- 0RC
+1RB 1LD  1RC 1RZ  1LA 0RB  --- 0RC
+1RB 1LD  1RC 0RB  1LA ---  1LA 1LA
+1RB 0RD  1RC 0LA  1LA ---  1RA 0LC
+1RB 0LD  1RC ---  1LA 1RZ  0LA 0RD
+1RB 0LD  1RC 0LA  1LA 1LD  --- 1RB
+1RB 0LD  1RC ---  1LA 0RB  0LA 1RB
+1RB 0LD  1RC 1LA  1LA 1LB  1RZ 0RB
+1RB 0LD  1RC ---  1LA 0LA  1RA 0RB
+1RB 1RC  1RC ---  1LA 1LD  1RA 0RC | None Infinite Backtrack 4 Backtrack
+1RB 1RC  1RC 0LA  1LA 1LD  --- 0RB | None Infinite Backtrack 2 Backtrack
+1RB 1LC  1RC 1RC  1LA 0LD  1RC 1RZ
+1RB 1LC  1RC 0RD  1LA 0LC  1RC 1RZ
+1RB 1LC  1RC 1RD  1LA 1RB  --- 1LB
+1RB 0RC  1RC 1LA  1LA 1LD  1LA --- | None Infinite Backtrack 4 Backtrack
+1RB 0LC  1RC 1RC  1LA 0LD  0LC ---
+1RB 0LC  1RC 1LB  1LA 0LD  1LA 1RZ
+1RB 0LC  1RC 1RZ  1LA 0LD  0RA 0LA
+1RB 0LC  1RC 0LD  1LA 1LB  1LD ---
+1RB 1RB  1RC 0LC  1LA 1LD  --- 1LB
+1RB 1LB  1RC 1RD  1LA 1LC  --- 0RA
+1RB 1LB  1RC 0RB  1LA 0LD  1RZ 0LD
+1RB 1LB  1RC 0LB  1LA 1LD  1RZ 1LD
+1RB 1LB  1RC 0RA  1LA 1LD  --- 0RA | None Infinite Backtrack 2 Backtrack
+1RB 0LB  1RC 1RD  1LA ---  0RD 0LD | None Infinite Backtrack 3 Backtrack
+1RB 0LB  1RC 0RD  1LA ---  1RD 0LA
+1RB 0LB  1RC 0RD  1LA 1LC  0RC 1RZ
+1RB 1LA  1RC 1LD  1LA 1RD  --- 0LA
+1RB 1RD  1RC ---  0LA 0RC  1LA 0LC | None Infinite Backtrack 3 Backtrack
+1RB 1LD  1RC ---  0LA 1LC  1LB 0LD
+1RB 1LD  1RC ---  0LA 0LD  1RZ 1LC
+1RB 1LD  1RC 0RD  0LA ---  1RB 1LA
+1RB 1LD  1RC 0LC  0LA 1RZ  1RB 0RA
+1RB 1LD  1RC 1RZ  0LA 0RD  0RB 0LA
+1RB 0RD  1RC 1RZ  0LA 1LD  1LC 1LB
+1RB 0LD  1RC 1RZ  0LA 1LB  1RC 1LD
+1RB 0LD  1RC 1LB  0LA 1RA  --- 1LB | None Infinite Backtrack 4 Backtrack
+1RB 0LD  1RC 1RA  0LA 1RA  --- 1LB | None Infinite Backtrack 4 Backtrack
+1RB 1LC  1RC ---  0LA 0RD  0LB 0LB | None Infinite Backtrack 2 Backtrack
+1RB 1LC  1RC ---  0LA 0LD  1LC 0RA
+1RB 1LC  1RC 0LD  0LA 1LB  1RB 1RZ
+1RB 1LC  1RC 1RB  0LA 0RB  --- --- | None Infinite Backtrack 1 Backtrack
+1RB 1LC  1RC 1RD  0LA 0LB  1RC --- | None Infinite Backtrack 3 Backtrack
+1RB 1LB  1RC 1RD  0LA ---  1RZ 0LB
+1RB 1LB  1RC 0LD  0LA 1LC  0RB ---
+1RB 1LB  1RC 1RC  0LA 1LD  --- 1RZ
+1RB 1LB  1RC 1LC  0LA 0LD  1RZ 1LC
+1RB 1LB  1RC 1LA  0LA 1LD  1RZ 0LD
+1RB 1LB  1RC 0RA  0LA 0RD  1LB ---
+1RB 0LB  1RC 1LC  0LA 0LD  1RZ 0RC
+1RB 1LA  1RC 0RD  0LA 0LD  --- 0LA
+1RB 1LA  1RC 0LC  0LA 0LD  1RD 1RZ
+1RB 1LA  1LC 1LA  --- 1RD  1LB 1RD | None Infinite Backtrack 3 Backtrack
+1RB 0RC  1LC ---  1RZ 1RD  0LA 1RD
+1RB 0LB  1LC 1LA  1RZ 1RD  0LA 1RD
+1RB ---  1LC 1LB  0LA 1RD  1RB 1LD
+1RB ---  1LC 0RB  0RB 1RD  0RB 1LD | None Infinite Backtrack 1 Backtrack
+1RB 1RA  1LC 1RZ  0LA 1RD  1LB 0RD
+1RB ---  1LC 0LB  0LB 1RD  0RB 0RD | None Infinite Backtrack 1 Backtrack
+1RB ---  1LC 1LB  0LB 1RD  1RC 0LD | None Infinite Backtrack 1 Backtrack
+1RB 1RZ  1LC ---  0RA 1RD  1LC 0LD
+1RB ---  1LC 0RC  1RD 1RD  0LB 0RC | None Infinite Backtrack 1 Backtrack
+1RB 0LB  1LC ---  1LD 1RD  0RA 0RC
+1RB ---  1LC 1RD  1LA 1RD  1LC 0RC | None Infinite Backtrack 3 Backtrack
+1RB 1RB  1LC 1RC  1LA 1RD  --- 0RC
+1RB ---  1LC 0LB  0RB 1RD  1LB 0LC | None Infinite Backtrack 1 Backtrack
+1RB ---  1LC 0RD  0LD 1RD  0LB 0LC | None Infinite Backtrack 1 Backtrack
+1RB 1LD  1LC 0LD  1RZ 1RD  1LA 0LC
+1RB 1LD  1LC 1LD  1RZ 1RD  1RA 1LB
+1RB 0LB  1LC 1LC  1RA 1RD  --- 1LB | None Infinite Backtrack 2 Backtrack
+1RB 1LB  1LC 1LA  1RD 1RD  --- 1LB | None Infinite Backtrack 2 Backtrack
+1RB 1LB  1LC 1RB  1LA 1RD  --- 0RB | None Infinite Backtrack 2 Backtrack
+1RB 1LD  1LC ---  0LA 1RD  0LC 0RB
+1RB ---  1LC 1RD  1LC 1RD  0RB 0LB | None Infinite Backtrack 1 Backtrack
+1RB ---  1LC 1RC  0RD 1RD  0LB 0LB | None Infinite Backtrack 1 Backtrack
+1RB 1LD  1LC 0LD  --- 1RD  1LA 1LA | None Infinite Backtrack 2 Backtrack
+1RB 0LC  1LC ---  0RC 1RD  0RB 1LA
+1RB 1LB  1LC 1RA  1RC 1RD  --- 1LA
+1RB 1LD  1LC ---  0LB 1RD  0LC 0LA
+1RB 1RC  1LC 0LA  0RB 1RD  --- 0LA | None Infinite Backtrack 3 Backtrack
+1RB 0RD  1LC ---  1RA 1LD  0RD 1LC | None Infinite Backtrack 3 Backtrack
+1RB 0RC  1LC 1LA  --- 1LD  0RD 1RB | None Infinite Backtrack 2 Backtrack
+1RB 0RC  1LC ---  1RA 1LD  0RD 1LB
+1RB ---  1LC ---  0RC 1LD  1RC 0RD | None Infinite Backtrack 2 Backtrack
+1RB ---  1LC 1LC  0RB 1LD  1RC 0LD | None Infinite Backtrack 1 Backtrack
+1RB ---  1LC 1RC  0RB 1LD  1RC 0RB | None Infinite Backtrack 1 Backtrack
+1RB ---  1LC 1LD  1LA 1LD  1LC 0LD
+1RB 1LA  1LC 1LB  0RA 1LD  1LC ---
+1RB 1RC  1LC ---  1RC 1LD  0LC 0RA | None Infinite Backtrack 3 Backtrack
+1RB ---  1LC 1LD  1LA 1LD  0LC 1LC
+1RB ---  1LC 1RD  1LD 1LD  1RB 1LC | None Infinite Backtrack 1 Backtrack
+1RB ---  1LC 0RD  1RD 1LD  1RB 0LC | None Infinite Backtrack 1 Backtrack
+1RB ---  1LC 0LD  0LB 1LD  1RB 1RC | None Infinite Backtrack 1 Backtrack
+1RB 0RB  1LC 1RA  1RC 1LD  1RB 1RZ
+1RB 0RA  1LC 1LA  1RB 1LD  1LB ---
+1RB 1RD  1LC ---  1RA 1LD  1LB 0LD
+1RB ---  1LC 1RD  1RD 1LD  0RB 0RC | None Infinite Backtrack 1 Backtrack
+1RB ---  1LC 1LC  1LA 1LD  0RB ---
+1RB 1RZ  1LC 1RB  1RA 1LD  0RB 0LD
+1RB 0LD  1LC 1RB  1RZ 1LD  0RB 0RA
+1RB ---  1LC 1LB  1RC 1LD  0RB 1RC | None Infinite Backtrack 1 Backtrack
+1RB ---  1LC 0RD  1RC 1LD  0LB 1RD | None Infinite Backtrack 1 Backtrack
+1RB 1RZ  1LC 1RD  1LA 1LD  0LB 0RB
+1RB 1RZ  1LC 1RD  --- 1LD  1LA 0RB
+1RB 1RD  1LC 0RC  --- 1LD  1LA 1LC
+1RB 0LB  1LC 0RC  1RZ 1LD  1LA ---
+1RB ---  1LC 0RB  0LD 1LD  1LA 1RC
+1RB 1LD  1LC 1RA  --- 1LD  1LA 0LC
+1RB 1RA  1LC 0RA  1RZ 1LD  1LA 0LC
+1RB 1RC  1LC 1RC  1RZ 1LD  0RA 0LD
+1RB 1LB  1LC ---  1RC 1LD  0RA 0LC | None Infinite Backtrack 3 Backtrack
+1RB 1RZ  1LC 1LD  1RA 0RD  0LB 1RD
+1RB 1RZ  1LC 1RC  1LC 0RD  1LA 1LD
+1RB 1RC  1LC 1RZ  0LB 0RD  0RA 1LD
+1RB ---  1LC 0RB  1LD 0RD  0RB 0RD | None Infinite Backtrack 1 Backtrack
+1RB 0RD  1LC ---  0LA 0RD  1RC 0LD | None Infinite Backtrack 2 Backtrack
+1RB ---  1LC 1LD  1LA 0RD  1LC 0LD
+1RB 0RC  1LC ---  1LD 0RD  1RA 1LC
+1RB ---  1LC ---  1RC 0RD  1LC 1LC | None Infinite Backtrack 2 Backtrack
+1RB ---  1LC 0LC  1RB 0RD  0LB 1LC | None Infinite Backtrack 1 Backtrack
+1RB ---  1LC 1RD  0RB 0RD  0RD 0RC | None Infinite Backtrack 1 Backtrack
+1RB ---  1LC 1RD  1LA 0RD  0LD 0LC
+1RB 1RD  1LC 0LA  1LA 0RD  1RZ 0LC
+1RB 0RC  1LC ---  0RA 0RD  0RD 1LB
+1RB ---  1LC 0LC  0LD 0RD  1RD 0RB | None Infinite Backtrack 1 Backtrack
+1RB ---  1LC 0RD  0RB 0RD  0RC 0RB | None Infinite Backtrack 1 Backtrack
+1RB 1LA  1LC 1RC  1RA 0RD  1RZ 0LB
+1RB ---  1LC 0RD  1RD 0RD  0LC 1LA | None Infinite Backtrack 4 Backtrack
+1RB ---  1LC 0LC  0RA 0RD  0RC 1LA
+1RB ---  1LC 0LD  1LA 0LD  1RD 1LC
+1RB ---  1LC 0RB  0LD 0LD  1RD 1LB | None Infinite Backtrack 1 Backtrack
+1RB ---  1LC ---  1RZ 0LD  0RD 0LB
+1RB 0RC  1LC ---  1RD 0LD  1RC 0LA | None Infinite Backtrack 2 Backtrack
+1RB ---  1LC 1RZ  0LD 0LD  1RC 0RA
+1RB 0RD  1LC ---  0LA 0LD  1RC 0LC | None Infinite Backtrack 2 Backtrack
+1RB 0RA  1LC 1LA  1RB 0LD  1LC ---
+1RB 0RD  1LC 1LA  0RB 0LD  1LC 1RZ
+1RB ---  1LC 1RB  1LA 0LD  1LC 0RC
+1RB ---  1LC 0LB  0RD 0LD  0RC 1RA
+1RB 1LC  1LC 1RA  --- 0LD  1RA 0LA
+1RB 1RC  1LC 1LA  1RZ 0LD  1RA 0LC
+1RB 0RA  1LC 1LD  --- 0LD  1LA 0RA | None Infinite Backtrack 2 Backtrack
+1RB ---  1LC 1RC  1LD 0LD  1LA 0LC
+1RB ---  1LC 1RC  0LC 0LD  1LA 0LA
+1RB ---  1LC 1LB  1RD 0LD  1LA 0LC
+1RB 0LC  1LC 0RB  1LA 0LD  0RA ---
+1RB 0RB  1LC 1RZ  1RD 1RC  1LD 1LA
+1RB 1RZ  1LC 1LA  1RD 1RC  0LD 1LB
+1RB 0RB  1LC 1RA  1RD 1RC  1LB 1RZ
+1RB ---  1LC 1RA  1RD 1RC  0RB 0LB
+1RB 0LB  1LC 0LA  1RD 1RC  1LA 1RZ
+1RB 1RC  1LC ---  1LD 1RC  0LA 1RD | None Infinite Backtrack 2 Backtrack
+1RB 1RD  1LC ---  1LD 1RC  0LD 1RA
+1RB ---  1LC 1RZ  0LD 1RC  --- 0LB
+1RB ---  1LC 1LD  1LB 1RC  0LC 0RB | None Infinite Backtrack 1 Backtrack
+1RB 0RB  1LC 1RD  0RB 1RC  1LA ---
+1RB ---  1LC 1LD  0LB 1RC  1RB 0LD | None Infinite Backtrack 1 Backtrack
+1RB 1RD  1LC ---  1LA 1RC  1LA 0LA | None Infinite Backtrack 4 Backtrack
+1RB 0LD  1LC 1RZ  1LA 1RC  1LB 1RD
+1RB 0LD  1LC 1RZ  1LA 1RC  1LA 0RD
+1RB 1LD  1LC ---  0LA 1RC  1LB 0LD
+1RB 1LB  1LC 0RB  0LA 1RC  --- --- | None Infinite Backtrack 1 Backtrack
+1RB ---  1LC ---  1RD 1LC  0RD 1LD | None Infinite Backtrack 2 Backtrack
+1RB 1LA  1LC 1RZ  1RD 1LC  --- 0LA
+1RB 0RD  1LC ---  1LD 1LC  1RA 0LC
+1RB ---  1LC ---  0RD 1LC  1RC 0LD | None Infinite Backtrack 2 Backtrack
+1RB ---  1LC 1LD  0RD 1LC  1LA 0RC | None Infinite Backtrack 3 Backtrack
+1RB ---  1LC 0RC  0RD 1LC  0RD 1RB | None Infinite Backtrack 1 Backtrack
+1RB ---  1LC 0RC  0RD 1LC  0LB 0RB | None Infinite Backtrack 1 Backtrack
+1RB 1RB  1LC 0LB  0RD 1LC  --- 1RA | None Infinite Backtrack 2 Backtrack
+1RB ---  1LC 0RD  1RB 1LC  0LD 1LC | None Infinite Backtrack 1 Backtrack
+1RB 1RD  1LC 0RD  1RB 1LC  1RZ 1RA
+1RB ---  1LC 0LD  1RB 1LC  0LB 1LD | None Infinite Backtrack 1 Backtrack
+1RB 0LD  1LC 1LA  1RB 1LC  1LB ---
+1RB 0LB  1LC 1RD  1RA 1LC  1LD 1RZ
+1RB ---  1LC 0LD  1LA 1LC  1RD 1LD
+1RB 1LA  1LC 0LD  0RA 1LC  1RZ 1RD
+1RB 0RB  1LC ---  1LD 0RC  1RA 0RC
+1RB 1RC  1LC 0RB  1LA 0RC  --- --- | None Infinite Backtrack 1 Backtrack
+1RB 1RD  1LC 0LA  1LA 0RC  0RA ---
+1RB ---  1LC 1RD  1RD 0LC  0LD 0RB | None Infinite Backtrack 1 Backtrack
+1RB ---  1LC 0RB  1RD 0LC  0LB 1LD | None Infinite Backtrack 1 Backtrack
+1RB 0LD  1LC ---  1RD 0LC  1RA 0LC
+1RB 0RB  1LC ---  1RD 0LC  0LA 1RC | None Infinite Backtrack 2 Backtrack
+1RB ---  1LC ---  1LD 0LC  1RD 0LD | None Infinite Backtrack 2 Backtrack
+1RB ---  1LC 0RB  1LD 0LC  1RB 0LB | None Infinite Backtrack 1 Backtrack
+1RB 0RD  1LC 1RZ  1LD 0LC  1RA 1RA
+1RB ---  1LC 0RC  0RD 0LC  0LB 1RD | None Infinite Backtrack 1 Backtrack
+1RB ---  1LC 1LC  0LD 0LC  1RD 1LB | None Infinite Backtrack 1 Backtrack
+1RB 1RZ  1LC 1LA  0LD 0LC  1RD 1LB
+1RB 1RZ  1LC 1RD  0RB 0LC  0LA 1RA
+1RB ---  1LC 1LD  0RB 0LC  1LA 0RD
+1RB 1RB  1LC 1LD  0RB 0LC  0RA 1RZ
+1RB ---  1LC 0LB  0RB 0LC  --- --- | None Infinite Backtrack 1 Backtrack
+1RB 0RD  1LC 0RA  0RB 0LC  1LD ---
+1RB ---  1LC 1RD  1RA 0LC  1LD 1LB
+1RB 0LD  1LC 1LD  1RA 0LC  1RZ 1LA
+1RB ---  1LC 1LD  1RD 1RB  1LC 0RD | None Infinite Backtrack 1 Backtrack
+1RB 1RZ  1LC 1LD  0RA 1RB  1LB 0LD
+1RB ---  1LC 1LD  0LC 1RB  --- 1LC | None Infinite Backtrack 2 Backtrack
+1RB ---  1LC 1LD  0LD 1RB  1LB 0LC | None Infinite Backtrack 1 Backtrack
+1RB 1LA  1LC 0RD  --- 1RB  1LD 1RA | None Infinite Backtrack 2 Backtrack
+1RB ---  1LC 0RD  1LD 1RB  0LC 0LC | None Infinite Backtrack 1 Backtrack
+1RB ---  1LC 0LD  1LC 1RB  0LC 0RD | None Infinite Backtrack 1 Backtrack
+1RB ---  1LC 0LD  0RB 1RB  0RD 0RC | None Infinite Backtrack 1 Backtrack
+1RB ---  1LC 0LD  1LC 1RB  --- 1LB
+1RB ---  1LC 0RB  1LD 1RB  1RC 1LB | None Infinite Backtrack 1 Backtrack
+1RB 1RZ  1LC 0RB  0LD 1RB  0LA 1LD
+1RB 0LD  1LC 0RB  0RA 1RB  1LD 1RZ
+1RB 0LD  1LC 0RB  0LA 1RB  1RA ---
+1RB ---  1LC 0LB  1RD 1RB  1RC 1RC | None Infinite Backtrack 1 Backtrack
+1RB ---  1LC 0LB  0RD 1RB  0LD 1LD | None Infinite Backtrack 1 Backtrack
+1RB 1LD  1LC 1LA  1RD 1RB  0LB 1RZ
+1RB 0LD  1LC 1LA  0LB 1RB  1LC ---
+1RB 0LC  1LC 1LA  0RD 1RB  1LD ---
+1RB 1RD  1LC 0RA  1RD 1LB  1RZ 1LB
+1RB 0LD  1LC 1RA  1RD 1LB  --- 0LB | None Infinite Backtrack 2 Backtrack
+1RB 0RD  1LC 0RD  1RD 1LB  1RZ 1LA
+1RB 0RD  1LC 1LB  1RD 1LB  --- 1LA | None Infinite Backtrack 2 Backtrack
+1RB ---  1LC 1LD  1LD 1LB  1RC ---
+1RB 0RD  1LC 1LA  1LD 1LB  1RB 1RZ
+1RB 1RA  1LC 0LA  1LD 1LB  1RA ---
+1RB ---  1LC 0LB  0LD 1LB  1RD 1RC | None Infinite Backtrack 1 Backtrack
+1RB 1RZ  1LC 1RA  0LD 1LB  1RD 0LB
+1RB ---  1LC 1LD  0LD 1LB  0RA 0LD
+1RB 0RD  1LC 1RA  0RB 1LB  --- 0RC
+1RB 0RD  1LC 0RA  0RB 1LB  --- 0RA
+1RB 1LA  1LC 0RD  1RA 1LB  --- 1RA
+1RB ---  1LC 0RD  1LA 1LB  1LC 1RD
+1RB 0LD  1LC 1LA  1LA 1LB  0LB ---
+1RB 1LD  1LC ---  0RA 1LB  0RC ---
+1RB 0RB  1LC 0LD  0RA 1LB  1LA 1RZ
+1RB 0LB  1LC 1RD  0LD 0RB  0LA ---
+1RB 1RZ  1LC 1LD  1RB 0RB  1RC 0LA
+1RB ---  1LC 1LD  1RC 0RB  0LB 0LD | None Infinite Backtrack 1 Backtrack
+1RB ---  1LC 1LD  1LA 0RB  0LB 0RD
+1RB ---  1LC 0RD  1RD 0RB  1LC 1LC | None Infinite Backtrack 1 Backtrack
+1RB ---  1LC 0RD  1RD 0RB  0LC 0LC | None Infinite Backtrack 1 Backtrack
+1RB ---  1LC 0RD  1LD 0RB  0RB 0RB | None Infinite Backtrack 1 Backtrack
+1RB ---  1LC 0RD  0LB 0RB  0RB ---
+1RB 0LC  1LC 0LD  0RA 0RB  0LB ---
+1RB ---  1LC 0LD  0RD 0RB  1LA 0RB
+1RB ---  1LC 0LD  0RC 0RB  1LA 0RB
+1RB ---  1LC 1RC  1LD 0RB  1RD 1LB | None Infinite Backtrack 1 Backtrack
+1RB 1LD  1LC 1RC  0LA 0RB  0LC ---
+1RB ---  1LC 1LC  1RD 0RB  0RC 0LD | None Infinite Backtrack 1 Backtrack
+1RB 0LD  1LC 0LC  1RD 0RB  1LA 1RZ
+1RB ---  1LC 0LC  1LD 0RB  1RD 1LD | None Infinite Backtrack 1 Backtrack
+1RB 0LD  1LC 1LB  0RD 0RB  1RZ 0RA
+1RB ---  1LC 0RB  0RD 0RB  --- 1LB | None Infinite Backtrack 2 Backtrack
+1RB 0RD  1LC 0LB  1RA 0RB  1LA --- | None Infinite Backtrack 5 Backtrack
+1RB 0RD  1LC 1LA  --- 0RB  1RB 1RD | None Infinite Backtrack 3 Backtrack
+1RB 1LC  1LC 1LA  1RD 0RB  --- 1RB | None Infinite Backtrack 2 Backtrack
+1RB ---  1LC 0LC  1RD 0LB  1LB 1RD | None Infinite Backtrack 1 Backtrack
+1RB ---  1LC 1RD  1RD 0LB  1RB 1LD | None Infinite Backtrack 1 Backtrack
+1RB ---  1LC 1LD  1RD 0LB  1RB 1RC | None Infinite Backtrack 1 Backtrack
+1RB ---  1LC 1RC  1RD 0LB  0RA 1RC
+1RB 1RZ  1LC 0LA  1RD 0LB  --- 0RA
+1RB ---  1LC 1RD  1LD 0LB  1RB 0LB | None Infinite Backtrack 1 Backtrack
+1RB ---  1LC 1LD  1LD 0LB  1LA 0RD
+1RB ---  1LC 1RC  0RD 0LB  1RA 0LD
+1RB ---  1LC 1RC  0RD 0LB  1RD 1RA
+1RB 1RZ  1LC 1LD  0LD 0LB  1RA 0LD
+1RB 1LD  1LC 1RA  1RC 0LB  --- 1RB | None Infinite Backtrack 2 Backtrack
+1RB 0RA  1LC 1LD  0RB 0LB  1RA 1RZ
+1RB 1LD  1LC 0RB  1RA 0LB  --- 1RB | None Infinite Backtrack 2 Backtrack
+1RB 0RD  1LC 1RZ  1RA 0LB  1LD 0RB
+1RB 0LA  1LC 0RD  1LA 0LB  --- 0LC
+1RB 0RD  1LC 1LB  0RA 0LB  1RA 1RZ
+1RB 1RD  1LC ---  --- 1RA  0LD 1RZ
+1RB 1RD  1LC ---  0LD 1RA  0RC ---
+1RB 1LD  1LC 1RZ  1RB 1RA  0RB 0RD
+1RB 1LD  1LC 1RZ  1RB 1RA  --- 0LB
+1RB 1LD  1LC 1LD  --- 1RA  0RB 0RA | None Infinite Backtrack 3 Backtrack
+1RB 0RD  1LC ---  1RZ 1RA  1LD 0LB
+1RB 0RD  1LC 1RZ  0RB 1RA  1RC ---
+1RB 0RD  1LC 1RB  0RB 1RA  1LC ---
+1RB 0RD  1LC ---  0RC 1RA  1LB 0RB
+1RB 0LD  1LC ---  0LD 1RA  0RC 0LC | None Infinite Backtrack 4 Backtrack
+1RB 0LD  1LC 1RB  0RB 1RA  --- 0LC | None Infinite Backtrack 2 Backtrack
+1RB 0LD  1LC 0RA  1LA 1RA  1RZ 1LB
+1RB 0LD  1LC 1RD  --- 1RA  1LD 1LA | None Infinite Backtrack 2 Backtrack
+1RB 0RC  1LC ---  0LD 1RA  0LD 1LB
+1RB 1LB  1LC 0RD  1RC 1RA  --- 0LB
+1RB 1LB  1LC 0LD  --- 1RA  1RD 0RA | None Infinite Backtrack 4 Backtrack
+1RB 1LB  1LC 0LC  0LC 1RA  --- --- | None Infinite Backtrack 1 Backtrack
+1RB 1LB  1LC 0LC  0RA 1RA  --- --- | None Infinite Backtrack 1 Backtrack
+1RB 1LB  1LC 0RB  1LD 1RA  0RC ---
+1RB 1LB  1LC 0RB  0LD 1RA  0LA ---
+1RB 1LB  1LC 0RA  1RD 1RA  --- 0RA | None Infinite Backtrack 2 Backtrack
+1RB 1LB  1LC 0RA  0RD 1RA  1RZ 0LD
+1RB 0RB  1LC 1RZ  1LD 1RA  1RA 1LD
+1RB 0LB  1LC 0RB  1RD 1RA  --- 1RZ
+1RB 1LA  1LC 0RD  --- 1RA  0LD 0LD | None Infinite Backtrack 2 Backtrack
+1RB 1LA  1LC 0RD  0LC 1RA  --- 0LC
+1RB 1LA  1LC 0LD  1RD 1RA  1RZ 0LB
+1RB 1RZ  1LC 1RD  0LA 1LA  0RB 1RD
+1RB ---  1LC 1RD  0RC 1LA  0RC 0LD | None Infinite Backtrack 4 Backtrack
+1RB ---  1LC 1RD  0RC 1LA  --- 1RC
+1RB 0RB  1LC 1RD  --- 1LA  0LC 0LC | None Infinite Backtrack 3 Backtrack
+1RB 1RB  1LC 1RD  --- 1LA  --- 1RB
+1RB ---  1LC 1LD  0RC 1LA  0RB 0LD | None Infinite Backtrack 4 Backtrack
+1RB 0RD  1LC 0RD  --- 1LA  1RC 1LD | None Infinite Backtrack 5 Backtrack
+1RB ---  1LC 0RD  1LD 1LA  0LC 1LD
+1RB ---  1LC 0RD  1LA 1LA  0RC 0RD | None Infinite Backtrack 4 Backtrack
+1RB ---  1LC 0RD  1RD 1LA  0RC 0RC | None Infinite Backtrack 4 Backtrack
+1RB ---  1LC 0RD  1RB 1LA  1LD 0RB | None Infinite Backtrack 4 Backtrack
+1RB ---  1LC 0RD  1RD 1LA  1RC 1LA
+1RB ---  1LC 0LD  1LB 1LA  0RC 0LD
+1RB ---  1LC 0LD  1RB 1LA  0LC 0LD
+1RB 1RZ  1LC 0LD  1RD 1LA  1LC 1RC
+1RB ---  1LC 0LD  0RB 1LA  1RC 0RB | None Infinite Backtrack 4 Backtrack
+1RB 1LB  1LC 0LD  1RZ 1LA  1LB 1RA
+1RB 1RD  1LC 1RC  1LC 1LA  --- 0RB | None Infinite Backtrack 2 Backtrack
+1RB 1LD  1LC 1RC  1RZ 1LA  1LC 0RD
+1RB 0LD  1LC 1RC  0LD 1LA  1RZ 1LB
+1RB ---  1LC 0RC  1LD 1LA  0LD 0RC | None Infinite Backtrack 4 Backtrack
+1RB ---  1LC 0RC  0LD 1LA  1LD 0LD | None Infinite Backtrack 4 Backtrack
+1RB ---  1LC 1LB  0RD 1LA  1LD 1RD
+1RB 0RD  1LC 0RB  1RC 1LA  --- 1RC | None Infinite Backtrack 2 Backtrack
+1RB 1RD  1LC 1RA  --- 1LA  1RA 0RC
+1RB 0LC  1LC 1RA  0LD 1LA  1LC ---
+1RB 0LD  1LC 0RA  1RZ 1LA  1LA 1LC
+1RB 0LD  1LC 0LA  0LC 1LA  0LC ---
+1RB 1RD  1LC 1RA  --- 0RA  1LA 1LB | None Infinite Backtrack 3 Backtrack
+1RB 1LD  1LC ---  1RA 0RA  1LC 1RC
+1RB 1LD  1LC 0LB  0LB 0RA  1RB --- | None Infinite Backtrack 2 Backtrack
+1RB 1LD  1LC 1LD  1RB 0RA  1LB 1RZ
+1RB 1LD  1LC ---  1RD 0RA  0LB 1LC
+1RB 1LD  1LC 0RB  1LA 0RA  0LB ---
+1RB 0RD  1LC 0LD  1RZ 0RA  1LA 0RB
+1RB 0LD  1LC 1RZ  1RD 0RA  1LB 1RB
+1RB 0LD  1LC 1RA  0RB 0RA  1LB 1RZ
+1RB 1RC  1LC ---  1RD 0RA  1LD 1RD
+1RB 1RC  1LC ---  0LD 0RA  0LA 1LB
+1RB 1RC  1LC 0LD  0RB 0RA  0LA ---
+1RB 1RC  1LC 0LD  0LB 0RA  0RB ---
+1RB 1LC  1LC 1RD  0RB 0RA  1LC ---
+1RB 1LC  1LC 0RD  1LA 0RA  --- 1LB | None Infinite Backtrack 4 Backtrack
+1RB 0RC  1LC ---  1RD 0RA  0RB 1RB
+1RB 0LC  1LC ---  0RD 0RA  0RB 1RB
+1RB 1LB  1LC ---  0RD 0RA  1RZ 1RD
+1RB 0RB  1LC 1RZ  1RD 0RA  1LA 1LD
+1RB 1LA  1LC 1RD  --- 0RA  0LA 1LB | None Infinite Backtrack 3 Backtrack
+1RB 1LA  0RC 1RZ  1RD 0RA  1LD 1LC
+1RB ---  0RC 1RB  1RD 1LA  1LD 1LB | None Infinite Backtrack 2 Backtrack
+1RB 0LB  0RC 0RD  1RD ---  1LD 1RA
+1RB 1LD  0RC 1RD  1RD ---  1LD 1LA | None Infinite Backtrack 3 Backtrack
+1RB 1RA  0RC ---  1RD 1LC  1LC 1RA
+1RB 1LC  0RC ---  1RD 0RA  1LC 0RB
+1RB ---  0RC 0LC  1RD 1LC  0LC 1LB | None Infinite Backtrack 1 Backtrack
+1RB ---  0RC 1LC  1RD 0RB  1LB 1RC | None Infinite Backtrack 1 Backtrack
+1RB ---  0RC 1LC  1RD 1LC  1LB 0LB | None Infinite Backtrack 1 Backtrack
+1RB 1RC  0RC 1LA  1RD 0RC  1LB ---
+1RB 0LD  0RC 1LC  1RD 0LA  1LA 1RZ
+1RB 1RC  0RC 0RB  1RD 0LB  1LA ---
+1RB 1LC  0RC 0LD  1RD 1RZ  1LA 0RB
+1RB 0RC  0RC ---  1RD 1LC  1LA 0RB
+1RB 1LB  0RC 1RA  1RD 0LC  1LA ---
+1RB 0LB  0RC ---  1RD 1RD  1LA 1LC | None Infinite Backtrack 4 Backtrack
+1RB 0LA  0RC 1RD  1RD 0RD  1LA 1RZ
+1RB 1LC  0RC 1RA  1RD 1RZ  0LA 1LB
+1RB 0LC  0RC 1LA  1LD ---  1RD 0LB
+1RB 1LB  0RC 0RA  1LD 1RZ  1LD 1RB
+1RB ---  0RC 1LC  1LD 1RB  1LD 1LB | None Infinite Backtrack 1 Backtrack
+1RB ---  0RC 1RZ  1LD 1LA  1LD 1LB
+1RB ---  0RC ---  1LD 0LC  1LD 0LA
+1RB ---  0RC 0LC  1LD 0LD  0LD 1RA | None Infinite Backtrack 4 Backtrack
+1RB 0RB  0RC ---  1LD 0RD  1RC 1RA
+1RB ---  0RC 1RZ  1LD 1RC  1RC 0LB
+1RB 0RB  0RC 0RB  1LD 1LA  1RC --- | None Infinite Backtrack 3 Backtrack
+1RB ---  0RC 0LD  1LD 1RC  1LC 0RB | None Infinite Backtrack 1 Backtrack
+1RB 1LD  0RC 0RA  1LD 1RB  1LC ---
+1RB 1RA  0RC 1RD  1LD 1LA  0LC ---
+1RB 1LB  0RC 0LB  1LD 1RA  1LB --- | None Infinite Backtrack 2 Backtrack
+1RB 1RZ  0RC 0LA  1LD 0RD  1LB 1LA
+1RB 1RC  0RC 0LD  1LD 1RZ  1RA 1LB
+1RB 1LB  0RC 0RD  1LD ---  1RA 0LB
+1RB 1LD  0RC 1RA  1LD 1RZ  1LA 1RC
+1RB 0LD  0RC 1LC  1LD 1LD  1LA ---
+1RB 1LB  0RC 1LD  1LD 0LD  1LA 1RZ
+1RB 1LB  0RC 0RB  1LD 0LD  1LA --- | None Infinite Backtrack 2 Backtrack
+1RB 0RB  0RC 0LC  1LD 0LB  1LA ---
+1RB 0LB  0RC 0RD  1LD ---  1LA 1RA
+1RB 1RC  0RC ---  1LD 1LD  0RA 1LD | None Infinite Backtrack 3 Backtrack
+1RB 1LA  0RC 1LC  1LD 0LB  0RA ---
+1RB 0RD  0RC 1RZ  1LD 0LC  0LA 1RB
+1RB ---  0RC 0LB  0RD 1LA  1LD 0RC | None Infinite Backtrack 2 Backtrack
+1RB 1RZ  0RC 1LC  0RD 1RA  1LD 1RB
+1RB ---  0RC 1LD  0RD 1RB  1LD 1LB | None Infinite Backtrack 1 Backtrack
+1RB 1RC  0RC 1RZ  0RD 1RA  1LD 1LB
+1RB 0RD  0RC 1RB  0RD ---  1LD 1LA
+1RB 1LC  0RC 1RB  0RD 1RZ  1LD 1LA
+1RB ---  0RC 1LB  0RD 1LB  1LD 1LA
+1RB 0RD  0RC 1RC  0RD ---  0LD 1LA
+1RB 1RA  0RC 1LC  0RD 1LA  1LB ---
+1RB ---  0RC 1LB  0RD 0RD  1LA 0LD
+1RB 0LA  0RC ---  0LD 0RA  1LD 1LB
+1RB 1RB  0RC 1RA  0LD ---  1LD 1LA
+1RB ---  0RC 1RD  0LD 1LA  0LD 1LB | None Infinite Backtrack 2 Backtrack
+1RB 1LA  0RC 0RB  0LD ---  1RC 1LA
+1RB 0LD  0RC ---  0LD ---  1RC 0LA | None Infinite Backtrack 1 Backtrack
+1RB 1LC  0RC 0LA  0LD 1LA  1LC ---
+1RB ---  0RC 1LD  0LD 1LD  1LB ---
+1RB 0LA  0RC 1LD  0LD 1RA  1LB ---
+1RB 0LD  0RC 1RB  0LD 1RC  1LA 1RZ
+1RB 1LC  0RC 0LD  0LD ---  1LA 0LD
+1RB 1RB  0RC 1LC  0LD 1LB  1LA ---
+1RB 0RD  0RC ---  1LC 1RD  0RA 1RA
+1RB 1RD  0RC 1RA  1LC 1LD  1LA 1RZ
+1RB ---  0RC 1RZ  1LC 0RD  1LA 1LD
+1RB 1RD  0RC ---  1LC 0RD  0RA 0RA
+1RB ---  0RC 1RD  1LC 0LD  1RB 0RD | None Infinite Backtrack 1 Backtrack
+1RB 1RZ  0RC 0RA  1LC 0LD  1RA ---
+1RB ---  0RC 1RD  1LC 1RB  1RD 0LB | None Infinite Backtrack 1 Backtrack
+1RB 0LD  0RC 1LA  1LC 1RB  1RB ---
+1RB ---  0RC 0RD  1LC 0RB  1RC 1LD | None Infinite Backtrack 1 Backtrack
+1RB 1RD  0RC 1RZ  1LC 1RA  1LB 1LC
+1RB 0LB  0RC 0RD  1LC 1LA  1RZ 1RA
+1RB 0LD  0RC 1RA  1LC 0LA  --- 1LA
+1RB 1LA  0RC 0LD  1LC 0LA  --- 1RA | None Infinite Backtrack 2 Backtrack
+1RB 0RB  0RC 1RD  0LC 1RD  1LA ---
+1RB ---  0RC 1LB  0LC 0RD  1LA 0RD | None Infinite Backtrack 2 Backtrack
+1RB 1RD  0RC 1RD  0LC 1LA  0RB 1RZ
+1RB ---  0RC 1LD  0LC 1LA  1LA 0RD
+1RB ---  0RC 1RB  1LB 1RD  0LD 1LC | None Infinite Backtrack 1 Backtrack
+1RB 1RB  0RC 0RA  1LB 1RD  1RC ---
+1RB 1LA  0RC 1RZ  1LB 1LD  1LD 1RA
+1RB 0LA  0RC ---  1LB 1LD  1LD 1RA | None Infinite Backtrack 3 Backtrack
+1RB 1RZ  0RC 0LD  1LB 1LD  0RD 1LA
+1RB ---  0RC 0RB  1LB 1LD  1RC 1LB | None Infinite Backtrack 1 Backtrack
+1RB ---  0RC 0RD  1LB 1LD  1LB 1LB | None Infinite Backtrack 1 Backtrack
+1RB 0LC  0RC 1RZ  1LB 1LD  1RA 1LA
+1RB ---  0RC 0RC  1LB 0RD  1LD 0RB | None Infinite Backtrack 1 Backtrack
+1RB ---  0RC ---  1LB 0LD  0LD 0LC
+1RB 0RA  0RC 1RA  1LB 1LC  --- --- | None Infinite Backtrack 1 Backtrack
+1RB ---  0RC 1LD  1LB 1LA  0RD 1LD | None Infinite Backtrack 2 Backtrack
+1RB ---  0RC 1LD  1LB 1LA  1RZ 0LD
+1RB 0RC  0RC 1RD  1LA 1RZ  1LD 1LA
+1RB 0LD  0RC 1RD  1LA 1RZ  1LB 0LA
+1RB 1LD  0RC 1LD  1LA ---  0LB 1LA | None Infinite Backtrack 3 Backtrack
+1RB 1LA  0RC 1LD  1LA 0RC  --- 0LA | None Infinite Backtrack 2 Backtrack
+1RB 0RC  0RC 0RD  1LA 0RD  1RC ---
+1RB 1LA  0RC 0RD  1LA ---  1RC 1RD
+1RB 0RD  0RC 0LD  1LA ---  1RA 1LD
+1RB 0LB  0RC 1RC  1LA 0RD  1RZ 1LB
+1RB ---  0RC 1LC  1LA 1LD  1LA 0LB
+1RB ---  0RC 1LC  1LA 1LD  1LC 0LA
+1RB 1RC  0RC 1LC  1LA 0RB  --- --- | None Infinite Backtrack 1 Backtrack
+1RB 1LA  0RC 0LC  1LA 1RD  1RC 1RZ
+1RB 1RZ  0RC 0LC  1LA 1LD  1RA 1LD
+1RB 1RD  0RC 0LC  1LA 0RD  1RC 1RZ
+1RB 1LD  0RC 0LC  1LA 1RC  1RZ 1LD
+1RB 0LD  0RC 0LC  1LA 1LA  1RA ---
+1RB 1RD  0RC 1LA  1LA ---  0RD 1RD | None Infinite Backtrack 3 Backtrack
+1RB 1RD  0RC 0LA  1LA 0LB  0LC --- | None Infinite Backtrack 4 Backtrack
+1RB 1LD  0LC ---  1LA 1RD  0LD 1RC | None Infinite Backtrack 4 Backtrack
+1RB 1RZ  0LC 1RB  1LA 1RD  0LD 0RB
+1RB 1RC  0LC 1RA  --- 1RD  0LD 1LA
+1RB 1LB  0LC ---  0RD 1RD  1LC 0LA
+1RB ---  0LC 0RD  0LB 1RD  1LB 0RB | None Infinite Backtrack 1 Backtrack
+1RB ---  0LC 1LC  1RB 1RD  1LB 0LD | None Infinite Backtrack 1 Backtrack
+1RB ---  0LC 1LC  0RD 1RD  0LB 1LC | None Infinite Backtrack 1 Backtrack
+1RB ---  0LC 0LC  1RB 1RD  0LB --- | None Infinite Backtrack 1 Backtrack
+1RB 1LB  0LC 0LC  0RD 1RD  1LA --- | None Infinite Backtrack 2 Backtrack
+1RB 1LB  0LC ---  0LC 1RD  1LA ---
+1RB 0LB  0LC 1RA  --- 1LD  0RD 1RA | None Infinite Backtrack 3 Backtrack
+1RB 1RZ  0LC ---  0RA 1LD  1RC 1LC
+1RB 0RD  0LC 0LA  1RZ 1LD  1RC 1RB
+1RB 1RA  0LC ---  1RA 1LD  1LC 0RD
+1RB ---  0LC 0LC  1LA 1LD  1LC ---
+1RB ---  0LC 1RD  1RC 1LD  0LC 0LB | None Infinite Backtrack 1 Backtrack
+1RB ---  0LC 0RC  1RA 1LD  0LC 0RD
+1RB ---  0LC 1RB  1RA 1LD  0LC 0LC | None Infinite Backtrack 2 Backtrack
+1RB 0RC  0LC 1LA  1RA 1LD  0LC ---
+1RB ---  0LC 0LD  0LB 1LD  1RB 1LB | None Infinite Backtrack 1 Backtrack
+1RB ---  0LC 0LB  1RD 1LD  1RB 1RC | None Infinite Backtrack 1 Backtrack
+1RB 0RB  0LC 0LA  0RC 1LD  1RB ---
+1RB ---  0LC 0LD  1RC 1LD  1LB 1LB | None Infinite Backtrack 1 Backtrack
+1RB ---  0LC 0RB  1RA 1LD  1LB 1LD | None Infinite Backtrack 2 Backtrack
+1RB ---  0LC 0LB  1RA 1LD  1LB 1RD | None Infinite Backtrack 2 Backtrack
+1RB ---  0LC 1LD  1LA 1LD  1LB 1RB
+1RB 1RD  0LC 1RC  1LA 1LD  1LB 1RZ
+1RB 1RZ  0LC 1RC  1RB 1LD  0RB 0RA
+1RB 1LD  0LC 1LA  1LA 1LD  0LB ---
+1RB 0LB  0LC 1RA  --- 1LD  1RA 1RC | None Infinite Backtrack 3 Backtrack
+1RB 1LB  0LC 1RC  1RZ 1LD  1LA 0RC
+1RB 1LC  0LC 0RC  1LC 1LD  1LA ---
+1RB 0RC  0LC 1RA  1LA 1LD  0RA 1RZ
+1RB ---  0LC 1RA  0LD 0RD  1RC 1LA
+1RB 1RD  0LC 0LA  1LA 0RD  0LC ---
+1RB 1RZ  0LC 1RC  1LA 0RD  0LB ---
+1RB 0RB  0LC ---  0LA 0LD  1RC ---
+1RB ---  0LC 0LB  1RD 0LD  1LC 0LB | None Infinite Backtrack 1 Backtrack
+1RB 1RA  0LC ---  0RA 0LD  1LC 0LD
+1RB 1RZ  0LC 1RA  1RC 0LD  1LB 1LB
+1RB ---  0LC 1LD  0RA 0LD  1LB 1LA
+1RB ---  0LC ---  1RA 0LD  0LB 0RB
+1RB 1RC  0LC ---  0RC 0LD  1RA 1LD
+1RB 1RD  0LC ---  1LD 0LD  1RA 1LC
+1RB ---  0LC 1RZ  1LA 0LD  1RA 0LB
+1RB 0LD  0LC 1RD  1RZ 0LD  1LA 0LC
+1RB 0LD  0LC 1RC  0RA 0LD  1LA 1RZ
+1RB 1LC  0LC 1RC  0RA 0LD  1LA ---
+1RB 1RC  0LC 1RB  --- 0LD  1LA 1RD | None Infinite Backtrack 2 Backtrack
+1RB 1RA  0LC 0RB  1RD 0LD  1LA 1RZ
+1RB 1RA  0LC 1LA  --- 0LD  1LA 1LC
+1RB 1LC  0LC 1LA  1RD 1RC  1LB 1RZ
+1RB 1RB  0LC 0LD  1RD 1RC  1LA 1RZ
+1RB 1LB  0LC 1RC  1LD 1RC  --- 1LA
+1RB ---  0LC 0LB  1LD 1RC  0LD 1LA
+1RB 0LC  0LC 1RA  0LD 1RC  --- 1LA
+1RB ---  0LC 1RD  1LB 1RC  1LB 0LD | None Infinite Backtrack 1 Backtrack
+1RB 1LD  0LC 0RC  1LA 1RC  1RB ---
+1RB 0LD  0LC ---  1LA 1RC  1RD 1RD | None Infinite Backtrack 4 Backtrack
+1RB 0LD  0LC 0RD  1LA 1RC  0LB ---
+1RB 1LB  0LC 1RA  1LA 1RC  --- --- | None Infinite Backtrack 1 Backtrack
+1RB 1LA  0LC 1RA  1RD 1LC  --- 0LB | None Infinite Backtrack 4 Backtrack
+1RB 1LB  0LC 1RZ  1LD 1LC  0RD 0RA
+1RB ---  0LC 0RC  1LD 1LC  1RB 1RD | None Infinite Backtrack 1 Backtrack
+1RB ---  0LC 1LB  0RD 1LC  1LA 0RC | None Infinite Backtrack 2 Backtrack
+1RB ---  0LC 0LC  0RD 1LC  1RA 0RB
+1RB 1RZ  0LC 1LD  0LD 1LC  1RA 0RA
+1RB 1RB  0LC 1RD  1RA 1LC  0RA 1RZ
+1RB 1RD  0LC ---  0RA 1LC  1LC 0RB
+1RB 1RD  0LC 1RZ  0RA 1LC  1LC 0LB
+1RB 1LA  0LC 1LD  0RA 1LC  1RZ 0RD
+1RB ---  0LC 0RD  1RD 0RC  1LB 1RA
+1RB ---  0LC 1RZ  0RD 0RC  1LC 1LA
+1RB ---  0LC 0LC  0RD 0RC  1LA ---
+1RB 1LD  0LC 1RZ  1RD 0LC  1LA ---
+1RB ---  0LC 1RD  1LD 0LC  0RB 1RD | None Infinite Backtrack 1 Backtrack
+1RB 1LA  0LC 0LD  1LD 0LC  1RA 1RZ
+1RB 1RZ  0LC 0RD  1LD 0LC  1LA 1LD
+1RB 1RZ  0LC 0RA  1LD 0LC  1LA ---
+1RB ---  0LC 0RA  0LD 0LC  1LA 1RC
+1RB 1LB  0LC 1LD  1LA 0LC  1RZ 1RA
+1RB 1RZ  0LC 0LD  1LA 0LC  0RA 1RD
+1RB 1RZ  0LC 1RC  1RD 1LB  0LB 1LA
+1RB 1RC  0LC 1RC  1RD 1LB  1LA --- | None Infinite Backtrack 5 Backtrack
+1RB 1RZ  0LC 1RA  0RD 1LB  1LC 1RD
+1RB ---  0LC 0RD  1RC 1LB  1RZ 0RD
+1RB 0LA  0LC 0RA  1RC 1LB  --- --- | None Infinite Backtrack 1 Backtrack
+1RB ---  0LC 0LD  1RA 1LB  0RB 0LB | None Infinite Backtrack 2 Backtrack
+1RB 1LD  0LC 1LA  1RA 1LB  1RZ 1LD
+1RB 1RZ  0LC 1RD  1LA 1LB  0RC 1LA
+1RB ---  0LC 0LD  1LA 1LB  1LA 1RA
+1RB 1RZ  0LC 1RD  0RA 1LB  0LD 1RC
+1RB ---  0LC 0RD  1RD 0RB  1LC 1RZ
+1RB 1RZ  0LC 1RD  1LD 0RB  1LA 0RD
+1RB 0LB  0LC 0LA  0RD 0RB  1LA --- | None Infinite Backtrack 2 Backtrack
+1RB 1LC  0LC 1LD  1LA 0RB  --- 0RA
+1RB ---  0LC 1LC  1RD 0LB  1LD 0RB | None Infinite Backtrack 1 Backtrack
+1RB ---  0LC 0LD  1LD 0LB  1RC 0LA
+1RB ---  0LC 1RC  0RD 0LB  1LC 1RA
+1RB 0LC  0LC 1LD  0RD 0LB  1RA ---
+1RB 1RZ  0LC 1LD  1RA 0LB  0LC 1RA
+1RB ---  0LC 0LD  1RA 0LB  1LA 1RC
+1RB 1LA  0LC 1RD  1LA 0LB  1LA 1RZ
+1RB 1LD  0LC 1RC  1LA 0LB  --- 0LB
+1RB 1RD  0LC 1RD  --- 1LA  1LD 0RA | None Infinite Backtrack 2 Backtrack
+1RB 0RB  0LC 1RD  1RZ 1LA  1LC 0RB
+1RB 0LC  0LC 1LD  1RZ 1LA  1RA 1RD
+1RB ---  0LC 1LD  0RD 1LA  0LC 0RD | None Infinite Backtrack 4 Backtrack
+1RB ---  0LC 1LD  0LD 1LA  0RC 1LC
+1RB 1RC  0LC 1LD  1RA 1LA  --- 1LC | None Infinite Backtrack 2 Backtrack
+1RB ---  0LC 0LD  1LB 1LA  1LB 1RD
+1RB 0LC  0LC 1RC  1RD 1LA  1LC 1RZ
+1RB 1LD  0LC 1RC  1LC 1LA  0RB ---
+1RB 0RD  0LC 1RC  1RB 1LA  --- 1RB | None Infinite Backtrack 2 Backtrack
+1RB 0RD  0LC 0RC  1LC 1LA  1RZ 1LD
+1RB 1LD  0LC 1RB  1RZ 1LA  1RB 0LB
+1RB 0LC  0LC 1RB  1RD 1LA  1LC --- | None Infinite Backtrack 3 Backtrack
+1RB 0LC  0LC 1RB  1LD 1LA  0LD ---
+1RB 0LC  0LC 1RB  0LC 1LA  --- --- | None Infinite Backtrack 1 Backtrack
+1RB ---  0LC 0RB  0LD 1LA  1RZ 0LC
+1RB 1LD  0LC 1LA  --- 1LA  1RA 1RA | None Infinite Backtrack 2 Backtrack
+1RB 1RZ  1LB 1RC  --- 1RD  0LD 1LA
+1RB 0RC  1LB 1RC  1LA 1RD  1RC ---
+1RB 0LD  1LB 1RC  1LA 1RD  0LB 1RZ
+1RB 1LC  1LB 1RC  --- 1RD  1LA 1RD | None Infinite Backtrack 4 Backtrack
+1RB 1LB  1LB 1RC  --- 1RD  1LA 1LB | None Infinite Backtrack 4 Backtrack
+1RB ---  1LB 1RC  1LB 1LD  0RD 0RC | None Infinite Backtrack 1 Backtrack
+1RB ---  1LB 1RC  0RB 1LD  1RB 0RC | None Infinite Backtrack 1 Backtrack
+1RB 1LA  1LB 1RC  1LA 1LD  --- 0RA | None Infinite Backtrack 2 Backtrack
+1RB 0RB  1LB 1RC  1RZ 0RD  1LD 0RA
+1RB 0RA  1LB 1RC  0LA 0RD  1LC ---
+1RB ---  1LB 1RC  0LC 0RD  0RB 0LC | None Infinite Backtrack 1 Backtrack
+1RB ---  1LB 1RC  0RD 0LD  1RD 0LC | None Infinite Backtrack 1 Backtrack
+1RB ---  1LB 1RC  1LC 0LD  --- 0LC
+1RB 1RD  1LB 1RC  1LB 0LD  --- 1LA | None Infinite Backtrack 2 Backtrack
+1RB ---  1LB 1RC  1RD 1LC  1RB 0RB | None Infinite Backtrack 1 Backtrack
+1RB 0LD  1LB 1RC  0RA 1LC  0RC --- | None Infinite Backtrack 2 Backtrack
+1RB 1LD  1LB 1RC  0LA 0RB  0LB ---
+1RB ---  1LB 1RC  1RD 0LB  0LD 0LB | None Infinite Backtrack 1 Backtrack
+1RB ---  1LB 1RC  1LD 0LB  0RA 0RD
+1RB ---  1LB 1RC  0RD 0LB  1LB 1RZ
+1RB ---  1LB 1RC  0LD 0LB  0LA 1LC
+1RB 1RD  1LB 1RC  1LA 0LB  1RZ 0LA
+1RB 0LD  1LB 1RC  0RD 1LA  1RC 1RZ
+1RB 1LC  1LB 1RC  1RD 1LA  --- 1RA
+1RB 0RC  1LB 1RC  0LD 1LA  --- 1LA | None Infinite Backtrack 3 Backtrack
+1RB 1LC  1LB 1RC  0LD 0LA  0LD ---
+1RB ---  1LB 1LC  1RD 0RB  1RC 0LD | None Infinite Backtrack 1 Backtrack
+1RB ---  1LB 1LC  1RD 1LC  0RD 0RC | None Infinite Backtrack 1 Backtrack
+1RB 1RZ  1LB 1LC  1RD 0RC  0LA 1RB
+1RB 0LD  1LB 1LC  1RD 0LB  --- 1RA | None Infinite Backtrack 2 Backtrack
+1RB ---  1LB 1LC  1LD 1LA  0RD 1RB
+1RB 0RC  1LB 1LC  1LD 1LD  1RA ---
+1RB 1RZ  1LB 1LC  1RC 1LD  1RA 0RD
+1RB ---  1LB 1LC  1RC 1LD  0RB 0LC | None Infinite Backtrack 1 Backtrack
+1RB ---  1LB 1LC  1RC 0RD  0LC 0LD | None Infinite Backtrack 1 Backtrack
+1RB 1RD  1LB 1LC  1RC 0RA  0RA ---
+1RB ---  1LB 1LC  1RB 1LD  1RC 0LD | None Infinite Backtrack 1 Backtrack
+1RB 1LD  1LB 1LC  1RA 1LB  --- 1RB | None Infinite Backtrack 2 Backtrack
+1RB 0RD  1LB 1LC  1RA 1RZ  1LB 1LC
+1RB 0LD  1LB 1LC  1RA 1LA  --- 0RC
+1RB 1RA  1LB 1LC  1RA 1LB  --- --- | None Infinite Backtrack 1 Backtrack
+1RB 0RC  1LB 1LC  1LA 1RD  1RZ 1RC
+1RB ---  1LB 1LC  1LA 1LD  1LC ---
+1RB 1RD  1LB 1LC  1LA 1RC  --- 0RB | None Infinite Backtrack 2 Backtrack
+1RB 0LD  1LB 1LC  1LA 0RA  0RD 1RZ
+1RB 1RD  1LB 1LC  0RA ---  0LA 0RB
+1RB 1LD  1LB 1LC  0RA 1LB  1RB --- | None Infinite Backtrack 2 Backtrack
+1RB 0RC  1LB 1LC  0RA 0RB  --- --- | None Infinite Backtrack 1 Backtrack
+1RB 1RA  1LB 1LC  0RA 0LD  1RZ 1RD
+1RB ---  1LB 0RC  1RC 1LD  1LC 1LC | None Infinite Backtrack 1 Backtrack
+1RB ---  1LB 0RC  0RD 0RC  1RC ---
+1RB ---  1LB 0LC  0LD 0RA  1RD 1RA
+1RB ---  1LB 0LC  0RC 1LD  0RD 1LD | None Infinite Backtrack 1 Backtrack
+1RB ---  1LB 0LC  0RC 0LC  --- --- | None Infinite Backtrack 1 Backtrack
+1RB 1LD  1LB 0LC  1RA 0RC  --- 0LB | None Infinite Backtrack 2 Backtrack
+1RB 1RC  1LB 1RA  1LD 1RZ  1RC 1LD
+1RB 1LC  1LB 1RA  --- 1RD  0LB 1LD | None Infinite Backtrack 2 Backtrack
+1RB 1LC  1LB 1RA  0LA 1RD  --- 1RC
+1RB 1LC  1LB 1RA  0LD 1RC  --- 1RA | None Infinite Backtrack 3 Backtrack
+1RB 0RC  1LB 1RA  1LD ---  0RB ---
+1RB 0RC  1LB 1RA  0LC 1RD  0LD 1RZ
+1RB 0LC  1LB 1RA  0LC 0LD  0RC ---
+1RB 0LC  1LB 1RA  --- 0LD  1LA 1LB
+1RB 1RC  1LB 1LA  1RZ 1RD  1RC 1RD
+1RB 1RC  1LB 1LA  1RD 0RA  1RD ---
+1RB 1LC  1LB 1LA  1LD 0RA  0RC ---
+1RB 1LC  1LB 1LA  0LD ---  1RC 1LB
+1RB 0RC  1LB 1LA  0RC 1LD  1LC ---
+1RB 0RC  1LB 1LA  1RZ 0LD  1RD 1RC
+1RB 0LC  1LB 1LA  1RA 0LD  1LD ---
+1RB 1RC  1LB 0RA  0LC 0RD  0RA ---
+1RB 1RC  1LB 0RA  1LA 0LD  --- 0LB | None Infinite Backtrack 2 Backtrack
+1RB 0RC  1LB 0RA  0LD ---  1RZ ---
+1RB 0LC  1LB 0RA  0LD ---  0LC ---
+1RB 1LA  0LB 1RC  1RD 1LC  0LA 1RZ
+1RB ---  0LB 1RC  1LD 1LD  1RB 0LC | None Infinite Backtrack 1 Backtrack
+1RB 0LC  0LB 1RC  1LD ---  0LC 0RA
+1RB ---  0LB 1RC  1LC 0RD  --- 1LA
+1RB 1RD  0LB 1RC  1LC 1RA  0RA ---
+1RB ---  0LB 1RC  0LC 0LD  0LB ---
+1RB ---  0LB 1RC  1LB 1LD  1RA 0LD | None Infinite Backtrack 3 Backtrack
+1RB 1LD  0LB 1RC  1LA ---  0RD 0RA
+1RB 0LD  0LB 1RC  1LA 1LA  0RC 1RZ
+1RB 1LC  0LB 1RC  1LA 1RD  1RZ 0RC
+1RB 1LD  0LB 1RC  0LA ---  0RD 0LA | None Infinite Backtrack 3 Backtrack
+1RB ---  0LB 1LC  1LD 0RC  1RB ---
+1RB 1LC  0LB 1LC  1LD 0RA  1RA ---
+1RB 0RC  0LB 1LC  1LD 1RA  1RA ---
+1RB 0RA  0LB 1LC  0RD 1RA  --- 1LA | None Infinite Backtrack 2 Backtrack
+1RB 0LD  0LB 1LC  0LD 1RA  1RA 1RZ
+1RB ---  0LB 1LC  0RC 1RD  1LD 0RB | None Infinite Backtrack 1 Backtrack
+1RB ---  0LB 1LC  1RB 0RD  0RD 1LD | None Infinite Backtrack 1 Backtrack
+1RB 1RC  0LB 1LC  1RA 0RC  --- --- | None Infinite Backtrack 1 Backtrack
+1RB ---  0LB 1LC  1LA 1LD  0RD 0RD
+1RB ---  0LB 1LC  1LA 0RD  1LD 0RD
+1RB ---  0LB 1LC  1LA 0LD  0RD 1RZ
+1RB 1LD  0LB 1LC  0RA 1LB  1RB --- | None Infinite Backtrack 2 Backtrack
+1RB 1LA  0LB 1LC  0RA 1RD  1RZ 0LC
+1RB 0RB  0LB 0RC  1LD ---  1RD 1LA
+1RB ---  0LB 0RC  1LD ---  0RD 1LA
+1RB ---  0LB 0RC  1LD 1RD  1RC 1RD | None Infinite Backtrack 1 Backtrack
+1RB ---  0LB 0LC  1LD ---  0RD 1RD
+1RB ---  0LB 0LC  1LD 0RA  1RC 1RB | None Infinite Backtrack 4 Backtrack
+1RB 1LC  0LB 0LC  1LD 0LA  1RC ---
+1RB 0LD  0LB 0LC  1LA 1RC  1RB ---
+1RB 1RC  0LB 1LA  1LD 0LA  --- 1RZ
+1RB 1LC  0LB 1LA  0RD ---  0LB 1RD
+1RB 1LC  0LB 1LA  0LD 1RD  1RA 1RZ
+1RB 0RC  0LB 1LA  --- 1LD  0RD 0LB | None Infinite Backtrack 2 Backtrack
+1RB 0LC  0LB 1LA  1LD ---  0RD 1RB
+1RB 0LC  0LB 1LA  0RD ---  0LB ---
+1RB 1RC  1LA 0LB  1LB 1RD  1RC ---
+1RB 1RC  1LA ---  1LC 1RD  0LA 0LC | None Infinite Backtrack 3 Backtrack
+1RB 1RC  1LA ---  1RD 1LD  1RC 0LD | None Infinite Backtrack 3 Backtrack
+1RB 1RC  1LA ---  1RD 1LD  0LD 1LC | None Infinite Backtrack 3 Backtrack
+1RB 1RC  1LA 1LC  --- 1LD  1RC 1RB | None Infinite Backtrack 2 Backtrack
+1RB 1RC  1LA 0LB  0RB 1LD  --- 1RA | None Infinite Backtrack 2 Backtrack
+1RB 1RC  1LA 0LD  0LB 1RC  --- 1LB
+1RB 1RC  1LA 1RZ  0LD 1LC  0RD 1LA
+1RB 1RC  1LA 1RZ  0LB 1LC  --- ---
+1RB 1RC  1LA 1LD  0LB 1LC  --- 1RZ
+1RB 1RC  1LA 1RD  1RD 0LC  0RB ---
+1RB 1RC  1LA 1LD  --- 1LB  1RB 0LA
+1RB 1RC  1LA 1RD  1RZ 0RB  1LD 0LA
+1RB 1RC  1LA 1LC  0RD 0RB  --- 1LA | None Infinite Backtrack 3 Backtrack
+1RB 1RC  1LA 0RA  1LD 0LA  --- 1LA | None Infinite Backtrack 2 Backtrack
+1RB 1LC  1LA 0RC  1RD 1RZ  1LA 1LD
+1RB 1LC  1LA ---  1RD 0LC  1LD 0RC | None Infinite Backtrack 3 Backtrack
+1RB 1LC  1LA ---  1LD 0LD  1RD 0RC | None Infinite Backtrack 3 Backtrack
+1RB 1LC  1LA 0LC  1LD 1LC  1RB ---
+1RB 1LC  1LA 1RC  1LD 1RA  0RB ---
+1RB 1LC  1LA 1RC  0RD 0LA  --- 1LB | None Infinite Backtrack 5 Backtrack
+1RB 1LC  1LA 1RC  0RD 1RZ  1LD 0RB
+1RB 1LC  1LA 1LD  0LD ---  0RB 0LB
+1RB 1LC  1LA 0RC  0LD 1LA  0RB ---
+1RB 1LC  1LA 0RA  1RC 1RD  --- 1RB
+1RB 1LC  1LA 1RZ  1RC 1LD  0RB 0LC
+1RB 1LC  1LA 1RZ  1RC 1LD  0LB 0LC
+1RB 1LC  1LA 0LD  0RC 1LD  1LA 1RZ
+1RB 1LC  1LA 0LD  1RB 0RD  1RZ 1RC
+1RB 1LC  1LA 1RD  1LB ---  0RB 1RD
+1RB 1LC  1LA 1RD  1LB 1RZ  --- 0RC
+1RB 1LC  1LA 0RD  1LB 1LB  --- 1RA
+1RB 1LC  1LA 0LD  1LB ---  0LB 1RC
+1RB 1LC  1LA 0RC  1LB 0LD  1RA 1RZ
+1RB 1LC  1LA 1RA  1LB 0LD  1RZ 1RD
+1RB 1LC  1LA 0RD  0RB ---  1RB 0RB | None Infinite Backtrack 4 Backtrack
+1RB 1LC  1LA 0LC  0RB 1LA  --- --- | None Infinite Backtrack 1 Backtrack
+1RB 1LC  1LA 0LD  1RA 0LC  --- 0RA | None Infinite Backtrack 2 Backtrack
+1RB 1LC  1LA 1RD  1LA ---  1RZ 0LB
+1RB 0RC  1LA 1RZ  0RB 1RD  1LC 0RD
+1RB 0RC  1LA 1RC  1RA 1RD  0RB ---
+1RB 0RC  1LA 1RZ  0LB 1LD  0RD 0RC
+1RB 0RC  1LA 0LA  1LA 1LD  0LC ---
+1RB 0RC  1LA 1LC  --- 1LD  1LB ---
+1RB 0RC  1LA 0RA  0LD 0RD  1LB 1RZ
+1RB 0RC  1LA ---  --- 0LD  0RD ---
+1RB 0RC  1LA ---  1RD 0LD  1LC 1RZ
+1RB 0RC  1LA 0RA  1LB 1RC  --- --- | None Infinite Backtrack 1 Backtrack
+1RB 0RC  1LA 1RZ  1LD 1LC  0RD 0RB
+1RB 0RC  1LA 0RD  0RB 0RC  1LD 1RZ
+1RB 0RC  1LA 1RD  1LB 0LC  --- 1RA
+1RB 0RC  1LA 0RA  1LA 0LC  --- --- | None Infinite Backtrack 1 Backtrack
+1RB 0RC  1LA 0RD  0LD 0RB  1LC 1RZ
+1RB 0RC  1LA 0RD  --- 0RB  1LB 1RD | None Infinite Backtrack 2 Backtrack
+1RB 0RC  1LA 1LC  0RD 0RB  1RZ 0RC
+1RB 0RC  1LA 1LD  --- 1LA  1RD 1RD | None Infinite Backtrack 2 Backtrack
+1RB 0LC  1LA 1RC  1RD 1LA  0RC ---
+1RB 0LC  1LA 1RA  1LD 1RA  0RB --- | None Infinite Backtrack 5 Backtrack
+1RB 0LC  1LA 1RB  1LD 0LB  1RA ---
+1RB 0LC  1LA ---  0RD 0LD  1RC 1LD | None Infinite Backtrack 3 Backtrack
+1RB 0LC  1LA 1RD  0RD 1RZ  1LC 1RB
+1RB 0LC  1LA 1LB  1RC 1LD  --- 1LB
+1RB 0LC  1LA ---  1RC 0LD  1LC 0LD | None Infinite Backtrack 3 Backtrack
+1RB 0LC  1LA 0RD  1RC 1RB  1RZ 0RD
+1RB 0LC  1LA 0LD  1RC 1RA  --- 1LC | None Infinite Backtrack 2 Backtrack
+1RB 0LC  1LA 1RD  1LB ---  0LB 0RB
+1RB 0LC  1LA 1LD  1LB ---  1LB 0RD
+1RB 0LC  1LA 1RD  0RB 1RZ  1LC 1RC
+1RB 0LC  1LA 0LC  0RB 0LD  1RB ---
+1RB 0LC  1LA 1LD  1RA 1RB  --- 0LC | None Infinite Backtrack 2 Backtrack
+1RB 0LC  1LA 1LD  1LA ---  0LB 0LD
+1RB 0LC  1LA 0RD  1LA 1RZ  1LA 1LC
+1RB 0LC  1LA 0LC  1LA 0RD  0LD ---
+1RB 0LC  1LA 1RD  0RA 1LA  1LA ---
+1RB 0LC  1LA 0LD  0RA ---  0LB 1RD
+1RB 1RB  1LA 1RC  1RD ---  0LD 0RB
+1RB 1RB  1LA 1RC  1RD 0RA  0LC ---
+1RB 1RB  1LA 1RC  0LD ---  0RD 0RD | None Infinite Backtrack 5 Backtrack
+1RB 1RB  1LA 1LC  --- 0LD  1RD 0LB
+1RB 1RB  1LA 1LC  1LC 0RB  --- --- | None Infinite Backtrack 1 Backtrack
+1RB 1RB  1LA 0RC  0RD ---  1LC 1LC | None Infinite Backtrack 5 Backtrack
+1RB 1RB  1LA 0LC  --- 1RD  1LD 1RD | None Infinite Backtrack 2 Backtrack
+1RB 1RB  1LA 0LC  1RD 1RC  0LC ---
+1RB 1LB  1LA 1LC  1RC 0RD  --- 0RC
+1RB 1LB  1LA 0RC  1RZ 1RD  1RC 0LD
+1RB 1LB  1LA 0RC  1RA 0LD  0RB --- | None Infinite Backtrack 2 Backtrack
+1RB 1LB  1LA 0RC  0LC 0LD  0LB ---
+1RB 1LB  1LA 0LC  1RZ 0LD  1RD 0LB
+1RB 0RB  1LA 1RC  0LD 0LC  1RZ 1LB
+1RB 0RB  1LA 1LC  1RD 1RZ  1RC 1LD
+1RB 0RB  1LA 1LC  0RD 1RZ  0RB 1RC
+1RB 0RB  1LA 1LC  0LB 0RD  --- 1RC
+1RB 0RB  1LA 1LC  0LB 1RB  --- --- | None Infinite Backtrack 1 Backtrack
+1RB 0RB  1LA 1LC  1LA 0LD  1RZ ---
+1RB 0RB  1LA 0RC  1LB 1LD  1LA --- | None Infinite Backtrack 2 Backtrack
+1RB 0LB  1LA 1RC  1LD ---  --- 1RZ
+1RB 0LB  1LA 1RC  1LC 1RB  --- --- | None Infinite Backtrack 1 Backtrack
+1RB 0LB  1LA 1LC  1RZ 1RD  1LC 0LD
+1RB 0LB  1LA 1LC  1RZ 1LD  1RD 0RC
+1RB 0LB  1LA 1LC  0RB 0RB  --- --- | None Infinite Backtrack 1 Backtrack
+1RB 0LB  1LA 0RC  0RD ---  0LA 0RC
+1RB 0LB  1LA 0LC  0LC 1RD  0LB --- | None Infinite Backtrack 2 Backtrack
+1RB 0LB  1LA 0LC  0RC 0LD  1RC ---
+1RB 1LA  1LA 1RC  0LC 1RD  0LB ---
+1RB 1LA  1LA 1RC  1RB 0LD  --- 0RB | None Infinite Backtrack 2 Backtrack
+1RB 1LA  1LA 1LC  0RA 0LC  --- --- | None Infinite Backtrack 1 Backtrack
+1RB 1LA  1LA 0RC  1RZ 1LD  1LD 0LC
+1RB 1LA  1LA 0RC  0RB 1LD  1RB --- | None Infinite Backtrack 2 Backtrack
+1RB 1LA  1LA 0RC  1RB 0LD  1LC 1RZ
+1RB 1LA  1LA 0LC  0LD 0RC  1RD 1RZ
+1RB 1RC  0LA ---  1RD 0RA  1LD 1RC
+1RB 1RC  0LA 1LB  1LD ---  1RB 1LC
+1RB 1RC  0LA 0LC  1LD 1RZ  0RC 0RB
+1RB 1RC  0LA 0LC  0RD 1RZ  1LB 1LA
+1RB 1RC  0LA 1LD  1LC 0RB  1RZ ---
+1RB 1RC  0LA 1LD  1LB ---  1RB 1LB | None Infinite Backtrack 2 Backtrack
+1RB 1RC  0LA 1RC  1LB 1RD  1RB ---
+1RB 1RC  0LA 1LB  1LA 0LD  --- 0RC | None Infinite Backtrack 3 Backtrack
+1RB 1RC  0LA 0LA  1LA 0RC  --- --- | None Infinite Backtrack 1 Backtrack
+1RB 1LC  0LA ---  1RD 1LB  0LC 0LD
+1RB 1LC  0LA ---  1RD 1RC  1RC 0LC | None Infinite Backtrack 2 Backtrack
+1RB 1LC  0LA 0RB  1RD ---  --- 1LB
+1RB 1LC  0LA 1RA  1RD 0RC  1RZ 1LB
+1RB 1LC  0LA 1RZ  1RD 0LD  1RA 0RB
+1RB 1LC  0LA 1RZ  1RD 0LC  1LD 0RB
+1RB 1LC  0LA 1RZ  0RD 0LA  1RA 0LC
+1RB 1LC  0LA 0RD  0RD ---  0RC 1LA
+1RB 1LC  0LA 0LC  0LD 0RB  1RA ---
+1RB 1LC  0LA 0RB  0LD 0RB  1LA ---
+1RB 1LC  0LA ---  1RC 0RD  1RA 0RB
+1RB 1LC  0LA 1RD  0RB 1RZ  0LC ---
+1RB 1LC  0LA 1LD  0RB 0LD  0RC ---
+1RB 1LC  0LA 1LD  1RA 1LA  --- 1LA | None Infinite Backtrack 2 Backtrack
+1RB 1LC  0LA 1RC  1LA 1RD  0RD ---
+1RB 1LC  0LA 0LC  1LA 1LD  0RB ---
+1RB 1LC  0LA 1RB  1LA 0RD  --- 0LC | None Infinite Backtrack 3 Backtrack
+1RB 0RC  0LA 1RC  1RD 0RB  1LC ---
+1RB 0RC  0LA 1RZ  1RD 1LC  0LC 0LB
+1RB 0RC  0LA 1LB  1RD ---  0LB 1RB | None Infinite Backtrack 2 Backtrack
+1RB 0RC  0LA 1LC  1LD 0LD  1LA ---
+1RB 0RC  0LA 1LC  1LA 1LB  --- --- | None Infinite Backtrack 1 Backtrack
+1RB 0LC  0LA ---  1RD 1LC  0LC 1RZ
+1RB 0LC  0LA 1RB  1RD 0LA  1LB --- | None Infinite Backtrack 2 Backtrack
+1RB 0LC  0LA ---  1RD 1LD  1RA 1LD
+1RB 0LC  0LA 1LC  1LD 0LB  1RC ---
+1RB 0LC  0LA 1RC  1LD 1RB  1LA ---
+1RB 0LC  0LA 1RC  1LD 1LA  1LA 1RZ
+1RB 0LC  0LA 0RB  1LA 0LD  1LA ---
+1RB 1LA  0LA 1RC  0LC 0LD  1RZ 1RC
+1RB 1LA  0LA 1LC  --- 0RD  0LD 1LD | None Infinite Backtrack 2 Backtrack
+1RB 1LA  0LA 1LC  1RZ 0LD  1RD 0RB
+1RB 1LA  0LA 1LC  1RB 0LD  0LC ---
+1RB 1LA  0LA 1LC  1LD 0RC  1LB ---
+1RB 1LA  0LA 1LC  0RD 0RB  --- 1LB | None Infinite Backtrack 2 Backtrack
+1RB 1LA  0LA 0RC  1RA 1LD  1LB --- | None Infinite Backtrack 2 Backtrack
