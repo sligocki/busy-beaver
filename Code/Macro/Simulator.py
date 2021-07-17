@@ -37,6 +37,8 @@ def add_option_group(parser):
   group.add_option("-p", "--no-prover", dest="prover",
                    action="store_false", default=True,
                    help="Turn OFF proof system.")
+  group.add_option("--html-format", action="store_true",
+                   help="Print tape in an HTML format.")
 
   parser.add_option_group(group)
 
@@ -73,7 +75,7 @@ class Simulator(object):
     # Init tape and prover (if needed).
     if init_tape:
       self.tape = Tape.Chain_Tape()
-      self.tape.init(self.machine.init_symbol, self.machine.init_dir)
+      self.tape.init(self.machine.init_symbol, self.machine.init_dir, options)
     if options.prover:
       self.prover = Proof_System.Proof_System(machine=self.machine,
                                               options=self.options,
@@ -246,11 +248,15 @@ class Simulator(object):
 
   def verbose_print(self):
     if self.verbose:
-      print "%s %6d  %s" % (self.verbose_prefix, self.num_loops, self.tape.print_with_state(self.state)),
-      if self.compute_steps:
-        print "(%s, %s)" % (self.step_num - self.old_step_num, self.step_num)
+      if self.options.html_format:
+        print "%s %6d: %s<br>" % (self.verbose_prefix, self.step_num,
+                                  self.tape.print_with_state(self.state))
       else:
-        print ""
+        print "%s %6d  %s" % (self.verbose_prefix, self.num_loops, self.tape.print_with_state(self.state)),
+        if self.compute_steps:
+          print "(%s, %s)" % (self.step_num - self.old_step_num, self.step_num)
+        else:
+          print ""
 
 def template(title, steps, loops):
   """Pretty print row of the steps table."""
