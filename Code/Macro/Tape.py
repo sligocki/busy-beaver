@@ -50,12 +50,21 @@ class Repeated_Symbol(object):
   def __hash__(self):
     return self.symbol + self.num
 
-  def __repr__(self):
+  def num_str(self):
+    """Rep count as string. Approx if count is too large."""
     if type(self.num) not in (int, long) or self.num < 100000000:
-      num_string = str(self.num)
+      return str(self.num)
     else:
-      num_string = "(~10^%.1f)" % math.log10(self.num)
-    return "%s^%s" % (str(self.symbol), num_string)
+      return "(~10^%.1f)" % math.log10(self.num)
+
+  def to_string(self, html_format):
+    if html_format:
+      return "%s<sup>%s</sup>" % (str(self.symbol), self.num_str())
+    else:
+      return "%s^%s" % (str(self.symbol), self.num_str())
+
+  def __repr__(self):
+    return self.to_string(html_format=False)
 
   def copy(self):
     return Repeated_Symbol(self.symbol, self.num, self.id)
@@ -64,13 +73,14 @@ class Chain_Tape(object):
   """Stores the turing machine tape with repetition compression."""
   # Total number of times tapes are copied. Copies are expensive.
   num_copies = 0
-  def init(self, init_symbol, init_dir):
+  def init(self, init_symbol, init_dir, options):
     self.dir = init_dir
     self.tape = [[], []]
     self.tape[0].append(Repeated_Symbol(init_symbol, INF))
     self.tape[1].append(Repeated_Symbol(init_symbol, INF))
     # Measures head displacement from initial position
     self.displace = 0
+    self.options = options
 
   def compressed_size(self):
     """Get compressed length of tape."""
@@ -86,23 +96,25 @@ class Chain_Tape(object):
     return self.print_with_state(None)
 
   def print_with_state(self, state):
-    retval = ""
-    for sym in self.tape[0]:
-      retval = retval + `sym` + " "
+    left_tape = " ".join(sym.to_string(self.options.html_format)
+                         for sym in self.tape[0])
+    right_tape = " ".join(sym.to_string(self.options.html_format)
+                          for sym in reverse(self.tape[1]))
 
     if state is None:
-      if self.dir:  dir = "-> "
-      else:         dir = "<- "
-      retval = retval + dir
+      state_str = "-"
     else:
-      if self.dir:  dir = "%s> " % state.print_with_dir(self.dir)
-      else:         dir = "<%s " % state.print_with_dir(self.dir)
-      retval = retval + dir
+      state_str = state.print_with_dir(self.dir)
 
-    for sym in reverse(self.tape[1]):
-      retval = retval + `sym` + " "
+    if self.dir:
+      dir_str = "%s>" % state_str
+    else:
+      dir_str = "<%s" % state_str
 
-    return retval
+    if self.options.html_format:
+      dir_str = "<b>%s</b>" % dir_str
+
+    return left_tape + " " + dir_str + " " + right_tape
 
 
   def copy(self):
@@ -113,6 +125,7 @@ class Chain_Tape(object):
     s0 = [x.copy() for x in self.tape[0]]
     s1 = [x.copy() for x in self.tape[1]]
     new.tape = [s0, s1]
+    new.options =  options
     return new
 
   def get_nonzeros(self, eval_symbol, state_value):
