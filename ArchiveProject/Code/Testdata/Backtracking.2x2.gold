@@ -1,0 +1,41 @@
+1RB ---  1RZ --- | None Halt ? 2
+1RB ---  1RB ---
+1RB ---  1LB 1RZ
+1RB ---  1LB 1RB | None Infinite Backtrack 1 Backtrack
+1RB ---  1LB 1LB | None Infinite Backtrack 1 Backtrack
+1RB ---  1LB 0RB | None Infinite Backtrack 1 Backtrack
+1RB ---  1LB 0LB | None Infinite Backtrack 1 Backtrack
+1RB 1RZ  1LB 1RA | None Halt ? 4
+1RB 1RZ  1LB 1LA | None Halt ? 6
+1RB 1RZ  1LB 0RA | None Halt ? 4
+1RB ---  1LB 0LA
+1RB ---  0RB ---
+1RB ---  0LB 1RZ
+1RB ---  0LB 1RB | None Infinite Backtrack 1 Backtrack
+1RB ---  0LB 1LB | None Infinite Backtrack 1 Backtrack
+1RB ---  0LB 0RB | None Infinite Backtrack 1 Backtrack
+1RB ---  0LB 0LB | None Infinite Backtrack 1 Backtrack
+1RB ---  0LB 1RA | None Infinite Backtrack 1 Backtrack
+1RB 1RZ  0LB 1LA | None Halt ? 6
+1RB ---  0LB 0RA | None Infinite Backtrack 1 Backtrack
+1RB ---  0LB 0LA
+1RB ---  1RA --- | None Infinite Backtrack 1 Backtrack
+1RB 1RZ  1LA --- | None Halt ? 3
+1RB 1RB  1LA 1RZ | None Halt ? 4
+1RB 1LB  1LA 1RZ | None Halt ? 6
+1RB 0RB  1LA 1RZ | None Halt ? 4
+1RB 0LB  1LA 1RZ | None Halt ? 6
+1RB 1RA  1LA ---
+1RB 1LA  1LA 1RZ | None Halt ? 5
+1RB 0RA  1LA ---
+1RB 0LA  1LA --- | None Infinite Backtrack 3 Backtrack
+1RB ---  0RA --- | None Infinite Backtrack 1 Backtrack
+1RB 1RZ  0LA --- | None Halt ? 3
+1RB 1RB  0LA --- | None Infinite Backtrack 1 Backtrack
+1RB 1LB  0LA ---
+1RB 0RB  0LA --- | None Infinite Backtrack 1 Backtrack
+1RB 0LB  0LA ---
+1RB 1RA  0LA --- | None Infinite Backtrack 1 Backtrack
+1RB 1LA  0LA 1RZ | None Halt ? 5
+1RB 0RA  0LA --- | None Infinite Backtrack 1 Backtrack
+1RB 0LA  0LA --- | None Infinite Backtrack 1 Backtrack
