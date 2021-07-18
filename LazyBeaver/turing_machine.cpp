@@ -148,7 +148,6 @@ TuringMachine* ReadTuringMachine(std::istream* instream, const std::string& base
       i += 1;
     }
     return new TuringMachine(transitions, base_name);
-
   } else {
     // Couldn't read line, so we're done.
     return nullptr;
