@@ -39,6 +39,7 @@ class SystemTest(unittest.TestCase):
 
     self.options.compute_steps = True
     self.options.verbose_prover = True
+    self.options.html_format = False
 
   def test_apply_rule_limited_diff_rule(self):
     # To construct a "Proof_System", a TM is needed.  This will be a
@@ -57,7 +58,7 @@ class SystemTest(unittest.TestCase):
     current_state = Turing_Machine.Simple_Machine_State(0)
 
     current_tape = Tape.Chain_Tape()
-    current_tape.init(0,0)
+    current_tape.init(0,0,self.options)
     current_tape.tape[0] = [Tape.Repeated_Symbol(0,INF),
                             Tape.Repeated_Symbol(1,10),
                             Tape.Repeated_Symbol(2,10),
@@ -82,7 +83,7 @@ class SystemTest(unittest.TestCase):
     expr_c = Algebraic_Expression.Expression_from_string("(c+2)")
 
     initial_tape = Tape.Chain_Tape()
-    initial_tape.init(0,0)
+    initial_tape.init(0,0,self.options)
     initial_tape.tape[0] = [Tape.Repeated_Symbol(0,expr_a),
                            ]
     initial_tape.tape[1] = [Tape.Repeated_Symbol(1,expr_c),
@@ -93,7 +94,7 @@ class SystemTest(unittest.TestCase):
     right_dist = 2
 
     diff_tape = Tape.Chain_Tape()
-    diff_tape.init(0,0)
+    diff_tape.init(0,0,self.options)
     diff_tape.tape[0] = [Tape.Repeated_Symbol(0,-2),
                         ]
     diff_tape.tape[1] = [Tape.Repeated_Symbol(1,-1),
@@ -115,7 +116,7 @@ class SystemTest(unittest.TestCase):
     print "  ",results
 
     final_tape = Tape.Chain_Tape()
-    final_tape.init(0,0)
+    final_tape.init(0,0,self.options)
     final_tape.tape[0] = [Tape.Repeated_Symbol(0,INF),
                           Tape.Repeated_Symbol(1,10),
                           Tape.Repeated_Symbol(2,10),
