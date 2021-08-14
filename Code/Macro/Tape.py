@@ -125,7 +125,7 @@ class Chain_Tape(object):
     s0 = [x.copy() for x in self.tape[0]]
     s1 = [x.copy() for x in self.tape[1]]
     new.tape = [s0, s1]
-    new.options =  options
+    new.options = self.options
     return new
 
   def get_nonzeros(self, eval_symbol, state_value):
