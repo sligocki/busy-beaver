@@ -7,10 +7,10 @@ import itertools
 from pprint import pprint
 
 
-def orbit_length(col_func, start_val):
+def orbit_length(col_func, start_val, max_orbit):
   vals = set()
   val = start_val
-  for n in itertools.count(1):
+  for n in range(max_orbit):
     vals.add(val)
     val = col_func(val)
     # If orbit finishes.
@@ -19,11 +19,12 @@ def orbit_length(col_func, start_val):
     # If orbit cycles.
     if val in vals:
       return None
-  # Note: This will never end if orbit diverges!
+  # If orbit was too long ... we assume it's infinite ...
+  return None
 
-def find_long_orbits(col_func, start_range):
+def find_long_orbits(col_func, start_range, max_orbit):
   orbits = [(length, val) for val in start_range
-            if (length := orbit_length(col_func, val)) is not None]
+            if (length := orbit_length(col_func, val, max_orbit)) is not None]
   return sorted(orbits, reverse=True)
 
 def enum_cartesian_power(val_range, val_count):
@@ -56,7 +57,7 @@ class CollatzFunction:
   def __repr__(self):
     return f"CollatzFunction({self.in_mod}, {self.out_mod}, {self.remainders})"
 
-def search_collatz(in_mod, out_mod, max_remainder_diff, start_range):
+def search_collatz(in_mod, out_mod, max_remainder_diff, start_range, max_orbit):
   orbits = []
   # We search for Collatz functions in "Normal Form". Specifically,
   #  * Require undefined transition to be the last one.
@@ -67,7 +68,7 @@ def search_collatz(in_mod, out_mod, max_remainder_diff, start_range):
     for rest in enum_cartesian_power(remainder_range, in_mod - 2):
       col_func = CollatzFunction(in_mod, out_mod, [remainder0] + rest + [None])
       orbits += [(orbit_len, start_val, col_func)
-                 for (orbit_len, start_val) in find_long_orbits(col_func, start_range)]
+                 for (orbit_len, start_val) in find_long_orbits(col_func, start_range, max_orbit)]
   return sorted(orbits, key=(lambda x: (-x[0], abs(x[1]))))[:40]
 
 def main():
@@ -76,10 +77,12 @@ def main():
   parser.add_argument("out_mod", type=int)
   parser.add_argument("--max-remainder-diff", type=int, default=10)
   parser.add_argument("--max-start-val", type=int, default=20)
+  parser.add_argument("--max-orbit", type=int, default=1_000_000)
   args = parser.parse_args()
 
   start_range = list(range(-args.max_start_val, args.max_start_val + 1))
-  pprint(search_collatz(args.in_mod, args.out_mod, args.max_remainder_diff, start_range))
+  pprint(search_collatz(args.in_mod, args.out_mod, args.max_remainder_diff, start_range,
+                        args.max_orbit))
 
 if __name__ == "__main__":
   main()
