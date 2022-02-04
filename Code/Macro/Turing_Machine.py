@@ -52,6 +52,7 @@ class Transition(object):
     self.num_base_steps = num_base_steps
     self.states_used = states_used
 
+  # TODO: Deprecate
   def to_legacy_tuple(self):
     """Return legacy tuple-form of transition."""
     return (tuple([self.condition] + self.condition_details),
@@ -66,6 +67,7 @@ class Turing_Machine(object):
     Function: get_transition, eval_symbol, eval_state
     Constants: init_symbol, init_state, and init_dir, num_states, num_symbols"""
 
+  # TODO: Deprecate
   def get_transition(self, symbol_in, state_in, dir_in):
     """Returns legacy tuple for now."""
     return self.get_trans_object(symbol_in, state_in, dir_in).to_legacy_tuple()
