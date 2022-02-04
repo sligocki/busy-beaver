@@ -165,7 +165,7 @@ def ttable_to_transition(TTable, state_in, symbol_in):
   if symbol_out == -1:
     # Treat an undefined cell as a halt, except note that it was undefined.
     condition = UNDEFINED
-    condition_details = (symbol_in, state_in)
+    condition_details = [(symbol_in, state_in)]
     symbol_out = 1; state_out = -1; dir_out = RIGHT
   # Historical signaling of final cell (transition to halt): (1, 1, -1)
   elif state_out == -1:
