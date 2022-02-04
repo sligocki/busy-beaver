@@ -10,7 +10,6 @@ formats.
 import sys, string
 
 from Macro import Turing_Machine, Simulator, Block_Finder
-import Input_CSV_Machine
 import IO
 
 def run(machine, block_size, back, prover, recursive, options):
@@ -94,8 +93,6 @@ if __name__ == "__main__":
                     help="Specify a maximum number of loops.")
   parser.add_option("--print-loops", type=int, default=10000, metavar="LOOPS",
                     help="Print every LOOPS loops [Default %default].")
-  parser.add_option("--csv", action="store_true",
-                    help="Read input file as CSV not standard format.")
 
   parser.add_option("--manual", action="store_true",
                     help="Don't run any simulation, just set up simulator "
@@ -133,14 +130,10 @@ if __name__ == "__main__":
   else:
     line = 1
 
-  if options.csv:
-    table = Input_CSV_Machine.read_csv_to_table(filename)
-    machine = Input_CSV_Machine.convert_table_to_machine(table)
-  else:
-    ttable = IO.load_TTable_filename(filename, line)
-    machine = Turing_Machine.make_machine(ttable)
-    if not options.quiet:
-      print Turing_Machine.machine_ttable_to_str(machine)
+  ttable = IO.load_TTable_filename(filename, line)
+  machine = Turing_Machine.make_machine(ttable)
+  if not options.quiet:
+    print Turing_Machine.machine_ttable_to_str(machine)
 
   run(machine, options.block_size, options.backsymbol, options.prover,
                options.recursive, options)
