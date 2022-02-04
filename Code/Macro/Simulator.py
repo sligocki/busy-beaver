@@ -92,6 +92,7 @@ class Simulator(object):
     self.op_details = ()
 
     # Stats
+    self.states_used = set()
     self.num_loops = 0
     self.num_macro_moves = 0
     self.num_chain_moves = 0
@@ -137,48 +138,42 @@ class Simulator(object):
     # places step() could early-return.
     self.num_loops += 1
     if self.prover:
-      # Log the configuration and see if we can apply a rule.
-      cond, new_tape, num_steps, replace_vars = self.prover.log(self.tape, self.state, self.step_num, self.num_loops-1)
-
-      # If the prover has been printing, give us a newline and remind us
-      # what the current configuration is.
-      # TODO(sligocki): Figure out how to get this to happen only when prover
-      # actually printed something (it doesn't if it just logged).
-      #if self.prover.verbose:
-      #  print
-      #  self.num_loops -= 1  # Kludgey :/
-      #  self.verbose_print()
-      #  self.num_loops += 1
+      # Log the configuration in the prover and apply rule if possible.
+      prover_result = self.prover.log_and_apply(
+        self.tape, self.state, self.step_num, self.num_loops-1)
 
       # Proof system says that machine will repeat forever
-      if cond == Turing_Machine.INF_REPEAT:
+      if prover_result.condition == Proof_System.INF_REPEAT:
         self.op_state = Turing_Machine.INF_REPEAT
         self.inf_reason = PROOF_SYSTEM
-        # TODO: Quasihalt, states unused, ...
+        # Get set of states which will *not* be used in this infinite repeat.
+        self.inf_states_unused = \
+          set(self.machine.list_base_states()) - prover_result.states_used
         self.verbose_print()
         return
       # Proof system says that we can apply a rule
-      elif cond == Turing_Machine.RUNNING:
+      elif prover_result.condition == Proof_System.APPLY_RULE:
         # TODO(shawn): This seems out of place here and is the only place in
         # the Simulator where we distinguish Algebraic_Expressions.
         # We should clean it up in some way.
-        if replace_vars:
+        if prover_result.replace_vars:
           assert self.options.allow_collatz
           # We don't want the update below to overwrite things.
           assert not frozenset(self.replace_vars.keys()).intersection(
-                     frozenset(replace_vars.keys()))
-          self.replace_vars.update(replace_vars)
+                     frozenset(prover_result.replace_vars.keys()))
+          self.replace_vars.update(prover_result.replace_vars)
           # Update all instances of old variable (should just be in steps).
           assert isinstance(self.step_num, Algebraic_Expression)
-          self.step_num = self.step_num.substitute(replace_vars)
+          self.step_num = self.step_num.substitute(prover_result.replace_vars)
           assert isinstance(self.old_step_num, Algebraic_Expression)
-          self.old_step_num = self.old_step_num.substitute(replace_vars)
+          self.old_step_num = self.old_step_num.substitute(prover_result.replace_vars)
           assert not isinstance(self.num_loops, Algebraic_Expression)
-        self.tape = new_tape
+        self.tape = prover_result.new_tape
         self.num_rule_moves += 1
+        self.states_used.update(prover_result.states_used)
         if self.compute_steps:
-          self.step_num += num_steps
-          self.steps_from_rule += num_steps
+          self.step_num += prover_result.num_base_steps
+          self.steps_from_rule += prover_result.num_base_steps
         self.verbose_print()
         return
     # Get current symbol
@@ -196,11 +191,13 @@ class Simulator(object):
         self.op_state = Turing_Machine.INF_REPEAT
         self.inf_reason = CHAIN_MOVE
         # Get set of states which will *not* be used in this infinite repeat.
-        self.inf_states_unused = set(self.machine.list_base_states()) - trans.states_used
+        self.inf_states_unused = \
+          set(self.machine.list_base_states()) - trans.states_used
         self.verbose_print()
         return
       # Don't need to change state or direction
       self.num_chain_moves += 1
+      self.states_used.update(trans.states_used)
       if self.compute_steps:
         self.step_num += trans.num_base_steps * num_reps
         self.steps_from_chain += trans.num_base_steps * num_reps
@@ -210,13 +207,15 @@ class Simulator(object):
       self.state = trans.state_out
       self.dir = trans.dir_out
       self.num_macro_moves += 1
+      self.states_used.update(trans.states_used)
       if self.compute_steps:
         self.step_num += trans.num_base_steps
         self.steps_from_macro += trans.num_base_steps
       if self.op_state == Turing_Machine.INF_REPEAT:
         self.inf_reason = REPEAT_IN_PLACE
         # Get set of states which will *not* be used in this infinite repeat.
-        self.inf_states_unused = set(self.machine.list_base_states()) - trans.states_used
+        self.inf_states_unused = \
+          set(self.machine.list_base_states()) - trans.states_used
     if self.op_state != Turing_Machine.UNDEFINED:
       self.verbose_print()
 

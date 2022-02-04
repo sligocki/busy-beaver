@@ -108,34 +108,27 @@ class SystemTest(unittest.TestCase):
 
     rule_num = 1
 
-    rule = Proof_System.Limited_Diff_Rule(initial_tape,left_dist,right_dist,diff_tape,initial_state,num_steps,num_loops,rule_num)
+    rule = Proof_System.Limited_Diff_Rule(initial_tape,left_dist,right_dist,diff_tape,initial_state,num_steps,num_loops,rule_num, states_used=set())
 
-    success, results = proof.apply_rule(rule,current_config)
+    success, (prover_result, large_delta) = proof.apply_rule(rule,current_config)
 
-    print success
-    print "  ",results
-
-    final_tape = Tape.Chain_Tape()
-    final_tape.init(0,0,self.options)
-    final_tape.tape[0] = [Tape.Repeated_Symbol(0,INF),
-                          Tape.Repeated_Symbol(1,10),
-                          Tape.Repeated_Symbol(2,10),
-                          Tape.Repeated_Symbol(0, 2),
-                         ]
-    final_tape.tape[1] = [Tape.Repeated_Symbol(0,INF),
-                          Tape.Repeated_Symbol(2,10),
-                          Tape.Repeated_Symbol(1,11),
-                          Tape.Repeated_Symbol(0,19),
-                         ]
-
-    final_num_steps = 44
-
-    (running, tape, num_steps, var_sub), large_delta = results
+    expected_tape = Tape.Chain_Tape()
+    expected_tape.init(0,0,self.options)
+    expected_tape.tape[0] = [Tape.Repeated_Symbol(0,INF),
+                             Tape.Repeated_Symbol(1,10),
+                             Tape.Repeated_Symbol(2,10),
+                             Tape.Repeated_Symbol(0, 2),
+                            ]
+    expected_tape.tape[1] = [Tape.Repeated_Symbol(0,INF),
+                             Tape.Repeated_Symbol(2,10),
+                             Tape.Repeated_Symbol(1,11),
+                             Tape.Repeated_Symbol(0,19),
+                            ]
 
     self.assertEqual(success, True)
-    self.assertEqual(running, Turing_Machine.RUNNING)
-    self.assertEqual(tape, final_tape)
-    self.assertEqual(num_steps, final_num_steps)
+    self.assertEqual(prover_result.condition, Proof_System.APPLY_RULE)
+    self.assertEqual(prover_result.new_tape, expected_tape)
+    self.assertEqual(prover_result.num_base_steps, 44)
 
 if __name__ == '__main__':
   unittest.main()

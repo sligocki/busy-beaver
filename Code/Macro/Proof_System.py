@@ -48,7 +48,7 @@ class Rule(object):
 
 class Diff_Rule(Rule):
   """A rule that specifies constant deltas for each tape block's exponent."""
-  def __init__(self, initial_tape, diff_tape, initial_state, num_steps, num_loops, rule_num):
+  def __init__(self, initial_tape, diff_tape, initial_state, num_steps, num_loops, rule_num, states_used):
     # TODO: Use basic lists instead of tapes, we never use the symbols.
     # TODO: Have a variable list and a min list instead of packing both
     # into init_tape.
@@ -62,6 +62,8 @@ class Diff_Rule(Rule):
     self.initial_state = initial_state
     self.num_loops = num_loops
     self.name = str(rule_num)  # Unique identifier.
+    self.states_used = states_used
+
     self.num_uses = 0  # Number of times this rule has been applied.
 
   def __repr__(self):
@@ -72,7 +74,7 @@ class Diff_Rule(Rule):
 class General_Rule(Rule):
   """A general rule that specifies any general end configuration."""
   def __init__(self, var_list, min_list,
-               result_tape, num_steps, num_loops, rule_num):
+               result_tape, num_steps, num_loops, rule_num, states_used):
     assert len(var_list) == len(min_list)
     self.var_list = var_list  # List of variables (or None) to assign repetition counts to.
     self.min_list = min_list  # List of minimum values for variables.
@@ -82,6 +84,8 @@ class General_Rule(Rule):
     self.num_steps = num_steps
     self.num_loops = num_loops
     self.name = str(rule_num)
+    self.states_used = states_used
+
     self.num_uses = 0
 
     # Is this an infinite rule?
@@ -116,6 +120,10 @@ class Collatz_Rule(Rule):
     self.num_steps = num_steps
     self.num_loops = num_loops
     self.name = ""  # Name will be set in Collatz_Rule_Group.
+
+    # TODO: Implement
+    raise Exception, "Collatz_Rule.states_used is not defined"
+    self.states_used = None  # TODO
 
     self.num_uses = 0
 
@@ -160,6 +168,11 @@ class Collatz_Rule_Group(Rule):
 
     self.name = str(rule_num)
     subrule.name = "%s.%d" % (self.name, len(self.rules))
+
+    # TODO: Implement
+    raise Exception, "Collatz_Rule_Group.states_used is not defined"
+    self.states_used = None  # TODO
+
     self.num_uses = 0
 
   def add_rule(self, rule):
@@ -190,7 +203,7 @@ class Collatz_Rule_Group(Rule):
 
 class Limited_Diff_Rule(Rule):
   """A Diff_Rule that only refers to a sub-section of the tape."""
-  def __init__(self, initial_tape, left_dist, right_dist, diff_tape, initial_state, num_steps, num_loops, rule_num):
+  def __init__(self, initial_tape, left_dist, right_dist, diff_tape, initial_state, num_steps, num_loops, rule_num, states_used):
     # TODO: Use basic lists instead of tapes, we never use the symbols.
     # TODO: Have a variable list and a min list instead of packing both
     # into init_tape.
@@ -207,6 +220,8 @@ class Limited_Diff_Rule(Rule):
     self.initial_state = initial_state
     self.num_loops = num_loops
     self.name = str(rule_num)  # Unique identifier.
+    self.states_used = states_used
+
     self.num_uses = 0  # Number of times this rule has been applied.
 
   def __repr__(self):
@@ -270,6 +285,22 @@ class Past_Config(object):
 
     # Now we can finally try a proof.
     return True
+
+
+# Possible values for ProverResult.condition
+NOTHING_TO_DO = "Nothing_To_Do"  # No rule applies, nothing to do.
+APPLY_RULE = "Apply_Rule"        # Rule applies, but only finitely many times.
+INF_REPEAT = "Inf_Repeat"        # Rule applies infinitely.
+
+class ProverResult(object):
+  def __init__(self, condition,
+               new_tape = None, num_base_steps = None, replace_vars = None,
+               states_used = None):
+    self.condition = condition
+    self.new_tape = new_tape
+    self.num_base_steps = num_base_steps
+    self.replace_vars = replace_vars if replace_vars else {}
+    self.states_used = states_used
 
 class Proof_System(object):
   """Stores past information, looks for patterns and tries to prove general
@@ -417,10 +448,10 @@ class Proof_System(object):
       if found_rule:
         print
 
-  def log(self, tape, state, step_num, loop_num):
+  def log_and_apply(self, tape, state, step_num, loop_num):
     """
     Log this configuration into the memory and check if it is similar to a
-    past one. Returned boolean answers question: Rule applies?
+    past one. Apply rule if possible.
     """
     # Stores state, direction pointed, and list of symbols on tape.
     # Note: we ignore the number of repetitions of these sequences so that we
@@ -448,7 +479,7 @@ class Proof_System(object):
       for rule in rules:
         is_good, res = self.apply_rule(rule, full_config)
         if is_good:
-          trans, large_delta = res
+          result, large_delta = res
           # Optimization: If we apply a rule and we are not trying to perform
           # recursive proofs, clear past configuration memory.
           # Likewise, even normal recursive proofs cannot use every subrule
@@ -460,15 +491,15 @@ class Proof_System(object):
             if self.past_configs is not None:
               self.past_configs.clear()
           rule.num_uses += 1
-          assert len(trans) == 4
-          return trans
-        # return False, None, None, None
+          assert isinstance(result, ProverResult), result
+          assert result.states_used, (rule, result)
+          return result
     else:
       if stripped_config in self.rules:
         rule = self.rules[stripped_config]
         is_good, res = self.apply_rule(rule, full_config)
         if is_good:
-          trans, large_delta = res
+          result, large_delta = res
           # Optimization: If we apply a rule and we are not trying to perform
           # recursive proofs, clear past configuration memory.
           # Likewise, if we apply a rule with a negative diff < -1 and we
@@ -477,15 +508,15 @@ class Proof_System(object):
             if self.past_configs is not None:
               self.past_configs.clear()
           rule.num_uses += 1
-          assert len(trans) == 4
-          return trans
+          assert isinstance(result, ProverResult), result
+          assert result.states_used, (rule, result)
+          return result
         if res != UNPROVEN_PARITY:
-          return False, None, None, None
+          return ProverResult(NOTHING_TO_DO)
 
     # If we are not trying to prove new rules, quit.
     if self.past_configs is None:
-      # TODO: Just return False for fail and object for success.
-      return False, None, None, None
+      return ProverResult(NOTHING_TO_DO)
 
     # Otherwise log it into past_configs and see if we should try and prove
     # a new rule.
@@ -552,12 +583,13 @@ class Proof_System(object):
           # Try to apply transition
           is_good, res = self.apply_rule(rule, full_config)
           if is_good:
-            trans, large_delta = res
+            result, large_delta = res
             rule.num_uses += 1
-            assert len(trans) == 4
-            return trans
+            assert isinstance(result, ProverResult), result
+            assert result.states_used, (rule, result)
+            return result
 
-    return False, None, None, None
+    return ProverResult(NOTHING_TO_DO)
 
   def prove_rule(self, stripped_config, full_config, delta_loop):
     """Try to prove a general rule based upon specific example.
@@ -752,7 +784,8 @@ class Proof_System(object):
 
       self.num_recursive_rules += 1
       rule = General_Rule(var_list, min_list, result_tape, num_steps,
-                          gen_sim.num_loops, self.rule_num)
+                          gen_sim.num_loops, self.rule_num,
+                          states_used=gen_sim.states_used)
 
       if self.verbose:
         print
@@ -855,9 +888,10 @@ class Proof_System(object):
         diff_tape.tape[0] = diff_tape.tape[0][-left_dist:]
         diff_tape.tape[1] = diff_tape.tape[1][-right_dist:]
 
-        rule = Limited_Diff_Rule(initial_tape, left_dist, right_dist, diff_tape, new_state, num_steps, gen_sim.num_loops, self.rule_num)
+        rule = Limited_Diff_Rule(initial_tape, left_dist, right_dist, diff_tape, new_state, num_steps, gen_sim.num_loops, self.rule_num,
+                                 states_used=gen_sim.states_used)
       else:
-        rule = Diff_Rule(initial_tape, diff_tape, new_state, num_steps, gen_sim.num_loops, self.rule_num)
+        rule = Diff_Rule(initial_tape, diff_tape, new_state, num_steps, gen_sim.num_loops, self.rule_num, states_used=gen_sim.states_used)
 
       if self.verbose:
         print
@@ -869,9 +903,6 @@ class Proof_System(object):
 
   def apply_rule(self, rule, start_config):
     """Try to apply a rule to a given configuration."""
-    # TODO: Currently this returns a new tape and does not mutate the input.
-    # Is that necessary, would it be worth it to mutate the input config
-    # in-place?
     if self.verbose:
       start_state, start_tape, start_step_num, start_loop_num = start_config
       print
@@ -904,15 +935,18 @@ class Proof_System(object):
       success, other = self.apply_diff_rule(rule, limited_start_config)
 
       if success:
-        (machine_state, final_tape, diff_steps, replace_vars), large_delta = other
+        # (machine_state, final_tape, diff_steps, replace_vars)
+        prover_result, large_delta = other
 
-        if machine_state == Turing_Machine.RUNNING:
-          final_tape.tape[0] = save_left  + final_tape.tape[0]
-          final_tape.tape[1] = save_right + final_tape.tape[1]
+        if prover_result.condition == APPLY_RULE:
+          # If we are applying this rule, add back on the saved part of the
+          # tape that was not part of this limited rule.
+          prover_result.new_tape.tape[0] = \
+            save_left  + prover_result.new_tape.tape[0]
+          prover_result.new_tape.tape[1] = \
+            save_right + prover_result.new_tape.tape[1]
 
-          other = ((machine_state, final_tape, diff_steps, replace_vars), large_delta)
-
-      return success, other
+      return success, (prover_result, large_delta)
     else:
       assert False, (type(rule), repr(rule))
 
@@ -947,7 +981,7 @@ class Proof_System(object):
               self.print_this("Config block:", new_block)
               self.print_this("Rule initial block:", init_block)
               self.print_this("")
-            return False, 1
+            return False, None
           delta_value[x] = diff_block.num
           assert(isinstance(delta_value[x], (int, long)))
           # If this block's repetitions will be depleted during this transition,
@@ -966,7 +1000,7 @@ class Proof_System(object):
                       self.print_this("%r // %r"
                                       % (init_value[x], -delta_value[x]))
                       self.print_this("")
-                    return False, 2
+                    return False, None
                   else:
                     # TODO(shawn): Deal with Collatz expressions here.
                     # We should have something like (x + 12)
@@ -999,7 +1033,7 @@ class Proof_System(object):
                     self.print_this("From: num_reps = (%r // %r)  + 1"
                                     % (init_value[x], -delta_value[x]))
                     self.print_this("")
-                  return False, 2
+                  return False, None
               else:
                 # First one is safe.
                 # For example, if we have a rule:
@@ -1032,14 +1066,15 @@ class Proof_System(object):
                   self.print_this("Initial tape:", rule.initial_tape)
                   self.print_this("Rule diff tape:", rule.diff_tape)
                   self.print_this("")
-                return False, "Multiple_Diff"
+                return False, None
 
     # If none of the diffs are negative, this will repeat forever.
     if num_reps is None:
       if self.verbose:
         self.print_this("++ Rules applies infinitely ++")
         print
-      return True, ((Turing_Machine.INF_REPEAT, None, None, {}), large_delta)
+      return True, (ProverResult(INF_REPEAT, states_used=rule.states_used),
+                    large_delta)
 
     # If we cannot even apply this transition once, we're done.
     if (not isinstance(num_reps, Algebraic_Expression) and
@@ -1047,7 +1082,7 @@ class Proof_System(object):
       if self.verbose:
         self.print_this("++ Cannot even apply transition once ++")
         print
-      return False, 3
+      return False, None
 
     ## Determine number of base steps taken by applying rule.
     if self.compute_steps:
@@ -1065,7 +1100,7 @@ class Proof_System(object):
           if self.verbose:
             self.print_this("++ Cannot divide expression by 2 ++")
             print
-          return False, 4
+          return False, None
     else:
       diff_steps = 0 # TODO: Make it None instead of a lie
 
@@ -1089,8 +1124,9 @@ class Proof_System(object):
       self.print_this("Resulting tape:",
                       return_tape.print_with_state(new_state))
       print
-    return True, ((Turing_Machine.RUNNING, return_tape, diff_steps,
-                   replace_vars), large_delta)
+    return True, (ProverResult(APPLY_RULE, return_tape, diff_steps, replace_vars,
+                               states_used=rule.states_used),
+                  large_delta)
 
   # Diff rules can be applied any number of times in a single evaluation.
   # But we can only apply a general rule once at a time.
@@ -1110,7 +1146,8 @@ class Proof_System(object):
       if self.verbose:
         self.print_this("++ Rule applies infinitely ++")
         print
-      return True, ((Turing_Machine.INF_REPEAT, None, None, {}), large_delta)
+      return True, (ProverResult(INF_REPEAT, states_used=rule.states_used),
+                    large_delta)
 
     # Keep applying rule until we can't anymore.
     # TODO: Maybe we can use some intelligence when all negative rules are
@@ -1134,7 +1171,8 @@ class Proof_System(object):
                    for val in rule.result_list]
 
       if next_list == current_list:
-        return True, ((Turing_Machine.INF_REPEAT, None, None, {}), large_delta)
+        return True, (ProverResult(INF_REPEAT,states_used=rule.states_used),
+                      large_delta)
       else:
         current_list = next_list
 
@@ -1156,14 +1194,16 @@ class Proof_System(object):
         self.print_this("Times applied", num_reps)
         self.print_this("Resulting tape:", tape)
         print
-      return True, ((Turing_Machine.RUNNING, tape, diff_steps, {}), large_delta)
+      return True, (ProverResult(APPLY_RULE, tape, diff_steps, {},
+                                 states_used=rule.states_used),
+                    large_delta)
     else:
       if self.verbose:
         self.print_this("++ Current config is below rule minimum ++")
         self.print_this("Config tape:", start_tape)
         self.print_this("Rule min vals:", min_list)
         print
-      return False, 1
+      return False, None
 
   def apply_collatz_rule(self, group, start_config):
     # Unpack input
@@ -1181,7 +1221,8 @@ class Proof_System(object):
       if self.verbose:
         self.print_this("++ Rule applies infinitely ++")
         print
-      return True, ((Turing_Machine.INF_REPEAT, None, None, {}), large_delta)
+      return True, (ProverResult(INF_REPEAT, states_used=rule.states_used),
+                    large_delta)
 
     # We cannot apply Collatz rules with general expressions.
     for val in current_list:
@@ -1259,7 +1300,9 @@ class Proof_System(object):
         self.print_this("Times applied", num_reps)
         self.print_this("Resulting tape:", tape)
         print
-      return True, ((Turing_Machine.RUNNING, tape, diff_steps, {}), large_delta)
+      return True, (ProverResult(APPLY_RULE, tape, diff_steps, {},
+                                 states_used=rule.states_used),
+                    large_delta)
     else:
       if self.verbose and reason != UNPROVEN_PARITY:
         self.print_this("++ Current config is below rule minimum ++")
