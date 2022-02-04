@@ -1,41 +1,41 @@
 1RB ---  1RZ --- | None Halt 2 2
-1RB ---  1RB --- | None Infinite Reverse_Engineer
+1RB ---  1RB --- | None Infinite Reverse_Engineer N/A
 1RB ---  1LB 1RZ | None Halt 2 3
-1RB ---  1LB 1RB | None Infinite Reverse_Engineer
-1RB ---  1LB 1LB | None Infinite Reverse_Engineer
-1RB ---  1LB 0RB | None Infinite Reverse_Engineer
-1RB ---  1LB 0LB | None Infinite Reverse_Engineer
+1RB ---  1LB 1RB | None Infinite Reverse_Engineer N/A
+1RB ---  1LB 1LB | None Infinite Reverse_Engineer N/A
+1RB ---  1LB 0RB | None Infinite Reverse_Engineer N/A
+1RB ---  1LB 0LB | None Infinite Reverse_Engineer N/A
 1RB 1RZ  1LB 1RA | None Halt 2 4
 1RB 1RZ  1LB 1LA | None Halt 3 6
 1RB 1RZ  1LB 0RA | None Halt 1 4
-1RB ---  1LB 0LA | None Infinite Chain_Move
-1RB ---  0RB --- | None Infinite Reverse_Engineer
+1RB ---  1LB 0LA | None Infinite Chain_Move All_States_Used
+1RB ---  0RB --- | None Infinite Reverse_Engineer N/A
 1RB ---  0LB 1RZ | None Halt 1 3
-1RB ---  0LB 1RB | None Infinite Reverse_Engineer
-1RB ---  0LB 1LB | None Infinite Reverse_Engineer
-1RB ---  0LB 0RB | None Infinite Reverse_Engineer
-1RB ---  0LB 0LB | None Infinite Reverse_Engineer
-1RB ---  0LB 1RA | None Infinite Reverse_Engineer
+1RB ---  0LB 1RB | None Infinite Reverse_Engineer N/A
+1RB ---  0LB 1LB | None Infinite Reverse_Engineer N/A
+1RB ---  0LB 0RB | None Infinite Reverse_Engineer N/A
+1RB ---  0LB 0LB | None Infinite Reverse_Engineer N/A
+1RB ---  0LB 1RA | None Infinite Reverse_Engineer N/A
 1RB 1RZ  0LB 1LA | None Halt 2 6
-1RB ---  0LB 0RA | None Infinite Reverse_Engineer
-1RB ---  0LB 0LA | None Infinite Chain_Move
-1RB ---  1RA --- | None Infinite Reverse_Engineer
+1RB ---  0LB 0RA | None Infinite Reverse_Engineer N/A
+1RB ---  0LB 0LA | None Infinite Chain_Move All_States_Used
+1RB ---  1RA --- | None Infinite Reverse_Engineer N/A
 1RB 1RZ  1LA --- | None Halt 2 3
 1RB 1RB  1LA 1RZ | None Halt 2 4
 1RB 1LB  1LA 1RZ | None Halt 4 6
 1RB 0RB  1LA 1RZ | None Halt 1 4
 1RB 0LB  1LA 1RZ | None Halt 3 6
-1RB 1RA  1LA --- | None Infinite Chain_Move
+1RB 1RA  1LA --- | None Infinite Chain_Move All_States_Used
 1RB 1LA  1LA 1RZ | None Halt 3 5
-1RB 0RA  1LA --- | None Infinite Chain_Move
-1RB 0LA  1LA --- | None Infinite Chain_Move
-1RB ---  0RA --- | None Infinite Reverse_Engineer
+1RB 0RA  1LA --- | None Infinite Chain_Move All_States_Used
+1RB 0LA  1LA --- | None Infinite Chain_Move All_States_Used
+1RB ---  0RA --- | None Infinite Reverse_Engineer N/A
 1RB 1RZ  0LA --- | None Halt 1 3
-1RB 1RB  0LA --- | None Infinite Reverse_Engineer
-1RB 1LB  0LA --- | None Infinite Chain_Move
-1RB 0RB  0LA --- | None Infinite Reverse_Engineer
-1RB 0LB  0LA --- | None Infinite Chain_Move
-1RB 1RA  0LA --- | None Infinite Reverse_Engineer
+1RB 1RB  0LA --- | None Infinite Reverse_Engineer N/A
+1RB 1LB  0LA --- | None Infinite Chain_Move All_States_Used
+1RB 0RB  0LA --- | None Infinite Reverse_Engineer N/A
+1RB 0LB  0LA --- | None Infinite Chain_Move All_States_Used
+1RB 1RA  0LA --- | None Infinite Reverse_Engineer N/A
 1RB 1LA  0LA 1RZ | None Halt 2 5
-1RB 0RA  0LA --- | None Infinite Reverse_Engineer
-1RB 0LA  0LA --- | None Infinite Reverse_Engineer
+1RB 0RA  0LA --- | None Infinite Reverse_Engineer N/A
+1RB 0LA  0LA --- | None Infinite Reverse_Engineer N/A

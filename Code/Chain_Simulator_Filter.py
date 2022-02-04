@@ -80,7 +80,7 @@ def run(TTable, options, steps=INF, runtime=None, block_size=None,
         return Exit_Condition.HALT, (sim.step_num, sim.get_nonzeros())
 
       elif sim.op_state == Macro.Turing_Machine.INF_REPEAT:
-        return Exit_Condition.INFINITE, (sim.inf_reason,)
+        return Exit_Condition.INFINITE, (sim.inf_reason, sim.inf_states_unused)
 
       elif sim.op_state == Macro.Turing_Machine.UNDEFINED:
         on_symbol, on_state = sim.op_details[0][:2]

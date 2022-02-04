@@ -83,7 +83,8 @@ def run_options(ttable, options, stats=None):
 
   ## Test for quickly for infinite machine
   if Reverse_Engineer_Filter.test(ttable):
-    return Exit_Condition.INFINITE, ("Reverse_Engineer",)
+    # Note: states_unused is not computable when using Reverse_Engineer filter.
+    return Exit_Condition.INFINITE, ("Reverse_Engineer", None)
 
   ## Construct the Macro Turing Machine (Backsymbol-k-Block-Macro-Machine)
   m = Turing_Machine.make_machine(ttable)
@@ -107,11 +108,13 @@ def run_options(ttable, options, stats=None):
     if CTL_config:
       CTL_config_copy = copy.deepcopy(CTL_config)
       if CTL1.CTL(m, CTL_config_copy, end_time=pre_sim_end_time):
-        return Exit_Condition.INFINITE, ("CTL_A*",)
+        # Note: states_unused is not computed when using CTL filters.
+        return Exit_Condition.INFINITE, ("CTL_A*", None)
 
       CTL_config_copy = copy.deepcopy(CTL_config)
       if CTL2.CTL(m, CTL_config_copy, end_time=pre_sim_end_time):
-        return Exit_Condition.INFINITE, ("CTL_A*_B",)
+        # Note: states_unused is not computed when using CTL filters.
+        return Exit_Condition.INFINITE, ("CTL_A*_B", None)
 
   ## Set up the simulator
   sim = Simulator.Simulator(m, options, end_time=end_time)
@@ -146,7 +149,7 @@ def run_options(ttable, options, stats=None):
     return Exit_Condition.HALT, (sim.step_num, sim.get_nonzeros())
 
   elif sim.op_state == Turing_Machine.INF_REPEAT:
-    return Exit_Condition.INFINITE, (sim.inf_reason,)
+    return Exit_Condition.INFINITE, (sim.inf_reason, sim.inf_states_unused)
 
   elif sim.op_state == Turing_Machine.UNDEFINED:
     on_symbol, on_state = sim.op_details[0][:2]

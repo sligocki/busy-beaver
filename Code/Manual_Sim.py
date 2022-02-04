@@ -373,6 +373,7 @@ In that case we execute the line as Python code.\n
             print
             print "Turing Machine proven Infinite!"
             print "Reason:", self.sim.inf_reason
+            print "States unused:", self.inf_states_unused
             print
           elif self.sim.op_state == Turing_Machine.UNDEFINED:
             print
