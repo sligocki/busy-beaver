@@ -184,16 +184,14 @@ class Simulator(object):
     # Get current symbol
     cur_symbol = self.tape.get_top_symbol()
     # Lookup TM transition rule
-    cond, (symbol2write, next_state, next_dir), num_steps = \
-          self.machine.get_transition(cur_symbol, self.state, self.dir)
-    # Test condition
-    self.op_state = cond[0]
-    self.op_details = cond[1:]
+    trans = self.machine.get_trans_object(cur_symbol, self.state, self.dir)
+    self.op_state = trans.condition
+    self.op_details = trans.condition_details
     # Apply transition
     # Chain move
-    if next_state == self.state and next_dir == self.dir and \
+    if trans.state_out == self.state and trans.dir_out == self.dir and \
        self.op_state == Turing_Machine.RUNNING:
-      num_reps = self.tape.apply_chain_move(symbol2write)
+      num_reps = self.tape.apply_chain_move(trans.symbol_out)
       if num_reps == Tape.INF:
         self.op_state = Turing_Machine.INF_REPEAT
         self.inf_reason = CHAIN_MOVE
@@ -203,17 +201,17 @@ class Simulator(object):
       # Don't need to change state or direction
       self.num_chain_moves += 1
       if self.compute_steps:
-        self.step_num += num_steps*num_reps
-        self.steps_from_chain += num_steps*num_reps
+        self.step_num += trans.num_base_steps * num_reps
+        self.steps_from_chain += trans.num_base_steps * num_reps
     # Simple move
     else:
-      self.tape.apply_single_move(symbol2write, next_dir)
-      self.state = next_state
-      self.dir = next_dir
+      self.tape.apply_single_move(trans.symbol_out, trans.dir_out)
+      self.state = trans.state_out
+      self.dir = trans.dir_out
       self.num_macro_moves += 1
       if self.compute_steps:
-        self.step_num += num_steps
-        self.steps_from_macro += num_steps
+        self.step_num += trans.num_base_steps
+        self.steps_from_macro += trans.num_base_steps
       if self.op_state == Turing_Machine.INF_REPEAT:
         self.inf_reason = REPEAT_IN_PLACE
         # TODO: Quasihalt, states unused, ...
