@@ -39,25 +39,24 @@ TIME_OUT   = "Timeout"    # A timer expired
 
 class Transition(object):
   """Class representing the result of a transition."""
-  def __init__(self, symbol_out, state_out, dir_out,
-               condition, condition_details,
-               num_steps, states_used):
+  def __init__(self,
+               condition,
+               symbol_out, state_out, dir_out,
+               num_base_steps, states_used,
+               condition_details = None):
+    self.condition = condition
+    self.condition_details = condition_details if condition_details else []
     self.symbol_out = symbol_out
     self.state_out = state_out
     self.dir_out = dir_out
-    self.condition = condition
-    self.condition_details = condition_details
-    self.num_steps = num_steps
+    self.num_base_steps = num_base_steps
     self.states_used = states_used
 
   def to_legacy_tuple(self):
     """Return legacy tuple-form of transition."""
-    condition = [self.condition]
-    if self.condition_details:
-      condition += self.condition_details
-    return (tuple(condition),
+    return (tuple([self.condition] + self.condition_details),
             (self.symbol_out, self.state_out, self.dir_out),
-            self.num_steps)
+            self.num_base_steps)
 
 
 class Turing_Machine(object):
@@ -66,8 +65,13 @@ class Turing_Machine(object):
   Derived classes should define:
     Function: get_transition, eval_symbol, eval_state
     Constants: init_symbol, init_state, and init_dir, num_states, num_symbols"""
+
   def get_transition(self, symbol_in, state_in, dir_in):
-    # Returns Transition
+    """Returns legacy tuple for now."""
+    return self.get_trans_object(symbol_in, state_in, dir_in).to_legacy_tuple()
+
+  def get_trans_object(self, symbol_in, state_in, dir_in):
+    """Returns Transition object."""
     return NotImplemented
 
 def make_machine(trans_table):
@@ -177,10 +181,10 @@ def ttable_to_transition(TTable, state_in, symbol_in):
     condition_details = None
 
   return Transition(
-    symbol_out=symbol_out, state_out=state_out, dir_out=dir_out,
     condition=condition, condition_details=condition_details,
+    symbol_out=symbol_out, state_out=state_out, dir_out=dir_out,
     # For base TMs, single trans is always 1 step and only uses one state.
-    num_steps=1, states_used={state_in})
+    num_base_steps=1, states_used={state_in})
 
 class Simple_Machine(Turing_Machine):
   """The most general Turing Machine based off of a transition table"""
@@ -209,9 +213,9 @@ class Simple_Machine(Turing_Machine):
   def eval_state(self, state):
     return 0
 
-  def get_transition(self, symbol_in, state_in, dir_in):
+  def get_trans_object(self, symbol_in, state_in, dir_in):
     # Note: Simple_Machine ignores dir_in.
-    return self.trans_table[state_in][symbol_in].to_legacy_tuple()
+    return self.trans_table[state_in][symbol_in]
 
 class Macro_Machine(Turing_Machine): pass
 
@@ -243,7 +247,7 @@ class Block_Macro_Machine(Macro_Machine):
     # initial symbol is (0, 0, 0, ..., 0) not just 0
     self.init_symbol = Block_Symbol((base_machine.init_symbol,) * block_size)
     # Maximum number of base-steps per macro-step evaluation w/o repeat
-    # #positions * #states * #macro_symbols
+    # #positions (within block) * #states * #macro_symbols (base symbols ** block_size)
     self.max_steps = block_size * self.num_states * self.num_symbols
     self.max_cells = Block_Macro_Machine.MAX_TTABLE_CELLS
     # Stat info
@@ -255,7 +259,7 @@ class Block_Macro_Machine(Macro_Machine):
   def eval_state(self, state):
     return self.base_machine.eval_state(state)
 
-  def get_transition(self, *args):
+  def get_trans_object(self, *args):
     if args not in self.trans_table:
       if len(self.trans_table) >= self.max_cells:
         self.trans_table.clear()
@@ -263,11 +267,14 @@ class Block_Macro_Machine(Macro_Machine):
     return self.trans_table[args]
 
   def eval_trans(self, (macro_symbol_in, macro_state_in, macro_dir_in)):
-    # Set up machine
-    num_steps = num_macro_steps = 0
+    # num_base_steps is 3 steps in the bottom level Simple_Machine.
+    num_base_steps = 0
+    # num_steps_in_macro is the # steps simulated below inside the macro symbol.
+    num_steps_in_macro = 0
     tape = list(macro_symbol_in)
     state = macro_state_in
     dir = macro_dir_in
+    states_used = set()
     if macro_dir_in is RIGHT:
       pos = 0
     else:
@@ -278,23 +285,40 @@ class Block_Macro_Machine(Macro_Machine):
     # Simulate Machine
     while 0 <= pos < self.block_size:
       symbol = tape[pos]
-      cond, (symbol_out, state_out, dir_out), num_steps_out = \
-            self.base_machine.get_transition(symbol, state, dir)
-      num_steps += num_steps_out
-      num_macro_steps += 1
+      #cond, (symbol_out, state_out, dir_out), num_steps_out = \
+      base_trans = self.base_machine.get_trans_object(symbol, state, dir)
+      num_base_steps += base_trans.num_base_steps
+      num_steps_in_macro += 1
       self.num_loops += 1
-      tape[pos] = symbol_out
-      state = state_out
-      dir = dir_out
-      if dir_out is RIGHT:
+      states_used.update(base_trans.states_used)
+      tape[pos] = base_trans.symbol_out
+      state = base_trans.state_out
+      dir = base_trans.dir_out
+      if dir is RIGHT:
         pos += 1
-      elif dir_out is LEFT:
+      elif dir is LEFT:
         pos -= 1
-      if cond[0] != RUNNING:
-        return cond+(pos,), (Block_Symbol(tape), state, dir), num_steps
-      if num_macro_steps > self.max_steps:
-        return (INF_REPEAT, pos), (Block_Symbol(tape), state, dir), num_steps
-    return (RUNNING,), (Block_Symbol(tape), state, dir), num_steps
+
+      if base_trans.condition != RUNNING:
+        return Transition(
+          condition=base_trans.condition,
+          condition_details=base_trans.condition_details + [pos],
+          symbol_out=Block_Symbol(tape), state_out=state, dir_out=dir,
+          num_base_steps=num_base_steps, states_used=states_used)
+
+      if num_steps_in_macro > self.max_steps:
+        # This macro simulation ran too long, we must be repeating infinitely
+        # inside the macro symbol.
+        return Transition(
+          condition=INF_REPEAT, condition_details=[pos],
+          symbol_out=Block_Symbol(tape), state_out=state, dir_out=dir,
+          num_base_steps=num_base_steps, states_used=states_used)
+
+    # We left the macro symbol (to the left or right).
+    return Transition(
+      condition=RUNNING,
+      symbol_out=Block_Symbol(tape), state_out=state, dir_out=dir,
+      num_base_steps=num_base_steps, states_used=states_used)
 
 class Backsymbol_Macro_Machine_State:
   def __init__(self,base_state,back_symbol):
@@ -338,7 +362,7 @@ class Backsymbol_Macro_Machine(Macro_Machine):
     self.init_dir = base_machine.init_dir
     self.init_symbol = base_machine.init_symbol
     # Maximum number of base-steps per macro-step evaluation w/o repeat
-    # #positions * #states * #symbols_in_front * #symbols_behind
+    # #positions (2) * #states * #symbols_in_front * #symbols_behind
     self.max_steps = 2 * self.num_states * self.num_symbols**2
     self.max_cells = Backsymbol_Macro_Machine.MAX_TTABLE_CELLS
     # Stats
@@ -359,7 +383,7 @@ class Backsymbol_Macro_Machine(Macro_Machine):
 
   def eval_trans(self, (macro_symbol_in, macro_state_in, macro_dir_in)):
     # Set up machine
-    num_steps = num_macro_steps = 0
+    num_steps = num_steps_in_macro = 0
     state = macro_state_in.base_state
     back_macro_symbol = macro_state_in.back_symbol
     dir = macro_dir_in
@@ -375,7 +399,7 @@ class Backsymbol_Macro_Machine(Macro_Machine):
       cond, (symbol_out, state_out, dir_out), num_steps_out = \
             self.base_machine.get_transition(symbol, state, dir)
       num_steps += num_steps_out
-      num_macro_steps += 1
+      num_steps_in_macro += 1
       self.num_loops += 1
       tape[pos] = symbol_out
       state = state_out
@@ -387,7 +411,7 @@ class Backsymbol_Macro_Machine(Macro_Machine):
       if cond[0] != RUNNING:
         trans = backsymbol_get_trans(tape, state, dir)
         return cond+(pos,), trans, num_steps
-      if num_macro_steps > self.max_steps:
+      if num_steps_in_macro > self.max_steps:
         trans = backsymbol_get_trans(tape, state, dir)
         return (INF_REPEAT, pos), trans, num_steps
     # If we just ran off of the tape, we are still running
