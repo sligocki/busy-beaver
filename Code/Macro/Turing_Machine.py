@@ -37,6 +37,29 @@ UNDEFINED  = "Undefined"  # Machine encountered undefined transition
 TIME_OUT   = "Timeout"    # A timer expired
 
 
+class Transition(object):
+  """Class representing the result of a transition."""
+  def __init__(self, symbol_out, state_out, dir_out,
+               condition, condition_details,
+               num_steps, states_used):
+    self.symbol_out = symbol_out
+    self.state_out = state_out
+    self.dir_out = dir_out
+    self.condition = condition
+    self.condition_details = condition_details
+    self.num_steps = num_steps
+    self.states_used = states_used
+
+  def to_legacy_tuple(self):
+    """Return legacy tuple-form of transition."""
+    condition = [self.condition]
+    if self.condition_details:
+      condition += self.condition_details
+    return (tuple(condition),
+            (self.symbol_out, self.state_out, self.dir_out),
+            self.num_steps)
+
+
 class Turing_Machine(object):
   """Abstract base for all specific Turing Machines
 
@@ -44,8 +67,7 @@ class Turing_Machine(object):
     Function: get_transition, eval_symbol, eval_state
     Constants: init_symbol, init_state, and init_dir, num_states, num_symbols"""
   def get_transition(self, symbol_in, state_in, dir_in):
-    # Returns triple (condition, transition, stats)
-    # Condition
+    # Returns Transition
     return NotImplemented
 
 def make_machine(trans_table):
@@ -133,15 +155,50 @@ class Simple_Machine_State(int):
   def __repr__(self):
     return states[self]
 
+def ttable_to_transition(TTable, state_in, symbol_in):
+  """Convert from historical TTable trans format tuple (sym, dir, state) to
+  a Transition object."""
+  # Historical ordering of transition table elements: (sym, dir, state)
+  symbol_out, dir_out, state_out = TTable[state_in][symbol_in]
+
+  # Historical signaling of undefined cell in transition table: (-1, 0, -1)
+  if symbol_out == -1:
+    # Treat an undefined cell as a halt, except note that it was undefined.
+    condition = UNDEFINED
+    condition_details = (symbol_in, state_in)
+    symbol_out = 1; state_out = -1; dir_out = RIGHT
+  # Historical signaling of final cell (transition to halt): (1, 1, -1)
+  elif state_out == -1:
+    condition = HALT
+    condition_details = None
+  # Otherwise, the transition is normal
+  else:
+    condition = RUNNING
+    condition_details = None
+
+  return Transition(
+    symbol_out=symbol_out, state_out=state_out, dir_out=dir_out,
+    condition=condition, condition_details=condition_details,
+    # For base TMs, single trans is always 1 step and only uses one state.
+    num_steps=1, states_used={state_in})
+
 class Simple_Machine(Turing_Machine):
   """The most general Turing Machine based off of a transition table"""
-  def __init__(self, trans_table):
-    self.trans_table = trans_table
-    self.num_states = len(trans_table)
-    self.num_symbols = len(trans_table[0])
+  def __init__(self, TTable):
+    self.num_states = len(TTable)
+    self.num_symbols = len(TTable[0])
     self.init_state = Simple_Machine_State(0)
     self.init_dir = 1
     self.init_symbol = 0
+
+    # Convert from raw (historical) TTable to a table which returns
+    # a Transition object.
+    self.trans_table = [[None for _ in range(self.num_symbols)]
+                        for _ in range(self.num_states)]
+    for state_in in range(self.num_states):
+      for symbol_in in range(self.num_symbols):
+        self.trans_table[state_in][symbol_in] = \
+          ttable_to_transition(TTable, state_in, symbol_in)
 
   def eval_symbol(self, symbol):
     if symbol != self.init_symbol:
@@ -153,19 +210,8 @@ class Simple_Machine(Turing_Machine):
     return 0
 
   def get_transition(self, symbol_in, state_in, dir_in):
-    # Historical ordering of transition table elements: (sym, dir, state)
-    symbol_out, dir_out, state_out = self.trans_table[state_in][symbol_in]
-    trans = symbol_out, Simple_Machine_State(state_out), dir_out
-    # Historical signaling of undefined cell in transition table: (-1, 0, -1)
-    if symbol_out == -1:
-      # Treat an undefined cell as a halt, except note that it was undefined.
-      return (UNDEFINED, (symbol_in, state_in)), (1, -1, 1), 1
-    # Historical signaling of final cell (transition to halt): (1, 1, -1)
-    elif state_out == -1:
-      return (HALT,), trans, 1
-    # Otherwise, the transition is normal
-    else:
-      return (RUNNING,), trans, 1
+    # Note: Simple_Machine ignores dir_in.
+    return self.trans_table[state_in][symbol_in].to_legacy_tuple()
 
 class Macro_Machine(Turing_Machine): pass
 

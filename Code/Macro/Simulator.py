@@ -154,6 +154,7 @@ class Simulator(object):
       if cond == Turing_Machine.INF_REPEAT:
         self.op_state = Turing_Machine.INF_REPEAT
         self.inf_reason = PROOF_SYSTEM
+        # TODO: Quasihalt, states unused, ...
         self.verbose_print()
         return
       # Proof system says that we can apply a rule
@@ -196,6 +197,7 @@ class Simulator(object):
       if num_reps == Tape.INF:
         self.op_state = Turing_Machine.INF_REPEAT
         self.inf_reason = CHAIN_MOVE
+        # TODO: Quasihalt, states unused, ...
         self.verbose_print()
         return
       # Don't need to change state or direction
@@ -214,6 +216,7 @@ class Simulator(object):
         self.steps_from_macro += num_steps
       if self.op_state == Turing_Machine.INF_REPEAT:
         self.inf_reason = REPEAT_IN_PLACE
+        # TODO: Quasihalt, states unused, ...
     if self.op_state != Turing_Machine.UNDEFINED:
       self.verbose_print()
 
