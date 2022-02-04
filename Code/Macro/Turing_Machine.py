@@ -282,10 +282,9 @@ class Block_Macro_Machine(Macro_Machine):
     # Deal with dummy offset case
     if state == Block_Macro_Machine.DUMMY_OFFSET_STATE:
       state, pos = self.save
-    # Simulate Machine
+    # Simulate Machine on macro symbol
     while 0 <= pos < self.block_size:
       symbol = tape[pos]
-      #cond, (symbol_out, state_out, dir_out), num_steps_out = \
       base_trans = self.base_machine.get_trans_object(symbol, state, dir)
       num_base_steps += base_trans.num_base_steps
       num_steps_in_macro += 1
@@ -374,7 +373,7 @@ class Backsymbol_Macro_Machine(Macro_Machine):
   def eval_state(self, backsymbol_macro_machine_state):
     return self.base_machine.eval_state(backsymbol_macro_machine_state.base_state) + self.base_machine.eval_symbol(backsymbol_macro_machine_state.back_symbol)
 
-  def get_transition(self, *args):
+  def get_trans_object(self, *args):
     if args not in self.trans_table:
       if len(self.trans_table) >= self.max_cells:
         self.trans_table.clear()
@@ -382,38 +381,68 @@ class Backsymbol_Macro_Machine(Macro_Machine):
     return self.trans_table[args]
 
   def eval_trans(self, (macro_symbol_in, macro_state_in, macro_dir_in)):
-    # Set up machine
-    num_steps = num_steps_in_macro = 0
+    # num_base_steps is 3 steps in the bottom level Simple_Machine.
+    num_base_steps = 0
+    # num_steps_in_macro is the # steps simulated below inside the macro symbol.
+    num_steps_in_macro = 0
     state = macro_state_in.base_state
     back_macro_symbol = macro_state_in.back_symbol
     dir = macro_dir_in
+    states_used = set()
     if macro_dir_in is RIGHT:
       tape = [back_macro_symbol, macro_symbol_in]
       pos = 1
     else:
       tape = [macro_symbol_in, back_macro_symbol]
       pos = 0
-    # Simulate Machine
-    while 0 <= pos < 2:
+    # Simulate Machine on macro symbol
+    while True:
       symbol = tape[pos]
-      cond, (symbol_out, state_out, dir_out), num_steps_out = \
-            self.base_machine.get_transition(symbol, state, dir)
-      num_steps += num_steps_out
+      base_trans = self.base_machine.get_trans_object(symbol, state, dir)
+      num_base_steps += base_trans.num_base_steps
       num_steps_in_macro += 1
       self.num_loops += 1
-      tape[pos] = symbol_out
-      state = state_out
-      dir = dir_out
-      if dir_out is RIGHT:
+      states_used.update(base_trans.states_used)
+      tape[pos] = base_trans.symbol_out
+      state = base_trans.state_out
+      dir = base_trans.dir_out
+      if dir is RIGHT:
         pos += 1
-      elif dir_out is LEFT:
+      elif dir is LEFT:
         pos -= 1
-      if cond[0] != RUNNING:
-        trans = backsymbol_get_trans(tape, state, dir)
-        return cond+(pos,), trans, num_steps
+
+      # Are we done simulating on this macro symbol?
+      if base_trans.condition != RUNNING:
+        # Base machine stopped running (HALT, INF_REPEAT, etc.)
+        condition = base_trans.condition
+        condition_details = base_trans.condition_details + [pos]
+        break
       if num_steps_in_macro > self.max_steps:
-        trans = backsymbol_get_trans(tape, state, dir)
-        return (INF_REPEAT, pos), trans, num_steps
-    # If we just ran off of the tape, we are still running
-    trans = backsymbol_get_trans(tape, state, dir)
-    return (RUNNING,), trans, num_steps
+        # This macro simulation ran too long, we must be repeating infinitely
+        # inside the macro symbol.
+        condition = INF_REPEAT
+        condition_details = [pos]
+        break
+      if not (0 <= pos < 2):
+        # We ran off one end of the macro symbol. We're done.
+        condition = RUNNING
+        condition_details = None
+        break
+
+    # Calculate the macro symbol and macro state to return.
+    # Note: For Halt/Infinite these return details are not 100% accurate because
+    # we could be ending in the middle of the macro symbol ...
+
+    # backsymbol is the symbol that will be part of the Macro state.
+    # If we are moving right, it will be the right symbol (tape[1]).
+    backsymbol = tape[dir]
+    # return_symbol will be the other symbol. The one that should be writen to
+    # the tape. If we are moving right, it will be the left symbol (tape[0]).
+    return_symbol = tape[1 - dir]
+
+    return Transition(
+      condition=condition, condition_details=condition_details,
+      symbol_out=return_symbol,
+      state_out=Backsymbol_Macro_Machine_State(state, backsymbol),
+      dir_out=dir,
+      num_base_steps=num_base_steps, states_used=states_used)
