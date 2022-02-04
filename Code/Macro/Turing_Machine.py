@@ -76,6 +76,9 @@ class Turing_Machine(object):
     """Returns Transition object."""
     return NotImplemented
 
+  def list_base_states(self):
+    return NotImplemented
+
 def make_machine(trans_table):
   """Generate a standard Turing Machine based on a transition table. Wraps any machine that has Stay with a macro machine."""
   machine = Simple_Machine(trans_table)
@@ -215,6 +218,9 @@ class Simple_Machine(Turing_Machine):
   def eval_state(self, state):
     return 0
 
+  def list_base_states(self):
+    return list(range(self.num_states))
+
   def get_trans_object(self, symbol_in, state_in, dir_in):
     # Note: Simple_Machine ignores dir_in.
     return self.trans_table[state_in][symbol_in]
@@ -260,6 +266,9 @@ class Block_Macro_Machine(Macro_Machine):
 
   def eval_state(self, state):
     return self.base_machine.eval_state(state)
+
+  def list_base_states(self):
+    return self.base_machine.list_base_states()
 
   def get_trans_object(self, *args):
     if args not in self.trans_table:
@@ -345,11 +354,6 @@ class Backsymbol_Macro_Machine_State:
   def __hash__(self):
     return hash((self.base_state, self.back_symbol))
 
-def backsymbol_get_trans(tape, state, dir):
-  backsymbol = tape[dir]
-  return_symbol = tape[1 - dir]
-  return return_symbol, Backsymbol_Macro_Machine_State(state, backsymbol), dir
-
 class Backsymbol_Macro_Machine(Macro_Machine):
   MAX_TTABLE_CELLS = 100000
   def __init__(self, base_machine):
@@ -374,6 +378,9 @@ class Backsymbol_Macro_Machine(Macro_Machine):
 
   def eval_state(self, backsymbol_macro_machine_state):
     return self.base_machine.eval_state(backsymbol_macro_machine_state.base_state) + self.base_machine.eval_symbol(backsymbol_macro_machine_state.back_symbol)
+
+  def list_base_states(self):
+    return self.base_machine.list_base_states()
 
   def get_trans_object(self, *args):
     if args not in self.trans_table:

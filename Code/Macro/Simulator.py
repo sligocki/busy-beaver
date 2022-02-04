@@ -195,7 +195,8 @@ class Simulator(object):
       if num_reps == Tape.INF:
         self.op_state = Turing_Machine.INF_REPEAT
         self.inf_reason = CHAIN_MOVE
-        # TODO: Quasihalt, states unused, ...
+        # Get set of states which will *not* be used in this infinite repeat.
+        self.inf_states_unused = set(self.machine.list_base_states()) - trans.states_used
         self.verbose_print()
         return
       # Don't need to change state or direction
@@ -214,7 +215,8 @@ class Simulator(object):
         self.steps_from_macro += trans.num_base_steps
       if self.op_state == Turing_Machine.INF_REPEAT:
         self.inf_reason = REPEAT_IN_PLACE
-        # TODO: Quasihalt, states unused, ...
+        # Get set of states which will *not* be used in this infinite repeat.
+        self.inf_states_unused = set(self.machine.list_base_states()) - trans.states_used
     if self.op_state != Turing_Machine.UNDEFINED:
       self.verbose_print()
 
