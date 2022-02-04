@@ -66,7 +66,7 @@ def run(machine, block_size, back, prover, recursive, options):
     print
     print "Turing Machine proven Infinite!"
     print "Reason:", sim.inf_reason
-    print "States unused:", self.inf_states_unused
+    print "States unused:", sim.inf_states_unused
   elif sim.op_state == Turing_Machine.UNDEFINED:
     print
     print "Turing Machine reached Undefined transition!"

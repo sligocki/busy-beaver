@@ -109,39 +109,37 @@ def print_machine(machine):
   sys.stdout.write("Transition table:\n")
   sys.stdout.write("\n")
 
-  TTable = machine.trans_table
+  trans_table = machine.trans_table
 
   sys.stdout.write("       ")
-  for j in xrange(len(TTable[0])):
+  for j in xrange(len(trans_table[0])):
     sys.stdout.write("+-----")
   sys.stdout.write("+\n")
 
   sys.stdout.write("       ")
-  for j in xrange(len(TTable[0])):
+  for j in xrange(len(trans_table[0])):
     sys.stdout.write("|  %d  " % j)
   sys.stdout.write("|\n")
 
   sys.stdout.write("   +---")
-  for j in xrange(len(TTable[0])):
+  for j in xrange(len(trans_table[0])):
     sys.stdout.write("+-----")
   sys.stdout.write("+\n")
 
-  for i in xrange(len(TTable)):
+  for i in xrange(len(trans_table)):
     sys.stdout.write("   | %c " % states[i])
-    for j in xrange(len(TTable[i])):
+    for j in xrange(len(trans_table[i])):
       sys.stdout.write("| ")
-      if TTable[i][j][0] == -1 and \
-         TTable[i][j][1] == -1 and \
-         TTable[i][j][2] == -1:
+      if trans_table[i][j].symbol_out == -1:
         sys.stdout.write("--- ")
       else:
-        sys.stdout.write("%c"   % symbols[TTable[i][j][0]])
-        sys.stdout.write("%c"   % dirs   [TTable[i][j][1]])
-        sys.stdout.write("%c "  % states [TTable[i][j][2]])
+        sys.stdout.write("%c"   % symbols[trans_table[i][j].symbol_out])
+        sys.stdout.write("%c"   % dirs   [trans_table[i][j].dir_out])
+        sys.stdout.write("%c "  % states [trans_table[i][j].state_out])
     sys.stdout.write("|\n")
 
     sys.stdout.write("   +---")
-    for j in xrange(len(TTable[0])):
+    for j in xrange(len(trans_table[0])):
       sys.stdout.write("+-----")
     sys.stdout.write("+\n")
 
@@ -187,7 +185,9 @@ def ttable_to_transition(TTable, state_in, symbol_in):
 
   return Transition(
     condition=condition, condition_details=condition_details,
-    symbol_out=symbol_out, state_out=state_out, dir_out=dir_out,
+    symbol_out=symbol_out,
+    state_out=Simple_Machine_State(state_out),
+    dir_out=dir_out,
     # For base TMs, single trans is always 1 step and only uses one state.
     num_base_steps=1, states_used={state_in})
 
@@ -332,6 +332,7 @@ class Block_Macro_Machine(Macro_Machine):
 
 class Backsymbol_Macro_Machine_State:
   def __init__(self,base_state,back_symbol):
+    assert isinstance(base_state, Simple_Machine_State), base_state
     self.base_state  = base_state
     self.back_symbol = back_symbol
 
@@ -363,7 +364,8 @@ class Backsymbol_Macro_Machine(Macro_Machine):
     # A lazy evaluation hashed macro transition table
     self.trans_table = {}
     # States of macro machine are old states and symbol behind state
-    self.init_state = Backsymbol_Macro_Machine_State(base_machine.init_state, base_machine.init_symbol)
+    self.init_state = Backsymbol_Macro_Machine_State(base_machine.init_state,
+                                                     base_machine.init_symbol)
     self.init_dir = base_machine.init_dir
     self.init_symbol = base_machine.init_symbol
     # Maximum number of base-steps per macro-step evaluation w/o repeat
