@@ -270,9 +270,8 @@ class IO(object):
 
 def load_TTable_filename(filename, line_num = 1):
   """Load a transition table from a filename w/ optional line number."""
-  infile = open(filename, "r")
-  TTable = load_TTable(infile, line_num)
-  infile.close()
+  with open(filename, "r") as infile:
+    TTable = load_TTable(infile, line_num)
   return TTable
 
 def load_TTable(infile, line_num = 1):
