@@ -97,7 +97,7 @@ states = string.ascii_uppercase + string.ascii_lowercase + string.digits + "!@#$
 symbols = string.digits + "-"
 dirs = "LRS-"
 
-def print_machine(machine):
+def machine_ttable_to_str(machine):
   """
   Pretty-print the contents of the Turing machine.
   This method prints the state transition information
@@ -105,47 +105,49 @@ def print_machine(machine):
   but not the contents of the tape.
   """
 
-  sys.stdout.write("\n")
-  sys.stdout.write("Transition table:\n")
-  sys.stdout.write("\n")
+  result = ""
+
+  result += "\n"
+  result += "Transition table:\n"
+  result += "\n"
 
   trans_table = machine.trans_table
 
-  sys.stdout.write("       ")
+  result += "       "
   for j in xrange(len(trans_table[0])):
-    sys.stdout.write("+-----")
-  sys.stdout.write("+\n")
+    result += "+-----"
+  result += "+\n"
 
-  sys.stdout.write("       ")
+  result += "       "
   for j in xrange(len(trans_table[0])):
-    sys.stdout.write("|  %d  " % j)
-  sys.stdout.write("|\n")
+    result += "|  %d  " % j
+  result += "|\n"
 
-  sys.stdout.write("   +---")
+  result += "   +---"
   for j in xrange(len(trans_table[0])):
-    sys.stdout.write("+-----")
-  sys.stdout.write("+\n")
+    result += "+-----"
+  result += "+\n"
 
   for i in xrange(len(trans_table)):
-    sys.stdout.write("   | %c " % states[i])
+    result += "   | %c " % states[i]
     for j in xrange(len(trans_table[i])):
-      sys.stdout.write("| ")
-      if trans_table[i][j].symbol_out == -1:
-        sys.stdout.write("--- ")
+      result += "| "
+      if trans_table[i][j].condition == UNDEFINED:
+        result += "--- "
       else:
-        sys.stdout.write("%c"   % symbols[trans_table[i][j].symbol_out])
-        sys.stdout.write("%c"   % dirs   [trans_table[i][j].dir_out])
-        sys.stdout.write("%c "  % states [trans_table[i][j].state_out])
-    sys.stdout.write("|\n")
+        result += "%c"   % symbols[trans_table[i][j].symbol_out]
+        result += "%c"   % dirs   [trans_table[i][j].dir_out]
+        result += "%c "  % states [trans_table[i][j].state_out]
+    result += "|\n"
 
-    sys.stdout.write("   +---")
+    result += "   +---"
     for j in xrange(len(trans_table[0])):
-      sys.stdout.write("+-----")
-    sys.stdout.write("+\n")
+      result += "+-----"
+    result += "+\n"
 
-  sys.stdout.write("\n")
+  result += "\n"
 
-  sys.stdout.flush()
+  return result
 
 
 # Characters to use for states.

@@ -140,7 +140,7 @@ if __name__ == "__main__":
     ttable = IO.load_TTable_filename(filename, line)
     machine = Turing_Machine.make_machine(ttable)
     if not options.quiet:
-      Turing_Machine.print_machine(machine)
+      print Turing_Machine.machine_ttable_to_str(machine)
 
   run(machine, options.block_size, options.backsymbol, options.prover,
                options.recursive, options)
