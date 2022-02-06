@@ -107,14 +107,12 @@ def main():
   parser = argparse.ArgumentParser()
   parser.add_argument("tm_file")
   parser.add_argument("tm_line", type=int, nargs="?", default=1)
-  parser.add_argument("--initial-steps", type=int, default=1024,
-                      help="How many steps to run before starting checks.")
   args = parser.parse_args()
 
   ttable = IO.load_TTable_filename(args.tm_file, args.tm_line)
   # NOTE: init_step is not necessarily the earliest time that recurrence
   # starts, it is simply a time after which recurrence is in effect.
-  init_step, period = lin_search(ttable, args.initial_steps)
+  init_step, period = lin_search(ttable, 1)
 
   # Do a second search, now that we know the recurrence period to find the
   # earliest start time of the recurrence.
