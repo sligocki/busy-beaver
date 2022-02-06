@@ -1,9 +1,7 @@
 #! /usr/bin/env python
-#
-# Macro_Simulator.py
-#
 """
-Run a given TM for a given number of steps and the result.
+Try Reverse_Engineer_Filter, CTL and then simulate TM as a Macro Machine using
+the Proof System.
 """
 
 import copy
