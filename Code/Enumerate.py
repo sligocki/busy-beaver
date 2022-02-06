@@ -64,8 +64,6 @@ class Enumerator(object):
     self.options = options
 
     # Main TM attributes
-    self.max_steps = options.steps
-    self.max_time = options.time
     # I/O info
     self.io = io
     self.pout = pout
@@ -224,9 +222,12 @@ class Enumerator(object):
     max_state  = old_tm.get_num_states_available()
     max_symbol = old_tm.get_num_symbols_available()
     num_dirs = old_tm.num_dirs_available
+
     # If this is the last undefined cell, then it must be a halt, so only try
     # other values for cell if this is not the last undefined cell.
-    if old_tm.num_empty_cells > 1:
+    # (Or if we are explicitly enumerating machines without halt states.
+    # For example, while searching for Beeping Busy Beavers.)
+    if self.options.allow_no_halt or old_tm.num_empty_cells > 1:
       # 'state_out' in [0, 1, ... max_state] == xrange(max_state + 1)
       new_tms = []
       for state_out in range(max_state + 1):
@@ -333,9 +334,6 @@ def main(args):
   req_parser.add_option("--symbols", type=int, help="Number of symbols")
   parser.add_option_group(req_parser)
 
-  parser.add_option("--no-first-1rb", dest="first_1rb", action="store_false", default=True,
-                    help="Allow first transition to be anything (not just restricted to A1->1RB).")
-
   enum_parser = OptionGroup(parser, "Enumeration Options")
   enum_parser.add_option("--breadth-first", action="store_true", default=False,
                          help="Run search breadth first (only works in single "
@@ -347,6 +345,12 @@ def main(args):
   enum_parser.add_option("--randomize", action="store_true", default=False,
                          help="Randomize the order of enumeration.")
   enum_parser.add_option("--seed", type=int, help="Seed to randomize with.")
+
+  enum_parser.add_option("--allow-no-halt", action="store_true", default=False,
+                         help="Search for Beep Busy Beaver (allow enumerating machines without halt states).")
+  enum_parser.add_option("--no-first-1rb", dest="first_1rb",
+                         action="store_false", default=True,
+                         help="Allow first transition to be anything (not just restricted to A1->1RB).")
   parser.add_option_group(enum_parser)
 
   Macro_Simulator.add_option_group(parser)
@@ -367,7 +371,7 @@ def main(args):
                         help="Don't save a checkpoint file.")
   out_parser.add_option("--checkpoint", metavar="FILE",
                         help="Checkpoint file name [Default: OUTFILE.check]")
-  out_parser.add_option("--save_freq", type=int, default=100000, metavar="FREQ",
+  out_parser.add_option("--save-freq", type=int, default=100000, metavar="FREQ",
                         help="Freq to save checkpoints [Default: %default]")
   out_parser.add_option("--print-stats", action="store_true", default=False,
                         help="Print aggregate statistics every time we "
@@ -385,7 +389,7 @@ def main(args):
     options.seed = long(1000*time.time())
 
   if not options.outfilename:
-    options.outfilename = "Enum.%d.%d.%s.out" % (options.states, options.symbols, options.steps)
+    options.outfilename = "Enum.%d.%d.%s.out" % (options.states, options.symbols, options.max_loops)
 
   if num_proc > 1:
     field_size = len(str(num_proc - 1))
@@ -420,15 +424,15 @@ def main(args):
 
   ## Print command line
   if pout:
-    pout.write("Enumerate.py --states=%d --symbols=%d --steps=%s --time=%f" \
-      % (options.states, options.symbols, options.steps, options.time))
+    pout.write("Enumerate.py --states=%d --symbols=%d --max-loops=%s --time=%f" \
+      % (options.states, options.symbols, options.max_loops, options.time))
     if options.randomize:
       pout.write(" --randomize --seed=%d" % options.seed)
 
     pout.write(" --outfile=%s" % options.outfilename)
     if options.log_number:
       pout.write(" --log_number=%d" % options.log_number)
-    pout.write(" --checkpoint=%s --save_freq=%d" % (options.checkpoint, options.save_freq))
+    pout.write(" --checkpoint=%s --save-freq=%d" % (options.checkpoint, options.save_freq))
     pout.write("\n")
 
   # Set up work queue and populate with blank machine.

@@ -25,14 +25,17 @@ def add_option_group(parser):
 
   group = OptionGroup(parser, "Macro Simulator options")
 
-  group.add_option("--steps", type=int, default=INF,
-                   help="Max steps to run each simulation (0 for infinite). "
+  group.add_option("--max-loops", type=int, default=INF,
+                   help="Max simulator loops to run each simulation (0 for infinite). "
                    "[Default: infinite]")
   group.add_option("--time", type=float, default=15.0,
                    help="Max seconds to run each simulation. "
                    "[Default: %default]")
   group.add_option("--tape-limit", type=int, default=50,
                    help="Max tape size to allow.")
+  group.add_option("--no-reverse-engineer", dest="reverse_engineer",
+                   action="store_false", default=True,
+                   help="Don't try Reverse_Engineer_Filter.")
   group.add_option("--no-ctl", dest="ctl", action="store_false", default=True,
                    help="Don't try CTL optimization.")
 
@@ -69,8 +72,8 @@ def setup_CTL(m, cutoff, end_time=None):
 def run_options(ttable, options, stats=None):
   """Run the Accelerated Turing Machine Simulator, running a few simple filters
   first and using intelligent blockfinding."""
-  if options.steps == 0:
-    options.steps = INF
+  if options.max_loops == 0:
+    options.max_loops = INF
 
   if options.time:
     # Note: We cannot practically use time.clock() because it often
@@ -82,7 +85,7 @@ def run_options(ttable, options, stats=None):
     start_time = end_time = None
 
   ## Test for quickly for infinite machine
-  if Reverse_Engineer_Filter.test(ttable):
+  if options.reverse_engineer and Reverse_Engineer_Filter.test(ttable):
     # Note: states_unused is not computable when using Reverse_Engineer filter.
     return Exit_Condition.INFINITE, ("Reverse_Engineer", None)
 
@@ -120,7 +123,7 @@ def run_options(ttable, options, stats=None):
   sim = Simulator.Simulator(m, options, end_time=end_time)
 
   ## Run the simulator
-  while (sim.step_num < options.steps and
+  while (sim.num_loops < options.max_loops and
          sim.op_state == Turing_Machine.RUNNING and
          sim.tape.compressed_size() <= options.tape_limit):
     sim.step()

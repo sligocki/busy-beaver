@@ -16,7 +16,7 @@ from Alarm import ALARM, AlarmException
 max_step2inf = 0
 max_loop2inf = 0
 
-def run(TTable, block_size, steps, runtime, recursive, progress, options,
+def run(TTable, block_size, max_loops, runtime, recursive, progress, options,
         stats):
   # Get and initialize a new simulator object.
   m1 = Turing_Machine.Simple_Machine(TTable)
@@ -33,7 +33,7 @@ def run(TTable, block_size, steps, runtime, recursive, progress, options,
     if runtime:
       ALARM.set_alarm(runtime)
 
-    sim.loop_run(steps)
+    sim.loop_run(max_loops)
 
     ALARM.cancel_alarm()
 
@@ -107,7 +107,7 @@ if __name__ == "__main__":
                     help="Log number to use in output file.")
 
   # Macro_Simulator specific:
-  parser.add_option("--steps", type=int, default=10000,
+  parser.add_option("--max-loops", type=int, default=10000,
                     help="Max simulation loops to run each machine for "
                     "(0 for infinite) [Default: %default].")
   parser.add_option("--time", type=float,
@@ -142,7 +142,7 @@ if __name__ == "__main__":
 
   for io_record in io:
     # Run the simulator/filter on this machine.
-    sim_results = run(io_record.ttable, options.block_size, options.steps,
+    sim_results = run(io_record.ttable, options.block_size, options.max_loops,
                       options.time, options.recursive, options.progress,
                       options, stats)
 
