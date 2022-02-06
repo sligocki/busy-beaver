@@ -37,7 +37,7 @@ class GoldTest(unittest.TestCase):
       Enumerate.main(["--states=%d" % states,
                       "--symbols=%d" % symbols,
                       "--outfile=%s" % outfile,
-                      "--steps=10000",  # Makes tests deterministic.
+                      "--max-loops=1000",  # Makes tests deterministic.
                       ])
       if regold:
         subprocess.call(["mv", outfile, goldfile])

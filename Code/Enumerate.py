@@ -160,8 +160,8 @@ class Enumerator(object):
         steps, score = info
         self.add_halt(tm, steps, score)
       elif cond == Exit_Condition.INFINITE:
-        reason, states_used = info
-        self.add_infinite(tm, reason, states_used)
+        reason, num_steps, states_unused = info
+        self.add_infinite(tm, reason, num_steps, states_unused)
       elif cond in Exit_Condition.UNKNOWN_SET:
         self.add_unresolved(tm, cond, *info)
       else:
@@ -267,7 +267,7 @@ class Enumerator(object):
       io_record.category_reason = (score, steps)
       self.io.write_record(io_record)
 
-  def add_infinite(self, tm, reason, states_unused):
+  def add_infinite(self, tm, reason, num_steps, states_unused):
     """Note an infinite TM. Add statistics and output it with reason."""
     self.num_infinite += 1
     self.inf_type[reason] += 1
@@ -284,7 +284,7 @@ class Enumerator(object):
       io_record = IO.Record()
       io_record.ttable = tm.get_TTable()
       io_record.category = Exit_Condition.INFINITE
-      io_record.category_reason = (reason, states_unused_str)
+      io_record.category_reason = (reason, num_steps, states_unused_str)
       self.io.write_record(io_record)
 
   def add_unresolved(self, tm, reason, *args):
