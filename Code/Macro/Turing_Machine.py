@@ -42,7 +42,7 @@ class Transition(object):
   def __init__(self,
                condition,
                symbol_out, state_out, dir_out,
-               num_base_steps, states_used,
+               num_base_steps, states_last_seen,
                condition_details = None):
     self.condition = condition
     self.condition_details = condition_details if condition_details else []
@@ -50,7 +50,7 @@ class Transition(object):
     self.state_out = state_out
     self.dir_out = dir_out
     self.num_base_steps = num_base_steps
-    self.states_used = states_used
+    self.states_last_seen = states_last_seen
 
   # TODO: Deprecate
   def to_legacy_tuple(self):
@@ -191,7 +191,7 @@ def ttable_to_transition(TTable, state_in, symbol_in):
     state_out=Simple_Machine_State(state_out),
     dir_out=dir_out,
     # For base TMs, single trans is always 1 step and only uses one state.
-    num_base_steps=1, states_used={state_in})
+    num_base_steps=1, states_last_seen={state_in: 0})
 
 class Simple_Machine(Turing_Machine):
   """The most general Turing Machine based off of a transition table"""
@@ -287,7 +287,7 @@ class Block_Macro_Machine(Macro_Machine):
     tape = list(macro_symbol_in)
     state = macro_state_in
     dir = macro_dir_in
-    states_used = set()
+    states_last_seen = {}
     if macro_dir_in is RIGHT:
       pos = 0
     else:
@@ -299,10 +299,11 @@ class Block_Macro_Machine(Macro_Machine):
     while 0 <= pos < self.block_size:
       symbol = tape[pos]
       base_trans = self.base_machine.get_trans_object(symbol, state, dir)
+      for state, base_last_seen in base_trans.states_last_seen.iteritems():
+        states_last_seen[state] = num_base_steps + base_last_seen
       num_base_steps += base_trans.num_base_steps
       num_steps_in_macro += 1
       self.num_loops += 1
-      states_used.update(base_trans.states_used)
       tape[pos] = base_trans.symbol_out
       state = base_trans.state_out
       dir = base_trans.dir_out
@@ -316,7 +317,7 @@ class Block_Macro_Machine(Macro_Machine):
           condition=base_trans.condition,
           condition_details=base_trans.condition_details + [pos],
           symbol_out=Block_Symbol(tape), state_out=state, dir_out=dir,
-          num_base_steps=num_base_steps, states_used=states_used)
+          num_base_steps=num_base_steps, states_last_seen=states_last_seen)
 
       if num_steps_in_macro > self.max_steps:
         # This macro simulation ran too long, we must be repeating infinitely
@@ -324,13 +325,13 @@ class Block_Macro_Machine(Macro_Machine):
         return Transition(
           condition=INF_REPEAT, condition_details=[pos],
           symbol_out=Block_Symbol(tape), state_out=state, dir_out=dir,
-          num_base_steps=num_base_steps, states_used=states_used)
+          num_base_steps=num_base_steps, states_last_seen=states_last_seen)
 
     # We left the macro symbol (to the left or right).
     return Transition(
       condition=RUNNING,
       symbol_out=Block_Symbol(tape), state_out=state, dir_out=dir,
-      num_base_steps=num_base_steps, states_used=states_used)
+      num_base_steps=num_base_steps, states_last_seen=states_last_seen)
 
 class Backsymbol_Macro_Machine_State:
   def __init__(self,base_state,back_symbol):
@@ -401,7 +402,7 @@ class Backsymbol_Macro_Machine(Macro_Machine):
     state = macro_state_in.base_state
     back_macro_symbol = macro_state_in.back_symbol
     dir = macro_dir_in
-    states_used = set()
+    states_last_seen = {}
     if macro_dir_in is RIGHT:
       tape = [back_macro_symbol, macro_symbol_in]
       pos = 1
@@ -412,10 +413,11 @@ class Backsymbol_Macro_Machine(Macro_Machine):
     while True:
       symbol = tape[pos]
       base_trans = self.base_machine.get_trans_object(symbol, state, dir)
+      for state, base_last_seen in base_trans.states_last_seen.iteritems():
+        states_last_seen[state] = num_base_steps + base_last_seen
       num_base_steps += base_trans.num_base_steps
       num_steps_in_macro += 1
       self.num_loops += 1
-      states_used.update(base_trans.states_used)
       tape[pos] = base_trans.symbol_out
       state = base_trans.state_out
       dir = base_trans.dir_out
@@ -458,4 +460,4 @@ class Backsymbol_Macro_Machine(Macro_Machine):
       symbol_out=return_symbol,
       state_out=Backsymbol_Macro_Machine_State(state, backsymbol),
       dir_out=dir,
-      num_base_steps=num_base_steps, states_used=states_used)
+      num_base_steps=num_base_steps, states_last_seen=states_last_seen)

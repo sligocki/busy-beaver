@@ -108,7 +108,7 @@ class SystemTest(unittest.TestCase):
 
     rule_num = 1
 
-    rule = Proof_System.Limited_Diff_Rule(initial_tape,left_dist,right_dist,diff_tape,initial_state,num_steps,num_loops,rule_num, states_used=set())
+    rule = Proof_System.Limited_Diff_Rule(initial_tape,left_dist,right_dist,diff_tape,initial_state,num_steps,num_loops,rule_num, states_last_seen={})
 
     success, (prover_result, large_delta) = proof.apply_rule(rule,current_config)
 

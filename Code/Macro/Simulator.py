@@ -56,7 +56,8 @@ CHAIN_MOVE = "Chain_Move"
 
 class Simulator(object):
   """Turing machine simulator using chain-tape optimization."""
-  def __init__(self, machine, options, verbose_prefix="", init_tape=True):
+  def __init__(self, machine, options, verbose_prefix="", init_tape=True,
+               base_simulator=True):
     assert isinstance(options, optparse.Values)
 
     self.machine = machine
@@ -64,6 +65,8 @@ class Simulator(object):
     self.compute_steps = options.compute_steps
     self.verbose = options.verbose_simulator
     self.verbose_prefix = verbose_prefix
+    # True for normal Simulators. False for those run inside of a Proof_System.
+    self.base_simulator = base_simulator
 
     self.state = machine.init_state
     self.dir = machine.init_dir
@@ -90,7 +93,6 @@ class Simulator(object):
     self.op_details = ()
 
     # Stats
-    self.states_used = set()
     self.num_loops = 0
     self.num_macro_moves = 0
     self.num_chain_moves = 0
@@ -99,10 +101,34 @@ class Simulator(object):
       self.steps_from_macro = 0
       self.steps_from_chain = 0
       self.steps_from_rule = 0
+      # Last step that we visited each state.
+      self.states_last_seen = {}
     else:
       self.steps_from_macro = None
       self.steps_from_chain = None
       self.steps_from_rule = None
+      self.states_last_seen = None
+
+  def calc_quasihalt(self, ignore_states=set()):
+    """In order to support search for the Beeping Busy Beaver, calculate the
+    state seen most recently and at what time."""
+    if self.states_last_seen is not None:
+      q_state = None
+      q_state_last_seen = -1
+      for state, last_seen in self.states_last_seen.iteritems():
+        if state not in ignore_states:
+          if last_seen > q_state_last_seen:
+            q_state_last_seen = last_seen
+            q_state = state
+      # Note: The quasihalt time is actually defined as the step after the last
+      # time a specific state is seen. (The step that the quasihalting behavior
+      # began.)
+      if q_state == None:
+        return ("No_Quasihalt", "N/A")
+      else:
+        return (q_state, q_state_last_seen + 1)
+    else:
+      return ("Quasihalt_Not_Computed", "N/A")
 
   def run(self, steps):
     self.seek(self.step_num + steps)
@@ -141,13 +167,15 @@ class Simulator(object):
       if prover_result.condition == Proof_System.INF_REPEAT:
         self.op_state = Turing_Machine.INF_REPEAT
         self.inf_reason = PROOF_SYSTEM
-        # Get set of states which will *not* be used in this infinite repeat.
-        self.inf_states_unused = \
-          set(self.machine.list_base_states()) - prover_result.states_used
+        self.inf_quasihalt = self.calc_quasihalt(
+          ignore_states=prover_result.states_last_seen.keys())
         self.verbose_print()
         return
       # Proof system says that we can apply a rule
       elif prover_result.condition == Proof_System.APPLY_RULE:
+        if self.base_simulator and prover_result.states_last_seen:
+          assert not isinstance(prover_result.states_last_seen.values()[0], Algebraic_Expression), prover_result.states_last_seen
+
         # TODO(shawn): This seems out of place here and is the only place in
         # the Simulator where we distinguish Algebraic_Expressions.
         # We should clean it up in some way.
@@ -165,8 +193,14 @@ class Simulator(object):
           assert not isinstance(self.num_loops, Algebraic_Expression)
         self.tape = prover_result.new_tape
         self.num_rule_moves += 1
-        self.states_used.update(prover_result.states_used)
         if self.compute_steps:
+          if self.states_last_seen is not None and prover_result.states_last_seen:
+            for state, prover_last_seen in prover_result.states_last_seen.iteritems():
+              self.states_last_seen[state] = (
+                self.step_num + prover_last_seen)
+          else:
+            # Cancel self.states_last_seen if we hit a rule that doesn't support it.
+            self.states_last_seen = None
           self.step_num += prover_result.num_base_steps
           self.steps_from_rule += prover_result.num_base_steps
         self.verbose_print()
@@ -185,15 +219,18 @@ class Simulator(object):
       if num_reps == Tape.INF:
         self.op_state = Turing_Machine.INF_REPEAT
         self.inf_reason = CHAIN_MOVE
-        # Get set of states which will *not* be used in this infinite repeat.
-        self.inf_states_unused = \
-          set(self.machine.list_base_states()) - trans.states_used
-        self.verbose_print()
+        self.inf_quasihalt = self.calc_quasihalt(
+          ignore_states=trans.states_last_seen.keys())
         return
       # Don't need to change state or direction
       self.num_chain_moves += 1
-      self.states_used.update(trans.states_used)
       if self.compute_steps:
+        if self.states_last_seen is not None:
+          for state, trans_last_seen in trans.states_last_seen.iteritems():
+            self.states_last_seen[state] = (
+              # Within the last iteration of the chain step.
+              self.step_num + trans.num_base_steps * (num_reps - 1)
+              + trans_last_seen)
         self.step_num += trans.num_base_steps * num_reps
         self.steps_from_chain += trans.num_base_steps * num_reps
     # Simple move
@@ -202,15 +239,16 @@ class Simulator(object):
       self.state = trans.state_out
       self.dir = trans.dir_out
       self.num_macro_moves += 1
-      self.states_used.update(trans.states_used)
       if self.compute_steps:
+        if self.states_last_seen is not None:
+          for state, trans_last_seen in trans.states_last_seen.iteritems():
+            self.states_last_seen[state] = self.step_num + trans_last_seen
         self.step_num += trans.num_base_steps
         self.steps_from_macro += trans.num_base_steps
       if self.op_state == Turing_Machine.INF_REPEAT:
         self.inf_reason = REPEAT_IN_PLACE
-        # Get set of states which will *not* be used in this infinite repeat.
-        self.inf_states_unused = \
-          set(self.machine.list_base_states()) - trans.states_used
+        self.inf_quasihalt = self.calc_quasihalt(
+          ignore_states=trans.states_last_seen.keys())
     if self.op_state != Turing_Machine.UNDEFINED:
       self.verbose_print()
 

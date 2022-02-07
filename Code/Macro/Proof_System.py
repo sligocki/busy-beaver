@@ -48,7 +48,7 @@ class Rule(object):
 
 class Diff_Rule(Rule):
   """A rule that specifies constant deltas for each tape block's exponent."""
-  def __init__(self, initial_tape, diff_tape, initial_state, num_steps, num_loops, rule_num, states_used):
+  def __init__(self, initial_tape, diff_tape, initial_state, num_steps, num_loops, rule_num, states_last_seen):
     # TODO: Use basic lists instead of tapes, we never use the symbols.
     # TODO: Have a variable list and a min list instead of packing both
     # into init_tape.
@@ -62,19 +62,20 @@ class Diff_Rule(Rule):
     self.initial_state = initial_state
     self.num_loops = num_loops
     self.name = str(rule_num)  # Unique identifier.
-    self.states_used = states_used
+    self.states_last_seen = states_last_seen
 
     self.num_uses = 0  # Number of times this rule has been applied.
 
   def __repr__(self):
-    return ("Diff Rule %s\nInitial Config: %s\nDiff Config:    %s\nSteps: %s, Loops: %s"
-            % (self.name, self.initial_tape.print_with_state(self.initial_state), self.diff_tape.print_with_state(self.initial_state), self.num_steps,
-               self.num_loops))
+    return ("Diff Rule %s\nInitial Config: %s\nDiff Config:    %s\nSteps: %s, Loops: %s\nStates last seen: %r"
+            % (self.name, self.initial_tape.print_with_state(self.initial_state),
+               self.diff_tape.print_with_state(self.initial_state),
+               self.num_steps, self.num_loops, self.states_last_seen))
 
 class General_Rule(Rule):
   """A general rule that specifies any general end configuration."""
   def __init__(self, var_list, min_list,
-               result_tape, num_steps, num_loops, rule_num, states_used):
+               result_tape, num_steps, num_loops, rule_num, states_last_seen):
     assert len(var_list) == len(min_list)
     self.var_list = var_list  # List of variables (or None) to assign repetition counts to.
     self.min_list = min_list  # List of minimum values for variables.
@@ -84,7 +85,7 @@ class General_Rule(Rule):
     self.num_steps = num_steps
     self.num_loops = num_loops
     self.name = str(rule_num)
-    self.states_used = states_used
+    self.states_last_seen = states_last_seen
 
     self.num_uses = 0
 
@@ -106,7 +107,7 @@ class General_Rule(Rule):
 class Collatz_Rule(Rule):
   """General rule that only applies if exponents have certain parity."""
   def __init__(self, var_list, coef_list, parity_list, min_list,
-               result_list, num_steps, num_loops):
+               result_list, num_steps, num_loops, states_last_seen):
     # *_lists are parallel lists for each exponent in the configuration.
     # If one exponent goes from 2k+1 -> 3k+5 for all 2k+1 >= 5, then
     # var = k, coef = 2, parity = 1, min = 5 and result = 3k+5
@@ -120,10 +121,7 @@ class Collatz_Rule(Rule):
     self.num_steps = num_steps
     self.num_loops = num_loops
     self.name = ""  # Name will be set in Collatz_Rule_Group.
-
-    # TODO: Implement
-    raise Exception, "Collatz_Rule.states_used is not defined"
-    self.states_used = None  # TODO
+    self.states_last_seen = states_last_seen
 
     self.num_uses = 0
 
@@ -170,8 +168,8 @@ class Collatz_Rule_Group(Rule):
     subrule.name = "%s.%d" % (self.name, len(self.rules))
 
     # TODO: Implement
-    raise Exception, "Collatz_Rule_Group.states_used is not defined"
-    self.states_used = None  # TODO
+    raise Exception, "Collatz_Rule_Group.states_last_seen is not defined"
+    self.states_last_seen = None  # TODO
 
     self.num_uses = 0
 
@@ -203,7 +201,7 @@ class Collatz_Rule_Group(Rule):
 
 class Limited_Diff_Rule(Rule):
   """A Diff_Rule that only refers to a sub-section of the tape."""
-  def __init__(self, initial_tape, left_dist, right_dist, diff_tape, initial_state, num_steps, num_loops, rule_num, states_used):
+  def __init__(self, initial_tape, left_dist, right_dist, diff_tape, initial_state, num_steps, num_loops, rule_num, states_last_seen):
     # TODO: Use basic lists instead of tapes, we never use the symbols.
     # TODO: Have a variable list and a min list instead of packing both
     # into init_tape.
@@ -220,7 +218,7 @@ class Limited_Diff_Rule(Rule):
     self.initial_state = initial_state
     self.num_loops = num_loops
     self.name = str(rule_num)  # Unique identifier.
-    self.states_used = states_used
+    self.states_last_seen = states_last_seen
 
     self.num_uses = 0  # Number of times this rule has been applied.
 
@@ -295,12 +293,12 @@ INF_REPEAT = "Inf_Repeat"        # Rule applies infinitely.
 class ProverResult(object):
   def __init__(self, condition,
                new_tape = None, num_base_steps = None, replace_vars = None,
-               states_used = None):
+               states_last_seen = None):
     self.condition = condition
     self.new_tape = new_tape
     self.num_base_steps = num_base_steps
     self.replace_vars = replace_vars if replace_vars else {}
-    self.states_used = states_used
+    self.states_last_seen = states_last_seen
 
 class Proof_System(object):
   """Stores past information, looks for patterns and tries to prove general
@@ -492,7 +490,8 @@ class Proof_System(object):
               self.past_configs.clear()
           rule.num_uses += 1
           assert isinstance(result, ProverResult), result
-          assert result.states_used, (rule, result)
+          if not result.states_last_seen:
+            print >> sys.stderr, "UNIMPLEMENTED: Prover missing states_last_seen for rule:", rule, result
           return result
     else:
       if stripped_config in self.rules:
@@ -509,7 +508,8 @@ class Proof_System(object):
               self.past_configs.clear()
           rule.num_uses += 1
           assert isinstance(result, ProverResult), result
-          assert result.states_used, (rule, result)
+          if not result.states_last_seen:
+            print >> sys.stderr, "UNIMPLEMENTED: Prover missing states_last_seen for rule:", rule, result
           return result
         if res != UNPROVEN_PARITY:
           return ProverResult(NOTHING_TO_DO)
@@ -586,7 +586,8 @@ class Proof_System(object):
             result, large_delta = res
             rule.num_uses += 1
             assert isinstance(result, ProverResult), result
-            assert result.states_used, (rule, result)
+            if not result.states_last_seen:
+              print >> sys.stderr, "UNIMPLEMENTED: Prover missing states_last_seen for rule:", rule, result
             return result
 
     return ProverResult(NOTHING_TO_DO)
@@ -614,7 +615,8 @@ class Proof_System(object):
     gen_sim = Simulator.Simulator(self.machine,
                                   new_options,
                                   init_tape=False,
-                                  verbose_prefix=self.verbose_prefix + "  ")
+                                  verbose_prefix=self.verbose_prefix + "  ",
+                                  base_simulator=False)
     gen_sim.state = new_state
     gen_sim.step_num = ConstantToExpression(0)
 
@@ -779,13 +781,16 @@ class Proof_System(object):
       # Fix num_steps.
       if self.compute_steps:
         num_steps = gen_sim.step_num.substitute(assignment)
+        states_last_seen = {state: last_seen.substitute(assignment)
+                            for state, last_seen in gen_sim.states_last_seen.iteritems()}
       else:
         num_steps = 0
+        states_last_seen = None
 
       self.num_recursive_rules += 1
       rule = General_Rule(var_list, min_list, result_tape, num_steps,
                           gen_sim.num_loops, self.rule_num,
-                          states_used=gen_sim.states_used)
+                          states_last_seen=states_last_seen)
 
       if self.verbose:
         print
@@ -836,12 +841,16 @@ class Proof_System(object):
       # Fix num_steps.
       if self.compute_steps:
         num_steps = gen_sim.step_num.substitute(assignment)
+        states_last_seen = {state: last_seen.substitute(assignment)
+                            for state, last_seen in gen_sim.states_last_seen.iteritems()}
       else:
         num_steps = 0
+        states_last_seen = None
 
       self.num_collatz_rules += 1
       rule = Collatz_Rule(var_list, coef_list, parity_list, min_list,
-                          result_list, num_steps, gen_sim.num_loops)
+                          result_list, num_steps, gen_sim.num_loops,
+                          states_last_seen=states_last_seen)
 
       if self.verbose:
         print
@@ -870,8 +879,11 @@ class Proof_System(object):
       # Fix num_steps.
       if self.compute_steps:
         num_steps = gen_sim.step_num.substitute(replaces)
+        states_last_seen = {state: last_seen.substitute(replaces)
+                            for state, last_seen in gen_sim.states_last_seen.iteritems()}
       else:
         num_steps = 0
+        states_last_seen = None
 
       # Cast num_steps as an Algebraic Expression (if it somehow got through
       # as simply an int)
@@ -889,9 +901,9 @@ class Proof_System(object):
         diff_tape.tape[1] = diff_tape.tape[1][-right_dist:]
 
         rule = Limited_Diff_Rule(initial_tape, left_dist, right_dist, diff_tape, new_state, num_steps, gen_sim.num_loops, self.rule_num,
-                                 states_used=gen_sim.states_used)
+                                 states_last_seen=states_last_seen)
       else:
-        rule = Diff_Rule(initial_tape, diff_tape, new_state, num_steps, gen_sim.num_loops, self.rule_num, states_used=gen_sim.states_used)
+        rule = Diff_Rule(initial_tape, diff_tape, new_state, num_steps, gen_sim.num_loops, self.rule_num, states_last_seen=states_last_seen)
 
       if self.verbose:
         print
@@ -1073,7 +1085,8 @@ class Proof_System(object):
       if self.verbose:
         self.print_this("++ Rules applies infinitely ++")
         print
-      return True, (ProverResult(INF_REPEAT, states_used=rule.states_used),
+      return True, (ProverResult(INF_REPEAT,  states_last_seen={
+        state: Tape.INF for state in rule.states_last_seen}),
                     large_delta)
 
     # If we cannot even apply this transition once, we're done.
@@ -1101,8 +1114,19 @@ class Proof_System(object):
             self.print_this("++ Cannot divide expression by 2 ++")
             print
           return False, None
+      # Compute diff_steps until each state was last seen.
+      last_value = {var: init_value[var] + delta_value[var] * (num_reps - 1)
+                    for var in init_value}
+      states_last_seen = {}
+      for state, last_seen in rule.states_last_seen.iteritems():
+        # After the rule is applied, how many steps before that did we last see
+        # `state`.
+        last_seen_ago = rule.num_steps - last_seen
+        states_last_seen[state] = diff_steps - last_seen_ago.substitute(last_value)
+        
     else:
       diff_steps = 0 # TODO: Make it None instead of a lie
+      states_last_seen = None
 
     ## Alter the tape to account for applying rule.
     return_tape = new_tape.copy()
@@ -1125,7 +1149,7 @@ class Proof_System(object):
                       return_tape.print_with_state(new_state))
       print
     return True, (ProverResult(APPLY_RULE, return_tape, diff_steps, replace_vars,
-                               states_used=rule.states_used),
+                               states_last_seen=states_last_seen),
                   large_delta)
 
   # Diff rules can be applied any number of times in a single evaluation.
@@ -1146,7 +1170,8 @@ class Proof_System(object):
       if self.verbose:
         self.print_this("++ Rule applies infinitely ++")
         print
-      return True, (ProverResult(INF_REPEAT, states_used=rule.states_used),
+      return True, (ProverResult(INF_REPEAT, states_last_seen={
+        state: Tape.INF for state in rule.states_last_seen}),
                     large_delta)
 
     # Keep applying rule until we can't anymore.
@@ -1171,7 +1196,8 @@ class Proof_System(object):
                    for val in rule.result_list]
 
       if next_list == current_list:
-        return True, (ProverResult(INF_REPEAT,states_used=rule.states_used),
+        return True, (ProverResult(INF_REPEAT, states_last_seen={
+          state: Tape.INF for state in rule.states_last_seen}),
                       large_delta)
       else:
         current_list = next_list
@@ -1194,8 +1220,8 @@ class Proof_System(object):
         self.print_this("Times applied", num_reps)
         self.print_this("Resulting tape:", tape)
         print
-      return True, (ProverResult(APPLY_RULE, tape, diff_steps, {},
-                                 states_used=rule.states_used),
+      # TODO: Calculate states_last_seen
+      return True, (ProverResult(APPLY_RULE, tape, diff_steps, {}),
                     large_delta)
     else:
       if self.verbose:
@@ -1221,7 +1247,8 @@ class Proof_System(object):
       if self.verbose:
         self.print_this("++ Rule applies infinitely ++")
         print
-      return True, (ProverResult(INF_REPEAT, states_used=rule.states_used),
+      return True, (ProverResult(INF_REPEAT, states_last_seen={
+        state: Tape.INF for state in rule.states_last_seen}),
                     large_delta)
 
     # We cannot apply Collatz rules with general expressions.
@@ -1300,8 +1327,7 @@ class Proof_System(object):
         self.print_this("Times applied", num_reps)
         self.print_this("Resulting tape:", tape)
         print
-      return True, (ProverResult(APPLY_RULE, tape, diff_steps, {},
-                                 states_used=rule.states_used),
+      return True, (ProverResult(APPLY_RULE, tape, diff_steps, {}),
                     large_delta)
     else:
       if self.verbose and reason != UNPROVEN_PARITY:
