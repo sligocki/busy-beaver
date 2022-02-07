@@ -13,9 +13,11 @@ import signal
 # Fall back to inferior signal.alarm if we have to.
 try:
   from signalPlus import alarm
+  using_signal_plus = True
 except ImportError:
   import sys; print >>sys.stderr, "Alarm.py: Failed to import signalPlus, falling back to signal."
   from signal import alarm
+  using_signal_plus = False
 
 class AlarmException(Exception):
   """An exception to be tied to a timer running out."""
@@ -26,6 +28,8 @@ class Alarm(object):
     self.is_alarm_on = False
 
   def set_alarm(self, time):
+    if not using_signal_plus:
+      time = int(time)
     self.is_alarm_on = True
     alarm(time)
 

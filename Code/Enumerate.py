@@ -25,6 +25,7 @@ from Common import Exit_Condition, GenContainer
 import IO
 from Macro import Block_Finder
 import Macro_Simulator
+import Output_Machine
 from Turing_Machine import Turing_Machine
 import Work_Queue
 
@@ -213,7 +214,11 @@ class Enumerator(object):
 
   def run(self, tm):
     """Simulate TM"""
-    return Macro_Simulator.run_options(tm.get_TTable(), self.options, self.stats)
+    if self.options.time > 0:
+      return Macro_Simulator.run_timer(tm.get_TTable(), self.options,
+                                       self.stats, self.options.time)
+    else:
+      return Macro_Simulator.run_options(tm.get_TTable(), self.options, self.stats)
 
   def add_transitions(self, old_tm, state_in, symbol_in):
     """Push Turing Machines with each possible transition at this state and symbol"""
@@ -293,6 +298,7 @@ class Enumerator(object):
     if reason == Exit_Condition.MAX_STEPS:
       self.num_over_steps += 1
     elif reason == Exit_Condition.TIME_OUT:
+      print >> sys.stderr, "ERROR: TIMEOUT", args, Output_Machine.display_ttable(tm.get_TTable())
       self.num_over_time += 1
     elif reason == Exit_Condition.OVER_TAPE:
       self.num_over_tape += 1

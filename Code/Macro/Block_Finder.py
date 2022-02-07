@@ -38,7 +38,7 @@ def add_option_group(parser):
   parser.add_option_group(group)
 
 
-def block_finder(machine, options, end_time=None):
+def block_finder(machine, options):
   """Tries to find the optimal block-size for macro machines"""
   assert isinstance(options, optparse.Values)
 
@@ -76,7 +76,7 @@ def block_finder(machine, options, end_time=None):
       print
 
     # TODO: Instead of re-seeking, keep going till next bigger tape?
-    sim = Simulator(machine, new_options, end_time=end_time)
+    sim = Simulator(machine, new_options)
     sim.loop_seek(worst_loop)
 
   ## Or just find the best compression at time limit

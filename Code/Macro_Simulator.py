@@ -9,6 +9,7 @@ from optparse import OptionParser, OptionGroup
 import sys
 import time
 
+import Alarm
 from Common import Exit_Condition, GenContainer
 import CTL1
 import CTL2
@@ -26,7 +27,7 @@ def add_option_group(parser):
   group.add_option("--max-loops", type=int, default=INF,
                    help="Max simulator loops to run each simulation (0 for infinite). "
                    "[Default: infinite]")
-  group.add_option("--time", type=float, default=15.0,
+  group.add_option("--time", type=int, default=15,
                    help="Max seconds to run each simulation. "
                    "[Default: %default]")
   group.add_option("--tape-limit", type=int, default=50,
@@ -49,10 +50,10 @@ def create_default_options():
   options, args = parser.parse_args([])
   return options
 
-def setup_CTL(m, cutoff, end_time=None):
+def setup_CTL(m, cutoff):
   options = create_default_options()
   options.prover = False
-  sim = Simulator.Simulator(m, options, end_time=end_time)
+  sim = Simulator.Simulator(m, options)
   sim.seek(cutoff)
 
   if sim.op_state != Turing_Machine.RUNNING:
@@ -67,20 +68,24 @@ def setup_CTL(m, cutoff, end_time=None):
   config = GenContainer(state=sim.state, dir=sim.dir, tape=tape)
   return config
 
+def run_timer(ttable, options, stats, time_limit_sec):
+  try:
+    start_time = time.time()
+    Alarm.ALARM.set_alarm(time_limit_sec)
+    
+    return run_options(ttable, options, stats)
+
+    Alarm.ALARM.cancel_alarm()
+
+  except Alarm.AlarmException:
+    Alarm.ALARM.cancel_alarm()
+    return Exit_Condition.TIME_OUT, (time.time() - start_time,)
+
 def run_options(ttable, options, stats=None):
   """Run the Accelerated Turing Machine Simulator, running a few simple filters
   first and using intelligent blockfinding."""
   if options.max_loops == 0:
     options.max_loops = INF
-
-  if options.time:
-    # Note: We cannot practically use time.clock() because it often
-    # only has 10ms granularity.
-    start_time = time.time()
-    pre_sim_end_time = start_time + (options.time / 10)
-    end_time = start_time + options.time
-  else:
-    start_time = end_time = None
 
   ## Test for quickly for infinite machine
   if options.reverse_engineer and Reverse_Engineer_Filter.test(ttable):
@@ -93,8 +98,7 @@ def run_options(ttable, options, stats=None):
   block_size = options.block_size
   if not block_size:
     # If no explicit block-size given, use inteligent software to find one
-    block_size = Block_Finder.block_finder(m, options,
-                                           end_time=pre_sim_end_time)
+    block_size = Block_Finder.block_finder(m, options)
 
   # Do not create a 1-Block Macro-Machine (just use base machine)
   if block_size != 1:
@@ -103,31 +107,29 @@ def run_options(ttable, options, stats=None):
     m = Turing_Machine.Backsymbol_Macro_Machine(m)
 
   if options.ctl:
-    CTL_config = setup_CTL(m, options.bf_limit1, end_time=pre_sim_end_time)
+    CTL_config = setup_CTL(m, options.bf_limit1)
 
     # Run CTL filters unless machine halted
     if CTL_config:
       CTL_config_copy = copy.deepcopy(CTL_config)
-      if CTL1.CTL(m, CTL_config_copy, end_time=pre_sim_end_time):
+      if CTL1.CTL(m, CTL_config_copy):
         # Note: states_unused is not computed when using CTL filters.
         return Exit_Condition.INFINITE, ("CTL_A*", 0, None)
 
       CTL_config_copy = copy.deepcopy(CTL_config)
-      if CTL2.CTL(m, CTL_config_copy, end_time=pre_sim_end_time):
+      if CTL2.CTL(m, CTL_config_copy):
         # Note: states_unused is not computed when using CTL filters.
         return Exit_Condition.INFINITE, ("CTL_A*_B", 0, None)
 
   ## Set up the simulator
-  sim = Simulator.Simulator(m, options, end_time=end_time)
+  sim = Simulator.Simulator(m, options)
 
   ## Run the simulator
+
   while (sim.num_loops < options.max_loops and
          sim.op_state == Turing_Machine.RUNNING and
          sim.tape.compressed_size() <= options.tape_limit):
     sim.step()
-    if sim.op_state == Turing_Machine.TIME_OUT and sim.step_num == 0:
-      sim.op_state = Turing_Machine.RUNNING
-      sim.end_time += options.time
 
   # TODO(shawn): pass the stats object into sim so we don't have to copy.
   if stats:
@@ -139,9 +141,6 @@ def run_options(ttable, options, stats=None):
   ## Resolve end conditions and return relevent info.
   if sim.tape.compressed_size() > options.tape_limit:
     return Exit_Condition.OVER_TAPE, (sim.tape.compressed_size(), sim.step_num)
-
-  elif sim.op_state == Turing_Machine.TIME_OUT:
-    return Exit_Condition.TIME_OUT, (time.time() - start_time, sim.step_num)
 
   elif sim.op_state == Turing_Machine.RUNNING:
     return Exit_Condition.MAX_STEPS, (sim.step_num,)
@@ -183,5 +182,8 @@ if __name__ == "__main__":
     line = 1
 
   ttable = IO.load_TTable_filename(filename, line)
-
-  print run_options(ttable, options)
+  
+  if options.time > 0:
+    print run_timer(ttable, options, None, options.time)
+  else:
+    print run_options(ttable, options)

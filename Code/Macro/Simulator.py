@@ -56,8 +56,7 @@ CHAIN_MOVE = "Chain_Move"
 
 class Simulator(object):
   """Turing machine simulator using chain-tape optimization."""
-  def __init__(self, machine, options, verbose_prefix="", init_tape=True,
-               end_time=None):
+  def __init__(self, machine, options, verbose_prefix="", init_tape=True):
     assert isinstance(options, optparse.Values)
 
     self.machine = machine
@@ -65,7 +64,6 @@ class Simulator(object):
     self.compute_steps = options.compute_steps
     self.verbose = options.verbose_simulator
     self.verbose_prefix = verbose_prefix
-    self.end_time = end_time
 
     self.state = machine.init_state
     self.dir = machine.init_dir
@@ -127,9 +125,6 @@ class Simulator(object):
   def step(self):
     """Perform an atomic transition or chain step."""
     if self.op_state != Turing_Machine.RUNNING:
-      return
-    if self.end_time and time.time() >= self.end_time:
-      self.op_state = Turing_Machine.TIME_OUT
       return
 
     if self.compute_steps:

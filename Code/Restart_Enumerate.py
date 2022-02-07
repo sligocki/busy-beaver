@@ -6,7 +6,8 @@
 Simple code to restart TM enumeration started be "Enumerate.py".
 """
 
-import sys, pickle
+import sys
+import pickle
 from Enumerate import *
 from IO import IO
 
@@ -20,9 +21,9 @@ except:
 enumerator = pickle.load( file(checkpoint_fn, "r") )
 outfile = file(output_fn, "ab")
 enumerator.io = IO(None, outfile, None)
+enumerator.pout = sys.stdout
 
 # TODO(shawn): Automatically clear duplicate machines?
 outfile.write("\nRestarted - Some machines will be duplicated.\n")
 
 enumerator.continue_enum()
-
