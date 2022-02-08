@@ -60,14 +60,15 @@ class Transition(object):
             self.num_base_steps)
 
 
-def sim_limited(tm, state, start_tape, pos, dir, max_steps=10000):
+def sim_limited(tm, state, start_tape, pos, dir, max_loops=10000):
   """Simulate TM on a limited tape segment.
   Can detect HALT and INF_REPEAT. Used by Macro Machines."""
+  inf_loops = tm.num_states * len(start_tape) * tm.num_symbols**len(start_tape)
 
   # num_base_steps in the bottom level Simple_Machine.
   num_base_steps = 0
-  # num_steps_here is the # steps simulated in this function.
-  num_steps_here = 0
+  # num_loops is the # steps simulated in this function.
+  num_loops = 0
   tape = list(start_tape)
   states_last_seen = {}
   # Simulate Machine on macro symbol
@@ -77,7 +78,7 @@ def sim_limited(tm, state, start_tape, pos, dir, max_steps=10000):
     for state, base_last_seen in trans.states_last_seen.iteritems():
       states_last_seen[state] = num_base_steps + base_last_seen
     num_base_steps += trans.num_base_steps
-    num_steps_here += 1
+    num_loops += 1
     tape[pos] = trans.symbol_out
     state = trans.state_out
     dir = trans.dir_out
@@ -91,10 +92,15 @@ def sim_limited(tm, state, start_tape, pos, dir, max_steps=10000):
       condition = trans.condition
       condition_details = trans.condition_details + [pos]
       break
-    if num_steps_here > max_steps:
+    if num_loops > inf_loops:
+      # Simulator must be repeating configurations.
+      condition = INF_REPEAT
+      condition_details = [pos]
+      break
+    if num_loops > max_loops:
       # Simulation ran too long, we give up.
       condition = GAVE_UP
-      condition_details = [num_steps_here]
+      condition_details = [num_loops]
       break
     if not (0 <= pos < len(tape)):
       # We ran off one end of the macro symbol. We're done.
@@ -109,7 +115,7 @@ def sim_limited(tm, state, start_tape, pos, dir, max_steps=10000):
     # this and state_out.
     symbol_out=tape, state_out=state, dir_out=dir,
     num_base_steps=num_base_steps, states_last_seen=states_last_seen)
-  
+
 
 class Turing_Machine(object):
   """Abstract base for all specific Turing Machines
@@ -332,17 +338,17 @@ class Block_Macro_Machine(Macro_Machine):
     if macro_dir_in == RIGHT:
       pos = 0
     else:
-      assert macro_dir_in == LEFT
+      assert macro_dir_in == LEFT, macro_dir_in
       pos = self.block_size - 1
-    
+
     trans = sim_limited(self.base_machine,
                         state=macro_state_in, dir=macro_dir_in,
                         start_tape=macro_symbol_in, pos=pos)
-    
+
     # Convert symbol into the correct format.
     trans.symbol_out = Block_Symbol(trans.symbol_out)
     return trans
-    
+
 
 class Backsymbol_Macro_Machine_State:
   def __init__(self,base_state,back_symbol):
@@ -404,68 +410,33 @@ class Backsymbol_Macro_Machine(Macro_Machine):
     return self.trans_table[args]
 
   def eval_trans(self, (macro_symbol_in, macro_state_in, macro_dir_in)):
-    # num_base_steps is 3 steps in the bottom level Simple_Machine.
-    num_base_steps = 0
-    # num_steps_in_macro is the # steps simulated below inside the macro symbol.
-    num_steps_in_macro = 0
-    state = macro_state_in.base_state
-    back_macro_symbol = macro_state_in.back_symbol
-    dir = macro_dir_in
-    states_last_seen = {}
-    if macro_dir_in is RIGHT:
-      tape = [back_macro_symbol, macro_symbol_in]
+    if macro_dir_in == RIGHT:
+      tape = [macro_state_in.back_symbol, macro_symbol_in]
       pos = 1
     else:
-      tape = [macro_symbol_in, back_macro_symbol]
+      assert macro_dir_in == LEFT, macro_dir_in
+      tape = [macro_symbol_in, macro_state_in.back_symbol]
       pos = 0
-    # Simulate Machine on macro symbol
-    while True:
-      symbol = tape[pos]
-      base_trans = self.base_machine.get_trans_object(symbol, state, dir)
-      for state, base_last_seen in base_trans.states_last_seen.iteritems():
-        states_last_seen[state] = num_base_steps + base_last_seen
-      num_base_steps += base_trans.num_base_steps
-      num_steps_in_macro += 1
-      tape[pos] = base_trans.symbol_out
-      state = base_trans.state_out
-      dir = base_trans.dir_out
-      if dir is RIGHT:
-        pos += 1
-      elif dir is LEFT:
-        pos -= 1
 
-      # Are we done simulating on this macro symbol?
-      if base_trans.condition != RUNNING:
-        # Base machine stopped running (HALT, INF_REPEAT, etc.)
-        condition = base_trans.condition
-        condition_details = base_trans.condition_details + [pos]
-        break
-      if num_steps_in_macro > self.max_steps:
-        # This macro simulation ran too long, we must be repeating infinitely
-        # inside the macro symbol.
-        condition = INF_REPEAT
-        condition_details = [pos]
-        break
-      if not (0 <= pos < 2):
-        # We ran off one end of the macro symbol. We're done.
-        condition = RUNNING
-        condition_details = None
-        break
+    trans = sim_limited(self.base_machine,
+                        state=macro_state_in.base_state, dir=macro_dir_in,
+                        start_tape=tape, pos=pos)
 
-    # Calculate the macro symbol and macro state to return.
-    # Note: For Halt/Infinite these return details are not 100% accurate because
-    # we could be ending in the middle of the macro symbol ...
+    # sim_limited just leaves the final tape in `trans.symbol_out`, we
+    # need to split out the backsymbol and printed_symbol ourselves.
+    final_tape = trans.symbol_out
 
-    # backsymbol is the symbol that will be part of the Macro state.
-    # If we are moving right, it will be the right symbol (tape[1]).
-    backsymbol = tape[dir]
-    # return_symbol will be the other symbol. The one that should be writen to
-    # the tape. If we are moving right, it will be the left symbol (tape[0]).
-    return_symbol = tape[1 - dir]
+    if trans.dir_out == RIGHT:
+      # [0, 1], A, RIGHT -> 0 (1)A>
+      symbol_out, backsymbol = final_tape
+    else:
+      # [0, 1], A, LEFT -> <A(0) 1
+      assert trans.dir_out == LEFT, trans.dir_out
+      backsymbol, symbol_out = final_tape
 
-    return Transition(
-      condition=condition, condition_details=condition_details,
-      symbol_out=return_symbol,
-      state_out=Backsymbol_Macro_Machine_State(state, backsymbol),
-      dir_out=dir,
-      num_base_steps=num_base_steps, states_last_seen=states_last_seen)
+    # Update symbol_out and state_out to be backsymbol-style.
+    trans.symbol_out = symbol_out
+    trans.state_out = Backsymbol_Macro_Machine_State(trans.state_out,
+                                                     backsymbol)
+
+    return trans

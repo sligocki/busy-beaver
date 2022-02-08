@@ -108,12 +108,7 @@ class SystemTest(unittest.TestCase):
             ]
     for ttable_text, expected_result in data:
       ttable = IO.parse_ttable(ttable_text)
-      try:
-        simulated_result = Macro_Simulator.run_options(ttable, self.options)
-      except:
-        print "Error"
-        print name
-        raise
+      simulated_result = Macro_Simulator.run_options(ttable, self.options)
       self.assertEqual(expected_result, simulated_result)
 
 if __name__ == '__main__':
