@@ -21,7 +21,6 @@ for block_size in range(2, 21):
   end_time = time.time()
   print "Finished", block_size, end_time - start_time
 
-  assert trans.condition in (Turing_Machine.INF_REPEAT,
-                             Turing_Machine.GAVE_UP), trans.__dict__
+  assert trans.condition in (Turing_Machine.INF_REPEAT,), trans.__dict__
 
 print "Success"

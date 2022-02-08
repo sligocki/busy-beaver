@@ -63,14 +63,20 @@ class Transition(object):
 def sim_limited(tm, state, start_tape, pos, dir, max_loops=10000):
   """Simulate TM on a limited tape segment.
   Can detect HALT and INF_REPEAT. Used by Macro Machines."""
-  inf_loops = tm.num_states * len(start_tape) * tm.num_symbols**len(start_tape)
-
   # num_base_steps in the bottom level Simple_Machine.
   num_base_steps = 0
   # num_loops is the # steps simulated in this function.
   num_loops = 0
   tape = list(start_tape)
   states_last_seen = {}
+
+  # Once we run long enough use this to detect repeat-in-place.
+  # If `old_config` is ever repeated, we know it will repeat forever.
+  # Format: (state, dir, pos, tape)
+  old_config = None
+  # Arbitrarily start looking for repeats after ~100 steps (~0.1ms).
+  next_config_save = 128
+
   # Simulate Machine on macro symbol
   while True:
     symbol = tape[pos]
@@ -87,20 +93,29 @@ def sim_limited(tm, state, start_tape, pos, dir, max_loops=10000):
     elif dir == LEFT:
       pos -= 1
 
-    if trans.condition != RUNNING:
-      # Base machine stopped running (HALT, INF_REPEAT, etc.)
-      condition = trans.condition
-      condition_details = trans.condition_details + [pos]
-      break
-    if num_loops > inf_loops:
-      # Simulator must be repeating configurations.
+    if (state, dir, pos, tape) == old_config:
+      # Found a repeated config.
       condition = INF_REPEAT
       condition_details = [pos]
       break
+    if num_loops >= next_config_save:
+      # At various checkpoints we update old_config.
+      # With the exponential growth of next_config_save we guarantee that for
+      # any repeat which starts at `init_time` and has period `period`
+      # we'll detect the repeat by step `2 * max(init_time, period)`.
+      old_config = (state, dir, pos, list(tape))
+      next_config_save *= 2
+
     if num_loops > max_loops:
       # Simulation ran too long, we give up.
       condition = GAVE_UP
       condition_details = [num_loops]
+      break
+
+    if trans.condition != RUNNING:
+      # Base machine stopped running (HALT, INF_REPEAT, etc.)
+      condition = trans.condition
+      condition_details = trans.condition_details + [pos]
       break
     if not (0 <= pos < len(tape)):
       # We ran off one end of the macro symbol. We're done.

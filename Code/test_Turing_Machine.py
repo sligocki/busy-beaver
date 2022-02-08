@@ -25,6 +25,37 @@ class SystemTest(unittest.TestCase):
     filename = os.path.join(self.root_dir, "Machines", name)
     ttable = IO.load_TTable_filename(filename)
     return Turing_Machine.make_machine(ttable)
+  
+  def test_block_repeat(self):
+    """Test that Block_Macro_Machine can detect repeats efficiently even for giant block sizes."""
+    ttable = IO.parse_ttable("0RA 1LA")
+    tm = Turing_Machine.make_machine(ttable)
+    block_size = 100
+    macro_machine = Turing_Machine.Block_Macro_Machine(tm, block_size)
+    macro_symbol = Turing_Machine.Block_Symbol((0, 1) + (0,) * (block_size - 2))
+
+    trans = macro_machine.get_trans_object(macro_symbol,
+                                           macro_machine.init_state,
+                                           Turing_Machine.RIGHT)
+
+    self.assertEqual(trans.condition, Turing_Machine.INF_REPEAT)
+  
+  def test_backsymbol_repeat(self):
+    """Test that Backsymbol_Macro_Machine can detect repeats efficiently even for giant block sizes."""
+    ttable = IO.parse_ttable("0RA 1LA")
+    tm = Turing_Machine.make_machine(ttable)
+    block_size = 100
+    block_m = Turing_Machine.Block_Macro_Machine(tm, block_size)
+    macro_machine = Turing_Machine.Backsymbol_Macro_Machine(block_m)
+
+    back_symbol = Turing_Machine.Block_Symbol((0,) * block_size)
+    front_symbol = Turing_Machine.Block_Symbol((1,) * block_size)
+    state = Turing_Machine.Backsymbol_Macro_Machine_State(tm.init_state,
+                                                          back_symbol)
+
+    trans = macro_machine.get_trans_object(front_symbol, state, Turing_Machine.RIGHT)
+
+    self.assertEqual(trans.condition, Turing_Machine.INF_REPEAT)
 
   def test_machine_ttable_to_str(self):
     self.assertEqual(Turing_Machine.machine_ttable_to_str(self.load_tm("2x2-6-4")),
