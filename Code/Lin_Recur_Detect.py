@@ -20,18 +20,18 @@ def are_half_tapes_equal(tape1, start_pos1, tape2, start_pos2, dir_offset):
   # Entire half-tapes are equal!
   return True
 
-def lin_search(ttable, initial_steps):
+def lin_search(ttable, max_steps=None):
   """Detect Lin Recurrence without knowing the period or start time."""
   sim = Direct_Simulator.DirectSimulator(ttable)
-  sim.seek(initial_steps)
+  sim.step()
 
-  while True:
+  while max_steps is None or sim.step_num < max_steps:
     # Instead of comparing each config to all previous configs, we try at one
     # starting steps up til 2x those steps. Then fix at 2x and repeat.
     # Thus instead of doing N^2 tape comparisons, we do N.
     # This works because once the TM repeats, it will keep repeating forever!
     init_step_num = sim.step_num
-    steps_reset = init_step_num * 2
+    steps_reset = 2 * init_step_num
     init_pos = sim.tape.position
     most_left_pos = most_right_pos = init_pos
     init_state = sim.state
@@ -107,18 +107,23 @@ def main():
   parser = argparse.ArgumentParser()
   parser.add_argument("tm_file")
   parser.add_argument("tm_line", type=int, nargs="?", default=1)
+  parser.add_argument("--max-steps", type=int)
   args = parser.parse_args()
 
   ttable = IO.load_TTable_filename(args.tm_file, args.tm_line)
-  # NOTE: init_step is not necessarily the earliest time that recurrence
-  # starts, it is simply a time after which recurrence is in effect.
-  init_step, period = lin_search(ttable, 1)
+  result = lin_search(ttable, max_steps=args.max_steps)
+  if result:
+    # NOTE: init_step is not necessarily the earliest time that recurrence
+    # starts, it is simply a time after which recurrence is in effect.
+    init_step, period = result
 
-  # Do a second search, now that we know the recurrence period to find the
-  # earliest start time of the recurrence.
-  recur_start = period_search(ttable, init_step, period)
+    # Do a second search, now that we know the recurrence period to find the
+    # earliest start time of the recurrence.
+    recur_start = period_search(ttable, init_step, period)
 
-  print "Found Lin Recurrence: Start:", recur_start, "Period:", period
+    print "Found Lin Recurrence: Start:", recur_start, "Period:", period
+  else:
+    print "No Lin Recurrence found searching up to step", args.max_steps
 
 if __name__ == "__main__":
   main()
