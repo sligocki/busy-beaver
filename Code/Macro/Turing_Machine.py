@@ -34,7 +34,7 @@ RUNNING    = "Running"    # Machine still running normally
 HALT       = "Halt"       # Machine halts in or directly after move
 INF_REPEAT = "Inf_Repeat" # Machine proven not to halt within move
 UNDEFINED  = "Undefined"  # Machine encountered undefined transition
-TIME_OUT   = "Timeout"    # A timer expired
+GAVE_UP   = "Gave_Up"     # For some reason, we bailed on computation (maybe too many steps).
 
 
 class Transition(object):
@@ -238,6 +238,9 @@ class Block_Symbol(tuple):
 class Block_Macro_Machine(Macro_Machine):
   """A derivative Turing Machine which simulates another machine clumping k-symbols together into a block-symbol"""
   MAX_TTABLE_CELLS = 100000
+  # Cutoff for maximum steps allowed to compute a macro step. If it's over
+  # this we bail.
+  MAX_STEPS = 10000
   DUMMY_OFFSET_STATE = "Dummy_Offset_State"
 
   def __init__(self, base_machine, block_size, offset=None):
@@ -324,6 +327,12 @@ class Block_Macro_Machine(Macro_Machine):
         # inside the macro symbol.
         return Transition(
           condition=INF_REPEAT, condition_details=[pos],
+          symbol_out=Block_Symbol(tape), state_out=state, dir_out=dir,
+          num_base_steps=num_base_steps, states_last_seen=states_last_seen)
+      # TODO: Maybe add better recur detection?
+      elif num_steps_in_macro > self.MAX_STEPS:
+        return Transition(
+          condition=GAVE_UP,
           symbol_out=Block_Symbol(tape), state_out=state, dir_out=dir,
           num_base_steps=num_base_steps, states_last_seen=states_last_seen)
 

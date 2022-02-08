@@ -39,7 +39,7 @@ def run(TTable, block_size, max_loops, runtime, recursive, progress, options,
 
   except AlarmException:
     ALARM.cancel_alarm()
-    sim.op_state = Turing_Machine.TIME_OUT
+    sim.op_state = Exit_Condition.TIME_OUT
 
   stats.num_rules += len(sim.prover.rules)
   stats.num_recursive_rules += sim.prover.num_recursive_rules
@@ -55,7 +55,7 @@ def run(TTable, block_size, max_loops, runtime, recursive, progress, options,
     # TODO(shawn): Return time taken.
     return Exit_Condition.UNKNOWN, "Max_Steps", sim.get_nonzeros(), sim.step_num
 
-  elif sim.op_state == Turing_Machine.TIME_OUT:
+  elif sim.op_state == Exit_Condition.TIME_OUT:
     if progress:
       print "\tTimeout", block_size, sim.step_num, sim.num_loops
     return Exit_Condition.UNKNOWN, "Time_Out", sim.get_nonzeros(), sim.step_num
