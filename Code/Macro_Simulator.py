@@ -156,6 +156,9 @@ def run_options(ttable, options, stats=None):
     return Exit_Condition.UNDEF_CELL, (on_state, on_symbol,
                                        sim.step_num, sim.get_nonzeros())
 
+  elif sim.op_state == Turing_Machine.GAVE_UP:
+    return Exit_Condition.UNKNOWN, (sim.op_state,) + sim.op_details
+
   raise Exception, (sim.op_state, ttable, sim)
 
 # Main script

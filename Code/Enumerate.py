@@ -88,6 +88,7 @@ class Enumerator(object):
     self.best_steps = self.best_score = 0
     self.inf_type = DefaultDict(0)
     self.num_over_time = self.num_over_steps = self.num_over_tape = 0
+    self.max_sim_time_s = 0.0
     # Passed into and updated in Macro_Simulator
     self.stats = GenContainer()
     self.stats.num_rules = 0
@@ -147,7 +148,10 @@ class Enumerator(object):
         self.save()
 
       # ... and run it.
+      start_time = time.time()
       cond, info = self.run(tm)
+      sim_time = time.time() - start_time
+      self.max_sim_time_s = max(sim_time, self.max_sim_time_s)
 
       # If it hits an undefined transition ...
       if cond == Exit_Condition.UNDEF_CELL:
@@ -187,11 +191,12 @@ class Enumerator(object):
       # Print out statistical data
       self.pout.write("%s -" % self.tm_num)
       self.pout.write(" %s %s %s -" % (self.num_halt, self.num_infinite,
-                                  self.num_unresolved))
+                                       self.num_unresolved))
       self.pout.write(" %s" % (long_to_eng_str(self.best_steps,1,3),))
       self.pout.write(" %s" % (long_to_eng_str(self.best_score,1,3),))
-      self.pout.write(" (%.2f - %.2f)\n" % (self.end_time - self.start_time,
-                                       self.end_clock - self.start_clock))
+      self.pout.write(" %.0fms " % (self.max_sim_time_s * 1000))
+      self.pout.write(" (%.2fs - %.2fs)\n" % (self.end_time - self.start_time,
+                                              self.end_clock - self.start_clock))
       if self.options.print_stats:
         pprint(self.stats.__dict__)
       self.pout.flush()
@@ -291,10 +296,13 @@ class Enumerator(object):
     if reason == Exit_Condition.MAX_STEPS:
       self.num_over_steps += 1
     elif reason == Exit_Condition.TIME_OUT:
-      print >> sys.stderr, "ERROR: TIMEOUT", args, Output_Machine.display_ttable(tm.get_TTable())
+      print >> sys.stderr, "WARNING: TIMEOUT", args, Output_Machine.display_ttable(tm.get_TTable())
       self.num_over_time += 1
     elif reason == Exit_Condition.OVER_TAPE:
       self.num_over_tape += 1
+    elif reason == Exit_Condition.UNKNOWN and args[0] == Turing_Machine.GAVE_UP:
+      print >> sys.stderr, "WARNING: GAVE_UP", args, Output_Machine.display_ttable(tm.get_TTable())
+      self.num_gave_up += 1
     else:
       assert reason == Exit_Condition.NOT_RUN, "Invalid reason (%r)" % reason
     self.tm_num += 1
