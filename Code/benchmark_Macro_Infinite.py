@@ -24,4 +24,4 @@ for block_size in range(2, 21):
   assert trans.condition in (Turing_Machine.INF_REPEAT,
                              Turing_Machine.GAVE_UP), trans.__dict__
 
-print "Finished"
+print "Success"
