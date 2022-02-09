@@ -167,7 +167,7 @@ def run_options(ttable, options, stats=None):
                                        sim.step_num, sim.get_nonzeros())
 
   elif sim.op_state == Turing_Machine.GAVE_UP:
-    return Exit_Condition.UNKNOWN, (sim.op_state,) + sim.op_details
+    return Exit_Condition.UNKNOWN, (sim.op_state,) + tuple(sim.op_details)
 
   raise Exception, (sim.op_state, ttable, sim)
 

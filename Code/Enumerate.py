@@ -23,10 +23,10 @@ import time
 
 from Common import Exit_Condition, GenContainer
 import IO
-from Macro import Block_Finder
+from Macro import Block_Finder, Turing_Machine
 import Macro_Simulator
 import Output_Machine
-from Turing_Machine import Turing_Machine
+import Turing_Machine as old_tm
 import Work_Queue
 
 try:
@@ -322,12 +322,12 @@ def initialize_stack(options, stack):
       # TODO(shawn): Allow these TMs to be expanded from read size to
       # options size. Ex: if record.ttable is 2x2, but options are 2x3.
       # Currently that will be treated like a normal 2x2 machine here.
-      tm = Turing_Machine(record.ttable)
+      tm = old_tm.Turing_Machine(record.ttable)
       stack.push_job(tm)
     infile.close()
   else:
     # If no infile is specified, then default to the NxM blank TM.
-    blank_tm = Turing_Machine(options.states, options.symbols, options.first_1rb)
+    blank_tm = old_tm.Turing_Machine(options.states, options.symbols, options.first_1rb)
     stack.push_job(blank_tm)
 
 def main(args):
