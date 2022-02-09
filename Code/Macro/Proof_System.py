@@ -490,7 +490,7 @@ class Proof_System(object):
               self.past_configs.clear()
           rule.num_uses += 1
           assert isinstance(result, ProverResult), result
-          if not result.states_last_seen:
+          if self.options.compute_steps and not result.states_last_seen:
             print >> sys.stderr, "UNIMPLEMENTED: Prover missing states_last_seen for rule:", rule, result
           return result
     else:
@@ -508,7 +508,7 @@ class Proof_System(object):
               self.past_configs.clear()
           rule.num_uses += 1
           assert isinstance(result, ProverResult), result
-          if not result.states_last_seen:
+          if self.options.compute_steps and not result.states_last_seen:
             print >> sys.stderr, "UNIMPLEMENTED: Prover missing states_last_seen for rule:", rule, result
           return result
         if res != UNPROVEN_PARITY:
@@ -586,7 +586,7 @@ class Proof_System(object):
             result, large_delta = res
             rule.num_uses += 1
             assert isinstance(result, ProverResult), result
-            if not result.states_last_seen:
+            if self.options.compute_steps and not result.states_last_seen:
               print >> sys.stderr, "UNIMPLEMENTED: Prover missing states_last_seen for rule:", rule, result
             return result
 
@@ -1204,6 +1204,7 @@ class Proof_System(object):
 
       num_reps += 1
       success = True
+      last_assignment = assignment
       assignment = {}
 
     # We cannot apply rule any more.
@@ -1220,8 +1221,19 @@ class Proof_System(object):
         self.print_this("Times applied", num_reps)
         self.print_this("Resulting tape:", tape)
         print
-      # TODO: Calculate states_last_seen
-      return True, (ProverResult(APPLY_RULE, tape, diff_steps, {}),
+      # Calculate states_last_seen
+      if rule.states_last_seen:
+        states_last_seen = {}
+        for state, last_seen in rule.states_last_seen.iteritems():
+          # After the rule is applied, how many steps before that did we last see
+          # `state`.
+          last_seen_ago = rule.num_steps - last_seen
+          states_last_seen[state] = diff_steps - last_seen_ago.substitute(last_assignment)
+        # TODO: Test this ...
+      else:
+        states_last_seen = None
+      return True, (ProverResult(APPLY_RULE, tape, diff_steps, {},
+                                 states_last_seen=states_last_seen),
                     large_delta)
     else:
       if self.verbose:
