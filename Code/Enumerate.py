@@ -302,7 +302,6 @@ class Enumerator(object):
       self.num_over_tape += 1
     elif reason == Exit_Condition.UNKNOWN and args[0] == Turing_Machine.GAVE_UP:
       print >> sys.stderr, "WARNING: GAVE_UP", args, Output_Machine.display_ttable(tm.get_TTable())
-      self.num_gave_up += 1
     else:
       assert reason == Exit_Condition.NOT_RUN, "Invalid reason (%r)" % reason
     self.tm_num += 1

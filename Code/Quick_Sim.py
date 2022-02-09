@@ -55,7 +55,7 @@ def run(machine, block_size, back, prover, recursive, options):
 
   if sim.op_state == Turing_Machine.HALT:
     print
-    print "Turing Machine Halted!"
+    print "Turing Machine Halted"
     print
     if options.compute_steps:
       print "Steps:   ", sim.step_num
@@ -63,12 +63,12 @@ def run(machine, block_size, back, prover, recursive, options):
     print
   elif sim.op_state == Turing_Machine.INF_REPEAT:
     print
-    print "Turing Machine proven Infinite!"
+    print "Turing Machine proven Infinite"
     print "Reason:", sim.inf_reason
     print "Quasihalt:", sim.inf_quasihalt
   elif sim.op_state == Turing_Machine.UNDEFINED:
     print
-    print "Turing Machine reached Undefined transition!"
+    print "Turing Machine reached Undefined transition"
     print "State: ", sim.op_details[0][1]
     print "Symbol:", sim.op_details[0][0]
     print
@@ -76,6 +76,13 @@ def run(machine, block_size, back, prover, recursive, options):
       print "Steps:   ", sim.step_num
     print "Nonzeros:", sim.get_nonzeros()
     print
+  elif sim.op_state == Turing_Machine.GAVE_UP:
+    print
+    print "Gave up while simulating Turing Machine"
+    print "Info:", sim.op_details
+  else:
+    print
+    print "Unexpected sim exit condition:", sim.op_state, sim.op_details
 
 
 if __name__ == "__main__":
