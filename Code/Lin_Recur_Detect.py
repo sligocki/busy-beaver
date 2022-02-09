@@ -20,6 +20,13 @@ def are_half_tapes_equal(tape1, start_pos1, tape2, start_pos2, dir_offset):
   # Entire half-tapes are equal!
   return True
 
+def are_sections_equal(start_tape, end_tape, most_left_pos, most_right_pos, offset):
+  for start_pos in range(most_left_pos, most_right_pos + 1):
+    end_pos = start_pos + offset
+    if start_tape.read(start_pos) != end_tape.read(end_pos):
+      return False
+  return True
+
 def lin_search(ttable, max_steps=None):
   """Detect Lin Recurrence without knowing the period or start time."""
   sim = Direct_Simulator.DirectSimulator(ttable)
@@ -38,6 +45,9 @@ def lin_search(ttable, max_steps=None):
     init_tape = sim.tape.copy()
     while sim.step_num < steps_reset:
       sim.step()
+      if sim.halted:
+        return False  # Halted
+
       most_left_pos = min(most_left_pos, sim.tape.position)
       most_right_pos = max(most_right_pos, sim.tape.position)
       if sim.state == init_state:
@@ -45,17 +55,18 @@ def lin_search(ttable, max_steps=None):
         if offset > 0:  # Right
           if are_half_tapes_equal(init_tape, most_left_pos,
                                   sim.tape, most_left_pos + offset, dir_offset=+1):
-            print "lin_search", init_step_num, sim.step_num, sim.state, offset, most_left_pos - init_pos
+            # print "lin_search", init_step_num, sim.step_num, sim.state, offset, most_left_pos - init_pos
             return init_step_num, (sim.step_num - init_step_num)
         elif offset < 0:  # Left
           if are_half_tapes_equal(init_tape, most_right_pos,
                                   sim.tape, most_right_pos + offset, dir_offset=-1):
-            print "lin_search", init_step_num, sim.step_num, sim.state, offset, most_right_pos - init_pos
+            # print "lin_search", init_step_num, sim.step_num, sim.state, offset, most_right_pos - init_pos
             return init_step_num, (sim.step_num - init_step_num)
         else:  # In place
-          # TODO: Implement in-place checking which requires comparing entire tapes
-          # (or at least the segments between most_left_pos and most_right_pos)
-          pass
+          if are_sections_equal(init_tape, sim.tape,
+                                most_left_pos, most_right_pos, offset):
+            # print "lin_search", init_step_num, sim.step_num, sim.state, offset, most_left_pos - init_pos
+            return init_step_num, (sim.step_num - init_step_num)
 
 def check_recur(ttable, init_step, period):
   sim = Direct_Simulator.DirectSimulator(ttable)
@@ -84,7 +95,9 @@ def check_recur(ttable, init_step, period):
                               sim.tape, most_right_pos + offset, dir_offset=-1):
         return True
     else:  # In place
-      raise Exception, "Not implemented"
+      if are_sections_equal(init_tape, sim.tape,
+                            most_left_pos, most_right_pos, offset):
+        return True
 
   # Either states were not equal or "half-tape" was not equal, so recurrence
   # has not started yet.

@@ -2,6 +2,9 @@
 Class for managing direct simulations (non-chain tape).
 """
 
+import Common
+
+
 class DirectTape:
   def __init__(self, init_symbol, tape_increment=1000):
     self.init_symbol = init_symbol
@@ -62,21 +65,25 @@ class DirectSimulator:
     self.ttable = ttable
 
     self.state = 0  # Init state
+    self.halted = False
     self.tape = DirectTape(init_symbol = 0)
 
     self.step_num = 0
 
   def step(self):
-    state_in = self.state
-    symbol_in = self.tape.read()
-    symbol_out, dir_out, state_out = self.ttable[state_in][symbol_in]
+    if not self.halted:
+      state_in = self.state
+      symbol_in = self.tape.read()
+      symbol_out, dir_out, state_out = self.ttable[state_in][symbol_in]
 
-    self.tape.write(symbol_out)
-    self.tape.move(dir_out)
-    self.state = state_out
+      self.tape.write(symbol_out)
+      self.tape.move(dir_out)
+      self.state = state_out
+      if self.state == Common.HALT_STATE:
+        self.halted = True
 
-    self.step_num += 1
+      self.step_num += 1
 
   def seek(self, target_step_num):
-    while self.step_num < target_step_num:
+    while not self.halted and self.step_num < target_step_num:
       self.step()
