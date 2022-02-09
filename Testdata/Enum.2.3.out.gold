@@ -8,49 +8,49 @@
 1RB --- ---  2LB 2RB 1LB | None Infinite Reverse_Engineer N/A N/A
 1RB --- ---  2LB 2RB 0RB | None Infinite Reverse_Engineer N/A N/A
 1RB --- ---  2LB 2RB 0LB | None Infinite Reverse_Engineer N/A N/A
-1RB --- ---  2LB 2RB 2RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB --- ---  2LB 2RB 2RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB --- 1RZ  2LB 2RB 2LA | None Halt 2 5
-1RB --- 2RB  2LB 2RB 2LA | None Infinite Repeat_in_Place No_Quasihalt N/A
-1RB --- 2LB  2LB 2RB 2LA | None Infinite Chain_Move 0 5
+1RB --- 2RB  2LB 2RB 2LA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB --- 2LB  2LB 2RB 2LA | None Infinite Lin_Recur 0 5
 1RB 1RZ 1RB  2LB 2RB 2LA | None Halt 2 7
-1RB --- 1LB  2LB 2RB 2LA | None Infinite Chain_Move 0 5
+1RB --- 1LB  2LB 2RB 2LA | None Infinite Lin_Recur 0 5
 1RB 1RZ 0RB  2LB 2RB 2LA | None Halt 2 9
-1RB --- 0LB  2LB 2RB 2LA | None Infinite Chain_Move 0 5
-1RB --- 2RA  2LB 2RB 2LA | None Infinite Chain_Move No_Quasihalt N/A
+1RB --- 0LB  2LB 2RB 2LA | None Infinite Lin_Recur 0 5
+1RB --- 2RA  2LB 2RB 2LA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1RZ 2LA  2LB 2RB 2LA | None Halt 3 8
-1RB --- 1RA  2LB 2RB 2LA | None Infinite Chain_Move No_Quasihalt N/A
+1RB --- 1RA  2LB 2RB 2LA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1RZ 1LA  2LB 2RB 2LA | None Halt 3 10
-1RB --- 0RA  2LB 2RB 2LA | None Infinite Chain_Move No_Quasihalt N/A
-1RB --- 0LA  2LB 2RB 2LA | None Infinite Chain_Move No_Quasihalt N/A
-1RB --- ---  2LB 2RB 1RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB --- 0RA  2LB 2RB 2LA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB --- 0LA  2LB 2RB 2LA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB --- ---  2LB 2RB 1RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB --- 1RZ  2LB 2RB 1LA | None Halt 2 5
-1RB --- 2RB  2LB 2RB 1LA | None Infinite Chain_Move No_Quasihalt N/A
-1RB --- 2LB  2LB 2RB 1LA | None Infinite Chain_Move 0 5
+1RB --- 2RB  2LB 2RB 1LA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB --- 2LB  2LB 2RB 1LA | None Infinite Lin_Recur 0 5
 1RB 1RZ 1RB  2LB 2RB 1LA | None Halt 3 9
-1RB --- 1LB  2LB 2RB 1LA | None Infinite Chain_Move 0 5
-1RB --- 0RB  2LB 2RB 1LA | None Infinite Chain_Move No_Quasihalt N/A
-1RB --- 0LB  2LB 2RB 1LA | None Infinite Chain_Move 0 5
+1RB --- 1LB  2LB 2RB 1LA | None Infinite Lin_Recur 0 5
+1RB --- 0RB  2LB 2RB 1LA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB --- 0LB  2LB 2RB 1LA | None Infinite Lin_Recur 0 5
 1RB 1RZ 2RA  2LB 2RB 1LA | None Halt 2 6
 1RB 1RZ 2LA  2LB 2RB 1LA | None Halt 3 8
 1RB 1RZ 1RA  2LB 2RB 1LA | None Halt 2 6
 1RB 1RZ 1LA  2LB 2RB 1LA | None Halt 4 12
 1RB 1RZ 0RA  2LB 2RB 1LA | None Halt 1 6
-1RB --- 0LA  2LB 2RB 1LA | None Infinite Chain_Move No_Quasihalt N/A
-1RB --- ---  2LB 2RB 0RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB --- 0LA  2LB 2RB 1LA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB --- ---  2LB 2RB 0RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB --- 1RZ  2LB 2RB 0LA | None Halt 1 5
-1RB --- 2RB  2LB 2RB 0LA | None Infinite Chain_Move No_Quasihalt N/A
-1RB --- 2LB  2LB 2RB 0LA | None Infinite Chain_Move 0 5
-1RB --- 1RB  2LB 2RB 0LA | None Infinite Repeat_in_Place No_Quasihalt N/A
-1RB --- 1LB  2LB 2RB 0LA | None Infinite Chain_Move 0 5
-1RB --- 0RB  2LB 2RB 0LA | None Infinite Chain_Move 0 5
-1RB --- 0LB  2LB 2RB 0LA | None Infinite Chain_Move 0 5
-1RB --- 2RA  2LB 2RB 0LA | None Infinite Chain_Move No_Quasihalt N/A
+1RB --- 2RB  2LB 2RB 0LA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB --- 2LB  2LB 2RB 0LA | None Infinite Lin_Recur 0 5
+1RB --- 1RB  2LB 2RB 0LA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB --- 1LB  2LB 2RB 0LA | None Infinite Lin_Recur 0 5
+1RB --- 0RB  2LB 2RB 0LA | None Infinite Lin_Recur 0 5
+1RB --- 0LB  2LB 2RB 0LA | None Infinite Lin_Recur 0 5
+1RB --- 2RA  2LB 2RB 0LA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1RZ 2LA  2LB 2RB 0LA | None Halt 1 8
-1RB --- 1RA  2LB 2RB 0LA | None Infinite Chain_Move No_Quasihalt N/A
+1RB --- 1RA  2LB 2RB 0LA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1RZ 1LA  2LB 2RB 0LA | None Halt 2 10
-1RB --- 0RA  2LB 2RB 0LA | None Infinite Chain_Move No_Quasihalt N/A
-1RB --- 0LA  2LB 2RB 0LA | None Infinite Chain_Move No_Quasihalt N/A
-1RB --- ---  2LB 2LB --- | None Infinite Chain_Move 0 1
+1RB --- 0RA  2LB 2RB 0LA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB --- 0LA  2LB 2RB 0LA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB --- ---  2LB 2LB --- | None Infinite Lin_Recur 0 1
 1RB --- ---  2LB 1RB 1RZ | None Halt 2 4
 1RB --- ---  2LB 1RB 2RB | None Infinite Reverse_Engineer N/A N/A
 1RB --- ---  2LB 1RB 2LB | None Infinite Reverse_Engineer N/A N/A
@@ -58,7 +58,7 @@
 1RB --- ---  2LB 1RB 1LB | None Infinite Reverse_Engineer N/A N/A
 1RB --- ---  2LB 1RB 0RB | None Infinite Reverse_Engineer N/A N/A
 1RB --- ---  2LB 1RB 0LB | None Infinite Reverse_Engineer N/A N/A
-1RB --- ---  2LB 1RB 2RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB --- ---  2LB 1RB 2RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1RZ ---  2LB 1RB 2LA | None Halt 2 5
 1RB 2RB 1RZ  2LB 1RB 2LA | None Halt 2 7
 1RB 2LB ---  2LB 1RB 2LA | None Infinite Reverse_Engineer N/A N/A
@@ -72,35 +72,35 @@
 1RB 1LA ---  2LB 1RB 2LA | None Infinite Reverse_Engineer N/A N/A
 1RB 0RA 1RZ  2LB 1RB 2LA | None Halt 1 6
 1RB 0LA ---  2LB 1RB 2LA | None Infinite Reverse_Engineer N/A N/A
-1RB --- ---  2LB 1RB 1RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB --- ---  2LB 1RB 1RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1RZ ---  2LB 1RB 1LA | None Halt 2 5
-1RB 2RB ---  2LB 1RB 1LA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2RB ---  2LB 1RB 1LA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LB ---  2LB 1RB 1LA | None Infinite Reverse_Engineer N/A N/A
 1RB 1RB ---  2LB 1RB 1LA | None Infinite Reverse_Engineer N/A N/A
 1RB 1LB ---  2LB 1RB 1LA | None Infinite Reverse_Engineer N/A N/A
 1RB 0RB ---  2LB 1RB 1LA | None Infinite Reverse_Engineer N/A N/A
 1RB 0LB ---  2LB 1RB 1LA | None Infinite Reverse_Engineer N/A N/A
-1RB 2RA ---  2LB 1RB 1LA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2RA ---  2LB 1RB 1LA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LA ---  2LB 1RB 1LA | None Infinite Reverse_Engineer N/A N/A
-1RB 1RA ---  2LB 1RB 1LA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 1RA ---  2LB 1RB 1LA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1LA ---  2LB 1RB 1LA | None Infinite Reverse_Engineer N/A N/A
-1RB 0RA ---  2LB 1RB 1LA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 0RA ---  2LB 1RB 1LA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 0LA ---  2LB 1RB 1LA | None Infinite Reverse_Engineer N/A N/A
-1RB --- ---  2LB 1RB 0RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB --- ---  2LB 1RB 0RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1RZ ---  2LB 1RB 0LA | None Halt 1 5
-1RB 2RB ---  2LB 1RB 0LA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2RB ---  2LB 1RB 0LA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LB ---  2LB 1RB 0LA | None Infinite Reverse_Engineer N/A N/A
 1RB 1RB ---  2LB 1RB 0LA | None Infinite Reverse_Engineer N/A N/A
 1RB 1LB ---  2LB 1RB 0LA | None Infinite Reverse_Engineer N/A N/A
 1RB 0RB ---  2LB 1RB 0LA | None Infinite Reverse_Engineer N/A N/A
 1RB 0LB ---  2LB 1RB 0LA | None Infinite Reverse_Engineer N/A N/A
-1RB 2RA ---  2LB 1RB 0LA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2RA ---  2LB 1RB 0LA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LA ---  2LB 1RB 0LA | None Infinite Reverse_Engineer N/A N/A
-1RB 1RA ---  2LB 1RB 0LA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 1RA ---  2LB 1RB 0LA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1LA ---  2LB 1RB 0LA | None Infinite Reverse_Engineer N/A N/A
-1RB 0RA ---  2LB 1RB 0LA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 0RA ---  2LB 1RB 0LA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 0LA ---  2LB 1RB 0LA | None Infinite Reverse_Engineer N/A N/A
-1RB --- ---  2LB 1LB --- | None Infinite Chain_Move 0 1
+1RB --- ---  2LB 1LB --- | None Infinite Lin_Recur 0 1
 1RB --- ---  2LB 0RB 1RZ | None Halt 1 4
 1RB --- ---  2LB 0RB 2RB | None Infinite Reverse_Engineer N/A N/A
 1RB --- ---  2LB 0RB 2LB | None Infinite Reverse_Engineer N/A N/A
@@ -108,7 +108,7 @@
 1RB --- ---  2LB 0RB 1LB | None Infinite Reverse_Engineer N/A N/A
 1RB --- ---  2LB 0RB 0RB | None Infinite Reverse_Engineer N/A N/A
 1RB --- ---  2LB 0RB 0LB | None Infinite Reverse_Engineer N/A N/A
-1RB --- ---  2LB 0RB 2RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB --- ---  2LB 0RB 2RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1RZ ---  2LB 0RB 2LA | None Halt 2 7
 1RB 2RB 1RZ  2LB 0RB 2LA | None Halt 2 9
 1RB 2LB ---  2LB 0RB 2LA | None Infinite Reverse_Engineer N/A N/A
@@ -122,30 +122,30 @@
 1RB 1LA ---  2LB 0RB 2LA | None Infinite Reverse_Engineer N/A N/A
 1RB 0RA 1RZ  2LB 0RB 2LA | None Halt 1 8
 1RB 0LA ---  2LB 0RB 2LA | None Infinite Reverse_Engineer N/A N/A
-1RB --- ---  2LB 0RB 1RA | None Infinite Chain_Move No_Quasihalt N/A
-1RB --- ---  2LB 0RB 1LA | None Infinite Chain_Move No_Quasihalt N/A
-1RB --- ---  2LB 0RB 0RA | None Infinite Chain_Move No_Quasihalt N/A
-1RB --- ---  2LB 0RB 0LA | None Infinite Repeat_in_Place No_Quasihalt N/A
-1RB --- ---  2LB 0LB --- | None Infinite Chain_Move 0 1
+1RB --- ---  2LB 0RB 1RA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB --- ---  2LB 0RB 1LA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB --- ---  2LB 0RB 0RA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB --- ---  2LB 0RB 0LA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB --- ---  2LB 0LB --- | None Infinite Lin_Recur 0 1
 1RB --- 1RZ  2LB 2RA --- | None Halt 2 4
 1RB --- 2RB  2LB 2RA 1RZ | None Halt 3 6
 1RB --- 2RB  2LB 2RA 2RB | None Infinite Reverse_Engineer N/A N/A
 1RB --- 2RB  2LB 2RA 2LB | None Infinite Reverse_Engineer N/A N/A
 1RB --- 2RB  2LB 2RA 1RB | None Infinite Reverse_Engineer N/A N/A
-1RB --- 2RB  2LB 2RA 1LB | None Infinite Chain_Move 0 4
+1RB --- 2RB  2LB 2RA 1LB | None Infinite Lin_Recur 0 4
 1RB --- 2RB  2LB 2RA 0RB | None Infinite Reverse_Engineer N/A N/A
 1RB --- 2RB  2LB 2RA 0LB | None Infinite Reverse_Engineer N/A N/A
 1RB --- 2RB  2LB 2RA 2RA | None Infinite Reverse_Engineer N/A N/A
-1RB --- 2RB  2LB 2RA 2LA | None Infinite Repeat_in_Place No_Quasihalt N/A
+1RB --- 2RB  2LB 2RA 2LA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB --- 2RB  2LB 2RA 1RA | None Infinite Reverse_Engineer N/A N/A
-1RB --- 2RB  2LB 2RA 1LA | None Infinite Chain_Move No_Quasihalt N/A
+1RB --- 2RB  2LB 2RA 1LA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB --- 2RB  2LB 2RA 0RA | None Infinite Reverse_Engineer N/A N/A
-1RB --- 2RB  2LB 2RA 0LA | None Infinite Chain_Move No_Quasihalt N/A
+1RB --- 2RB  2LB 2RA 0LA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB --- 2LB  2LB 2RA 1RZ | None Halt 2 5
 1RB --- 2LB  2LB 2RA 2RB | None Infinite Reverse_Engineer N/A N/A
 1RB --- 2LB  2LB 2RA 2LB | None Infinite Reverse_Engineer N/A N/A
 1RB --- 2LB  2LB 2RA 1RB | None Infinite Reverse_Engineer N/A N/A
-1RB --- 2LB  2LB 2RA 1LB | None Infinite Chain_Move 0 4
+1RB --- 2LB  2LB 2RA 1LB | None Infinite Lin_Recur 0 4
 1RB --- 2LB  2LB 2RA 0RB | None Infinite Reverse_Engineer N/A N/A
 1RB --- 2LB  2LB 2RA 0LB | None Infinite Reverse_Engineer N/A N/A
 1RB --- 2LB  2LB 2RA 2RA | None Infinite Reverse_Engineer N/A N/A
@@ -153,51 +153,51 @@
 1RB --- 2LB  2LB 2RA 1RA | None Infinite Reverse_Engineer N/A N/A
 1RB 1RZ 2LB  2LB 2RA 1LA | None Halt 3 10
 1RB --- 2LB  2LB 2RA 0RA | None Infinite Reverse_Engineer N/A N/A
-1RB --- 2LB  2LB 2RA 0LA | None Infinite Chain_Move No_Quasihalt N/A
-1RB --- 1RB  2LB 2RA --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB --- 2LB  2LB 2RA 0LA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB --- 1RB  2LB 2RA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB --- 1LB  2LB 2RA 1RZ | None Halt 2 5
-1RB --- 1LB  2LB 2RA 2RB | None Infinite Chain_Move No_Quasihalt N/A
-1RB --- 1LB  2LB 2RA 2LB | None Infinite Chain_Move 0 4
-1RB --- 1LB  2LB 2RA 1RB | None Infinite Chain_Move No_Quasihalt N/A
-1RB --- 1LB  2LB 2RA 1LB | None Infinite Chain_Move 0 4
-1RB --- 1LB  2LB 2RA 0RB | None Infinite Chain_Move No_Quasihalt N/A
-1RB --- 1LB  2LB 2RA 0LB | None Infinite Chain_Move 0 4
+1RB --- 1LB  2LB 2RA 2RB | None Infinite Lin_Recur No_Quasihalt N/A
+1RB --- 1LB  2LB 2RA 2LB | None Infinite Lin_Recur 0 4
+1RB --- 1LB  2LB 2RA 1RB | None Infinite Lin_Recur No_Quasihalt N/A
+1RB --- 1LB  2LB 2RA 1LB | None Infinite Lin_Recur 0 4
+1RB --- 1LB  2LB 2RA 0RB | None Infinite Lin_Recur No_Quasihalt N/A
+1RB --- 1LB  2LB 2RA 0LB | None Infinite Lin_Recur 0 4
 1RB 1RZ 1LB  2LB 2RA 2RA | None Halt 2 6
 1RB 1RZ 1LB  2LB 2RA 2LA | None Halt 3 8
 1RB 1RZ 1LB  2LB 2RA 1RA | None Halt 2 6
 1RB 1RZ 1LB  2LB 2RA 1LA | None Halt 3 8
 1RB 1RZ 1LB  2LB 2RA 0RA | None Halt 1 6
-1RB --- 1LB  2LB 2RA 0LA | None Infinite Chain_Move No_Quasihalt N/A
+1RB --- 1LB  2LB 2RA 0LA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB --- 0RB  2LB 2RA 1RZ | None Halt 3 7
 1RB --- 0RB  2LB 2RA 2RB | None Infinite Reverse_Engineer N/A N/A
 1RB --- 0RB  2LB 2RA 2LB | None Infinite Reverse_Engineer N/A N/A
 1RB --- 0RB  2LB 2RA 1RB | None Infinite Reverse_Engineer N/A N/A
-1RB --- 0RB  2LB 2RA 1LB | None Infinite Chain_Move 0 4
+1RB --- 0RB  2LB 2RA 1LB | None Infinite Lin_Recur 0 4
 1RB --- 0RB  2LB 2RA 0RB | None Infinite Reverse_Engineer N/A N/A
 1RB --- 0RB  2LB 2RA 0LB | None Infinite Reverse_Engineer N/A N/A
 1RB --- 0RB  2LB 2RA 2RA | None Infinite Reverse_Engineer N/A N/A
 1RB 1RZ 0RB  2LB 2RA 2LA | None Halt 4 10
 1RB --- 0RB  2LB 2RA 1RA | None Infinite Reverse_Engineer N/A N/A
-1RB --- 0RB  2LB 2RA 1LA | None Infinite Chain_Move No_Quasihalt N/A
+1RB --- 0RB  2LB 2RA 1LA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB --- 0RB  2LB 2RA 0RA | None Infinite Reverse_Engineer N/A N/A
 1RB --- 0RB  2LB 2RA 0LA | None Infinite CTL_A* N/A N/A
 1RB --- 0LB  2LB 2RA 1RZ | None Halt 1 5
 1RB --- 0LB  2LB 2RA 2RB | None Infinite Reverse_Engineer N/A N/A
 1RB --- 0LB  2LB 2RA 2LB | None Infinite Reverse_Engineer N/A N/A
 1RB --- 0LB  2LB 2RA 1RB | None Infinite Reverse_Engineer N/A N/A
-1RB --- 0LB  2LB 2RA 1LB | None Infinite Chain_Move 0 4
+1RB --- 0LB  2LB 2RA 1LB | None Infinite Lin_Recur 0 4
 1RB --- 0LB  2LB 2RA 0RB | None Infinite Reverse_Engineer N/A N/A
 1RB --- 0LB  2LB 2RA 0LB | None Infinite Reverse_Engineer N/A N/A
 1RB --- 0LB  2LB 2RA 2RA | None Infinite Reverse_Engineer N/A N/A
 1RB 1RZ 0LB  2LB 2RA 2LA | None Halt 2 8
 1RB --- 0LB  2LB 2RA 1RA | None Infinite Reverse_Engineer N/A N/A
-1RB --- 0LB  2LB 2RA 1LA | None Infinite Chain_Move No_Quasihalt N/A
+1RB --- 0LB  2LB 2RA 1LA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB --- 0LB  2LB 2RA 0RA | None Infinite Reverse_Engineer N/A N/A
-1RB --- 0LB  2LB 2RA 0LA | None Infinite Chain_Move No_Quasihalt N/A
-1RB --- 2RA  2LB 2RA --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB --- 0LB  2LB 2RA 0LA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB --- 2RA  2LB 2RA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB --- 2LA  2LB 2RA 1RZ | None Halt 3 7
-1RB --- 2LA  2LB 2RA 2RB | None Infinite Chain_Move 0 6
-1RB --- 2LA  2LB 2RA 2LB | None Infinite Chain_Move No_Quasihalt N/A
+1RB --- 2LA  2LB 2RA 2RB | None Infinite Lin_Recur 0 6
+1RB --- 2LA  2LB 2RA 2LB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1RZ 2LA  2LB 2RA 1RB | None Halt 4 13
 1RB 1RZ 2LA  2LB 2RA 1LB | None Halt 3 9
 1RB --- 2LA  2LB 2RA 0RB | None Infinite Proof_System No_Quasihalt N/A
@@ -206,29 +206,29 @@
 1RB 1RZ 2LA  2LB 2RA 2LA | None Halt 3 8
 1RB 1RZ 2LA  2LB 2RA 1RA | None Halt 3 9
 1RB 1RZ 2LA  2LB 2RA 1LA | None Halt 3 8
-1RB --- 2LA  2LB 2RA 0RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB --- 2LA  2LB 2RA 0RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1RZ 2LA  2LB 2RA 0LA | None Halt 2 8
-1RB --- 1RA  2LB 2RA --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB --- 1RA  2LB 2RA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1RZ 1LA  2LB 2RA --- | None Halt 3 8
 1RB 2RB 1LA  2LB 2RA 1RZ | None Halt 4 10
 1RB 2LB 1LA  2LB 2RA 1RZ | None Halt 3 9
-1RB 1RB 1LA  2LB 2RA --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 1RB 1LA  2LB 2RA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1LB 1LA  2LB 2RA 1RZ | None Halt 3 9
 1RB 0RB 1LA  2LB 2RA 1RZ | None Halt 4 11
 1RB 0LB 1LA  2LB 2RA 1RZ | None Halt 2 9
 1RB 2RA 1LA  2LB 2RA --- | None Infinite CTL_A* N/A N/A
 1RB 2LA 1LA  2LB 2RA 1RZ | None Halt 4 12
-1RB 1RA 1LA  2LB 2RA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 1LA 1LA  2LB 2RA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 0RA 1LA  2LB 2RA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 0LA 1LA  2LB 2RA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB --- 0RA  2LB 2RA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB --- 0LA  2LB 2RA --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 1RA 1LA  2LB 2RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 1LA 1LA  2LB 2RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 0RA 1LA  2LB 2RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 0LA 1LA  2LB 2RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB --- 0RA  2LB 2RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB --- 0LA  2LB 2RA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB --- ---  2LB 2LA 1RZ | None Halt 3 5
-1RB --- ---  2LB 2LA 2RB | None Infinite Chain_Move 0 4
-1RB --- ---  2LB 2LA 2LB | None Infinite Chain_Move No_Quasihalt N/A
+1RB --- ---  2LB 2LA 2RB | None Infinite Lin_Recur 0 4
+1RB --- ---  2LB 2LA 2LB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1RZ ---  2LB 2LA 1RB | None Halt 4 9
-1RB 2RB ---  2LB 2LA 1RB | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2RB ---  2LB 2LA 1RB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LB ---  2LB 2LA 1RB | None Infinite Reverse_Engineer N/A N/A
 1RB 1RB ---  2LB 2LA 1RB | None Infinite Reverse_Engineer N/A N/A
 1RB 1LB ---  2LB 2LA 1RB | None Infinite Reverse_Engineer N/A N/A
@@ -240,21 +240,21 @@
 1RB 1LA ---  2LB 2LA 1RB | None Infinite Reverse_Engineer N/A N/A
 1RB 0RA 1RZ  2LB 2LA 1RB | None Halt 3 10
 1RB 0LA ---  2LB 2LA 1RB | None Infinite Reverse_Engineer N/A N/A
-1RB --- ---  2LB 2LA 1LB | None Infinite Chain_Move No_Quasihalt N/A
+1RB --- ---  2LB 2LA 1LB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB --- ---  2LB 2LA 0RB | None Infinite Proof_System No_Quasihalt N/A
-1RB --- ---  2LB 2LA 0LB | None Infinite Chain_Move No_Quasihalt N/A
+1RB --- ---  2LB 2LA 0LB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB --- 1RZ  2LB 2LA 2RA | None Halt 3 6
-1RB --- 2RB  2LB 2LA 2RA | None Infinite Chain_Move No_Quasihalt N/A
-1RB --- 2LB  2LB 2LA 2RA | None Infinite Repeat_in_Place No_Quasihalt N/A
-1RB --- 1RB  2LB 2LA 2RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB --- 2RB  2LB 2LA 2RA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB --- 2LB  2LB 2LA 2RA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB --- 1RB  2LB 2LA 2RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1RZ 1LB  2LB 2LA 2RA | None Halt 3 8
-1RB --- 0RB  2LB 2LA 2RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB --- 0RB  2LB 2LA 2RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB --- 0LB  2LB 2LA 2RA | None Infinite Proof_System No_Quasihalt N/A
-1RB --- 2RA  2LB 2LA 2RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB --- 2RA  2LB 2LA 2RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1RZ 2LA  2LB 2LA 2RA | None Halt 3 8
 1RB 1RZ 1RA  2LB 2LA 2RA | None Halt 5 10
 1RB 1RZ 1LA  2LB 2LA 2RA | None Halt 3 8
-1RB --- 0RA  2LB 2LA 2RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB --- 0RA  2LB 2LA 2RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1RZ 0LA  2LB 2LA 2RA | None Halt 1 8
 1RB 1RZ ---  2LB 2LA 2LA | None Halt 3 6
 1RB 2RB 1RZ  2LB 2LA 2LA | None Halt 3 8
@@ -270,17 +270,17 @@
 1RB 0RA 1RZ  2LB 2LA 2LA | None Halt 2 7
 1RB 0LA ---  2LB 2LA 2LA | None Infinite Reverse_Engineer N/A N/A
 1RB --- 1RZ  2LB 2LA 1RA | None Halt 3 6
-1RB --- 2RB  2LB 2LA 1RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB --- 2RB  2LB 2LA 1RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1RZ 2LB  2LB 2LA 1RA | None Halt 3 8
 1RB 1RZ 1RB  2LB 2LA 1RA | None Halt 4 9
 1RB 1RZ 1LB  2LB 2LA 1RA | None Halt 3 8
 1RB 1RZ 0RB  2LB 2LA 1RA | None Halt 4 10
 1RB 1RZ 0LB  2LB 2LA 1RA | None Halt 2 8
-1RB --- 2RA  2LB 2LA 1RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB --- 2RA  2LB 2LA 1RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1RZ 2LA  2LB 2LA 1RA | None Halt 3 7
 1RB 1RZ 1RA  2LB 2LA 1RA | None Halt 5 10
 1RB 1RZ 1LA  2LB 2LA 1RA | None Halt 3 7
-1RB --- 0RA  2LB 2LA 1RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB --- 0RA  2LB 2LA 1RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1RZ 0LA  2LB 2LA 1RA | None Halt 2 7
 1RB 1RZ ---  2LB 2LA 1LA | None Halt 3 6
 1RB 2RB 1RZ  2LB 2LA 1LA | None Halt 3 8
@@ -296,20 +296,20 @@
 1RB 0RA 1RZ  2LB 2LA 1LA | None Halt 1 8
 1RB 0LA ---  2LB 2LA 1LA | None Infinite Reverse_Engineer N/A N/A
 1RB --- 1RZ  2LB 2LA 0RA | None Halt 2 6
-1RB --- 2RB  2LB 2LA 0RA | None Infinite Chain_Move No_Quasihalt N/A
-1RB --- 2LB  2LB 2LA 0RA | None Infinite Chain_Move No_Quasihalt N/A
-1RB --- 1RB  2LB 2LA 0RA | None Infinite Chain_Move No_Quasihalt N/A
-1RB --- 1LB  2LB 2LA 0RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB --- 2RB  2LB 2LA 0RA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB --- 2LB  2LB 2LA 0RA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB --- 1RB  2LB 2LA 0RA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB --- 1LB  2LB 2LA 0RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB --- 0RB  2LB 2LA 0RA | None Infinite Proof_System No_Quasihalt N/A
-1RB --- 0LB  2LB 2LA 0RA | None Infinite Chain_Move No_Quasihalt N/A
-1RB --- 2RA  2LB 2LA 0RA | None Infinite Chain_Move No_Quasihalt N/A
-1RB --- 2LA  2LB 2LA 0RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB --- 0LB  2LB 2LA 0RA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB --- 2RA  2LB 2LA 0RA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB --- 2LA  2LB 2LA 0RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1RZ 1RA  2LB 2LA 0RA | None Halt 4 10
 1RB 1RZ 1LA  2LB 2LA 0RA | None Halt 3 9
-1RB --- 0RA  2LB 2LA 0RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB --- 0RA  2LB 2LA 0RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1RZ 0LA  2LB 2LA 0RA | None Halt 3 10
 1RB 1RZ ---  2LB 2LA 0LA | None Halt 2 6
-1RB 2RB ---  2LB 2LA 0LA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2RB ---  2LB 2LA 0LA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LB ---  2LB 2LA 0LA | None Infinite Reverse_Engineer N/A N/A
 1RB 1RB ---  2LB 2LA 0LA | None Infinite Reverse_Engineer N/A N/A
 1RB 1LB ---  2LB 2LA 0LA | None Infinite Reverse_Engineer N/A N/A
@@ -319,7 +319,7 @@
 1RB 2LA ---  2LB 2LA 0LA | None Infinite Reverse_Engineer N/A N/A
 1RB 1RA 1RZ  2LB 2LA 0LA | None Halt 4 14
 1RB 1LA ---  2LB 2LA 0LA | None Infinite Reverse_Engineer N/A N/A
-1RB 0RA ---  2LB 2LA 0LA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 0RA ---  2LB 2LA 0LA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 0LA ---  2LB 2LA 0LA | None Infinite Reverse_Engineer N/A N/A
 1RB --- 1RZ  2LB 1RA --- | None Halt 2 4
 1RB --- 2RB  2LB 1RA 1RZ | None Halt 3 6
@@ -335,109 +335,109 @@
 1RB 1RZ 2RB  2LB 1RA 1LA | None Halt 3 7
 1RB --- 2RB  2LB 1RA 0RA | None Infinite Reverse_Engineer N/A N/A
 1RB 1RZ 2RB  2LB 1RA 0LA | None Halt 2 7
-1RB --- 2LB  2LB 1RA --- | None Infinite Repeat_in_Place No_Quasihalt N/A
-1RB --- 1RB  2LB 1RA --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB --- 2LB  2LB 1RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB --- 1RB  2LB 1RA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1RZ 1LB  2LB 1RA --- | None Halt 2 6
 1RB 2RB 1LB  2LB 1RA 1RZ | None Halt 3 8
-1RB 2LB 1LB  2LB 1RA --- | None Infinite Repeat_in_Place No_Quasihalt N/A
-1RB 1RB 1LB  2LB 1RA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 1LB 1LB  2LB 1RA --- | None Infinite Repeat_in_Place No_Quasihalt N/A
+1RB 2LB 1LB  2LB 1RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 1RB 1LB  2LB 1RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 1LB 1LB  2LB 1RA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 0RB 1LB  2LB 1RA 1RZ | None Halt 2 13
-1RB 0LB 1LB  2LB 1RA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2RA 1LB  2LB 1RA --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 0LB 1LB  2LB 1RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2RA 1LB  2LB 1RA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LA 1LB  2LB 1RA 1RZ | None Halt 3 9
-1RB 1RA 1LB  2LB 1RA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 1LA 1LB  2LB 1RA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 0RA 1LB  2LB 1RA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 0LA 1LB  2LB 1RA --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 1RA 1LB  2LB 1RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 1LA 1LB  2LB 1RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 0RA 1LB  2LB 1RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 0LA 1LB  2LB 1RA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB --- 0RB  2LB 1RA 1RZ | None Halt 2 9
 1RB --- 0RB  2LB 1RA 2RB | None Infinite Reverse_Engineer N/A N/A
 1RB --- 0RB  2LB 1RA 2LB | None Infinite Reverse_Engineer N/A N/A
 1RB --- 0RB  2LB 1RA 1RB | None Infinite Reverse_Engineer N/A N/A
-1RB --- 0RB  2LB 1RA 1LB | None Infinite Chain_Move No_Quasihalt N/A
+1RB --- 0RB  2LB 1RA 1LB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB --- 0RB  2LB 1RA 0RB | None Infinite Reverse_Engineer N/A N/A
 1RB --- 0RB  2LB 1RA 0LB | None Infinite Reverse_Engineer N/A N/A
 1RB --- 0RB  2LB 1RA 2RA | None Infinite Reverse_Engineer N/A N/A
 1RB 1RZ 0RB  2LB 1RA 2LA | None Halt 3 12
 1RB --- 0RB  2LB 1RA 1RA | None Infinite Reverse_Engineer N/A N/A
-1RB --- 0RB  2LB 1RA 1LA | None Infinite Chain_Move No_Quasihalt N/A
+1RB --- 0RB  2LB 1RA 1LA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB --- 0RB  2LB 1RA 0RA | None Infinite Reverse_Engineer N/A N/A
-1RB --- 0RB  2LB 1RA 0LA | None Infinite Chain_Move No_Quasihalt N/A
-1RB --- 0LB  2LB 1RA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB --- 2RA  2LB 1RA --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB --- 0RB  2LB 1RA 0LA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB --- 0LB  2LB 1RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB --- 2RA  2LB 1RA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1RZ 2LA  2LB 1RA --- | None Halt 2 5
 1RB 2RB 2LA  2LB 1RA 1RZ | None Halt 2 6
-1RB 2LB 2LA  2LB 1RA --- | None Infinite Chain_Move 0 5
+1RB 2LB 2LA  2LB 1RA --- | None Infinite Lin_Recur 0 5
 1RB 1RB 2LA  2LB 1RA 1RZ | None Halt 2 6
-1RB 1LB 2LA  2LB 1RA --- | None Infinite Chain_Move 0 5
+1RB 1LB 2LA  2LB 1RA --- | None Infinite Lin_Recur 0 5
 1RB 0RB 2LA  2LB 1RA 1RZ | None Halt 1 6
-1RB 0LB 2LA  2LB 1RA --- | None Infinite Chain_Move 0 5
+1RB 0LB 2LA  2LB 1RA --- | None Infinite Lin_Recur 0 5
 1RB 2RA 2LA  2LB 1RA 1RZ | None Halt 3 9
 1RB 2LA 2LA  2LB 1RA 1RZ | None Halt 3 7
-1RB 1RA 2LA  2LB 1RA --- | None Infinite Repeat_in_Place No_Quasihalt N/A
-1RB 1LA 2LA  2LB 1RA --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 1RA 2LA  2LB 1RA --- | None Infinite Lin_Recur 1 3
+1RB 1LA 2LA  2LB 1RA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 0RA 2LA  2LB 1RA 1RZ | None Halt 2 8
-1RB 0LA 2LA  2LB 1RA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB --- 1RA  2LB 1RA --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 0LA 2LA  2LB 1RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB --- 1RA  2LB 1RA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1RZ 1LA  2LB 1RA --- | None Halt 2 5
-1RB 2RB 1LA  2LB 1RA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2LB 1LA  2LB 1RA --- | None Infinite Chain_Move 0 5
-1RB 1RB 1LA  2LB 1RA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 1LB 1LA  2LB 1RA --- | None Infinite Chain_Move 0 5
-1RB 0RB 1LA  2LB 1RA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 0LB 1LA  2LB 1RA --- | None Infinite Chain_Move 0 5
-1RB 2RA 1LA  2LB 1RA --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2RB 1LA  2LB 1RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2LB 1LA  2LB 1RA --- | None Infinite Lin_Recur 0 5
+1RB 1RB 1LA  2LB 1RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 1LB 1LA  2LB 1RA --- | None Infinite Lin_Recur 0 5
+1RB 0RB 1LA  2LB 1RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 0LB 1LA  2LB 1RA --- | None Infinite Lin_Recur 0 5
+1RB 2RA 1LA  2LB 1RA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LA 1LA  2LB 1RA 1RZ | None Halt 3 7
-1RB 1RA 1LA  2LB 1RA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 1LA 1LA  2LB 1RA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 0RA 1LA  2LB 1RA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 0LA 1LA  2LB 1RA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB --- 0RA  2LB 1RA --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 1RA 1LA  2LB 1RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 1LA 1LA  2LB 1RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 0RA 1LA  2LB 1RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 0LA 1LA  2LB 1RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB --- 0RA  2LB 1RA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1RZ 0LA  2LB 1RA --- | None Halt 1 5
 1RB 2RB 0LA  2LB 1RA 1RZ | None Halt 2 7
-1RB 2LB 0LA  2LB 1RA --- | None Infinite Chain_Move 0 5
-1RB 1RB 0LA  2LB 1RA --- | None Infinite Repeat_in_Place No_Quasihalt N/A
-1RB 1LB 0LA  2LB 1RA --- | None Infinite Chain_Move 0 5
-1RB 0RB 0LA  2LB 1RA --- | None Infinite Chain_Move 0 5
-1RB 0LB 0LA  2LB 1RA --- | None Infinite Chain_Move 0 5
-1RB 2RA 0LA  2LB 1RA --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2LB 0LA  2LB 1RA --- | None Infinite Lin_Recur 0 5
+1RB 1RB 0LA  2LB 1RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 1LB 0LA  2LB 1RA --- | None Infinite Lin_Recur 0 5
+1RB 0RB 0LA  2LB 1RA --- | None Infinite Lin_Recur 0 5
+1RB 0LB 0LA  2LB 1RA --- | None Infinite Lin_Recur 0 5
+1RB 2RA 0LA  2LB 1RA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LA 0LA  2LB 1RA 1RZ | None Halt 2 7
-1RB 1RA 0LA  2LB 1RA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 1LA 0LA  2LB 1RA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 0RA 0LA  2LB 1RA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 0LA 0LA  2LB 1RA --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 1RA 0LA  2LB 1RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 1LA 0LA  2LB 1RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 0RA 0LA  2LB 1RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 0LA 0LA  2LB 1RA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1RZ ---  2LB 1LA --- | None Halt 3 6
 1RB 2RB 1RZ  2LB 1LA --- | None Halt 3 8
-1RB 2RB 2RB  2LB 1LA --- | None Infinite Repeat_in_Place No_Quasihalt N/A
-1RB 2RB 2LB  2LB 1LA --- | None Infinite Chain_Move 0 8
-1RB 2RB 1RB  2LB 1LA --- | None Infinite Repeat_in_Place No_Quasihalt N/A
-1RB 2RB 1LB  2LB 1LA --- | None Infinite Chain_Move 0 8
-1RB 2RB 0RB  2LB 1LA --- | None Infinite Repeat_in_Place No_Quasihalt N/A
-1RB 2RB 0LB  2LB 1LA --- | None Infinite Chain_Move 0 8
+1RB 2RB 2RB  2LB 1LA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2RB 2LB  2LB 1LA --- | None Infinite Lin_Recur 0 8
+1RB 2RB 1RB  2LB 1LA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2RB 1LB  2LB 1LA --- | None Infinite Lin_Recur 0 8
+1RB 2RB 0RB  2LB 1LA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2RB 0LB  2LB 1LA --- | None Infinite Lin_Recur 0 8
 1RB 2RB 2RA  2LB 1LA 1RZ | None Halt 3 10
 1RB 2RB 2LA  2LB 1LA 1RZ | None Halt 4 10
 1RB 2RB 1RA  2LB 1LA 1RZ | None Halt 3 10
-1RB 2RB 1LA  2LB 1LA --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2RB 1LA  2LB 1LA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2RB 0RA  2LB 1LA 1RZ | None Halt 2 10
-1RB 2RB 0LA  2LB 1LA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2LB ---  2LB 1LA --- | None Infinite Chain_Move 0 6
-1RB 1RB ---  2LB 1LA --- | None Infinite Repeat_in_Place No_Quasihalt N/A
-1RB 1LB ---  2LB 1LA --- | None Infinite Chain_Move 0 6
-1RB 0RB ---  2LB 1LA --- | None Infinite Repeat_in_Place No_Quasihalt N/A
-1RB 0LB ---  2LB 1LA --- | None Infinite Chain_Move 0 6
+1RB 2RB 0LA  2LB 1LA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2LB ---  2LB 1LA --- | None Infinite Lin_Recur 0 6
+1RB 1RB ---  2LB 1LA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 1LB ---  2LB 1LA --- | None Infinite Lin_Recur 0 6
+1RB 0RB ---  2LB 1LA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 0LB ---  2LB 1LA --- | None Infinite Lin_Recur 0 6
 1RB 2RA 1RZ  2LB 1LA --- | None Halt 3 8
 1RB 2RA 2RB  2LB 1LA 1RZ | None Halt 4 10
 1RB 2RA 2LB  2LB 1LA 1RZ | None Halt 3 9
-1RB 2RA 1RB  2LB 1LA --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2RA 1RB  2LB 1LA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2RA 1LB  2LB 1LA 1RZ | None Halt 3 9
 1RB 2RA 0RB  2LB 1LA 1RZ | None Halt 4 11
 1RB 2RA 0LB  2LB 1LA 1RZ | None Halt 2 9
-1RB 2RA 2RA  2LB 1LA --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2RA 2RA  2LB 1LA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2RA 2LA  2LB 1LA 1RZ | None Halt 4 12
-1RB 2RA 1RA  2LB 1LA --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2RA 1RA  2LB 1LA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2RA 1LA  2LB 1LA --- | None Infinite CTL_A*_B N/A N/A
-1RB 2RA 0RA  2LB 1LA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2RA 0LA  2LB 1LA --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2RA 0RA  2LB 1LA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2RA 0LA  2LB 1LA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LA ---  2LB 1LA 1RZ | None Halt 4 8
 1RB 2LA 1RZ  2LB 1LA 2RB | None Halt 4 10
 1RB 2LA ---  2LB 1LA 2LB | None Infinite Reverse_Engineer N/A N/A
@@ -453,70 +453,70 @@
 1RB 2LA ---  2LB 1LA 0LA | None Infinite Reverse_Engineer N/A N/A
 1RB 1RA 1RZ  2LB 1LA --- | None Halt 3 8
 1RB 1RA 2RB  2LB 1LA 1RZ | None Halt 4 10
-1RB 1RA 2LB  2LB 1LA --- | None Infinite Repeat_in_Place No_Quasihalt N/A
-1RB 1RA 1RB  2LB 1LA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 1RA 1LB  2LB 1LA --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 1RA 2LB  2LB 1LA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 1RA 1RB  2LB 1LA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 1RA 1LB  2LB 1LA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1RA 0RB  2LB 1LA 1RZ | None Halt 3 15
-1RB 1RA 0LB  2LB 1LA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 1RA 2RA  2LB 1LA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 1RA 2LA  2LB 1LA --- | None Infinite Repeat_in_Place 1 5
-1RB 1RA 1RA  2LB 1LA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 1RA 1LA  2LB 1LA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 1RA 0RA  2LB 1LA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 1RA 0LA  2LB 1LA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 1LA ---  2LB 1LA --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 1RA 0LB  2LB 1LA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 1RA 2RA  2LB 1LA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 1RA 2LA  2LB 1LA --- | None Infinite Lin_Recur 1 5
+1RB 1RA 1RA  2LB 1LA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 1RA 1LA  2LB 1LA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 1RA 0RA  2LB 1LA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 1RA 0LA  2LB 1LA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 1LA ---  2LB 1LA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 0RA 1RZ  2LB 1LA --- | None Halt 1 8
 1RB 0RA 2RB  2LB 1LA 1RZ | None Halt 2 10
-1RB 0RA 2LB  2LB 1LA --- | None Infinite Chain_Move 0 8
-1RB 0RA 1RB  2LB 1LA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 0RA 1LB  2LB 1LA --- | None Infinite Chain_Move 0 8
-1RB 0RA 0RB  2LB 1LA --- | None Infinite Chain_Move 0 8
-1RB 0RA 0LB  2LB 1LA --- | None Infinite Chain_Move 0 8
-1RB 0RA 2RA  2LB 1LA --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 0RA 2LB  2LB 1LA --- | None Infinite Lin_Recur 0 8
+1RB 0RA 1RB  2LB 1LA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 0RA 1LB  2LB 1LA --- | None Infinite Lin_Recur 0 8
+1RB 0RA 0RB  2LB 1LA --- | None Infinite Lin_Recur 0 8
+1RB 0RA 0LB  2LB 1LA --- | None Infinite Lin_Recur 0 8
+1RB 0RA 2RA  2LB 1LA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 0RA 2LA  2LB 1LA 1RZ | None Halt 2 10
-1RB 0RA 1RA  2LB 1LA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 0RA 1LA  2LB 1LA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 0RA 0RA  2LB 1LA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 0RA 0LA  2LB 1LA --- | None Infinite Repeat_in_Place No_Quasihalt N/A
-1RB 0LA ---  2LB 1LA --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 0RA 1RA  2LB 1LA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 0RA 1LA  2LB 1LA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 0RA 0RA  2LB 1LA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 0RA 0LA  2LB 1LA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 0LA ---  2LB 1LA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB --- 1RZ  2LB 0RA --- | None Halt 1 4
 1RB --- 2RB  2LB 0RA 1RZ | None Halt 2 6
 1RB --- 2RB  2LB 0RA 2RB | None Infinite Reverse_Engineer N/A N/A
 1RB --- 2RB  2LB 0RA 2LB | None Infinite Reverse_Engineer N/A N/A
 1RB --- 2RB  2LB 0RA 1RB | None Infinite Reverse_Engineer N/A N/A
-1RB --- 2RB  2LB 0RA 1LB | None Infinite Chain_Move 0 4
+1RB --- 2RB  2LB 0RA 1LB | None Infinite Lin_Recur 0 4
 1RB --- 2RB  2LB 0RA 0RB | None Infinite Reverse_Engineer N/A N/A
 1RB --- 2RB  2LB 0RA 0LB | None Infinite Reverse_Engineer N/A N/A
 1RB --- 2RB  2LB 0RA 2RA | None Infinite Reverse_Engineer N/A N/A
 1RB 1RZ 2RB  2LB 0RA 2LA | None Halt 3 9
 1RB --- 2RB  2LB 0RA 1RA | None Infinite Reverse_Engineer N/A N/A
-1RB --- 2RB  2LB 0RA 1LA | None Infinite Chain_Move No_Quasihalt N/A
+1RB --- 2RB  2LB 0RA 1LA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB --- 2RB  2LB 0RA 0RA | None Infinite Reverse_Engineer N/A N/A
-1RB --- 2RB  2LB 0RA 0LA | None Infinite Repeat_in_Place No_Quasihalt N/A
-1RB --- 2LB  2LB 0RA --- | None Infinite Chain_Move 0 4
-1RB --- 1RB  2LB 0RA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB --- 1LB  2LB 0RA --- | None Infinite Chain_Move 0 4
-1RB --- 0RB  2LB 0RA --- | None Infinite Chain_Move 0 4
-1RB --- 0LB  2LB 0RA --- | None Infinite Chain_Move 0 4
-1RB --- 2RA  2LB 0RA --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB --- 2RB  2LB 0RA 0LA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB --- 2LB  2LB 0RA --- | None Infinite Lin_Recur 0 4
+1RB --- 1RB  2LB 0RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB --- 1LB  2LB 0RA --- | None Infinite Lin_Recur 0 4
+1RB --- 0RB  2LB 0RA --- | None Infinite Lin_Recur 0 4
+1RB --- 0LB  2LB 0RA --- | None Infinite Lin_Recur 0 4
+1RB --- 2RA  2LB 0RA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB --- 2LA  2LB 0RA 1RZ | None Halt 2 6
-1RB --- 2LA  2LB 0RA 2RB | None Infinite Chain_Move 0 5
-1RB --- 2LA  2LB 0RA 2LB | None Infinite Repeat_in_Place No_Quasihalt N/A
-1RB --- 2LA  2LB 0RA 1RB | None Infinite Chain_Move No_Quasihalt N/A
+1RB --- 2LA  2LB 0RA 2RB | None Infinite Lin_Recur 0 5
+1RB --- 2LA  2LB 0RA 2LB | None Infinite Lin_Recur No_Quasihalt N/A
+1RB --- 2LA  2LB 0RA 1RB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1RZ 2LA  2LB 0RA 1LB | None Halt 1 8
 1RB --- 2LA  2LB 0RA 0RB | None Infinite CTL_A* N/A N/A
-1RB --- 2LA  2LB 0RA 0LB | None Infinite Chain_Move No_Quasihalt N/A
-1RB --- 2LA  2LB 0RA 2RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB --- 2LA  2LB 0RA 0LB | None Infinite Lin_Recur No_Quasihalt N/A
+1RB --- 2LA  2LB 0RA 2RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1RZ 2LA  2LB 0RA 2LA | None Halt 2 7
-1RB --- 2LA  2LB 0RA 1RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB --- 2LA  2LB 0RA 1RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1RZ 2LA  2LB 0RA 1LA | None Halt 2 7
-1RB --- 2LA  2LB 0RA 0RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB --- 2LA  2LB 0RA 0RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1RZ 2LA  2LB 0RA 0LA | None Halt 1 7
-1RB --- 1RA  2LB 0RA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB --- 1LA  2LB 0RA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB --- 0RA  2LB 0RA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB --- 0LA  2LB 0RA --- | None Infinite Repeat_in_Place No_Quasihalt N/A
-1RB --- ---  2LB 0LA --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB --- 1RA  2LB 0RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB --- 1LA  2LB 0RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB --- 0RA  2LB 0RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB --- 0LA  2LB 0RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB --- ---  2LB 0LA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB --- ---  1RB --- --- | None Infinite Reverse_Engineer N/A N/A
 1RB --- ---  1LB 1RZ --- | None Halt 2 3
 1RB --- ---  1LB 2RB 1RZ | None Halt 3 6
@@ -540,21 +540,21 @@
 1RB 0RA ---  1LB 2RB 2RA | None Infinite Reverse_Engineer N/A N/A
 1RB 0LA 1RZ  1LB 2RB 2RA | None Halt 2 8
 1RB --- 1RZ  1LB 2RB 2LA | None Halt 3 7
-1RB --- 2RB  1LB 2RB 2LA | None Infinite Repeat_in_Place No_Quasihalt N/A
-1RB --- 2LB  1LB 2RB 2LA | None Infinite Chain_Move 0 7
+1RB --- 2RB  1LB 2RB 2LA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB --- 2LB  1LB 2RB 2LA | None Infinite Lin_Recur 0 7
 1RB 1RZ 1RB  1LB 2RB 2LA | None Halt 3 9
-1RB --- 1LB  1LB 2RB 2LA | None Infinite Chain_Move 0 7
+1RB --- 1LB  1LB 2RB 2LA | None Infinite Lin_Recur 0 7
 1RB 1RZ 0RB  1LB 2RB 2LA | None Halt 3 11
-1RB --- 0LB  1LB 2RB 2LA | None Infinite Chain_Move 0 7
+1RB --- 0LB  1LB 2RB 2LA | None Infinite Lin_Recur 0 7
 1RB 1RZ 2RA  1LB 2RB 2LA | None Halt 3 9
 1RB 1RZ 2LA  1LB 2RB 2LA | None Halt 4 10
 1RB 1RZ 1RA  1LB 2RB 2LA | None Halt 3 9
 1RB 1RZ 1LA  1LB 2RB 2LA | None Halt 4 12
 1RB 1RZ 0RA  1LB 2RB 2LA | None Halt 1 9
-1RB --- 0LA  1LB 2RB 2LA | None Infinite Chain_Move No_Quasihalt N/A
+1RB --- 0LA  1LB 2RB 2LA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1RZ ---  1LB 2RB 1RA | None Halt 3 7
 1RB 2RB ---  1LB 2RB 1RA | None Infinite Reverse_Engineer N/A N/A
-1RB 2LB ---  1LB 2RB 1RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2LB ---  1LB 2RB 1RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1RB ---  1LB 2RB 1RA | None Infinite Reverse_Engineer N/A N/A
 1RB 1LB ---  1LB 2RB 1RA | None Infinite Reverse_Engineer N/A N/A
 1RB 0RB ---  1LB 2RB 1RA | None Infinite Reverse_Engineer N/A N/A
@@ -566,45 +566,45 @@
 1RB 0RA ---  1LB 2RB 1RA | None Infinite Reverse_Engineer N/A N/A
 1RB 0LA 1RZ  1LB 2RB 1RA | None Halt 1 9
 1RB --- 1RZ  1LB 2RB 1LA | None Halt 3 7
-1RB --- 2RB  1LB 2RB 1LA | None Infinite Chain_Move No_Quasihalt N/A
-1RB --- 2LB  1LB 2RB 1LA | None Infinite Chain_Move 0 7
-1RB --- 1RB  1LB 2RB 1LA | None Infinite Chain_Move No_Quasihalt N/A
-1RB --- 1LB  1LB 2RB 1LA | None Infinite Chain_Move 0 7
-1RB --- 0RB  1LB 2RB 1LA | None Infinite Chain_Move No_Quasihalt N/A
-1RB --- 0LB  1LB 2RB 1LA | None Infinite Chain_Move 0 7
+1RB --- 2RB  1LB 2RB 1LA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB --- 2LB  1LB 2RB 1LA | None Infinite Lin_Recur 0 7
+1RB --- 1RB  1LB 2RB 1LA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB --- 1LB  1LB 2RB 1LA | None Infinite Lin_Recur 0 7
+1RB --- 0RB  1LB 2RB 1LA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB --- 0LB  1LB 2RB 1LA | None Infinite Lin_Recur 0 7
 1RB 1RZ 2RA  1LB 2RB 1LA | None Halt 3 8
 1RB 1RZ 2LA  1LB 2RB 1LA | None Halt 4 10
 1RB 1RZ 1RA  1LB 2RB 1LA | None Halt 3 8
 1RB 1RZ 1LA  1LB 2RB 1LA | None Halt 5 16
 1RB 1RZ 0RA  1LB 2RB 1LA | None Halt 2 8
-1RB --- 0LA  1LB 2RB 1LA | None Infinite Proof_System No_Quasihalt N/A
+1RB --- 0LA  1LB 2RB 1LA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1RZ ---  1LB 2RB 0RA | None Halt 2 7
 1RB 2RB ---  1LB 2RB 0RA | None Infinite Reverse_Engineer N/A N/A
-1RB 2LB ---  1LB 2RB 0RA | None Infinite Chain_Move 0 10
+1RB 2LB ---  1LB 2RB 0RA | None Infinite Lin_Recur 0 10
 1RB 1RB ---  1LB 2RB 0RA | None Infinite Reverse_Engineer N/A N/A
 1RB 1LB ---  1LB 2RB 0RA | None Infinite Reverse_Engineer N/A N/A
 1RB 0RB ---  1LB 2RB 0RA | None Infinite Reverse_Engineer N/A N/A
 1RB 0LB ---  1LB 2RB 0RA | None Infinite Reverse_Engineer N/A N/A
 1RB 2RA ---  1LB 2RB 0RA | None Infinite Reverse_Engineer N/A N/A
-1RB 2LA ---  1LB 2RB 0RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2LA ---  1LB 2RB 0RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1RA ---  1LB 2RB 0RA | None Infinite Reverse_Engineer N/A N/A
-1RB 1LA ---  1LB 2RB 0RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 1LA ---  1LB 2RB 0RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 0RA ---  1LB 2RB 0RA | None Infinite Reverse_Engineer N/A N/A
-1RB 0LA ---  1LB 2RB 0RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 0LA ---  1LB 2RB 0RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB --- 1RZ  1LB 2RB 0LA | None Halt 2 7
 1RB --- 2RB  1LB 2RB 0LA | None Infinite CTL_A* N/A N/A
-1RB --- 2LB  1LB 2RB 0LA | None Infinite Chain_Move 0 7
-1RB --- 1RB  1LB 2RB 0LA | None Infinite Chain_Move No_Quasihalt N/A
-1RB --- 1LB  1LB 2RB 0LA | None Infinite Chain_Move 0 7
-1RB --- 0RB  1LB 2RB 0LA | None Infinite Chain_Move 0 7
-1RB --- 0LB  1LB 2RB 0LA | None Infinite Chain_Move 0 7
+1RB --- 2LB  1LB 2RB 0LA | None Infinite Lin_Recur 0 7
+1RB --- 1RB  1LB 2RB 0LA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB --- 1LB  1LB 2RB 0LA | None Infinite Lin_Recur 0 7
+1RB --- 0RB  1LB 2RB 0LA | None Infinite Lin_Recur 0 7
+1RB --- 0LB  1LB 2RB 0LA | None Infinite Lin_Recur 0 7
 1RB 1RZ 2RA  1LB 2RB 0LA | None Halt 3 12
 1RB 1RZ 2LA  1LB 2RB 0LA | None Halt 2 10
 1RB 1RZ 1RA  1LB 2RB 0LA | None Halt 3 12
 1RB 1RZ 1LA  1LB 2RB 0LA | None Halt 3 12
 1RB 1RZ 0RA  1LB 2RB 0LA | None Halt 2 12
-1RB --- 0LA  1LB 2RB 0LA | None Infinite Chain_Move No_Quasihalt N/A
-1RB --- ---  1LB 2LB --- | None Infinite Chain_Move 0 1
+1RB --- 0LA  1LB 2RB 0LA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB --- ---  1LB 2LB --- | None Infinite Lin_Recur 0 1
 1RB --- ---  1LB 1RB --- | None Infinite Reverse_Engineer N/A N/A
 1RB --- ---  1LB 1LB --- | None Infinite Reverse_Engineer N/A N/A
 1RB --- ---  1LB 0RB --- | None Infinite Reverse_Engineer N/A N/A
@@ -612,7 +612,7 @@
 1RB 1RZ ---  1LB 2RA --- | None Halt 2 4
 1RB 2RB ---  1LB 2RA 1RZ | None Halt 3 6
 1RB 2RB ---  1LB 2RA 2RB | None Infinite Reverse_Engineer N/A N/A
-1RB 2RB ---  1LB 2RA 2LB | None Infinite Chain_Move 0 4
+1RB 2RB ---  1LB 2RA 2LB | None Infinite Lin_Recur 0 4
 1RB 2RB ---  1LB 2RA 1RB | None Infinite Reverse_Engineer N/A N/A
 1RB 2RB ---  1LB 2RA 1LB | None Infinite Reverse_Engineer N/A N/A
 1RB 2RB ---  1LB 2RA 0RB | None Infinite Reverse_Engineer N/A N/A
@@ -624,115 +624,115 @@
 1RB 2RB ---  1LB 2RA 0RA | None Infinite Reverse_Engineer N/A N/A
 1RB 2RB 1RZ  1LB 2RA 0LA | None Halt 2 7
 1RB 2LB ---  1LB 2RA 1RZ | None Halt 2 5
-1RB 2LB ---  1LB 2RA 2RB | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2LB ---  1LB 2RA 2LB | None Infinite Chain_Move 0 4
-1RB 2LB ---  1LB 2RA 1RB | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2LB ---  1LB 2RA 1LB | None Infinite Chain_Move 0 4
-1RB 2LB ---  1LB 2RA 0RB | None Infinite Chain_Move 0 4
-1RB 2LB ---  1LB 2RA 0LB | None Infinite Chain_Move 0 4
+1RB 2LB ---  1LB 2RA 2RB | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2LB ---  1LB 2RA 2LB | None Infinite Lin_Recur 0 4
+1RB 2LB ---  1LB 2RA 1RB | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2LB ---  1LB 2RA 1LB | None Infinite Lin_Recur 0 4
+1RB 2LB ---  1LB 2RA 0RB | None Infinite Lin_Recur 0 4
+1RB 2LB ---  1LB 2RA 0LB | None Infinite Lin_Recur 0 4
 1RB 2LB 1RZ  1LB 2RA 2RA | None Halt 2 6
-1RB 2LB ---  1LB 2RA 2LA | None Infinite Chain_Move 0 8
+1RB 2LB ---  1LB 2RA 2LA | None Infinite Lin_Recur 0 8
 1RB 2LB 1RZ  1LB 2RA 1RA | None Halt 2 6
 1RB 2LB 1RZ  1LB 2RA 1LA | None Halt 3 8
 1RB 2LB 1RZ  1LB 2RA 0RA | None Halt 1 6
-1RB 2LB ---  1LB 2RA 0LA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 1RB ---  1LB 2RA --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2LB ---  1LB 2RA 0LA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 1RB ---  1LB 2RA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1LB ---  1LB 2RA 1RZ | None Halt 2 5
 1RB 1LB ---  1LB 2RA 2RB | None Infinite Reverse_Engineer N/A N/A
-1RB 1LB ---  1LB 2RA 2LB | None Infinite Chain_Move 0 4
+1RB 1LB ---  1LB 2RA 2LB | None Infinite Lin_Recur 0 4
 1RB 1LB ---  1LB 2RA 1RB | None Infinite Reverse_Engineer N/A N/A
 1RB 1LB ---  1LB 2RA 1LB | None Infinite Reverse_Engineer N/A N/A
 1RB 1LB ---  1LB 2RA 0RB | None Infinite Reverse_Engineer N/A N/A
 1RB 1LB ---  1LB 2RA 0LB | None Infinite Reverse_Engineer N/A N/A
 1RB 1LB ---  1LB 2RA 2RA | None Infinite Reverse_Engineer N/A N/A
-1RB 1LB ---  1LB 2RA 2LA | None Infinite Chain_Move 0 8
+1RB 1LB ---  1LB 2RA 2LA | None Infinite Lin_Recur 0 8
 1RB 1LB ---  1LB 2RA 1RA | None Infinite Reverse_Engineer N/A N/A
-1RB 1LB ---  1LB 2RA 1LA | None Infinite Chain_Move 0 10
+1RB 1LB ---  1LB 2RA 1LA | None Infinite Lin_Recur 0 10
 1RB 1LB ---  1LB 2RA 0RA | None Infinite Reverse_Engineer N/A N/A
-1RB 1LB ---  1LB 2RA 0LA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 1LB ---  1LB 2RA 0LA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 0RB ---  1LB 2RA 1RZ | None Halt 3 7
 1RB 0RB ---  1LB 2RA 2RB | None Infinite Reverse_Engineer N/A N/A
-1RB 0RB ---  1LB 2RA 2LB | None Infinite Chain_Move 0 4
+1RB 0RB ---  1LB 2RA 2LB | None Infinite Lin_Recur 0 4
 1RB 0RB ---  1LB 2RA 1RB | None Infinite Reverse_Engineer N/A N/A
 1RB 0RB ---  1LB 2RA 1LB | None Infinite Reverse_Engineer N/A N/A
 1RB 0RB ---  1LB 2RA 0RB | None Infinite Reverse_Engineer N/A N/A
 1RB 0RB ---  1LB 2RA 0LB | None Infinite Reverse_Engineer N/A N/A
 1RB 0RB ---  1LB 2RA 2RA | None Infinite Reverse_Engineer N/A N/A
-1RB 0RB ---  1LB 2RA 2LA | None Infinite Repeat_in_Place No_Quasihalt N/A
+1RB 0RB ---  1LB 2RA 2LA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 0RB ---  1LB 2RA 1RA | None Infinite Reverse_Engineer N/A N/A
 1RB 0RB 1RZ  1LB 2RA 1LA | None Halt 6 19
 1RB 0RB ---  1LB 2RA 0RA | None Infinite Reverse_Engineer N/A N/A
-1RB 0RB ---  1LB 2RA 0LA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 0RB ---  1LB 2RA 0LA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 0LB ---  1LB 2RA 1RZ | None Halt 1 5
 1RB 0LB ---  1LB 2RA 2RB | None Infinite Reverse_Engineer N/A N/A
-1RB 0LB ---  1LB 2RA 2LB | None Infinite Chain_Move 0 4
+1RB 0LB ---  1LB 2RA 2LB | None Infinite Lin_Recur 0 4
 1RB 0LB ---  1LB 2RA 1RB | None Infinite Reverse_Engineer N/A N/A
 1RB 0LB ---  1LB 2RA 1LB | None Infinite Reverse_Engineer N/A N/A
 1RB 0LB ---  1LB 2RA 0RB | None Infinite Reverse_Engineer N/A N/A
 1RB 0LB ---  1LB 2RA 0LB | None Infinite Reverse_Engineer N/A N/A
 1RB 0LB ---  1LB 2RA 2RA | None Infinite Reverse_Engineer N/A N/A
-1RB 0LB ---  1LB 2RA 2LA | None Infinite Chain_Move 0 8
+1RB 0LB ---  1LB 2RA 2LA | None Infinite Lin_Recur 0 8
 1RB 0LB ---  1LB 2RA 1RA | None Infinite Reverse_Engineer N/A N/A
 1RB 0LB 1RZ  1LB 2RA 1LA | None Halt 3 13
 1RB 0LB ---  1LB 2RA 0RA | None Infinite Reverse_Engineer N/A N/A
-1RB 0LB ---  1LB 2RA 0LA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2RA ---  1LB 2RA --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 0LB ---  1LB 2RA 0LA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2RA ---  1LB 2RA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LA 1RZ  1LB 2RA --- | None Halt 2 5
 1RB 2LA 2RB  1LB 2RA 1RZ | None Halt 2 6
-1RB 2LA 2LB  1LB 2RA --- | None Infinite Chain_Move 0 5
+1RB 2LA 2LB  1LB 2RA --- | None Infinite Lin_Recur 0 5
 1RB 2LA 1RB  1LB 2RA 1RZ | None Halt 2 6
-1RB 2LA 1LB  1LB 2RA --- | None Infinite Chain_Move 0 5
+1RB 2LA 1LB  1LB 2RA --- | None Infinite Lin_Recur 0 5
 1RB 2LA 0RB  1LB 2RA 1RZ | None Halt 1 6
-1RB 2LA 0LB  1LB 2RA --- | None Infinite Chain_Move 0 5
-1RB 2LA 2RA  1LB 2RA --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2LA 0LB  1LB 2RA --- | None Infinite Lin_Recur 0 5
+1RB 2LA 2RA  1LB 2RA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LA 2LA  1LB 2RA 1RZ | None Halt 3 7
-1RB 2LA 1RA  1LB 2RA --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2LA 1RA  1LB 2RA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LA 1LA  1LB 2RA 1RZ | None Halt 4 12
-1RB 2LA 0RA  1LB 2RA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2LA 0LA  1LB 2RA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 1RA ---  1LB 2RA --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2LA 0RA  1LB 2RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2LA 0LA  1LB 2RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 1RA ---  1LB 2RA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1LA 1RZ  1LB 2RA --- | None Halt 2 5
-1RB 1LA 2RB  1LB 2RA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 1LA 2LB  1LB 2RA --- | None Infinite Chain_Move 0 5
-1RB 1LA 1RB  1LB 2RA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 1LA 1LB  1LB 2RA --- | None Infinite Chain_Move 0 5
-1RB 1LA 0RB  1LB 2RA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 1LA 0LB  1LB 2RA --- | None Infinite Chain_Move 0 5
-1RB 1LA 2RA  1LB 2RA --- | None Infinite Repeat_in_Place No_Quasihalt N/A
+1RB 1LA 2RB  1LB 2RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 1LA 2LB  1LB 2RA --- | None Infinite Lin_Recur 0 5
+1RB 1LA 1RB  1LB 2RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 1LA 1LB  1LB 2RA --- | None Infinite Lin_Recur 0 5
+1RB 1LA 0RB  1LB 2RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 1LA 0LB  1LB 2RA --- | None Infinite Lin_Recur 0 5
+1RB 1LA 2RA  1LB 2RA --- | None Infinite Lin_Recur 1 3
 1RB 1LA 2LA  1LB 2RA 1RZ | None Halt 3 7
-1RB 1LA 1RA  1LB 2RA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 1LA 1LA  1LB 2RA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 1LA 0RA  1LB 2RA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 1LA 0LA  1LB 2RA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 0RA ---  1LB 2RA --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 1LA 1RA  1LB 2RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 1LA 1LA  1LB 2RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 1LA 0RA  1LB 2RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 1LA 0LA  1LB 2RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 0RA ---  1LB 2RA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 0LA 1RZ  1LB 2RA --- | None Halt 1 5
 1RB 0LA 2RB  1LB 2RA 1RZ | None Halt 2 7
-1RB 0LA 2LB  1LB 2RA --- | None Infinite Chain_Move 0 5
-1RB 0LA 1RB  1LB 2RA --- | None Infinite Repeat_in_Place No_Quasihalt N/A
-1RB 0LA 1LB  1LB 2RA --- | None Infinite Chain_Move 0 5
-1RB 0LA 0RB  1LB 2RA --- | None Infinite Chain_Move 0 5
-1RB 0LA 0LB  1LB 2RA --- | None Infinite Chain_Move 0 5
-1RB 0LA 2RA  1LB 2RA --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 0LA 2LB  1LB 2RA --- | None Infinite Lin_Recur 0 5
+1RB 0LA 1RB  1LB 2RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 0LA 1LB  1LB 2RA --- | None Infinite Lin_Recur 0 5
+1RB 0LA 0RB  1LB 2RA --- | None Infinite Lin_Recur 0 5
+1RB 0LA 0LB  1LB 2RA --- | None Infinite Lin_Recur 0 5
+1RB 0LA 2RA  1LB 2RA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 0LA 2LA  1LB 2RA 1RZ | None Halt 2 7
-1RB 0LA 1RA  1LB 2RA --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 0LA 1RA  1LB 2RA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 0LA 1LA  1LB 2RA --- | None Infinite CTL_A* N/A N/A
-1RB 0LA 0RA  1LB 2RA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 0LA 0LA  1LB 2RA --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 0LA 0RA  1LB 2RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 0LA 0LA  1LB 2RA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB --- ---  1LB 2LA 1RZ | None Halt 3 5
 1RB --- 1RZ  1LB 2LA 2RB | None Halt 3 7
-1RB --- 2RB  1LB 2LA 2RB | None Infinite Chain_Move No_Quasihalt N/A
-1RB --- 2LB  1LB 2LA 2RB | None Infinite Chain_Move No_Quasihalt N/A
-1RB --- 1RB  1LB 2LA 2RB | None Infinite Chain_Move No_Quasihalt N/A
-1RB --- 1LB  1LB 2LA 2RB | None Infinite Chain_Move No_Quasihalt N/A
-1RB --- 0RB  1LB 2LA 2RB | None Infinite Chain_Move No_Quasihalt N/A
-1RB --- 0LB  1LB 2LA 2RB | None Infinite Chain_Move No_Quasihalt N/A
+1RB --- 2RB  1LB 2LA 2RB | None Infinite Lin_Recur No_Quasihalt N/A
+1RB --- 2LB  1LB 2LA 2RB | None Infinite Lin_Recur No_Quasihalt N/A
+1RB --- 1RB  1LB 2LA 2RB | None Infinite Lin_Recur No_Quasihalt N/A
+1RB --- 1LB  1LB 2LA 2RB | None Infinite Lin_Recur No_Quasihalt N/A
+1RB --- 0RB  1LB 2LA 2RB | None Infinite Lin_Recur No_Quasihalt N/A
+1RB --- 0LB  1LB 2LA 2RB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1RZ 2RA  1LB 2LA 2RB | None Halt 5 14
 1RB 1RZ 2LA  1LB 2LA 2RB | None Halt 3 8
 1RB 1RZ 1RA  1LB 2LA 2RB | None Halt 5 12
 1RB 1RZ 1LA  1LB 2LA 2RB | None Halt 3 8
-1RB --- 0RA  1LB 2LA 2RB | None Infinite Chain_Move No_Quasihalt N/A
+1RB --- 0RA  1LB 2LA 2RB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1RZ 0LA  1LB 2LA 2RB | None Halt 2 8
-1RB --- ---  1LB 2LA 2LB | None Infinite Chain_Move No_Quasihalt N/A
+1RB --- ---  1LB 2LA 2LB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1RZ ---  1LB 2LA 1RB | None Halt 3 7
 1RB 2RB 1RZ  1LB 2LA 1RB | None Halt 4 11
 1RB 2LB ---  1LB 2LA 1RB | None Infinite Reverse_Engineer N/A N/A
@@ -746,9 +746,9 @@
 1RB 1LA ---  1LB 2LA 1RB | None Infinite Reverse_Engineer N/A N/A
 1RB 0RA 1RZ  1LB 2LA 1RB | None Halt 2 8
 1RB 0LA ---  1LB 2LA 1RB | None Infinite Reverse_Engineer N/A N/A
-1RB --- ---  1LB 2LA 1LB | None Infinite Chain_Move No_Quasihalt N/A
+1RB --- ---  1LB 2LA 1LB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1RZ ---  1LB 2LA 0RB | None Halt 4 12
-1RB 2RB ---  1LB 2LA 0RB | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2RB ---  1LB 2LA 0RB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LB ---  1LB 2LA 0RB | None Infinite Reverse_Engineer N/A N/A
 1RB 1RB ---  1LB 2LA 0RB | None Infinite Reverse_Engineer N/A N/A
 1RB 1LB ---  1LB 2LA 0RB | None Infinite Reverse_Engineer N/A N/A
@@ -760,19 +760,19 @@
 1RB 1LA ---  1LB 2LA 0RB | None Infinite Reverse_Engineer N/A N/A
 1RB 0RA 1RZ  1LB 2LA 0RB | None Halt 3 13
 1RB 0LA ---  1LB 2LA 0RB | None Infinite Reverse_Engineer N/A N/A
-1RB --- ---  1LB 2LA 0LB | None Infinite Chain_Move No_Quasihalt N/A
+1RB --- ---  1LB 2LA 0LB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1RZ ---  1LB 2LA 2RA | None Halt 3 6
-1RB 2RB ---  1LB 2LA 2RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2RB ---  1LB 2LA 2RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LB 1RZ  1LB 2LA 2RA | None Halt 3 8
 1RB 1RB 1RZ  1LB 2LA 2RA | None Halt 4 9
-1RB 1LB ---  1LB 2LA 2RA | None Infinite Repeat_in_Place No_Quasihalt N/A
+1RB 1LB ---  1LB 2LA 2RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 0RB 1RZ  1LB 2LA 2RA | None Halt 6 17
 1RB 0LB 1RZ  1LB 2LA 2RA | None Halt 4 11
 1RB 2RA 1RZ  1LB 2LA 2RA | None Halt 5 10
 1RB 2LA 1RZ  1LB 2LA 2RA | None Halt 3 7
 1RB 1RA 1RZ  1LB 2LA 2RA | None Halt 5 11
 1RB 1LA 1RZ  1LB 2LA 2RA | None Halt 3 7
-1RB 0RA ---  1LB 2LA 2RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 0RA ---  1LB 2LA 2RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 0LA 1RZ  1LB 2LA 2RA | None Halt 2 7
 1RB 1RZ ---  1LB 2LA 2LA | None Halt 3 6
 1RB 2RB 1RZ  1LB 2LA 2LA | None Halt 3 8
@@ -788,18 +788,18 @@
 1RB 0RA 1RZ  1LB 2LA 2LA | None Halt 2 7
 1RB 0LA ---  1LB 2LA 2LA | None Infinite Reverse_Engineer N/A N/A
 1RB 1RZ ---  1LB 2LA 1RA | None Halt 3 6
-1RB 2RB ---  1LB 2LA 1RA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2LB ---  1LB 2LA 1RA | None Infinite Chain_Move 0 8
-1RB 1RB ---  1LB 2LA 1RA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 1LB ---  1LB 2LA 1RA | None Infinite Chain_Move 0 8
-1RB 0RB ---  1LB 2LA 1RA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 0LB ---  1LB 2LA 1RA | None Infinite Chain_Move 0 8
+1RB 2RB ---  1LB 2LA 1RA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2LB ---  1LB 2LA 1RA | None Infinite Lin_Recur 0 8
+1RB 1RB ---  1LB 2LA 1RA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 1LB ---  1LB 2LA 1RA | None Infinite Lin_Recur 0 8
+1RB 0RB ---  1LB 2LA 1RA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 0LB ---  1LB 2LA 1RA | None Infinite Lin_Recur 0 8
 1RB 2RA 1RZ  1LB 2LA 1RA | None Halt 5 10
 1RB 2LA 1RZ  1LB 2LA 1RA | None Halt 4 11
 1RB 1RA 1RZ  1LB 2LA 1RA | None Halt 5 11
-1RB 1LA ---  1LB 2LA 1RA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 0RA ---  1LB 2LA 1RA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 0LA ---  1LB 2LA 1RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 1LA ---  1LB 2LA 1RA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 0RA ---  1LB 2LA 1RA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 0LA ---  1LB 2LA 1RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1RZ ---  1LB 2LA 1LA | None Halt 3 6
 1RB 2RB 1RZ  1LB 2LA 1LA | None Halt 3 8
 1RB 2LB ---  1LB 2LA 1LA | None Infinite Reverse_Engineer N/A N/A
@@ -811,23 +811,23 @@
 1RB 2LA ---  1LB 2LA 1LA | None Infinite Reverse_Engineer N/A N/A
 1RB 1RA 1RZ  1LB 2LA 1LA | None Halt 5 13
 1RB 1LA ---  1LB 2LA 1LA | None Infinite Reverse_Engineer N/A N/A
-1RB 0RA ---  1LB 2LA 1LA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 0RA ---  1LB 2LA 1LA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 0LA ---  1LB 2LA 1LA | None Infinite Reverse_Engineer N/A N/A
 1RB 1RZ ---  1LB 2LA 0RA | None Halt 2 6
-1RB 2RB ---  1LB 2LA 0RA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2LB ---  1LB 2LA 0RA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 1RB ---  1LB 2LA 0RA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 1LB ---  1LB 2LA 0RA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 0RB ---  1LB 2LA 0RA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 0LB ---  1LB 2LA 0RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2RB ---  1LB 2LA 0RA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2LB ---  1LB 2LA 0RA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 1RB ---  1LB 2LA 0RA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 1LB ---  1LB 2LA 0RA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 0RB ---  1LB 2LA 0RA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 0LB ---  1LB 2LA 0RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2RA 1RZ  1LB 2LA 0RA | None Halt 4 10
-1RB 2LA ---  1LB 2LA 0RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2LA ---  1LB 2LA 0RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1RA 1RZ  1LB 2LA 0RA | None Halt 4 11
-1RB 1LA ---  1LB 2LA 0RA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 0RA ---  1LB 2LA 0RA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 0LA ---  1LB 2LA 0RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 1LA ---  1LB 2LA 0RA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 0RA ---  1LB 2LA 0RA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 0LA ---  1LB 2LA 0RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1RZ ---  1LB 2LA 0LA | None Halt 2 6
-1RB 2RB ---  1LB 2LA 0LA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2RB ---  1LB 2LA 0LA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LB ---  1LB 2LA 0LA | None Infinite Reverse_Engineer N/A N/A
 1RB 1RB ---  1LB 2LA 0LA | None Infinite Reverse_Engineer N/A N/A
 1RB 1LB ---  1LB 2LA 0LA | None Infinite Reverse_Engineer N/A N/A
@@ -850,76 +850,76 @@
 1RB 2RB ---  1LB 1RA 2RA | None Infinite Reverse_Engineer N/A N/A
 1RB 2RB 1RZ  1LB 1RA 2LA | None Halt 3 9
 1RB 2RB ---  1LB 1RA 1RA | None Infinite Reverse_Engineer N/A N/A
-1RB 2RB ---  1LB 1RA 1LA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2RB ---  1LB 1RA 1LA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2RB ---  1LB 1RA 0RA | None Infinite Reverse_Engineer N/A N/A
 1RB 2RB 1RZ  1LB 1RA 0LA | None Halt 4 21
 1RB 2LB 1RZ  1LB 1RA --- | None Halt 2 6
 1RB 2LB 2RB  1LB 1RA 1RZ | None Halt 3 8
-1RB 2LB 2LB  1LB 1RA --- | None Infinite Repeat_in_Place No_Quasihalt N/A
-1RB 2LB 1RB  1LB 1RA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2LB 1LB  1LB 1RA --- | None Infinite Repeat_in_Place No_Quasihalt N/A
-1RB 2LB 0RB  1LB 1RA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2LB 0LB  1LB 1RA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2LB 2RA  1LB 1RA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2LB 2LA  1LB 1RA --- | None Infinite Chain_Move 0 7
-1RB 2LB 1RA  1LB 1RA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2LB 1LA  1LB 1RA --- | None Infinite Chain_Move 0 7
-1RB 2LB 0RA  1LB 1RA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2LB 0LA  1LB 1RA --- | None Infinite Chain_Move 0 7
+1RB 2LB 2LB  1LB 1RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2LB 1RB  1LB 1RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2LB 1LB  1LB 1RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2LB 0RB  1LB 1RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2LB 0LB  1LB 1RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2LB 2RA  1LB 1RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2LB 2LA  1LB 1RA --- | None Infinite Lin_Recur 0 7
+1RB 2LB 1RA  1LB 1RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2LB 1LA  1LB 1RA --- | None Infinite Lin_Recur 0 7
+1RB 2LB 0RA  1LB 1RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2LB 0LA  1LB 1RA --- | None Infinite Lin_Recur 0 7
 1RB 1RB ---  1LB 1RA --- | None Infinite Reverse_Engineer N/A N/A
 1RB 1LB ---  1LB 1RA --- | None Infinite Reverse_Engineer N/A N/A
 1RB 0RB ---  1LB 1RA --- | None Infinite Reverse_Engineer N/A N/A
 1RB 0LB ---  1LB 1RA --- | None Infinite Reverse_Engineer N/A N/A
-1RB 2RA ---  1LB 1RA --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2RA ---  1LB 1RA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LA ---  1LB 1RA 1RZ | None Halt 3 7
 1RB 2LA 1RZ  1LB 1RA 2RB | None Halt 6 18
 1RB 2LA 1RZ  1LB 1RA 2LB | None Halt 3 9
 1RB 2LA ---  1LB 1RA 1RB | None Infinite CTL_A* N/A N/A
-1RB 2LA ---  1LB 1RA 1LB | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2LA ---  1LB 1RA 0RB | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2LA ---  1LB 1RA 1LB | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2LA ---  1LB 1RA 0RB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LA ---  1LB 1RA 0LB | None Infinite CTL_A* N/A N/A
 1RB 2LA 1RZ  1LB 1RA 2RA | None Halt 3 8
-1RB 2LA ---  1LB 1RA 2LA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2LA ---  1LB 1RA 2LA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LA 1RZ  1LB 1RA 1RA | None Halt 3 8
-1RB 2LA ---  1LB 1RA 1LA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2LA ---  1LB 1RA 1LA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LA 1RZ  1LB 1RA 0RA | None Halt 2 8
-1RB 2LA ---  1LB 1RA 0LA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2LA ---  1LB 1RA 0LA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1RA ---  1LB 1RA --- | None Infinite Reverse_Engineer N/A N/A
 1RB 1LA ---  1LB 1RA --- | None Infinite Reverse_Engineer N/A N/A
 1RB 0RA ---  1LB 1RA --- | None Infinite Reverse_Engineer N/A N/A
 1RB 0LA ---  1LB 1RA --- | None Infinite Reverse_Engineer N/A N/A
 1RB 1RZ ---  1LB 1LA --- | None Halt 3 6
 1RB 2RB 1RZ  1LB 1LA --- | None Halt 3 8
-1RB 2RB 2RB  1LB 1LA --- | None Infinite Repeat_in_Place No_Quasihalt N/A
-1RB 2RB 2LB  1LB 1LA --- | None Infinite Chain_Move 0 8
-1RB 2RB 1RB  1LB 1LA --- | None Infinite Repeat_in_Place No_Quasihalt N/A
-1RB 2RB 1LB  1LB 1LA --- | None Infinite Chain_Move 0 8
-1RB 2RB 0RB  1LB 1LA --- | None Infinite Repeat_in_Place No_Quasihalt N/A
-1RB 2RB 0LB  1LB 1LA --- | None Infinite Chain_Move 0 8
+1RB 2RB 2RB  1LB 1LA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2RB 2LB  1LB 1LA --- | None Infinite Lin_Recur 0 8
+1RB 2RB 1RB  1LB 1LA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2RB 1LB  1LB 1LA --- | None Infinite Lin_Recur 0 8
+1RB 2RB 0RB  1LB 1LA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2RB 0LB  1LB 1LA --- | None Infinite Lin_Recur 0 8
 1RB 2RB 2RA  1LB 1LA 1RZ | None Halt 4 14
 1RB 2RB 2LA  1LB 1LA 1RZ | None Halt 4 10
 1RB 2RB 1RA  1LB 1LA 1RZ | None Halt 4 14
-1RB 2RB 1LA  1LB 1LA --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2RB 1LA  1LB 1LA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2RB 0RA  1LB 1LA 1RZ | None Halt 2 14
-1RB 2RB 0LA  1LB 1LA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2LB ---  1LB 1LA --- | None Infinite Chain_Move 0 6
+1RB 2RB 0LA  1LB 1LA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2LB ---  1LB 1LA --- | None Infinite Lin_Recur 0 6
 1RB 1RB ---  1LB 1LA --- | None Infinite Reverse_Engineer N/A N/A
 1RB 1LB ---  1LB 1LA --- | None Infinite Reverse_Engineer N/A N/A
 1RB 0RB ---  1LB 1LA --- | None Infinite Reverse_Engineer N/A N/A
 1RB 0LB ---  1LB 1LA --- | None Infinite Reverse_Engineer N/A N/A
 1RB 2RA 1RZ  1LB 1LA --- | None Halt 5 12
-1RB 2RA 2RB  1LB 1LA --- | None Infinite Repeat_in_Place No_Quasihalt N/A
+1RB 2RA 2RB  1LB 1LA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2RA 2LB  1LB 1LA 1RZ | None Halt 5 13
-1RB 2RA 1RB  1LB 1LA --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2RA 1RB  1LB 1LA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2RA 1LB  1LB 1LA 1RZ | None Halt 5 13
-1RB 2RA 0RB  1LB 1LA --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2RA 0RB  1LB 1LA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2RA 0LB  1LB 1LA 1RZ | None Halt 4 13
-1RB 2RA 2RA  1LB 1LA --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2RA 2RA  1LB 1LA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2RA 2LA  1LB 1LA 1RZ | None Halt 6 16
-1RB 2RA 1RA  1LB 1LA --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2RA 1RA  1LB 1LA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2RA 1LA  1LB 1LA --- | None Infinite CTL_A* N/A N/A
-1RB 2RA 0RA  1LB 1LA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2RA 0LA  1LB 1LA --- | None Infinite CTL_A* N/A N/A
+1RB 2RA 0RA  1LB 1LA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2RA 0LA  1LB 1LA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LA ---  1LB 1LA 1RZ | None Halt 4 8
 1RB 2LA 1RZ  1LB 1LA 2RB | None Halt 4 10
 1RB 2LA ---  1LB 1LA 2LB | None Infinite Reverse_Engineer N/A N/A
@@ -940,7 +940,7 @@
 1RB 1RZ ---  1LB 0RA --- | None Halt 1 4
 1RB 2RB ---  1LB 0RA 1RZ | None Halt 2 6
 1RB 2RB ---  1LB 0RA 2RB | None Infinite Reverse_Engineer N/A N/A
-1RB 2RB ---  1LB 0RA 2LB | None Infinite Chain_Move 0 4
+1RB 2RB ---  1LB 0RA 2LB | None Infinite Lin_Recur 0 4
 1RB 2RB ---  1LB 0RA 1RB | None Infinite Reverse_Engineer N/A N/A
 1RB 2RB ---  1LB 0RA 1LB | None Infinite Reverse_Engineer N/A N/A
 1RB 2RB ---  1LB 0RA 0RB | None Infinite Reverse_Engineer N/A N/A
@@ -948,33 +948,33 @@
 1RB 2RB ---  1LB 0RA 2RA | None Infinite Reverse_Engineer N/A N/A
 1RB 2RB 1RZ  1LB 0RA 2LA | None Halt 3 11
 1RB 2RB ---  1LB 0RA 1RA | None Infinite Reverse_Engineer N/A N/A
-1RB 2RB ---  1LB 0RA 1LA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2RB ---  1LB 0RA 1LA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2RB ---  1LB 0RA 0RA | None Infinite Reverse_Engineer N/A N/A
-1RB 2RB ---  1LB 0RA 0LA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2LB ---  1LB 0RA --- | None Infinite Chain_Move 0 4
+1RB 2RB ---  1LB 0RA 0LA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2LB ---  1LB 0RA --- | None Infinite Lin_Recur 0 4
 1RB 1RB ---  1LB 0RA --- | None Infinite Reverse_Engineer N/A N/A
 1RB 1LB ---  1LB 0RA --- | None Infinite Reverse_Engineer N/A N/A
 1RB 0RB ---  1LB 0RA --- | None Infinite Reverse_Engineer N/A N/A
 1RB 0LB ---  1LB 0RA --- | None Infinite Reverse_Engineer N/A N/A
-1RB 2RA ---  1LB 0RA --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2RA ---  1LB 0RA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LA ---  1LB 0RA 1RZ | None Halt 2 6
-1RB 2LA ---  1LB 0RA 2RB | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2LA ---  1LB 0RA 2RB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LA 1RZ  1LB 0RA 2LB | None Halt 1 8
-1RB 2LA ---  1LB 0RA 1RB | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2LA ---  1LB 0RA 1LB | None Infinite Repeat_in_Place No_Quasihalt N/A
-1RB 2LA ---  1LB 0RA 0RB | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2LA ---  1LB 0RA 0LB | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2LA ---  1LB 0RA 2RA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2LA ---  1LB 0RA 2LA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2LA ---  1LB 0RA 1RA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2LA ---  1LB 0RA 1LA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2LA ---  1LB 0RA 0RA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2LA ---  1LB 0RA 0LA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2LA ---  1LB 0RA 1RB | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2LA ---  1LB 0RA 1LB | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2LA ---  1LB 0RA 0RB | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2LA ---  1LB 0RA 0LB | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2LA ---  1LB 0RA 2RA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2LA ---  1LB 0RA 2LA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2LA ---  1LB 0RA 1RA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2LA ---  1LB 0RA 1LA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2LA ---  1LB 0RA 0RA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2LA ---  1LB 0RA 0LA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1RA ---  1LB 0RA --- | None Infinite Reverse_Engineer N/A N/A
 1RB 1LA ---  1LB 0RA --- | None Infinite Reverse_Engineer N/A N/A
 1RB 0RA ---  1LB 0RA --- | None Infinite Reverse_Engineer N/A N/A
 1RB 0LA ---  1LB 0RA --- | None Infinite Reverse_Engineer N/A N/A
-1RB --- ---  1LB 0LA --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB --- ---  1LB 0LA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB --- ---  0RB --- --- | None Infinite Reverse_Engineer N/A N/A
 1RB --- ---  0LB 1RZ --- | None Halt 1 3
 1RB --- ---  0LB 2RB 1RZ | None Halt 1 5
@@ -987,42 +987,42 @@
 1RB --- ---  0LB 2RB 2RA | None Infinite Reverse_Engineer N/A N/A
 1RB 1RZ ---  0LB 2RB 2LA | None Halt 2 8
 1RB 2RB 1RZ  0LB 2RB 2LA | None Halt 2 10
-1RB 2LB ---  0LB 2RB 2LA | None Infinite Chain_Move 0 8
-1RB 1RB ---  0LB 2RB 2LA | None Infinite Repeat_in_Place No_Quasihalt N/A
-1RB 1LB ---  0LB 2RB 2LA | None Infinite Chain_Move 0 8
-1RB 0RB ---  0LB 2RB 2LA | None Infinite Repeat_in_Place No_Quasihalt N/A
-1RB 0LB ---  0LB 2RB 2LA | None Infinite Chain_Move 0 8
+1RB 2LB ---  0LB 2RB 2LA | None Infinite Lin_Recur 0 8
+1RB 1RB ---  0LB 2RB 2LA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 1LB ---  0LB 2RB 2LA | None Infinite Lin_Recur 0 8
+1RB 0RB ---  0LB 2RB 2LA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 0LB ---  0LB 2RB 2LA | None Infinite Lin_Recur 0 8
 1RB 2RA 1RZ  0LB 2RB 2LA | None Halt 2 9
-1RB 2LA ---  0LB 2RB 2LA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2LA ---  0LB 2RB 2LA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1RA 1RZ  0LB 2RB 2LA | None Halt 2 9
 1RB 1LA 1RZ  0LB 2RB 2LA | None Halt 3 12
 1RB 0RA 1RZ  0LB 2RB 2LA | None Halt 1 9
-1RB 0LA ---  0LB 2RB 2LA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 0LA ---  0LB 2RB 2LA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB --- ---  0LB 2RB 1RA | None Infinite Reverse_Engineer N/A N/A
 1RB 1RZ ---  0LB 2RB 1LA | None Halt 2 10
 1RB 2RB 1RZ  0LB 2RB 1LA | None Halt 2 14
-1RB 2LB ---  0LB 2RB 1LA | None Infinite Chain_Move 0 10
-1RB 1RB ---  0LB 2RB 1LA | None Infinite Repeat_in_Place No_Quasihalt N/A
-1RB 1LB ---  0LB 2RB 1LA | None Infinite Chain_Move 0 10
-1RB 0RB ---  0LB 2RB 1LA | None Infinite Repeat_in_Place No_Quasihalt N/A
-1RB 0LB ---  0LB 2RB 1LA | None Infinite Chain_Move 0 10
+1RB 2LB ---  0LB 2RB 1LA | None Infinite Lin_Recur 0 10
+1RB 1RB ---  0LB 2RB 1LA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 1LB ---  0LB 2RB 1LA | None Infinite Lin_Recur 0 10
+1RB 0RB ---  0LB 2RB 1LA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 0LB ---  0LB 2RB 1LA | None Infinite Lin_Recur 0 10
 1RB 2RA 1RZ  0LB 2RB 1LA | None Halt 3 17
-1RB 2LA ---  0LB 2RB 1LA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 1RA ---  0LB 2RB 1LA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2LA ---  0LB 2RB 1LA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 1RA ---  0LB 2RB 1LA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1LA 1RZ  0LB 2RB 1LA | None Halt 3 16
-1RB 0RA ---  0LB 2RB 1LA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 0LA ---  0LB 2RB 1LA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 0RA ---  0LB 2RB 1LA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 0LA ---  0LB 2RB 1LA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB --- ---  0LB 2RB 0RA | None Infinite Reverse_Engineer N/A N/A
-1RB --- ---  0LB 2RB 0LA | None Infinite Chain_Move No_Quasihalt N/A
-1RB --- ---  0LB 2LB --- | None Infinite Chain_Move 0 1
+1RB --- ---  0LB 2RB 0LA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB --- ---  0LB 2LB --- | None Infinite Lin_Recur 0 1
 1RB --- ---  0LB 1RB --- | None Infinite Reverse_Engineer N/A N/A
 1RB --- ---  0LB 1LB --- | None Infinite Reverse_Engineer N/A N/A
 1RB --- ---  0LB 0RB --- | None Infinite Reverse_Engineer N/A N/A
 1RB --- ---  0LB 0LB --- | None Infinite Reverse_Engineer N/A N/A
-1RB --- ---  0LB 2RA --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB --- ---  0LB 2RA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB --- ---  0LB 2LA 1RZ | None Halt 2 5
-1RB --- ---  0LB 2LA 2RB | None Infinite Repeat_in_Place 0 4
-1RB --- ---  0LB 2LA 2LB | None Infinite Chain_Move No_Quasihalt N/A
+1RB --- ---  0LB 2LA 2RB | None Infinite Lin_Recur 0 4
+1RB --- ---  0LB 2LA 2LB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1RZ ---  0LB 2LA 1RB | None Halt 2 8
 1RB 2RB 1RZ  0LB 2LA 1RB | None Halt 2 12
 1RB 2LB ---  0LB 2LA 1RB | None Infinite Reverse_Engineer N/A N/A
@@ -1036,21 +1036,21 @@
 1RB 1LA ---  0LB 2LA 1RB | None Infinite Reverse_Engineer N/A N/A
 1RB 0RA 1RZ  0LB 2LA 1RB | None Halt 1 9
 1RB 0LA ---  0LB 2LA 1RB | None Infinite Reverse_Engineer N/A N/A
-1RB --- ---  0LB 2LA 1LB | None Infinite Chain_Move No_Quasihalt N/A
-1RB --- ---  0LB 2LA 0RB | None Infinite Chain_Move No_Quasihalt N/A
-1RB --- ---  0LB 2LA 0LB | None Infinite Chain_Move No_Quasihalt N/A
+1RB --- ---  0LB 2LA 1LB | None Infinite Lin_Recur No_Quasihalt N/A
+1RB --- ---  0LB 2LA 0RB | None Infinite Lin_Recur No_Quasihalt N/A
+1RB --- ---  0LB 2LA 0LB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB --- 1RZ  0LB 2LA 2RA | None Halt 3 9
-1RB --- 2RB  0LB 2LA 2RA | None Infinite Chain_Move No_Quasihalt N/A
-1RB --- 2LB  0LB 2LA 2RA | None Infinite Repeat_in_Place No_Quasihalt N/A
-1RB --- 1RB  0LB 2LA 2RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB --- 2RB  0LB 2LA 2RA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB --- 2LB  0LB 2LA 2RA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB --- 1RB  0LB 2LA 2RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1RZ 1LB  0LB 2LA 2RA | None Halt 4 13
-1RB --- 0RB  0LB 2LA 2RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB --- 0RB  0LB 2LA 2RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB --- 0LB  0LB 2LA 2RA | None Infinite Proof_System No_Quasihalt N/A
-1RB --- 2RA  0LB 2LA 2RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB --- 2RA  0LB 2LA 2RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1RZ 2LA  0LB 2LA 2RA | None Halt 3 10
 1RB 1RZ 1RA  0LB 2LA 2RA | None Halt 4 14
 1RB 1RZ 1LA  0LB 2LA 2RA | None Halt 3 10
-1RB --- 0RA  0LB 2LA 2RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB --- 0RA  0LB 2LA 2RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1RZ 0LA  0LB 2LA 2RA | None Halt 2 10
 1RB 1RZ ---  0LB 2LA 2LA | None Halt 2 6
 1RB 2RB 1RZ  0LB 2LA 2LA | None Halt 2 8
@@ -1066,18 +1066,18 @@
 1RB 0RA 1RZ  0LB 2LA 2LA | None Halt 1 7
 1RB 0LA ---  0LB 2LA 2LA | None Infinite Reverse_Engineer N/A N/A
 1RB 1RZ ---  0LB 2LA 1RA | None Halt 3 9
-1RB 2RB ---  0LB 2LA 1RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2RB ---  0LB 2LA 1RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LB 1RZ  0LB 2LA 1RA | None Halt 4 13
-1RB 1RB ---  0LB 2LA 1RA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 1LB ---  0LB 2LA 1RA | None Infinite Chain_Move 0 15
-1RB 0RB ---  0LB 2LA 1RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 1RB ---  0LB 2LA 1RA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 1LB ---  0LB 2LA 1RA | None Infinite Lin_Recur 0 15
+1RB 0RB ---  0LB 2LA 1RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 0LB ---  0LB 2LA 1RA | None Infinite Proof_System No_Quasihalt N/A
 1RB 2RA 1RZ  0LB 2LA 1RA | None Halt 3 10
 1RB 2LA 1RZ  0LB 2LA 1RA | None Halt 4 13
 1RB 1RA 1RZ  0LB 2LA 1RA | None Halt 3 10
-1RB 1LA ---  0LB 2LA 1RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 1LA ---  0LB 2LA 1RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 0RA 1RZ  0LB 2LA 1RA | None Halt 2 10
-1RB 0LA ---  0LB 2LA 1RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 0LA ---  0LB 2LA 1RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1RZ ---  0LB 2LA 1LA | None Halt 2 6
 1RB 2RB 1RZ  0LB 2LA 1LA | None Halt 2 8
 1RB 2LB ---  0LB 2LA 1LA | None Infinite Reverse_Engineer N/A N/A
@@ -1089,11 +1089,11 @@
 1RB 2LA ---  0LB 2LA 1LA | None Infinite Reverse_Engineer N/A N/A
 1RB 1RA 1RZ  0LB 2LA 1LA | None Halt 3 12
 1RB 1LA ---  0LB 2LA 1LA | None Infinite Reverse_Engineer N/A N/A
-1RB 0RA ---  0LB 2LA 1LA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 0RA ---  0LB 2LA 1LA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 0LA ---  0LB 2LA 1LA | None Infinite Reverse_Engineer N/A N/A
-1RB --- ---  0LB 2LA 0RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB --- ---  0LB 2LA 0RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1RZ ---  0LB 2LA 0LA | None Halt 1 6
-1RB 2RB ---  0LB 2LA 0LA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2RB ---  0LB 2LA 0LA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LB ---  0LB 2LA 0LA | None Infinite Reverse_Engineer N/A N/A
 1RB 1RB ---  0LB 2LA 0LA | None Infinite Reverse_Engineer N/A N/A
 1RB 1LB ---  0LB 2LA 0LA | None Infinite Reverse_Engineer N/A N/A
@@ -1103,41 +1103,41 @@
 1RB 2LA ---  0LB 2LA 0LA | None Infinite Reverse_Engineer N/A N/A
 1RB 1RA 1RZ  0LB 2LA 0LA | None Halt 2 11
 1RB 1LA ---  0LB 2LA 0LA | None Infinite Reverse_Engineer N/A N/A
-1RB 0RA ---  0LB 2LA 0LA | None Infinite Repeat_in_Place No_Quasihalt N/A
+1RB 0RA ---  0LB 2LA 0LA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 0LA ---  0LB 2LA 0LA | None Infinite Reverse_Engineer N/A N/A
 1RB --- ---  0LB 1RA --- | None Infinite Reverse_Engineer N/A N/A
 1RB 1RZ ---  0LB 1LA --- | None Halt 2 6
 1RB 2RB 1RZ  0LB 1LA --- | None Halt 2 8
-1RB 2RB 2RB  0LB 1LA --- | None Infinite Repeat_in_Place No_Quasihalt N/A
-1RB 2RB 2LB  0LB 1LA --- | None Infinite Chain_Move 0 8
-1RB 2RB 1RB  0LB 1LA --- | None Infinite Repeat_in_Place No_Quasihalt N/A
-1RB 2RB 1LB  0LB 1LA --- | None Infinite Chain_Move 0 8
-1RB 2RB 0RB  0LB 1LA --- | None Infinite Repeat_in_Place No_Quasihalt N/A
-1RB 2RB 0LB  0LB 1LA --- | None Infinite Chain_Move 0 8
+1RB 2RB 2RB  0LB 1LA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2RB 2LB  0LB 1LA --- | None Infinite Lin_Recur 0 8
+1RB 2RB 1RB  0LB 1LA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2RB 1LB  0LB 1LA --- | None Infinite Lin_Recur 0 8
+1RB 2RB 0RB  0LB 1LA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2RB 0LB  0LB 1LA --- | None Infinite Lin_Recur 0 8
 1RB 2RB 2RA  0LB 1LA 1RZ | None Halt 2 11
 1RB 2RB 2LA  0LB 1LA 1RZ | None Halt 3 10
 1RB 2RB 1RA  0LB 1LA 1RZ | None Halt 2 11
-1RB 2RB 1LA  0LB 1LA --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2RB 1LA  0LB 1LA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2RB 0RA  0LB 1LA 1RZ | None Halt 1 11
-1RB 2RB 0LA  0LB 1LA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2LB ---  0LB 1LA --- | None Infinite Chain_Move 0 6
+1RB 2RB 0LA  0LB 1LA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2LB ---  0LB 1LA --- | None Infinite Lin_Recur 0 6
 1RB 1RB ---  0LB 1LA --- | None Infinite Reverse_Engineer N/A N/A
 1RB 1LB ---  0LB 1LA --- | None Infinite Reverse_Engineer N/A N/A
 1RB 0RB ---  0LB 1LA --- | None Infinite Reverse_Engineer N/A N/A
 1RB 0LB ---  0LB 1LA --- | None Infinite Reverse_Engineer N/A N/A
 1RB 2RA 1RZ  0LB 1LA --- | None Halt 3 11
-1RB 2RA 2RB  0LB 1LA --- | None Infinite Repeat_in_Place No_Quasihalt N/A
+1RB 2RA 2RB  0LB 1LA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2RA 2LB  0LB 1LA 1RZ | None Halt 3 12
-1RB 2RA 1RB  0LB 1LA --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2RA 1RB  0LB 1LA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2RA 1LB  0LB 1LA 1RZ | None Halt 3 12
-1RB 2RA 0RB  0LB 1LA --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2RA 0RB  0LB 1LA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2RA 0LB  0LB 1LA 1RZ | None Halt 2 12
-1RB 2RA 2RA  0LB 1LA --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2RA 2RA  0LB 1LA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2RA 2LA  0LB 1LA 1RZ | None Halt 4 14
-1RB 2RA 1RA  0LB 1LA --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2RA 1RA  0LB 1LA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2RA 1LA  0LB 1LA --- | None Infinite CTL_A* N/A N/A
-1RB 2RA 0RA  0LB 1LA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2RA 0LA  0LB 1LA --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2RA 0RA  0LB 1LA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2RA 0LA  0LB 1LA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LA ---  0LB 1LA 1RZ | None Halt 3 8
 1RB 2LA 1RZ  0LB 1LA 2RB | None Halt 3 10
 1RB 2LA ---  0LB 1LA 2LB | None Infinite Reverse_Engineer N/A N/A
@@ -1156,13 +1156,13 @@
 1RB 0RA ---  0LB 1LA --- | None Infinite Reverse_Engineer N/A N/A
 1RB 0LA ---  0LB 1LA --- | None Infinite Reverse_Engineer N/A N/A
 1RB --- ---  0LB 0RA --- | None Infinite Reverse_Engineer N/A N/A
-1RB --- ---  0LB 0LA --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB --- ---  0LB 0LA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB --- ---  2RA --- --- | None Infinite Reverse_Engineer N/A N/A
 1RB 1RZ ---  2LA --- --- | None Halt 2 3
 1RB 2RB ---  2LA --- 1RZ | None Halt 2 4
 1RB 2RB 1RZ  2LA --- 2RB | None Halt 3 6
 1RB 2RB 2RB  2LA --- 2RB | None Infinite Reverse_Engineer N/A N/A
-1RB 2RB 2LB  2LA --- 2RB | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2RB 2LB  2LA --- 2RB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2RB 1RB  2LA --- 2RB | None Infinite Reverse_Engineer N/A N/A
 1RB 2RB 1LB  2LA 1RZ 2RB | None Halt 3 8
 1RB 2RB 0RB  2LA --- 2RB | None Infinite Reverse_Engineer N/A N/A
@@ -1174,61 +1174,61 @@
 1RB 2RB 0RA  2LA --- 2RB | None Infinite Reverse_Engineer N/A N/A
 1RB 2RB 0LA  2LA --- 2RB | None Infinite Reverse_Engineer N/A N/A
 1RB 2RB ---  2LA 1RZ 2LB | None Halt 4 9
-1RB 2RB ---  2LA 2RB 2LB | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2RB ---  2LA 2LB 2LB | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2RB ---  2LA 1RB 2LB | None Infinite Repeat_in_Place No_Quasihalt N/A
-1RB 2RB ---  2LA 1LB 2LB | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2RB ---  2LA 0RB 2LB | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2RB ---  2LA 0LB 2LB | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2RB ---  2LA 2RB 2LB | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2RB ---  2LA 2LB 2LB | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2RB ---  2LA 1RB 2LB | None Infinite Lin_Recur 0 7
+1RB 2RB ---  2LA 1LB 2LB | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2RB ---  2LA 0RB 2LB | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2RB ---  2LA 0LB 2LB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2RB 1RZ  2LA 2RA 2LB | None Halt 4 10
-1RB 2RB ---  2LA 2LA 2LB | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2RB ---  2LA 2LA 2LB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2RB 1RZ  2LA 1RA 2LB | None Halt 4 10
 1RB 2RB 1RZ  2LA 1LA 2LB | None Halt 5 14
 1RB 2RB 1RZ  2LA 0RA 2LB | None Halt 3 10
-1RB 2RB ---  2LA 0LA 2LB | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2RB ---  2LA --- 1RB | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2RB ---  2LA 0LA 2LB | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2RB ---  2LA --- 1RB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2RB ---  2LA 1RZ 1LB | None Halt 4 9
 1RB 2RB 1RZ  2LA 2RB 1LB | None Halt 5 14
-1RB 2RB ---  2LA 2LB 1LB | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2RB ---  2LA 1RB 1LB | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2RB ---  2LA 1LB 1LB | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2RB ---  2LA 0RB 1LB | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2RB ---  2LA 0LB 1LB | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2RB ---  2LA 2LB 1LB | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2RB ---  2LA 1RB 1LB | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2RB ---  2LA 1LB 1LB | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2RB ---  2LA 0RB 1LB | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2RB ---  2LA 0LB 1LB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2RB 1RZ  2LA 2RA 1LB | None Halt 5 14
-1RB 2RB ---  2LA 2LA 1LB | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2RB ---  2LA 2LA 1LB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2RB 1RZ  2LA 1RA 1LB | None Halt 5 14
 1RB 2RB 1RZ  2LA 1LA 1LB | None Halt 5 14
 1RB 2RB 1RZ  2LA 0RA 1LB | None Halt 3 14
-1RB 2RB ---  2LA 0LA 1LB | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2RB ---  2LA --- 0RB | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2RB ---  2LA 0LA 1LB | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2RB ---  2LA --- 0RB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2RB ---  2LA 1RZ 0LB | None Halt 1 9
 1RB 2RB 1RZ  2LA 2RB 0LB | None Halt 2 11
-1RB 2RB ---  2LA 2LB 0LB | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2RB ---  2LA 1RB 0LB | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2RB ---  2LA 1LB 0LB | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2RB ---  2LA 0RB 0LB | None Infinite Repeat_in_Place No_Quasihalt N/A
-1RB 2RB ---  2LA 0LB 0LB | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2RB ---  2LA 2RA 0LB | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2RB ---  2LA 2LA 0LB | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2RB ---  2LA 1RA 0LB | None Infinite Repeat_in_Place No_Quasihalt N/A
+1RB 2RB ---  2LA 2LB 0LB | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2RB ---  2LA 1RB 0LB | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2RB ---  2LA 1LB 0LB | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2RB ---  2LA 0RB 0LB | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2RB ---  2LA 0LB 0LB | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2RB ---  2LA 2RA 0LB | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2RB ---  2LA 2LA 0LB | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2RB ---  2LA 1RA 0LB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2RB 1RZ  2LA 1LA 0LB | None Halt 2 14
-1RB 2RB ---  2LA 0RA 0LB | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2RB ---  2LA 0LA 0LB | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2RB ---  2LA --- 2RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2RB ---  2LA 0RA 0LB | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2RB ---  2LA 0LA 0LB | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2RB ---  2LA --- 2RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2RB 1RZ  2LA --- 2LA | None Halt 2 5
 1RB 2RB 2RB  2LA --- 2LA | None Infinite Reverse_Engineer N/A N/A
-1RB 2RB 2LB  2LA --- 2LA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2RB 2LB  2LA --- 2LA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2RB 1RB  2LA --- 2LA | None Infinite Reverse_Engineer N/A N/A
-1RB 2RB 1LB  2LA --- 2LA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2RB 1LB  2LA --- 2LA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2RB 0RB  2LA --- 2LA | None Infinite Reverse_Engineer N/A N/A
-1RB 2RB 0LB  2LA --- 2LA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2RB 0LB  2LA --- 2LA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2RB 2RA  2LA --- 2LA | None Infinite Reverse_Engineer N/A N/A
 1RB 2RB 2LA  2LA --- 2LA | None Infinite Reverse_Engineer N/A N/A
 1RB 2RB 1RA  2LA --- 2LA | None Infinite Reverse_Engineer N/A N/A
 1RB 2RB 1LA  2LA 1RZ 2LA | None Halt 3 7
 1RB 2RB 0RA  2LA --- 2LA | None Infinite Reverse_Engineer N/A N/A
 1RB 2RB 0LA  2LA --- 2LA | None Infinite Reverse_Engineer N/A N/A
-1RB 2RB ---  2LA --- 1RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2RB ---  2LA --- 1RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2RB 1RZ  2LA --- 1LA | None Halt 2 5
 1RB 2RB 2RB  2LA 1RZ 1LA | None Halt 2 6
 1RB 2RB 2LB  2LA 1RZ 1LA | None Halt 4 10
@@ -1236,20 +1236,20 @@
 1RB 2RB 1LB  2LA 1RZ 1LA | None Halt 4 10
 1RB 2RB 0RB  2LA 1RZ 1LA | None Halt 1 6
 1RB 2RB 0LB  2LA 1RZ 1LA | None Halt 3 10
-1RB 2RB 2RA  2LA --- 1LA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2RB 2RA  2LA --- 1LA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2RB 2LA  2LA 1RZ 1LA | None Halt 3 9
-1RB 2RB 1RA  2LA --- 1LA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2RB 1RA  2LA --- 1LA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2RB 1LA  2LA 1RZ 1LA | None Halt 3 7
-1RB 2RB 0RA  2LA --- 1LA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2RB 0LA  2LA --- 1LA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2RB ---  2LA --- 0RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2RB 0RA  2LA --- 1LA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2RB 0LA  2LA --- 1LA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2RB ---  2LA --- 0RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2RB 1RZ  2LA --- 0LA | None Halt 1 5
 1RB 2RB 2RB  2LA --- 0LA | None Infinite Reverse_Engineer N/A N/A
-1RB 2RB 2LB  2LA --- 0LA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2RB 2LB  2LA --- 0LA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2RB 1RB  2LA --- 0LA | None Infinite Reverse_Engineer N/A N/A
-1RB 2RB 1LB  2LA --- 0LA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2RB 1LB  2LA --- 0LA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2RB 0RB  2LA --- 0LA | None Infinite Reverse_Engineer N/A N/A
-1RB 2RB 0LB  2LA --- 0LA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2RB 0LB  2LA --- 0LA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2RB 2RA  2LA --- 0LA | None Infinite Reverse_Engineer N/A N/A
 1RB 2RB 2LA  2LA --- 0LA | None Infinite Reverse_Engineer N/A N/A
 1RB 2RB 1RA  2LA --- 0LA | None Infinite Reverse_Engineer N/A N/A
@@ -1258,20 +1258,20 @@
 1RB 2RB 0LA  2LA --- 0LA | None Infinite Reverse_Engineer N/A N/A
 1RB 2LB ---  2LA --- 1RZ | None Halt 4 6
 1RB 2LB 1RZ  2LA --- 2RB | None Halt 5 10
-1RB 2LB 2RB  2LA --- 2RB | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2LB 2LB  2LA --- 2RB | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2LB 1RB  2LA --- 2RB | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2LB 2RB  2LA --- 2RB | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2LB 2LB  2LA --- 2RB | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2LB 1RB  2LA --- 2RB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LB 1LB  2LA 1RZ 2RB | None Halt 5 12
-1RB 2LB 0RB  2LA --- 2RB | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2LB 0RB  2LA --- 2RB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LB 0LB  2LA 1RZ 2RB | None Halt 4 17
-1RB 2LB 2RA  2LA --- 2RB | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2LB 2RA  2LA --- 2RB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LB 2LA  2LA --- 2RB | None Infinite CTL_A*_B N/A N/A
 1RB 2LB 1RA  2LA 1RZ 2RB | None Halt 7 15
 1RB 2LB 1LA  2LA 1RZ 2RB | None Halt 7 18
-1RB 2LB 0RA  2LA --- 2RB | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2LB 0LA  2LA --- 2RB | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2LB 0RA  2LA --- 2RB | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2LB 0LA  2LA --- 2RB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LB ---  2LA 1RZ 2LB | None Halt 4 7
-1RB 2LB ---  2LA 2RB 2LB | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2LB ---  2LA 2RB 2LB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LB ---  2LA 2LB 2LB | None Infinite Reverse_Engineer N/A N/A
 1RB 2LB ---  2LA 1RB 2LB | None Infinite Reverse_Engineer N/A N/A
 1RB 2LB ---  2LA 1LB 2LB | None Infinite Reverse_Engineer N/A N/A
@@ -1284,7 +1284,7 @@
 1RB 2LB 1RZ  2LA 0RA 2LB | None Halt 3 8
 1RB 2LB ---  2LA 0LA 2LB | None Infinite Reverse_Engineer N/A N/A
 1RB 2LB ---  2LA 1RZ 1RB | None Halt 5 11
-1RB 2LB ---  2LA 2RB 1RB | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2LB ---  2LA 2RB 1RB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LB ---  2LA 2LB 1RB | None Infinite Reverse_Engineer N/A N/A
 1RB 2LB ---  2LA 1RB 1RB | None Infinite Reverse_Engineer N/A N/A
 1RB 2LB ---  2LA 1LB 1RB | None Infinite Reverse_Engineer N/A N/A
@@ -1303,13 +1303,13 @@
 1RB 2LB ---  2LA 1LB 1LB | None Infinite Reverse_Engineer N/A N/A
 1RB 2LB ---  2LA 0RB 1LB | None Infinite Reverse_Engineer N/A N/A
 1RB 2LB ---  2LA 0LB 1LB | None Infinite Reverse_Engineer N/A N/A
-1RB 2LB ---  2LA 2RA 1LB | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2LB ---  2LA 2RA 1LB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LB ---  2LA 2LA 1LB | None Infinite Reverse_Engineer N/A N/A
 1RB 2LB 1RZ  2LA 1RA 1LB | None Halt 4 10
 1RB 2LB ---  2LA 1LA 1LB | None Infinite Reverse_Engineer N/A N/A
-1RB 2LB ---  2LA 0RA 1LB | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2LB ---  2LA 0RA 1LB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LB ---  2LA 0LA 1LB | None Infinite Reverse_Engineer N/A N/A
-1RB 2LB ---  2LA --- 0RB | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2LB ---  2LA --- 0RB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LB ---  2LA 1RZ 0LB | None Halt 3 7
 1RB 2LB 1RZ  2LA 2RB 0LB | None Halt 4 9
 1RB 2LB ---  2LA 2LB 0LB | None Infinite Reverse_Engineer N/A N/A
@@ -1317,26 +1317,26 @@
 1RB 2LB ---  2LA 1LB 0LB | None Infinite Reverse_Engineer N/A N/A
 1RB 2LB ---  2LA 0RB 0LB | None Infinite Reverse_Engineer N/A N/A
 1RB 2LB ---  2LA 0LB 0LB | None Infinite Reverse_Engineer N/A N/A
-1RB 2LB ---  2LA 2RA 0LB | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2LB ---  2LA 2RA 0LB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LB ---  2LA 2LA 0LB | None Infinite Reverse_Engineer N/A N/A
 1RB 2LB 1RZ  2LA 1RA 0LB | None Halt 5 18
 1RB 2LB ---  2LA 1LA 0LB | None Infinite Reverse_Engineer N/A N/A
-1RB 2LB ---  2LA 0RA 0LB | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2LB ---  2LA 0RA 0LB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LB ---  2LA 0LA 0LB | None Infinite Reverse_Engineer N/A N/A
 1RB 2LB 1RZ  2LA --- 2RA | None Halt 4 7
-1RB 2LB 2RB  2LA --- 2RA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2LB 2LB  2LA --- 2RA | None Infinite Repeat_in_Place No_Quasihalt N/A
-1RB 2LB 1RB  2LA --- 2RA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2LB 1LB  2LA --- 2RA | None Infinite Repeat_in_Place No_Quasihalt N/A
-1RB 2LB 0RB  2LA --- 2RA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2LB 0LB  2LA --- 2RA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2LB 2RA  2LA --- 2RA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2LB 2LA  2LA --- 2RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2LB 2RB  2LA --- 2RA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2LB 2LB  2LA --- 2RA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2LB 1RB  2LA --- 2RA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2LB 1LB  2LA --- 2RA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2LB 0RB  2LA --- 2RA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2LB 0LB  2LA --- 2RA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2LB 2RA  2LA --- 2RA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2LB 2LA  2LA --- 2RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LB 1RA  2LA 1RZ 2RA | None Halt 6 12
-1RB 2LB 1LA  2LA --- 2RA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2LB 0RA  2LA --- 2RA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2LB 0LA  2LA --- 2RA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2LB ---  2LA --- 2LA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2LB 1LA  2LA --- 2RA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2LB 0RA  2LA --- 2RA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2LB 0LA  2LA --- 2RA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2LB ---  2LA --- 2LA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LB 1RZ  2LA --- 1RA | None Halt 4 7
 1RB 2LB 2RB  2LA 1RZ 1RA | None Halt 6 12
 1RB 2LB 2LB  2LA 1RZ 1RA | None Halt 4 8
@@ -1344,27 +1344,27 @@
 1RB 2LB 1LB  2LA 1RZ 1RA | None Halt 4 8
 1RB 2LB 0RB  2LA 1RZ 1RA | None Halt 5 12
 1RB 2LB 0LB  2LA 1RZ 1RA | None Halt 3 8
-1RB 2LB 2RA  2LA --- 1RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2LB 2RA  2LA --- 1RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LB 2LA  2LA 1RZ 1RA | None Halt 4 9
 1RB 2LB 1RA  2LA 1RZ 1RA | None Halt 6 12
 1RB 2LB 1LA  2LA 1RZ 1RA | None Halt 4 9
-1RB 2LB 0RA  2LA --- 1RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2LB 0RA  2LA --- 1RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LB 0LA  2LA 1RZ 1RA | None Halt 3 9
-1RB 2LB ---  2LA --- 1LA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2LB ---  2LA --- 1LA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LB 1RZ  2LA --- 0RA | None Halt 3 7
-1RB 2LB 2RB  2LA --- 0RA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2LB 2LB  2LA --- 0RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2LB 2RB  2LA --- 0RA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2LB 2LB  2LA --- 0RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LB 1RB  2LA --- 0RA | None Infinite CTL_A* N/A N/A
-1RB 2LB 1LB  2LA --- 0RA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2LB 0RB  2LA --- 0RA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2LB 0LB  2LA --- 0RA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2LB 2RA  2LA --- 0RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2LB 1LB  2LA --- 0RA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2LB 0RB  2LA --- 0RA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2LB 0LB  2LA --- 0RA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2LB 2RA  2LA --- 0RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LB 2LA  2LA 1RZ 0RA | None Halt 6 18
 1RB 2LB 1RA  2LA 1RZ 0RA | None Halt 5 12
 1RB 2LB 1LA  2LA 1RZ 0RA | None Halt 4 9
-1RB 2LB 0RA  2LA --- 0RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2LB 0RA  2LA --- 0RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LB 0LA  2LA 1RZ 0RA | None Halt 4 11
-1RB 2LB ---  2LA --- 0LA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2LB ---  2LA --- 0LA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1RB ---  2LA --- 1RZ | None Halt 2 4
 1RB 1RB 1RZ  2LA --- 2RB | None Halt 3 6
 1RB 1RB 2RB  2LA --- 2RB | None Infinite Reverse_Engineer N/A N/A
@@ -1380,7 +1380,7 @@
 1RB 1RB 0RA  2LA --- 2RB | None Infinite Reverse_Engineer N/A N/A
 1RB 1RB 0LA  2LA --- 2RB | None Infinite Reverse_Engineer N/A N/A
 1RB 1RB ---  2LA 1RZ 2LB | None Halt 2 5
-1RB 1RB ---  2LA 2RB 2LB | None Infinite Chain_Move No_Quasihalt N/A
+1RB 1RB ---  2LA 2RB 2LB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1RB ---  2LA 2LB 2LB | None Infinite Reverse_Engineer N/A N/A
 1RB 1RB ---  2LA 1RB 2LB | None Infinite Reverse_Engineer N/A N/A
 1RB 1RB ---  2LA 1LB 2LB | None Infinite Reverse_Engineer N/A N/A
@@ -1400,11 +1400,11 @@
 1RB 1RB ---  2LA 1LB 1LB | None Infinite Reverse_Engineer N/A N/A
 1RB 1RB ---  2LA 0RB 1LB | None Infinite Reverse_Engineer N/A N/A
 1RB 1RB ---  2LA 0LB 1LB | None Infinite Reverse_Engineer N/A N/A
-1RB 1RB ---  2LA 2RA 1LB | None Infinite Chain_Move No_Quasihalt N/A
+1RB 1RB ---  2LA 2RA 1LB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1RB ---  2LA 2LA 1LB | None Infinite Reverse_Engineer N/A N/A
-1RB 1RB ---  2LA 1RA 1LB | None Infinite Chain_Move No_Quasihalt N/A
+1RB 1RB ---  2LA 1RA 1LB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1RB ---  2LA 1LA 1LB | None Infinite Reverse_Engineer N/A N/A
-1RB 1RB ---  2LA 0RA 1LB | None Infinite Chain_Move No_Quasihalt N/A
+1RB 1RB ---  2LA 0RA 1LB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1RB ---  2LA 0LA 1LB | None Infinite Reverse_Engineer N/A N/A
 1RB 1RB ---  2LA --- 0RB | None Infinite Reverse_Engineer N/A N/A
 1RB 1RB ---  2LA 1RZ 0LB | None Halt 1 5
@@ -1414,15 +1414,15 @@
 1RB 1RB ---  2LA 1LB 0LB | None Infinite Reverse_Engineer N/A N/A
 1RB 1RB ---  2LA 0RB 0LB | None Infinite Reverse_Engineer N/A N/A
 1RB 1RB ---  2LA 0LB 0LB | None Infinite Reverse_Engineer N/A N/A
-1RB 1RB ---  2LA 2RA 0LB | None Infinite Chain_Move No_Quasihalt N/A
+1RB 1RB ---  2LA 2RA 0LB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1RB ---  2LA 2LA 0LB | None Infinite Reverse_Engineer N/A N/A
-1RB 1RB ---  2LA 1RA 0LB | None Infinite Chain_Move No_Quasihalt N/A
+1RB 1RB ---  2LA 1RA 0LB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1RB ---  2LA 1LA 0LB | None Infinite Reverse_Engineer N/A N/A
-1RB 1RB ---  2LA 0RA 0LB | None Infinite Chain_Move No_Quasihalt N/A
+1RB 1RB ---  2LA 0RA 0LB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1RB ---  2LA 0LA 0LB | None Infinite Reverse_Engineer N/A N/A
-1RB 1RB ---  2LA --- 2RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 1RB ---  2LA --- 2RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1RB ---  2LA --- 2LA | None Infinite Reverse_Engineer N/A N/A
-1RB 1RB ---  2LA --- 1RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 1RB ---  2LA --- 1RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1RB ---  2LA 1RZ 1LA | None Halt 2 6
 1RB 1RB 1RZ  2LA 2RB 1LA | None Halt 3 8
 1RB 1RB ---  2LA 2LB 1LA | None Infinite Reverse_Engineer N/A N/A
@@ -1430,20 +1430,20 @@
 1RB 1RB ---  2LA 1LB 1LA | None Infinite Reverse_Engineer N/A N/A
 1RB 1RB ---  2LA 0RB 1LA | None Infinite Reverse_Engineer N/A N/A
 1RB 1RB ---  2LA 0LB 1LA | None Infinite Reverse_Engineer N/A N/A
-1RB 1RB ---  2LA 2RA 1LA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 1RB ---  2LA 2RA 1LA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1RB ---  2LA 2LA 1LA | None Infinite Reverse_Engineer N/A N/A
-1RB 1RB ---  2LA 1RA 1LA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 1RB ---  2LA 1RA 1LA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1RB ---  2LA 1LA 1LA | None Infinite Reverse_Engineer N/A N/A
-1RB 1RB ---  2LA 0RA 1LA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 1RB ---  2LA 0RA 1LA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1RB ---  2LA 0LA 1LA | None Infinite Reverse_Engineer N/A N/A
-1RB 1RB ---  2LA --- 0RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 1RB ---  2LA --- 0RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1RB ---  2LA --- 0LA | None Infinite Reverse_Engineer N/A N/A
 1RB 1LB ---  2LA --- 1RZ | None Halt 4 6
 1RB 1LB ---  2LA 1RZ 2RB | None Halt 4 7
 1RB 1LB 1RZ  2LA 2RB 2RB | None Halt 5 10
 1RB 1LB 1RZ  2LA 2LB 2RB | None Halt 5 12
 1RB 1LB 1RZ  2LA 1RB 2RB | None Halt 5 10
-1RB 1LB ---  2LA 1LB 2RB | None Infinite Repeat_in_Place 0 5
+1RB 1LB ---  2LA 1LB 2RB | None Infinite Lin_Recur 0 5
 1RB 1LB 1RZ  2LA 0RB 2RB | None Halt 4 10
 1RB 1LB 1RZ  2LA 0LB 2RB | None Halt 4 10
 1RB 1LB 1RZ  2LA 2RA 2RB | None Halt 4 8
@@ -1453,7 +1453,7 @@
 1RB 1LB 1RZ  2LA 0RA 2RB | None Halt 3 8
 1RB 1LB 1RZ  2LA 0LA 2RB | None Halt 3 8
 1RB 1LB ---  2LA 1RZ 2LB | None Halt 4 7
-1RB 1LB ---  2LA 2RB 2LB | None Infinite Chain_Move No_Quasihalt N/A
+1RB 1LB ---  2LA 2RB 2LB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1LB ---  2LA 2LB 2LB | None Infinite Reverse_Engineer N/A N/A
 1RB 1LB ---  2LA 1RB 2LB | None Infinite Reverse_Engineer N/A N/A
 1RB 1LB ---  2LA 1LB 2LB | None Infinite Reverse_Engineer N/A N/A
@@ -1466,7 +1466,7 @@
 1RB 1LB 1RZ  2LA 0RA 2LB | None Halt 3 8
 1RB 1LB ---  2LA 0LA 2LB | None Infinite Reverse_Engineer N/A N/A
 1RB 1LB ---  2LA 1RZ 1RB | None Halt 4 7
-1RB 1LB ---  2LA 2RB 1RB | None Infinite Chain_Move No_Quasihalt N/A
+1RB 1LB ---  2LA 2RB 1RB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1LB ---  2LA 2LB 1RB | None Infinite Reverse_Engineer N/A N/A
 1RB 1LB ---  2LA 1RB 1RB | None Infinite Reverse_Engineer N/A N/A
 1RB 1LB ---  2LA 1LB 1RB | None Infinite Reverse_Engineer N/A N/A
@@ -1485,14 +1485,14 @@
 1RB 1LB ---  2LA 1LB 1LB | None Infinite Reverse_Engineer N/A N/A
 1RB 1LB ---  2LA 0RB 1LB | None Infinite Reverse_Engineer N/A N/A
 1RB 1LB ---  2LA 0LB 1LB | None Infinite Reverse_Engineer N/A N/A
-1RB 1LB ---  2LA 2RA 1LB | None Infinite Chain_Move No_Quasihalt N/A
+1RB 1LB ---  2LA 2RA 1LB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1LB ---  2LA 2LA 1LB | None Infinite Reverse_Engineer N/A N/A
-1RB 1LB ---  2LA 1RA 1LB | None Infinite Repeat_in_Place No_Quasihalt N/A
+1RB 1LB ---  2LA 1RA 1LB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1LB ---  2LA 1LA 1LB | None Infinite Reverse_Engineer N/A N/A
-1RB 1LB ---  2LA 0RA 1LB | None Infinite Chain_Move No_Quasihalt N/A
+1RB 1LB ---  2LA 0RA 1LB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1LB ---  2LA 0LA 1LB | None Infinite Reverse_Engineer N/A N/A
 1RB 1LB ---  2LA 1RZ 0RB | None Halt 3 7
-1RB 1LB ---  2LA 2RB 0RB | None Infinite Chain_Move No_Quasihalt N/A
+1RB 1LB ---  2LA 2RB 0RB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1LB ---  2LA 2LB 0RB | None Infinite Reverse_Engineer N/A N/A
 1RB 1LB ---  2LA 1RB 0RB | None Infinite Reverse_Engineer N/A N/A
 1RB 1LB ---  2LA 1LB 0RB | None Infinite Reverse_Engineer N/A N/A
@@ -1517,28 +1517,28 @@
 1RB 1LB ---  2LA 1LA 0LB | None Infinite Reverse_Engineer N/A N/A
 1RB 1LB 1RZ  2LA 0RA 0LB | None Halt 2 10
 1RB 1LB ---  2LA 0LA 0LB | None Infinite Reverse_Engineer N/A N/A
-1RB 1LB ---  2LA --- 2RA | None Infinite Repeat_in_Place No_Quasihalt N/A
-1RB 1LB ---  2LA --- 2LA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 1LB ---  2LA --- 2RA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 1LB ---  2LA --- 2LA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1LB ---  2LA 1RZ 1RA | None Halt 4 8
-1RB 1LB ---  2LA 2RB 1RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 1LB ---  2LA 2RB 1RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1LB 1RZ  2LA 2LB 1RA | None Halt 6 13
-1RB 1LB ---  2LA 1RB 1RA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 1LB ---  2LA 1LB 1RA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 1LB ---  2LA 0RB 1RA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 1LB ---  2LA 0LB 1RA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 1LB ---  2LA 2RA 1RA | None Infinite Repeat_in_Place No_Quasihalt N/A
-1RB 1LB ---  2LA 2LA 1RA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 1LB ---  2LA 1RA 1RA | None Infinite Repeat_in_Place No_Quasihalt N/A
-1RB 1LB ---  2LA 1LA 1RA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 1LB ---  2LA 0RA 1RA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 1LB ---  2LA 0LA 1RA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 1LB ---  2LA --- 1LA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 1LB ---  2LA --- 0RA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 1LB ---  2LA --- 0LA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 1LB ---  2LA 1RB 1RA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 1LB ---  2LA 1LB 1RA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 1LB ---  2LA 0RB 1RA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 1LB ---  2LA 0LB 1RA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 1LB ---  2LA 2RA 1RA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 1LB ---  2LA 2LA 1RA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 1LB ---  2LA 1RA 1RA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 1LB ---  2LA 1LA 1RA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 1LB ---  2LA 0RA 1RA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 1LB ---  2LA 0LA 1RA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 1LB ---  2LA --- 1LA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 1LB ---  2LA --- 0RA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 1LB ---  2LA --- 0LA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 0RB ---  2LA --- 1RZ | None Halt 1 4
 1RB 0RB 1RZ  2LA --- 2RB | None Halt 2 6
 1RB 0RB 2RB  2LA --- 2RB | None Infinite Reverse_Engineer N/A N/A
-1RB 0RB 2LB  2LA --- 2RB | None Infinite Chain_Move No_Quasihalt N/A
+1RB 0RB 2LB  2LA --- 2RB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 0RB 1RB  2LA --- 2RB | None Infinite Reverse_Engineer N/A N/A
 1RB 0RB 1LB  2LA 1RZ 2RB | None Halt 4 10
 1RB 0RB 0RB  2LA --- 2RB | None Infinite Reverse_Engineer N/A N/A
@@ -1550,7 +1550,7 @@
 1RB 0RB 0RA  2LA --- 2RB | None Infinite Reverse_Engineer N/A N/A
 1RB 0RB 0LA  2LA --- 2RB | None Infinite Reverse_Engineer N/A N/A
 1RB 0RB ---  2LA 1RZ 2LB | None Halt 3 8
-1RB 0RB ---  2LA 2RB 2LB | None Infinite Chain_Move No_Quasihalt N/A
+1RB 0RB ---  2LA 2RB 2LB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 0RB ---  2LA 2LB 2LB | None Infinite Reverse_Engineer N/A N/A
 1RB 0RB ---  2LA 1RB 2LB | None Infinite Reverse_Engineer N/A N/A
 1RB 0RB ---  2LA 1LB 2LB | None Infinite Reverse_Engineer N/A N/A
@@ -1572,9 +1572,9 @@
 1RB 0RB ---  2LA 0LB 1LB | None Infinite Reverse_Engineer N/A N/A
 1RB 0RB 1RZ  2LA 2RA 1LB | None Halt 4 16
 1RB 0RB ---  2LA 2LA 1LB | None Infinite Reverse_Engineer N/A N/A
-1RB 0RB ---  2LA 1RA 1LB | None Infinite Chain_Move No_Quasihalt N/A
+1RB 0RB ---  2LA 1RA 1LB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 0RB ---  2LA 1LA 1LB | None Infinite Reverse_Engineer N/A N/A
-1RB 0RB ---  2LA 0RA 1LB | None Infinite Chain_Move No_Quasihalt N/A
+1RB 0RB ---  2LA 0RA 1LB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 0RB ---  2LA 0LA 1LB | None Infinite Reverse_Engineer N/A N/A
 1RB 0RB ---  2LA --- 0RB | None Infinite Reverse_Engineer N/A N/A
 1RB 0RB ---  2LA 1RZ 0LB | None Halt 1 8
@@ -1586,13 +1586,13 @@
 1RB 0RB ---  2LA 0LB 0LB | None Infinite Reverse_Engineer N/A N/A
 1RB 0RB 1RZ  2LA 2RA 0LB | None Halt 2 14
 1RB 0RB ---  2LA 2LA 0LB | None Infinite Reverse_Engineer N/A N/A
-1RB 0RB ---  2LA 1RA 0LB | None Infinite Chain_Move No_Quasihalt N/A
+1RB 0RB ---  2LA 1RA 0LB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 0RB ---  2LA 1LA 0LB | None Infinite Reverse_Engineer N/A N/A
-1RB 0RB ---  2LA 0RA 0LB | None Infinite Repeat_in_Place No_Quasihalt N/A
+1RB 0RB ---  2LA 0RA 0LB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 0RB ---  2LA 0LA 0LB | None Infinite Reverse_Engineer N/A N/A
-1RB 0RB ---  2LA --- 2RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 0RB ---  2LA --- 2RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 0RB ---  2LA --- 2LA | None Infinite Reverse_Engineer N/A N/A
-1RB 0RB ---  2LA --- 1RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 0RB ---  2LA --- 1RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 0RB ---  2LA 1RZ 1LA | None Halt 2 6
 1RB 0RB 1RZ  2LA 2RB 1LA | None Halt 3 8
 1RB 0RB ---  2LA 2LB 1LA | None Infinite Reverse_Engineer N/A N/A
@@ -1600,30 +1600,30 @@
 1RB 0RB ---  2LA 1LB 1LA | None Infinite Reverse_Engineer N/A N/A
 1RB 0RB ---  2LA 0RB 1LA | None Infinite Reverse_Engineer N/A N/A
 1RB 0RB ---  2LA 0LB 1LA | None Infinite Reverse_Engineer N/A N/A
-1RB 0RB ---  2LA 2RA 1LA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 0RB ---  2LA 2RA 1LA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 0RB ---  2LA 2LA 1LA | None Infinite Reverse_Engineer N/A N/A
-1RB 0RB ---  2LA 1RA 1LA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 0RB ---  2LA 1RA 1LA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 0RB ---  2LA 1LA 1LA | None Infinite Reverse_Engineer N/A N/A
-1RB 0RB ---  2LA 0RA 1LA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 0RB ---  2LA 0RA 1LA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 0RB ---  2LA 0LA 1LA | None Infinite Reverse_Engineer N/A N/A
-1RB 0RB ---  2LA --- 0RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 0RB ---  2LA --- 0RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 0RB ---  2LA --- 0LA | None Infinite Reverse_Engineer N/A N/A
 1RB 0LB ---  2LA --- 1RZ | None Halt 3 6
 1RB 0LB 1RZ  2LA --- 2RB | None Halt 4 8
-1RB 0LB 2RB  2LA --- 2RB | None Infinite Chain_Move No_Quasihalt N/A
+1RB 0LB 2RB  2LA --- 2RB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 0LB 2LB  2LA 1RZ 2RB | None Halt 4 9
-1RB 0LB 1RB  2LA --- 2RB | None Infinite Chain_Move No_Quasihalt N/A
+1RB 0LB 1RB  2LA --- 2RB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 0LB 1LB  2LA 1RZ 2RB | None Halt 4 9
-1RB 0LB 0RB  2LA --- 2RB | None Infinite Chain_Move No_Quasihalt N/A
+1RB 0LB 0RB  2LA --- 2RB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 0LB 0LB  2LA 1RZ 2RB | None Halt 3 9
-1RB 0LB 2RA  2LA --- 2RB | None Infinite Chain_Move No_Quasihalt N/A
-1RB 0LB 2LA  2LA --- 2RB | None Infinite Chain_Move No_Quasihalt N/A
+1RB 0LB 2RA  2LA --- 2RB | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 0LB 2LA  2LA --- 2RB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 0LB 1RA  2LA 1RZ 2RB | None Halt 5 14
-1RB 0LB 1LA  2LA --- 2RB | None Infinite Chain_Move No_Quasihalt N/A
-1RB 0LB 0RA  2LA --- 2RB | None Infinite Chain_Move No_Quasihalt N/A
-1RB 0LB 0LA  2LA --- 2RB | None Infinite Chain_Move No_Quasihalt N/A
+1RB 0LB 1LA  2LA --- 2RB | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 0LB 0RA  2LA --- 2RB | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 0LB 0LA  2LA --- 2RB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 0LB ---  2LA 1RZ 2LB | None Halt 3 7
-1RB 0LB ---  2LA 2RB 2LB | None Infinite Chain_Move No_Quasihalt N/A
+1RB 0LB ---  2LA 2RB 2LB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 0LB ---  2LA 2LB 2LB | None Infinite Reverse_Engineer N/A N/A
 1RB 0LB ---  2LA 1RB 2LB | None Infinite Reverse_Engineer N/A N/A
 1RB 0LB ---  2LA 1LB 2LB | None Infinite Reverse_Engineer N/A N/A
@@ -1642,11 +1642,11 @@
 1RB 0LB ---  2LA 1LB 1RB | None Infinite Reverse_Engineer N/A N/A
 1RB 0LB ---  2LA 0RB 1RB | None Infinite Reverse_Engineer N/A N/A
 1RB 0LB ---  2LA 0LB 1RB | None Infinite Reverse_Engineer N/A N/A
-1RB 0LB ---  2LA 2RA 1RB | None Infinite Chain_Move No_Quasihalt N/A
+1RB 0LB ---  2LA 2RA 1RB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 0LB ---  2LA 2LA 1RB | None Infinite Reverse_Engineer N/A N/A
-1RB 0LB ---  2LA 1RA 1RB | None Infinite Chain_Move No_Quasihalt N/A
+1RB 0LB ---  2LA 1RA 1RB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 0LB ---  2LA 1LA 1RB | None Infinite Reverse_Engineer N/A N/A
-1RB 0LB ---  2LA 0RA 1RB | None Infinite Chain_Move No_Quasihalt N/A
+1RB 0LB ---  2LA 0RA 1RB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 0LB ---  2LA 0LA 1RB | None Infinite Reverse_Engineer N/A N/A
 1RB 0LB ---  2LA 1RZ 1LB | None Halt 3 7
 1RB 0LB 1RZ  2LA 2RB 1LB | None Halt 4 10
@@ -1655,13 +1655,13 @@
 1RB 0LB ---  2LA 1LB 1LB | None Infinite Reverse_Engineer N/A N/A
 1RB 0LB ---  2LA 0RB 1LB | None Infinite Reverse_Engineer N/A N/A
 1RB 0LB ---  2LA 0LB 1LB | None Infinite Reverse_Engineer N/A N/A
-1RB 0LB ---  2LA 2RA 1LB | None Infinite Chain_Move No_Quasihalt N/A
+1RB 0LB ---  2LA 2RA 1LB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 0LB ---  2LA 2LA 1LB | None Infinite Reverse_Engineer N/A N/A
-1RB 0LB ---  2LA 1RA 1LB | None Infinite Chain_Move No_Quasihalt N/A
+1RB 0LB ---  2LA 1RA 1LB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 0LB ---  2LA 1LA 1LB | None Infinite Reverse_Engineer N/A N/A
-1RB 0LB ---  2LA 0RA 1LB | None Infinite Chain_Move No_Quasihalt N/A
+1RB 0LB ---  2LA 0RA 1LB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 0LB ---  2LA 0LA 1LB | None Infinite Reverse_Engineer N/A N/A
-1RB 0LB ---  2LA --- 0RB | None Infinite Chain_Move No_Quasihalt N/A
+1RB 0LB ---  2LA --- 0RB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 0LB ---  2LA 1RZ 0LB | None Halt 2 7
 1RB 0LB 1RZ  2LA 2RB 0LB | None Halt 3 9
 1RB 0LB ---  2LA 2LB 0LB | None Infinite Reverse_Engineer N/A N/A
@@ -1669,30 +1669,30 @@
 1RB 0LB ---  2LA 1LB 0LB | None Infinite Reverse_Engineer N/A N/A
 1RB 0LB ---  2LA 0RB 0LB | None Infinite Reverse_Engineer N/A N/A
 1RB 0LB ---  2LA 0LB 0LB | None Infinite Reverse_Engineer N/A N/A
-1RB 0LB ---  2LA 2RA 0LB | None Infinite Chain_Move No_Quasihalt N/A
+1RB 0LB ---  2LA 2RA 0LB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 0LB ---  2LA 2LA 0LB | None Infinite Reverse_Engineer N/A N/A
-1RB 0LB ---  2LA 1RA 0LB | None Infinite Chain_Move No_Quasihalt N/A
+1RB 0LB ---  2LA 1RA 0LB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 0LB ---  2LA 1LA 0LB | None Infinite Reverse_Engineer N/A N/A
-1RB 0LB ---  2LA 0RA 0LB | None Infinite Chain_Move No_Quasihalt N/A
+1RB 0LB ---  2LA 0RA 0LB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 0LB ---  2LA 0LA 0LB | None Infinite Reverse_Engineer N/A N/A
-1RB 0LB ---  2LA --- 2RA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 0LB ---  2LA --- 2LA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 0LB ---  2LA --- 2RA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 0LB ---  2LA --- 2LA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 0LB ---  2LA 1RZ 1RA | None Halt 5 12
 1RB 0LB 1RZ  2LA 2RB 1RA | None Halt 6 14
 1RB 0LB 1RZ  2LA 2LB 1RA | None Halt 7 19
 1RB 0LB 1RZ  2LA 1RB 1RA | None Halt 8 29
-1RB 0LB ---  2LA 1LB 1RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 0LB ---  2LA 1LB 1RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 0LB 1RZ  2LA 0RB 1RA | None Halt 6 16
-1RB 0LB ---  2LA 0LB 1RA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 0LB ---  2LA 2RA 1RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 0LB ---  2LA 0LB 1RA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 0LB ---  2LA 2RA 1RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 0LB ---  2LA 2LA 1RA | None Infinite CTL_A* N/A N/A
-1RB 0LB ---  2LA 1RA 1RA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 0LB ---  2LA 1LA 1RA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 0LB ---  2LA 0RA 1RA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 0LB ---  2LA 0LA 1RA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 0LB ---  2LA --- 1LA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 0LB ---  2LA 1RA 1RA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 0LB ---  2LA 1LA 1RA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 0LB ---  2LA 0RA 1RA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 0LB ---  2LA 0LA 1RA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 0LB ---  2LA --- 1LA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 0LB ---  2LA --- 0RA | None Infinite CTL_A* N/A N/A
-1RB 0LB ---  2LA --- 0LA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 0LB ---  2LA --- 0LA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2RA 1RZ  2LA --- --- | None Halt 2 4
 1RB 2RA 2RB  2LA --- 1RZ | None Halt 3 7
 1RB 2RA 2RB  2LA --- 2RB | None Infinite Reverse_Engineer N/A N/A
@@ -1708,19 +1708,19 @@
 1RB 2RA 2RB  2LA --- 0RA | None Infinite Reverse_Engineer N/A N/A
 1RB 2RA 2RB  2LA --- 0LA | None Infinite Reverse_Engineer N/A N/A
 1RB 2RA 2LB  2LA --- 1RZ | None Halt 2 5
-1RB 2RA 2LB  2LA --- 2RB | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2RA 2LB  2LA --- 2RB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2RA 2LB  2LA 1RZ 2LB | None Halt 4 9
-1RB 2RA 2LB  2LA --- 1RB | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2RA 2LB  2LA --- 1RB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2RA 2LB  2LA 1RZ 1LB | None Halt 4 9
-1RB 2RA 2LB  2LA --- 0RB | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2RA 2LB  2LA --- 0RB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2RA 2LB  2LA 1RZ 0LB | None Halt 2 9
-1RB 2RA 2LB  2LA --- 2RA | None Infinite Repeat_in_Place No_Quasihalt N/A
-1RB 2RA 2LB  2LA --- 2LA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2RA 2LB  2LA --- 2RA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2RA 2LB  2LA --- 2LA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2RA 2LB  2LA 1RZ 1RA | None Halt 2 7
 1RB 2RA 2LB  2LA 1RZ 1LA | None Halt 3 7
-1RB 2RA 2LB  2LA --- 0RA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2RA 2LB  2LA --- 0LA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2RA 1RB  2LA --- --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2RA 2LB  2LA --- 0RA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2RA 2LB  2LA --- 0LA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2RA 1RB  2LA --- --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2RA 1LB  2LA --- 1RZ | None Halt 2 5
 1RB 2RA 1LB  2LA 1RZ 2RB | None Halt 2 6
 1RB 2RA 1LB  2LA 1RZ 2LB | None Halt 4 9
@@ -1728,12 +1728,12 @@
 1RB 2RA 1LB  2LA 1RZ 1LB | None Halt 4 9
 1RB 2RA 1LB  2LA 1RZ 0RB | None Halt 1 6
 1RB 2RA 1LB  2LA 1RZ 0LB | None Halt 2 9
-1RB 2RA 1LB  2LA --- 2RA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2RA 1LB  2LA --- 2LA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2RA 1LB  2LA --- 1RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2RA 1LB  2LA --- 2RA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2RA 1LB  2LA --- 2LA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2RA 1LB  2LA --- 1RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2RA 1LB  2LA 1RZ 1LA | None Halt 3 7
-1RB 2RA 1LB  2LA --- 0RA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2RA 1LB  2LA --- 0LA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2RA 1LB  2LA --- 0RA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2RA 1LB  2LA --- 0LA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2RA 0RB  2LA --- 1RZ | None Halt 3 7
 1RB 2RA 0RB  2LA --- 2RB | None Infinite Reverse_Engineer N/A N/A
 1RB 2RA 0RB  2LA 1RZ 2LB | None Halt 3 8
@@ -1744,23 +1744,23 @@
 1RB 2RA 0RB  2LA --- 2RA | None Infinite Reverse_Engineer N/A N/A
 1RB 2RA 0RB  2LA --- 2LA | None Infinite Reverse_Engineer N/A N/A
 1RB 2RA 0RB  2LA --- 1RA | None Infinite Reverse_Engineer N/A N/A
-1RB 2RA 0RB  2LA --- 1LA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2RA 0RB  2LA --- 1LA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2RA 0RB  2LA --- 0RA | None Infinite Reverse_Engineer N/A N/A
 1RB 2RA 0RB  2LA --- 0LA | None Infinite Reverse_Engineer N/A N/A
 1RB 2RA 0LB  2LA --- 1RZ | None Halt 1 5
 1RB 2RA 0LB  2LA 1RZ 2RB | None Halt 3 13
 1RB 2RA 0LB  2LA 1RZ 2LB | None Halt 3 9
-1RB 2RA 0LB  2LA --- 1RB | None Infinite Repeat_in_Place No_Quasihalt N/A
+1RB 2RA 0LB  2LA --- 1RB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2RA 0LB  2LA 1RZ 1LB | None Halt 3 9
-1RB 2RA 0LB  2LA --- 0RB | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2RA 0LB  2LA --- 0RB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2RA 0LB  2LA 1RZ 0LB | None Halt 1 9
-1RB 2RA 0LB  2LA --- 2RA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2RA 0LB  2LA --- 2LA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2RA 0LB  2LA --- 1RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2RA 0LB  2LA --- 2RA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2RA 0LB  2LA --- 2LA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2RA 0LB  2LA --- 1RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2RA 0LB  2LA 1RZ 1LA | None Halt 2 7
-1RB 2RA 0LB  2LA --- 0RA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2RA 0LB  2LA --- 0LA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2RA 2RA  2LA --- --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2RA 0LB  2LA --- 0RA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2RA 0LB  2LA --- 0LA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2RA 2RA  2LA --- --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2RA 2LA  2LA --- 1RZ | None Halt 3 7
 1RB 2RA 2LA  2LA --- 2RB | None Infinite Reverse_Engineer N/A N/A
 1RB 2RA 2LA  2LA 1RZ 2LB | None Halt 3 8
@@ -1771,10 +1771,10 @@
 1RB 2RA 2LA  2LA --- 2RA | None Infinite Reverse_Engineer N/A N/A
 1RB 2RA 2LA  2LA --- 2LA | None Infinite Reverse_Engineer N/A N/A
 1RB 2RA 2LA  2LA --- 1RA | None Infinite Reverse_Engineer N/A N/A
-1RB 2RA 2LA  2LA --- 1LA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2RA 2LA  2LA --- 1LA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2RA 2LA  2LA --- 0RA | None Infinite Reverse_Engineer N/A N/A
 1RB 2RA 2LA  2LA --- 0LA | None Infinite Reverse_Engineer N/A N/A
-1RB 2RA 1RA  2LA --- --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2RA 1RA  2LA --- --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2RA 1LA  2LA 1RZ --- | None Halt 3 7
 1RB 2RA 1LA  2LA 2RB --- | None Infinite Proof_System No_Quasihalt N/A
 1RB 2RA 1LA  2LA 2LB 1RZ | None Halt 5 11
@@ -1783,17 +1783,17 @@
 1RB 2RA 1LA  2LA 0RB 1RZ | None Halt 3 11
 1RB 2RA 1LA  2LA 0LB 1RZ | None Halt 3 11
 1RB 2RA 1LA  2LA 2RA --- | None Infinite CTL_A* N/A N/A
-1RB 2RA 1LA  2LA 2LA --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2RA 1LA  2LA 2LA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2RA 1LA  2LA 1RA --- | None Infinite CTL_A* N/A N/A
 1RB 2RA 1LA  2LA 1LA --- | None Infinite CTL_A* N/A N/A
 1RB 2RA 1LA  2LA 0RA --- | None Infinite CTL_A* N/A N/A
 1RB 2RA 1LA  2LA 0LA --- | None Infinite CTL_A* N/A N/A
-1RB 2RA 0RA  2LA --- --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2RA 0LA  2LA --- --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2RA 0RA  2LA --- --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2RA 0LA  2LA --- --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LA ---  2LA --- 1RZ | None Halt 3 5
 1RB 2LA 1RZ  2LA --- 2RB | None Halt 4 8
 1RB 2LA 2RB  2LA --- 2RB | None Infinite Reverse_Engineer N/A N/A
-1RB 2LA 2LB  2LA --- 2RB | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2LA 2LB  2LA --- 2RB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LA 1RB  2LA --- 2RB | None Infinite Reverse_Engineer N/A N/A
 1RB 2LA 1LB  2LA 1RZ 2RB | None Halt 4 10
 1RB 2LA 0RB  2LA --- 2RB | None Infinite Reverse_Engineer N/A N/A
@@ -1805,7 +1805,7 @@
 1RB 2LA 0RA  2LA --- 2RB | None Infinite Reverse_Engineer N/A N/A
 1RB 2LA 0LA  2LA --- 2RB | None Infinite Reverse_Engineer N/A N/A
 1RB 2LA ---  2LA 1RZ 2LB | None Halt 3 6
-1RB 2LA ---  2LA 2RB 2LB | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2LA ---  2LA 2RB 2LB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LA ---  2LA 2LB 2LB | None Infinite Reverse_Engineer N/A N/A
 1RB 2LA ---  2LA 1RB 2LB | None Infinite Reverse_Engineer N/A N/A
 1RB 2LA ---  2LA 1LB 2LB | None Infinite Reverse_Engineer N/A N/A
@@ -1827,9 +1827,9 @@
 1RB 2LA ---  2LA 0LB 1LB | None Infinite Reverse_Engineer N/A N/A
 1RB 2LA 1RZ  2LA 2RA 1LB | None Halt 3 8
 1RB 2LA ---  2LA 2LA 1LB | None Infinite Reverse_Engineer N/A N/A
-1RB 2LA ---  2LA 1RA 1LB | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2LA ---  2LA 1RA 1LB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LA ---  2LA 1LA 1LB | None Infinite Reverse_Engineer N/A N/A
-1RB 2LA ---  2LA 0RA 1LB | None Infinite Repeat_in_Place No_Quasihalt N/A
+1RB 2LA ---  2LA 0RA 1LB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LA ---  2LA 0LA 1LB | None Infinite Reverse_Engineer N/A N/A
 1RB 2LA ---  2LA --- 0RB | None Infinite Reverse_Engineer N/A N/A
 1RB 2LA ---  2LA 1RZ 0LB | None Halt 2 6
@@ -1843,11 +1843,11 @@
 1RB 2LA ---  2LA 2LA 0LB | None Infinite Reverse_Engineer N/A N/A
 1RB 2LA ---  2LA 1RA 0LB | None Infinite CTL_A* N/A N/A
 1RB 2LA ---  2LA 1LA 0LB | None Infinite Reverse_Engineer N/A N/A
-1RB 2LA ---  2LA 0RA 0LB | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2LA ---  2LA 0RA 0LB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LA ---  2LA 0LA 0LB | None Infinite Reverse_Engineer N/A N/A
 1RB 2LA 1RZ  2LA --- 2RA | None Halt 3 6
 1RB 2LA 2RB  2LA --- 2RA | None Infinite Reverse_Engineer N/A N/A
-1RB 2LA 2LB  2LA --- 2RA | None Infinite Repeat_in_Place No_Quasihalt N/A
+1RB 2LA 2LB  2LA --- 2RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LA 1RB  2LA --- 2RA | None Infinite Reverse_Engineer N/A N/A
 1RB 2LA 1LB  2LA 1RZ 2RA | None Halt 3 10
 1RB 2LA 0RB  2LA --- 2RA | None Infinite Reverse_Engineer N/A N/A
@@ -1855,7 +1855,7 @@
 1RB 2LA 2RA  2LA --- 2RA | None Infinite Reverse_Engineer N/A N/A
 1RB 2LA 2LA  2LA --- 2RA | None Infinite Reverse_Engineer N/A N/A
 1RB 2LA 1RA  2LA --- 2RA | None Infinite Reverse_Engineer N/A N/A
-1RB 2LA 1LA  2LA --- 2RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2LA 1LA  2LA --- 2RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LA 0RA  2LA --- 2RA | None Infinite Reverse_Engineer N/A N/A
 1RB 2LA 0LA  2LA --- 2RA | None Infinite Reverse_Engineer N/A N/A
 1RB 2LA ---  2LA --- 2LA | None Infinite Reverse_Engineer N/A N/A
@@ -1869,17 +1869,17 @@
 1RB 2LA 2RA  2LA --- 1RA | None Infinite Reverse_Engineer N/A N/A
 1RB 2LA 2LA  2LA --- 1RA | None Infinite Reverse_Engineer N/A N/A
 1RB 2LA 1RA  2LA --- 1RA | None Infinite Reverse_Engineer N/A N/A
-1RB 2LA 1LA  2LA --- 1RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2LA 1LA  2LA --- 1RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LA 0RA  2LA --- 1RA | None Infinite Reverse_Engineer N/A N/A
 1RB 2LA 0LA  2LA --- 1RA | None Infinite Reverse_Engineer N/A N/A
-1RB 2LA ---  2LA --- 1LA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2LA ---  2LA --- 1LA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LA 1RZ  2LA --- 0RA | None Halt 2 6
 1RB 2LA 2RB  2LA --- 0RA | None Infinite Reverse_Engineer N/A N/A
-1RB 2LA 2LB  2LA --- 0RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2LA 2LB  2LA --- 0RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LA 1RB  2LA --- 0RA | None Infinite Reverse_Engineer N/A N/A
-1RB 2LA 1LB  2LA --- 0RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2LA 1LB  2LA --- 0RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LA 0RB  2LA --- 0RA | None Infinite Reverse_Engineer N/A N/A
-1RB 2LA 0LB  2LA --- 0RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2LA 0LB  2LA --- 0RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LA 2RA  2LA --- 0RA | None Infinite Reverse_Engineer N/A N/A
 1RB 2LA 2LA  2LA --- 0RA | None Infinite Reverse_Engineer N/A N/A
 1RB 2LA 1RA  2LA --- 0RA | None Infinite Reverse_Engineer N/A N/A
@@ -1910,24 +1910,24 @@
 1RB 1RA 2LB  2LA 0LB 1RZ | None Halt 3 8
 1RB 1RA 2LB  2LA 2RA 1RZ | None Halt 2 7
 1RB 1RA 2LB  2LA 2LA 1RZ | None Halt 3 7
-1RB 1RA 2LB  2LA 1RA --- | None Infinite Repeat_in_Place No_Quasihalt N/A
-1RB 1RA 2LB  2LA 1LA --- | None Infinite Repeat_in_Place No_Quasihalt N/A
+1RB 1RA 2LB  2LA 1RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 1RA 2LB  2LA 1LA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1RA 2LB  2LA 0RA 1RZ | None Halt 3 9
-1RB 1RA 2LB  2LA 0LA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 1RA 1RB  2LA --- --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 1RA 2LB  2LA 0LA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 1RA 1RB  2LA --- --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1RA 1LB  2LA 1RZ --- | None Halt 2 5
 1RB 1RA 1LB  2LA 2RB 1RZ | None Halt 3 9
 1RB 1RA 1LB  2LA 2LB 1RZ | None Halt 4 8
-1RB 1RA 1LB  2LA 1RB --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 1RA 1LB  2LA 1RB --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1RA 1LB  2LA 1LB 1RZ | None Halt 4 8
 1RB 1RA 1LB  2LA 0RB 1RZ | None Halt 2 9
 1RB 1RA 1LB  2LA 0LB 1RZ | None Halt 3 8
-1RB 1RA 1LB  2LA 2RA --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 1RA 1LB  2LA 2RA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1RA 1LB  2LA 2LA 1RZ | None Halt 3 7
-1RB 1RA 1LB  2LA 1RA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 1RA 1LB  2LA 1LA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 1RA 1LB  2LA 0RA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 1RA 1LB  2LA 0LA --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 1RA 1LB  2LA 1RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 1RA 1LB  2LA 1LA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 1RA 1LB  2LA 0RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 1RA 1LB  2LA 0LA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1RA 0RB  2LA --- 1RZ | None Halt 3 7
 1RB 1RA 0RB  2LA --- 2RB | None Infinite Reverse_Engineer N/A N/A
 1RB 1RA 0RB  2LA 1RZ 2LB | None Halt 3 8
@@ -1938,41 +1938,41 @@
 1RB 1RA 0RB  2LA --- 2RA | None Infinite Reverse_Engineer N/A N/A
 1RB 1RA 0RB  2LA --- 2LA | None Infinite Reverse_Engineer N/A N/A
 1RB 1RA 0RB  2LA --- 1RA | None Infinite Reverse_Engineer N/A N/A
-1RB 1RA 0RB  2LA --- 1LA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 1RA 0RB  2LA --- 1LA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1RA 0RB  2LA --- 0RA | None Infinite Reverse_Engineer N/A N/A
 1RB 1RA 0RB  2LA --- 0LA | None Infinite Reverse_Engineer N/A N/A
 1RB 1RA 0LB  2LA 1RZ --- | None Halt 1 5
 1RB 1RA 0LB  2LA 2RB 1RZ | None Halt 3 10
 1RB 1RA 0LB  2LA 2LB 1RZ | None Halt 3 8
-1RB 1RA 0LB  2LA 1RB --- | None Infinite Repeat_in_Place No_Quasihalt N/A
+1RB 1RA 0LB  2LA 1RB --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1RA 0LB  2LA 1LB 1RZ | None Halt 3 8
 1RB 1RA 0LB  2LA 0RB 1RZ | None Halt 2 8
 1RB 1RA 0LB  2LA 0LB 1RZ | None Halt 2 8
-1RB 1RA 0LB  2LA 2RA --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 1RA 0LB  2LA 2RA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1RA 0LB  2LA 2LA 1RZ | None Halt 2 7
-1RB 1RA 0LB  2LA 1RA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 1RA 0LB  2LA 1LA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 1RA 0LB  2LA 0RA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 1RA 0LB  2LA 0LA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 1RA 2RA  2LA --- --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 1RA 2LA  2LA --- --- | None Infinite Repeat_in_Place No_Quasihalt N/A
-1RB 1RA 1RA  2LA --- --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 1RA 1LA  2LA --- --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 1RA 0RA  2LA --- --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 1RA 0LA  2LA --- --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 1RA 0LB  2LA 1RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 1RA 0LB  2LA 1LA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 1RA 0LB  2LA 0RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 1RA 0LB  2LA 0LA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 1RA 2RA  2LA --- --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 1RA 2LA  2LA --- --- | None Infinite Lin_Recur 1 2
+1RB 1RA 1RA  2LA --- --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 1RA 1LA  2LA --- --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 1RA 0RA  2LA --- --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 1RA 0LA  2LA --- --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1LA ---  2LA 1RZ --- | None Halt 3 5
 1RB 1LA ---  2LA 2RB 1RZ | None Halt 3 6
 1RB 1LA 1RZ  2LA 2RB 2RB | None Halt 4 8
-1RB 1LA ---  2LA 2RB 2LB | None Infinite Chain_Move No_Quasihalt N/A
+1RB 1LA ---  2LA 2RB 2LB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1LA 1RZ  2LA 2RB 1RB | None Halt 4 9
 1RB 1LA 1RZ  2LA 2RB 1LB | None Halt 4 12
-1RB 1LA ---  2LA 2RB 0RB | None Infinite Chain_Move No_Quasihalt N/A
+1RB 1LA ---  2LA 2RB 0RB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1LA 1RZ  2LA 2RB 0LB | None Halt 2 10
 1RB 1LA 1RZ  2LA 2RB 2RA | None Halt 5 10
 1RB 1LA 1RZ  2LA 2RB 2LA | None Halt 3 7
 1RB 1LA 1RZ  2LA 2RB 1RA | None Halt 5 11
 1RB 1LA 1RZ  2LA 2RB 1LA | None Halt 3 7
-1RB 1LA ---  2LA 2RB 0RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 1LA ---  2LA 2RB 0RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1LA 1RZ  2LA 2RB 0LA | None Halt 2 7
 1RB 1LA ---  2LA 2LB 1RZ | None Halt 5 9
 1RB 1LA 1RZ  2LA 2LB 2RB | None Halt 6 14
@@ -1998,10 +1998,10 @@
 1RB 1LA ---  2LA 1RB 2LA | None Infinite Reverse_Engineer N/A N/A
 1RB 1LA ---  2LA 1RB 1RA | None Infinite Proof_System No_Quasihalt N/A
 1RB 1LA ---  2LA 1RB 1LA | None Infinite Reverse_Engineer N/A N/A
-1RB 1LA ---  2LA 1RB 0RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 1LA ---  2LA 1RB 0RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1LA ---  2LA 1RB 0LA | None Infinite Reverse_Engineer N/A N/A
 1RB 1LA ---  2LA 1LB 1RZ | None Halt 5 9
-1RB 1LA ---  2LA 1LB 2RB | None Infinite Repeat_in_Place 0 8
+1RB 1LA ---  2LA 1LB 2RB | None Infinite Lin_Recur 0 8
 1RB 1LA ---  2LA 1LB 2LB | None Infinite Reverse_Engineer N/A N/A
 1RB 1LA ---  2LA 1LB 1RB | None Infinite Reverse_Engineer N/A N/A
 1RB 1LA ---  2LA 1LB 1LB | None Infinite Reverse_Engineer N/A N/A
@@ -2009,9 +2009,9 @@
 1RB 1LA ---  2LA 1LB 0LB | None Infinite Reverse_Engineer N/A N/A
 1RB 1LA 1RZ  2LA 1LB 2RA | None Halt 5 11
 1RB 1LA ---  2LA 1LB 2LA | None Infinite Reverse_Engineer N/A N/A
-1RB 1LA ---  2LA 1LB 1RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 1LA ---  2LA 1LB 1RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1LA ---  2LA 1LB 1LA | None Infinite Reverse_Engineer N/A N/A
-1RB 1LA ---  2LA 1LB 0RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 1LA ---  2LA 1LB 0RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1LA ---  2LA 1LB 0LA | None Infinite Reverse_Engineer N/A N/A
 1RB 1LA ---  2LA 0RB 1RZ | None Halt 2 6
 1RB 1LA 1RZ  2LA 0RB 2RB | None Halt 3 8
@@ -2022,9 +2022,9 @@
 1RB 1LA ---  2LA 0RB 0LB | None Infinite Reverse_Engineer N/A N/A
 1RB 1LA 1RZ  2LA 0RB 2RA | None Halt 4 10
 1RB 1LA ---  2LA 0RB 2LA | None Infinite Reverse_Engineer N/A N/A
-1RB 1LA ---  2LA 0RB 1RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 1LA ---  2LA 0RB 1RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1LA ---  2LA 0RB 1LA | None Infinite Reverse_Engineer N/A N/A
-1RB 1LA ---  2LA 0RB 0RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 1LA ---  2LA 0RB 0RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1LA ---  2LA 0RB 0LA | None Infinite Reverse_Engineer N/A N/A
 1RB 1LA ---  2LA 0LB 1RZ | None Halt 3 9
 1RB 1LA 1RZ  2LA 0LB 2RB | None Halt 4 11
@@ -2035,52 +2035,52 @@
 1RB 1LA ---  2LA 0LB 0LB | None Infinite Reverse_Engineer N/A N/A
 1RB 1LA 1RZ  2LA 0LB 2RA | None Halt 5 13
 1RB 1LA ---  2LA 0LB 2LA | None Infinite Reverse_Engineer N/A N/A
-1RB 1LA ---  2LA 0LB 1RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 1LA ---  2LA 0LB 1RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1LA ---  2LA 0LB 1LA | None Infinite Reverse_Engineer N/A N/A
-1RB 1LA ---  2LA 0LB 0RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 1LA ---  2LA 0LB 0RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1LA ---  2LA 0LB 0LA | None Infinite Reverse_Engineer N/A N/A
 1RB 1LA 1RZ  2LA 2RA --- | None Halt 3 6
 1RB 1LA 2RB  2LA 2RA 1RZ | None Halt 4 9
 1RB 1LA 2LB  2LA 2RA 1RZ | None Halt 3 7
-1RB 1LA 1RB  2LA 2RA --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 1LA 1RB  2LA 2RA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1LA 1LB  2LA 2RA 1RZ | None Halt 3 7
 1RB 1LA 0RB  2LA 2RA 1RZ | None Halt 4 9
 1RB 1LA 0LB  2LA 2RA 1RZ | None Halt 2 7
-1RB 1LA 2RA  2LA 2RA --- | None Infinite Repeat_in_Place 1 8
-1RB 1LA 2LA  2LA 2RA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 1LA 1RA  2LA 2RA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 1LA 1LA  2LA 2RA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 1LA 0RA  2LA 2RA --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 1LA 2RA  2LA 2RA --- | None Infinite Lin_Recur 1 8
+1RB 1LA 2LA  2LA 2RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 1LA 1RA  2LA 2RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 1LA 1LA  2LA 2RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 1LA 0RA  2LA 2RA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1LA 0LA  2LA 2RA --- | None Infinite Proof_System No_Quasihalt N/A
-1RB 1LA ---  2LA 2LA --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 1LA ---  2LA 2LA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1LA 1RZ  2LA 1RA --- | None Halt 3 6
 1RB 1LA 2RB  2LA 1RA 1RZ | None Halt 4 9
-1RB 1LA 2LB  2LA 1RA --- | None Infinite Repeat_in_Place No_Quasihalt N/A
-1RB 1LA 1RB  2LA 1RA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 1LA 1LB  2LA 1RA --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 1LA 2LB  2LA 1RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 1LA 1RB  2LA 1RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 1LA 1LB  2LA 1RA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1LA 0RB  2LA 1RA 1RZ | None Halt 4 9
-1RB 1LA 0LB  2LA 1RA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 1LA 2RA  2LA 1RA --- | None Infinite Repeat_in_Place 1 8
-1RB 1LA 2LA  2LA 1RA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 1LA 1RA  2LA 1RA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 1LA 1LA  2LA 1RA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 1LA 0RA  2LA 1RA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 1LA 0LA  2LA 1RA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 1LA ---  2LA 1LA --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 1LA 0LB  2LA 1RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 1LA 2RA  2LA 1RA --- | None Infinite Lin_Recur 1 8
+1RB 1LA 2LA  2LA 1RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 1LA 1RA  2LA 1RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 1LA 1LA  2LA 1RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 1LA 0RA  2LA 1RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 1LA 0LA  2LA 1RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 1LA ---  2LA 1LA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1LA 1RZ  2LA 0RA --- | None Halt 2 6
 1RB 1LA 2RB  2LA 0RA 1RZ | None Halt 3 9
-1RB 1LA 2LB  2LA 0RA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 1LA 1RB  2LA 0RA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 1LA 1LB  2LA 0RA --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 1LA 2LB  2LA 0RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 1LA 1RB  2LA 0RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 1LA 1LB  2LA 0RA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1LA 0RB  2LA 0RA 1RZ | None Halt 3 9
-1RB 1LA 0LB  2LA 0RA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 1LA 2RA  2LA 0RA --- | None Infinite Repeat_in_Place 1 8
+1RB 1LA 0LB  2LA 0RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 1LA 2RA  2LA 0RA --- | None Infinite Lin_Recur 1 8
 1RB 1LA 2LA  2LA 0RA 1RZ | None Halt 3 8
-1RB 1LA 1RA  2LA 0RA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 1LA 1LA  2LA 0RA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 1LA 0RA  2LA 0RA --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 1LA 1RA  2LA 0RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 1LA 1LA  2LA 0RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 1LA 0RA  2LA 0RA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1LA 0LA  2LA 0RA --- | None Infinite CTL_A*_B N/A N/A
-1RB 1LA ---  2LA 0LA --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 1LA ---  2LA 0LA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 0RA 1RZ  2LA --- --- | None Halt 1 4
 1RB 0RA 2RB  2LA --- 1RZ | None Halt 2 7
 1RB 0RA 2RB  2LA --- 2RB | None Infinite Reverse_Engineer N/A N/A
@@ -2096,19 +2096,19 @@
 1RB 0RA 2RB  2LA --- 0RA | None Infinite Reverse_Engineer N/A N/A
 1RB 0RA 2RB  2LA --- 0LA | None Infinite Reverse_Engineer N/A N/A
 1RB 0RA 2LB  2LA --- 1RZ | None Halt 3 7
-1RB 0RA 2LB  2LA --- 2RB | None Infinite Chain_Move No_Quasihalt N/A
+1RB 0RA 2LB  2LA --- 2RB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 0RA 2LB  2LA 1RZ 2LB | None Halt 3 8
 1RB 0RA 2LB  2LA --- 1RB | None Infinite CTL_A* N/A N/A
 1RB 0RA 2LB  2LA 1RZ 1LB | None Halt 3 8
-1RB 0RA 2LB  2LA --- 0RB | None Infinite Chain_Move No_Quasihalt N/A
+1RB 0RA 2LB  2LA --- 0RB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 0RA 2LB  2LA 1RZ 0LB | None Halt 2 8
-1RB 0RA 2LB  2LA --- 2RA | None Infinite Repeat_in_Place No_Quasihalt N/A
-1RB 0RA 2LB  2LA --- 2LA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 0RA 2LB  2LA --- 2RA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 0RA 2LB  2LA --- 2LA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 0RA 2LB  2LA 1RZ 1RA | None Halt 3 9
-1RB 0RA 2LB  2LA --- 1LA | None Infinite Repeat_in_Place No_Quasihalt N/A
-1RB 0RA 2LB  2LA --- 0RA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 0RA 2LB  2LA --- 0LA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 0RA 1RB  2LA --- --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 0RA 2LB  2LA --- 1LA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 0RA 2LB  2LA --- 0RA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 0RA 2LB  2LA --- 0LA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 0RA 1RB  2LA --- --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 0RA 1LB  2LA --- 1RZ | None Halt 3 7
 1RB 0RA 1LB  2LA 1RZ 2RB | None Halt 3 8
 1RB 0RA 1LB  2LA 1RZ 2LB | None Halt 3 8
@@ -2116,11 +2116,11 @@
 1RB 0RA 1LB  2LA 1RZ 1LB | None Halt 3 8
 1RB 0RA 1LB  2LA 1RZ 0RB | None Halt 2 8
 1RB 0RA 1LB  2LA 1RZ 0LB | None Halt 2 8
-1RB 0RA 1LB  2LA --- 2RA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 0RA 1LB  2LA --- 2LA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 0RA 1LB  2LA --- 1RA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 0RA 1LB  2LA --- 1LA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 0RA 1LB  2LA --- 0RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 0RA 1LB  2LA --- 2RA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 0RA 1LB  2LA --- 2LA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 0RA 1LB  2LA --- 1RA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 0RA 1LB  2LA --- 1LA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 0RA 1LB  2LA --- 0RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 0RA 1LB  2LA 1RZ 0LA | None Halt 2 10
 1RB 0RA 0RB  2LA --- 1RZ | None Halt 2 7
 1RB 0RA 0RB  2LA --- 2RB | None Infinite Reverse_Engineer N/A N/A
@@ -2132,23 +2132,23 @@
 1RB 0RA 0RB  2LA --- 2RA | None Infinite Reverse_Engineer N/A N/A
 1RB 0RA 0RB  2LA --- 2LA | None Infinite Reverse_Engineer N/A N/A
 1RB 0RA 0RB  2LA --- 1RA | None Infinite Reverse_Engineer N/A N/A
-1RB 0RA 0RB  2LA --- 1LA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 0RA 0RB  2LA --- 1LA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 0RA 0RB  2LA --- 0RA | None Infinite Reverse_Engineer N/A N/A
 1RB 0RA 0RB  2LA --- 0LA | None Infinite Reverse_Engineer N/A N/A
 1RB 0RA 0LB  2LA --- 1RZ | None Halt 2 7
 1RB 0RA 0LB  2LA 1RZ 2RB | None Halt 2 10
 1RB 0RA 0LB  2LA 1RZ 2LB | None Halt 2 8
-1RB 0RA 0LB  2LA --- 1RB | None Infinite Chain_Move No_Quasihalt N/A
+1RB 0RA 0LB  2LA --- 1RB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 0RA 0LB  2LA 1RZ 1LB | None Halt 2 8
-1RB 0RA 0LB  2LA --- 0RB | None Infinite Chain_Move No_Quasihalt N/A
+1RB 0RA 0LB  2LA --- 0RB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 0RA 0LB  2LA 1RZ 0LB | None Halt 1 8
 1RB 0RA 0LB  2LA 1RZ 2RA | None Halt 2 14
-1RB 0RA 0LB  2LA --- 2LA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 0RA 0LB  2LA --- 1RA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 0RA 0LB  2LA --- 1LA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 0RA 0LB  2LA --- 0RA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 0RA 0LB  2LA --- 0LA | None Infinite Repeat_in_Place No_Quasihalt N/A
-1RB 0RA 2RA  2LA --- --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 0RA 0LB  2LA --- 2LA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 0RA 0LB  2LA --- 1RA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 0RA 0LB  2LA --- 1LA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 0RA 0LB  2LA --- 0RA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 0RA 0LB  2LA --- 0LA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 0RA 2RA  2LA --- --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 0RA 2LA  2LA --- 1RZ | None Halt 2 6
 1RB 0RA 2LA  2LA --- 2RB | None Infinite Reverse_Engineer N/A N/A
 1RB 0RA 2LA  2LA 1RZ 2LB | None Halt 2 7
@@ -2159,26 +2159,26 @@
 1RB 0RA 2LA  2LA --- 2RA | None Infinite Reverse_Engineer N/A N/A
 1RB 0RA 2LA  2LA --- 2LA | None Infinite Reverse_Engineer N/A N/A
 1RB 0RA 2LA  2LA --- 1RA | None Infinite Reverse_Engineer N/A N/A
-1RB 0RA 2LA  2LA --- 1LA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 0RA 2LA  2LA --- 1LA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 0RA 2LA  2LA --- 0RA | None Infinite Reverse_Engineer N/A N/A
 1RB 0RA 2LA  2LA --- 0LA | None Infinite Reverse_Engineer N/A N/A
-1RB 0RA 1RA  2LA --- --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 0RA 1RA  2LA --- --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 0RA 1LA  2LA 1RZ --- | None Halt 2 6
-1RB 0RA 1LA  2LA 2RB --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 0RA 1LA  2LA 2RB --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 0RA 1LA  2LA 2LB 1RZ | None Halt 4 10
-1RB 0RA 1LA  2LA 1RB --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 0RA 1LA  2LA 1RB --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 0RA 1LA  2LA 1LB 1RZ | None Halt 4 10
 1RB 0RA 1LA  2LA 0RB 1RZ | None Halt 3 9
 1RB 0RA 1LA  2LA 0LB 1RZ | None Halt 2 10
-1RB 0RA 1LA  2LA 2RA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 0RA 1LA  2LA 2LA --- | None Infinite Repeat_in_Place No_Quasihalt N/A
-1RB 0RA 1LA  2LA 1RA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 0RA 1LA  2LA 1LA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 0RA 1LA  2LA 0RA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 0RA 1LA  2LA 0LA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 0RA 0RA  2LA --- --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 0RA 0LA  2LA --- --- | None Infinite Repeat_in_Place No_Quasihalt N/A
-1RB 0LA ---  2LA --- --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 0RA 1LA  2LA 2RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 0RA 1LA  2LA 2LA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 0RA 1LA  2LA 1RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 0RA 1LA  2LA 1LA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 0RA 1LA  2LA 0RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 0RA 1LA  2LA 0LA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 0RA 0RA  2LA --- --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 0RA 0LA  2LA --- --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 0LA ---  2LA --- --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB --- ---  1RA --- --- | None Infinite Reverse_Engineer N/A N/A
 1RB 1RZ ---  1LA --- --- | None Halt 2 3
 1RB 2RB ---  1LA 1RZ --- | None Halt 2 4
@@ -2197,46 +2197,46 @@
 1RB 2RB 0LA  1LA 2RB --- | None Infinite Reverse_Engineer N/A N/A
 1RB 2RB ---  1LA 2LB 1RZ | None Halt 2 5
 1RB 2RB 1RZ  1LA 2LB 2RB | None Halt 3 8
-1RB 2RB ---  1LA 2LB 2LB | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2RB ---  1LA 2LB 1RB | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2RB ---  1LA 2LB 1LB | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2RB ---  1LA 2LB 0RB | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2RB ---  1LA 2LB 0LB | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2RB ---  1LA 2LB 2LB | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2RB ---  1LA 2LB 1RB | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2RB ---  1LA 2LB 1LB | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2RB ---  1LA 2LB 0RB | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2RB ---  1LA 2LB 0LB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2RB 1RZ  1LA 2LB 2RA | None Halt 2 6
 1RB 2RB 1RZ  1LA 2LB 2LA | None Halt 3 10
 1RB 2RB 1RZ  1LA 2LB 1RA | None Halt 2 6
-1RB 2RB ---  1LA 2LB 1LA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2RB ---  1LA 2LB 1LA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2RB 1RZ  1LA 2LB 0RA | None Halt 1 6
-1RB 2RB ---  1LA 2LB 0LA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2RB ---  1LA 1RB --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2RB ---  1LA 2LB 0LA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2RB ---  1LA 1RB --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2RB ---  1LA 1LB 1RZ | None Halt 2 5
-1RB 2RB ---  1LA 1LB 2RB | None Infinite Repeat_in_Place No_Quasihalt N/A
-1RB 2RB ---  1LA 1LB 2LB | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2RB ---  1LA 1LB 1RB | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2RB ---  1LA 1LB 1LB | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2RB ---  1LA 1LB 0RB | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2RB ---  1LA 1LB 0LB | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2RB ---  1LA 1LB 2RB | None Infinite Lin_Recur 0 3
+1RB 2RB ---  1LA 1LB 2LB | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2RB ---  1LA 1LB 1RB | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2RB ---  1LA 1LB 1LB | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2RB ---  1LA 1LB 0RB | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2RB ---  1LA 1LB 0LB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2RB 1RZ  1LA 1LB 2RA | None Halt 3 8
 1RB 2RB 1RZ  1LA 1LB 2LA | None Halt 3 10
 1RB 2RB 1RZ  1LA 1LB 1RA | None Halt 3 8
-1RB 2RB ---  1LA 1LB 1LA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2RB ---  1LA 1LB 1LA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2RB 1RZ  1LA 1LB 0RA | None Halt 2 8
-1RB 2RB ---  1LA 1LB 0LA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2RB ---  1LA 0RB --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2RB ---  1LA 1LB 0LA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2RB ---  1LA 0RB --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2RB ---  1LA 0LB 1RZ | None Halt 1 5
 1RB 2RB 1RZ  1LA 0LB 2RB | None Halt 2 7
-1RB 2RB ---  1LA 0LB 2LB | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2RB ---  1LA 0LB 1RB | None Infinite Repeat_in_Place No_Quasihalt N/A
-1RB 2RB ---  1LA 0LB 1LB | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2RB ---  1LA 0LB 0RB | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2RB ---  1LA 0LB 0LB | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2RB ---  1LA 0LB 2RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2RB ---  1LA 0LB 2LB | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2RB ---  1LA 0LB 1RB | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2RB ---  1LA 0LB 1LB | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2RB ---  1LA 0LB 0RB | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2RB ---  1LA 0LB 0LB | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2RB ---  1LA 0LB 2RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2RB 1RZ  1LA 0LB 2LA | None Halt 2 10
-1RB 2RB ---  1LA 0LB 1RA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2RB ---  1LA 0LB 1LA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2RB ---  1LA 0LB 0RA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2RB ---  1LA 0LB 0LA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2RB ---  1LA 2RA --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2RB ---  1LA 0LB 1RA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2RB ---  1LA 0LB 1LA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2RB ---  1LA 0LB 0RA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2RB ---  1LA 0LB 0LA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2RB ---  1LA 2RA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2RB 1RZ  1LA 2LA --- | None Halt 2 5
 1RB 2RB 2RB  1LA 2LA 1RZ | None Halt 2 6
 1RB 2RB 2LB  1LA 2LA 1RZ | None Halt 4 10
@@ -2244,34 +2244,34 @@
 1RB 2RB 1LB  1LA 2LA 1RZ | None Halt 4 10
 1RB 2RB 0RB  1LA 2LA 1RZ | None Halt 1 6
 1RB 2RB 0LB  1LA 2LA 1RZ | None Halt 3 10
-1RB 2RB 2RA  1LA 2LA --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2RB 2RA  1LA 2LA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2RB 2LA  1LA 2LA 1RZ | None Halt 3 7
-1RB 2RB 1RA  1LA 2LA --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2RB 1RA  1LA 2LA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2RB 1LA  1LA 2LA 1RZ | None Halt 3 9
-1RB 2RB 0RA  1LA 2LA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2RB 0LA  1LA 2LA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2RB ---  1LA 1RA --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2RB 0RA  1LA 2LA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2RB 0LA  1LA 2LA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2RB ---  1LA 1RA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2RB 1RZ  1LA 1LA --- | None Halt 2 5
 1RB 2RB 2RB  1LA 1LA --- | None Infinite Reverse_Engineer N/A N/A
-1RB 2RB 2LB  1LA 1LA --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2RB 2LB  1LA 1LA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2RB 1RB  1LA 1LA --- | None Infinite Reverse_Engineer N/A N/A
-1RB 2RB 1LB  1LA 1LA --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2RB 1LB  1LA 1LA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2RB 0RB  1LA 1LA --- | None Infinite Reverse_Engineer N/A N/A
-1RB 2RB 0LB  1LA 1LA --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2RB 0LB  1LA 1LA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2RB 2RA  1LA 1LA --- | None Infinite Reverse_Engineer N/A N/A
 1RB 2RB 2LA  1LA 1LA 1RZ | None Halt 3 7
 1RB 2RB 1RA  1LA 1LA --- | None Infinite Reverse_Engineer N/A N/A
 1RB 2RB 1LA  1LA 1LA --- | None Infinite Reverse_Engineer N/A N/A
 1RB 2RB 0RA  1LA 1LA --- | None Infinite Reverse_Engineer N/A N/A
 1RB 2RB 0LA  1LA 1LA --- | None Infinite Reverse_Engineer N/A N/A
-1RB 2RB ---  1LA 0RA --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2RB ---  1LA 0RA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2RB 1RZ  1LA 0LA --- | None Halt 1 5
 1RB 2RB 2RB  1LA 0LA --- | None Infinite Reverse_Engineer N/A N/A
-1RB 2RB 2LB  1LA 0LA --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2RB 2LB  1LA 0LA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2RB 1RB  1LA 0LA --- | None Infinite Reverse_Engineer N/A N/A
-1RB 2RB 1LB  1LA 0LA --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2RB 1LB  1LA 0LA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2RB 0RB  1LA 0LA --- | None Infinite Reverse_Engineer N/A N/A
-1RB 2RB 0LB  1LA 0LA --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2RB 0LB  1LA 0LA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2RB 2RA  1LA 0LA --- | None Infinite Reverse_Engineer N/A N/A
 1RB 2RB 2LA  1LA 0LA 1RZ | None Halt 2 7
 1RB 2RB 1RA  1LA 0LA --- | None Infinite Reverse_Engineer N/A N/A
@@ -2281,20 +2281,20 @@
 1RB 2LB ---  1LA 1RZ --- | None Halt 4 6
 1RB 2LB ---  1LA 2RB 1RZ | None Halt 4 7
 1RB 2LB 1RZ  1LA 2RB 2RB | None Halt 5 10
-1RB 2LB ---  1LA 2RB 2LB | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2LB ---  1LA 2RB 2LB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LB 1RZ  1LA 2RB 1RB | None Halt 5 10
 1RB 2LB 1RZ  1LA 2RB 1LB | None Halt 5 14
 1RB 2LB 1RZ  1LA 2RB 0RB | None Halt 4 10
 1RB 2LB 1RZ  1LA 2RB 0LB | None Halt 3 11
 1RB 2LB 1RZ  1LA 2RB 2RA | None Halt 4 10
 1RB 2LB 1RZ  1LA 2RB 2LA | None Halt 4 8
-1RB 2LB ---  1LA 2RB 1RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2LB ---  1LA 2RB 1RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LB 1RZ  1LA 2RB 1LA | None Halt 4 8
 1RB 2LB 1RZ  1LA 2RB 0RA | None Halt 4 10
 1RB 2LB 1RZ  1LA 2RB 0LA | None Halt 3 8
-1RB 2LB ---  1LA 2LB --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2LB ---  1LA 2LB --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LB ---  1LA 1RB 1RZ | None Halt 4 7
-1RB 2LB ---  1LA 1RB 2RB | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2LB ---  1LA 1RB 2RB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LB ---  1LA 1RB 2LB | None Infinite Reverse_Engineer N/A N/A
 1RB 2LB ---  1LA 1RB 1RB | None Infinite Reverse_Engineer N/A N/A
 1RB 2LB ---  1LA 1RB 1LB | None Infinite Reverse_Engineer N/A N/A
@@ -2302,13 +2302,13 @@
 1RB 2LB ---  1LA 1RB 0LB | None Infinite Reverse_Engineer N/A N/A
 1RB 2LB 1RZ  1LA 1RB 2RA | None Halt 4 10
 1RB 2LB ---  1LA 1RB 2LA | None Infinite Reverse_Engineer N/A N/A
-1RB 2LB ---  1LA 1RB 1RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2LB ---  1LA 1RB 1RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LB ---  1LA 1RB 1LA | None Infinite Reverse_Engineer N/A N/A
-1RB 2LB ---  1LA 1RB 0RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2LB ---  1LA 1RB 0RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LB ---  1LA 1RB 0LA | None Infinite Reverse_Engineer N/A N/A
-1RB 2LB ---  1LA 1LB --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2LB ---  1LA 1LB --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LB ---  1LA 0RB 1RZ | None Halt 3 7
-1RB 2LB ---  1LA 0RB 2RB | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2LB ---  1LA 0RB 2RB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LB ---  1LA 0RB 2LB | None Infinite Reverse_Engineer N/A N/A
 1RB 2LB ---  1LA 0RB 1RB | None Infinite Reverse_Engineer N/A N/A
 1RB 2LB ---  1LA 0RB 1LB | None Infinite Reverse_Engineer N/A N/A
@@ -2316,11 +2316,11 @@
 1RB 2LB ---  1LA 0RB 0LB | None Infinite Reverse_Engineer N/A N/A
 1RB 2LB 1RZ  1LA 0RB 2RA | None Halt 3 10
 1RB 2LB ---  1LA 0RB 2LA | None Infinite Reverse_Engineer N/A N/A
-1RB 2LB ---  1LA 0RB 1RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2LB ---  1LA 0RB 1RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LB ---  1LA 0RB 1LA | None Infinite Reverse_Engineer N/A N/A
-1RB 2LB ---  1LA 0RB 0RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2LB ---  1LA 0RB 0RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LB ---  1LA 0RB 0LA | None Infinite Reverse_Engineer N/A N/A
-1RB 2LB ---  1LA 0LB --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2LB ---  1LA 0LB --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LB 1RZ  1LA 2RA --- | None Halt 4 7
 1RB 2LB 2RB  1LA 2RA 1RZ | None Halt 6 12
 1RB 2LB 2LB  1LA 2RA 1RZ | None Halt 4 8
@@ -2329,40 +2329,40 @@
 1RB 2LB 0RB  1LA 2RA 1RZ | None Halt 5 12
 1RB 2LB 0LB  1LA 2RA 1RZ | None Halt 3 8
 1RB 2LB 2RA  1LA 2RA 1RZ | None Halt 4 9
-1RB 2LB 2LA  1LA 2RA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2LB 1RA  1LA 2RA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2LB 1LA  1LA 2RA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2LB 0RA  1LA 2RA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2LB 0LA  1LA 2RA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2LB ---  1LA 2LA --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2LB 2LA  1LA 2RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2LB 1RA  1LA 2RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2LB 1LA  1LA 2RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2LB 0RA  1LA 2RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2LB 0LA  1LA 2RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2LB ---  1LA 2LA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LB 1RZ  1LA 1RA --- | None Halt 4 7
-1RB 2LB 2RB  1LA 1RA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2LB 2LB  1LA 1RA --- | None Infinite Repeat_in_Place No_Quasihalt N/A
-1RB 2LB 1RB  1LA 1RA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2LB 1LB  1LA 1RA --- | None Infinite Repeat_in_Place No_Quasihalt N/A
-1RB 2LB 0RB  1LA 1RA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2LB 0LB  1LA 1RA --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2LB 2RB  1LA 1RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2LB 2LB  1LA 1RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2LB 1RB  1LA 1RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2LB 1LB  1LA 1RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2LB 0RB  1LA 1RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2LB 0LB  1LA 1RA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LB 2RA  1LA 1RA 1RZ | None Halt 4 9
-1RB 2LB 2LA  1LA 1RA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2LB 1RA  1LA 1RA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2LB 1LA  1LA 1RA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2LB 0RA  1LA 1RA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2LB 0LA  1LA 1RA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2LB ---  1LA 1LA --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2LB 2LA  1LA 1RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2LB 1RA  1LA 1RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2LB 1LA  1LA 1RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2LB 0RA  1LA 1RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2LB 0LA  1LA 1RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2LB ---  1LA 1LA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LB 1RZ  1LA 0RA --- | None Halt 3 7
-1RB 2LB 2RB  1LA 0RA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2LB 2LB  1LA 0RA --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2LB 2RB  1LA 0RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2LB 2LB  1LA 0RA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LB 1RB  1LA 0RA --- | None Infinite CTL_A* N/A N/A
-1RB 2LB 1LB  1LA 0RA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2LB 0RB  1LA 0RA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2LB 0LB  1LA 0RA --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2LB 1LB  1LA 0RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2LB 0RB  1LA 0RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2LB 0LB  1LA 0RA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LB 2RA  1LA 0RA 1RZ | None Halt 3 9
 1RB 2LB 2LA  1LA 0RA 1RZ | None Halt 4 9
-1RB 2LB 1RA  1LA 0RA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2LB 1LA  1LA 0RA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2LB 0RA  1LA 0RA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2LB 0LA  1LA 0RA --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2LB ---  1LA 0LA --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2LB 1RA  1LA 0RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2LB 1LA  1LA 0RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2LB 0RA  1LA 0RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2LB 0LA  1LA 0RA --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2LB ---  1LA 0LA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1RB ---  1LA 1RZ --- | None Halt 2 4
 1RB 1RB 1RZ  1LA 2RB --- | None Halt 3 6
 1RB 1RB 2RB  1LA 2RB --- | None Infinite Reverse_Engineer N/A N/A
@@ -2370,19 +2370,19 @@
 1RB 1RB 1RB  1LA 2RB --- | None Infinite Reverse_Engineer N/A N/A
 1RB 1RB 1LB  1LA 2RB 1RZ | None Halt 4 12
 1RB 1RB 0RB  1LA 2RB --- | None Infinite Reverse_Engineer N/A N/A
-1RB 1RB 0LB  1LA 2RB --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 1RB 0LB  1LA 2RB --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1RB 2RA  1LA 2RB --- | None Infinite Reverse_Engineer N/A N/A
 1RB 1RB 2LA  1LA 2RB 1RZ | None Halt 3 8
 1RB 1RB 1RA  1LA 2RB --- | None Infinite Reverse_Engineer N/A N/A
 1RB 1RB 1LA  1LA 2RB --- | None Infinite Reverse_Engineer N/A N/A
 1RB 1RB 0RA  1LA 2RB --- | None Infinite Reverse_Engineer N/A N/A
 1RB 1RB 0LA  1LA 2RB --- | None Infinite Reverse_Engineer N/A N/A
-1RB 1RB ---  1LA 2LB --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 1RB ---  1LA 2LB --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1RB ---  1LA 1RB --- | None Infinite Reverse_Engineer N/A N/A
 1RB 1RB ---  1LA 1LB --- | None Infinite Reverse_Engineer N/A N/A
 1RB 1RB ---  1LA 0RB --- | None Infinite Reverse_Engineer N/A N/A
 1RB 1RB ---  1LA 0LB --- | None Infinite Reverse_Engineer N/A N/A
-1RB 1RB ---  1LA 2RA --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 1RB ---  1LA 2RA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1RB ---  1LA 2LA 1RZ | None Halt 2 6
 1RB 1RB 1RZ  1LA 2LA 2RB | None Halt 3 8
 1RB 1RB ---  1LA 2LA 2LB | None Infinite Reverse_Engineer N/A N/A
@@ -2390,11 +2390,11 @@
 1RB 1RB ---  1LA 2LA 1LB | None Infinite Reverse_Engineer N/A N/A
 1RB 1RB ---  1LA 2LA 0RB | None Infinite Reverse_Engineer N/A N/A
 1RB 1RB ---  1LA 2LA 0LB | None Infinite Reverse_Engineer N/A N/A
-1RB 1RB ---  1LA 2LA 2RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 1RB ---  1LA 2LA 2RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1RB ---  1LA 2LA 2LA | None Infinite Reverse_Engineer N/A N/A
-1RB 1RB ---  1LA 2LA 1RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 1RB ---  1LA 2LA 1RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1RB ---  1LA 2LA 1LA | None Infinite Reverse_Engineer N/A N/A
-1RB 1RB ---  1LA 2LA 0RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 1RB ---  1LA 2LA 0RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1RB ---  1LA 2LA 0LA | None Infinite Reverse_Engineer N/A N/A
 1RB 1RB ---  1LA 1RA --- | None Infinite Reverse_Engineer N/A N/A
 1RB 1RB ---  1LA 1LA --- | None Infinite Reverse_Engineer N/A N/A
@@ -2402,37 +2402,37 @@
 1RB 1RB ---  1LA 0LA --- | None Infinite Reverse_Engineer N/A N/A
 1RB 1LB ---  1LA 1RZ --- | None Halt 4 6
 1RB 1LB 1RZ  1LA 2RB --- | None Halt 5 10
-1RB 1LB 2RB  1LA 2RB --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 1LB 2RB  1LA 2RB --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1LB 2LB  1LA 2RB 1RZ | None Halt 5 11
-1RB 1LB 1RB  1LA 2RB --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 1LB 1RB  1LA 2RB --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1LB 1LB  1LA 2RB 1RZ | None Halt 5 11
-1RB 1LB 0RB  1LA 2RB --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 1LB 0RB  1LA 2RB --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1LB 0LB  1LA 2RB 1RZ | None Halt 4 11
 1RB 1LB 2RA  1LA 2RB 1RZ | None Halt 5 12
 1RB 1LB 2LA  1LA 2RB 1RZ | None Halt 7 18
-1RB 1LB 1RA  1LA 2RB --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 1LB 1RA  1LA 2RB --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1LB 1LA  1LA 2RB --- | None Infinite CTL_A*_B N/A N/A
 1RB 1LB 0RA  1LA 2RB --- | None Infinite Proof_System No_Quasihalt N/A
-1RB 1LB 0LA  1LA 2RB --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 1LB ---  1LA 2LB --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 1LB 0LA  1LA 2RB --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 1LB ---  1LA 2LB --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1LB ---  1LA 1RB --- | None Infinite Reverse_Engineer N/A N/A
 1RB 1LB ---  1LA 1LB --- | None Infinite Reverse_Engineer N/A N/A
 1RB 1LB ---  1LA 0RB --- | None Infinite Reverse_Engineer N/A N/A
 1RB 1LB ---  1LA 0LB --- | None Infinite Reverse_Engineer N/A N/A
 1RB 1LB ---  1LA 2RA 1RZ | None Halt 4 8
-1RB 1LB ---  1LA 2RA 2RB | None Infinite Chain_Move No_Quasihalt N/A
+1RB 1LB ---  1LA 2RA 2RB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1LB 1RZ  1LA 2RA 2LB | None Halt 4 10
-1RB 1LB ---  1LA 2RA 1RB | None Infinite Chain_Move No_Quasihalt N/A
-1RB 1LB ---  1LA 2RA 1LB | None Infinite Chain_Move No_Quasihalt N/A
-1RB 1LB ---  1LA 2RA 0RB | None Infinite Chain_Move No_Quasihalt N/A
-1RB 1LB ---  1LA 2RA 0LB | None Infinite Chain_Move No_Quasihalt N/A
-1RB 1LB ---  1LA 2RA 2RA | None Infinite Repeat_in_Place No_Quasihalt N/A
-1RB 1LB ---  1LA 2RA 2LA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 1LB ---  1LA 2RA 1RA | None Infinite Repeat_in_Place No_Quasihalt N/A
-1RB 1LB ---  1LA 2RA 1LA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 1LB ---  1LA 2RA 0RA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 1LB ---  1LA 2RA 0LA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 1LB ---  1LA 2LA --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 1LB ---  1LA 2RA 1RB | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 1LB ---  1LA 2RA 1LB | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 1LB ---  1LA 2RA 0RB | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 1LB ---  1LA 2RA 0LB | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 1LB ---  1LA 2RA 2RA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 1LB ---  1LA 2RA 2LA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 1LB ---  1LA 2RA 1RA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 1LB ---  1LA 2RA 1LA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 1LB ---  1LA 2RA 0RA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 1LB ---  1LA 2RA 0LA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 1LB ---  1LA 2LA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1LB ---  1LA 1RA --- | None Infinite Reverse_Engineer N/A N/A
 1RB 1LB ---  1LA 1LA --- | None Infinite Reverse_Engineer N/A N/A
 1RB 1LB ---  1LA 0RA --- | None Infinite Reverse_Engineer N/A N/A
@@ -2444,19 +2444,19 @@
 1RB 0RB 1RB  1LA 2RB --- | None Infinite Reverse_Engineer N/A N/A
 1RB 0RB 1LB  1LA 2RB 1RZ | None Halt 5 14
 1RB 0RB 0RB  1LA 2RB --- | None Infinite Reverse_Engineer N/A N/A
-1RB 0RB 0LB  1LA 2RB --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 0RB 0LB  1LA 2RB --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 0RB 2RA  1LA 2RB --- | None Infinite Reverse_Engineer N/A N/A
 1RB 0RB 2LA  1LA 2RB 1RZ | None Halt 3 8
 1RB 0RB 1RA  1LA 2RB --- | None Infinite Reverse_Engineer N/A N/A
 1RB 0RB 1LA  1LA 2RB --- | None Infinite Reverse_Engineer N/A N/A
 1RB 0RB 0RA  1LA 2RB --- | None Infinite Reverse_Engineer N/A N/A
 1RB 0RB 0LA  1LA 2RB --- | None Infinite Reverse_Engineer N/A N/A
-1RB 0RB ---  1LA 2LB --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 0RB ---  1LA 2LB --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 0RB ---  1LA 1RB --- | None Infinite Reverse_Engineer N/A N/A
 1RB 0RB ---  1LA 1LB --- | None Infinite Reverse_Engineer N/A N/A
 1RB 0RB ---  1LA 0RB --- | None Infinite Reverse_Engineer N/A N/A
 1RB 0RB ---  1LA 0LB --- | None Infinite Reverse_Engineer N/A N/A
-1RB 0RB ---  1LA 2RA --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 0RB ---  1LA 2RA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 0RB ---  1LA 2LA 1RZ | None Halt 2 6
 1RB 0RB 1RZ  1LA 2LA 2RB | None Halt 3 8
 1RB 0RB ---  1LA 2LA 2LB | None Infinite Reverse_Engineer N/A N/A
@@ -2464,11 +2464,11 @@
 1RB 0RB ---  1LA 2LA 1LB | None Infinite Reverse_Engineer N/A N/A
 1RB 0RB ---  1LA 2LA 0RB | None Infinite Reverse_Engineer N/A N/A
 1RB 0RB ---  1LA 2LA 0LB | None Infinite Reverse_Engineer N/A N/A
-1RB 0RB ---  1LA 2LA 2RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 0RB ---  1LA 2LA 2RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 0RB ---  1LA 2LA 2LA | None Infinite Reverse_Engineer N/A N/A
-1RB 0RB ---  1LA 2LA 1RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 0RB ---  1LA 2LA 1RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 0RB ---  1LA 2LA 1LA | None Infinite Reverse_Engineer N/A N/A
-1RB 0RB ---  1LA 2LA 0RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 0RB ---  1LA 2LA 0RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 0RB ---  1LA 2LA 0LA | None Infinite Reverse_Engineer N/A N/A
 1RB 0RB ---  1LA 1RA --- | None Infinite Reverse_Engineer N/A N/A
 1RB 0RB ---  1LA 1LA --- | None Infinite Reverse_Engineer N/A N/A
@@ -2476,19 +2476,19 @@
 1RB 0RB ---  1LA 0LA --- | None Infinite Reverse_Engineer N/A N/A
 1RB 0LB ---  1LA 1RZ --- | None Halt 3 6
 1RB 0LB 1RZ  1LA 2RB --- | None Halt 4 8
-1RB 0LB 2RB  1LA 2RB --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 0LB 2RB  1LA 2RB --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 0LB 2LB  1LA 2RB 1RZ | None Halt 4 10
-1RB 0LB 1RB  1LA 2RB --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 0LB 1RB  1LA 2RB --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 0LB 1LB  1LA 2RB 1RZ | None Halt 5 15
-1RB 0LB 0RB  1LA 2RB --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 0LB 0LB  1LA 2RB --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 0LB 0RB  1LA 2RB --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 0LB 0LB  1LA 2RB --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 0LB 2RA  1LA 2RB 1RZ | None Halt 3 10
-1RB 0LB 2LA  1LA 2RB --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 0LB 1RA  1LA 2RB --- | None Infinite Repeat_in_Place No_Quasihalt N/A
-1RB 0LB 1LA  1LA 2RB --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 0LB 0RA  1LA 2RB --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 0LB 0LA  1LA 2RB --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 0LB ---  1LA 2LB --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 0LB 2LA  1LA 2RB --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 0LB 1RA  1LA 2RB --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 0LB 1LA  1LA 2RB --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 0LB 0RA  1LA 2RB --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 0LB 0LA  1LA 2RB --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 0LB ---  1LA 2LB --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 0LB ---  1LA 1RB --- | None Infinite Reverse_Engineer N/A N/A
 1RB 0LB ---  1LA 1LB --- | None Infinite Reverse_Engineer N/A N/A
 1RB 0LB ---  1LA 0RB --- | None Infinite Reverse_Engineer N/A N/A
@@ -2496,38 +2496,38 @@
 1RB 0LB ---  1LA 2RA 1RZ | None Halt 5 12
 1RB 0LB 1RZ  1LA 2RA 2RB | None Halt 6 14
 1RB 0LB 1RZ  1LA 2RA 2LB | None Halt 5 14
-1RB 0LB ---  1LA 2RA 1RB | None Infinite Chain_Move No_Quasihalt N/A
-1RB 0LB ---  1LA 2RA 1LB | None Infinite Chain_Move No_Quasihalt N/A
-1RB 0LB ---  1LA 2RA 0RB | None Infinite Chain_Move No_Quasihalt N/A
-1RB 0LB ---  1LA 2RA 0LB | None Infinite Chain_Move No_Quasihalt N/A
-1RB 0LB ---  1LA 2RA 2RA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 0LB ---  1LA 2RA 2LA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 0LB ---  1LA 2RA 1RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 0LB ---  1LA 2RA 1RB | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 0LB ---  1LA 2RA 1LB | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 0LB ---  1LA 2RA 0RB | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 0LB ---  1LA 2RA 0LB | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 0LB ---  1LA 2RA 2RA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 0LB ---  1LA 2RA 2LA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 0LB ---  1LA 2RA 1RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 0LB ---  1LA 2RA 1LA | None Infinite CTL_A* N/A N/A
-1RB 0LB ---  1LA 2RA 0RA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 0LB ---  1LA 2RA 0LA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 0LB ---  1LA 2LA --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 0LB ---  1LA 2RA 0RA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 0LB ---  1LA 2RA 0LA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 0LB ---  1LA 2LA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 0LB ---  1LA 1RA --- | None Infinite Reverse_Engineer N/A N/A
 1RB 0LB ---  1LA 1LA --- | None Infinite Reverse_Engineer N/A N/A
 1RB 0LB ---  1LA 0RA --- | None Infinite Reverse_Engineer N/A N/A
 1RB 0LB ---  1LA 0LA --- | None Infinite Reverse_Engineer N/A N/A
-1RB 2RA ---  1LA --- --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2RA ---  1LA --- --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LA ---  1LA --- 1RZ | None Halt 3 5
 1RB 2LA ---  1LA 1RZ 2RB | None Halt 3 6
 1RB 2LA 1RZ  1LA 2RB 2RB | None Halt 4 8
 1RB 2LA 1RZ  1LA 2LB 2RB | None Halt 4 10
 1RB 2LA 1RZ  1LA 1RB 2RB | None Halt 4 9
-1RB 2LA ---  1LA 1LB 2RB | None Infinite Repeat_in_Place 0 4
-1RB 2LA ---  1LA 0RB 2RB | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2LA ---  1LA 1LB 2RB | None Infinite Lin_Recur 0 4
+1RB 2LA ---  1LA 0RB 2RB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LA 1RZ  1LA 0LB 2RB | None Halt 3 9
 1RB 2LA 1RZ  1LA 2RA 2RB | None Halt 5 10
 1RB 2LA 1RZ  1LA 2LA 2RB | None Halt 3 7
 1RB 2LA 1RZ  1LA 1RA 2RB | None Halt 5 11
 1RB 2LA 1RZ  1LA 1LA 2RB | None Halt 3 7
-1RB 2LA ---  1LA 0RA 2RB | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2LA ---  1LA 0RA 2RB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LA 1RZ  1LA 0LA 2RB | None Halt 2 7
 1RB 2LA ---  1LA 1RZ 2LB | None Halt 3 6
-1RB 2LA ---  1LA 2RB 2LB | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2LA ---  1LA 2RB 2LB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LA ---  1LA 2LB 2LB | None Infinite Reverse_Engineer N/A N/A
 1RB 2LA ---  1LA 1RB 2LB | None Infinite Reverse_Engineer N/A N/A
 1RB 2LA ---  1LA 1LB 2LB | None Infinite Reverse_Engineer N/A N/A
@@ -2550,7 +2550,7 @@
 1RB 2LA ---  1LA 2LA 1RB | None Infinite Reverse_Engineer N/A N/A
 1RB 2LA ---  1LA 1RA 1RB | None Infinite Proof_System No_Quasihalt N/A
 1RB 2LA ---  1LA 1LA 1RB | None Infinite Reverse_Engineer N/A N/A
-1RB 2LA ---  1LA 0RA 1RB | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2LA ---  1LA 0RA 1RB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LA ---  1LA 0LA 1RB | None Infinite Reverse_Engineer N/A N/A
 1RB 2LA ---  1LA 1RZ 1LB | None Halt 3 6
 1RB 2LA 1RZ  1LA 2RB 1LB | None Halt 4 10
@@ -2561,9 +2561,9 @@
 1RB 2LA ---  1LA 0LB 1LB | None Infinite Reverse_Engineer N/A N/A
 1RB 2LA 1RZ  1LA 2RA 1LB | None Halt 3 8
 1RB 2LA ---  1LA 2LA 1LB | None Infinite Reverse_Engineer N/A N/A
-1RB 2LA ---  1LA 1RA 1LB | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2LA ---  1LA 1RA 1LB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LA ---  1LA 1LA 1LB | None Infinite Reverse_Engineer N/A N/A
-1RB 2LA ---  1LA 0RA 1LB | None Infinite Repeat_in_Place No_Quasihalt N/A
+1RB 2LA ---  1LA 0RA 1LB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LA ---  1LA 0LA 1LB | None Infinite Reverse_Engineer N/A N/A
 1RB 2LA ---  1LA 1RZ 0RB | None Halt 2 6
 1RB 2LA 1RZ  1LA 2RB 0RB | None Halt 3 8
@@ -2574,9 +2574,9 @@
 1RB 2LA ---  1LA 0LB 0RB | None Infinite Reverse_Engineer N/A N/A
 1RB 2LA 1RZ  1LA 2RA 0RB | None Halt 4 10
 1RB 2LA ---  1LA 2LA 0RB | None Infinite Reverse_Engineer N/A N/A
-1RB 2LA ---  1LA 1RA 0RB | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2LA ---  1LA 1RA 0RB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LA ---  1LA 1LA 0RB | None Infinite Reverse_Engineer N/A N/A
-1RB 2LA ---  1LA 0RA 0RB | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2LA ---  1LA 0RA 0RB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LA ---  1LA 0LA 0RB | None Infinite Reverse_Engineer N/A N/A
 1RB 2LA ---  1LA 1RZ 0LB | None Halt 2 6
 1RB 2LA 1RZ  1LA 2RB 0LB | None Halt 3 8
@@ -2589,22 +2589,22 @@
 1RB 2LA ---  1LA 2LA 0LB | None Infinite Reverse_Engineer N/A N/A
 1RB 2LA ---  1LA 1RA 0LB | None Infinite Proof_System No_Quasihalt N/A
 1RB 2LA ---  1LA 1LA 0LB | None Infinite Reverse_Engineer N/A N/A
-1RB 2LA ---  1LA 0RA 0LB | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2LA ---  1LA 0RA 0LB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LA ---  1LA 0LA 0LB | None Infinite Reverse_Engineer N/A N/A
 1RB 2LA 1RZ  1LA --- 2RA | None Halt 3 7
-1RB 2LA 2RB  1LA --- 2RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2LA 2RB  1LA --- 2RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LA 2LB  1LA 1RZ 2RA | None Halt 3 8
-1RB 2LA 1RB  1LA --- 2RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2LA 1RB  1LA --- 2RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LA 1LB  1LA 1RZ 2RA | None Halt 3 8
-1RB 2LA 0RB  1LA --- 2RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2LA 0RB  1LA --- 2RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LA 0LB  1LA 1RZ 2RA | None Halt 2 8
-1RB 2LA 2RA  1LA --- 2RA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2LA 2LA  1LA --- 2RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2LA 2RA  1LA --- 2RA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2LA 2LA  1LA --- 2RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LA 1RA  1LA --- 2RA | None Infinite CTL_A*_B N/A N/A
-1RB 2LA 1LA  1LA --- 2RA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2LA 0RA  1LA --- 2RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2LA 1LA  1LA --- 2RA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2LA 0RA  1LA --- 2RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LA 0LA  1LA --- 2RA | None Infinite CTL_A*_B N/A N/A
-1RB 2LA ---  1LA --- 2LA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2LA ---  1LA --- 2LA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LA 1RZ  1LA --- 1RA | None Halt 4 11
 1RB 2LA 2RB  1LA 1RZ 1RA | None Halt 6 20
 1RB 2LA 2LB  1LA 1RZ 1RA | None Halt 4 12
@@ -2612,16 +2612,16 @@
 1RB 2LA 1LB  1LA 1RZ 1RA | None Halt 4 12
 1RB 2LA 0RB  1LA 1RZ 1RA | None Halt 5 20
 1RB 2LA 0LB  1LA 1RZ 1RA | None Halt 3 12
-1RB 2LA 2RA  1LA --- 1RA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2LA 2LA  1LA --- 1RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2LA 2RA  1LA --- 1RA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2LA 2LA  1LA --- 1RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LA 1RA  1LA --- 1RA | None Infinite CTL_A*_B N/A N/A
-1RB 2LA 1LA  1LA --- 1RA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2LA 0RA  1LA --- 1RA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2LA 0LA  1LA --- 1RA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2LA ---  1LA --- 1LA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2LA ---  1LA --- 0RA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2LA ---  1LA --- 0LA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 1RA ---  1LA --- --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2LA 1LA  1LA --- 1RA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2LA 0RA  1LA --- 1RA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2LA 0LA  1LA --- 1RA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2LA ---  1LA --- 1LA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2LA ---  1LA --- 0RA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2LA ---  1LA --- 0LA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 1RA ---  1LA --- --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1LA ---  1LA 1RZ --- | None Halt 3 5
 1RB 1LA 1RZ  1LA 2RB --- | None Halt 4 8
 1RB 1LA 2RB  1LA 2RB --- | None Infinite Reverse_Engineer N/A N/A
@@ -2636,7 +2636,7 @@
 1RB 1LA 1LA  1LA 2RB --- | None Infinite Reverse_Engineer N/A N/A
 1RB 1LA 0RA  1LA 2RB --- | None Infinite Reverse_Engineer N/A N/A
 1RB 1LA 0LA  1LA 2RB --- | None Infinite Reverse_Engineer N/A N/A
-1RB 1LA ---  1LA 2LB --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 1LA ---  1LA 2LB --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1LA ---  1LA 1RB --- | None Infinite Reverse_Engineer N/A N/A
 1RB 1LA ---  1LA 1LB --- | None Infinite Reverse_Engineer N/A N/A
 1RB 1LA ---  1LA 0RB --- | None Infinite Reverse_Engineer N/A N/A
@@ -2645,31 +2645,31 @@
 1RB 1LA 2RB  1LA 2RA --- | None Infinite Reverse_Engineer N/A N/A
 1RB 1LA 2LB  1LA 2RA 1RZ | None Halt 3 10
 1RB 1LA 1RB  1LA 2RA --- | None Infinite Reverse_Engineer N/A N/A
-1RB 1LA 1LB  1LA 2RA --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 1LA 1LB  1LA 2RA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1LA 0RB  1LA 2RA --- | None Infinite Reverse_Engineer N/A N/A
-1RB 1LA 0LB  1LA 2RA --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 1LA 0LB  1LA 2RA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1LA 2RA  1LA 2RA --- | None Infinite Reverse_Engineer N/A N/A
-1RB 1LA 2LA  1LA 2RA --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 1LA 2LA  1LA 2RA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1LA 1RA  1LA 2RA --- | None Infinite Reverse_Engineer N/A N/A
 1RB 1LA 1LA  1LA 2RA --- | None Infinite Reverse_Engineer N/A N/A
 1RB 1LA 0RA  1LA 2RA --- | None Infinite Reverse_Engineer N/A N/A
 1RB 1LA 0LA  1LA 2RA --- | None Infinite Reverse_Engineer N/A N/A
-1RB 1LA ---  1LA 2LA --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 1LA ---  1LA 2LA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1LA ---  1LA 1RA --- | None Infinite Reverse_Engineer N/A N/A
 1RB 1LA ---  1LA 1LA --- | None Infinite Reverse_Engineer N/A N/A
 1RB 1LA ---  1LA 0RA --- | None Infinite Reverse_Engineer N/A N/A
 1RB 1LA ---  1LA 0LA --- | None Infinite Reverse_Engineer N/A N/A
-1RB 0RA ---  1LA --- --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 0LA ---  1LA --- --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 0RA ---  1LA --- --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 0LA ---  1LA --- --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB --- ---  0RA --- --- | None Infinite Reverse_Engineer N/A N/A
 1RB 1RZ ---  0LA --- --- | None Halt 1 3
 1RB 2RB 1RZ  0LA --- --- | None Halt 1 5
 1RB 2RB 2RB  0LA --- --- | None Infinite Reverse_Engineer N/A N/A
-1RB 2RB 2LB  0LA --- --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2RB 2LB  0LA --- --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2RB 1RB  0LA --- --- | None Infinite Reverse_Engineer N/A N/A
-1RB 2RB 1LB  0LA --- --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2RB 1LB  0LA --- --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2RB 0RB  0LA --- --- | None Infinite Reverse_Engineer N/A N/A
-1RB 2RB 0LB  0LA --- --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2RB 0LB  0LA --- --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2RB 2RA  0LA --- --- | None Infinite Reverse_Engineer N/A N/A
 1RB 2RB 2LA  0LA --- 1RZ | None Halt 2 7
 1RB 2RB 2LA  0LA --- 2RB | None Infinite Reverse_Engineer N/A N/A
@@ -2687,11 +2687,11 @@
 1RB 2RB 1RA  0LA --- --- | None Infinite Reverse_Engineer N/A N/A
 1RB 2RB 1LA  0LA 1RZ --- | None Halt 2 7
 1RB 2RB 1LA  0LA 2RB --- | None Infinite Reverse_Engineer N/A N/A
-1RB 2RB 1LA  0LA 2LB --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2RB 1LA  0LA 2LB --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2RB 1LA  0LA 1RB --- | None Infinite Reverse_Engineer N/A N/A
-1RB 2RB 1LA  0LA 1LB --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2RB 1LA  0LA 1LB --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2RB 1LA  0LA 0RB --- | None Infinite Reverse_Engineer N/A N/A
-1RB 2RB 1LA  0LA 0LB --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2RB 1LA  0LA 0LB --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2RB 1LA  0LA 2RA --- | None Infinite Reverse_Engineer N/A N/A
 1RB 2RB 1LA  0LA 2LA 1RZ | None Halt 2 9
 1RB 2RB 1LA  0LA 1RA --- | None Infinite Reverse_Engineer N/A N/A
@@ -2700,12 +2700,12 @@
 1RB 2RB 1LA  0LA 0LA --- | None Infinite Reverse_Engineer N/A N/A
 1RB 2RB 0RA  0LA --- --- | None Infinite Reverse_Engineer N/A N/A
 1RB 2RB 0LA  0LA --- --- | None Infinite Reverse_Engineer N/A N/A
-1RB 2LB ---  0LA --- --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2LB ---  0LA --- --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1RB ---  0LA --- --- | None Infinite Reverse_Engineer N/A N/A
-1RB 1LB ---  0LA --- --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 1LB ---  0LA --- --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 0RB ---  0LA --- --- | None Infinite Reverse_Engineer N/A N/A
-1RB 0LB ---  0LA --- --- | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2RA ---  0LA --- --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 0LB ---  0LA --- --- | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2RA ---  0LA --- --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LA ---  0LA --- 1RZ | None Halt 2 5
 1RB 2LA 1RZ  0LA --- 2RB | None Halt 2 7
 1RB 2LA 2RB  0LA --- 2RB | None Infinite Reverse_Engineer N/A N/A
@@ -2721,7 +2721,7 @@
 1RB 2LA 0RA  0LA --- 2RB | None Infinite Reverse_Engineer N/A N/A
 1RB 2LA 0LA  0LA --- 2RB | None Infinite Reverse_Engineer N/A N/A
 1RB 2LA ---  0LA 1RZ 2LB | None Halt 2 6
-1RB 2LA ---  0LA 2RB 2LB | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2LA ---  0LA 2RB 2LB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LA ---  0LA 2LB 2LB | None Infinite Reverse_Engineer N/A N/A
 1RB 2LA ---  0LA 1RB 2LB | None Infinite Reverse_Engineer N/A N/A
 1RB 2LA ---  0LA 1LB 2LB | None Infinite Reverse_Engineer N/A N/A
@@ -2743,9 +2743,9 @@
 1RB 2LA ---  0LA 0LB 1LB | None Infinite Reverse_Engineer N/A N/A
 1RB 2LA 1RZ  0LA 2RA 1LB | None Halt 2 8
 1RB 2LA ---  0LA 2LA 1LB | None Infinite Reverse_Engineer N/A N/A
-1RB 2LA ---  0LA 1RA 1LB | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2LA ---  0LA 1RA 1LB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LA ---  0LA 1LA 1LB | None Infinite Reverse_Engineer N/A N/A
-1RB 2LA ---  0LA 0RA 1LB | None Infinite Repeat_in_Place No_Quasihalt N/A
+1RB 2LA ---  0LA 0RA 1LB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LA ---  0LA 0LA 1LB | None Infinite Reverse_Engineer N/A N/A
 1RB 2LA ---  0LA --- 0RB | None Infinite Reverse_Engineer N/A N/A
 1RB 2LA ---  0LA 1RZ 0LB | None Halt 1 6
@@ -2759,7 +2759,7 @@
 1RB 2LA ---  0LA 2LA 0LB | None Infinite Reverse_Engineer N/A N/A
 1RB 2LA ---  0LA 1RA 0LB | None Infinite CTL_A* N/A N/A
 1RB 2LA ---  0LA 1LA 0LB | None Infinite Reverse_Engineer N/A N/A
-1RB 2LA ---  0LA 0RA 0LB | None Infinite Repeat_in_Place No_Quasihalt N/A
+1RB 2LA ---  0LA 0RA 0LB | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LA ---  0LA 0LA 0LB | None Infinite Reverse_Engineer N/A N/A
 1RB 2LA 1RZ  0LA --- 2RA | None Halt 3 9
 1RB 2LA 2RB  0LA --- 2RA | None Infinite Reverse_Engineer N/A N/A
@@ -2771,7 +2771,7 @@
 1RB 2LA 2RA  0LA --- 2RA | None Infinite Reverse_Engineer N/A N/A
 1RB 2LA 2LA  0LA --- 2RA | None Infinite Reverse_Engineer N/A N/A
 1RB 2LA 1RA  0LA --- 2RA | None Infinite Reverse_Engineer N/A N/A
-1RB 2LA 1LA  0LA --- 2RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2LA 1LA  0LA --- 2RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LA 0RA  0LA --- 2RA | None Infinite Reverse_Engineer N/A N/A
 1RB 2LA 0LA  0LA --- 2RA | None Infinite Reverse_Engineer N/A N/A
 1RB 2LA ---  0LA --- 2LA | None Infinite Reverse_Engineer N/A N/A
@@ -2785,11 +2785,11 @@
 1RB 2LA 2RA  0LA --- 1RA | None Infinite Reverse_Engineer N/A N/A
 1RB 2LA 2LA  0LA --- 1RA | None Infinite Reverse_Engineer N/A N/A
 1RB 2LA 1RA  0LA --- 1RA | None Infinite Reverse_Engineer N/A N/A
-1RB 2LA 1LA  0LA --- 1RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2LA 1LA  0LA --- 1RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LA 0RA  0LA --- 1RA | None Infinite Reverse_Engineer N/A N/A
 1RB 2LA 0LA  0LA --- 1RA | None Infinite Reverse_Engineer N/A N/A
-1RB 2LA ---  0LA --- 1LA | None Infinite Chain_Move No_Quasihalt N/A
-1RB 2LA ---  0LA --- 0RA | None Infinite Chain_Move No_Quasihalt N/A
+1RB 2LA ---  0LA --- 1LA | None Infinite Lin_Recur No_Quasihalt N/A
+1RB 2LA ---  0LA --- 0RA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 2LA ---  0LA --- 0LA | None Infinite Reverse_Engineer N/A N/A
 1RB 1RA ---  0LA --- --- | None Infinite Reverse_Engineer N/A N/A
 1RB 1LA ---  0LA 1RZ --- | None Halt 2 5
@@ -2799,14 +2799,14 @@
 1RB 1LA 1RB  0LA 2RB --- | None Infinite Reverse_Engineer N/A N/A
 1RB 1LA 1LB  0LA 2RB 1RZ | None Halt 2 12
 1RB 1LA 0RB  0LA 2RB --- | None Infinite Reverse_Engineer N/A N/A
-1RB 1LA 0LB  0LA 2RB --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 1LA 0LB  0LA 2RB --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1LA 2RA  0LA 2RB --- | None Infinite Reverse_Engineer N/A N/A
 1RB 1LA 2LA  0LA 2RB 1RZ | None Halt 3 11
 1RB 1LA 1RA  0LA 2RB --- | None Infinite Reverse_Engineer N/A N/A
 1RB 1LA 1LA  0LA 2RB --- | None Infinite Reverse_Engineer N/A N/A
 1RB 1LA 0RA  0LA 2RB --- | None Infinite Reverse_Engineer N/A N/A
 1RB 1LA 0LA  0LA 2RB --- | None Infinite Reverse_Engineer N/A N/A
-1RB 1LA ---  0LA 2LB --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 1LA ---  0LA 2LB --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1LA ---  0LA 1RB --- | None Infinite Reverse_Engineer N/A N/A
 1RB 1LA ---  0LA 1LB --- | None Infinite Reverse_Engineer N/A N/A
 1RB 1LA ---  0LA 0RB --- | None Infinite Reverse_Engineer N/A N/A
@@ -2817,14 +2817,14 @@
 1RB 1LA 1RB  0LA 2RA --- | None Infinite Reverse_Engineer N/A N/A
 1RB 1LA 1LB  0LA 2RA 1RZ | None Halt 6 26
 1RB 1LA 0RB  0LA 2RA --- | None Infinite Reverse_Engineer N/A N/A
-1RB 1LA 0LB  0LA 2RA --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 1LA 0LB  0LA 2RA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1LA 2RA  0LA 2RA --- | None Infinite Reverse_Engineer N/A N/A
-1RB 1LA 2LA  0LA 2RA --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 1LA 2LA  0LA 2RA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1LA 1RA  0LA 2RA --- | None Infinite Reverse_Engineer N/A N/A
 1RB 1LA 1LA  0LA 2RA --- | None Infinite Reverse_Engineer N/A N/A
 1RB 1LA 0RA  0LA 2RA --- | None Infinite Reverse_Engineer N/A N/A
 1RB 1LA 0LA  0LA 2RA --- | None Infinite Reverse_Engineer N/A N/A
-1RB 1LA ---  0LA 2LA --- | None Infinite Chain_Move No_Quasihalt N/A
+1RB 1LA ---  0LA 2LA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1LA ---  0LA 1RA --- | None Infinite Reverse_Engineer N/A N/A
 1RB 1LA ---  0LA 1LA --- | None Infinite Reverse_Engineer N/A N/A
 1RB 1LA ---  0LA 0RA --- | None Infinite Reverse_Engineer N/A N/A

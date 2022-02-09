@@ -14,6 +14,7 @@ from Common import Exit_Condition, GenContainer
 import CTL1
 import CTL2
 import IO
+import Lin_Recur_Detect
 from Macro import Turing_Machine, Simulator, Block_Finder
 from Macro.Tape import INF
 import Reverse_Engineer_Filter
@@ -32,6 +33,8 @@ def add_option_group(parser):
                    "[Default: %default]")
   group.add_option("--tape-limit", type=int, default=50,
                    help="Max tape size to allow.")
+  group.add_option("--lin-steps", type=int, default=100,
+                   help="Number of steps to run Lin_Recur detection (0 means skip).")
   group.add_option("--no-reverse-engineer", dest="reverse_engineer",
                    action="store_false", default=True,
                    help="Don't try Reverse_Engineer_Filter.")
@@ -91,6 +94,13 @@ def run_options(ttable, options, stats=None):
   if options.reverse_engineer and Reverse_Engineer_Filter.test(ttable):
     # Note: quasihalting result is not computable when using Reverse_Engineer filter.
     return Exit_Condition.INFINITE, ("Reverse_Engineer", ("N/A", "N/A"))
+  
+  if options.lin_steps:
+    result = Lin_Recur_Detect.lin_search(ttable, max_steps=options.lin_steps)
+    if result.success:
+      quasihalt_state, quasihalt_time = result.calc_quasihalt(all_states = range(len(ttable)))
+      # TODO: Include recurrence info in addition to quasihalt.
+      return Exit_Condition.INFINITE, ("Lin_Recur", (quasihalt_state, quasihalt_time))
 
   ## Construct the Macro Turing Machine (Backsymbol-k-Block-Macro-Machine)
   m = Turing_Machine.make_machine(ttable)

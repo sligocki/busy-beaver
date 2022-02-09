@@ -24,8 +24,8 @@ def main():
     result = Lin_Recur_Detect.lin_search(io_record.ttable, max_steps=args.max_steps)
 
     if result:
-      init_step, period = result
-      recur_start = Lin_Recur_Detect.period_search(io_record.ttable, init_step, period)
+      # TODO: Do something with result.calc_quasihalt.
+      recur_start = Lin_Recur_Detect.period_search(io_record.ttable, result.init_step, result.period)
 
       # If a Lin recurrence is detected, update the results.
       io_record.log_number = args.log_number
@@ -33,7 +33,8 @@ def main():
       io_record.extended_reason = io_record.category_reason
 
       io_record.category = Exit_Condition.INFINITE
-      io_record.category_reason = ("Lin_Recur", recur_start, period)
+      io_record.category_reason = ("Lin_Recur", recur_start, result.period,
+                                   result.offset)
 
     io.write_record(io_record)
 

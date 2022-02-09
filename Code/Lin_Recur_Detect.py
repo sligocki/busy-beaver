@@ -9,6 +9,33 @@ import Direct_Simulator
 import IO
 
 
+class Lin_Recur_Result(object):
+  def __init__(self, success,
+               init_step=None, period=None, offset=None,
+               states_used=None, states_last_seen=None):
+    self.success = success
+
+    self.init_step = init_step
+    self.period = period
+    self.offset = offset
+
+    self.states_used = states_used
+    self.states_last_seen = states_last_seen
+
+  def calc_quasihalt(self, all_states):
+    q_state = None
+    q_last_seen = -1
+    for state in all_states:
+      if state not in self.states_used:
+        if self.states_last_seen.get(state, -1) > q_last_seen:
+          q_state = state
+          q_last_seen = self.states_last_seen[state]
+    if q_state == None:
+      return ("No_Quasihalt", "N/A")
+    else:
+      return (q_state, q_last_seen + 1)
+      
+
 def are_half_tapes_equal(tape1, start_pos1, tape2, start_pos2, dir_offset):
   pos1 = start_pos1
   pos2 = start_pos2
@@ -30,6 +57,7 @@ def are_sections_equal(start_tape, end_tape, most_left_pos, most_right_pos, offs
 def lin_search(ttable, max_steps=None):
   """Detect Lin Recurrence without knowing the period or start time."""
   sim = Direct_Simulator.DirectSimulator(ttable)
+  states_last_seen = {sim.state: sim.step_num}
   sim.step()
 
   while max_steps is None or sim.step_num < max_steps:
@@ -43,10 +71,13 @@ def lin_search(ttable, max_steps=None):
     most_left_pos = most_right_pos = init_pos
     init_state = sim.state
     init_tape = sim.tape.copy()
+    states_used = set()
     while sim.step_num < steps_reset:
+      states_last_seen[sim.state] = sim.step_num
+      states_used.add(sim.state)
       sim.step()
       if sim.halted:
-        return False  # Halted
+        return Lin_Recur_Result(False)  # Halted
 
       most_left_pos = min(most_left_pos, sim.tape.position)
       most_right_pos = max(most_right_pos, sim.tape.position)
@@ -56,17 +87,28 @@ def lin_search(ttable, max_steps=None):
           if are_half_tapes_equal(init_tape, most_left_pos,
                                   sim.tape, most_left_pos + offset, dir_offset=+1):
             # print "lin_search", init_step_num, sim.step_num, sim.state, offset, most_left_pos - init_pos
-            return init_step_num, (sim.step_num - init_step_num)
+            return Lin_Recur_Result(
+              True, init_step=init_step_num,
+              period=sim.step_num - init_step_num, offset=offset,
+              states_used=states_used, states_last_seen=states_last_seen)
         elif offset < 0:  # Left
           if are_half_tapes_equal(init_tape, most_right_pos,
                                   sim.tape, most_right_pos + offset, dir_offset=-1):
             # print "lin_search", init_step_num, sim.step_num, sim.state, offset, most_right_pos - init_pos
-            return init_step_num, (sim.step_num - init_step_num)
+            return Lin_Recur_Result(
+              True, init_step=init_step_num,
+              period=sim.step_num - init_step_num, offset=offset,
+              states_used=states_used, states_last_seen=states_last_seen)
         else:  # In place
           if are_sections_equal(init_tape, sim.tape,
                                 most_left_pos, most_right_pos, offset):
             # print "lin_search", init_step_num, sim.step_num, sim.state, offset, most_left_pos - init_pos
-            return init_step_num, (sim.step_num - init_step_num)
+            return Lin_Recur_Result(
+              True, init_step=init_step_num,
+              period=sim.step_num - init_step_num, offset=offset,
+              states_used=states_used, states_last_seen=states_last_seen)
+
+  return Lin_Recur_Result(False)  # Give up, ran too long.
 
 def check_recur(ttable, init_step, period):
   sim = Direct_Simulator.DirectSimulator(ttable)
@@ -125,16 +167,15 @@ def main():
 
   ttable = IO.load_TTable_filename(args.tm_file, args.tm_line)
   result = lin_search(ttable, max_steps=args.max_steps)
-  if result:
-    # NOTE: init_step is not necessarily the earliest time that recurrence
+  if result.success:
+    # NOTE: result.init_step is not necessarily the earliest time that recurrence
     # starts, it is simply a time after which recurrence is in effect.
-    init_step, period = result
 
     # Do a second search, now that we know the recurrence period to find the
     # earliest start time of the recurrence.
-    recur_start = period_search(ttable, init_step, period)
+    recur_start = period_search(ttable, result.init_step, result.period)
 
-    print "Found Lin Recurrence: Start:", recur_start, "Period:", period
+    print "Found Lin Recurrence: Start:", recur_start, "Period:", result.period, "States used:", sorted(result.states_used)
   else:
     print "No Lin Recurrence found searching up to step", args.max_steps
 
