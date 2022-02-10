@@ -371,6 +371,8 @@ def main(args):
                         help="If specified, enumeration is started from "
                         "these input machines instead of the single empty "
                         "Turing Machine.")
+  out_parser.add_option("--force", action="store_true", default=False,
+                        help="Force overwriting outfile (don't ask).")
   out_parser.add_option("--log_number", type=int, metavar="NUM",
                         help="Log number to use in output file")
   out_parser.add_option("--no-checkpoint", action="store_true", default=False,
@@ -415,7 +417,7 @@ def main(args):
 
   ## Set up I/O
   if pout:
-    if os.path.exists(options.outfilename):
+    if os.path.exists(options.outfilename) and not options.force:
       if num_proc > 1:
         # TODO(shawn): MPI abort here and other failure places.
         parser.error("Output file %r already exists" % options.outfilename)
