@@ -219,11 +219,15 @@ class Enumerator(object):
 
   def run(self, tm):
     """Simulate TM"""
-    if self.options.time > 0:
-      return Macro_Simulator.run_timer(tm.get_TTable(), self.options,
-                                       self.stats, self.options.time)
-    else:
-      return Macro_Simulator.run_options(tm.get_TTable(), self.options, self.stats)
+    try:
+      if self.options.time > 0:
+        return Macro_Simulator.run_timer(tm.get_TTable(), self.options,
+                                         self.stats, self.options.time)
+      else:
+        return Macro_Simulator.run_options(tm.get_TTable(), self.options, self.stats)
+    except:
+      print >> sys.stderr, "ERROR: Exception raised while simulating TM:", Output_Machine.display_ttable(tm.get_TTable())
+      raise
 
   def add_transitions(self, old_tm, state_in, symbol_in):
     """Push Turing Machines with each possible transition at this state and symbol"""
