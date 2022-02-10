@@ -152,6 +152,7 @@ class Turing_Machine:
 
     self.num_states  = len(table)
     self.num_symbols = len(table[0])
+    self.num_dirs_available = 2
 
     self.max_state  = -1
     self.max_symbol = -1
