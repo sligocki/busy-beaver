@@ -14,6 +14,7 @@ import sys
 import unittest
 
 from Common import Exit_Condition
+from Macro import Simulator, Turing_Machine
 from Macro.Tape import INF
 import IO
 
@@ -32,8 +33,22 @@ class SystemTest(unittest.TestCase):
     Macro_Simulator.add_option_group(parser)
     self.options, args = parser.parse_args([])
 
+  def test_previous_bugs(self):
+    # This machine failed:
+    #   File ".../Code/Macro/Simulator.py", line 120, in calc_quasihalt
+    #     if last_seen > q_state_last_seen:
+    # while proving a rule because last_seen / q_state_last_seen were
+    # Algebraic_Expressions.
+
+    ttable = IO.parse_ttable("1RB 1RC  0LC 1LA  0LD 1LB  0RD 1RE  1LC 0RA")
+    m = Turing_Machine.make_machine(ttable)
+    m = Turing_Machine.Backsymbol_Macro_Machine(m)
+    sim = Simulator.Simulator(m, self.options)
+    sim.loop_run(100)
+    self.assertEqual(sim.op_state, Turing_Machine.INF_REPEAT)
+
   def test_small_machines(self):
-    self.options.time = 1.0  # These guys should be quick.
+    self.options.time = 1.0  # These machines should be quick.
     # TODO(shawn): Should we just list the machine ttables directly instead?
     data = [("Machines/2x2-6-4", (Exit_Condition.HALT, (6, 4))),
             ("Machines/2x3-38-9", (Exit_Condition.HALT, (38, 9))),

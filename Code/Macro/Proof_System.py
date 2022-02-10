@@ -693,7 +693,7 @@ class Proof_System(object):
       if gen_sim.op_state is not Turing_Machine.RUNNING:
         if self.verbose:
           print
-          self.print_this("** Failed: Machine stopped running **")
+          self.print_this("** Failed: Machine stopped running:", gen_sim.op_state)
           print
         return False
       # Update min_val for each expression.

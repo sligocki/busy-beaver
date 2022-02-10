@@ -9,6 +9,7 @@ build-all:
 
 test: test-all
 test-all:
+	./test_Algebraic_Expression.py
 	./test_Backtracking_Filter.py
 	./test_Enumerate.py
 	./test_Lin_Recur.py
