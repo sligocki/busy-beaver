@@ -1,9 +1,0 @@
-1RB ---  0LC 0RD  1LA 1LC  0LA 0RB | 1 Unknown 5
-1RB 1LC  0LC 1RD  --- 1LA  0LA 0RD | 1 Unknown 5
-1RB 1RA  1LC ---  0RA 0LD  0RB 0LC | 1 Unknown 5
-1RB 0RB  1LC 1RB  --- 0LD  1RA 1LD | 1 Unknown 5
-1RB 1LA  0LA 1RC  1LD 0RB  --- 1LC | 1 Unknown 5
-1RB ---  0LC 1RA  0RA 1LD  0RB 0LD | 1 Unknown 5
-1RB 0LD  1LC 1RA  0RB 0LC  --- 1LA | 1 Unknown 5
-1RB 1LA  1LA 0RC  1LD 1RC  --- 0LA | 1 Unknown 5
-1RB 1LA  0LA 1RC  1RA 1RD  --- 0RB | 1 Unknown 5

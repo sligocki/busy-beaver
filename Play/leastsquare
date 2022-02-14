@@ -1,3 +1,0 @@
-#!/bin/csh -f
-set cmddir=`dirname $0`
-sed -e 's/^.*,//' -e 's/)//' $* | tr '\012' ' ' | ${cmddir}/../Code/Recur_Fit.py
