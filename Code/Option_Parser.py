@@ -18,7 +18,7 @@ def open_infile(infilename):
   if not infilename or infilename == "-":
     return sys.stdin
   else:
-    return file(infilename, "r")
+    return open(infilename, "r")
 
 def open_outfile(outfilename, force):
   """Create output file based on filename."""
@@ -29,7 +29,7 @@ def open_outfile(outfilename, force):
       sys.stderr.write("Output text file, '%s', exists\n" % outfilename)
       if string.lower(input("Overwrite? ")) not in ("y", "yes"):
         return None
-    return file(outfilename, "w")
+    return open(outfilename, "w")
 
 def Generator_Option_Parser(argv, extra_opt, ignore_infile = True):
   """

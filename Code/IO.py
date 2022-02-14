@@ -13,7 +13,10 @@ Format looks like:
 <transition table> | <log num> <category> <category specific attributes> ... [| <extended attributes>]
 """
 
-import string, sys, time
+import io
+import string
+import sys
+import time
 
 from Common import Exit_Condition
 import Input_Machine
@@ -136,8 +139,8 @@ class IO(object):
   """
   def __init__(self, input_file, output_file, log_number = None,
                compressed = True):
-    assert input_file == None or isinstance(input_file, file), type(input_file)
-    assert output_file == None or isinstance(output_file, file), type(output_file)
+    assert input_file == None or isinstance(input_file, io.TextIOBase), type(input_file)
+    assert output_file == None or isinstance(output_file, io.TextIOBase), type(output_file)
     self.input_file  = input_file
     self.output_file = output_file
     self.log_number  = log_number

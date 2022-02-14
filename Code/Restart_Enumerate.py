@@ -18,8 +18,8 @@ except:
   print("Usage: Restart_Enumerate.py checkpoint_filename output_filename")
   sys.exit(1)
 
-enumerator = pickle.load( file(checkpoint_fn, "r") )
-outfile = file(output_fn, "ab")
+enumerator = pickle.load( open(checkpoint_fn, "r") )
+outfile = open(output_fn, "ab")
 enumerator.io = IO(None, outfile, None)
 enumerator.pout = sys.stdout
 

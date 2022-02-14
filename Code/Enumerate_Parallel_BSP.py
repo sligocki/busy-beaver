@@ -173,7 +173,7 @@ class Enumerator(object):
     if os.path.exists(self.checkpoint_filename):
       shutil.move(self.checkpoint_filename, self.backup_checkpoint_filename)
     # Save checkpoint file
-    f = file(self.checkpoint_filename, "wb")
+    f = open(self.checkpoint_filename, "wb")
     pickle.dump(self, f)
     f.close()
 
@@ -368,7 +368,7 @@ class Enumerator_Startup(object):
     # if os.path.exists(self.checkpoint_filename):
     #   shutil.move(self.checkpoint_filename, self.backup_checkpoint_filename)
     # Save checkpoint file
-    # f = file(self.checkpoint_filename, "wb")
+    # f = open(self.checkpoint_filename, "wb")
     # pickle.dump(self, f)
     # f.close()
 
@@ -459,7 +459,7 @@ def checkpoint_stack(stack,checkpoint,checkpoint_backup):
     shutil.move(checkpoint, checkpoint_backup)
 
   # Save checkpoint file
-  f = file(checkpoint, "wb")
+  f = open(checkpoint, "wb")
   pickle.dump(stack, f)
   f.close()
 
@@ -580,7 +580,7 @@ if __name__ == "__main__":
       sys.stderr.write("Output test file, '%s', exists\n" % outfilename)
       exit(1)
     # outfile = bz2.BZ2File(outfilename, "w")
-    outfile = file(outfilename, "w")
+    outfile = open(outfilename, "w")
 
   checkpoint_nProc         = checkpoint + ".%05d" % numberOfProcessors
   checkpoint_nProc_backup  = checkpoint_nProc + ".bak"
@@ -598,7 +598,7 @@ if __name__ == "__main__":
       for proc in range(0,restart_num):
         restart_procID = restart_base + ".%05d" % proc + ".%05d" % restart_num
 
-        f = file(restart_procID, "rb")
+        f = open(restart_procID, "rb")
         stack = pickle.load(f)
         f.close()
 

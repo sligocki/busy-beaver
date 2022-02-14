@@ -209,7 +209,7 @@ class Enumerator(object):
         if os.path.exists(self.checkpoint_filename):
           shutil.move(self.checkpoint_filename, self.backup_checkpoint_filename)
         # Save checkpoint file
-        f = file(self.checkpoint_filename, "wb")
+        f = open(self.checkpoint_filename, "wb")
         pickle.dump(self, f)
         f.close()
 
