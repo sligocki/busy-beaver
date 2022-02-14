@@ -484,6 +484,9 @@ def main(args):
   enumerator = Enumerator(options, stack, io, pout)
   enumerator.continue_enum()
 
+  options["infile"].close()
+  options["outfile"].close()
+
   if options.print_stats:
     pprint(enumerator.stats.__dict__)
 

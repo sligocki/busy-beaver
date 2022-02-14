@@ -177,6 +177,8 @@ def main(argv):
       next_entry = apply_results(results, next_entry, log_number)
     io.write_result_raw(*next_entry)
     next_entry = io.read_result()
+  opts["infile"].close()
+  opts["outfile"].close()
 
 if __name__ == "__main__":
   import sys

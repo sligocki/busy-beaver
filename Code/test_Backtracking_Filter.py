@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 #
 # test_Backtracking_Filter.py
 #
@@ -13,6 +13,9 @@ import sys
 import tempfile
 import unittest
 
+import tracemalloc
+tracemalloc.start()
+
 class SystemTest(unittest.TestCase):
   def setUp(self):
     # Get busy-beaver root direcory.
@@ -20,7 +23,8 @@ class SystemTest(unittest.TestCase):
     self.testdata_dir = os.path.join(test_dir, os.pardir, "Testdata")
 
   def read(self, filename):
-    return open(os.path.join(self.testdata_dir, filename), "r").read()
+    with open(os.path.join(self.testdata_dir, filename), "r") as f:
+      return f.read()
 
   def backtrack(self, filename):
     filename = os.path.join(self.testdata_dir, filename)
