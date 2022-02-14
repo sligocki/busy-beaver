@@ -7,7 +7,7 @@ Filters out machines whose halt states obviously cannot be reached based
 on backtracking.
 """
 
-from __future__ import division
+
 import copy
 
 from Common import Exit_Condition, HALT_STATE
@@ -49,15 +49,18 @@ class Partial_Config:
   def __repr__(self):
     return "%r %r %r %r" % (self.dir[0], self.state, self.current, self.dir[1])
 
-  def applies(self, (state_in, symbol_in), (symbol_out, dir_out, state_out)):
+  def applies(self, xxx_todo_changeme, xxx_todo_changeme1):
     """Tests whether this transition could have been applied to reach
     this configuration."""
+    (state_in, symbol_in) = xxx_todo_changeme
+    (symbol_out, dir_out, state_out) = xxx_todo_changeme1
     return len(self.dir[not dir_out]) == 0 or \
            self.dir[not dir_out][0] == symbol_out
 
-  def apply_trans(self, (state_in, symbol_in),
-                  (symbol_out, dir_out, state_out)):
+  def apply_trans(self, xxx_todo_changeme2, xxx_todo_changeme3):
     """Return a new configuration with transition applied backwards."""
+    (state_in, symbol_in) = xxx_todo_changeme2
+    (symbol_out, dir_out, state_out) = xxx_todo_changeme3
     new_config = copy.deepcopy(self)
     # Back away from the current symbol.
     new_config.dir[dir_out].insert(0, new_config.current)
@@ -90,12 +93,12 @@ def is_possible_config(config, dir_to_symbol):
         return False
   return True
 
-def backtrack_single_halt((halt_state, halt_symbol),
+def backtrack_single_halt(xxx_todo_changeme4,
                           to_state, dir_to_symbol, steps, max_configs):
   """Try backtrackying |steps| steps from this specific halting
   config. |to_state| is a list of transitions that lead to each state.
   |dir_to_symbol| indicates which direction symbols can be found."""
-  # All possible configurations leading to halt in i+1 steps.
+  (halt_state, halt_symbol) = xxx_todo_changeme4
   pos_configs = [Partial_Config(halt_state, halt_symbol)]
   for i in range(steps):
     # All configurations that could lead to pos_configs in one step.

@@ -30,11 +30,11 @@ class Proof_System:
     self.num_loops = 0
 
   def print_rules(self):
-    for (state, a, b, c), (init_tape, diff_tape, num_steps) in self.proven_transitions.items():
-      print
-      print state, init_tape
-      print diff_tape
-      print num_steps
+    for (state, a, b, c), (init_tape, diff_tape, num_steps) in list(self.proven_transitions.items()):
+      print()
+      print(state, init_tape)
+      print(diff_tape)
+      print(num_steps)
 
   def log(self, tape, state, step_num, loop_num):
     """Log this configuration into the table and check if it is similar to a past one.
@@ -48,7 +48,7 @@ class Proof_System:
     full_config = (state, tape, step_num, loop_num)
 
     # If this config already has a proven meta-transition return it.
-    if self.proven_transitions.has_key(stripped_config):
+    if stripped_config in self.proven_transitions:
       is_good, res = self.applies(self.proven_transitions[stripped_config], full_config)
       if is_good:
         trans, bad_delta = res
@@ -64,7 +64,7 @@ class Proof_System:
 
     # Otherwise
     # If this is the first time we see this stripped config, just store the loop number
-    if not self.past_configs.has_key(stripped_config):
+    if stripped_config not in self.past_configs:
       self.past_configs[stripped_config] = (1, loop_num)
       return False, None, None
 
@@ -86,8 +86,8 @@ class Proof_System:
 
     # ... and loops do match up, then try the proof!
     if DEBUG:
-      print
-      print "Trying configurations from these loop numbers:", old_loop_num, loop_num
+      print()
+      print("Trying configurations from these loop numbers:", old_loop_num, loop_num)
     rule = self.compare(old_config, full_config)
     if rule:
       # Remember rule
@@ -135,24 +135,24 @@ class Proof_System:
     gen_sim.op_state = Turing_Machine.RUNNING
 
     if DEBUG:
-      print
-      print "-"*60
-      print old_state, old_tape, old_step_num
-      print new_state, new_tape, new_step_num
+      print()
+      print("-"*60)
+      print(old_state, old_tape, old_step_num)
+      print(new_state, new_tape, new_step_num)
       #gen_sim.print_self()
-      print
-      print gen_sim.state, gen_sim.tape
-      print "Steps:", gen_sim.step_num
-      print "Num Nonzeros:", gen_sim.get_nonzeros()
-      show = raw_input("Show this proof (Enter nothing for no)?")
+      print()
+      print(gen_sim.state, gen_sim.tape)
+      print("Steps:", gen_sim.step_num)
+      print("Num Nonzeros:", gen_sim.get_nonzeros())
+      show = input("Show this proof (Enter nothing for no)?")
     gen_sim.step()
     self.num_loops += 1
     if DEBUG and show:
       #gen_sim.print_self()
-      print
-      print gen_sim.state, gen_sim.tape
-      print "Steps:", gen_sim.step_num
-      print "Num Nonzeros:", gen_sim.get_nonzeros()
+      print()
+      print(gen_sim.state, gen_sim.tape)
+      print("Steps:", gen_sim.step_num)
+      print("Num Nonzeros:", gen_sim.get_nonzeros())
 
     # Run the simulator
     #for i in xrange(new_loop_num - old_loop_num):
@@ -167,10 +167,10 @@ class Proof_System:
       self.num_loops += 1
       if DEBUG and show:
         #gen_sim.print_self()
-        print
-        print gen_sim.state, gen_sim.tape
-        print "Steps:", gen_sim.step_num
-        print "Num Nonzeros:", gen_sim.get_nonzeros()
+        print()
+        print(gen_sim.state, gen_sim.tape)
+        print("Steps:", gen_sim.step_num)
+        print("Num Nonzeros:", gen_sim.get_nonzeros())
         #raw_input()
       if gen_sim.op_state is not Turing_Machine.RUNNING:
         return False
@@ -221,23 +221,23 @@ class Proof_System:
     if not isinstance(num_steps, Algebraic_Expression):
       num_steps = Algebraic_Expression([], num_steps)
     if DEBUG:
-      print
-      print min_val
-      print replaces
-      print initial_tape
-      print diff_tape, num_steps
-      print "-"*60
+      print()
+      print(min_val)
+      print(replaces)
+      print(initial_tape)
+      print(diff_tape, num_steps)
+      print("-"*60)
       if show:
-        raw_input()
+        input()
     return initial_tape, diff_tape, num_steps
 
   def applies(self, rule, new_config):
     """Make sure that a meta-transion applies and provide important info"""
     if DEBUG:
-      print
-      print "Applying Rule"
-      print rule
-      print new_config
+      print()
+      print("Applying Rule")
+      print(rule)
+      print(new_config)
     ## Unpack input
     initial_tape, diff_tape, diff_num_steps = rule
     new_state, new_tape, new_step_num, new_loop_num = new_config
@@ -256,7 +256,7 @@ class Proof_System:
           init_value[x] = new_block.num - init_block.num.const
           if init_value[x] < 0:
             if DEBUG:
-              print "Fail 1 %s \t %s \t %s" % (init_block, diff_block, new_block)
+              print("Fail 1 %s \t %s \t %s" % (init_block, diff_block, new_block))
             return False, 1
           delta_value[x] = diff_block.num
           # We can't apply non-constant deltas ... yet.
@@ -274,12 +274,12 @@ class Proof_System:
               num_reps = min(num_reps, (init_value[x] // -delta_value[x])  + 1)
             except TypeError:
               if DEBUG:
-                print "Fail 2 %s \t %s \t %s" % (num_reps, init_value[x], -delta_value[x])
+                print("Fail 2 %s \t %s \t %s" % (num_reps, init_value[x], -delta_value[x]))
               return False, 2
     # If none of the diffs are negative, this will repeat forever.
     if num_reps is Chain_Tape.INF:
       if DEBUG:
-        print "Meta transition repeats forever", diff_tape
+        print("Meta transition repeats forever", diff_tape)
       return True, ((Turing_Machine.INF_REPEAT, None, None), bad_delta)
     # We can't apply recursive transitions ... yet.
     if has_variable:
@@ -287,7 +287,7 @@ class Proof_System:
     # If we cannot even apply this transition once, we're done.
     if num_reps <= 0:
       if DEBUG:
-        print "Fail 3", num_reps
+        print("Fail 3", num_reps)
       return False, 3
     ## Evaluate number of steps taken by taking meta-transition.
     ##   This would be equivolent to summing the diff_num_steps over ...

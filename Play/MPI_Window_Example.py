@@ -19,7 +19,7 @@ if rank % 2 == 0:
   win.Get([other_data, MPI.INT], (rank + 1) % num_proc)
   win.Fence()
 
-  print rank, data, other_data
+  print(rank, data, other_data)
 
   win.Free()
   #win2.Free()
@@ -32,6 +32,6 @@ else:
   win2.Get([other_data, MPI.INT], (rank + 1) % num_proc)
   win2.Fence()
 
-  print rank, data2, other_data
+  print(rank, data2, other_data)
 
   win2.Free()

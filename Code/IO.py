@@ -107,7 +107,7 @@ class Record(object):
       #assert obj[0] not in string.digits
       return obj
     else:
-      assert isinstance(obj, (int, long, float)), \
+      assert isinstance(obj, (int, float)), \
           "Object %r is invalid type %s" % (obj, type(obj))
       return str(obj)
 
@@ -208,8 +208,8 @@ class IO(object):
         result.read(line)
         yield result
       except Exception as e:
-        print >>sys.stderr, "IO Parsing error", repr(e),
-        print >>sys.stderr, "while parsing line:", line
+        print("IO Parsing error", repr(e), "while parsing line:", line,
+              file=sys.stderr)
         yield None
 
 
@@ -277,10 +277,10 @@ def load_TTable_filename(filename, line_num = 1):
 def load_TTable(infile, line_num = 1):
   """Load a transition table from a file w/ optional line number."""
   if line_num < 1:
-    raise Exception, "load_TTable: line_num must be >= 1"
+    raise Exception("load_TTable: line_num must be >= 1")
   while line_num > 1:
     if not infile.readline():
-      raise Exception, "Not enough lines in file"
+      raise Exception("Not enough lines in file")
     line_num -= 1
   line = infile.readline()
   return parse_ttable(line)
@@ -291,13 +291,13 @@ def parse_ttable(line):
   return result.ttable
 
 def test():
-  from StringIO import StringIO
+  from io import StringIO
   global s
   s = StringIO()
   io = IO(s, s)
   io.write_result_raw(8, 2, 2, -1, -1, [Exit_Condition.HALT, 3, 6],
                       [[(1, 1, 1), (1, 1, -1)], [(1, 0, 1), (1, 1, 0)]],
                       13, ["Time_Out", 2, 2])
-  print s.getvalue()
+  print(s.getvalue())
   s.seek(0)
-  print io.read_result()
+  print(io.read_result())

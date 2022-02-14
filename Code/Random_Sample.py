@@ -13,7 +13,7 @@ try:
   length = int(sys.argv[2])
   sample_size = int(sys.argv[3])
 except:
-  print "Random_Sample.py filename in_lines out_lines"
+  print("Random_Sample.py filename in_lines out_lines")
   sys.exit(1)
 outfilename = infilename + ".sample"
 
@@ -22,13 +22,13 @@ outfilename = infilename + ".sample"
 assert sample_size <= length // 2
 
 # Select random machines
-sample_nums = random.sample(xrange(1, length+1), sample_size)
+sample_nums = random.sample(range(1, length+1), sample_size)
 sample_nums.sort()
 
 infile = open(infilename, "r")
 outfile = open(outfilename, "w")
 last = 0
-for num, i in zip(sample_nums, range(len(sample_nums))):
+for num, i in zip(sample_nums, list(range(len(sample_nums)))):
   #print num, i+1, "of", sample_size
   for j in range(num - last):
     line = infile.readline()

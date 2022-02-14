@@ -43,7 +43,7 @@ class Exit_Condition(object):
             TIME_OUT: "Time_Out",
             NOT_RUN: "Not_Run",
             }
-  condition_from_name = dict((name, cond) for (cond, name) in names.items())
+  condition_from_name = dict((name, cond) for (cond, name) in list(names.items()))
 
   @classmethod
   def name(cls, cond):

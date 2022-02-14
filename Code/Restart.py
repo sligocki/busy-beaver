@@ -106,7 +106,7 @@ def Generate_Recursive(machine, num_states, num_symbols,
     message = results[2]
     sys.stderr.write("Error %d: %s\n" % (error_number, message))
     save_machine(machine, results, tape_length, max_steps, io, save_it)
-    raise Turing_Machine_Runtime_Error, "Error encountered while running a turing machine"
+    raise Turing_Machine_Runtime_Error("Error encountered while running a turing machine")
   # All other returns
   else:
     save_machine(machine, results, tape_length, max_steps, io, save_it)

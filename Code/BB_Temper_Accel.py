@@ -33,7 +33,7 @@ def optimize(Ti, Tf, pt_loops, n, seed, print_freq, steps, time, states, symbols
 
 
 def usage():
-  print "Usage:  BB_Temper_Accel.py [--help] [--T0=] [--Tf=] [--iter=] [--num=] [--seed=] [--freq=] [--steps=] [--time=] [--states=] [--symbols=]"
+  print("Usage:  BB_Temper_Accel.py [--help] [--T0=] [--Tf=] [--iter=] [--num=] [--seed=] [--freq=] [--steps=] [--time=] [--states=] [--symbols=]")
 
 if __name__ == "__main__":
   states  = 5
@@ -45,7 +45,7 @@ if __name__ == "__main__":
   loops = 1000000000
   num = 12
 
-  seed = long(1000*time.time())
+  seed = int(1000*time.time())
 
   freq = 100000
 
@@ -81,13 +81,13 @@ if __name__ == "__main__":
     if opt == "--Tf":
       Tf = float(arg)
     if opt == "--iter":
-      iter = long(arg)
+      iter = int(arg)
     if opt == "--num":
-      num = long(arg)
+      num = int(arg)
     if opt == "--seed":
-      seed = long(arg)
+      seed = int(arg)
     if opt == "--freq":
-      freq = long(arg)
+      freq = int(arg)
     if opt == "--steps":
       steps = int(arg)
     if opt == "--time":
@@ -97,17 +97,17 @@ if __name__ == "__main__":
     if opt == "--symbols":
       symbols = int(arg)
 
-  print "BB_Temper_Accel.py --T0=%f --Tf=%f --iter=%d --num=%d --seed=%s --freq=%d --steps=%d --time=%d --states=%d --symbols=%d" % \
-        (T0, Tf, loops, num, seed, freq, steps, time, states, symbols)
-  print
+  print("BB_Temper_Accel.py --T0=%f --Tf=%f --iter=%d --num=%d --seed=%s --freq=%d --steps=%d --time=%d --states=%d --symbols=%d" % \
+        (T0, Tf, loops, num, seed, freq, steps, time, states, symbols))
+  print()
 
   res = optimize(T0, Tf, loops, num, seed, freq, steps, time, states, symbols)
-  print [x[1] for x in res]
-  print
+  print([x[1] for x in res])
+  print()
   for k in range(2):
     for x in range(X):
       for y in range(Y):
-        print ('X' if C[k][0][x][y] else ' '),
-      print
-    print
+        print(('X' if C[k][0][x][y] else ' '), end=' ')
+      print()
+    print()
 

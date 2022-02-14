@@ -15,7 +15,7 @@ VERBOSE = False
 
 class CTL_Table(dict):
   def __getitem__(self, key):
-    if not self.has_key(key):
+    if key not in self:
       self[key] = (set(), set())
     return dict.__getitem__(self, key)
 
@@ -37,8 +37,8 @@ def CTL(machine, config, end_time=None):
 
     if VERBOSE:
       for term in new_table:
-        print term,":",new_table[term]
-      print
+        print(term,":",new_table[term])
+      print()
 
     table, new_table = new_table, CTL_Table()
     for state, dir in table:
@@ -48,7 +48,7 @@ def CTL(machine, config, end_time=None):
         if trans.condition != Turing_Machine.RUNNING:
           return False
         if VERBOSE:
-          print "(", symb, state, dir, ") -> (", trans.symbol_out, trans.state_out, trans.dir_out, ")"
+          print("(", symb, state, dir, ") -> (", trans.symbol_out, trans.state_out, trans.dir_out, ")")
 
         # Ex: (1|5)* A> 4 (1|4|5)* -> (1|5)* <B 2 (1|4|5)*
         # table[<B][0] = table[A>][0]; table[<B][1] = table[A>][1] + [2]
@@ -80,7 +80,7 @@ class GenContainer:
 def test_CTL(ttable, cutoff, block_size=1, offset=None):
   m = Turing_Machine.Simple_Machine(ttable)
   if VERBOSE:
-    print Turing_Machine.machine_ttable_to_str(m)
+    print(Turing_Machine.machine_ttable_to_str(m))
 
   if block_size != 1:
     m = Turing_Machine.Block_Macro_Machine(m, block_size, offset)
@@ -92,8 +92,8 @@ def test_CTL(ttable, cutoff, block_size=1, offset=None):
   if sim.op_state != Turing_Machine.RUNNING:
     return False
   if VERBOSE:
-    print sim.tape.print_with_state(sim.state)
-    print
+    print(sim.tape.print_with_state(sim.state))
+    print()
   tape = [None, None]
   for d in range(2):
     tape[d] = [block.symbol for block in reversed(sim.tape.tape[d]) if block.num != "Inf"]
@@ -104,10 +104,10 @@ def test_from_file(filename, line, cutoff, block_size, offset):
   ttable = IO.load_TTable_filename(filename, line)
   if test_CTL(ttable, cutoff, block_size, offset):
     if VERBOSE:
-      print "Success :)"
+      print("Success :)")
   else:
     if VERBOSE:
-      print "Failure :("
+      print("Failure :(")
 
 # Main
 if __name__ == "__main__":
@@ -119,7 +119,7 @@ if __name__ == "__main__":
     block_size = int(sys.argv[4])
     offset = int(sys.argv[5])
   except:
-    print "CTL1.py filename line_num cutoff block_size offset"
+    print("CTL1.py filename line_num cutoff block_size offset")
     sys.exit(1)
   VERBOSE = True
   test_from_file(filename, line, cutoff, block_size, offset)

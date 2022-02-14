@@ -51,7 +51,7 @@ def Dual_Machine_Recursive(machine_num, machine, num_states, num_symbols,
     sys.stderr.write("Error %d: %s\n" % (error_number, message))
     save_machine(machine_num, machine, results,
                  old_tape_length, old_max_steps, io, old_results)
-    raise Turing_Machine_Runtime_Error, "Error encountered while running a turing machine"
+    raise Turing_Machine_Runtime_Error("Error encountered while running a turing machine")
 
   # If it's been classified:
   #    0) Halt

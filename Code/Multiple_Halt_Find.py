@@ -9,7 +9,7 @@ Prints out all TMs with more than one halt state and lists the number of TMs
 that have each number of halts.
 """
 
-from __future__ import division
+
 import math
 import sys
 
@@ -44,9 +44,9 @@ for io_record in io:
 total_count = sum(count.values())
 width = int(math.log(total_count, 10)) + 2
 
-print
+print()
 for n in range(1, max(count.keys()) + 1):
-  print ("%"+`width`+"d machines with %d halts (%.1f%%)") % (
-    count.get(n, 0), n, count.get(n, 0) * 100 / total_count)
-print
-print ("%"+`width`+"d total machines") % total_count
+  print(("%"+repr(width)+"d machines with %d halts (%.1f%%)") % (
+    count.get(n, 0), n, count.get(n, 0) * 100 / total_count))
+print()
+print(("%"+repr(width)+"d total machines") % total_count)

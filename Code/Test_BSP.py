@@ -7,15 +7,15 @@ Some communication timing tests for BSP from ScientificPython.
 """
 
 import copy, sys, time, math, random, os, shutil, operator
-import cPickle as pickle
+import pickle as pickle
 
 from Scientific.BSP import *
 
 def print_value(value):
-  print value
+  print(value)
 
 def print_blank():
-  print
+  print()
 
 # Command line interpretter code
 if __name__ == "__main__":
@@ -24,23 +24,23 @@ if __name__ == "__main__":
   global_print_value = ParRootFunction(print_value)
   global_print_blank = ParRootFunction(print_blank)
 
-  range0000001 = range(0,   1)
-  range0000010 = range(0,  10)
-  range0000100 = range(0, 100)
-  range0001000 = range(0,1000)
+  range0000001 = list(range(0,   1))
+  range0000010 = list(range(0,  10))
+  range0000100 = list(range(0, 100))
+  range0001000 = list(range(0,1000))
 
   range0010000 =   10*range0001000
   range0100000 =  100*range0001000
   range1000000 = 1000*range0001000
 
   count1 = 10000
-  xcount1 = xrange(0,count1)
+  xcount1 = range(0,count1)
 
   count2 = 100
-  xcount2 = xrange(0,count2)
+  xcount2 = range(0,count2)
 
   count3 = 100
-  xcount3 = xrange(0,count3)
+  xcount3 = range(0,count3)
 
   t1 = time.time()
   for i in xcount1:

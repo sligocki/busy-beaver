@@ -4,7 +4,7 @@
 """
 Search for a good block size for the TM simulator.
 """
-from __future__ import division
+
 
 import copy
 import optparse
@@ -50,8 +50,8 @@ def block_finder(machine, options):
   sim = Simulator(machine, new_options)
 
   if options.verbose_block_finder:
-    print
-    print "Block finder start time:", time.clock()
+    print()
+    print("Block finder start time:", time.clock())
   ## Find the least compressed time in before limit
   if options.bf_limit1 > 0:
     # Run sim to find when the tape is least compressed with macro size 1
@@ -66,14 +66,14 @@ def block_finder(machine, options):
       # If it has stopped running then this is a good block size!
       if sim.op_state != Turing_Machine.RUNNING:
         if options.verbose_block_finder:
-          print "Halted, returning base block size: 1"
-          print
+          print("Halted, returning base block size: 1")
+          print()
         return 1
 
     if options.verbose_block_finder:
-      print "Found least compression time:", time.clock()
-      print "Least compression at step:", worst_loop
-      print
+      print("Found least compression time:", time.clock())
+      print("Least compression at step:", worst_loop)
+      print()
 
     # TODO: Instead of re-seeking, keep going till next bigger tape?
     sim = Simulator(machine, new_options)
@@ -84,17 +84,17 @@ def block_finder(machine, options):
     sim.run(options.bf_limit1)
 
   if options.verbose_block_finder:
-    print "Reset sim time:", time.clock()
-    print
+    print("Reset sim time:", time.clock())
+    print()
 
   # Analyze this time to see which block size provides greatest compression
   tape = uncompress_tape(sim.tape.tape)
 
   if options.verbose_block_finder:
-    print "Uncompressed tape time:", time.clock()
-    print
-    print tape
-    print
+    print("Uncompressed tape time:", time.clock())
+    print()
+    print(tape)
+    print()
 
   min_compr = len(tape) + 1 # Worse than no compression
   opt_size = 1
@@ -105,11 +105,11 @@ def block_finder(machine, options):
       opt_size = block_size
 
   if options.verbose_block_finder:
-    print "Run1 end time:", time.clock()
-    print "Optimal base block size:", opt_size
-    print
-    print tape
-    print
+    print("Run1 end time:", time.clock())
+    print("Optimal base block size:", opt_size)
+    print()
+    print(tape)
+    print()
 
   if options.bf_limit2 <= 0:
     return opt_size
@@ -128,7 +128,7 @@ def block_finder(machine, options):
     chain_factor = sim.steps_from_chain / sim.steps_from_macro
 
     if options.verbose_block_finder:
-      print mult, chain_factor
+      print(mult, chain_factor)
 
     # Note that we prefer smaller multiples
     # We only choose larger multiples if they perform much better
@@ -138,10 +138,10 @@ def block_finder(machine, options):
     mult += 1
 
   if options.verbose_block_finder:
-    print
-    print "Run2 end time:", time.clock()
-    print "Optimal block mult:", opt_mult
-    print
+    print()
+    print("Run2 end time:", time.clock())
+    print("Optimal block mult:", opt_mult)
+    print()
     sys.stdout.flush()
 
   return opt_mult*opt_size

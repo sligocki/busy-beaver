@@ -15,7 +15,7 @@ if __name__ == "__main__":
 
   lines = []
 
-  for i in xrange(num):
+  for i in range(num):
     filename = base + (".%05d" % i) + ".unknown"
 
     file = open(filename,"r")
@@ -23,7 +23,7 @@ if __name__ == "__main__":
     file.close()
 
     if i % 100 == 0:
-      print i,len(lines)
+      print(i,len(lines))
       sys.stdout.flush()
 
   random.seed()
@@ -32,10 +32,10 @@ if __name__ == "__main__":
   numLines = len(lines)
   numPer   = float(numLines)/float(num)
 
-  print numLines,numPer
+  print(numLines,numPer)
   sys.stdout.flush()
 
-  for i in xrange(num):
+  for i in range(num):
     start = int( i   *numPer)
     end   = int((i+1)*numPer)
 
@@ -46,5 +46,5 @@ if __name__ == "__main__":
     file.close()
 
     if i % 100 == 0:
-      print i,start,end
+      print(i,start,end)
       sys.stdout.flush()

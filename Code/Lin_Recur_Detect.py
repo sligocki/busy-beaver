@@ -1,4 +1,4 @@
-#! /usr/bin/env python2
+#! /usr/bin/env python
 """
 Search for Lin Recurrence (as discussed in https://nickdrozd.github.io/2021/02/24/lin-recurrence-and-lins-algorithm.html)
 """
@@ -175,9 +175,9 @@ def main():
     # earliest start time of the recurrence.
     recur_start = period_search(ttable, result.init_step, result.period)
 
-    print "Found Lin Recurrence: Start:", recur_start, "Period:", result.period, "States used:", sorted(result.states_used)
+    print("Found Lin Recurrence: Start:", recur_start, "Period:", result.period, "States used:", sorted(result.states_used))
   else:
-    print "No Lin Recurrence found searching up to step", args.max_steps
+    print("No Lin Recurrence found searching up to step", args.max_steps)
 
 if __name__ == "__main__":
   main()

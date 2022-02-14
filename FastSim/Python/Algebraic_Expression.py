@@ -1,8 +1,9 @@
 import string, operator
 from Number import Number, Rational
+from functools import reduce
 
 def is_scalar(value):
-  return isinstance(value, (int, long, Rational))
+  return isinstance(value, (int, Rational))
 
 class Variable:
   """A distinct variable in an algebraic expression"""
@@ -118,7 +119,7 @@ class Expression(Number):
     if len(self.terms) == 1 and len(self.terms[0].vars) == 1:
       return self.terms[0].vars[0].var
     else:
-      raise Exception, "This expression does not have exactly 1 variable!"
+      raise Exception("This expression does not have exactly 1 variable!")
 
 def term_sum(terms1, terms2):
   """Add 2 lists of terms"""

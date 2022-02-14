@@ -168,7 +168,7 @@ class Collatz_Rule_Group(Rule):
     subrule.name = "%s.%d" % (self.name, len(self.rules))
 
     # TODO: Implement
-    raise Exception, "Collatz_Rule_Group.states_last_seen is not defined"
+    raise Exception("Collatz_Rule_Group.states_last_seen is not defined")
     self.states_last_seen = None  # TODO
 
     self.num_uses = 0
@@ -187,14 +187,14 @@ class Collatz_Rule_Group(Rule):
     # We only say a Collatz Group is infinite if we have all the subrules.
     # TODO(shawn): Check if partial rule groups are infinite.
     if len(self.rules) == self.total_subrules:
-      non_increasing_rules = [rule for rule in self.rules.values()
+      non_increasing_rules = [rule for rule in list(self.rules.values())
                               if not rule.increasing]
       if len(non_increasing_rules) == 0:
         self.infinite = True
 
   def __repr__(self):
     s = "Collatz Rule Group %s\n" % self.name
-    for rule in self.rules.values():
+    for rule in list(self.rules.values()):
       s += str(rule).replace("\n", "\n  ")
       s += "\n\n"
     return s
@@ -342,16 +342,16 @@ class Proof_System(object):
 
   def print_this(self, *args):
     """Print with prefix."""
-    print self.verbose_prefix,
+    print(self.verbose_prefix, end=' ')
     for arg in args:
-      print arg,
-    print
+      print(arg, end=' ')
+    print()
 
   def delete_rule(self, name):
     found = False
 
     if self.options.limited_rules:
-      for key, rules in self.rules.iteritems():
+      for key, rules in self.rules.items():
         for rule in rules:
           if name == rule.name:
             rules.remove(rule)
@@ -359,23 +359,23 @@ class Proof_System(object):
             break
 
       if not found:
-        print "\nRule %s not found\n" % (name,)
+        print("\nRule %s not found\n" % (name,))
     else:
-      for key, rule in self.rules.iteritems():
+      for key, rule in self.rules.items():
         if name == rule.name:
           del self.rules[key]
           found = True
           break
 
       if not found:
-        print "\nRule %s not found\n" % (name,)
+        print("\nRule %s not found\n" % (name,))
 
   def rename_rule(self, src, dest):
     found_src  = False
     found_dest = False
 
     if self.options.limited_rules:
-      for key, rules in self.rules.iteritems():
+      for key, rules in self.rules.items():
         for rule in rules:
           if src == rule.name:
             found_src = True
@@ -383,16 +383,16 @@ class Proof_System(object):
             found_dest = True
 
       if not found_src:
-        print "\nRule %s not found\n" % (src,)
+        print("\nRule %s not found\n" % (src,))
       elif found_dest:
-        print "\nRule %s already exists\n" % (dest,)
+        print("\nRule %s already exists\n" % (dest,))
       else:
-        for key, rules in self.rules.iteritems():
+        for key, rules in self.rules.items():
           for rule in rules:
             if src == rule.name:
               rule.name = dest
     else:
-      for key, rule in self.rules.iteritems():
+      for key, rule in self.rules.items():
         if src == rule.name:
           key_src = key
           found_src = True
@@ -400,15 +400,15 @@ class Proof_System(object):
           found_dest = True
 
       if not found_src:
-        print "\nRule %s not found\n" % (src,)
+        print("\nRule %s not found\n" % (src,))
       elif found_dest:
-        print "\nRule %s already exists\n" % (dest,)
+        print("\nRule %s already exists\n" % (dest,))
       else:
         self.rules[key_src].name = dest
 
   def print_rules(self, args=None):
     if self.options.limited_rules:
-      rules = list(set([(rule.name, rule) for key in self.rules.keys() for rule in self.rules[key]]))
+      rules = list(set([(rule.name, rule) for key in list(self.rules.keys()) for rule in self.rules[key]]))
       sorted_rules = sorted(rules)
       found_rule = False
       for rule_name, rule in sorted_rules:
@@ -416,7 +416,7 @@ class Proof_System(object):
           if rule.name != args:
             continue
         found_rule = True
-        print
+        print()
         self.print_this("Rule", rule.name)
         state = rule.initial_state
         self.print_this("Initial:", rule.initial_tape.print_with_state(state))
@@ -425,9 +425,9 @@ class Proof_System(object):
         self.print_this("Num uses:", rule.num_uses)
 
       if found_rule:
-        print
+        print()
     else:
-      sorted_keys = sorted([[self.rules[key].name, key] for key in self.rules.keys()])
+      sorted_keys = sorted([[self.rules[key].name, key] for key in list(self.rules.keys())])
       found_rule = False
       for rule_name, key in sorted_keys:
         rule = self.rules[key]
@@ -435,7 +435,7 @@ class Proof_System(object):
           if rule.name != args:
             continue
         found_rule = True
-        print
+        print()
         self.print_this("Rule", rule.name)
         state = rule.initial_state
         self.print_this("Initial:", rule.initial_tape.print_with_state(state))
@@ -444,7 +444,7 @@ class Proof_System(object):
         self.print_this("Num uses:", rule.num_uses)
 
       if found_rule:
-        print
+        print()
 
   def log_and_apply(self, tape, state, step_num, loop_num):
     """
@@ -463,12 +463,12 @@ class Proof_System(object):
       (state, dir, stripped_tape_left, stripped_tape_right) = stripped_config
 
       stripped_tape_left = (Tape.Repeated_Symbol(0,-1),) + stripped_tape_left
-      stripped_configs_left = [(0, state, dir, stripped_tape_left[-i:], i) for i in xrange(1,len(stripped_tape_left)+1)]
+      stripped_configs_left = [(0, state, dir, stripped_tape_left[-i:], i) for i in range(1,len(stripped_tape_left)+1)]
 
       list_left = [rule for config in stripped_configs_left if config in self.rules for rule in self.rules[config]]
 
       stripped_tape_right = (Tape.Repeated_Symbol(0,-1),) + stripped_tape_right
-      stripped_configs_right = [(1, state, dir, stripped_tape_right[-i:], i) for i in xrange(1,len(stripped_tape_right)+1)]
+      stripped_configs_right = [(1, state, dir, stripped_tape_right[-i:], i) for i in range(1,len(stripped_tape_right)+1)]
 
       list_right = [rule for config in stripped_configs_right if config in self.rules for rule in self.rules[config]]
 
@@ -491,7 +491,7 @@ class Proof_System(object):
           rule.num_uses += 1
           assert isinstance(result, ProverResult), result
           if self.options.compute_steps and not result.states_last_seen:
-            print >> sys.stderr, "UNIMPLEMENTED: Prover missing states_last_seen for rule:", rule, result
+            print("UNIMPLEMENTED: Prover missing states_last_seen for rule:", rule, result, file=sys.stderr)
           return result
     else:
       if stripped_config in self.rules:
@@ -509,7 +509,7 @@ class Proof_System(object):
           rule.num_uses += 1
           assert isinstance(result, ProverResult), result
           if self.options.compute_steps and not result.states_last_seen:
-            print >> sys.stderr, "UNIMPLEMENTED: Prover missing states_last_seen for rule:", rule, result
+            print("UNIMPLEMENTED: Prover missing states_last_seen for rule:", rule, result, file=sys.stderr)
           return result
         if res != UNPROVEN_PARITY:
           return ProverResult(NOTHING_TO_DO)
@@ -587,7 +587,7 @@ class Proof_System(object):
             rule.num_uses += 1
             assert isinstance(result, ProverResult), result
             if self.options.compute_steps and not result.states_last_seen:
-              print >> sys.stderr, "UNIMPLEMENTED: Prover missing states_last_seen for rule:", rule, result
+              print("UNIMPLEMENTED: Prover missing states_last_seen for rule:", rule, result, file=sys.stderr)
             return result
 
     return ProverResult(NOTHING_TO_DO)
@@ -601,7 +601,7 @@ class Proof_System(object):
     new_state, new_tape, new_step_num, new_loop_num = full_config
 
     if self.verbose:
-      print
+      print()
       self.print_this("** Testing new rule **")
       self.print_this("Original config:", new_tape.print_with_state(new_state))
       self.print_this("Start loop:", new_loop_num, "Loops:", delta_loop)
@@ -663,10 +663,10 @@ class Proof_System(object):
         # fixed sized.
         # For now we just fail. It may not be worth implimenting this anyway
         if self.verbose:
-          print
+          print()
           self.print_this("** Failed: Exponent below min **")
           self.print_this(gen_sim.tape.print_with_state(gen_sim.state))
-          print
+          print()
         return False
       gen_sim.step()
       cur_dir = gen_sim.tape.dir
@@ -683,7 +683,7 @@ class Proof_System(object):
         for init_block in initial_tape.tape[0]+initial_tape.tape[1]:
           if isinstance(init_block.num, Algebraic_Expression):
             init_block.num = init_block.num.substitute(gen_sim.replace_vars)
-        for old_var, new_expr in gen_sim.replace_vars.items():
+        for old_var, new_expr in list(gen_sim.replace_vars.items()):
           new_var = new_expr.variable()
           min_val[new_var] = min_val[old_var]
           del min_val[old_var]
@@ -692,9 +692,9 @@ class Proof_System(object):
 
       if gen_sim.op_state is not Turing_Machine.RUNNING:
         if self.verbose:
-          print
+          print()
           self.print_this("** Failed: Machine stopped running:", gen_sim.op_state)
-          print
+          print()
         return False
       # Update min_val for each expression.
       # TODO: We only need to update for the blocks on each side of head.
@@ -709,10 +709,10 @@ class Proof_System(object):
             # it will fail.
             elif len(block.num.terms) > 1:
               if self.verbose:
-                print
+                print()
                 self.print_this("** Failed: Multiple vars in one term **")
                 self.print_this(gen_sim.tape)
-                print
+                print()
               return False
 
     # Make sure finishing tape has the same stripped config as original.
@@ -720,12 +720,12 @@ class Proof_System(object):
                                        gen_sim.tape.tape)
     if gen_stripped_config != stripped_config:
       if self.verbose:
-        print
+        print()
         self.print_this("** Failed: Config mismatch **")
         self.print_this(gen_sim.tape)
         self.print_this(gen_stripped_config)
         self.print_this(stripped_config)
-        print
+        print()
       return False
 
     # If machine has run delta_steps without error, it is a general rule.
@@ -782,7 +782,7 @@ class Proof_System(object):
       if self.compute_steps:
         num_steps = gen_sim.step_num.substitute(assignment)
         states_last_seen = {state: last_seen.substitute(assignment)
-                            for state, last_seen in gen_sim.states_last_seen.iteritems()}
+                            for state, last_seen in gen_sim.states_last_seen.items()}
       else:
         num_steps = 0
         states_last_seen = None
@@ -793,10 +793,10 @@ class Proof_System(object):
                           states_last_seen=states_last_seen)
 
       if self.verbose:
-        print
+        print()
         self.print_this("** New recursive rule proven **")
         self.print_this(str(rule).replace("\n", "\n " + self.verbose_prefix))
-        print
+        print()
 
       return rule
     elif rule_type == Collatz_Rule:
@@ -842,7 +842,7 @@ class Proof_System(object):
       if self.compute_steps:
         num_steps = gen_sim.step_num.substitute(assignment)
         states_last_seen = {state: last_seen.substitute(assignment)
-                            for state, last_seen in gen_sim.states_last_seen.iteritems()}
+                            for state, last_seen in gen_sim.states_last_seen.items()}
       else:
         num_steps = 0
         states_last_seen = None
@@ -853,10 +853,10 @@ class Proof_System(object):
                           states_last_seen=states_last_seen)
 
       if self.verbose:
-        print
+        print()
         self.print_this("** New Collatz rule proven **")
         self.print_this(str(rule).replace("\n", "\n " + self.verbose_prefix))
-        print
+        print()
 
       return rule
     else:
@@ -880,7 +880,7 @@ class Proof_System(object):
       if self.compute_steps:
         num_steps = gen_sim.step_num.substitute(replaces)
         states_last_seen = {state: last_seen.substitute(replaces)
-                            for state, last_seen in gen_sim.states_last_seen.iteritems()}
+                            for state, last_seen in gen_sim.states_last_seen.items()}
       else:
         num_steps = 0
         states_last_seen = None
@@ -906,10 +906,10 @@ class Proof_System(object):
         rule = Diff_Rule(initial_tape, diff_tape, new_state, num_steps, gen_sim.num_loops, self.rule_num, states_last_seen=states_last_seen)
 
       if self.verbose:
-        print
+        print()
         self.print_this("** New rule proven **")
         self.print_this(str(rule).replace("\n", "\n " + self.verbose_prefix))
-        print
+        print()
 
       return rule
 
@@ -917,7 +917,7 @@ class Proof_System(object):
     """Try to apply a rule to a given configuration."""
     if self.verbose:
       start_state, start_tape, start_step_num, start_loop_num = start_config
-      print
+      print()
       self.print_this("++ Applying Rule ++")
       self.print_this("Loop:", start_loop_num, "Rule ID:", rule.name)
       self.print_this("Rule:", str(rule).replace("\n",
@@ -997,7 +997,7 @@ class Proof_System(object):
               self.print_this("")
             return False, None
           delta_value[x] = diff_block.num
-          assert(isinstance(delta_value[x], (int, long)))
+          assert(isinstance(delta_value[x], int))
           # If this block's repetitions will be depleted during this transition,
           #   count the number of repetitions that it can allow while staying
           #   above the minimum requirement.
@@ -1029,7 +1029,7 @@ class Proof_System(object):
                         if isinstance(block.num, Algebraic_Expression):
                           block.num = block.num.substitute(replace_vars)
                     # Update all initial values as well.
-                    for y in init_value.keys():
+                    for y in list(init_value.keys()):
                       if isinstance(init_value[y], Algebraic_Expression):
                         init_value[y] = init_value[y].substitute(replace_vars)
                     # 2) num_reps = (3k + 12) // 3 + 1 = k + (12//3) + 1
@@ -1086,7 +1086,7 @@ class Proof_System(object):
     if num_reps is None:
       if self.verbose:
         self.print_this("++ Rules applies infinitely ++")
-        print
+        print()
       return True, (ProverResult(INF_REPEAT,  states_last_seen={
         state: Tape.INF for state in rule.states_last_seen}),
                     large_delta)
@@ -1096,7 +1096,7 @@ class Proof_System(object):
         num_reps <= 0):
       if self.verbose:
         self.print_this("++ Cannot even apply transition once ++")
-        print
+        print()
       return False, None
 
     ## Determine number of base steps taken by applying rule.
@@ -1114,13 +1114,13 @@ class Proof_System(object):
         except TypeError:
           if self.verbose:
             self.print_this("++ Cannot divide expression by 2 ++")
-            print
+            print()
           return False, None
       # Compute diff_steps until each state was last seen.
       last_value = {var: init_value[var] + delta_value[var] * (num_reps - 1)
                     for var in init_value}
       states_last_seen = {}
-      for state, last_seen in rule.states_last_seen.iteritems():
+      for state, last_seen in rule.states_last_seen.items():
         # After the rule is applied, how many steps before that did we last see
         # `state`.
         last_seen_ago = rule.num_steps - last_seen
@@ -1149,7 +1149,7 @@ class Proof_System(object):
       self.print_this("Diff steps:", diff_steps)
       self.print_this("Resulting tape:",
                       return_tape.print_with_state(new_state))
-      print
+      print()
     return True, (ProverResult(APPLY_RULE, return_tape, diff_steps, replace_vars,
                                states_last_seen=states_last_seen),
                   large_delta)
@@ -1171,7 +1171,7 @@ class Proof_System(object):
                                              current_list):
       if self.verbose:
         self.print_this("++ Rule applies infinitely ++")
-        print
+        print()
       return True, (ProverResult(INF_REPEAT, states_last_seen={
         state: Tape.INF for state in rule.states_last_seen}),
                     large_delta)
@@ -1222,11 +1222,11 @@ class Proof_System(object):
         self.print_this("++ Recursive rule applied ++")
         self.print_this("Times applied", num_reps)
         self.print_this("Resulting tape:", tape)
-        print
+        print()
       # Calculate states_last_seen
       if rule.states_last_seen:
         states_last_seen = {}
-        for state, last_seen in rule.states_last_seen.iteritems():
+        for state, last_seen in rule.states_last_seen.items():
           # After the rule is applied, how many steps before that did we last see
           # `state`.
           last_seen_ago = rule.num_steps - last_seen
@@ -1242,7 +1242,7 @@ class Proof_System(object):
         self.print_this("++ Current config is below rule minimum ++")
         self.print_this("Config tape:", start_tape)
         self.print_this("Rule min vals:", min_list)
-        print
+        print()
       return False, None
 
   def apply_collatz_rule(self, group, start_config):
@@ -1260,7 +1260,7 @@ class Proof_System(object):
       #if config_is_above_min(rule.var_list, rule.min_list, current_list):
       if self.verbose:
         self.print_this("++ Rule applies infinitely ++")
-        print
+        print()
       return True, (ProverResult(INF_REPEAT, states_last_seen={
         state: Tape.INF for state in rule.states_last_seen}),
                     large_delta)
@@ -1271,7 +1271,7 @@ class Proof_System(object):
         if self.verbose:
           self.print_this("++ Cannot apply Collatz rule to expressions ++")
           self.print_this("Config tape:", start_tape)
-          print
+          print()
         return False, "Cannot apply Collatz rule to general expression"
 
     # Keep applying rule until we can't anymore.
@@ -1295,7 +1295,7 @@ class Proof_System(object):
           self.print_this("++ Reached unproven Collatz parity ++")
           self.print_this("Config tape:", start_tape)
           self.print_this("Parities:", parity_list)
-          print
+          print()
         reason = UNPROVEN_PARITY
         break
       rule = group.rules[parity_list]
@@ -1340,7 +1340,7 @@ class Proof_System(object):
         self.print_this("++ Collatz rule applied ++")
         self.print_this("Times applied", num_reps)
         self.print_this("Resulting tape:", tape)
-        print
+        print()
       return True, (ProverResult(APPLY_RULE, tape, diff_steps, {}),
                     large_delta)
     else:
@@ -1348,7 +1348,7 @@ class Proof_System(object):
         self.print_this("++ Current config is below rule minimum ++")
         self.print_this("Config tape:", start_tape)
         self.print_this("Rule min vals:", rule.min_list)
-        print
+        print()
       return False, reason
 
 def config_is_above_min(var_list, min_list, current_list, assignment={}):

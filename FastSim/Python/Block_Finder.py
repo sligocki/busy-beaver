@@ -1,4 +1,4 @@
-from __future__ import division
+
 
 import copy
 import sys
@@ -52,7 +52,7 @@ def block_finder(machine, limit=200):
       min_compr = compr_size
       opt_size = block_size
   if DEBUG:
-    print "Optimal base block size:", opt_size
+    print("Optimal base block size:", opt_size)
     sys.stdout.flush()
   return opt_size
 
@@ -77,7 +77,7 @@ def block_finder(machine, limit=200):
       opt_mult = mult
     mult += 1
   if DEBUG:
-    print "Optimal block mult:", opt_mult
+    print("Optimal block mult:", opt_mult)
     sys.stdout.flush()
   return opt_mult*opt_size
 

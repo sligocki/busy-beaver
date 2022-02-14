@@ -57,7 +57,7 @@ class IO:
       self.output_file.write("%d " % max_steps)
 
       for item in results:
-        if type(item) in [int, long]:
+        if type(item) in [int, int]:
           self.output_file.write("%d " % item)
         elif type(item) == float:
           self.output_file.write("%.0f " % item)
@@ -70,7 +70,7 @@ class IO:
         self.output_file.write("%d " % log_number)
 
         for item in old_results:
-          if type(item) in [int, long]:
+          if type(item) in [int, int]:
             self.output_file.write("%d " % item)
           elif type(item) == float:
             self.output_file.write("%.0f " % item)
@@ -135,7 +135,7 @@ class IO:
         except:
           # Try to read a line that's just a ttable.
           machine_num = -1
-          print repr(cur_line)
+          print(repr(cur_line))
           machine_TTable = eval(cur_line)
           num_states = len(machine_TTable[0])
           num_symbols = len(machine_TTable)
@@ -161,10 +161,10 @@ def load_TTable_filename(filename, line_num = 1):
 def load_TTable(infile, line_num = 1):
   """Load a transition table from a file w/ optional line number."""
   if line_num < 1:
-    raise Exception, "load_TTable: line_num must be >= 1"
+    raise Exception("load_TTable: line_num must be >= 1")
   while line_num > 1:
     if not infile.readline():
-      raise Exception, "Not enough lines in file"
+      raise Exception("Not enough lines in file")
     line_num -= 1
   line = infile.readline()
   return get_TTable_line(line)
@@ -175,4 +175,4 @@ def get_TTable_line(line):
   if start != -1 and end != -1:
     return eval(line[start:end])
   else:
-    raise Exception, "Turing Machine not found in input file."
+    raise Exception("Turing Machine not found in input file.")

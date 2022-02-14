@@ -50,7 +50,7 @@ class Chain_Tape:
   def __repr__(self):
     if self.dir:  dir = " -> "
     else:         dir = " <- "
-    return `reverse(self.tape[0])`+dir+`self.tape[1]`
+    return repr(reverse(self.tape[0]))+dir+repr(self.tape[1])
   def copy(self):
     new = Chain_Tape()
     new.dir = self.dir

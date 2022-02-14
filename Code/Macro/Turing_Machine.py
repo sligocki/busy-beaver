@@ -82,7 +82,7 @@ def sim_limited(tm, state, start_tape, pos, dir, max_loops=10000):
   while True:
     symbol = tape[pos]
     trans = tm.get_trans_object(symbol, state, dir)
-    for state, base_last_seen in trans.states_last_seen.iteritems():
+    for state, base_last_seen in trans.states_last_seen.items():
       states_last_seen[state] = num_base_steps + base_last_seen
     num_base_steps += trans.num_base_steps
     num_loops += 1
@@ -187,23 +187,23 @@ def machine_ttable_to_str(machine):
   trans_table = machine.trans_table
 
   result += "       "
-  for j in xrange(len(trans_table[0])):
+  for j in range(len(trans_table[0])):
     result += "+-----"
   result += "+\n"
 
   result += "       "
-  for j in xrange(len(trans_table[0])):
+  for j in range(len(trans_table[0])):
     result += "|  %d  " % j
   result += "|\n"
 
   result += "   +---"
-  for j in xrange(len(trans_table[0])):
+  for j in range(len(trans_table[0])):
     result += "+-----"
   result += "+\n"
 
-  for i in xrange(len(trans_table)):
+  for i in range(len(trans_table)):
     result += "   | %c " % states[i]
-    for j in xrange(len(trans_table[i])):
+    for j in range(len(trans_table[i])):
       result += "| "
       if trans_table[i][j].condition == UNDEFINED:
         result += "--- "
@@ -214,7 +214,7 @@ def machine_ttable_to_str(machine):
     result += "|\n"
 
     result += "   +---"
-    for j in xrange(len(trans_table[0])):
+    for j in range(len(trans_table[0])):
       result += "+-----"
     result += "+\n"
 
@@ -350,7 +350,8 @@ class Block_Macro_Machine(Macro_Machine):
       self.trans_table[args] = self.eval_trans(args)
     return self.trans_table[args]
 
-  def eval_trans(self, (macro_symbol_in, macro_state_in, macro_dir_in)):
+  def eval_trans(self, xxx_todo_changeme):
+    (macro_symbol_in, macro_state_in, macro_dir_in) = xxx_todo_changeme
     if macro_dir_in == RIGHT:
       pos = 0
     else:
@@ -425,7 +426,8 @@ class Backsymbol_Macro_Machine(Macro_Machine):
       self.trans_table[args] = self.eval_trans(args)
     return self.trans_table[args]
 
-  def eval_trans(self, (macro_symbol_in, macro_state_in, macro_dir_in)):
+  def eval_trans(self, xxx_todo_changeme1):
+    (macro_symbol_in, macro_state_in, macro_dir_in) = xxx_todo_changeme1
     if macro_dir_in == RIGHT:
       tape = [macro_state_in.back_symbol, macro_symbol_in]
       pos = 1

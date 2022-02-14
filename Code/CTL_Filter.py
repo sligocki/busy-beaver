@@ -52,7 +52,7 @@ elif type == "CTL4":
   type_str  = "CTL4_A*_B_C"
   type_func = CTL4
 else:
-  print "Unknown CTL: %s" % (type,)
+  print("Unknown CTL: %s" % (type,))
   sys.exit(1)
 
 inf_reasons = (type_str, cutoff, block_size, offset)

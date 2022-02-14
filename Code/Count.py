@@ -80,11 +80,11 @@ if __name__ == "__main__":
   total = 0
   for filename in sys.argv[1:]:
     subtotal, states, symbols = count_all(filename)
-    print "", filename, subtotal
+    print("", filename, subtotal)
     sys.stdout.flush()
     total += subtotal
-  print "Total", total
+  print("Total", total)
   if states and symbols:
     expected = ((states * symbols - 1) *
                 (2 * states * symbols)**(states * symbols - 2))
-    print "Expected %dx%d: %d" % (states, symbols, expected)
+    print("Expected %dx%d: %d" % (states, symbols, expected))

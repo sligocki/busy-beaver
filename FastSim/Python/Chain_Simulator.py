@@ -67,16 +67,16 @@ class Simulator:
         return
       elif cond == Turing_Machine.RUNNING:
         if DEBUG:
-          print
-          print self.step_num, self.num_loops - 1
-          print self.state, self.tape
+          print()
+          print(self.step_num, self.num_loops - 1)
+          print(self.state, self.tape)
         self.tape = new_tape
         self.step_num += num_steps
         self.num_rule_moves += 1
         self.steps_from_rule += num_steps
         if DEBUG:
-          print self.state, self.tape
-          print self.step_num, self.num_loops
+          print(self.state, self.tape)
+          print(self.step_num, self.num_loops)
         return
     # Get current symbol
     cur_symbol = self.tape.get_top_symbol()
@@ -114,24 +114,24 @@ class Simulator:
                                   self.machine.eval_state(self.state))
   def print_self(self):
     x = len(repr(self.step_num)) + 1
-    print
-    print "         Steps:                       Times Applied:"
-    print template("Total:", self.step_num, x, self.num_loops)
+    print()
+    print("         Steps:                       Times Applied:")
+    print(template("Total:", self.step_num, x, self.num_loops))
     #print "Single Steps:", with_power(self.mtt.num_single_steps)
-    print template("Macro:", self.steps_from_macro, x, self.num_macro_moves) #, "Macro transitions defined:", len(self.mtt.macro_TTable)
-    print template("Chain:", self.steps_from_chain, x, self.num_chain_moves)
+    print(template("Macro:", self.steps_from_macro, x, self.num_macro_moves)) #, "Macro transitions defined:", len(self.mtt.macro_TTable)
+    print(template("Chain:", self.steps_from_chain, x, self.num_chain_moves))
     if self.proof:
-      print template("Rule:", self.steps_from_rule, x, self.num_rule_moves)
-      print "Rules proven:", len(self.proof.proven_transitions)
-      print "Loops through prover:", self.proof.num_loops
+      print(template("Rule:", self.steps_from_rule, x, self.num_rule_moves))
+      print("Rules proven:", len(self.proof.proven_transitions))
+      print("Loops through prover:", self.proof.num_loops)
     m = self.machine
-    print "Loops through macro machine"
+    print("Loops through macro machine")
     while isinstance(m, Turing_Machine.Macro_Machine):
-      print "", m.num_loops
+      print("", m.num_loops)
       m = m.base_machine
-    print "Time:", time.clock()
-    print self.state, self.tape
-    print "Num Nonzeros:", with_power(self.get_nonzeros())
+    print("Time:", time.clock())
+    print(self.state, self.tape)
+    print("Num Nonzeros:", with_power(self.get_nonzeros()))
 
 def template(s, m, x, n):
   title = "%-8s" % s

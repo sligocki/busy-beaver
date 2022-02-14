@@ -37,7 +37,7 @@ if __name__ == "__main__":
   try:
     basename = sys.argv[1]
   except IndexError:
-    print usage
+    print(usage)
     sys.exit(1)
 
   # Open BB data files
@@ -47,8 +47,8 @@ if __name__ == "__main__":
     undecided_file = file(basename + ".undecided", "r")
     unknown_file = file(basename + ".unknown", "r")
   except IOError:
-    print usage
-    print "Error: basename (%s) not valid." % basename
+    print(usage)
+    print("Error: basename (%s) not valid." % basename)
     sys.exit(1)
 
   # Get Stats
@@ -68,18 +68,18 @@ if __name__ == "__main__":
   digits = int(math.ceil(math.log10(num_total)))
   format_string = "%%%dd" % digits
 
-  print basename
-  print ""
-  print "Max Steps         = ", max_steps
-  print "Max Symbols       = ", max_symbols
-  print ""
-  print "Number Total      = ", format_string % num_total
-  print "Number Halt       = ", format_string % num_halt
-  print "Number Infinite   = ", format_string % num_infinite
-  print "Number Unknown    = ", format_string % num_unknown
-  print "Number Undecided  = ", format_string % num_undecided
-  print ""
-  print "Percent Halt      =", "%10.6f" % percent_halt
-  print "Percent Infinite  =", "%10.6f" % percent_infinite
-  print "Percent Unknown   =", "%10.6f" % percent_unknown
-  print "Percent Undecided =", "%10.6f" % percent_undecided
+  print(basename)
+  print("")
+  print("Max Steps         = ", max_steps)
+  print("Max Symbols       = ", max_symbols)
+  print("")
+  print("Number Total      = ", format_string % num_total)
+  print("Number Halt       = ", format_string % num_halt)
+  print("Number Infinite   = ", format_string % num_infinite)
+  print("Number Unknown    = ", format_string % num_unknown)
+  print("Number Undecided  = ", format_string % num_undecided)
+  print("")
+  print("Percent Halt      =", "%10.6f" % percent_halt)
+  print("Percent Infinite  =", "%10.6f" % percent_infinite)
+  print("Percent Unknown   =", "%10.6f" % percent_unknown)
+  print("Percent Undecided =", "%10.6f" % percent_undecided)

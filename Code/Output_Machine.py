@@ -61,15 +61,15 @@ def display_line(line):
   try:
     ones = int(parts[6])
     steps = int(parts[7])
-    print display_ttable(table), "# ",ones, "", steps, "", long_to_eng_str(ones,1,3), "", long_to_eng_str(steps,1,3)
+    print(display_ttable(table), "# ",ones, "", steps, "", long_to_eng_str(ones,1,3), "", long_to_eng_str(steps,1,3))
   except:
-    print display_ttable(table)
+    print(display_ttable(table))
 
 if __name__ == "__main__":
   import sys
 
   if not (2 <= len(sys.argv) <= 3):
-    print >>sys.stderr, "usage: Output_Machine.py filename [line-num]"
+    print("usage: Output_Machine.py filename [line-num]", file=sys.stderr)
     sys.exit(1)
   filename = sys.argv[1]
   if filename == "-":

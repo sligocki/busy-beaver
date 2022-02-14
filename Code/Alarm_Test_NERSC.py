@@ -14,7 +14,7 @@ class AlarmException(Exception):
   """An exception to be tied to a timer running out."""
 
 def alarm_handler(signum, frame):
-  raise AlarmException, "Timeout!"
+  raise AlarmException("Timeout!")
 
 # Attach the alarm signal to the alarm exception.
 #   so signal.alarm will cause a catchable exception.
@@ -27,9 +27,9 @@ try:
   while count < 12000000:
     count += 1
     if (count % 400000 == 0):
-      print count
+      print(count)
 
-  print "loop completed - doh..."
+  print("loop completed - doh...")
 
 except AlarmException:
-  print "loop interrupted at",count
+  print("loop interrupted at",count)

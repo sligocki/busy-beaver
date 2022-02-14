@@ -1,4 +1,4 @@
-from __future__ import division
+
 
 class Number:
   """Base class for user-defined number-like objects"""
@@ -34,14 +34,14 @@ def gcd(a, b):
     return gcd(b % a, a)
 
 def is_int(value):
-  return isinstance(value, (int, long))
+  return isinstance(value, int)
 
 class Rational(Number):
   def __init__(self, top, bottom):
     if not is_int(top) or not is_int(bottom):
-      raise TypeError, "Number.Rational() - must have integer arguments."
+      raise TypeError("Number.Rational() - must have integer arguments.")
     if bottom == 0:
-      raise ZeroDivisionError, "Number.Rational() - cannot have 0 denominator."
+      raise ZeroDivisionError("Number.Rational() - cannot have 0 denominator.")
     elif bottom < 0:
       top, bottom = -top, -bottom
     g = gcd(abs(top), bottom)

@@ -15,7 +15,7 @@ it evenly to all the processors.  The load is periodically redistributed.
 
 import copy, sys, time, math, random, os, shutil, operator
 # import bz2
-import cPickle as pickle
+import pickle as pickle
 
 from Scientific.BSP import *
 
@@ -149,7 +149,7 @@ class Enumerator(object):
         runtime, steps = info
         self.add_unresolved(tm, Exit_Condition.TIME_OUT, steps, runtime)
       else:
-        raise Exception, "Enumerator.enum() - unexpected condition (%r)" % cond
+        raise Exception("Enumerator.enum() - unexpected condition (%r)" % cond)
 
     # Done
     # if len(self.stack) == 0:
@@ -195,9 +195,9 @@ class Enumerator(object):
     if old_tm.num_empty_cells > 1:
       # 'state_out' in [0, 1, ... max_state] == xrange(max_state + 1)
       new_tms = []
-      for state_out in xrange(max_state + 1):
-        for symbol_out in xrange(max_symbol + 1):
-          for direction_out in xrange(2):
+      for state_out in range(max_state + 1):
+        for symbol_out in range(max_symbol + 1):
+          for direction_out in range(2):
             new_tm = copy.deepcopy(old_tm)
             new_tm.add_cell(state_in , symbol_in ,
                             state_out, symbol_out, direction_out)
@@ -318,7 +318,7 @@ class Enumerator_Startup(object):
       # if (self.tm_num % self.save_freq) == 0:
       #   self.save()
       if len(self.stack) >= next_length:
-        print len(self.stack)
+        print(len(self.stack))
         next_length += 1000
       if len(self.stack) >= 2*numberOfProcessors:
         return self.stack
@@ -348,7 +348,7 @@ class Enumerator_Startup(object):
         runtime, steps = info
         self.add_unresolved(tm, Exit_Condition.TIME_OUT, steps, runtime)
       else:
-        raise Exception, "Enumerator.enum() - unexpected condition (%r)" % cond
+        raise Exception("Enumerator.enum() - unexpected condition (%r)" % cond)
 
     # Done
     return []
@@ -390,9 +390,9 @@ class Enumerator_Startup(object):
     if old_tm.num_empty_cells > 1:
       # 'state_out' in [0, 1, ... max_state] == xrange(max_state + 1)
       new_tms = []
-      for state_out in xrange(max_state + 1):
-        for symbol_out in xrange(max_symbol + 1):
-          for direction_out in xrange(2):
+      for state_out in range(max_state + 1):
+        for symbol_out in range(max_symbol + 1):
+          for direction_out in range(2):
             new_tm = copy.deepcopy(old_tm)
             new_tm.add_cell(state_in , symbol_in ,
                             state_out, symbol_out, direction_out)
@@ -471,13 +471,13 @@ def get_and_print_stats(string,mylist):
   global_print_stats(string,min_list,max_list,sum_list)
 
 def print_stats(string,min_list,max_list,sum_list):
-  print string + "(%.2f %.2f %.2f)..." % (min_list,max_list,sum_list/float(numberOfProcessors))
+  print(string + "(%.2f %.2f %.2f)..." % (min_list,max_list,sum_list/float(numberOfProcessors)))
 
 def print_value(value):
-  print value
+  print(value)
 
 def print_blank():
-  print
+  print()
 
 # Command line interpretter code
 if __name__ == "__main__":
@@ -526,7 +526,7 @@ if __name__ == "__main__":
 
   ## Set complex defaults
   if not options.seed:
-    options.seed = long(1000*time.time())
+    options.seed = int(1000*time.time())
 
   if not options.outfilename:
     options.outfilename = "Enum.%d.%d.%d.out" % (options.states, options.symbols, options.steps)
@@ -536,21 +536,21 @@ if __name__ == "__main__":
 
   if processorID == 0:
     ## Print command line
-    print "Enumerate_Parallel_BSP.py --states=%d --symbols=%d --steps=%d --time=%f" \
-      % (options.states, options.symbols, options.steps, options.time),
+    print("Enumerate_Parallel_BSP.py --states=%d --symbols=%d --steps=%d --time=%f" \
+      % (options.states, options.symbols, options.steps, options.time), end=' ')
     if options.randomize:
-      print "--randomize",
-    print "--seed=%d" % options.seed,
-    print "--outfile=%s" % options.outfilename,
+      print("--randomize", end=' ')
+    print("--seed=%d" % options.seed, end=' ')
+    print("--outfile=%s" % options.outfilename, end=' ')
     if options.log_number:
-      print "--log_number=%d" % options.log_number,
-    print "--checkpoint=%s" % options.checkpoint,
-    print "--checkpoint_interval=%d" % options.checkpoint_interval,
+      print("--log_number=%d" % options.log_number, end=' ')
+    print("--checkpoint=%s" % options.checkpoint, end=' ')
+    print("--checkpoint_interval=%d" % options.checkpoint_interval, end=' ')
     if options.restart_base:
-      print "--restart_base=%s" % options.restart_base,
-      print "--restart_num=%d" % options.restart_num,
-    print "--stack_mult=%f" % options.stack_mult,
-    print
+      print("--restart_base=%s" % options.restart_base, end=' ')
+      print("--restart_num=%d" % options.restart_num, end=' ')
+    print("--stack_mult=%f" % options.stack_mult, end=' ')
+    print()
 
   if options.steps == 0:
     options.steps = Macro_Simulator.INF
@@ -595,7 +595,7 @@ if __name__ == "__main__":
     if restart_base:
       # Read restart files
       full_stack = []
-      for proc in xrange(0,restart_num):
+      for proc in range(0,restart_num):
         restart_procID = restart_base + ".%05d" % proc + ".%05d" % restart_num
 
         f = file(restart_procID, "rb")

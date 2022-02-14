@@ -7,13 +7,14 @@ which contain number and variables.
 """
 
 import string, operator
-from Number import Number, Rational
+from Numbers.Number import Number, Rational
+from functools import reduce
 
 class BadOperation(Exception):
   """This operation cannot be performed on this Expression."""
 
 def is_scalar(value):
-  return isinstance(value, (int, long, Rational))
+  return isinstance(value, (int, Rational))
 
 class Variable(object):
   """A distinct variable in an algebraic expression"""
@@ -41,16 +42,11 @@ class Variable(object):
 
 def Variable_from_string(input):
   if input[0] == '<' and input[1] == 'x':
-    retval = Variable(int(input[2:-1]))
-  elif len(input) == 1:
-    if string.find(string.ascii_lowercase,input) != -1:
-      retval = Variable(ord(input[0]) - ord('a'))
-    else:
-      raise ValueError,"Unable to interpret '%s' as a Term" % (input,)
+    return Variable(int(input[2:-1]))
+  elif len(input) == 1 and input[0] in string.ascii_lowercase:
+    return Variable(ord(input[0]) - ord('a'))
   else:
-    raise ValueError,"Unable to interpret '%s' as a Term" % (input,)
-
-  return retval
+    raise ValueError("Unable to interpret '%s' as a Term" % (input,))
 
 class Var_Power(object):
   """A variable raised to some power (eg: a^3)"""
@@ -90,7 +86,7 @@ class Term(object):
     self.coef = coefficient
 
   def __repr__(self):
-    r = string.join([repr(v) for v in self.vars], " ")
+    r = " ".join([repr(v) for v in self.vars])
     if self.coef == 1:
       return r
     elif self.coef == -1:
@@ -129,7 +125,7 @@ class Expression(Number):
   def __repr__(self):
     if len(self.terms) == 0:
       return repr(self.const)
-    r = string.join([repr(t) for t in self.terms], " + ")
+    r = " + ".join([repr(t) for t in self.terms])
     if self.const == 0:
       return "("+r+")"
     elif self.const < 0:
@@ -218,6 +214,12 @@ class Expression(Number):
 
   def __ne__(self, other):
     return not self == other
+  
+  def __lt__(self, other):
+    return self.__cmp__(other) < 0
+  
+  def __gt__(self, other):
+    return self.__cmp__(other) > 0
 
   def __cmp__(self, other):
     # See if we are guaranteed (for all var values > 0) how self compares to other.
@@ -271,14 +273,14 @@ class Expression(Number):
     if self.is_var_plus_const():
       return self.terms[0].vars[0].var
     else:
-      raise BadOperation, "Expression %s is not of correct form" % self
+      raise BadOperation("Expression %s is not of correct form" % self)
 
   def variable(self):
     """Returns the single variable in this expression if it exists."""
     if len(self.terms) == 1 and len(self.terms[0].vars) == 1:
       return self.terms[0].vars[0].var
     else:
-      raise BadOperation, "Expression %s is not of correct form" % self
+      raise BadOperation("Expression %s is not of correct form" % self)
 
   def get_coef(self):
     """If expression is linear, say m*x + k, returns coefficient m.
@@ -343,19 +345,27 @@ def compare_terms(t1, t2):
   """Compare 2 Terms in an arbitrary, but consistent manner."""
   vars1 = t1.vars
   vars2 = t2.vars
+
   # Shorter terms preceed longer terms
-  c = cmp(len(vars1), len(vars2))
-  if c != 0:
-    return c
+  if len(vars1) < len(vars2):
+    return -1
+  elif len(vars1) > len(vars2):
+    return +1
+
+  # Same length
   for vp1, vp2 in zip(vars1, vars2):
     # Older variables preceed younger variables
-    c = cmp(vp1.var.id, vp2.var.id)
-    if c != 0:
-      return c
+    if vp1.var.id < vp2.var.id:
+      return -1
+    elif vp1.var.id > vp2.var.id:
+      return +1
+
     # Variables to smaller exponents preceed those with larger exponents
-    c = cmp(vp1.pow, vp2.pow)
-    if c != 0:
-      return c
+    if vp1.pow < vp2.pow:
+      return -1
+    elif vp1.pow > vp2.pow:
+      return +1
+
   # Otherwise the two terms are completely identical
   return 0
 
@@ -374,16 +384,15 @@ def vars_prod(vars1, vars2):
   i = j = 0
   while i < len(vars1) and j < len(vars2):
     vp1, vp2 = vars1[i], vars2[j]
-    c = cmp(vp1.var.id, vp2.var.id)
-    if c == 0:
-      new_vars.append(Var_Power(vp1.var, vp1.pow + vp2.pow))
-      i += 1
-      j += 1
-    elif c < 0:
+    if vp1.var.id < vp2.var.id:
       new_vars.append(vp1)
       i += 1
-    else:
+    elif vp1.var.id > vp2.var.id:
       new_vars.append(vp2)
+      j += 1
+    else:  # vp1.var.id == vp2.var.id
+      new_vars.append(Var_Power(vp1.var, vp1.pow + vp2.pow))
+      i += 1
       j += 1
   new_vars.extend(vars1[i:])
   new_vars.extend(vars2[j:])

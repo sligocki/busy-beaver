@@ -13,7 +13,7 @@ VERBOSE = False
 
 class CTL_Table(dict):
   def __getitem__(self, key):
-    if not self.has_key(key):
+    if key not in self:
       self[key] = ((set(), set(), set()), (set(), set(), set()))
     return dict.__getitem__(self, key)
 
@@ -29,8 +29,8 @@ def CTL(machine, config):
   while table != new_table:
     if VERBOSE:
       for term in new_table:
-        print term,":",new_table[term]
-      print
+        print(term,":",new_table[term])
+      print()
     table, new_table = new_table, CTL_Table()
     # For each entry in the old table, generate the possible outcomes and add
     # them to the new table
@@ -92,8 +92,8 @@ def test_CTL(ttable, cutoff, block_size=1, offset=None):
   if sim.op_state != Turing_Machine.RUNNING:
     return False
   if VERBOSE:
-    print sim.state, sim.tape
-    print
+    print(sim.state, sim.tape)
+    print()
   sets = [None, None]
   for d in range(2):
     # Pass all symbols from this side of tape except for inf 0s
@@ -135,14 +135,14 @@ def test_from_file(filename, line, cutoff, block_size, offset):
   ttable = IO.load_TTable_filename(filename, line)
   if VERBOSE:
     for term in ttable:
-      print term
-    print
+      print(term)
+    print()
   if test_CTL(ttable, cutoff, block_size, offset):
     if VERBOSE:
-      print "Success :)"
+      print("Success :)")
   else:
     if VERBOSE:
-      print "Failure :("
+      print("Failure :(")
 
 # Main
 if __name__ == "__main__":
@@ -154,7 +154,7 @@ if __name__ == "__main__":
     block_size = int(sys.argv[4])
     offset = int(sys.argv[5])
   except:
-    print "CTL4.py filename line_num cutoff block_size offset"
+    print("CTL4.py filename line_num cutoff block_size offset")
     sys.exit(1)
   VERBOSE = True
   test_from_file(filename, line, cutoff, block_size, offset)

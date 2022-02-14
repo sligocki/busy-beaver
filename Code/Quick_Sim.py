@@ -54,35 +54,35 @@ def run(machine, block_size, back, prover, recursive, options):
     sim.print_self()
 
   if sim.op_state == Turing_Machine.HALT:
-    print
-    print "Turing Machine Halted"
-    print
+    print()
+    print("Turing Machine Halted")
+    print()
     if options.compute_steps:
-      print "Steps:   ", sim.step_num
-    print "Nonzeros:", sim.get_nonzeros()
-    print
+      print("Steps:   ", sim.step_num)
+    print("Nonzeros:", sim.get_nonzeros())
+    print()
   elif sim.op_state == Turing_Machine.INF_REPEAT:
-    print
-    print "Turing Machine proven Infinite"
-    print "Reason:", sim.inf_reason
-    print "Quasihalt:", sim.inf_quasihalt
+    print()
+    print("Turing Machine proven Infinite")
+    print("Reason:", sim.inf_reason)
+    print("Quasihalt:", sim.inf_quasihalt)
   elif sim.op_state == Turing_Machine.UNDEFINED:
-    print
-    print "Turing Machine reached Undefined transition"
-    print "State: ", sim.op_details[0][1]
-    print "Symbol:", sim.op_details[0][0]
-    print
+    print()
+    print("Turing Machine reached Undefined transition")
+    print("State: ", sim.op_details[0][1])
+    print("Symbol:", sim.op_details[0][0])
+    print()
     if options.compute_steps:
-      print "Steps:   ", sim.step_num
-    print "Nonzeros:", sim.get_nonzeros()
-    print
+      print("Steps:   ", sim.step_num)
+    print("Nonzeros:", sim.get_nonzeros())
+    print()
   elif sim.op_state == Turing_Machine.GAVE_UP:
-    print
-    print "Gave up while simulating Turing Machine"
-    print "Info:", sim.op_details
+    print()
+    print("Gave up while simulating Turing Machine")
+    print("Info:", sim.op_details)
   else:
-    print
-    print "Unexpected sim exit condition:", sim.op_state, sim.op_details
+    print()
+    print("Unexpected sim exit condition:", sim.op_state, sim.op_details)
 
 
 if __name__ == "__main__":
@@ -140,7 +140,7 @@ if __name__ == "__main__":
   ttable = IO.load_TTable_filename(filename, line)
   machine = Turing_Machine.make_machine(ttable)
   if not options.quiet:
-    print Turing_Machine.machine_ttable_to_str(machine)
+    print(Turing_Machine.machine_ttable_to_str(machine))
 
   run(machine, options.block_size, options.backsymbol, options.prover,
                options.recursive, options)

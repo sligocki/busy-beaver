@@ -98,7 +98,7 @@ def run_options(ttable, options, stats=None):
   if options.lin_steps:
     result = Lin_Recur_Detect.lin_search(ttable, max_steps=options.lin_steps)
     if result.success:
-      quasihalt_state, quasihalt_time = result.calc_quasihalt(all_states = range(len(ttable)))
+      quasihalt_state, quasihalt_time = result.calc_quasihalt(all_states = list(range(len(ttable))))
       # TODO: Include recurrence info in addition to quasihalt.
       return Exit_Condition.INFINITE, ("Lin_Recur", (quasihalt_state, quasihalt_time))
 
@@ -169,7 +169,7 @@ def run_options(ttable, options, stats=None):
   elif sim.op_state == Turing_Machine.GAVE_UP:
     return Exit_Condition.UNKNOWN, (sim.op_state,) + tuple(sim.op_details)
 
-  raise Exception, (sim.op_state, ttable, sim)
+  raise Exception(sim.op_state, ttable, sim)
 
 # Main script
 if __name__ == "__main__":
@@ -197,6 +197,6 @@ if __name__ == "__main__":
   ttable = IO.load_TTable_filename(filename, line)
   
   if options.time > 0:
-    print run_timer(ttable, options, None, options.time)
+    print(run_timer(ttable, options, None, options.time))
   else:
-    print run_options(ttable, options)
+    print(run_options(ttable, options))

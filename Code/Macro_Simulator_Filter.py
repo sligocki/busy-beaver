@@ -51,13 +51,13 @@ def run(TTable, block_size, max_loops, runtime, recursive, progress, options,
 
   if sim.op_state == Turing_Machine.RUNNING:
     if progress:
-      print "\tMax_Steps", block_size, sim.step_num, sim.num_loops
+      print("\tMax_Steps", block_size, sim.step_num, sim.num_loops)
     # TODO(shawn): Return time taken.
     return Exit_Condition.UNKNOWN, "Max_Steps", sim.get_nonzeros(), sim.step_num
 
   elif sim.op_state == Exit_Condition.TIME_OUT:
     if progress:
-      print "\tTimeout", block_size, sim.step_num, sim.num_loops
+      print("\tTimeout", block_size, sim.step_num, sim.num_loops)
     return Exit_Condition.UNKNOWN, "Time_Out", sim.get_nonzeros(), sim.step_num
 
   elif sim.op_state == Turing_Machine.INF_REPEAT:
@@ -65,22 +65,22 @@ def run(TTable, block_size, max_loops, runtime, recursive, progress, options,
       global max_step2inf, max_loop2inf
       max_step2inf = max(max_step2inf, sim.step_num)
       max_loop2inf = max(max_loop2inf, sim.num_loops)
-      print "\tInfinite", block_size, (sim.step_num, max_step2inf),
-      print (sim.num_loops, max_loop2inf)
+      print("\tInfinite", block_size, (sim.step_num, max_step2inf), end=' ')
+      print((sim.num_loops, max_loop2inf))
     return (Exit_Condition.INFINITE, "Macro_Simulator",
             block_size, len(sim.prover.rules), sim.prover.num_recursive_rules,
             sim.step_num, sim.num_loops)
 
   elif sim.op_state == Turing_Machine.HALT:
     if progress:
-      print "\tHalted", sim.get_nonzeros(), sim.step_num
+      print("\tHalted", sim.get_nonzeros(), sim.step_num)
     return (Exit_Condition.HALT, sim.get_nonzeros(), sim.step_num,
             "Macro_Simulator", block_size, len(sim.prover.rules),
             sim.prover.num_recursive_rules, sim.num_loops)
 
   elif sim.op_state == Turing_Machine.UNDEFINED:
     if progress:
-      print "\tUndefined", sim.get_nonzeros(), sim.step_num
+      print("\tUndefined", sim.get_nonzeros(), sim.step_num)
     # sim.op_details[0][0 & 1] stores the symbol and state that we halted on.
     return (Exit_Condition.UNDEF_CELL,
             int(sim.op_details[0][1]), int(sim.op_details[0][0]),
@@ -88,7 +88,7 @@ def run(TTable, block_size, max_loops, runtime, recursive, progress, options,
             len(sim.prover.rules), sim.prover.num_recursive_rules, sim.num_loops)
 
   else:
-    raise Exception, "unexpected op_state"
+    raise Exception("unexpected op_state")
 
 if __name__ == "__main__":
   from optparse import OptionParser
@@ -172,9 +172,9 @@ if __name__ == "__main__":
   pprint(stats.__dict__)
   # Print number of TMs that halted.
   if num_halt > 0:
-    print >>sys.stderr, num_halt, "in file:", options.infile, "- halted!"
+    print(num_halt, "in file:", options.infile, "- halted!", file=sys.stderr)
 
   # Print number of TMs that reached an undefined transition.
   if num_undefined > 0:
-    print >>sys.stderr, num_undefined, "in file:", options.infile,
-    print >>sys.stderr, "- undefined transitions reached!"
+    print(num_undefined, "in file:", options.infile, end=' ', file=sys.stderr)
+    print("- undefined transitions reached!", file=sys.stderr)

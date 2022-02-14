@@ -46,21 +46,21 @@ def run(machine, tape_length, num_steps, silent=False):
   num_steps = 0
 
   if exit_cond < 0:
-    print "Error: %s" % result[2]
+    print("Error: %s" % result[2])
   elif exit_cond <= 2:
     num_syms  = int(result[1])
     num_steps = int(result[2])
 
     if not silent:
       if exit_cond == 0:
-        print "Halted"
+        print("Halted")
       else:
-        print "Did not halt"
-      print
+        print("Did not halt")
+      print()
       if (start_time == end_time):
-        print "Steps/second: infinite, ;-)"
+        print("Steps/second: infinite, ;-)")
       else:
-        print "Steps/second: ",num_steps / (end_time - start_time)
+        print("Steps/second: ",num_steps / (end_time - start_time))
   elif exit_cond == 3:
     bad_state  = int(result[1])
     bad_symbol = int(result[2])
@@ -68,11 +68,11 @@ def run(machine, tape_length, num_steps, silent=False):
     num_syms  = int(result[3])
     num_steps = int(result[4])
 
-    print "Invalid TM table entry reached - state: %d, symbol: %d" % (bad_state,bad_symbol)
+    print("Invalid TM table entry reached - state: %d, symbol: %d" % (bad_state,bad_symbol))
   elif exit_cond == 4:
-    print "Infinite result: %s" % result[2]
+    print("Infinite result: %s" % result[2])
   else:
-    print "Unknown exit code: %d" % exit_cond
+    print("Unknown exit code: %d" % exit_cond)
 
   sys.stdout.flush()
 
@@ -119,7 +119,7 @@ def run_visual(machine, tape_length, num_steps, print_width=79, silent=False, st
   if not silent:
     sys.stdout.write("\033[0m%10d: " % 0)  # Step number
 
-    for j in xrange(2*half_width):
+    for j in range(2*half_width):
       value = tape[start_pos+(j-half_width)]
       if position == start_pos+(j-half_width):
         # If this is the current position ...
@@ -135,9 +135,9 @@ def run_visual(machine, tape_length, num_steps, print_width=79, silent=False, st
   t = 0
   nt = 1
   while t < nt:
-    for i in xrange(num_steps):
+    for i in range(num_steps):
       if position < 1 or position >= tape_length-1:
-        print "Oops ... Didn't start on tape!?"
+        print("Oops ... Didn't start on tape!?")
         sys.stdout.flush()
         num_syms  = -1
         num_steps = -1
@@ -175,7 +175,7 @@ def run_visual(machine, tape_length, num_steps, print_width=79, silent=False, st
 
           sys.stdout.write("\033[0m%10d: " % int(cur_step+1))  # Step number
 
-          for j in xrange(2*half_width):
+          for j in range(2*half_width):
             value = tape[start_pos+(j-half_width)]
             if position == start_pos+(j-half_width):
               # If this is the current possition ...
@@ -225,12 +225,12 @@ def run_visual(machine, tape_length, num_steps, print_width=79, silent=False, st
 
   end_time = time.time()
 
-  print
-  print
-  print "Steps/second: ", num_steps / (end_time - start_time)
-  print
-  print "Range on tape: ", position_left  - start_pos, \
-                     "to", position_right - start_pos
+  print()
+  print()
+  print("Steps/second: ", num_steps / (end_time - start_time))
+  print()
+  print("Range on tape: ", position_left  - start_pos, \
+                     "to", position_right - start_pos)
 
   sys.stdout.flush()
 
@@ -283,14 +283,14 @@ if __name__ == "__main__":
 
   if visual:
     num_syms, num_steps = run_visual(machine, tape, steps, width, brief)
-    print
-    print "Number of 'not 0's printed: %u, steps: %u" % (num_syms, num_steps)
+    print()
+    print("Number of 'not 0's printed: %u, steps: %u" % (num_syms, num_steps))
   else:
     num_syms, num_steps = run(machine,tape,steps,brief)
     if brief:
-      print machine.num_states, machine.num_symbols, num_syms,num_steps
+      print(machine.num_states, machine.num_symbols, num_syms,num_steps)
     else:
-      print
-      print "Number of 'not 0's printed: %u, steps: %u" % (num_syms, num_steps)
+      print()
+      print("Number of 'not 0's printed: %u, steps: %u" % (num_syms, num_steps))
 
   sys.stdout.flush()

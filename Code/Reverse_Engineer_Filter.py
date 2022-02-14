@@ -12,7 +12,7 @@ on a simple end case fact:
   then it cannot ever halt.
 """
 
-from __future__ import division
+
 
 from Common import Exit_Condition, HALT_STATE
 import IO
@@ -36,10 +36,10 @@ def get_stats(TTable):
         to_symbol[cell[0]].append(((state, symbol), cell))
   return halts, to_state, to_symbol
 
-def cannot_reach_halt((halt_state, halt_symbol), to_state, to_symbol):
+def cannot_reach_halt(xxx_todo_changeme, to_state, to_symbol):
   """True means it is imposible to reach the halt state.
      False is inconclusive."""
-  # Internal function has access to arguments of this function.
+  (halt_state, halt_symbol) = xxx_todo_changeme
   def same_direction():
     """Test whether all transitions to halt_state are in the same direction as
        all the transitions writing halt_symbol."""

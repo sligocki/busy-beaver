@@ -15,7 +15,7 @@ try:
   from signalPlus import alarm
   using_signal_plus = True
 except ImportError:
-  import sys; print >>sys.stderr, "Alarm.py: Failed to import signalPlus, falling back to signal."
+  import sys; print("Alarm.py: Failed to import signalPlus, falling back to signal.", file=sys.stderr)
   from signal import alarm
   using_signal_plus = False
 
@@ -39,7 +39,7 @@ class Alarm(object):
 
   def alarm_handler(self, signum, frame):
     if self.is_alarm_on:
-      raise AlarmException, "Timeout!"
+      raise AlarmException("Timeout!")
 
 ALARM = Alarm()
 

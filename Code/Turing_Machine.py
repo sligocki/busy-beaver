@@ -17,7 +17,7 @@ class Turing_Machine_Runtime_Error:
     self.value = value
 
   def __repr__(self):
-    return `self.value`
+    return repr(self.value)
 
 
 class Filter_Unexpected_Return:
@@ -30,7 +30,7 @@ class Filter_Unexpected_Return:
     self.value = value
 
   def __repr__(self):
-    return `self.value`
+    return repr(self.value)
 
 
 # Characters to use for states (end in "Z" so that halt is Z)
@@ -53,23 +53,23 @@ def print_machine(machine):
   TTable = machine.trans_table
 
   sys.stdout.write("       ")
-  for j in xrange(len(TTable[0])):
+  for j in range(len(TTable[0])):
     sys.stdout.write("+-----")
   sys.stdout.write("+\n")
 
   sys.stdout.write("       ")
-  for j in xrange(len(TTable[0])):
+  for j in range(len(TTable[0])):
     sys.stdout.write("|  %d  " % j)
   sys.stdout.write("|\n")
 
   sys.stdout.write("   +---")
-  for j in xrange(len(TTable[0])):
+  for j in range(len(TTable[0])):
     sys.stdout.write("+-----")
   sys.stdout.write("+\n")
 
-  for i in xrange(len(TTable)):
+  for i in range(len(TTable)):
     sys.stdout.write("   | %c " % states[i])
-    for j in xrange(len(TTable[i])):
+    for j in range(len(TTable[i])):
       sys.stdout.write("| ")
       if TTable[i][j][0] == -1 and \
          TTable[i][j][1] == -1 and \
@@ -82,7 +82,7 @@ def print_machine(machine):
     sys.stdout.write("|\n")
 
     sys.stdout.write("   +---")
-    for j in xrange(len(TTable[0])):
+    for j in range(len(TTable[0])):
       sys.stdout.write("+-----")
     sys.stdout.write("+\n")
 
@@ -104,7 +104,7 @@ class Turing_Machine:
     elif len(args) in (2, 3):
       self.empty_init(*args)
     else:
-      raise ValueError, "Turing_Machine(args) - Takes 1 or 2 args"
+      raise ValueError("Turing_Machine(args) - Takes 1 or 2 args")
 
   def empty_init(self, num_states, num_symbols, first_1rb=True):
     """

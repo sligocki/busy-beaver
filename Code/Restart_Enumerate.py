@@ -15,7 +15,7 @@ try:
   checkpoint_fn = sys.argv[1]
   output_fn = sys.argv[2]
 except:
-  print "Usage: Restart_Enumerate.py checkpoint_filename output_filename"
+  print("Usage: Restart_Enumerate.py checkpoint_filename output_filename")
   sys.exit(1)
 
 enumerator = pickle.load( file(checkpoint_fn, "r") )

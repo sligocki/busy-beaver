@@ -47,8 +47,8 @@ class SA(object):
     config0 = self.obj.init_config()
     (energy0,extra0) = separate(self.obj.energy_func(config0))
 
-    print energy0,extra0
-    print
+    print(energy0,extra0)
+    print()
     sys.stdout.flush()
 
     config_min = config0
@@ -86,7 +86,7 @@ class SA(object):
 
       if total_count % self.report == 0:
         end_time = time.time()
-        print total_count,T,energy_total/self.report,energy_min,extra_min,"(%.3f)" % (end_time - start_time)
+        print(total_count,T,energy_total/self.report,energy_min,extra_min,"(%.3f)" % (end_time - start_time))
         sys.stdout.flush()
 
         energy_total = 0
@@ -95,15 +95,15 @@ class SA(object):
       T = init_T / math.log(math.e + self.cooling_rate * count)
 
       if count == self.reset:
-        print
-        print config_min
-        print
+        print()
+        print(config_min)
+        print()
         sys.stdout.flush()
         init_T = T
         count = 0
 
-    print
-    print energy_min,extra_min
+    print()
+    print(energy_min,extra_min)
     sys.stdout.flush()
 
     return (config_min,energy_min,extra_min)
@@ -138,7 +138,7 @@ class test_object(object):
   def init_config(self):
     import random
 
-    return [random.randrange(2) for i in xrange(self.length)]
+    return [random.randrange(2) for i in range(self.length)]
 
   def energy_func(self,config):
     return sum(config)

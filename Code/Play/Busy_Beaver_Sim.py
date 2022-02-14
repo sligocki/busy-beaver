@@ -77,7 +77,7 @@ def load_old(file):
       nsymbols = int(len(state)) / 3
       TTable = []
 
-    for j in xrange(nsymbols):
+    for j in range(nsymbols):
       if state[3*j + 1] == "R":
         state[3*j + 1] = 1
       elif state[3*j + 1] == "L":
@@ -86,10 +86,10 @@ def load_old(file):
         sys.stderr.write("Direction not 'L' or 'R'\n")
         sys.exit(1)
 
-    state = map(int, state)
+    state = list(map(int, state))
 
     state_list = [None] * nsymbols
-    for j in xrange(nsymbols):
+    for j in range(nsymbols):
       state_list[j] = tuple(state[3*j:3*j + 3])
 
     TTable.append(state_list)
@@ -111,9 +111,9 @@ def print_machine(machine):
 
   TTable = machine.get_TTable()
 
-  for i in xrange(len(TTable)):
+  for i in range(len(TTable)):
     sys.stdout.write("  State %d:\n" % i)
-    for j in xrange(len(TTable[i])):
+    for j in range(len(TTable[i])):
       sys.stdout.write("    %d: (" % j)
       for k in TTable[i][j]:
         sys.stdout.write(" %2d" % k)
@@ -139,24 +139,24 @@ def run(machine, tape_length, num_steps, silent=False):
   exit_cond = int(result[0])
 
   if exit_cond < 0:
-    print "Error: %s" % result[2]
+    print("Error: %s" % result[2])
   elif exit_cond <= 2:
     num_syms  = int(result[1])
     num_steps = int(result[2])
 
     if not silent:
-      print
+      print()
 
       if (start_time == end_time):
-        print "Steps/second: infinite, ;-)"
+        print("Steps/second: infinite, ;-)")
       else:
-        print "Steps/second: ",num_steps / (end_time - start_time)
+        print("Steps/second: ",num_steps / (end_time - start_time))
   elif exit_cond == 3:
-    print "Invalid state found"
+    print("Invalid state found")
   elif exit_cond == 4:
-    print "Infinite result: %s" % result[2]
+    print("Infinite result: %s" % result[2])
   else:
-    print "Unknown exit code: %d" % exit_cond
+    print("Unknown exit code: %d" % exit_cond)
 
   sys.stdout.flush()
 
@@ -185,7 +185,7 @@ def run_visual(machine, tape_length, num_steps, print_width=80, silent=False):
   max_syms = 0
   total_steps = 0
 
-  print
+  print()
 
   TTable = machine.get_TTable()
 
@@ -194,9 +194,9 @@ def run_visual(machine, tape_length, num_steps, print_width=80, silent=False):
   t = 0
   nt = 1
   while t < nt:
-    for i in xrange(num_steps):
+    for i in range(num_steps):
       if position < 1 or position >= tape_length-1:
-        print "Oops..."
+        print("Oops...")
         sys.stdout.flush()
         num_syms  = -1
         num_steps = -1
@@ -232,7 +232,7 @@ def run_visual(machine, tape_length, num_steps, print_width=80, silent=False):
 
         sys.stdout.write("%10d: " % int(cur_step+1))
 
-        for j in xrange(2*half_width):
+        for j in range(2*half_width):
           value = tape[middle+(j-half_width)]
           if value != 0:
             if position == middle+(j-half_width):
@@ -285,12 +285,12 @@ def run_visual(machine, tape_length, num_steps, print_width=80, silent=False):
   end_time = time.time()
 
   if not silent:
-    print
-    print
-    print "Steps/second: ",num_steps / (end_time - start_time)
-    print
-    print "Range on tape: ",position_start - middle, \
-                       "to",position_end   - middle
+    print()
+    print()
+    print("Steps/second: ",num_steps / (end_time - start_time))
+    print()
+    print("Range on tape: ",position_start - middle, \
+                       "to",position_end   - middle)
 
     sys.stdout.flush()
 
@@ -342,10 +342,10 @@ if __name__ == "__main__":
     num_syms, num_steps = run(machine,tape,steps,brief)
 
   if brief:
-    print machine.num_states,machine.num_symbols,num_syms,num_steps
+    print(machine.num_states,machine.num_symbols,num_syms,num_steps)
   else:
-    print
-    print "Number of 'not O's printed: %u, steps: %u" % (num_syms,num_steps)
+    print()
+    print("Number of 'not O's printed: %u, steps: %u" % (num_syms,num_steps))
 
   sys.stdout.flush()
   sys.exit(0)

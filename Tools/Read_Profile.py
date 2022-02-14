@@ -45,7 +45,7 @@ def smart_eval(arg):
   except ValueError:
     return arg
 
-print_args = map(smart_eval, args[1:])
+print_args = list(map(smart_eval, args[1:]))
 if len(print_args) == 0:
   print_args = [20]
 

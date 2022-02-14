@@ -52,7 +52,7 @@ def No_Halt_Recursive(machine_num, machine, num_states, num_symbols,
     sys.stderr.write("Error %d: %s\n" % (error_number, message))
     save_machine(machine_num, machine, results,
                  old_tape_length, old_max_steps, io, old_results)
-    raise Turing_Machine_Runtime_Error, "Error encountered while running a turing machine"
+    raise Turing_Machine_Runtime_Error("Error encountered while running a turing machine")
 
   #    3) Reached Undefined Cell
   # Should not occur because Filters should only be run on Generate.py results.
@@ -61,7 +61,7 @@ def No_Halt_Recursive(machine_num, machine, num_states, num_symbols,
                      (machine_num, result))
     save_machine(machine_num, machine, results,
                  old_tape_length, old_max_steps, io, old_results)
-    raise Filter_Unexpected_Return, "Machine reached undefined cell in filter."
+    raise Filter_Unexpected_Return("Machine reached undefined cell in filter.")
 
   # All other returns:
   #    0) Halt
@@ -87,8 +87,8 @@ def run(TTable, num_states, num_symbols, tape_length, max_steps):
   # Symbol 0 is there from the start
   symbol_written[0] = True
 
-  for state in xrange(num_states):
-    for symbol in xrange(num_symbols):
+  for state in range(num_states):
+    for symbol in range(num_symbols):
       new_symbol = TTable[state][symbol][0]
       # TODO(shawn): Should this be checking new_state == HALT_STATE (== -1)?
       if (new_symbol == -1):
@@ -97,7 +97,7 @@ def run(TTable, num_states, num_symbols, tape_length, max_steps):
         symbol_written[new_symbol] = True
 
   result = (Exit_Condition.INFINITE, "No_Halt")
-  for symbol in xrange(num_symbols):
+  for symbol in range(num_symbols):
     if (symbol_written[symbol] and undefined_transition[symbol]):
       result = (Exit_Condition.UNKNOWN, 0, 0)
       break

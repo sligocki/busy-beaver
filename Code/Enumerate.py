@@ -11,7 +11,7 @@ like Generate does.
 """
 
 import copy
-import cPickle as pickle
+import pickle as pickle
 import math
 from optparse import OptionParser, OptionGroup
 import os
@@ -170,7 +170,7 @@ class Enumerator(object):
       elif cond in Exit_Condition.UNKNOWN_SET:
         self.add_unresolved(tm, cond, *info)
       else:
-        raise Exception, "Enumerator.enum() - unexpected condition (%r)" % cond
+        raise Exception("Enumerator.enum() - unexpected condition (%r)" % cond)
 
     # Save any remaining machines on the stack.
     if self.options.num_enum:
@@ -226,7 +226,7 @@ class Enumerator(object):
       else:
         return Macro_Simulator.run_options(tm.get_TTable(), self.options, self.stats)
     except:
-      print >> sys.stderr, "ERROR: Exception raised while simulating TM:", Output_Machine.display_ttable(tm.get_TTable())
+      print("ERROR: Exception raised while simulating TM:", Output_Machine.display_ttable(tm.get_TTable()), file=sys.stderr)
       raise
 
   def add_transitions(self, old_tm, state_in, symbol_in):
@@ -300,12 +300,12 @@ class Enumerator(object):
     if reason == Exit_Condition.MAX_STEPS:
       self.num_over_steps += 1
     elif reason == Exit_Condition.TIME_OUT:
-      print >> sys.stderr, "WARNING: TIMEOUT", args, Output_Machine.display_ttable(tm.get_TTable())
+      print("WARNING: TIMEOUT", args, Output_Machine.display_ttable(tm.get_TTable()), file=sys.stderr)
       self.num_over_time += 1
     elif reason == Exit_Condition.OVER_TAPE:
       self.num_over_tape += 1
     elif reason == Exit_Condition.UNKNOWN and args[0] == Turing_Machine.GAVE_UP:
-      print >> sys.stderr, "WARNING: GAVE_UP", args, Output_Machine.display_ttable(tm.get_TTable())
+      print("WARNING: GAVE_UP", args, Output_Machine.display_ttable(tm.get_TTable()), file=sys.stderr)
     else:
       assert reason == Exit_Condition.NOT_RUN, "Invalid reason (%r)" % reason
     self.tm_num += 1
@@ -398,7 +398,7 @@ def main(args):
 
   ## Set complex defaults
   if options.randomize and not options.seed:
-    options.seed = long(1000*time.time())
+    options.seed = int(1000*time.time())
 
   if not options.outfilename:
     options.outfilename = "Enum.%d.%d.%s.out" % (options.states, options.symbols, options.max_loops)
@@ -425,7 +425,7 @@ def main(args):
       if num_proc > 1:
         # TODO(shawn): MPI abort here and other failure places.
         parser.error("Output file %r already exists" % options.outfilename)
-      reply = raw_input("File '%s' exists, overwrite it? " % options.outfilename)
+      reply = input("File '%s' exists, overwrite it? " % options.outfilename)
       if reply.lower() not in ("y", "yes"):
         parser.error("Choose different outfilename")
     outfile = open(options.outfilename, "w")
@@ -467,7 +467,7 @@ def main(args):
           pout.write("\nTotal time %.2f\n" % (end_time - start_time,))
           pout.close()
         else:
-          print "\nTotal time %.2f\n" % (end_time - start_time,)
+          print("\nTotal time %.2f\n" % (end_time - start_time,))
         sys.exit(0)
       else:
         end_time = time.time()
@@ -475,7 +475,7 @@ def main(args):
           pout.write("\nTotal time %.2f\n" % (end_time - start_time,))
           pout.close()
         else:
-          print "\nTotal time %.2f\n" % (end_time - start_time,)
+          print("\nTotal time %.2f\n" % (end_time - start_time,))
         sys.exit(1)
     else:
       stack = MPI_Work_Queue.MPI_Worker_Work_Queue(master_proc_num=0, pout=pout)

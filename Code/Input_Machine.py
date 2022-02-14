@@ -66,9 +66,9 @@ def get_numeric(cell):
     return False
 
 if __name__ == "__main__":
-  num_states = int(raw_input("Num States? "))
-  num_symbols = int(raw_input("Num Symbols? "))
-  name = raw_input("Name? ")
+  num_states = int(input("Num States? "))
+  num_symbols = int(input("Num Symbols? "))
+  name = input("Name? ")
 
   # Open first, so we immediately know of any problems.
   filename = "Machines/%dx%d-%s.bb" % (num_states, num_symbols, name)
@@ -88,11 +88,11 @@ if __name__ == "__main__":
       have_input = False
       while not have_input:
         if not parts:
-          temp = raw_input("State %c, Symbol %d: " % (states[state], symbol))
+          temp = input("State %c, Symbol %d: " % (states[state], symbol))
           temp = temp.strip().upper()
           parts = temp.split()
         if len(parts) == 0 or len(parts[0]) != 3:
-          print format
+          print(format)
           parts = []
           continue
         if parts[0] == "---":
@@ -102,24 +102,24 @@ if __name__ == "__main__":
         if not result:
           result = get_numeric(parts[0])
         if not result:
-          print "Bad input, please enter transition information in this form:"
-          print format
+          print("Bad input, please enter transition information in this form:")
+          print(format)
           parts = []
           continue
         new_symbol, new_dir, new_state = result
         if new_symbol >= num_symbols:
-          print "Symbol %d is too large." % new_symbol
+          print("Symbol %d is too large." % new_symbol)
           parts = []
           continue
         if new_state >= num_states:
-          print "State %d is too large." % new_state
+          print("State %d is too large." % new_state)
           parts = []
           continue
         TTable[state][symbol] = result
         have_input = True
         del parts[0]
-    print
+    print()
 
-  table_file.write(`TTable`+'\n')
+  table_file.write(repr(TTable)+'\n')
   table_file.close()
-  print "Successfully wrote %s" % filename
+  print("Successfully wrote %s" % filename)

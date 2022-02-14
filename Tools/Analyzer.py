@@ -24,7 +24,7 @@ usage = "Analyzer.py filename"
 try:
   filename = sys.argv[1]
 except:
-  print usage
+  print(usage)
   sys.exit(1)
 
 infile = file(filename, "r")
@@ -65,20 +65,20 @@ num_error = count[Exit_Condition.ERROR]
 digits = len(str(num_total))
 format_string = "%" + str(digits) + "d"
 
-print filename
-print
-print "Max Steps         = ", max_steps
-print "Max Symbols       = ", max_symbols
-print
-print "Number Total      = ", format_string % num_total
-print "Number Halt       = ", format_string % num_halt
-print "Number Infinite   = ", format_string % num_infinite
-print "Number Unknown    = ", format_string % num_unknown
-print "Number Undecided  = ", format_string % num_undecided
-print "Number Error      = ", format_string % num_error
-print
-print "Percent Halt      =", "%10.6f" % (100.0 * num_halt / num_total)
-print "Percent Infinite  =", "%10.6f" % (100.0 * num_infinite / num_total)
-print "Percent Unknown   =", "%10.6f" % (100.0 * num_unknown / num_total)
-print "Percent Undecided =", "%10.6f" % (100.0 * num_undecided / num_total)
-print "Percent Error     =", "%10.6f" % (100.0 * num_error / num_total)
+print(filename)
+print()
+print("Max Steps         = ", max_steps)
+print("Max Symbols       = ", max_symbols)
+print()
+print("Number Total      = ", format_string % num_total)
+print("Number Halt       = ", format_string % num_halt)
+print("Number Infinite   = ", format_string % num_infinite)
+print("Number Unknown    = ", format_string % num_unknown)
+print("Number Undecided  = ", format_string % num_undecided)
+print("Number Error      = ", format_string % num_error)
+print()
+print("Percent Halt      =", "%10.6f" % (100.0 * num_halt / num_total))
+print("Percent Infinite  =", "%10.6f" % (100.0 * num_infinite / num_total))
+print("Percent Unknown   =", "%10.6f" % (100.0 * num_unknown / num_total))
+print("Percent Undecided =", "%10.6f" % (100.0 * num_undecided / num_total))
+print("Percent Error     =", "%10.6f" % (100.0 * num_error / num_total))

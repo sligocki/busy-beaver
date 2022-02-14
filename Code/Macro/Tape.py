@@ -52,7 +52,7 @@ class Repeated_Symbol(object):
 
   def num_str(self):
     """Rep count as string. Approx if count is too large."""
-    if type(self.num) not in (int, long) or self.num < 100000000:
+    if type(self.num) not in (int, int) or self.num < 100000000:
       return str(self.num)
     else:
       return "(~10^%.1f)" % math.log10(self.num)

@@ -33,21 +33,21 @@ def run(TTable, block_size=None, back=True, prover=True, rec=False, verbose=True
     sim.print_self()
 
   if sim.op_state == Turing_Machine.HALT:
-    print
-    print "Turing Machine Halted!"
-    print "Steps:   ", sim.step_num
-    print "Nonzeros:", sim.get_nonzeros()
+    print()
+    print("Turing Machine Halted!")
+    print("Steps:   ", sim.step_num)
+    print("Nonzeros:", sim.get_nonzeros())
   elif sim.op_state == Turing_Machine.INF_REPEAT:
-    print
-    print "Turing Machine proven Infinite!"
-    print "Reason:", sim.inf_reason
+    print()
+    print("Turing Machine proven Infinite!")
+    print("Reason:", sim.inf_reason)
   elif sim.op_state == Turing_Machine.UNDEFINED:
-    print
-    print "Turing Machine reached Undefined transition!"
-    print "State: ", sim.op_details[0][1]
-    print "Symbol:", sim.op_details[0][0]
-    print "Steps:   ", sim.step_num
-    print "Nonzeros:", sim.get_nonzeros()
+    print()
+    print("Turing Machine reached Undefined transition!")
+    print("State: ", sim.op_details[0][1])
+    print("Symbol:", sim.op_details[0][0])
+    print("Steps:   ", sim.step_num)
+    print("Nonzeros:", sim.get_nonzeros())
 
 # Main script
 # Backsymbol (default on)

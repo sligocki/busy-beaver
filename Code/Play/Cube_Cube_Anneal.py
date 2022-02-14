@@ -22,17 +22,17 @@ class Cube_Object:
     self.sigma = sigma
 
   def init_config(self):
-    identity = [[(1 if i == j else 0) for j in xrange(0,self.n)] for i in xrange(0,self.n)]
+    identity = [[(1 if i == j else 0) for j in range(0,self.n)] for i in range(0,self.n)]
 
     return identity
 
   def energy_func(self,cur_matrix):
     max_sum = 0
 
-    for i in xrange(0,self.n):
+    for i in range(0,self.n):
       sum = 0
 
-      for j in xrange(0,self.m):
+      for j in range(0,self.m):
         sum += abs(cur_matrix[i][j])
 
       if sum > max_sum:
@@ -57,7 +57,7 @@ class Cube_Object:
       ct = math.cos(t)
       st = math.sin(t)
 
-      for i in xrange(0,self.n):
+      for i in range(0,self.n):
         new_matrix[i][ai] =  ct * cur_matrix[i][ai] + st * cur_matrix[i][aj]
         new_matrix[i][aj] = -st * cur_matrix[i][ai] + ct * cur_matrix[i][aj]
 
@@ -68,7 +68,7 @@ class Cube_Object:
     return new_matrix
 
 def usage():
-  print "Usage:  Cube_Cube_Anneal.py [--help] [--T0=] [--Tf=] [--iter=] [--reset=] [--seed=] [--freq=] [--m=] [--n=]"
+  print("Usage:  Cube_Cube_Anneal.py [--help] [--T0=] [--Tf=] [--iter=] [--reset=] [--seed=] [--freq=] [--m=] [--n=]")
 
 if __name__ == "__main__":
   m = 2
@@ -80,7 +80,7 @@ if __name__ == "__main__":
   iter  = 1000000000
   reset =    1000000
 
-  seed = long(1000*time.time())
+  seed = int(1000*time.time())
 
   stat_freq = 100000
 
@@ -111,25 +111,25 @@ if __name__ == "__main__":
     if opt == "--Tf":
       Tf = float(arg)
     if opt == "--iter":
-      iter = long(arg)
+      iter = int(arg)
     if opt == "--reset":
-      reset = long(arg)
+      reset = int(arg)
     if opt == "--seed":
-      seed = long(arg)
+      seed = int(arg)
     if opt == "--freq":
-      stat_freq = long(arg)
+      stat_freq = int(arg)
     if opt == "--m":
       m = int(arg)
     if opt == "--n":
       n = int(arg)
 
-  print "Cube_Cube_Anneal.py --T0=%f --Tf=%f --iter=%d --reset=%d --seed=%s --freq=%d --m=%d --n=%d" % \
-        (T0,Tf,iter,reset,seed,stat_freq,m,n)
-  print
+  print("Cube_Cube_Anneal.py --T0=%f --Tf=%f --iter=%d --reset=%d --seed=%s --freq=%d --m=%d --n=%d" % \
+        (T0,Tf,iter,reset,seed,stat_freq,m,n))
+  print()
 
   a = 1.0/reset * (math.exp(math.pow(T0/Tf,reset/float(iter))) - math.e)
-  print "a = ",a
-  print
+  print("a = ",a)
+  print()
 
   cube_obj = Cube_Object(m,n,1.0,seed)
   make_cubes = SA.SA(T0,Tf,a,cube_obj,reset,stat_freq,seed)

@@ -15,7 +15,7 @@ try:
   while True:
     count += 1
     if (count % 200000 == 0):
-      print count
+      print(count)
 
 except AlarmException:
-  print "loop interrupted at",count
+  print("loop interrupted at",count)

@@ -35,7 +35,7 @@ elif len(sys.argv) == 7:
   error_filename     = sys.argv[5];
   undecided_filename = sys.argv[6];
 else:
-  print usage
+  print(usage)
   exit(1)
 
 input_file     = file(input_filename, "r")
@@ -88,8 +88,8 @@ for line in input_file:
     error_file.write(line)
     num_error += 1
     was_error = True
-    print "There was an unexpected value (%s) found in file (%s)" % (repr(condition), input_filename)
-    print line
+    print("There was an unexpected value (%s) found in file (%s)" % (repr(condition), input_filename))
+    print(line)
 
 input_file.close()
 halt_file.close()
@@ -102,7 +102,7 @@ undecided_file.close()
 os.remove(input_filename)
 
 # Print counts
-print num_halt,num_infinite,num_undecided,num_unknown,num_error
+print(num_halt,num_infinite,num_undecided,num_unknown,num_error)
 
 # If error file is empty remove it.
 if not was_error:

@@ -27,7 +27,7 @@ def open_outfile(outfilename, force):
   else:
     if not force and os.path.exists(outfilename):
       sys.stderr.write("Output text file, '%s', exists\n" % outfilename)
-      if string.lower(raw_input("Overwrite? ")) not in ("y", "yes"):
+      if string.lower(input("Overwrite? ")) not in ("y", "yes"):
         return None
     return file(outfilename, "w")
 
@@ -172,13 +172,13 @@ def Option_Parser(argv, opts, help_flag = True, no_mult = True,
     if opt == "help" and help_flag:
       sys.stdout.write("%s\n" % usage)
       sys.exit(0)
-    elif result.has_key(opt) and no_mult:
+    elif opt in result and no_mult:
       sys.stderr.write("Option (%s) specified multiple times.\n%s\n" % (opt, usage))
       sys.exit(1)
     else:
       result[opt] = val
   for opt, type_func, default_val, is_required, has_val in opts:
-    if result.has_key(opt):
+    if opt in result:
       if has_val:
         result[opt] = type_func(result[opt])
       else:

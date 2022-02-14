@@ -44,7 +44,7 @@ class Turing_Machine_Sim:
       self.restart()
       self.run(step_num)
     else:
-      raise ValueError, "Turing_Machine_Sim.seek -- step_num (%d) must not be negative" % step_num
+      raise ValueError("Turing_Machine_Sim.seek -- step_num (%d) must not be negative" % step_num)
 
   def run(self, steps, pos_return = None):
     """
@@ -56,7 +56,7 @@ class Turing_Machine_Sim:
     if steps < 0:
       self.seek(self.step_num - steps)
     else:
-      for i in xrange(steps):
+      for i in range(steps):
         if not self.step():
           return
         if self.position == pos_return:
@@ -110,7 +110,7 @@ class Tape:
     if None in [left, right]:
       return "Tape()"
     else:
-      return "Tape(%d, %d, %s)" % (left, right+1, `self[left : right+1]`)
+      return "Tape(%d, %d, %s)" % (left, right+1, repr(self[left : right+1]))
   def __cmp__(self, tape2):
     """Good for == and !=, but relatively meaningless for <, >, etc."""
     for key in self.tape:
@@ -123,14 +123,14 @@ class Tape:
     return self.tape.get(pos, 0)
   def __setitem__(self, pos, val):
     """Write symbol on tape at position."""
-    if type(pos) in [int, long]:
+    if type(pos) in [int, int]:
       if val != 0:
         self.tape[pos] = val
       # if val == 0 and tape[pos] != 0
-      elif self.tape.has_key(pos):
+      elif pos in self.tape:
         del self.tape[pos]
     else:
-      raise ValueError, "Tape.__setitem__ -- index (%s) must be an integer." % repr(pos)
+      raise ValueError("Tape.__setitem__ -- index (%s) must be an integer." % repr(pos))
   def __delitem__(self, pos):
     self[pos] = 0
   def __getslice__(self, start, stop):
@@ -139,7 +139,7 @@ class Tape:
   def __setslice__(self, start, stop, val):
     """Write symbols to slice of tape."""
     if len(val) != stop - start:
-      raise ValueError, "Slices must be replaced by lists of the same length"
+      raise ValueError("Slices must be replaced by lists of the same length")
     else:
       for i in range(stop - start):
         self[i + start] = val[i]

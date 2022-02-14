@@ -115,7 +115,7 @@ class Simulator(object):
     if self.states_last_seen is not None:
       q_state = None
       q_state_last_seen = -1
-      for state, last_seen in self.states_last_seen.iteritems():
+      for state, last_seen in self.states_last_seen.items():
         if state not in ignore_states:
           if last_seen > q_state_last_seen:
             q_state_last_seen = last_seen
@@ -168,13 +168,13 @@ class Simulator(object):
         self.op_state = Turing_Machine.INF_REPEAT
         self.inf_reason = PROOF_SYSTEM
         self.inf_quasihalt = self.calc_quasihalt(
-          ignore_states=prover_result.states_last_seen.keys())
+          ignore_states=list(prover_result.states_last_seen.keys()))
         self.verbose_print()
         return
       # Proof system says that we can apply a rule
       elif prover_result.condition == Proof_System.APPLY_RULE:
         if self.base_simulator and prover_result.states_last_seen:
-          assert not isinstance(prover_result.states_last_seen.values()[0], Algebraic_Expression), prover_result.states_last_seen
+          assert not isinstance(list(prover_result.states_last_seen.values())[0], Algebraic_Expression), prover_result.states_last_seen
 
         # TODO(shawn): This seems out of place here and is the only place in
         # the Simulator where we distinguish Algebraic_Expressions.
@@ -182,8 +182,8 @@ class Simulator(object):
         if prover_result.replace_vars:
           assert self.options.allow_collatz
           # We don't want the update below to overwrite things.
-          assert not frozenset(self.replace_vars.keys()).intersection(
-                     frozenset(prover_result.replace_vars.keys()))
+          assert not frozenset(list(self.replace_vars.keys())).intersection(
+                     frozenset(list(prover_result.replace_vars.keys())))
           self.replace_vars.update(prover_result.replace_vars)
           # Update all instances of old variable (should just be in steps).
           assert isinstance(self.step_num, Algebraic_Expression)
@@ -195,7 +195,7 @@ class Simulator(object):
         self.num_rule_moves += 1
         if self.compute_steps:
           if self.states_last_seen is not None and prover_result.states_last_seen:
-            for state, prover_last_seen in prover_result.states_last_seen.iteritems():
+            for state, prover_last_seen in prover_result.states_last_seen.items():
               self.states_last_seen[state] = (
                 self.step_num + prover_last_seen)
           else:
@@ -220,13 +220,13 @@ class Simulator(object):
         self.op_state = Turing_Machine.INF_REPEAT
         self.inf_reason = CHAIN_MOVE
         self.inf_quasihalt = self.calc_quasihalt(
-          ignore_states=trans.states_last_seen.keys())
+          ignore_states=list(trans.states_last_seen.keys()))
         return
       # Don't need to change state or direction
       self.num_chain_moves += 1
       if self.compute_steps:
         if self.states_last_seen is not None:
-          for state, trans_last_seen in trans.states_last_seen.iteritems():
+          for state, trans_last_seen in trans.states_last_seen.items():
             self.states_last_seen[state] = (
               # Within the last iteration of the chain step.
               self.step_num + trans.num_base_steps * (num_reps - 1)
@@ -241,14 +241,14 @@ class Simulator(object):
       self.num_macro_moves += 1
       if self.compute_steps:
         if self.states_last_seen is not None:
-          for state, trans_last_seen in trans.states_last_seen.iteritems():
+          for state, trans_last_seen in trans.states_last_seen.items():
             self.states_last_seen[state] = self.step_num + trans_last_seen
         self.step_num += trans.num_base_steps
         self.steps_from_macro += trans.num_base_steps
       if self.op_state == Turing_Machine.INF_REPEAT:
         self.inf_reason = REPEAT_IN_PLACE
         self.inf_quasihalt = self.calc_quasihalt(
-          ignore_states=trans.states_last_seen.keys())
+          ignore_states=list(trans.states_last_seen.keys()))
     if self.op_state != Turing_Machine.UNDEFINED:
       self.verbose_print()
 
@@ -259,39 +259,39 @@ class Simulator(object):
 
   def print_self(self):
     self.print_steps()
-    print "Time:", time.clock()
-    print self.tape.print_with_state(self.state)
-    print "Num Nonzeros:", with_power(self.get_nonzeros())
+    print("Time:", time.clock())
+    print(self.tape.print_with_state(self.state))
+    print("Num Nonzeros:", with_power(self.get_nonzeros()))
 
   def print_steps(self):
-    print
-    print "         Steps:                     Times Applied:"
-    print template("Total:", self.step_num, self.num_loops)
+    print()
+    print("         Steps:                     Times Applied:")
+    print(template("Total:", self.step_num, self.num_loops))
     #print "Single Steps:", with_power(self.mtt.num_single_steps)
-    print template("Macro:", self.steps_from_macro, self.num_macro_moves)
+    print(template("Macro:", self.steps_from_macro, self.num_macro_moves))
     #print "Macro transitions defined:", len(self.mtt.macro_TTable)
-    print template("Chain:", self.steps_from_chain, self.num_chain_moves)
+    print(template("Chain:", self.steps_from_chain, self.num_chain_moves))
     if self.prover:
-      print template("Rule:", self.steps_from_rule, self.num_rule_moves)
-      print "Rules proven:", len(self.prover.rules)
+      print(template("Rule:", self.steps_from_rule, self.num_rule_moves))
+      print("Rules proven:", len(self.prover.rules))
       if self.prover.recursive:
-        print "Recursive rules proven:", self.prover.num_recursive_rules
+        print("Recursive rules proven:", self.prover.num_recursive_rules)
         if self.prover.allow_collatz:
-          print "Collatz rules proven:", self.prover.num_collatz_rules
-      print "Failed proofs:", self.prover.num_failed_proofs
-    print "Tape copies:", Tape.Chain_Tape.num_copies
+          print("Collatz rules proven:", self.prover.num_collatz_rules)
+      print("Failed proofs:", self.prover.num_failed_proofs)
+    print("Tape copies:", Tape.Chain_Tape.num_copies)
 
   def verbose_print(self):
     if self.verbose:
       if self.options.html_format:
-        print "%s %6d: %s<br>" % (self.verbose_prefix, self.step_num,
-                                  self.tape.print_with_state(self.state))
+        print("%s %6d: %s<br>" % (self.verbose_prefix, self.step_num,
+                                  self.tape.print_with_state(self.state)))
       else:
-        print "%s %6d  %s" % (self.verbose_prefix, self.num_loops, self.tape.print_with_state(self.state)),
+        print("%s %6d  %s" % (self.verbose_prefix, self.num_loops, self.tape.print_with_state(self.state)), end=' ')
         if self.compute_steps:
-          print "(%s, %s)" % (self.step_num - self.old_step_num, self.step_num)
+          print("(%s, %s)" % (self.step_num - self.old_step_num, self.step_num))
         else:
-          print ""
+          print("")
 
 def template(title, steps, loops):
   """Pretty print row of the steps table."""

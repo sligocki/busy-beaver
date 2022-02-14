@@ -39,7 +39,7 @@ for line in sys.stdin:
       else:
         filters[commandline] = [-delta_unknowns,runtime]
 
-for (filter,stats) in filters.iteritems():
+for (filter,stats) in filters.items():
   delta_unknowns = stats[0]
   runtime = stats[1]
 
@@ -49,7 +49,7 @@ for (filter,stats) in filters.iteritems():
     stats.append(float(delta_unknowns)/runtime)
 
 # new_order = sorted(filters, key=filters.get, reverse=True)
-new_order = sorted(filters.iteritems(), key=getrate, reverse=True)
+new_order = sorted(iter(filters.items()), key=getrate, reverse=True)
 
 for filter in new_order:
-  print filter[0]
+  print(filter[0])

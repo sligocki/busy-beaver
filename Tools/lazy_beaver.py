@@ -12,9 +12,9 @@ for line in sys.stdin:
     if steps == nextSteps:
       nextSteps = steps + 1
     elif steps > nextSteps:
-      print("Lazy Beaver:",nextSteps)
+      print(("Lazy Beaver:",nextSteps))
       found = True
       break
 
 if not found:
-  print("Lazy Beaver (max):",steps+1)
+  print(("Lazy Beaver (max):",steps+1))

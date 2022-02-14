@@ -27,7 +27,7 @@ class TM_Object:
 
     new_TM = [None] * self.num_symbols * self.num_states
 
-    for i in xrange(self.num_symbols * self.num_states):
+    for i in range(self.num_symbols * self.num_states):
       digit = self.random.randrange(self.num_symbols)
       dir   = self.random.randrange(2)
       state = self.random.randrange(-1,self.num_states)
@@ -41,7 +41,7 @@ class TM_Object:
     import sys,math
 
     trans_TM = [cur_TM[i*self.num_symbols:(i+1)*self.num_symbols] \
-                 for i in xrange(self.num_states)]
+                 for i in range(self.num_states)]
 
     result = Turing_Machine_Sim(trans_TM,self.num_states,self.num_symbols, \
                                 self.tape_limit,self.step_limit)
@@ -49,7 +49,7 @@ class TM_Object:
     exit_cond = int(result[0])
 
     if exit_cond < 0:
-      print "TM sim error: %s" % result[2]
+      print("TM sim error: %s" % result[2])
       sys.exit(1)
 
     elif exit_cond <= 2:
@@ -64,15 +64,15 @@ class TM_Object:
       bad_state  = int(result[1])
       bad_symbol = int(result[2])
 
-      print "TM sim invalid table entry - state: %d, symbol: %d" % (bad_state,bad_symbol)
+      print("TM sim invalid table entry - state: %d, symbol: %d" % (bad_state,bad_symbol))
       sys.exit(1)
 
     elif exit_cond == 4:
-      print "TM sim result: %s" % result[2]
+      print("TM sim result: %s" % result[2])
       sys.exit(1)
 
     else:
-      print "Unknown TM sim exit code: %d" % exit_cond
+      print("Unknown TM sim exit code: %d" % exit_cond)
       sys.exit(1)
 
     return (-math.log(num_steps+1),num_symbols,num_steps)
@@ -107,7 +107,7 @@ class TM_Object:
     return new_TM
 
 def usage():
-  print "Usage:  BB_Anneal_Regular.py [--help] [--T0=] [--Tf=] [--iter=] [--reset=] [--seed=] [--freq=] [--steps=] [--tape=] [--states=] [--symbols=]"
+  print("Usage:  BB_Anneal_Regular.py [--help] [--T0=] [--Tf=] [--iter=] [--reset=] [--seed=] [--freq=] [--steps=] [--tape=] [--states=] [--symbols=]")
 
 if __name__ == "__main__":
   import time,getopt,sys,math
@@ -122,7 +122,7 @@ if __name__ == "__main__":
   iter  = 1000000000
   reset =    1000000
 
-  seed = long(1000*time.time())
+  seed = int(1000*time.time())
 
   stat_freq = 100000
 
@@ -158,13 +158,13 @@ if __name__ == "__main__":
     if opt == "--Tf":
       Tf = float(arg)
     if opt == "--iter":
-      iter = long(arg)
+      iter = int(arg)
     if opt == "--reset":
-      reset = long(arg)
+      reset = int(arg)
     if opt == "--seed":
-      seed = long(arg)
+      seed = int(arg)
     if opt == "--freq":
-      stat_freq = long(arg)
+      stat_freq = int(arg)
     if opt == "--steps":
       step_limit = int(arg)
     if opt == "--tape":
@@ -174,13 +174,13 @@ if __name__ == "__main__":
     if opt == "--symbols":
       num_symbols = int(arg)
 
-  print "BB_Anneal_Regular.py --T0=%f --Tf=%f --iter=%d --reset=%d --seed=%s --freq=%d --steps=%d --tape=%d --states=%d --symbols=%d" % \
-        (T0,Tf,iter,reset,seed,stat_freq,step_limit,tape_limit,num_states,num_symbols)
-  print
+  print("BB_Anneal_Regular.py --T0=%f --Tf=%f --iter=%d --reset=%d --seed=%s --freq=%d --steps=%d --tape=%d --states=%d --symbols=%d" % \
+        (T0,Tf,iter,reset,seed,stat_freq,step_limit,tape_limit,num_states,num_symbols))
+  print()
 
   a = 1.0/reset * (math.exp(math.pow(T0/Tf,reset/float(iter))) - math.e)
-  print "a = ",a
-  print
+  print("a = ",a)
+  print()
 
   tm_obj = TM_Object(num_states,num_symbols,step_limit,tape_limit,seed)
   make_TMs = SA.SA(T0,Tf,a,tm_obj,reset,stat_freq,seed)
