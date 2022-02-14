@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 """
 Try Reverse_Engineer_Filter, CTL and then simulate TM as a Macro Machine using
 the Proof System.

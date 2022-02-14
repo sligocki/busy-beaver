@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 """
 Unit test for "Numbers/Algebraic_Expression.py"
 """
