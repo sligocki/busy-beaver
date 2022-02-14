@@ -36,10 +36,9 @@ def get_stats(TTable):
         to_symbol[cell[0]].append(((state, symbol), cell))
   return halts, to_state, to_symbol
 
-def cannot_reach_halt(xxx_todo_changeme, to_state, to_symbol):
+def cannot_reach_halt(halt_state, halt_symbol, to_state, to_symbol):
   """True means it is imposible to reach the halt state.
      False is inconclusive."""
-  (halt_state, halt_symbol) = xxx_todo_changeme
   def same_direction():
     """Test whether all transitions to halt_state are in the same direction as
        all the transitions writing halt_symbol."""
@@ -74,7 +73,7 @@ def test(TTable):
   halts, to_state, to_symbol = get_stats(TTable)
   # See if all halts cannot be reached
   for halt in halts:
-    if not cannot_reach_halt(halt, to_state, to_symbol):
+    if not cannot_reach_halt(*halt, to_state, to_symbol):
       return False
   # If all halt states cannot be reached:
   return Exit_Condition.INFINITE, "Reverse_Engineer"

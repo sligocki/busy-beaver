@@ -217,7 +217,7 @@ class Simulator(object):
     if trans.state_out == self.state and trans.dir_out == self.dir and \
        self.op_state == Turing_Machine.RUNNING:
       num_reps = self.tape.apply_chain_move(trans.symbol_out)
-      if num_reps == Tape.INF:
+      if num_reps == math.inf:
         self.op_state = Turing_Machine.INF_REPEAT
         self.inf_reason = CHAIN_MOVE
         self.inf_quasihalt = self.calc_quasihalt(

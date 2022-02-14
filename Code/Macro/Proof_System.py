@@ -7,6 +7,7 @@ Proof System which observes and attempts to prove patterns in computation.
 
 import copy
 from collections import defaultdict
+import math
 import operator
 import optparse
 from optparse import OptionParser, OptionGroup
@@ -638,7 +639,7 @@ class Proof_System(object):
         offset -= 1
         # Generalize, eg. (abc)^5 -> (abc)^(n+5)
         # Blocks with one rep are not generalized, eg. (abc)^1 -> (abc)^1
-        if block.num not in (Tape.INF, 1):
+        if block.num not in (math.inf, 1):
           x = Variable()
           x_expr = VariableToExpression(x)
           block.num += x_expr
@@ -738,7 +739,7 @@ class Proof_System(object):
     for dir in range(2):
       for diff_block, initial_block in zip(diff_tape.tape[dir],
                                            initial_tape.tape[dir]):
-        if diff_block.num != Tape.INF:
+        if diff_block.num != math.inf:
           diff_block.num -= initial_block.num
           if isinstance(diff_block.num, Algebraic_Expression):
             coef = initial_block.num.get_coef()
@@ -1089,7 +1090,7 @@ class Proof_System(object):
         self.print_this("++ Rules applies infinitely ++")
         print()
       return True, (ProverResult(INF_REPEAT,  states_last_seen={
-        state: Tape.INF for state in rule.states_last_seen}),
+        state: math.inf for state in rule.states_last_seen}),
                     large_delta)
 
     # If we cannot even apply this transition once, we're done.
@@ -1136,7 +1137,7 @@ class Proof_System(object):
     for dir in range(2):
       for diff_block, return_block in zip(rule.diff_tape.tape[dir],
                                           return_tape.tape[dir]):
-        if return_block.num is not Tape.INF:
+        if return_block.num is not math.inf:
           return_block.num += num_reps * diff_block.num
           if isinstance(return_block.num, Algebraic_Expression) and \
                 return_block.num.is_const():
@@ -1174,7 +1175,7 @@ class Proof_System(object):
         self.print_this("++ Rule applies infinitely ++")
         print()
       return True, (ProverResult(INF_REPEAT, states_last_seen={
-        state: Tape.INF for state in rule.states_last_seen}),
+        state: math.inf for state in rule.states_last_seen}),
                     large_delta)
 
     # Keep applying rule until we can't anymore.
@@ -1200,7 +1201,7 @@ class Proof_System(object):
 
       if next_list == current_list:
         return True, (ProverResult(INF_REPEAT, states_last_seen={
-          state: Tape.INF for state in rule.states_last_seen}),
+          state: math.inf for state in rule.states_last_seen}),
                       large_delta)
       else:
         current_list = next_list
@@ -1263,7 +1264,7 @@ class Proof_System(object):
         self.print_this("++ Rule applies infinitely ++")
         print()
       return True, (ProverResult(INF_REPEAT, states_last_seen={
-        state: Tape.INF for state in rule.states_last_seen}),
+        state: math.inf for state in rule.states_last_seen}),
                     large_delta)
 
     # We cannot apply Collatz rules with general expressions.

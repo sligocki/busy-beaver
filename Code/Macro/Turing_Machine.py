@@ -348,11 +348,10 @@ class Block_Macro_Machine(Macro_Machine):
     if args not in self.trans_table:
       if len(self.trans_table) >= self.max_cells:
         self.trans_table.clear()
-      self.trans_table[args] = self.eval_trans(args)
+      self.trans_table[args] = self.eval_trans(*args)
     return self.trans_table[args]
 
-  def eval_trans(self, xxx_todo_changeme):
-    (macro_symbol_in, macro_state_in, macro_dir_in) = xxx_todo_changeme
+  def eval_trans(self, macro_symbol_in, macro_state_in, macro_dir_in):
     if macro_dir_in == RIGHT:
       pos = 0
     else:
@@ -424,11 +423,10 @@ class Backsymbol_Macro_Machine(Macro_Machine):
     if args not in self.trans_table:
       if len(self.trans_table) >= self.max_cells:
         self.trans_table.clear()
-      self.trans_table[args] = self.eval_trans(args)
+      self.trans_table[args] = self.eval_trans(*args)
     return self.trans_table[args]
 
-  def eval_trans(self, xxx_todo_changeme1):
-    (macro_symbol_in, macro_state_in, macro_dir_in) = xxx_todo_changeme1
+  def eval_trans(self, macro_symbol_in, macro_state_in, macro_dir_in):
     if macro_dir_in == RIGHT:
       tape = [macro_state_in.back_symbol, macro_symbol_in]
       pos = 1

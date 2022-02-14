@@ -49,18 +49,18 @@ class Partial_Config:
   def __repr__(self):
     return "%r %r %r %r" % (self.dir[0], self.state, self.current, self.dir[1])
 
-  def applies(self, xxx_todo_changeme, xxx_todo_changeme1):
+  def applies(self, addr, cell):
     """Tests whether this transition could have been applied to reach
     this configuration."""
-    (state_in, symbol_in) = xxx_todo_changeme
-    (symbol_out, dir_out, state_out) = xxx_todo_changeme1
+    (state_in, symbol_in) = addr
+    (symbol_out, dir_out, state_out) = cell
     return len(self.dir[not dir_out]) == 0 or \
            self.dir[not dir_out][0] == symbol_out
 
-  def apply_trans(self, xxx_todo_changeme2, xxx_todo_changeme3):
+  def apply_trans(self, addr, cell):
     """Return a new configuration with transition applied backwards."""
-    (state_in, symbol_in) = xxx_todo_changeme2
-    (symbol_out, dir_out, state_out) = xxx_todo_changeme3
+    (state_in, symbol_in) = addr
+    (symbol_out, dir_out, state_out) = cell
     new_config = copy.deepcopy(self)
     # Back away from the current symbol.
     new_config.dir[dir_out].insert(0, new_config.current)
@@ -93,12 +93,11 @@ def is_possible_config(config, dir_to_symbol):
         return False
   return True
 
-def backtrack_single_halt(xxx_todo_changeme4,
+def backtrack_single_halt(halt_state, halt_symbol,
                           to_state, dir_to_symbol, steps, max_configs):
   """Try backtrackying |steps| steps from this specific halting
   config. |to_state| is a list of transitions that lead to each state.
   |dir_to_symbol| indicates which direction symbols can be found."""
-  (halt_state, halt_symbol) = xxx_todo_changeme4
   pos_configs = [Partial_Config(halt_state, halt_symbol)]
   for i in range(steps):
     # All configurations that could lead to pos_configs in one step.
@@ -138,7 +137,7 @@ def backtrack_ttable(TTable, steps, max_configs):
     for symbol_out, dir_out, state_out in TTable[halt_state]:
       if state_out == halt_state:
         return False
-    condition, this_steps = backtrack_single_halt((halt_state, halt_symbol),
+    condition, this_steps = backtrack_single_halt(halt_state, halt_symbol,
                                                   to_state, dir_to_symbol,
                                                   steps, max_configs)
     # If any of the backtracks fail, the whole thing fails.
