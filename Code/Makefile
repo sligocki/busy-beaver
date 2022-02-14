@@ -1,11 +1,14 @@
 CFLAGS = -ansi
 
-all: build-all test-all
+all: build-all protobuf test-all
 
 build-all:
 	/bin/rm -rf build *.so
 	./setup.py build
 	ln -s build/lib.*/*.so .
+
+protobuf:
+	protoc -I=. --python_out=. ./io.proto
 
 test: test-all
 test-all:

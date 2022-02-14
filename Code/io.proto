@@ -1,0 +1,55 @@
+syntax = "proto2";
+
+package busy_beaver;
+
+// Boolean or unknown
+enum BoolUnknown {
+  FALSE = 0;
+  TRUE = 1;
+  UNKNOWN = 2;
+}
+
+message HaltInfo {
+  optional BoolUnknown halts = 1;
+
+  // Note: These are integers, but may be huge, so store them as strings.
+  optional string halt_steps = 2;
+  optional string halt_score = 3;
+}
+
+message QuasihaltInfo {
+  optional BoolUnknown quasihalts = 1;
+
+  // Note: This is an integer, but may be huge, so store them as strings.
+  optional string quasihalt_steps = 2;
+  optional int32 quasihalt_state = 3;
+}
+
+message SimulatorInfo {
+  // Reason simulator finished (Halt, Inf, Over_Steps, Error, ...)
+  optional string sim_condition = 1;
+
+  // Stats
+  optional int32 num_loops = 2;
+  optional float run_time_s = 3;
+  optional float num_steps = 4;
+  
+  // Prover stats
+  optional int32 num_rules_proven = 5;
+  optional int32 num_proofs_failed = 6;
+}
+
+message IORecord {
+  // TODO: Do we want to store ttable as a list of lists instead?
+  optional string ttable = 1;
+
+  // Compiled results summarizing various information relevant to Busy Beaver
+  // (or BBB, etc.) problem.
+  optional HaltInfo halt_info = 2;
+  optional QuasihaltInfo quasihalt_info = 3;
+  // TODO: Add more, like lin_recur_info and blanking_info?
+  
+  // Raw parameters and results from various filters.
+  optional SimulatorInfo simulator_info = 4;
+  // TODO: Add info for other filters (LinRecur, ReverseEngineer, CTL, ...)
+}
