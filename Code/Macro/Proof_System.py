@@ -958,7 +958,9 @@ class Proof_System(object):
           prover_result.new_tape.tape[1] = \
             save_right + prover_result.new_tape.tape[1]
 
-      return success, (prover_result, large_delta)
+        return success, (prover_result, large_delta)
+      return success, other
+
     else:
       assert False, (type(rule), repr(rule))
 
