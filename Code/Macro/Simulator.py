@@ -213,7 +213,6 @@ class Simulator(object):
     self.op_details = trans.condition_details
     # Apply transition
     # Chain move
-    #print("Walrus A", trans.state_out, self.state, trans.state_out == self.state, trans.dir_out == self.dir, self.op_state == Turing_Machine.RUNNING)
     if trans.state_out == self.state and trans.dir_out == self.dir and \
        self.op_state == Turing_Machine.RUNNING:
       num_reps = self.tape.apply_chain_move(trans.symbol_out)
