@@ -1363,11 +1363,5 @@ def config_is_above_min(var_list, min_list, current_list, assignment={}):
 def series_sum(V0, dV, n):
   """Sums the arithmetic series V0, V0+dV, ... V0+(n-1)*dV."""
   # = sum(V0 + p*dV for p in range(n)) = V0*Sum(1) + dV*Sum(p)
-  # = V0*n + dV*(n*(n-1)/2)
-  # TODO: The '/' acts as integer division, this is dangerous. It should
-  # always work out because either n or n-1 is even. However, if n is an
-  # Algebraic_Expression, this is more complicated. We don't want to use
-  # __truediv__ because then we'd get a float output for ints.
-  # TODO: Don't crash when we get NotImplemented exception from
-  # Algebraic_Expression.__div__.
-  return V0*n + (dV*n*(n-1))/2
+  # = V0*n + dV*(n*(n-1) // 2)
+  return V0*n + (dV*n*(n-1)) // 2
