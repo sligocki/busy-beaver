@@ -12,8 +12,8 @@ from optparse import OptionParser, OptionGroup
 import sys
 import time
 
-from Simulator import Simulator
-import Turing_Machine
+from Macro.Simulator import Simulator
+from Macro import Turing_Machine
 
 def add_option_group(parser):
   """Add Block_Finder options group to an OptParser parser object."""
@@ -51,7 +51,7 @@ def block_finder(machine, options):
 
   if options.verbose_block_finder:
     print()
-    print("Block finder start time:", time.clock())
+    print("Block finder start time:", time.time())
   ## Find the least compressed time in before limit
   if options.bf_limit1 > 0:
     # Run sim to find when the tape is least compressed with macro size 1
@@ -71,7 +71,7 @@ def block_finder(machine, options):
         return 1
 
     if options.verbose_block_finder:
-      print("Found least compression time:", time.clock())
+      print("Found least compression time:", time.time())
       print("Least compression at step:", worst_loop)
       print()
 
@@ -84,14 +84,14 @@ def block_finder(machine, options):
     sim.run(options.bf_limit1)
 
   if options.verbose_block_finder:
-    print("Reset sim time:", time.clock())
+    print("Reset sim time:", time.time())
     print()
 
   # Analyze this time to see which block size provides greatest compression
   tape = uncompress_tape(sim.tape.tape)
 
   if options.verbose_block_finder:
-    print("Uncompressed tape time:", time.clock())
+    print("Uncompressed tape time:", time.time())
     print()
     print(tape)
     print()
@@ -105,7 +105,7 @@ def block_finder(machine, options):
       opt_size = block_size
 
   if options.verbose_block_finder:
-    print("Run1 end time:", time.clock())
+    print("Run1 end time:", time.time())
     print("Optimal base block size:", opt_size)
     print()
     print(tape)
@@ -139,7 +139,7 @@ def block_finder(machine, options):
 
   if options.verbose_block_finder:
     print()
-    print("Run2 end time:", time.clock())
+    print("Run2 end time:", time.time())
     print("Optimal block mult:", opt_mult)
     print()
     sys.stdout.flush()

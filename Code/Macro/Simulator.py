@@ -12,9 +12,9 @@ from optparse import OptionParser, OptionGroup
 import sys
 import time
 
-import Proof_System
-import Tape
-import Turing_Machine
+from Macro import Proof_System
+from Macro import Tape
+from Macro import Turing_Machine
 
 parent_dir = sys.path[0][:sys.path[0].rfind("/")] # pwd path with last directory removed
 sys.path.insert(1, parent_dir)
@@ -213,6 +213,7 @@ class Simulator(object):
     self.op_details = trans.condition_details
     # Apply transition
     # Chain move
+    #print("Walrus A", trans.state_out, self.state, trans.state_out == self.state, trans.dir_out == self.dir, self.op_state == Turing_Machine.RUNNING)
     if trans.state_out == self.state and trans.dir_out == self.dir and \
        self.op_state == Turing_Machine.RUNNING:
       num_reps = self.tape.apply_chain_move(trans.symbol_out)
@@ -259,7 +260,7 @@ class Simulator(object):
 
   def print_self(self):
     self.print_steps()
-    print("Time:", time.clock())
+    print("Time:", time.time())
     print(self.tape.print_with_state(self.state))
     print("Num Nonzeros:", with_power(self.get_nonzeros()))
 

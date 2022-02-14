@@ -10,23 +10,8 @@ Combined with an automated prover, this can prove Xmas Trees.
 
 import math
 
-class Infinity(object):
-  """An identifier of infinity, only to be used for comparison purposes.
-  There is one instance 'INF' of this class."""
-  def __cmp__(self, other):
-    if isinstance(other, Infinity):
-      return 0  # Inf == Inf
-    else:
-      return 1  # Inf > (anything other than Inf)
-
-  def __repr__(self):
-    return "Infinity()"
-
-  def __str__(self):
-    return "Inf"
-
 # Serves as numerical infinity
-INF = Infinity()
+INF = math.inf
 
 # Useful Tool
 def reverse(in_list):

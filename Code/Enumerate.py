@@ -122,8 +122,6 @@ class Enumerator(object):
     self.start_time = time.time()
     last_time = self.start_time
 
-    self.start_clock = time.clock()
-
     while True:
       cur_time = time.time()
 
@@ -185,7 +183,6 @@ class Enumerator(object):
   def save(self):
     """Save a checkpoint file so that computation can be restarted if it fails."""
     self.end_time = time.time()
-    self.end_clock = time.clock()
 
     if self.pout:
       # Print out statistical data
@@ -194,9 +191,8 @@ class Enumerator(object):
                                        self.num_unresolved))
       self.pout.write(" %s" % (long_to_eng_str(self.best_steps,1,3),))
       self.pout.write(" %s" % (long_to_eng_str(self.best_score,1,3),))
-      self.pout.write(" %.0fms " % (self.max_sim_time_s * 1000))
-      self.pout.write(" (%.2fs - %.2fs)\n" % (self.end_time - self.start_time,
-                                              self.end_clock - self.start_clock))
+      self.pout.write(" %.0fms " % (self.max_sim_time_s * 1000,))
+      self.pout.write(" (%.2fs)\n" % (self.end_time - self.start_time,))
       if self.options.print_stats:
         pprint(self.stats.__dict__)
       self.pout.flush()
@@ -215,7 +211,6 @@ class Enumerator(object):
 
     # Restart timer
     self.start_time = time.time()
-    self.start_clock = time.clock()
 
   def run(self, tm):
     """Simulate TM"""
@@ -484,11 +479,10 @@ def main(args):
   enumerator = Enumerator(options, stack, io, pout)
   enumerator.continue_enum()
 
-  options["infile"].close()
-  options["outfile"].close()
-
   if options.print_stats:
     pprint(enumerator.stats.__dict__)
+    
+  outfile.close()
 
 if __name__ == "__main__":
   main(sys.argv[1:])

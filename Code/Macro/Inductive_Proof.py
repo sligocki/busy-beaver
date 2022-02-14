@@ -20,8 +20,8 @@ X 1^2k+3 B> Y             1
 import copy
 import sys
 
-import Proof_System
-import Simulator
+from Macro import Proof_System
+from Macro import Simulator
 
 parent_dir = sys.path[0][:sys.path[0].rfind("/")] # pwd path with last directory removed
 sys.path.insert(1, parent_dir)

@@ -38,12 +38,13 @@ class GoldTest(unittest.TestCase):
                       "--symbols=%d" % symbols,
                       "--outfile=%s" % outfile,
                       "--max-loops=1000",  # Makes tests deterministic.
+                      "--time=1",  # These should be fast!
                       ])
       if regold:
         subprocess.call(["mv", outfile, goldfile])
       else:
-        retvalue = subprocess.call(["diff", outfile, goldfile])
-        self.assertEqual(0, retvalue)
+        proc = subprocess.run(["diff", goldfile, outfile])
+        self.assertEqual(0, proc.returncode)
     # Clean up after ourselves.
     subprocess.call(["rm", "-rf", test_dir])
 

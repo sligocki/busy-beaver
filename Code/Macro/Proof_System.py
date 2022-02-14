@@ -12,9 +12,9 @@ import optparse
 from optparse import OptionParser, OptionGroup
 import sys
 
-import Simulator
-import Tape
-import Turing_Machine
+from Macro import Simulator
+from Macro import Tape
+from Macro import Turing_Machine
 
 parent_dir = sys.path[0][:sys.path[0].rfind("/")] # pwd path with last directory removed
 sys.path.insert(1, parent_dir)
@@ -242,6 +242,7 @@ def strip_config(state, dir, tape):
   # Optimization: Strip off Infinity blocks before we run the map (see tape[x][1:]).
   # Turns out Infinity.__cmp__ is expensive when run millions of times.
   # It used to spend up to 25% of time here.
+  # TODO: Revisit now that we are using math.inf rather than a custom class.
   # TODO: This map is expensive upwards of 10% of time is spend here.
   return (state, dir, tuple(map(stripped_info, tape[0][1:])),
                       tuple(map(stripped_info, tape[1][1:])))

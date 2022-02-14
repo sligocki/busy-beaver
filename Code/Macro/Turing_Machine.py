@@ -6,7 +6,8 @@ Abstract Turing Machine model with basic NxM TM and Macro-Machine derivatives
 """
 
 from optparse import OptionParser, OptionGroup
-import sys,string
+import sys
+import string
 
 
 def add_option_group(parser):
@@ -306,7 +307,7 @@ class Block_Symbol(tuple):
   """Wrapper for block symbols that defines a concise-printer."""
   def __repr__(self):
     # TODO: this assumes single digit sub-symbols
-    return string.join((str(x) for x in self), "")
+    return "".join((str(x) for x in self))
 
 class Block_Macro_Machine(Macro_Machine):
   """A derivative Turing Machine which simulates another machine clumping k-symbols together into a block-symbol"""
@@ -385,9 +386,9 @@ class Backsymbol_Macro_Machine_State:
 
   # These must be defined so that we can check that two states are equal,
   # not equal, or use them as keys into a dictionary.
-  def __cmp__(self, other):
-    return cmp((self.base_state, self.back_symbol),
-               (other.base_state, other.back_symbol))
+  def __eq__(self, other):
+    return (self.base_state == other.base_state and
+            self.back_symbol == other.back_symbol)
 
   def __hash__(self):
     return hash((self.base_state, self.back_symbol))
