@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 #
 # Analyzer.py
 #
@@ -27,34 +27,33 @@ except:
   print(usage)
   sys.exit(1)
 
-infile = file(filename, "r")
+with open(filename, "r") as infile:
+  io = IO(infile, None)
 
-io = IO(infile, None)
-
-num_total = 0
-count = {Exit_Condition.HALT: 0,
-         Exit_Condition.INFINITE: 0,
-         Exit_Condition.UNDEF_CELL: 0,
-         Exit_Condition.ERROR: 0,
-         # Various Unknown types:
-         Exit_Condition.UNKNOWN: 0,
-         Exit_Condition.MAX_STEPS: 0,
-         Exit_Condition.OVER_TAPE: 0,
-         Exit_Condition.TIME_OUT: 0,
-         Exit_Condition.NOT_RUN: 0}
-max_symbols = -1
-max_steps = -1
-for result in io.catch_error_iter():
-  if result:
-    num_total += 1
-    try:
-      count[result.category] += 1
-    except KeyError:
-      count[Exit_Condition.ERROR] += 1
-    if result.category == Exit_Condition.HALT:
-      symbols, steps = result.category_reason
-      max_symbols = max(max_symbols, symbols)
-      max_steps = max(max_steps, steps)
+  num_total = 0
+  count = {Exit_Condition.HALT: 0,
+           Exit_Condition.INFINITE: 0,
+           Exit_Condition.UNDEF_CELL: 0,
+           Exit_Condition.ERROR: 0,
+           # Various Unknown types:
+           Exit_Condition.UNKNOWN: 0,
+           Exit_Condition.MAX_STEPS: 0,
+           Exit_Condition.OVER_TAPE: 0,
+           Exit_Condition.TIME_OUT: 0,
+           Exit_Condition.NOT_RUN: 0}
+  max_symbols = -1
+  max_steps = -1
+  for result in io.catch_error_iter():
+    if result:
+      num_total += 1
+      try:
+        count[result.category] += 1
+      except KeyError:
+        count[Exit_Condition.ERROR] += 1
+      if result.category == Exit_Condition.HALT:
+        symbols, steps = result.category_reason
+        max_symbols = max(max_symbols, symbols)
+        max_steps = max(max_steps, steps)
 
 num_halt = count[Exit_Condition.HALT]
 num_infinite = count[Exit_Condition.INFINITE]
