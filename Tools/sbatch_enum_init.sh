@@ -19,7 +19,7 @@ BASENAME=${WORK_DIR}/init
 mkdir -p ${WORK_DIR}
 
 # Enumerate a handful of machines.
-time python2 Code/Enumerate.py \
+time python3 Code/Enumerate.py \
   --allow-no-halt --no-reverse-engineer --no-ctl \
   --breadth-first --num-enum=10000 \
   --force --time=0 \

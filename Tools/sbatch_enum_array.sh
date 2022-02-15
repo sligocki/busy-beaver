@@ -17,7 +17,7 @@ shift
 INDEX=$(printf "%08d" $SLURM_ARRAY_TASK_ID)
 
 if [ -f "${WORK_DIR}/init.split.unknown.${INDEX}" ]; then
-  time python2 Code/Enumerate.py \
+  time python3 Code/Enumerate.py \
     --allow-no-halt --no-reverse-engineer --no-ctl \
     --force --time=0 \
     --infile=${WORK_DIR}/init.split.unknown.${INDEX} \
