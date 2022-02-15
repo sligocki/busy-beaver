@@ -35,21 +35,21 @@ class Repeated_Symbol(object):
   def __hash__(self):
     return self.symbol + self.num
 
-  def num_str(self):
+  def num_str(self, full_reps):
     """Rep count as string. Approx if count is too large."""
-    if type(self.num) not in (int, int) or self.num < 100000000:
+    if full_reps or type(self.num) not in (int, int) or self.num < 100_000_000:
       return str(self.num)
     else:
       return "(~10^%.1f)" % math.log10(self.num)
 
-  def to_string(self, html_format):
+  def to_string(self, html_format, full_reps):
     if html_format:
-      return "%s<sup>%s</sup>" % (str(self.symbol), self.num_str())
+      return "%s<sup>%s</sup>" % (str(self.symbol), self.num_str(full_reps))
     else:
-      return "%s^%s" % (str(self.symbol), self.num_str())
+      return "%s^%s" % (str(self.symbol), self.num_str(full_reps))
 
   def __repr__(self):
-    return self.to_string(html_format=False)
+    return self.to_string(html_format=False, full_reps=False)
 
   def copy(self):
     return Repeated_Symbol(self.symbol, self.num, self.id)
@@ -81,9 +81,11 @@ class Chain_Tape(object):
     return self.print_with_state(None)
 
   def print_with_state(self, state):
-    left_tape = " ".join(sym.to_string(self.options.html_format)
+    left_tape = " ".join(sym.to_string(self.options.html_format,
+                                       self.options.full_reps)
                          for sym in self.tape[0])
-    right_tape = " ".join(sym.to_string(self.options.html_format)
+    right_tape = " ".join(sym.to_string(self.options.html_format,
+                                        self.options.full_reps)
                           for sym in reverse(self.tape[1]))
 
     if state is None:

@@ -39,6 +39,8 @@ def add_option_group(parser):
                    help="Turn OFF proof system.")
   group.add_option("--html-format", action="store_true",
                    help="Print tape in an HTML format.")
+  group.add_option("--full-reps", action="store_true",
+                   help="Print full rep counts on tape even for very large reps.")
 
   parser.add_option_group(group)
 
@@ -93,6 +95,7 @@ class Simulator(object):
     self.op_details = ()
 
     # Stats
+    self.start_time = time.time()
     self.num_loops = 0
     self.num_macro_moves = 0
     self.num_chain_moves = 0
@@ -259,7 +262,7 @@ class Simulator(object):
 
   def print_self(self):
     self.print_steps()
-    print("Time:", time.time())
+    print("Elapsed time:", time.time() - self.start_time)
     print(self.tape.print_with_state(self.state))
     print("Num Nonzeros:", with_power(self.get_nonzeros()))
 
