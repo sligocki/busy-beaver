@@ -40,6 +40,7 @@ class SystemTest(unittest.TestCase):
     self.options.compute_steps = True
     self.options.verbose_prover = True
     self.options.html_format = False
+    self.options.full_reps = False
 
   def test_apply_rule_limited_diff_rule(self):
     # To construct a "Proof_System", a TM is needed.  This will be a

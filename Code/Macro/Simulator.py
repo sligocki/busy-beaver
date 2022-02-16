@@ -215,8 +215,13 @@ class Simulator(object):
     self.op_state = trans.condition
     self.op_details = trans.condition_details
     # Apply transition
+    if self.op_state == Turing_Machine.INF_REPEAT:
+      self.inf_reason = REPEAT_IN_PLACE
+      self.inf_quasihalt = self.calc_quasihalt(
+        # TODO(shawn): This is not 100% accurate. We should only ignore states involved in the repeat-in-place, but trans.states_last_seen could include some states before the repeat.
+        ignore_states=list(trans.states_last_seen.keys()))
     # Chain move
-    if trans.state_out == self.state and trans.dir_out == self.dir and \
+    elif trans.state_out == self.state and trans.dir_out == self.dir and \
        self.op_state == Turing_Machine.RUNNING:
       num_reps = self.tape.apply_chain_move(trans.symbol_out)
       if num_reps == math.inf:
@@ -237,7 +242,7 @@ class Simulator(object):
         self.step_num += trans.num_base_steps * num_reps
         self.steps_from_chain += trans.num_base_steps * num_reps
     # Simple move
-    else:
+    elif self.op_state != Turing_Machine.GAVE_UP:
       self.tape.apply_single_move(trans.symbol_out, trans.dir_out)
       self.state = trans.state_out
       self.dir = trans.dir_out
@@ -248,10 +253,6 @@ class Simulator(object):
             self.states_last_seen[state] = self.step_num + trans_last_seen
         self.step_num += trans.num_base_steps
         self.steps_from_macro += trans.num_base_steps
-      if self.op_state == Turing_Machine.INF_REPEAT:
-        self.inf_reason = REPEAT_IN_PLACE
-        self.inf_quasihalt = self.calc_quasihalt(
-          ignore_states=list(trans.states_last_seen.keys()))
     if self.op_state != Turing_Machine.UNDEFINED:
       self.verbose_print()
 

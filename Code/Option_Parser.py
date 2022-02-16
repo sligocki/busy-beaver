@@ -27,7 +27,7 @@ def open_outfile(outfilename, force):
   else:
     if not force and os.path.exists(outfilename):
       sys.stderr.write("Output text file, '%s', exists\n" % outfilename)
-      if string.lower(input("Overwrite? ")) not in ("y", "yes"):
+      if (input("Overwrite? ")).lower not in ("y", "yes"):
         return None
     return open(outfilename, "w")
 
