@@ -557,6 +557,8 @@ class Proof_System(object):
             stripped_tape_right = (Tape.Repeated_Symbol(0,-1),) + stripped_tape_right
             stripped_config_right = (1, state, dir, stripped_tape_right[-rule.right_dist:], rule.right_dist)
 
+            # Note: Every Limited_Diff_Rule actually becomes two values
+            # in `self.rules`
             if stripped_config_left in self.rules:
               self.rules[stripped_config_left].append(rule)
             else:
