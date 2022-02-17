@@ -15,12 +15,10 @@ def ttable_to_markdown(ttable):
   Write TM transition table to a Markdown table for use in, say, blog posts.
   
   Ex:
-    |     |  0  |  1  |
-    | :-: | :-: | :-: |
-    |  A  | 1RB | 1LD |
-    |  B  | 1RC | 1RB |
-    |  C  | 1LC | 1LA |
-    |  D  | 0RC | 0RD |
+    |     |  0  |  1  |  2  |  3  |
+    | :-: | :-: | :-: | :-: | :-: |
+    |  A  | 1RB | 2LA | 1RA | 1RA |
+    |  B  | 1LB | 1LA | 3RB | 1RZ |
   """
   
   num_states = len(ttable)
