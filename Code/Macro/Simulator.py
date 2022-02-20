@@ -288,7 +288,7 @@ class Simulator(object):
   def verbose_print(self):
     if self.verbose:
       if self.options.html_format:
-        print("%s %6d: %s<br>" % (self.verbose_prefix, self.step_num,
+        print("%s %10s: %s<br>" % (self.verbose_prefix, self.step_num,
                                   self.tape.print_with_state(self.state)))
       else:
         print("%s %6d  %s" % (self.verbose_prefix, self.num_loops, self.tape.print_with_state(self.state)), end=' ')

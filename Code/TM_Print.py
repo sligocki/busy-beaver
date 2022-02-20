@@ -40,9 +40,12 @@ def ttable_to_markdown(ttable):
     result += "|  %c  |" % Turing_Machine.states[state_in]
     for symbol_in in range(num_symbols):
       (symbol_out, dir_out, state_out) = ttable[state_in][symbol_in]
-      result += " %c%c%c |" % (Turing_Machine.symbols[symbol_out],
-                               Turing_Machine.dirs[dir_out],
-                               Turing_Machine.states[state_out])
+      if symbol_out == -1:
+        result += " --- |"  # Undefined transition
+      else:
+        result += " %c%c%c |" % (Turing_Machine.symbols[symbol_out],
+                                 Turing_Machine.dirs[dir_out],
+                                 Turing_Machine.states[state_out])
     result += "\n"
 
   return result
