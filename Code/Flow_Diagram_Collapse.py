@@ -23,8 +23,10 @@ def ttable_to_digraph(ttable):
   for state_in, row in enumerate(ttable):
     for symbol_in, cell in enumerate(row):
       symbol_out, dir_out, state_out = cell
-      # +1 so that Halt (-1) becomes 0 (all nodes must be pos ints).
-      graph.addEdge(state_in+1, state_out+1)
+      # Skip undefined transitions (rep by symbol_out == -1)
+      if symbol_out >= 0:
+        # +1 so that Halt (-1) becomes 0 (all nodes must be pos ints).
+        graph.addEdge(state_in+1, state_out+1)
   return graph
 
 def collapse_graph(graph):
