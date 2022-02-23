@@ -5,6 +5,7 @@
 Abstract Turing Machine model with basic NxM TM and Macro-Machine derivatives
 """
 
+from functools import total_ordering
 from optparse import OptionParser, OptionGroup
 import sys
 import string
@@ -367,6 +368,7 @@ class Block_Macro_Machine(Macro_Machine):
     return trans
 
 
+@total_ordering
 class Backsymbol_Macro_Machine_State:
   def __init__(self,base_state,back_symbol):
     assert isinstance(base_state, Simple_Machine_State), base_state
@@ -374,11 +376,10 @@ class Backsymbol_Macro_Machine_State:
     self.back_symbol = back_symbol
 
   def print_with_dir(self, dir):
-    if dir == 0:
+    if dir == LEFT:
       return "%s (%s)" % (self.base_state.print_with_dir(dir),self.back_symbol)
     else:
       return "(%s) %s" % (self.back_symbol,self.base_state.print_with_dir(dir))
-    return self.__repr__()
 
   def __repr__(self):
     return "(%s,%s)" % (self.base_state,self.back_symbol)
@@ -388,6 +389,10 @@ class Backsymbol_Macro_Machine_State:
   def __eq__(self, other):
     return (self.base_state == other.base_state and
             self.back_symbol == other.back_symbol)
+
+  # Define __lt__ so that we can sort backstates.
+  def __lt__(self, other):
+    return (self.base_state, self.back_symbol) < (other.base_state, other.back_symbol)
 
   def __hash__(self):
     return hash((self.base_state, self.back_symbol))

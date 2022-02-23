@@ -84,6 +84,57 @@ def run(machine, block_size, back, prover, recursive, options):
     print()
     print("Unexpected sim exit condition:", sim.op_state, sim.op_details)
 
+  if options.print_macro_ttable and isinstance(machine, Turing_Machine.Macro_Machine):
+    macro_states = set()
+    macro_symbols = set()
+    for (macro_symbol_in, macro_state_in, macro_dir_in) in machine.trans_table.keys():
+      macro_states.add( (macro_state_in, macro_dir_in) )
+      macro_symbols.add(macro_symbol_in)
+
+    macro_states = sorted(macro_states)
+    macro_symbols = sorted(macro_symbols)
+    table = [["" for _ in range(len(macro_symbols) + 1)]
+             for _ in range(len(macro_states) + 1)]
+    for y, macro_symbol in enumerate(macro_symbols):
+      table[0][y+1] = str(macro_symbol)
+    for x, (macro_state, dir) in enumerate(macro_states):
+      state_dir_str = macro_state.print_with_dir(dir)
+      if dir == Turing_Machine.RIGHT:
+        table[x+1][0] = " %s>" % (state_dir_str,)
+      else:
+        assert dir == Turing_Machine.LEFT, dir
+        table[x+1][0] = "<%s " % (state_dir_str,)
+
+    num_trans = 0
+    for x, (macro_state_in, dir_in) in enumerate(macro_states):
+      for y, macro_symbol_in in enumerate(macro_symbols):
+        if (macro_symbol_in, macro_state_in, dir_in) in machine.trans_table:
+          trans = machine.trans_table[(macro_symbol_in, macro_state_in, dir_in)]
+          state_dir_out_str = trans.state_out.print_with_dir(trans.dir_out)
+          if trans.dir_out == Turing_Machine.RIGHT:
+            table[x+1][y+1] = "%s %s>" % (trans.symbol_out, state_dir_out_str)
+          else:
+            assert trans.dir_out == Turing_Machine.LEFT, trans
+            table[x+1][y+1] = "<%s %s" % (state_dir_out_str, trans.symbol_out)
+          num_trans += 1
+
+    print()
+    print("Macro Machine TTable (%d states, %d symbols, %d transitions):" % (
+      len(macro_states), len(macro_symbols), num_trans))
+    print(table_to_str(table))
+
+def table_to_str(table):
+  max_cell_width = max(max(len(cell) for cell in row) for row in table)
+  cell_width = max_cell_width + 2
+
+  t_str = ""
+  for row in table:
+    for cell in row:
+      t_str += "| %*s " % (cell_width, cell)
+    t_str += "|\n"
+
+  return t_str
+
 
 if __name__ == "__main__":
   from optparse import OptionParser, OptionGroup
@@ -100,6 +151,7 @@ if __name__ == "__main__":
                     help="Specify a maximum number of loops.")
   parser.add_option("--print-loops", type=int, default=10000, metavar="LOOPS",
                     help="Print every LOOPS loops [Default %default].")
+  parser.add_option("--print-macro-ttable", action="store_true")
 
   parser.add_option("--manual", action="store_true",
                     help="Don't run any simulation, just set up simulator "
