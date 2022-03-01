@@ -13,11 +13,15 @@ import Alarm
 from Common import Exit_Condition, GenContainer
 import CTL1
 import CTL2
+import Halting_Lib
 import IO
 import Lin_Recur_Detect
 from Macro import Turing_Machine, Simulator, Block_Finder
 from Macro.Tape import INF
 import Reverse_Engineer_Filter
+
+import io_pb2
+
 
 def add_option_group(parser):
   """Add Macro_Simulator options group to an OptParser parser object."""
@@ -35,7 +39,7 @@ def add_option_group(parser):
                    help="Max tape size to allow.")
   group.add_option("--lin-steps", type=int, default=100,
                    help="Number of steps to run Lin_Recur detection (0 means skip).")
-  group.add_option("--lin-min", action="store_true")
+  group.add_option("--lin-min", action="store_true", default = False)
   group.add_option("--no-reverse-engineer", dest="reverse_engineer",
                    action="store_false", default=True,
                    help="Don't try Reverse_Engineer_Filter.")
@@ -97,12 +101,15 @@ def run_options(ttable, options, stats=None):
     return Exit_Condition.INFINITE, ("Reverse_Engineer", ("N/A", "N/A"))
 
   if options.lin_steps:
-    lr_result, quasihalt_info = Lin_Recur_Detect.lin_detect(
-      ttable, max_steps=options.lin_steps, find_min_start_step=options.lin_min)
+    lr_params = io_pb2.LinRecurFilterRequest()
+    lr_params.max_steps = options.lin_steps
+    lr_params.find_min_start_step = options.lin_min
+    lr_result, tm_status = Lin_Recur_Detect.filter(ttable, lr_params)
     if lr_result.success:
-      if quasihalt_info.quasihalts:
+      if tm_status.quasihalt_status.is_quasihalting:
         return Exit_Condition.INFINITE, ("Lin_Recur", (
-          quasihalt_info.quasihalt_state, int(quasihalt_info.quasihalt_steps)))
+          tm_status.quasihalt_status.quasihalt_state,
+          Halting_Lib.get_big_int(tm_status.quasihalt_status.quasihalt_steps)))
       else:
         return Exit_Condition.INFINITE, ("Lin_Recur", ("No_Quasihalt", "N/A"))
 
@@ -146,7 +153,7 @@ def run_options(ttable, options, stats=None):
     sim.step()
 
   # TODO(shawn): pass the stats object into sim so we don't have to copy.
-  if stats:
+  if stats and sim.prover:
     stats.num_rules += len(sim.prover.rules)
     stats.num_recursive_rules += sim.prover.num_recursive_rules
     stats.num_collatz_rules += sim.prover.num_collatz_rules

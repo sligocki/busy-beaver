@@ -5,29 +5,13 @@ Search for Lin Recurrence (as discussed in https://nickdrozd.github.io/2021/02/2
 
 import argparse
 import time
+from typing import Tuple
 
 import Direct_Simulator
+import Halting_Lib
 import IO
+
 import io_pb2
-
-
-def calc_quasihalt(all_states, states_used, states_last_seen):
-  q_state = None
-  q_last_seen = -1
-  for state in all_states:
-    if state not in states_used:
-      if states_last_seen.get(state, -1) > q_last_seen:
-        q_state = state
-        q_last_seen = states_last_seen[state]
-
-  quasihalt_info = io_pb2.QuasihaltInfo()
-  if q_state == None:
-    quasihalt_info.quasihalts = False
-  else:
-    quasihalt_info.quasihalts = True
-    quasihalt_info.quasihalt_steps = q_last_seen + 1
-    quasihalt_info.quasihalt_state = q_state
-  return quasihalt_info
 
 
 def are_half_tapes_equal(tape1, start_pos1, tape2, start_pos2, dir_offset):
@@ -52,11 +36,8 @@ def lin_detect_not_min(ttable, max_steps=None):
   """Detect Lin Recurrence without knowing the period or start time.
   The result is a point at which it is in Lin Recurrence, not necessarily the
   time that it has started LR."""
-  result = io_pb2.LinRecurInfo()
-  if max_steps is not None:
-    result.max_steps = max_steps
-  # Not min, until period_search() is called.
-  result.is_start_step_min = False
+  result = io_pb2.LinRecurFilterResponse()
+  tm_status = io_pb2.Status()
 
   sim = Direct_Simulator.DirectSimulator(ttable)
   states_last_seen = {sim.state: sim.step_num}
@@ -81,7 +62,9 @@ def lin_detect_not_min(ttable, max_steps=None):
       if sim.halted:
         # If a machine halts, it will never Lin Recur.
         result.success = False
-        return result, io_pb2.QuasihaltInfo()
+        # NOTE: We do not currently evaluate `halt_score`
+        Halting_Lib.set_halting(tm_status, sim.step_num, halt_score = None)
+        return result, tm_status
 
       most_left_pos = min(most_left_pos, sim.tape.position)
       most_right_pos = max(most_right_pos, sim.tape.position)
@@ -104,13 +87,16 @@ def lin_detect_not_min(ttable, max_steps=None):
     result.start_step = init_step_num
     result.period = sim.step_num - init_step_num
     result.offset = offset
-    return result, calc_quasihalt(all_states = list(range(len(ttable))),
-                                  states_used = states_used,
-                                  states_last_seen = states_last_seen)
+    Halting_Lib.set_inf_recur(tm_status,
+                              all_states = list(range(len(ttable))),
+                              states_to_ignore = states_used,
+                              states_last_seen = states_last_seen)
+    return result, tm_status
   else:
     assert sim.step_num == steps_reset, (sim.step_num, steps_reset)
     result.success = False
-    return result, io_pb2.QuasihaltInfo()
+    # We have no information on halt_status or quasihalt_status.
+    return result, tm_status
 
 
 def check_recur(ttable, init_step, period):
@@ -166,19 +152,18 @@ def period_search(ttable, init_step, period):
   return high
 
 
-def lin_detect(ttable, max_steps, find_min_start_step):
+def filter(ttable, params : io_pb2.LinRecurFilterRequest) -> Tuple[io_pb2.LinRecurFilterResponse, io_pb2.Status]:
   start_time = time.time()
-  lr_result, quasihalt_info = lin_detect_not_min(ttable, max_steps=max_steps)
-  if lr_result.success and find_min_start_step:
+  lr_result, tm_status = lin_detect_not_min(ttable, max_steps=params.max_steps)
+  if lr_result.success and params.find_min_start_step:
     # NOTE: lr_result.start_step is not necessarily the earliest time that recurrence
     # starts, it is simply a time after which recurrence is in effect.
 
     # Do a second search, now that we know the recurrence period to find the
     # earliest start time of the recurrence.
     lr_result.start_step = period_search(ttable, lr_result.start_step, lr_result.period)
-    lr_result.is_start_step_min = True
   lr_result.elapsed_time_sec = time.time() - start_time
-  return lr_result, quasihalt_info
+  return lr_result, tm_status
 
 
 def main():
@@ -191,10 +176,10 @@ def main():
   args = parser.parse_args()
 
   ttable = IO.load_TTable_filename(args.tm_file, args.tm_line)
-  lr_result, quasihalt_info = lin_detect(ttable, args.max_steps, args.min_start_step)
+  lr_result, tm_status = filter(ttable, args.max_steps, args.min_start_step)
 
   print(lr_result)
-  print(quasihalt_info)
+  print(tm_status)
 
 if __name__ == "__main__":
   main()

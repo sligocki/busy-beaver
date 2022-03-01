@@ -15,10 +15,8 @@ import time
 from Macro import Proof_System
 from Macro import Tape
 from Macro import Turing_Machine
-
-parent_dir = sys.path[0][:sys.path[0].rfind("/")] # pwd path with last directory removed
-sys.path.insert(1, parent_dir)
 from Numbers.Algebraic_Expression import Algebraic_Expression
+
 
 def add_option_group(parser):
   """Add Simulator options group to an OptParser parser object."""

@@ -1,72 +1,140 @@
-syntax = "proto2";
+// Protobuf messages used for storing TM search results on disk.
+//
+// This is meant to replace the existing ad-hoc text format used by IO.py.
+//
+// It provides the main advantage of being extensible, adding a new field
+// for new stats is trivial and backwards/forwards compatible. It also
+// has the potential to be more efficient for data storage ...
+
+syntax = "proto3";
 
 package busy_beaver;
 
-message HaltInfo {
-  // Does this machine halt?
-  // Note: If unset, that means it is unknown whether it is halting or not.
-  optional bool halts = 1;
 
-  // Note: These are integers, but may be huge, so store them as float.
-  optional float halt_steps = 2;
-  optional float halt_score = 3;
+// A "potentially" big positive integer.
+message BigInt {
+  oneof big_int {
+    // If the int is small enough, it is stored as a uint64.
+    uint64 int = 1;
+    // If it is too big (>= 2^64), serialize it as a text string.
+    //
+    // Note: If we have a lot of these, we could consider a more efficient
+    // format, like byte-packing into a bytes object ... but I think it is
+    // uncommon enough, that using this inefficient solution is fine.
+    string str = 2;
+  }
 }
 
-message QuasihaltInfo {
-  // Does this machine quasihalt?
-  // Note: If unset, that means it is unknown whether it is quasihalting or not.
-  optional bool quasihalts = 1;
-
-  // Note: This is an integer, but may be huge, so store them as float.
-  optional float quasihalt_steps = 2;
-  optional int32 quasihalt_state = 3;
+message TuringMachine {
+  // TODO: We may want to encode this in a more efficient way.
+  // Ex: a bytes with transitions bit-packed into 1 byte each? (~4x smaller).
+  string ttable = 1;
 }
 
-message SimulatorInfo {
+
+// Statuses for various searches (BB, BBB, ...)
+message HaltStatus {
+  // Have we made a halting decision?
+  bool is_decided = 1;
+  // Does this machine halt? (Only meaningful if is_decided = True)
+  bool is_halting = 2;
+
+  BigInt halt_steps = 3;
+  BigInt halt_score = 4;
+}
+
+message QuasihaltStatus {
+  // Have we made a quasihalting decision?
+  bool is_decided = 1;
+  // Does this machine quasihalt? (Only meaningful if is_decided = True)
+  bool is_quasihalting = 2;
+
+  BigInt quasihalt_steps = 3;
+  int64 quasihalt_state = 4;
+}
+
+message Status {
+  HaltStatus halt_status = 1;
+  QuasihaltStatus quasihalt_status = 2;
+  // TODO: Add more, like lin_recur_info and blanking_info?
+}
+
+
+// Filter Results
+message SimulatorRequest {
+  // Parameters
+  // TODO
+}
+
+message SimulatorResponse {
+  // Results
   // Reason simulator finished (Halt, Inf, Over_Steps, Error, ...)
-  optional string sim_condition = 1;
+  string sim_condition = 1;
 
   // Stats
-  optional int32 num_loops = 2;
-  optional float run_time_s = 3;
-  optional float num_steps = 4;
+  float elapsed_time_sec = 2;
 
-  // Prover stats
-  optional int32 num_rules_proven = 5;
-  optional int32 num_proofs_failed = 6;
+  int64 num_loops = 3;
+  BigInt num_steps = 4;
+
+  int64 num_rules_proven = 5;
+  int64 num_proofs_failed = 6;
 }
 
-message LinRecurInfo {
-  // Parameters
-  optional int32 max_steps = 1;
-  // Is start_step the min start time of LR? Or just a time at which it had started by?
-  optional bool is_start_step_min = 2;
+message SimulatorResult {
+  SimulatorRequest parameters = 1;
+  SimulatorResponse result = 2;
+}
 
+
+message LinRecurFilterRequest {
+  // Parameters
+  int64 max_steps = 1;
+  // Is start_step the min start time of LR?
+  // Or just a time at which it had started by?
+  bool find_min_start_step = 2;
+}
+
+message LinRecurFilterResponse {
   // Results
   // Did the filter classify this machine as LR?
-  optional bool success = 3;
-  // A time at which LR has started. If is_start_step_min=True, this is the min time.
-  optional int32 start_step = 4;
+  bool success = 3;
+  // A step at which the machine is in Lin Recurrence.
+  // If is_start_step_min=True, this is the smallest such step (i.e. the
+  // step that Lin Recurrence began).
+  int64 start_step = 4;
   // Period of LR cycle.
-  optional int32 period = 5;
-  // Tape offset distance from one cycle to the next (+ means right, - means left, 0 means it repeats in place).
-  optional int32 offset = 6;
+  int64 period = 5;
+  // Tape offset distance from one cycle to the next
+  // (+ means right, - means left, 0 means it repeats in place).
+  int64 offset = 6;
 
   // Stats
-  optional float elapsed_time_sec = 7;
+  float elapsed_time_sec = 7;
 }
 
+message LinRecurFilterResult {
+  LinRecurFilterRequest parameters = 1;
+  LinRecurFilterResponse result = 2;
+}
+
+
+// The top level message for a TM. It contains:
+//  * TM specification (ttable)
+//  * Results for all filters that have been run
+//  * Concluded "Statuses" for Halting, etc. conditions
 message IORecord {
-  // TODO: Do we want to store ttable as a list of lists instead?
-  optional string ttable = 1;
+  TuringMachine tm = 1;
 
-  // Compiled results summarizing various information relevant to Busy Beaver
-  // (or BBB, etc.) problem.
-  optional HaltInfo halt_info = 2;
-  optional QuasihaltInfo quasihalt_info = 3;
-  // TODO: Add more, like lin_recur_info and blanking_info?
+  // Status of this machine with respect to BB, BBB, etc. criteria.
+  Status status = 2;
 
-  // Raw parameters and results from various filters.
-  optional SimulatorInfo simulator_info = 4;
-  // TODO: Add info for other filters (LinRecur, ReverseEngineer, CTL, ...)
+  // Raw parameters, results and stats from various filters.
+
+  // We allow multiple SimulatorResults since we may have run it with different
+  // parameters and get different results.
+  repeated SimulatorResult simulator_results = 3;
+
+  LinRecurFilterResult lin_recur_filter_result = 4;
+  // TODO: Add results for other filters (ReverseEngineer, CTL, ...)
 }
