@@ -3,21 +3,11 @@
 # Alarm.py
 #
 """
-A class to manipulate alarms down the the millisecond level if SignalPlus
-is available...
+A class to manipulate alarms and turn them into Exceptions.
 """
 
 import signal
-
-# SignalPlus allows millisecond alarm, but needs to be compiled seperately.
-# Fall back to inferior signal.alarm if we have to.
-try:
-  from signalPlus import alarm
-  using_signal_plus = True
-except ImportError:
-  import sys; print("Alarm.py: Failed to import signalPlus, falling back to signal.", file=sys.stderr)
-  from signal import alarm
-  using_signal_plus = False
+from signal import alarm
 
 class AlarmException(Exception):
   """An exception to be tied to a timer running out."""
@@ -28,10 +18,8 @@ class Alarm(object):
     self.is_alarm_on = False
 
   def set_alarm(self, time):
-    if not using_signal_plus:
-      time = int(time)
     self.is_alarm_on = True
-    alarm(time)
+    alarm(int(time))
 
   def cancel_alarm(self):
     self.is_alarm_on = False
@@ -41,6 +29,7 @@ class Alarm(object):
     if self.is_alarm_on:
       raise AlarmException("Timeout!")
 
+# Singleton object
 ALARM = Alarm()
 
 # Attach the alarm signal to the alarm exception.
