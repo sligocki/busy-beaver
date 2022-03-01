@@ -2,26 +2,23 @@ syntax = "proto2";
 
 package busy_beaver;
 
-// Boolean or unknown
-enum BoolUnknown {
-  FALSE = 0;
-  TRUE = 1;
-  UNKNOWN = 2;
-}
-
 message HaltInfo {
-  optional BoolUnknown halts = 1;
+  // Does this machine halt?
+  // Note: If unset, that means it is unknown whether it is halting or not.
+  optional bool halts = 1;
 
-  // Note: These are integers, but may be huge, so store them as strings.
-  optional string halt_steps = 2;
-  optional string halt_score = 3;
+  // Note: These are integers, but may be huge, so store them as float.
+  optional float halt_steps = 2;
+  optional float halt_score = 3;
 }
 
 message QuasihaltInfo {
-  optional BoolUnknown quasihalts = 1;
+  // Does this machine quasihalt?
+  // Note: If unset, that means it is unknown whether it is quasihalting or not.
+  optional bool quasihalts = 1;
 
-  // Note: This is an integer, but may be huge, so store them as strings.
-  optional string quasihalt_steps = 2;
+  // Note: This is an integer, but may be huge, so store them as float.
+  optional float quasihalt_steps = 2;
   optional int32 quasihalt_state = 3;
 }
 
@@ -33,10 +30,30 @@ message SimulatorInfo {
   optional int32 num_loops = 2;
   optional float run_time_s = 3;
   optional float num_steps = 4;
-  
+
   // Prover stats
   optional int32 num_rules_proven = 5;
   optional int32 num_proofs_failed = 6;
+}
+
+message LinRecurInfo {
+  // Parameters
+  optional int32 max_steps = 1;
+  // Is start_step the min start time of LR? Or just a time at which it had started by?
+  optional bool is_start_step_min = 2;
+
+  // Results
+  // Did the filter classify this machine as LR?
+  optional bool success = 3;
+  // A time at which LR has started. If is_start_step_min=True, this is the min time.
+  optional int32 start_step = 4;
+  // Period of LR cycle.
+  optional int32 period = 5;
+  // Tape offset distance from one cycle to the next (+ means right, - means left, 0 means it repeats in place).
+  optional int32 offset = 6;
+
+  // Stats
+  optional float elapsed_time_sec = 7;
 }
 
 message IORecord {
@@ -48,7 +65,7 @@ message IORecord {
   optional HaltInfo halt_info = 2;
   optional QuasihaltInfo quasihalt_info = 3;
   // TODO: Add more, like lin_recur_info and blanking_info?
-  
+
   // Raw parameters and results from various filters.
   optional SimulatorInfo simulator_info = 4;
   // TODO: Add info for other filters (LinRecur, ReverseEngineer, CTL, ...)

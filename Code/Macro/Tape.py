@@ -125,7 +125,6 @@ class Chain_Tape(object):
     return n
 
   def get_top_block(self):
-    """Simply returns the current symbol"""
     return self.tape[self.dir][-1]
 
   def get_top_symbol(self):

@@ -74,7 +74,11 @@ class DirectSimulator:
     if not self.halted:
       state_in = self.state
       symbol_in = self.tape.read()
-      symbol_out, dir_out, state_out = self.ttable[state_in][symbol_in]
+      try:
+        symbol_out, dir_out, state_out = self.ttable[state_in][symbol_in]
+      except IndexError:
+        print("Error", state_in, symbol_in, len(self.ttable), len(self.ttable[0]))
+        raise
 
       self.tape.write(symbol_out)
       self.tape.move(dir_out)

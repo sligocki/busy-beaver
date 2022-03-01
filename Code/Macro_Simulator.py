@@ -35,6 +35,7 @@ def add_option_group(parser):
                    help="Max tape size to allow.")
   group.add_option("--lin-steps", type=int, default=100,
                    help="Number of steps to run Lin_Recur detection (0 means skip).")
+  group.add_option("--lin-min", action="store_true")
   group.add_option("--no-reverse-engineer", dest="reverse_engineer",
                    action="store_false", default=True,
                    help="Don't try Reverse_Engineer_Filter.")
@@ -75,7 +76,7 @@ def run_timer(ttable, options, stats, time_limit_sec):
   try:
     start_time = time.time()
     Alarm.ALARM.set_alarm(time_limit_sec)
-    
+
     return run_options(ttable, options, stats)
 
     Alarm.ALARM.cancel_alarm()
@@ -94,13 +95,16 @@ def run_options(ttable, options, stats=None):
   if options.reverse_engineer and Reverse_Engineer_Filter.test(ttable):
     # Note: quasihalting result is not computable when using Reverse_Engineer filter.
     return Exit_Condition.INFINITE, ("Reverse_Engineer", ("N/A", "N/A"))
-  
+
   if options.lin_steps:
-    result = Lin_Recur_Detect.lin_search(ttable, max_steps=options.lin_steps)
-    if result.success:
-      quasihalt_state, quasihalt_time = result.calc_quasihalt(all_states = list(range(len(ttable))))
-      # TODO: Include recurrence info in addition to quasihalt.
-      return Exit_Condition.INFINITE, ("Lin_Recur", (quasihalt_state, quasihalt_time))
+    lr_result, quasihalt_info = Lin_Recur_Detect.lin_detect(
+      ttable, max_steps=options.lin_steps, find_min_start_step=options.lin_min)
+    if lr_result.success:
+      if quasihalt_info.quasihalts:
+        return Exit_Condition.INFINITE, ("Lin_Recur", (
+          quasihalt_info.quasihalt_state, int(quasihalt_info.quasihalt_steps)))
+      else:
+        return Exit_Condition.INFINITE, ("Lin_Recur", ("No_Quasihalt", "N/A"))
 
   ## Construct the Macro Turing Machine (Backsymbol-k-Block-Macro-Machine)
   m = Turing_Machine.make_machine(ttable)
@@ -195,7 +199,7 @@ if __name__ == "__main__":
     line = 1
 
   ttable = IO.load_TTable_filename(filename, line)
-  
+
   if options.time > 0:
     print(run_timer(ttable, options, None, options.time))
   else:
