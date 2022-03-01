@@ -52,29 +52,33 @@ def collapse_graph(graph):
 
 def main():
   parser = argparse.ArgumentParser()
-  parser.add_argument("tm_file", type=Path)
+  parser.add_argument("tm_file", type=Path, nargs="+")
   parser.add_argument("--line-num", "-n", type=int)
+  parser.add_argument("--print-freq", type=int, default=100_000)
   args = parser.parse_args()
   
   if args.line_num == None:
     # Multi-TM use-case
     num_structured = 0
     num_total = 0
-    with open(args.tm_file) as infile:
-      for record in IO.IO(infile, None):
-        graph = ttable_to_digraph(record.ttable)
-        graph = collapse_graph(graph)
-        num_total += 1
-        if graph.numberOfNodes() == 0:
-          num_structured += 1
+    for filename in args.tm_file:
+      with open(filename, "r") as infile:
+        for record in IO.IO(infile, None):
+          graph = ttable_to_digraph(record.ttable)
+          graph = collapse_graph(graph)
+          num_total += 1
+          if graph.numberOfNodes() == 0:
+            num_structured += 1
 
-        if num_total % 100_000 == 0:
-          print(f"... {num_structured:_} / {num_total:_} = {num_structured / num_total:.0%}")
-      print(f"Structured TMs: {num_structured:_} / {num_total:_} = {num_structured / num_total:.0%}")
+          if num_total % args.print_freq == 0:
+            print(f" ... {num_structured:_} / {num_total:_} = {num_structured / num_total:.0%}")
+    print(f"Structured TMs: {num_structured:_} / {num_total:_} = {num_structured / num_total:.0%}")
 
   else:
     # Single TM use-case
-    ttable = IO.load_TTable_filename(args.tm_file, args.line_num)
+    assert len(args.tm_file) == 1, args.tm_file
+    filename = args.tm_file[0]
+    ttable = IO.load_TTable_filename(filename, args.line_num)
     graph = ttable_to_digraph(ttable)
     graph = collapse_graph(graph)
     print(f"Collapsed to graph: {graph.numberOfNodes():_} nodes / {graph.numberOfEdges():_} edges")
