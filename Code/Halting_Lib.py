@@ -7,8 +7,9 @@ import io_pb2
 
 _BIG_INT_MAX = 2**64 - 1
 def set_big_int(field : io_pb2.BigInt, value : int):
-  if 0 <= value <= _BIG_INT_MAX:
+  if value <= _BIG_INT_MAX:
     # For "small" (non-negative) integers, store them directly.
+    # Setting with negative value will cause a ValueError here.
     field.int = value
   else:
     # For "big" integers, store them as serialized text.
