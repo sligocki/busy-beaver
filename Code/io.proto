@@ -87,6 +87,49 @@ message SimulatorResult {
 }
 
 
+message BlockFinderRequest {
+  // # loops to run Sim searching for least-compressed tape.
+  int64 compression_search_loops = 1;
+  // # loops to run sim for each multiple of optimal compression size.
+  int64 mult_sim_loops = 2;
+  // While searching for optimal multiple: How far should we look beyond
+  // current best mult?
+  int64 extra_mult = 3;
+}
+
+message BlockFinderResponse {
+  // Results
+  // Overall heuristically decided best block size.
+  int64 best_block_size = 1;
+
+  // Stats
+  float elapsed_time_sec = 2;
+
+  // Chain Sim loop (with block size 1) where compressed tape was largest
+  // (least effectively compressed).
+  int64 least_compressed_loop = 3;
+  // # Blocks (with compression) on this least compressed tape.
+  int64 least_compressed_tape_size_chain = 4;
+  // Total # symbols (no compression) on this least compressed tape.
+  int64 least_compressed_tape_size_raw = 5;
+  // Best block size for compression on this least compressed tape.
+  int64 best_compression_block_size = 6;
+  // # Blocks (with compression) using best_compression_block_size on this
+  // least compressed tape.
+  int64 best_compression_tape_size = 7;
+
+  // Best multiple of best_compression_block_size found.
+  int64 best_mult = 8;
+  // "Chain factor" (steps_from_chain / steps_from_macro) at best_mult.
+  float best_chain_factor = 9;
+}
+
+message BlockFinderResult {
+  BlockFinderRequest parameters = 1;
+  BlockFinderResponse result = 2;
+}
+
+
 message LinRecurFilterRequest {
   // Parameters
   int64 max_steps = 1;
@@ -134,7 +177,8 @@ message IORecord {
   // We allow multiple SimulatorResults since we may have run it with different
   // parameters and get different results.
   repeated SimulatorResult simulator_results = 3;
+  repeated BlockFinderResult block_finder_results = 4;
 
-  LinRecurFilterResult lin_recur_filter_result = 4;
+  LinRecurFilterResult lin_recur_filter_result = 5;
   // TODO: Add results for other filters (ReverseEngineer, CTL, ...)
 }

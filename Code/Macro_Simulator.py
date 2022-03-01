@@ -118,8 +118,14 @@ def run_options(ttable, options, stats=None):
 
   block_size = options.block_size
   if not block_size:
-    # If no explicit block-size given, use inteligent software to find one
-    block_size = Block_Finder.block_finder(m, options)
+    bf_params = io_pb2.BlockFinderRequest()
+    bf_params.compression_search_loops = options.bf_limit1
+    bf_params.mult_sim_loops = options.bf_limit2
+    bf_params.extra_mult = options.bf_extra_mult
+    # If no explicit block-size given, use heuristics to find one.
+    bf_result = Block_Finder.block_finder(m, bf_params, options)
+    # TODO
+    block_size = bf_result.best_block_size
 
   # Do not create a 1-Block Macro-Machine (just use base machine)
   if block_size != 1:

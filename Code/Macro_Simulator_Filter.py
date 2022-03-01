@@ -7,10 +7,13 @@ Tree Filter which uses the Macro Machine Simulator.
 """
 
 from pprint import pprint
+
+from Alarm import ALARM, AlarmException
 from Common import Exit_Condition, GenContainer
 import IO
 from Macro import Simulator, Turing_Machine, Block_Finder
-from Alarm import ALARM, AlarmException
+
+import io_pb2
 
 # TODO(shawn): Get rid of bad global vars :/
 max_step2inf = 0
@@ -21,8 +24,14 @@ def run(TTable, block_size, max_loops, runtime, recursive, progress, options,
   # Get and initialize a new simulator object.
   m1 = Turing_Machine.Simple_Machine(TTable)
   if not block_size:
-    # Find optimal macro block size automatically.
-    block_size = Block_Finder.block_finder(m1, options)
+    bf_params = io_pb2.BlockFinderRequest()
+    bf_params.compression_search_loops = options.bf_limit1
+    bf_params.mult_sim_loops = options.bf_limit2
+    bf_params.extra_mult = options.bf_extra_mult
+    # If no explicit block-size given, use heuristics to find one.
+    bf_result = Block_Finder.block_finder(m1, bf_params, options)
+    # TODO
+    block_size = bf_result.best_block_size
   m2 = Turing_Machine.Block_Macro_Machine(m1, block_size)
   m3 = Turing_Machine.Backsymbol_Macro_Machine(m2)
 

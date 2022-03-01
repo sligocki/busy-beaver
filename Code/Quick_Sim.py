@@ -7,17 +7,27 @@ A TM simulator with a variety of advanced features, options, and output
 formats.
 """
 
-import sys, string
+import string
+import sys
 
 from Macro import Turing_Machine, Simulator, Block_Finder
 import IO
+
+import io_pb2
 
 def run(machine, block_size, back, prover, recursive, options):
   # Construct Machine (Backsymbol-k-Block-Macro-Machine)
 
   # If no explicit block-size given, use inteligent software to find one
   if not block_size:
-    block_size = Block_Finder.block_finder(machine, options)
+    bf_params = io_pb2.BlockFinderRequest()
+    bf_params.compression_search_loops = options.bf_limit1
+    bf_params.mult_sim_loops = options.bf_limit2
+    bf_params.extra_mult = options.bf_extra_mult
+    # If no explicit block-size given, use heuristics to find one.
+    bf_result = Block_Finder.block_finder(machine, bf_params, options)
+    # TODO
+    block_size = bf_result.best_block_size
 
   # Do not create a 1-Block Macro-Machine (just use base machine)
   if block_size != 1:

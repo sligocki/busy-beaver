@@ -14,7 +14,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x08io.proto\x12\x0b\x62usy_beaver\"1\n\x06\x42igInt\x12\r\n\x03int\x18\x01 \x01(\x04H\x00\x12\r\n\x03str\x18\x02 \x01(\tH\x00\x42\t\n\x07\x62ig_int\"\x1f\n\rTuringMachine\x12\x0e\n\x06ttable\x18\x01 \x01(\t\"\x86\x01\n\nHaltStatus\x12\x12\n\nis_decided\x18\x01 \x01(\x08\x12\x12\n\nis_halting\x18\x02 \x01(\x08\x12\'\n\nhalt_steps\x18\x03 \x01(\x0b\x32\x13.busy_beaver.BigInt\x12\'\n\nhalt_score\x18\x04 \x01(\x0b\x32\x13.busy_beaver.BigInt\"\x85\x01\n\x0fQuasihaltStatus\x12\x12\n\nis_decided\x18\x01 \x01(\x08\x12\x17\n\x0fis_quasihalting\x18\x02 \x01(\x08\x12,\n\x0fquasihalt_steps\x18\x03 \x01(\x0b\x32\x13.busy_beaver.BigInt\x12\x17\n\x0fquasihalt_state\x18\x04 \x01(\x03\"n\n\x06Status\x12,\n\x0bhalt_status\x18\x01 \x01(\x0b\x32\x17.busy_beaver.HaltStatus\x12\x36\n\x10quasihalt_status\x18\x02 \x01(\x0b\x32\x1c.busy_beaver.QuasihaltStatus\"\x12\n\x10SimulatorRequest\"\xb4\x01\n\x11SimulatorResponse\x12\x15\n\rsim_condition\x18\x01 \x01(\t\x12\x18\n\x10\x65lapsed_time_sec\x18\x02 \x01(\x02\x12\x11\n\tnum_loops\x18\x03 \x01(\x03\x12&\n\tnum_steps\x18\x04 \x01(\x0b\x32\x13.busy_beaver.BigInt\x12\x18\n\x10num_rules_proven\x18\x05 \x01(\x03\x12\x19\n\x11num_proofs_failed\x18\x06 \x01(\x03\"t\n\x0fSimulatorResult\x12\x31\n\nparameters\x18\x01 \x01(\x0b\x32\x1d.busy_beaver.SimulatorRequest\x12.\n\x06result\x18\x02 \x01(\x0b\x32\x1e.busy_beaver.SimulatorResponse\"G\n\x15LinRecurFilterRequest\x12\x11\n\tmax_steps\x18\x01 \x01(\x03\x12\x1b\n\x13\x66ind_min_start_step\x18\x02 \x01(\x08\"w\n\x16LinRecurFilterResponse\x12\x0f\n\x07success\x18\x03 \x01(\x08\x12\x12\n\nstart_step\x18\x04 \x01(\x03\x12\x0e\n\x06period\x18\x05 \x01(\x03\x12\x0e\n\x06offset\x18\x06 \x01(\x03\x12\x18\n\x10\x65lapsed_time_sec\x18\x07 \x01(\x02\"\x83\x01\n\x14LinRecurFilterResult\x12\x36\n\nparameters\x18\x01 \x01(\x0b\x32\".busy_beaver.LinRecurFilterRequest\x12\x33\n\x06result\x18\x02 \x01(\x0b\x32#.busy_beaver.LinRecurFilterResponse\"\xd4\x01\n\x08IORecord\x12&\n\x02tm\x18\x01 \x01(\x0b\x32\x1a.busy_beaver.TuringMachine\x12#\n\x06status\x18\x02 \x01(\x0b\x32\x13.busy_beaver.Status\x12\x37\n\x11simulator_results\x18\x03 \x03(\x0b\x32\x1c.busy_beaver.SimulatorResult\x12\x42\n\x17lin_recur_filter_result\x18\x04 \x01(\x0b\x32!.busy_beaver.LinRecurFilterResultb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x08io.proto\x12\x0b\x62usy_beaver\"1\n\x06\x42igInt\x12\r\n\x03int\x18\x01 \x01(\x04H\x00\x12\r\n\x03str\x18\x02 \x01(\tH\x00\x42\t\n\x07\x62ig_int\"\x1f\n\rTuringMachine\x12\x0e\n\x06ttable\x18\x01 \x01(\t\"\x86\x01\n\nHaltStatus\x12\x12\n\nis_decided\x18\x01 \x01(\x08\x12\x12\n\nis_halting\x18\x02 \x01(\x08\x12\'\n\nhalt_steps\x18\x03 \x01(\x0b\x32\x13.busy_beaver.BigInt\x12\'\n\nhalt_score\x18\x04 \x01(\x0b\x32\x13.busy_beaver.BigInt\"\x85\x01\n\x0fQuasihaltStatus\x12\x12\n\nis_decided\x18\x01 \x01(\x08\x12\x17\n\x0fis_quasihalting\x18\x02 \x01(\x08\x12,\n\x0fquasihalt_steps\x18\x03 \x01(\x0b\x32\x13.busy_beaver.BigInt\x12\x17\n\x0fquasihalt_state\x18\x04 \x01(\x03\"n\n\x06Status\x12,\n\x0bhalt_status\x18\x01 \x01(\x0b\x32\x17.busy_beaver.HaltStatus\x12\x36\n\x10quasihalt_status\x18\x02 \x01(\x0b\x32\x1c.busy_beaver.QuasihaltStatus\"\x12\n\x10SimulatorRequest\"\xb4\x01\n\x11SimulatorResponse\x12\x15\n\rsim_condition\x18\x01 \x01(\t\x12\x18\n\x10\x65lapsed_time_sec\x18\x02 \x01(\x02\x12\x11\n\tnum_loops\x18\x03 \x01(\x03\x12&\n\tnum_steps\x18\x04 \x01(\x0b\x32\x13.busy_beaver.BigInt\x12\x18\n\x10num_rules_proven\x18\x05 \x01(\x03\x12\x19\n\x11num_proofs_failed\x18\x06 \x01(\x03\"t\n\x0fSimulatorResult\x12\x31\n\nparameters\x18\x01 \x01(\x0b\x32\x1d.busy_beaver.SimulatorRequest\x12.\n\x06result\x18\x02 \x01(\x0b\x32\x1e.busy_beaver.SimulatorResponse\"b\n\x12\x42lockFinderRequest\x12 \n\x18\x63ompression_search_loops\x18\x01 \x01(\x03\x12\x16\n\x0emult_sim_loops\x18\x02 \x01(\x03\x12\x12\n\nextra_mult\x18\x03 \x01(\x03\"\xb0\x02\n\x13\x42lockFinderResponse\x12\x17\n\x0f\x62\x65st_block_size\x18\x01 \x01(\x03\x12\x18\n\x10\x65lapsed_time_sec\x18\x02 \x01(\x02\x12\x1d\n\x15least_compressed_loop\x18\x03 \x01(\x03\x12(\n least_compressed_tape_size_chain\x18\x04 \x01(\x03\x12&\n\x1eleast_compressed_tape_size_raw\x18\x05 \x01(\x03\x12#\n\x1b\x62\x65st_compression_block_size\x18\x06 \x01(\x03\x12\"\n\x1a\x62\x65st_compression_tape_size\x18\x07 \x01(\x03\x12\x11\n\tbest_mult\x18\x08 \x01(\x03\x12\x19\n\x11\x62\x65st_chain_factor\x18\t \x01(\x02\"z\n\x11\x42lockFinderResult\x12\x33\n\nparameters\x18\x01 \x01(\x0b\x32\x1f.busy_beaver.BlockFinderRequest\x12\x30\n\x06result\x18\x02 \x01(\x0b\x32 .busy_beaver.BlockFinderResponse\"G\n\x15LinRecurFilterRequest\x12\x11\n\tmax_steps\x18\x01 \x01(\x03\x12\x1b\n\x13\x66ind_min_start_step\x18\x02 \x01(\x08\"w\n\x16LinRecurFilterResponse\x12\x0f\n\x07success\x18\x03 \x01(\x08\x12\x12\n\nstart_step\x18\x04 \x01(\x03\x12\x0e\n\x06period\x18\x05 \x01(\x03\x12\x0e\n\x06offset\x18\x06 \x01(\x03\x12\x18\n\x10\x65lapsed_time_sec\x18\x07 \x01(\x02\"\x83\x01\n\x14LinRecurFilterResult\x12\x36\n\nparameters\x18\x01 \x01(\x0b\x32\".busy_beaver.LinRecurFilterRequest\x12\x33\n\x06result\x18\x02 \x01(\x0b\x32#.busy_beaver.LinRecurFilterResponse\"\x92\x02\n\x08IORecord\x12&\n\x02tm\x18\x01 \x01(\x0b\x32\x1a.busy_beaver.TuringMachine\x12#\n\x06status\x18\x02 \x01(\x0b\x32\x13.busy_beaver.Status\x12\x37\n\x11simulator_results\x18\x03 \x03(\x0b\x32\x1c.busy_beaver.SimulatorResult\x12<\n\x14\x62lock_finder_results\x18\x04 \x03(\x0b\x32\x1e.busy_beaver.BlockFinderResult\x12\x42\n\x17lin_recur_filter_result\x18\x05 \x01(\x0b\x32!.busy_beaver.LinRecurFilterResultb\x06proto3')
 
 
 
@@ -26,6 +26,9 @@ _STATUS = DESCRIPTOR.message_types_by_name['Status']
 _SIMULATORREQUEST = DESCRIPTOR.message_types_by_name['SimulatorRequest']
 _SIMULATORRESPONSE = DESCRIPTOR.message_types_by_name['SimulatorResponse']
 _SIMULATORRESULT = DESCRIPTOR.message_types_by_name['SimulatorResult']
+_BLOCKFINDERREQUEST = DESCRIPTOR.message_types_by_name['BlockFinderRequest']
+_BLOCKFINDERRESPONSE = DESCRIPTOR.message_types_by_name['BlockFinderResponse']
+_BLOCKFINDERRESULT = DESCRIPTOR.message_types_by_name['BlockFinderResult']
 _LINRECURFILTERREQUEST = DESCRIPTOR.message_types_by_name['LinRecurFilterRequest']
 _LINRECURFILTERRESPONSE = DESCRIPTOR.message_types_by_name['LinRecurFilterResponse']
 _LINRECURFILTERRESULT = DESCRIPTOR.message_types_by_name['LinRecurFilterResult']
@@ -86,6 +89,27 @@ SimulatorResult = _reflection.GeneratedProtocolMessageType('SimulatorResult', (_
   })
 _sym_db.RegisterMessage(SimulatorResult)
 
+BlockFinderRequest = _reflection.GeneratedProtocolMessageType('BlockFinderRequest', (_message.Message,), {
+  'DESCRIPTOR' : _BLOCKFINDERREQUEST,
+  '__module__' : 'io_pb2'
+  # @@protoc_insertion_point(class_scope:busy_beaver.BlockFinderRequest)
+  })
+_sym_db.RegisterMessage(BlockFinderRequest)
+
+BlockFinderResponse = _reflection.GeneratedProtocolMessageType('BlockFinderResponse', (_message.Message,), {
+  'DESCRIPTOR' : _BLOCKFINDERRESPONSE,
+  '__module__' : 'io_pb2'
+  # @@protoc_insertion_point(class_scope:busy_beaver.BlockFinderResponse)
+  })
+_sym_db.RegisterMessage(BlockFinderResponse)
+
+BlockFinderResult = _reflection.GeneratedProtocolMessageType('BlockFinderResult', (_message.Message,), {
+  'DESCRIPTOR' : _BLOCKFINDERRESULT,
+  '__module__' : 'io_pb2'
+  # @@protoc_insertion_point(class_scope:busy_beaver.BlockFinderResult)
+  })
+_sym_db.RegisterMessage(BlockFinderResult)
+
 LinRecurFilterRequest = _reflection.GeneratedProtocolMessageType('LinRecurFilterRequest', (_message.Message,), {
   'DESCRIPTOR' : _LINRECURFILTERREQUEST,
   '__module__' : 'io_pb2'
@@ -133,12 +157,18 @@ if _descriptor._USE_C_DESCRIPTORS == False:
   _SIMULATORRESPONSE._serialized_end=695
   _SIMULATORRESULT._serialized_start=697
   _SIMULATORRESULT._serialized_end=813
-  _LINRECURFILTERREQUEST._serialized_start=815
-  _LINRECURFILTERREQUEST._serialized_end=886
-  _LINRECURFILTERRESPONSE._serialized_start=888
-  _LINRECURFILTERRESPONSE._serialized_end=1007
-  _LINRECURFILTERRESULT._serialized_start=1010
-  _LINRECURFILTERRESULT._serialized_end=1141
-  _IORECORD._serialized_start=1144
-  _IORECORD._serialized_end=1356
+  _BLOCKFINDERREQUEST._serialized_start=815
+  _BLOCKFINDERREQUEST._serialized_end=913
+  _BLOCKFINDERRESPONSE._serialized_start=916
+  _BLOCKFINDERRESPONSE._serialized_end=1220
+  _BLOCKFINDERRESULT._serialized_start=1222
+  _BLOCKFINDERRESULT._serialized_end=1344
+  _LINRECURFILTERREQUEST._serialized_start=1346
+  _LINRECURFILTERREQUEST._serialized_end=1417
+  _LINRECURFILTERRESPONSE._serialized_start=1419
+  _LINRECURFILTERRESPONSE._serialized_end=1538
+  _LINRECURFILTERRESULT._serialized_start=1541
+  _LINRECURFILTERRESULT._serialized_end=1672
+  _IORECORD._serialized_start=1675
+  _IORECORD._serialized_end=1949
 # @@protoc_insertion_point(module_scope)
