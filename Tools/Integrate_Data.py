@@ -38,12 +38,12 @@ else:
   print(usage)
   exit(1)
 
-input_file     = file(input_filename, "r")
-halt_file      = file(halt_filename, "a")
-infinite_file  = file(infinite_filename, "a")
-unknown_file   = file(unknown_filename, "w")
-error_file     = file(error_filename, "a")
-undecided_file = file(undecided_filename, "a")
+input_file     = open(input_filename, "r")
+halt_file      = open(halt_filename, "a")
+infinite_file  = open(infinite_filename, "a")
+unknown_file   = open(unknown_filename, "w")
+error_file     = open(error_filename, "a")
+undecided_file = open(undecided_filename, "a")
 
 # Error flag:
 #   False means no unexpected (weird) entries.
