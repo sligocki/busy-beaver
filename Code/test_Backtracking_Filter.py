@@ -37,17 +37,20 @@ class SystemTest(unittest.TestCase):
     return self.read(outfile.name)
 
   def test_2x2(self):
-    self.assertEqual(self.read("Backtracking.2x2.gold"), self.backtrack("2x2"))
+    self.assertEqual(self.read("Backtracking.2x2.gold"),
+                     self.backtrack("2x2"))
 
   def test_2x3(self):
-    self.assertEqual(self.read("Backtracking.2x3.gold"), self.backtrack("2x3"))
+    self.assertEqual(self.read("Backtracking.2x3.gold"),
+                     self.backtrack("2x3.sample"))
 
   def test_2x4(self):
     self.assertEqual(self.read("Backtracking.2x4.gold"),
                      self.backtrack("2x4.sample"))
 
   def test_3x2(self):
-    self.assertEqual(self.read("Backtracking.3x2.gold"), self.backtrack("3x2"))
+    self.assertEqual(self.read("Backtracking.3x2.gold"),
+                     self.backtrack("3x2.sample"))
 
   def test_4x2(self):
     self.assertEqual(self.read("Backtracking.4x2.gold"),
