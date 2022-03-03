@@ -17,8 +17,10 @@ from Macro import Tape
 from Macro import Turing_Machine
 from Numbers.Algebraic_Expression import Algebraic_Expression
 
+import io_pb2
 
-def add_option_group(parser):
+
+def add_option_group(parser : OptionParser):
   """Add Simulator options group to an OptParser parser object."""
   assert isinstance(parser, OptionParser)
 
@@ -42,7 +44,7 @@ def add_option_group(parser):
 
   parser.add_option_group(group)
 
-def create_default_options():
+def create_default_options() -> OptionParser:
   """Returns a set of default options."""
   parser = OptionParser()
   add_option_group(parser)
@@ -56,17 +58,21 @@ CHAIN_MOVE = "Chain_Move"
 
 class Simulator(object):
   """Turing machine simulator using chain-tape optimization."""
-  def __init__(self, machine, options, verbose_prefix="", init_tape=True,
-               base_simulator=True):
+  def __init__(self,
+               machine : Turing_Machine.Turing_Machine,
+               options : optparse.Values,
+               verbose_prefix : str = "",
+               init_tape : bool = True,
+               is_base_simulator : bool = True):
     assert isinstance(options, optparse.Values)
 
     self.machine = machine
     self.options = options
-    self.compute_steps = options.compute_steps
     self.verbose = options.verbose_simulator
     self.verbose_prefix = verbose_prefix
     # True for normal Simulators. False for those run inside of a Proof_System.
-    self.base_simulator = base_simulator
+    self.is_base_simulator = is_base_simulator
+    self.compute_steps = options.compute_steps
 
     self.state = machine.init_state
     self.dir = machine.init_dir
@@ -79,7 +85,7 @@ class Simulator(object):
       self.tape.init(self.machine.init_symbol, self.machine.init_dir, options)
     if options.prover:
       self.prover = Proof_System.Proof_System(machine=self.machine,
-                                              options=self.options,
+                                              options=options,
                                               verbose_prefix=self.verbose_prefix + "  ")
     else:
       self.prover = None  # We will run the simulation without a proof system.
@@ -109,27 +115,6 @@ class Simulator(object):
       self.steps_from_chain = None
       self.steps_from_rule = None
       self.states_last_seen = None
-
-  def calc_quasihalt(self, ignore_states=set()):
-    """In order to support search for the Beeping Busy Beaver, calculate the
-    state seen most recently and at what time."""
-    if self.states_last_seen is not None:
-      q_state = None
-      q_state_last_seen = -1
-      for state, last_seen in self.states_last_seen.items():
-        if state not in ignore_states:
-          if last_seen > q_state_last_seen:
-            q_state_last_seen = last_seen
-            q_state = state
-      # Note: The quasihalt time is actually defined as the step after the last
-      # time a specific state is seen. (The step that the quasihalting behavior
-      # began.)
-      if q_state == None:
-        return ("No_Quasihalt", "N/A")
-      else:
-        return (q_state, q_state_last_seen + 1)
-    else:
-      return ("Quasihalt_Not_Computed", "N/A")
 
   def run(self, steps):
     self.seek(self.step_num + steps)
@@ -168,13 +153,12 @@ class Simulator(object):
       if prover_result.condition == Proof_System.INF_REPEAT:
         self.op_state = Turing_Machine.INF_REPEAT
         self.inf_reason = PROOF_SYSTEM
-        self.inf_quasihalt = self.calc_quasihalt(
-          ignore_states=list(prover_result.states_last_seen.keys()))
+        self.inf_recur_states = list(prover_result.states_last_seen.keys())
         self.verbose_print()
         return
       # Proof system says that we can apply a rule
       elif prover_result.condition == Proof_System.APPLY_RULE:
-        if self.base_simulator and prover_result.states_last_seen:
+        if self.is_base_simulator and prover_result.states_last_seen:
           assert not isinstance(list(prover_result.states_last_seen.values())[0], Algebraic_Expression), prover_result.states_last_seen
 
         # TODO(shawn): This seems out of place here and is the only place in
@@ -215,9 +199,8 @@ class Simulator(object):
     # Apply transition
     if self.op_state == Turing_Machine.INF_REPEAT:
       self.inf_reason = REPEAT_IN_PLACE
-      self.inf_quasihalt = self.calc_quasihalt(
-        # TODO(shawn): This is not 100% accurate. We should only ignore states involved in the repeat-in-place, but trans.states_last_seen could include some states before the repeat.
-        ignore_states=list(trans.states_last_seen.keys()))
+      # TODO(shawn): This is not 100% accurate. We should only ignore states involved in the repeat-in-place, but trans.states_last_seen could include some states before the repeat.
+      self.inf_recur_states = list(trans.states_last_seen.keys())
     # Chain move
     elif trans.state_out == self.state and trans.dir_out == self.dir and \
        self.op_state == Turing_Machine.RUNNING:
@@ -225,8 +208,7 @@ class Simulator(object):
       if num_reps == math.inf:
         self.op_state = Turing_Machine.INF_REPEAT
         self.inf_reason = CHAIN_MOVE
-        self.inf_quasihalt = self.calc_quasihalt(
-          ignore_states=list(trans.states_last_seen.keys()))
+        self.inf_recur_states = list(trans.states_last_seen.keys())
         return
       # Don't need to change state or direction
       self.num_chain_moves += 1

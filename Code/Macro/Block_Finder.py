@@ -41,11 +41,11 @@ def add_option_group(parser : OptionParser):
 
 
 def block_finder(machine : Turing_Machine.Turing_Machine,
-                 params : io_pb2.BlockFinderRequest,
-                 options : optparse.Values) -> io_pb2.BlockFinderResponse:
+                 options : optparse.Values,
+                 params : io_pb2.BlockFinderParams,
+                 result : io_pb2.BlockFinderResult) -> None:
   """Tries to find the optimal block-size for macro machines using heuristics."""
   start_time = time.time()
-  result = io_pb2.BlockFinderResponse()
 
   ## First find the minimum efficient tape compression size.
   new_options = copy.copy(options)
@@ -53,11 +53,13 @@ def block_finder(machine : Turing_Machine.Turing_Machine,
   new_options.prover = False
   new_options.verbose_simulator = False
 
-  block_finder_internal(machine, params, result, new_options)
+  block_finder_internal(machine, new_options, params, result)
   result.elapsed_time_sec = time.time() - start_time
-  return result
 
-def block_finder_internal(machine, params, result, options):
+def block_finder_internal(machine : Turing_Machine.Turing_Machine,
+                          options : optparse.Values,
+                          params : io_pb2.BlockFinderParams,
+                          result : io_pb2.BlockFinderResult) -> None:
   sim = Simulator(machine, options)
 
   ## Find the least compressed time in before limit
@@ -73,7 +75,7 @@ def block_finder_internal(machine, params, result, options):
     # If it has stopped running then this is a good block size!
     if sim.op_state != Turing_Machine.RUNNING:
       result.best_block_size = 1
-      return result
+      return
 
   result.least_compressed_loop = worst_loop
   result.least_compressed_tape_size_chain = max_length
@@ -100,7 +102,7 @@ def block_finder_internal(machine, params, result, options):
 
   if params.mult_sim_loops <= 0:
     result.best_block_size = opt_size
-    return result
+    return
 
   ## Then try a couple different multiples of this base size to find best speed
   if options.verbose_block_finder:
@@ -115,7 +117,7 @@ def block_finder_internal(machine, params, result, options):
     sim.loop_seek(params.mult_sim_loops)
     if sim.op_state != Turing_Machine.RUNNING:
       result.best_block_size = mult * opt_size
-      return result
+      return
     chain_factor = sim.steps_from_chain / sim.steps_from_macro
 
     if options.verbose_block_finder:
@@ -136,8 +138,6 @@ def block_finder_internal(machine, params, result, options):
     print("Block Finder finished")
     print(result)
     sys.stdout.flush()
-
-  return result
 
 def uncompress_tape(compr_tape):
   """Expand out repatition counts in tape."""

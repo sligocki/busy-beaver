@@ -32,18 +32,17 @@ def are_sections_equal(start_tape, end_tape, most_left_pos, most_right_pos, offs
       return False
   return True
 
-def lin_detect_not_min(ttable, max_steps=None):
+def lin_detect_not_min(ttable,
+                       max_steps : int,
+                       result : io_pb2.LinRecurFilterResult) -> None:
   """Detect Lin Recurrence without knowing the period or start time.
   The result is a point at which it is in Lin Recurrence, not necessarily the
   time that it has started LR."""
-  result = io_pb2.LinRecurFilterResponse()
-  tm_status = io_pb2.Status()
-
   sim = Direct_Simulator.DirectSimulator(ttable)
   states_last_seen = {sim.state: sim.step_num}
   sim.step()
 
-  while (max_steps is None or sim.step_num < max_steps) and not result.success:
+  while (not max_steps or sim.step_num < max_steps) and not result.success:
     # Instead of comparing each config to all previous configs, we try at one
     # starting steps up til 2x those steps. Then fix at 2x and repeat.
     # Thus instead of doing N^2 tape comparisons, we do N.
@@ -63,8 +62,8 @@ def lin_detect_not_min(ttable, max_steps=None):
         # If a machine halts, it will never Lin Recur.
         result.success = False
         # NOTE: We do not currently evaluate `halt_score`
-        Halting_Lib.set_halting(tm_status, sim.step_num, halt_score = None)
-        return result, tm_status
+        Halting_Lib.set_halting(result.status, sim.step_num, halt_score = None)
+        return
 
       most_left_pos = min(most_left_pos, sim.tape.position)
       most_right_pos = max(most_right_pos, sim.tape.position)
@@ -87,16 +86,16 @@ def lin_detect_not_min(ttable, max_steps=None):
     result.start_step = init_step_num
     result.period = sim.step_num - init_step_num
     result.offset = offset
-    Halting_Lib.set_inf_recur(tm_status,
-                              all_states = list(range(len(ttable))),
+    Halting_Lib.set_inf_recur(result.status,
                               states_to_ignore = states_used,
                               states_last_seen = states_last_seen)
-    return result, tm_status
+    Halting_Lib.set_not_halting(result.status, "Lin_Recur")
+    return
   else:
     assert sim.step_num == steps_reset, (sim.step_num, steps_reset)
     result.success = False
     # We have no information on halt_status or quasihalt_status.
-    return result, tm_status
+    return
 
 
 def check_recur(ttable, init_step, period):
@@ -152,34 +151,39 @@ def period_search(ttable, init_step, period):
   return high
 
 
-def filter(ttable, params : io_pb2.LinRecurFilterRequest) -> Tuple[io_pb2.LinRecurFilterResponse, io_pb2.Status]:
+def filter(ttable,
+           params : io_pb2.LinRecurFilterParams,
+           result : io_pb2.LinRecurFilterResult) -> None:
+  """Applies Lin Recur filter to `ttable` using `params`.
+  The results are stored in `result`."""
   start_time = time.time()
-  lr_result, tm_status = lin_detect_not_min(ttable, max_steps=params.max_steps)
-  if lr_result.success and params.find_min_start_step:
-    # NOTE: lr_result.start_step is not necessarily the earliest time that recurrence
+  lin_detect_not_min(ttable, max_steps=params.max_steps, result=result)
+  if result.success and params.find_min_start_step:
+    # NOTE: result.start_step is not necessarily the earliest time that recurrence
     # starts, it is simply a time after which recurrence is in effect.
 
     # Do a second search, now that we know the recurrence period to find the
     # earliest start time of the recurrence.
-    lr_result.start_step = period_search(ttable, lr_result.start_step, lr_result.period)
-  lr_result.elapsed_time_sec = time.time() - start_time
-  return lr_result, tm_status
+    result.start_step = period_search(ttable, result.start_step, result.period)
+  result.elapsed_time_sec = time.time() - start_time
 
 
 def main():
   parser = argparse.ArgumentParser()
   parser.add_argument("tm_file")
   parser.add_argument("tm_line", type=int, nargs="?", default=1)
-  parser.add_argument("--max-steps", type=int)
+  parser.add_argument("--max-steps", type=int, default = 0)
   parser.add_argument("--no-min-start-step", action="store_false",
                       dest="min_start_step")
   args = parser.parse_args()
 
   ttable = IO.load_TTable_filename(args.tm_file, args.tm_line)
-  lr_result, tm_status = filter(ttable, args.max_steps, args.min_start_step)
+  lr_info = io_pb2.LinRecurFilterInfo()
+  lr_info.parameters.max_steps = args.max_steps
+  lr_info.parameters.find_min_start_step = args.min_start_step
+  filter(ttable, lr_info.parameters, lr_info.result)
 
-  print(lr_result)
-  print(tm_status)
+  print(lr_info)
 
 if __name__ == "__main__":
   main()

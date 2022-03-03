@@ -10,6 +10,7 @@ Macro Machine simulator, gathers statistics, and outputs all of the machines
 like Generate does.
 """
 
+import collections
 import copy
 import pickle as pickle
 import math
@@ -22,12 +23,15 @@ import sys
 import time
 
 from Common import Exit_Condition, GenContainer
+import Halting_Lib
 import IO
 from Macro import Block_Finder, Turing_Machine
 import Macro_Simulator
 import Output_Machine
 import Turing_Machine as old_tm_mod
 import Work_Queue
+
+import io_pb2
 
 try:
   import MPI_Work_Queue
@@ -51,13 +55,6 @@ def long_to_eng_str(number, left, right):
                             expo)
   else:
     return "0.%se+00" % ("0" * right)
-
-class DefaultDict(dict):
-  """Dictionary that defaults to a value."""
-  def __init__(self, default):
-    self.default = default
-  def __getitem__(self, item):
-    return self.get(item, self.default)
 
 class Enumerator(object):
   """Holds enumeration state information for checkpointing."""
@@ -86,15 +83,8 @@ class Enumerator(object):
     self.tm_num = 0
     self.num_halt = self.num_infinite = self.num_unresolved = 0
     self.best_steps = self.best_score = 0
-    self.inf_type = DefaultDict(0)
     self.num_over_time = self.num_over_steps = self.num_over_tape = 0
     self.max_sim_time_s = 0.0
-    # Passed into and updated in Macro_Simulator
-    self.stats = GenContainer()
-    self.stats.num_rules = 0
-    self.stats.num_recursive_rules = 0
-    self.stats.num_collatz_rules = 0
-    self.stats.num_failed_proofs = 0
 
   def __getstate__(self):
     """Gets state of TM for checkpoint file."""
@@ -147,33 +137,17 @@ class Enumerator(object):
 
       # ... and run it.
       start_time = time.time()
-      cond, info = self.run(tm)
+      tm_record = self.run(tm)
       sim_time = time.time() - start_time
       self.max_sim_time_s = max(sim_time, self.max_sim_time_s)
 
-      # If it hits an undefined transition ...
-      if cond == Exit_Condition.UNDEF_CELL:
-        on_state, on_symbol, steps, score = info
-        # ... push all the possible non-halting transitions onto the stack ...
-        self.add_transitions(tm, on_state, on_symbol)
-        # ... and make this TM the halting one (mutates tm)
-        self.add_halt_trans(tm, on_state, on_symbol, steps, score)
-      # Otherwise record defined result
-      elif cond == Exit_Condition.HALT:
-        steps, score = info
-        self.add_halt(tm, steps, score)
-      elif cond == Exit_Condition.INFINITE:
-        reason, (quasihalt_state, quasihalt_time) = info
-        self.add_infinite(tm, reason, quasihalt_state, quasihalt_time)
-      elif cond in Exit_Condition.UNKNOWN_SET:
-        self.add_unresolved(tm, cond, *info)
-      else:
-        raise Exception("Enumerator.enum() - unexpected condition (%r)" % cond)
+      self.add_result(tm, tm_record)
 
     # Save any remaining machines on the stack.
     if self.options.num_enum:
       tm = self.stack.pop_job()
       while tm:
+        # TODO: Fix this
         self.add_unresolved(tm, Exit_Condition.NOT_RUN)
         tm = self.stack.pop_job()
 
@@ -193,8 +167,6 @@ class Enumerator(object):
       self.pout.write(" %s" % (long_to_eng_str(self.best_score,1,3),))
       self.pout.write(" %.0fms " % (self.max_sim_time_s * 1000,))
       self.pout.write(" (%.2fs)\n" % (self.end_time - self.start_time,))
-      if self.options.print_stats:
-        pprint(self.stats.__dict__)
       self.pout.flush()
 
       # Note: We are overloading self.pout = None to mean don't write any output
@@ -212,17 +184,21 @@ class Enumerator(object):
     # Restart timer
     self.start_time = time.time()
 
-  def run(self, tm):
+  def run(self, tm) -> io_pb2.IORecord:
     """Simulate TM"""
+    tm_record = io_pb2.IORecord()
+    tm_record.tm.ttable = Output_Machine.display_ttable(tm.get_TTable())
     try:
       if self.options.time > 0:
-        return Macro_Simulator.run_timer(tm.get_TTable(), self.options,
-                                         self.stats, self.options.time)
+        Macro_Simulator.run_timer(tm.get_TTable(), self.options, tm_record,
+                                  self.options.time)
       else:
-        return Macro_Simulator.run_options(tm.get_TTable(), self.options, self.stats)
+        Macro_Simulator.run_options(tm.get_TTable(), self.options, tm_record)
     except:
-      print("ERROR: Exception raised while simulating TM:", Output_Machine.display_ttable(tm.get_TTable()), file=sys.stderr)
+      print("ERROR: Exception raised while simulating TM:",
+            tm_record.tm.ttable, file=sys.stderr)
       raise
+    return tm_record
 
   def add_transitions(self, old_tm, state_in, symbol_in):
     """Push Turing Machines with each possible transition at this state and symbol"""
@@ -254,20 +230,37 @@ class Enumerator(object):
       # Push the list of TMs onto the stack
       self.stack.push_jobs(new_tms)
 
-  def add_halt_trans(self, tm, on_state, on_symbol, steps, score):
-    """Edit the TM to have a halt at on_stat/on_symbol and save the result."""
-    #   1) Add the halt state
-    tm.set_halt(on_state, on_symbol)
-    #   2) Save this machine
-    self.add_halt(tm, steps, score)
+  def add_result(self, tm, tm_record : io_pb2.IORecord):
+    sim_result = tm_record.simulator_info.result
+    if sim_result.undefined_cell_info.reached_undefined_cell:
+      # Push all the possible non-halting transitions onto the stack.
+      self.add_transitions(tm,
+                           state_in = sim_result.undefined_cell_info.state,
+                           symbol_in = sim_result.undefined_cell_info.symbol)
+      # Modify this TM to halt on this transition so that when we save it as
+      # halting below the ttable reflects that.
+      tm.set_halt(state_in = sim_result.undefined_cell_info.state,
+                  symbol_in = sim_result.undefined_cell_info.symbol)
 
-  def add_halt(self, tm, steps, score):
+    if tm_record.status.halt_status.is_decided:
+      if tm_record.status.halt_status.is_halting:
+        self.add_halt(tm, tm_record.status.halt_status)
+      else:
+        self.add_infinite(tm, tm_record.status.halt_status.reason,
+                          tm_record.status.quasihalt_status)
+    else:
+      self.add_unknown(tm, sim_result.unknown_info)
+
+  def add_halt(self, tm,
+               halt_info : io_pb2.HaltInfo):
     """Note a halting TM. Add statistics and output it with score/steps."""
     self.num_halt += 1
-    if steps > self.best_steps or score > self.best_score:
-      self.best_steps = max(self.best_steps, steps)
-      self.best_score = max(self.best_score, score)
     self.tm_num += 1
+
+    steps = Halting_Lib.get_big_int(halt_info.halt_steps)
+    score = Halting_Lib.get_big_int(halt_info.halt_score)
+    self.best_steps = max(self.best_steps, steps)
+    self.best_score = max(self.best_score, score)
 
     if self.pout:
       io_record = IO.Record()
@@ -276,40 +269,66 @@ class Enumerator(object):
       io_record.category_reason = (score, steps)
       self.io.write_record(io_record)
 
-  def add_infinite(self, tm, reason, quasihalt_state, quasihalt_time):
+  def add_infinite(self, tm, reason, quasihalt_status):
     """Note an infinite TM. Add statistics and output it with reason."""
     self.num_infinite += 1
-    self.inf_type[reason] += 1
     self.tm_num += 1
+
+    if not quasihalt_status.is_decided:
+      # Quasihalt unknown
+      if reason in ("Reverse_Engineer", "CTL_A*", "CTL_A*_B"):
+        # Temporary work-around to get rid of gold diffs.
+        quasihalt_info = ("N/A", "N/A")
+      else:
+        quasihalt_info = ("Quasihalt_Not_Computed", "N/A")
+    elif quasihalt_status.is_quasihalting:
+      quasihalt_info = (quasihalt_status.quasihalt_state,
+                        Halting_Lib.get_big_int(quasihalt_status.quasihalt_steps))
+    else:
+      # Not quasihalting
+      quasihalt_info = ("No_Quasihalt", "N/A")
 
     if self.pout:
       io_record = IO.Record()
       io_record.ttable = tm.get_TTable()
       io_record.category = Exit_Condition.INFINITE
-      io_record.category_reason = (reason, quasihalt_state, quasihalt_time)
+      io_record.category_reason = (reason,) + quasihalt_info
       self.io.write_record(io_record)
 
-  def add_unresolved(self, tm, reason, *args):
+  def add_unknown(self, tm,
+                  unknown_info : io_pb2.UnknownInfo):
     """Note an unresolved TM. Add statistics and output it with reason."""
     self.num_unresolved += 1
-    if reason == Exit_Condition.MAX_STEPS:
-      self.num_over_steps += 1
-    elif reason == Exit_Condition.TIME_OUT:
-      print("WARNING: TIMEOUT", args, Output_Machine.display_ttable(tm.get_TTable()), file=sys.stderr)
-      self.num_over_time += 1
-    elif reason == Exit_Condition.OVER_TAPE:
-      self.num_over_tape += 1
-    elif reason == Exit_Condition.UNKNOWN and args[0] == Turing_Machine.GAVE_UP:
-      print("WARNING: GAVE_UP", args, Output_Machine.display_ttable(tm.get_TTable()), file=sys.stderr)
-    else:
-      assert reason == Exit_Condition.NOT_RUN, "Invalid reason (%r)" % reason
     self.tm_num += 1
+
+    unk_reason = unknown_info.WhichOneof("reason")
+    if unk_reason == "over_loops_info":
+      reason_old = Exit_Condition.MAX_STEPS
+      args = (unknown_info.over_loops_info.num_loops,)
+    elif unk_reason == "over_tape_info":
+      reason_old = Exit_Condition.OVER_TAPE
+      args = (unknown_info.over_tape_info.compressed_tape_size,)
+    elif unk_reason == "over_time_info":
+      reason_old = Exit_Condition.TIME_OUT
+      args = (unknown_info.over_time_info.elapsed_time_sec,)
+      print("WARNING: TIMEOUT",
+            Output_Machine.display_ttable(tm.get_TTable()), file=sys.stderr)
+    elif unk_reason == "over_steps_in_macro_info":
+      reason_old = Exit_Condition.OVER_STEPS_IN_MACRO
+      args = (unknown_info.over_steps_in_macro_info.macro_symbol,
+              unknown_info.over_steps_in_macro_info.macro_state,
+              unknown_info.over_steps_in_macro_info.macro_dir_is_right)
+      print("WARNING: OVER_STEPS_IN_MACRO",
+            Output_Machine.display_ttable(tm.get_TTable()), file=sys.stderr)
+    else:
+      raise Exception(unknown_info)
+
 
     if self.pout:
       io_record = IO.Record()
       io_record.ttable = tm.get_TTable()
       io_record.category = Exit_Condition.UNKNOWN
-      io_record.category_reason = (Exit_Condition.name(reason),) + args
+      io_record.category_reason = (Exit_Condition.name(reason_old),) + args
       self.io.write_record(io_record)
 
 def initialize_stack(options, stack):
@@ -380,9 +399,6 @@ def main(args):
                         help="Checkpoint file name [Default: OUTFILE.check]")
   out_parser.add_option("--save-freq", type=int, default=100000, metavar="FREQ",
                         help="Freq to save checkpoints [Default: %default]")
-  out_parser.add_option("--print-stats", action="store_true", default=False,
-                        help="Print aggregate statistics every time we "
-                        "checkpoint.")
   parser.add_option_group(out_parser)
 
   (options, args) = parser.parse_args(args)
@@ -479,9 +495,6 @@ def main(args):
   enumerator = Enumerator(options, stack, io, pout)
   enumerator.continue_enum()
 
-  if options.print_stats:
-    pprint(enumerator.stats.__dict__)
-    
   outfile.close()
 
 if __name__ == "__main__":

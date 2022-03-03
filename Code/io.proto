@@ -41,6 +41,8 @@ message HaltStatus {
 
   BigInt halt_steps = 3;
   BigInt halt_score = 4;
+
+  string reason = 5;
 }
 
 message QuasihaltStatus {
@@ -53,41 +55,140 @@ message QuasihaltStatus {
   int64 quasihalt_state = 4;
 }
 
-message Status {
+message BBStatus {
   HaltStatus halt_status = 1;
   QuasihaltStatus quasihalt_status = 2;
   // TODO: Add more, like lin_recur_info and blanking_info?
 }
 
 
-// Filter Results
-message SimulatorRequest {
-  // Parameters
-  // TODO
+message SimulatorParams {
+  // Maximum number of simulator "loops" to run for.
+  int64 max_loops = 1;
+  // Maximum wall time to run the simuator for.
+  float max_time_sec = 2;
+  // Maximum size of compressed tape before we give up.
+  int64 max_tape_blocks = 3;
+
+  // Prover Params
+  bool use_prover = 4;
+  // Instead of logging stripped configuration at all steps in order to try and
+  // prove rules, only do it when the TM is at the edge of the tape. Any rule
+  // that expands the written part of the tape will (by definition) have to go
+  // to the edge, so this "shouldn't" hurt much.
+  bool only_log_configs_at_edge = 5;
+  bool use_limited_rules = 6;
+  bool use_recursive_rules = 7;
+  bool use_collatz_rules = 8;
 }
 
-message SimulatorResponse {
-  // Results
-  // Reason simulator finished (Halt, Inf, Over_Steps, Error, ...)
-  string sim_condition = 1;
+message HaltInfo {
+  bool is_halting = 1;
+}
 
-  // Stats
-  float elapsed_time_sec = 2;
 
-  int64 num_loops = 3;
-  BigInt num_steps = 4;
+// TM repeats infinitely in place while evaluating a macro transition.
+message InfMacroRepeatInfo {
+  // The macro symbol and macro state immediately preceding the repeat.
+  string macro_symbol = 1;
+  string macro_state = 2;
+  bool macro_dir_is_right = 3;
+}
 
-  int64 num_rules_proven = 5;
-  int64 num_proofs_failed = 6;
+// Simulator attempted to apply a chain move to the infinite block of 0s
+// thus demonstrating that this TM will move infinitely in one state across
+// those 0s (Chain Recurrence). It has "Spun out".
+message InfChainMoveInfo {
+  string macro_state = 1;
+  // Is this Chain Recurrence to the right?
+  bool dir_is_right = 2;
+}
+
+// Simulator proved a PA-CTR rule that has all positive exponent changes, thus
+// it will apply forever.
+message InfProofSystemInfo {
+  // Human readable summary of the rule itself.
+  string rule = 1;
+}
+
+message InfiniteInfo {
+  oneof reason {
+    InfMacroRepeatInfo macro_repeat_info = 1;
+    InfChainMoveInfo   chain_move_info   = 2;
+    InfProofSystemInfo proof_system_info = 3;
+    // TODO: ...
+  }
+}
+
+
+message OverLoopsInfo {
+  int64 num_loops = 1;
+}
+
+message OverTapeInfo {
+  int64 compressed_tape_size = 1;
+}
+
+message OverTimeInfo {
+  float elapsed_time_sec = 1;
+}
+
+message OverStepsInMacroInfo {
+  // The macro symbol and macro state which took to long to simulate.
+  string macro_symbol = 1;
+  string macro_state = 2;
+  bool macro_dir_is_right = 3;
+}
+
+message UnknownInfo {
+  oneof reason {
+    OverLoopsInfo over_loops_info = 1;
+    OverTapeInfo over_tape_info = 2;
+    OverTimeInfo over_time_info = 3;
+    OverStepsInMacroInfo over_steps_in_macro_info = 4;
+  }
+}
+
+message UnfinedCellInfo {
+  bool reached_undefined_cell = 1;
+  int64 state = 2;
+  int64 symbol = 3;
 }
 
 message SimulatorResult {
-  SimulatorRequest parameters = 1;
-  SimulatorResponse result = 2;
+  // Results
+  oneof exit_condition {
+    HaltInfo halt_info = 1;
+    InfiniteInfo infinite_info = 2;
+
+    // We could not decide if this machine halted or will never halt.
+    UnknownInfo unknown_info = 3;
+  }
+
+  // Machine reached undefined transition and thus we must enumerate all
+  // possible transitions that could be there (ex: during TNF enumeration).
+  // Note: We will also include HaltInfo for this machine (what would have
+  // happened if this transition had been defined as a halting one).
+  UnfinedCellInfo undefined_cell_info = 4;
+
+  // Stats
+  float elapsed_time_sec = 5;
+
+  int64 num_loops = 6;
+  BigInt num_steps = 7;
+  // TODO: loops/steps by category (Macro, Chain, Proof, ...)
+
+  int64 num_rules_proven = 8;
+  int64 num_proofs_failed = 9;
+}
+
+message SimulatorInfo {
+  SimulatorParams parameters = 1;
+  SimulatorResult result = 2;
 }
 
 
-message BlockFinderRequest {
+message BlockFinderParams {
   // # loops to run Sim searching for least-compressed tape.
   int64 compression_search_loops = 1;
   // # loops to run sim for each multiple of optimal compression size.
@@ -97,7 +198,7 @@ message BlockFinderRequest {
   int64 extra_mult = 3;
 }
 
-message BlockFinderResponse {
+message BlockFinderResult {
   // Results
   // Overall heuristically decided best block size.
   int64 best_block_size = 1;
@@ -124,13 +225,19 @@ message BlockFinderResponse {
   float best_chain_factor = 9;
 }
 
-message BlockFinderResult {
-  BlockFinderRequest parameters = 1;
-  BlockFinderResponse result = 2;
+message BlockFinderInfo {
+  BlockFinderParams parameters = 1;
+  BlockFinderResult result = 2;
 }
 
 
-message LinRecurFilterRequest {
+message FilterInfo {
+  bool tested = 1;
+  bool success = 2;
+}
+
+
+message LinRecurFilterParams {
   // Parameters
   int64 max_steps = 1;
   // Is start_step the min start time of LR?
@@ -138,27 +245,42 @@ message LinRecurFilterRequest {
   bool find_min_start_step = 2;
 }
 
-message LinRecurFilterResponse {
+message LinRecurFilterResult {
   // Results
   // Did the filter classify this machine as LR?
-  bool success = 3;
+  bool success = 1;
   // A step at which the machine is in Lin Recurrence.
   // If is_start_step_min=True, this is the smallest such step (i.e. the
   // step that Lin Recurrence began).
-  int64 start_step = 4;
+  int64 start_step = 2;
   // Period of LR cycle.
-  int64 period = 5;
+  int64 period = 3;
   // Tape offset distance from one cycle to the next
   // (+ means right, - means left, 0 means it repeats in place).
-  int64 offset = 6;
+  int64 offset = 4;
+
+  // Halting or Quasihalting conclusions.
+  BBStatus status = 5;
 
   // Stats
-  float elapsed_time_sec = 7;
+  float elapsed_time_sec = 6;
 }
 
-message LinRecurFilterResult {
-  LinRecurFilterRequest parameters = 1;
-  LinRecurFilterResponse result = 2;
+message LinRecurFilterInfo {
+  LinRecurFilterParams parameters = 1;
+  LinRecurFilterResult result = 2;
+}
+
+
+message CTLFilterInfo {
+  // Parameters
+  int64 init_step = 1;
+
+  // Results
+  // CTL_A*
+  FilterInfo ctl_as = 2;
+  // CTL_A*_B
+  FilterInfo ctl_as_b = 3;
 }
 
 
@@ -170,15 +292,14 @@ message IORecord {
   TuringMachine tm = 1;
 
   // Status of this machine with respect to BB, BBB, etc. criteria.
-  Status status = 2;
+  BBStatus status = 2;
 
-  // Raw parameters, results and stats from various filters.
+  // parameters, results and stats from various filters.
+  SimulatorInfo simulator_info = 3;
+  BlockFinderInfo block_finder_info = 4;
 
-  // We allow multiple SimulatorResults since we may have run it with different
-  // parameters and get different results.
-  repeated SimulatorResult simulator_results = 3;
-  repeated BlockFinderResult block_finder_results = 4;
-
-  LinRecurFilterResult lin_recur_filter_result = 5;
-  // TODO: Add results for other filters (ReverseEngineer, CTL, ...)
+  FilterInfo reverse_engineer_filter_info = 5;
+  LinRecurFilterInfo lin_recur_filter_info = 6;
+  CTLFilterInfo ctl_filter_info = 7;
+  // TODO: Add results for other filters
 }

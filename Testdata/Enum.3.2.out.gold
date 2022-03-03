@@ -3917,7 +3917,7 @@
 1RB 1LC  0LA 0LC  1LA 1RZ | None Halt 2 7
 1RB 1LC  0LA 1RB  1LA 1RZ | None Halt 3 10
 1RB 1LC  0LA 1LB  1LA --- | None Infinite Lin_Recur No_Quasihalt N/A
-1RB 1LC  0LA 0RB  1LA --- | None Unknown Max_Steps 7987
+1RB 1LC  0LA 0RB  1LA --- | None Unknown Max_Steps 1000
 1RB 1LC  0LA 0LB  1LA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1LC  0LA 1RA  1LA 1RZ | None Halt 3 8
 1RB 1LC  0LA 1LA  1LA --- | None Infinite Lin_Recur No_Quasihalt N/A

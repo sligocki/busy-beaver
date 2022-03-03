@@ -25,7 +25,7 @@ def get_big_int(field : io_pb2.BigInt) -> Optional[int]:
     return None
 
 
-def set_halting(tm_status : io_pb2.Status,
+def set_halting(tm_status : io_pb2.BBStatus,
                 halt_steps : int,
                 halt_score : Optional[int]):
   """Specify that we know that this machine halts."""
@@ -39,19 +39,22 @@ def set_halting(tm_status : io_pb2.Status,
   # Technically, Aaronson's definition calls Halting machines Quasihalting also.
   set_not_quasihalting(tm_status)
 
-def set_not_halting(tm_status : io_pb2.Status):
+def set_not_halting(tm_status : io_pb2.BBStatus,
+                    reason : str):
   """Specify that we know that this machine does not halt."""
   tm_status.halt_status.is_decided = True
   tm_status.halt_status.is_halting = False
+  tm_status.halt_status.reason = reason
 
-def set_not_quasihalting(tm_status : io_pb2.Status):
+def set_not_quasihalting(tm_status : io_pb2.BBStatus):
   """Specify that we know that this machine does not quasihalt."""
   tm_status.quasihalt_status.is_decided = True
   tm_status.quasihalt_status.is_quasihalting = False
 
 
-def set_inf_recur(tm_status : io_pb2.Status,
-                  all_states, states_to_ignore, states_last_seen):
+def set_inf_recur(tm_status : io_pb2.BBStatus,
+                  states_to_ignore,
+                  states_last_seen):
   """Call for a TM that has some form of infinite recurrence.
   This detects if it has quasihalted (or if it will visit all states for all
   time) and sets the quasihalt_status (as well as halt_status since we know
@@ -60,9 +63,9 @@ def set_inf_recur(tm_status : io_pb2.Status,
 
   q_state = None
   q_last_seen = -1
-  for state in all_states:
+  for state, last_seen in states_last_seen.items():
     if state not in states_to_ignore:
-      if states_last_seen.get(state, -1) > q_last_seen:
+      if last_seen > q_last_seen:
         q_state = state
         q_last_seen = states_last_seen[state]
 
@@ -80,6 +83,3 @@ def set_inf_recur(tm_status : io_pb2.Status,
     # Note: A TM may quasihalt at different times with respect to different
     # states. This is guaranteed to be the final quasihalt (max steps).
     tm_status.quasihalt_status.quasihalt_state = q_state
-
-  # Whether or not this machine quasihalts, it is certainly infinite.
-  set_not_halting(tm_status)

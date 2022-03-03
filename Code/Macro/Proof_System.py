@@ -16,9 +16,6 @@ import sys
 from Macro import Simulator
 from Macro import Tape
 from Macro import Turing_Machine
-
-parent_dir = sys.path[0][:sys.path[0].rfind("/")] # pwd path with last directory removed
-sys.path.insert(1, parent_dir)
 from Numbers.Algebraic_Expression import Algebraic_Expression, Variable, NewVariableExpression, VariableToExpression, ConstantToExpression, is_scalar, BadOperation
 
 
@@ -37,7 +34,7 @@ def add_option_group(parser):
                    help="Rules are saved and applied based on the maximum they "
                    "effect the tape to the left and right. [Experimental]")
   group.add_option("--max-num-reps", type=int, default=10,
-                    help="Specify a maximum consecutive number of times a rule is applied.")
+                    help="Specify a maximum consecutive number of times a recursive (General) rule is applied (Does not apply to standard Diff Rules).")
 
   parser.add_option_group(group)
 
@@ -335,7 +332,7 @@ class Proof_System(object):
 
     self.max_num_reps = options.max_num_reps
 
-    # Stat
+    # Stats
     self.num_loops = 0
     self.num_recursive_rules = 0
     self.num_collatz_rules = 0
@@ -620,7 +617,7 @@ class Proof_System(object):
                                   new_options,
                                   init_tape=False,
                                   verbose_prefix=self.verbose_prefix + "  ",
-                                  base_simulator=False)
+                                  is_base_simulator=False)
     gen_sim.state = new_state
     gen_sim.step_num = ConstantToExpression(0)
 
@@ -1129,7 +1126,7 @@ class Proof_System(object):
         # `state`.
         last_seen_ago = rule.num_steps - last_seen
         states_last_seen[state] = diff_steps - last_seen_ago.substitute(last_value)
-        
+
     else:
       diff_steps = 0 # TODO: Make it None instead of a lie
       states_last_seen = None
