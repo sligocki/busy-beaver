@@ -276,11 +276,7 @@ class Enumerator(object):
 
     if not quasihalt_status.is_decided:
       # Quasihalt unknown
-      if reason in ("Reverse_Engineer", "CTL_A*", "CTL_A*_B"):
-        # Temporary work-around to get rid of gold diffs.
-        quasihalt_info = ("N/A", "N/A")
-      else:
-        quasihalt_info = ("Quasihalt_Not_Computed", "N/A")
+      quasihalt_info = ("Quasihalt_Not_Computed", "N/A")
     elif quasihalt_status.is_quasihalting:
       quasihalt_info = (quasihalt_status.quasihalt_state,
                         Halting_Lib.get_big_int(quasihalt_status.quasihalt_steps))
