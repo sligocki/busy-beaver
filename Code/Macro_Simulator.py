@@ -120,13 +120,13 @@ def run_options(ttable, options,
   ## Construct the Macro Turing Machine (Backsymbol-k-Block-Macro-Machine)
   machine = Turing_Machine.make_machine(ttable)
 
+  # If no explicit block-size given, use heuristics to find one.
   block_size = options.block_size
   if not block_size:
     bf_info = tm_record.block_finder_info
     bf_info.parameters.compression_search_loops = options.bf_limit1
     bf_info.parameters.mult_sim_loops = options.bf_limit2
     bf_info.parameters.extra_mult = options.bf_extra_mult
-    # If no explicit block-size given, use heuristics to find one.
     Block_Finder.block_finder(machine, options,
                               bf_info.parameters, bf_info.result)
     block_size = bf_info.result.best_block_size

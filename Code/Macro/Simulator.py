@@ -153,7 +153,10 @@ class Simulator(object):
       if prover_result.condition == Proof_System.INF_REPEAT:
         self.op_state = Turing_Machine.INF_REPEAT
         self.inf_reason = PROOF_SYSTEM
-        self.inf_recur_states = list(prover_result.states_last_seen.keys())
+        if prover_result.states_last_seen:
+          self.inf_recur_states = list(prover_result.states_last_seen.keys())
+        else:
+          self.inf_recur_states = None
         self.verbose_print()
         return
       # Proof system says that we can apply a rule

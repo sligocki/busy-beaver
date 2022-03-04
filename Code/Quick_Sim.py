@@ -11,6 +11,7 @@ import string
 import sys
 
 from Macro import Turing_Machine, Simulator, Block_Finder
+import Halting_Lib
 import IO
 
 import io_pb2
@@ -18,15 +19,15 @@ import io_pb2
 def run(machine, block_size, back, prover, recursive, options):
   # Construct Machine (Backsymbol-k-Block-Macro-Machine)
 
-  # If no explicit block-size given, use inteligent software to find one
+  # If no explicit block-size given, use heuristics to find one.
   if not block_size:
-    bf_params = io_pb2.BlockFinderParams()
-    bf_params.compression_search_loops = options.bf_limit1
-    bf_params.mult_sim_loops = options.bf_limit2
-    bf_params.extra_mult = options.bf_extra_mult
-    # If no explicit block-size given, use heuristics to find one.
-    bf_result = Block_Finder.block_finder(machine, bf_params, options)
-    block_size = bf_result.best_block_size
+    bf_info = io_pb2.BlockFinderInfo()
+    bf_info.parameters.compression_search_loops = options.bf_limit1
+    bf_info.parameters.mult_sim_loops = options.bf_limit2
+    bf_info.parameters.extra_mult = options.bf_extra_mult
+    Block_Finder.block_finder(machine, options,
+                              bf_info.parameters, bf_info.result)
+    block_size = bf_info.result.best_block_size
 
   # Do not create a 1-Block Macro-Machine (just use base machine)
   if block_size != 1:
@@ -71,10 +72,14 @@ def run(machine, block_size, back, prover, recursive, options):
     print("Nonzeros:", sim.get_nonzeros())
     print()
   elif sim.op_state == Turing_Machine.INF_REPEAT:
+    bb_status = io_pb2.BBStatus()
+    Halting_Lib.set_inf_recur(bb_status,
+                              states_to_ignore=sim.inf_recur_states,
+                              states_last_seen=sim.states_last_seen)
     print()
     print("Turing Machine proven Infinite")
     print("Reason:", sim.inf_reason)
-    print("Quasihalt:", sim.inf_quasihalt)
+    print("Quasihalt:", bb_status.quasihalt_status)
   elif sim.op_state == Turing_Machine.UNDEFINED:
     print()
     print("Turing Machine reached Undefined transition")

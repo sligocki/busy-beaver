@@ -1173,8 +1173,11 @@ class Proof_System(object):
       if self.verbose:
         self.print_this("++ Rule applies infinitely ++")
         print()
-      return True, (ProverResult(INF_REPEAT, states_last_seen={
-        state: math.inf for state in rule.states_last_seen}),
+      if rule.states_last_seen:
+        states_last_seen = {state: math.inf for state in rule.states_last_seen}
+      else:
+        states_last_seen = None
+      return True, (ProverResult(INF_REPEAT, states_last_seen=states_last_seen),
                     large_delta)
 
     # Keep applying rule until we can't anymore.
