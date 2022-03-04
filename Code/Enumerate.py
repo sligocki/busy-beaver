@@ -131,6 +131,10 @@ class Enumerator(object):
         self.pout.write("Ran out of TMs...\n");
         break
 
+      if self.options.debug:
+        print("----- Debug - Current TM:",Output_Machine.display_ttable(tm.get_TTable()))
+        sys.stdout.flush()
+
       # Periodically save state
       if (self.tm_num % self.save_freq) == 0:
         self.save()
@@ -365,12 +369,12 @@ def main(args):
   enum_parser.add_option("--randomize", action="store_true", default=False,
                          help="Randomize the order of enumeration.")
   enum_parser.add_option("--seed", type=int, help="Seed to randomize with.")
-
   enum_parser.add_option("--allow-no-halt", action="store_true", default=False,
                          help="Search for Beep Busy Beaver (allow enumerating machines without halt states).")
   enum_parser.add_option("--no-first-1rb", dest="first_1rb",
                          action="store_false", default=True,
                          help="Allow first transition to be anything (not just restricted to A1->1RB).")
+  enum_parser.add_option("-d","--debug", action="store_true", default=False)
   parser.add_option_group(enum_parser)
 
   Macro_Simulator.add_option_group(parser)
