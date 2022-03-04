@@ -94,8 +94,11 @@ def block_finder_internal(machine : Turing_Machine.Turing_Machine,
   for block_size in range(1, len(tape)//2):
     compr_size = compression_efficiency(tape, block_size)
     if compr_size < min_compr:
-      min_compr = compr_size
-      opt_size = block_size
+      if block_size <= options.max_block_size:
+        min_compr = compr_size
+        opt_size = block_size
+      else:
+        break
 
   result.best_compression_block_size = opt_size
   result.best_compression_tape_size = min_compr
@@ -116,7 +119,10 @@ def block_finder_internal(machine : Turing_Machine.Turing_Machine,
     sim = Simulator(back_machine, options)
     sim.loop_seek(params.mult_sim_loops)
     if sim.op_state != Turing_Machine.RUNNING:
-      result.best_block_size = mult * opt_size
+      if mult * opt_size <= options.max_block_size:
+        result.best_block_size = mult * opt_size
+      else:
+        result.best_block_size = opt_size
       return
     chain_factor = sim.steps_from_chain / sim.steps_from_macro
 
@@ -130,9 +136,13 @@ def block_finder_internal(machine : Turing_Machine.Turing_Machine,
       opt_mult = mult
     mult += 1
 
+  if opt_mult * opt_size > options.max_block_size:
+    opt_mult = 1
+
   result.best_mult = opt_mult
   result.best_chain_factor = max_chain_factor
   result.best_block_size = opt_mult * opt_size
+
   if options.verbose_block_finder:
     print()
     print("Block Finder finished")
