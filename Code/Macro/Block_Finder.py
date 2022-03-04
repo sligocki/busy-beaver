@@ -23,6 +23,10 @@ def add_option_group(parser : OptionParser):
 
   group = OptionGroup(parser, "Block Finder options")
 
+  group.add_option("--max-block-size", type=int, default=5,
+                   help="Maximum block size to try when using Block Finder. "
+                   "Note: This is ignored if --block-size is set explicitly.")
+
   group.add_option("--verbose-block-finder", action="store_true")
 
   group.add_option("--bf-limit1", type=int, default=200, metavar="LIMIT",
@@ -113,16 +117,14 @@ def block_finder_internal(machine : Turing_Machine.Turing_Machine,
   max_chain_factor = 0
   opt_mult = 1
   mult = 1
-  while mult <= opt_mult + params.extra_mult:
+  while (mult <= opt_mult + params.extra_mult and
+         mult * opt_size <= options.max_block_size):
     block_machine = Turing_Machine.Block_Macro_Machine(machine, mult*opt_size)
     back_machine = Turing_Machine.Backsymbol_Macro_Machine(block_machine)
     sim = Simulator(back_machine, options)
     sim.loop_seek(params.mult_sim_loops)
     if sim.op_state != Turing_Machine.RUNNING:
-      if mult * opt_size <= options.max_block_size:
-        result.best_block_size = mult * opt_size
-      else:
-        result.best_block_size = opt_size
+      result.best_block_size = mult * opt_size
       return
     chain_factor = sim.steps_from_chain / sim.steps_from_macro
 
@@ -131,13 +133,10 @@ def block_finder_internal(machine : Turing_Machine.Turing_Machine,
 
     # Note that we prefer smaller multiples
     # We only choose larger multiples if they perform much better
-    if chain_factor > 2*max_chain_factor:
+    if chain_factor > 2 * max_chain_factor:
       max_chain_factor = chain_factor
       opt_mult = mult
     mult += 1
-
-  if opt_mult * opt_size > options.max_block_size:
-    opt_mult = 1
 
   result.best_mult = opt_mult
   result.best_chain_factor = max_chain_factor
