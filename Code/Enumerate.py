@@ -151,8 +151,7 @@ class Enumerator(object):
     if self.options.num_enum:
       tm = self.stack.pop_job()
       while tm:
-        # TODO: Fix this
-        self.add_unresolved(tm, Exit_Condition.NOT_RUN)
+        self.add_unknown_raw(tm, Exit_Condition.NOT_RUN, ())
         tm = self.stack.pop_job()
 
     # Done
@@ -323,12 +322,14 @@ class Enumerator(object):
     else:
       raise Exception(unknown_info)
 
+    self.add_unknown_raw(tm, reason_old, args)
 
+  def add_unknown_raw(self, tm, reason, args):
     if self.pout:
       io_record = IO.Record()
       io_record.ttable = tm.get_TTable()
       io_record.category = Exit_Condition.UNKNOWN
-      io_record.category_reason = (Exit_Condition.name(reason_old),) + args
+      io_record.category_reason = (Exit_Condition.name(reason),) + args
       self.io.write_record(io_record)
 
 def initialize_stack(options, stack):
