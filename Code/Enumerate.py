@@ -151,7 +151,10 @@ class Enumerator(object):
     if self.options.num_enum:
       tm = self.stack.pop_job()
       while tm:
-        self.add_unknown_raw(tm, Exit_Condition.NOT_RUN, ())
+        tm_record = io_pb2.IORecord()
+        tm_record.tm.ttable = Output_Machine.display_ttable(tm.get_TTable())
+        # Empty tm_record (no filter results) indicates that the TM hasn't been run.
+        self.add_result(tm, tm_record)
         tm = self.stack.pop_job()
 
     # Done
@@ -301,7 +304,11 @@ class Enumerator(object):
     self.tm_num += 1
 
     unk_reason = unknown_info.WhichOneof("reason")
-    if unk_reason == "over_loops_info":
+    if unk_reason is None:
+      # If we haven't run this TM, there will not exist any unknown_info at all.
+      reason_old = Exit_Condition.NOT_RUN
+      args = ()
+    elif unk_reason == "over_loops_info":
       reason_old = Exit_Condition.MAX_STEPS
       args = (unknown_info.over_loops_info.num_loops,)
     elif unk_reason == "over_tape_info":
@@ -322,14 +329,11 @@ class Enumerator(object):
     else:
       raise Exception(unknown_info)
 
-    self.add_unknown_raw(tm, reason_old, args)
-
-  def add_unknown_raw(self, tm, reason, args):
     if self.pout:
       io_record = IO.Record()
       io_record.ttable = tm.get_TTable()
       io_record.category = Exit_Condition.UNKNOWN
-      io_record.category_reason = (Exit_Condition.name(reason),) + args
+      io_record.category_reason = (Exit_Condition.name(reason_old),) + args
       self.io.write_record(io_record)
 
 def initialize_stack(options, stack):
