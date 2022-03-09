@@ -64,25 +64,30 @@ class Record(object):
     """Read a result off of a line from a file."""
     start_time = time.time()
 
-    line = line.split("#")[0]  # Cleave off comment.
+    try:
+      line = line.split("#")[0]  # Cleave off comment.
 
-    parts = line.split("|", 2)
-    self.ttable = Input_Machine.read_ttable(parts[0])
-    if len(parts) >= 2:
-      subparts = parts[1].split()  # Split by whitespace
-      try:
-        self.log_number = int(subparts[0])
-      except ValueError:
-        self.log_number = None
-      self.category = Exit_Condition.read(subparts[1])
-      self.category_reason = self.read_list(subparts[2:])
-    if len(parts) >= 3:
-      subparts = parts[2].split()  # Split by whitespace
-      self.extended = Exit_Condition.read(subparts[0])
-      self.extended_reason = self.read_list(subparts[1:])
+      parts = line.split("|", 2)
+      self.ttable = Input_Machine.read_ttable(parts[0])
+      if len(parts) >= 2:
+        subparts = parts[1].split()  # Split by whitespace
+        try:
+          self.log_number = int(subparts[0])
+        except ValueError:
+          self.log_number = None
+        self.category = Exit_Condition.read(subparts[1])
+        self.category_reason = self.read_list(subparts[2:])
+      if len(parts) >= 3:
+        subparts = parts[2].split()  # Split by whitespace
+        self.extended = Exit_Condition.read(subparts[0])
+        self.extended_reason = self.read_list(subparts[1:])
 
-    end_time = time.time()
-    self.io_time += (end_time - start_time)
+      end_time = time.time()
+      self.io_time += (end_time - start_time)
+
+    except:
+      print(f"ERROR: While parsing line: [{line}]", file=sys.stderr)
+      raise
 
   def read_list(self, strs):
     start_time = time.time()
