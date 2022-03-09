@@ -12,8 +12,8 @@ set -x
 
 WORK_DIR=$1
 shift
-
-NUM_CHUNKS=1000
+NUM_CHUNKS=$1
+shift
 
 BASENAME=${WORK_DIR}/init
 mkdir -p ${WORK_DIR}
@@ -28,13 +28,8 @@ time python3 Code/Enumerate.py \
 
 time python2 Tools/Integrate_Data.py ${BASENAME}
 
-time shuf ${BASENAME}.unknown > ${BASENAME}.shuffled.unknown
-
-num_lines=$(cat ${BASENAME}.shuffled.unknown | wc -l)
-num_lines_per_chunk=$((num_lines / NUM_CHUNKS + 1))
-
-time split --lines=${num_lines_per_chunk} --numeric-suffixes --suffix-length=8 \
-  ${BASENAME}.shuffled.unknown \
+time split --number="r/${NUM_CHUNKS}" --numeric-suffixes --suffix-length=8 \
+  ${BASENAME}.unknown \
   ${BASENAME}.split.unknown.
 
 echo Success
