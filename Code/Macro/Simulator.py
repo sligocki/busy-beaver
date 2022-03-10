@@ -51,11 +51,6 @@ def create_default_options() -> OptionParser:
   options, args = parser.parse_args([])
   return options
 
-# Infinite Reasons
-PROOF_SYSTEM = "Proof_System"
-REPEAT_IN_PLACE = "Repeat_in_Place"
-CHAIN_MOVE = "Chain_Move"
-
 class Simulator(object):
   """Turing machine simulator using chain-tape optimization."""
   def __init__(self,
@@ -152,7 +147,7 @@ class Simulator(object):
       # Proof system says that machine will repeat forever
       if prover_result.condition == Proof_System.INF_REPEAT:
         self.op_state = Turing_Machine.INF_REPEAT
-        self.inf_reason = PROOF_SYSTEM
+        self.inf_reason = io_pb2.INF_PROOF_SYSTEM
         if prover_result.states_last_seen:
           self.inf_recur_states = list(prover_result.states_last_seen.keys())
         else:
@@ -201,7 +196,7 @@ class Simulator(object):
     self.op_details = trans.condition_details
     # Apply transition
     if self.op_state == Turing_Machine.INF_REPEAT:
-      self.inf_reason = REPEAT_IN_PLACE
+      self.inf_reason = io_pb2.INF_MACRO_STEP
       # TODO(shawn): This is not 100% accurate. We should only ignore states involved in the repeat-in-place, but trans.states_last_seen could include some states before the repeat.
       self.inf_recur_states = list(trans.states_last_seen.keys())
     # Chain move
@@ -210,7 +205,7 @@ class Simulator(object):
       num_reps = self.tape.apply_chain_move(trans.symbol_out)
       if num_reps == math.inf:
         self.op_state = Turing_Machine.INF_REPEAT
-        self.inf_reason = CHAIN_MOVE
+        self.inf_reason = io_pb2.INF_CHAIN_STEP
         self.inf_recur_states = list(trans.states_last_seen.keys())
         return
       # Don't need to change state or direction

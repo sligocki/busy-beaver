@@ -16,10 +16,25 @@ import sys
 import time
 
 from Common import Exit_Condition
+import Halting_Lib
 import Input_Machine
+import IO_proto
 import Output_Machine
 
-class IO_Error(Exception): pass
+import io_pb2
+
+
+inf_reason2str = {
+  io_pb2.INF_UNSPECIFIED: "",
+  io_pb2.INF_MACRO_STEP: "Repeat_in_Place",
+  io_pb2.INF_CHAIN_STEP: "Chain_Move",
+  io_pb2.INF_PROOF_SYSTEM: "Proof_System",
+  io_pb2.INF_REVERSE_ENGINEER: "Reverse_Engineer",
+  io_pb2.INF_LIN_RECUR: "Lin_Recur",
+  io_pb2.INF_CTL: "CTL",
+}
+str2inf_reason = {s: inf_reason for (inf_reason, s) in inf_reason2str.items()}
+
 
 class Record(object):
   """Structuring of information in a Turing machine result line."""
@@ -149,7 +164,7 @@ class IO(object):
     self.flush_each  = not compressed
     self.io_time = 0.0
 
-  def write_record(self, result):
+  def write_record(self, result : Record):
     """New interface for writing an IO.Record object."""
     start_time = time.time()
 
@@ -163,6 +178,64 @@ class IO(object):
 
     end_time = time.time()
     self.io_time += (end_time - start_time)
+
+  def write_protobuf(self, tm_record : io_pb2.TMRecord):
+    io_record = Record()
+    io_record.ttable = IO_proto.unpack_ttable(tm_record.tm.ttable_packed)
+
+    if not tm_record.status.halt_status.is_decided:
+      io_record.category = Exit_Condition.UNKNOWN
+
+      unknown_info = tm_record.filter.simulator.result.unknown_info
+      unk_reason = unknown_info.WhichOneof("reason")
+      if unk_reason is None:
+        # If we haven't run this TM, there will not exist any unknown_info at all.
+        reason = Exit_Condition.NOT_RUN
+        args = ()
+      elif unk_reason == "over_loops":
+        reason = Exit_Condition.MAX_STEPS
+        args = (unknown_info.over_loops.num_loops,)
+      elif unk_reason == "over_tape":
+        reason = Exit_Condition.OVER_TAPE
+        args = (unknown_info.over_tape.compressed_tape_size,)
+      elif unk_reason == "over_time":
+        reason = Exit_Condition.TIME_OUT
+        args = (unknown_info.over_time.elapsed_time_sec,)
+      elif unk_reason == "over_steps_in_macro":
+        reason = Exit_Condition.OVER_STEPS_IN_MACRO
+        args = (unknown_info.over_steps_in_macro.macro_symbol,
+                unknown_info.over_steps_in_macro.macro_state,
+                unknown_info.over_steps_in_macro.macro_dir_is_right)
+      else:
+        raise Exception(unknown_info)
+
+      io_record.category_reason = (Exit_Condition.name(reason),) + args
+
+    elif tm_record.status.halt_status.is_halting:
+      io_record.category = Exit_Condition.HALT
+      io_record.category_reason = (
+        Halting_Lib.get_big_int(tm_record.status.halt_status.halt_score),
+        Halting_Lib.get_big_int(tm_record.status.halt_status.halt_steps))
+
+    else:
+      io_record.category = Exit_Condition.INFINITE
+      reason_str = inf_reason2str[tm_record.status.halt_status.reason]
+
+      if not tm_record.status.quasihalt_status.is_decided:
+        quasihalt_info = ("Quasihalt_Not_Computed", "N/A")
+
+      elif tm_record.status.quasihalt_status.is_quasihalting:
+        quasihalt_info = (
+          tm_record.status.quasihalt_status.quasihalt_state,
+          Halting_Lib.get_big_int(tm_record.status.quasihalt_status.quasihalt_steps))
+
+      else:
+        quasihalt_info = ("No_Quasihalt", "N/A")
+
+      io_record.category_reason = (reason_str,) + quasihalt_info
+
+
+    self.write_record(io_record)
 
   def read_record(self):
     """

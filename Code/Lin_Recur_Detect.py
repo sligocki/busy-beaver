@@ -89,7 +89,7 @@ def lin_detect_not_min(ttable,
     Halting_Lib.set_inf_recur(result.status,
                               states_to_ignore = states_used,
                               states_last_seen = states_last_seen)
-    Halting_Lib.set_not_halting(result.status, "Lin_Recur")
+    Halting_Lib.set_not_halting(result.status, io_pb2.INF_LIN_RECUR)
     return
   else:
     assert sim.step_num == steps_reset, (sim.step_num, steps_reset)

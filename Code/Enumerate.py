@@ -25,6 +25,7 @@ import time
 from Common import Exit_Condition, GenContainer
 import Halting_Lib
 import IO
+import IO_proto
 from Macro import Block_Finder, Turing_Machine
 import Macro_Simulator
 import Output_Machine
@@ -81,9 +82,10 @@ class Enumerator(object):
 
     # Statistics
     self.tm_num = 0
-    self.num_halt = self.num_infinite = self.num_unresolved = 0
-    self.best_steps = self.best_score = 0
-    self.num_over_time = self.num_over_steps = self.num_over_tape = 0
+    self.num_halt = 0
+    self.num_quasihalt = 0
+    self.num_infinite = 0
+    self.num_unknown = 0
     self.max_sim_time_s = 0.0
 
   def __getstate__(self):
@@ -151,8 +153,7 @@ class Enumerator(object):
     if self.options.num_enum:
       tm = self.stack.pop_job()
       while tm:
-        tm_record = io_pb2.IORecord()
-        tm_record.tm.ttable = Output_Machine.display_ttable(tm.get_TTable())
+        tm_record = IO_proto.create_record(tm.get_TTable())
         # Empty tm_record (no filter results) indicates that the TM hasn't been run.
         self.add_result(tm, tm_record)
         tm = self.stack.pop_job()
@@ -167,10 +168,8 @@ class Enumerator(object):
     if self.pout:
       # Print out statistical data
       self.pout.write("%s -" % self.tm_num)
-      self.pout.write(" %s %s %s -" % (self.num_halt, self.num_infinite,
-                                       self.num_unresolved))
-      self.pout.write(" %s" % (long_to_eng_str(self.best_steps,1,3),))
-      self.pout.write(" %s" % (long_to_eng_str(self.best_score,1,3),))
+      self.pout.write(" %s %s %s %s -" % (
+        self.num_halt, self.num_quasihalt, self.num_infinite, self.num_unknown))
       self.pout.write(" %.0fms " % (self.max_sim_time_s * 1000,))
       self.pout.write(" (%.2fs)\n" % (self.end_time - self.start_time,))
       self.pout.flush()
@@ -187,13 +186,13 @@ class Enumerator(object):
         pickle.dump(self, f)
         f.close()
 
-    # Restart timer
+    # Restart timer and time stats.
     self.start_time = time.time()
+    self.max_sim_time_s = 0.0
 
-  def run(self, tm) -> io_pb2.IORecord:
+  def run(self, tm) -> io_pb2.TMRecord:
     """Simulate TM"""
-    tm_record = io_pb2.IORecord()
-    tm_record.tm.ttable = Output_Machine.display_ttable(tm.get_TTable())
+    tm_record = IO_proto.create_record(tm.get_TTable())
     try:
       if self.options.time > 0:
         Macro_Simulator.run_timer(tm.get_TTable(), self.options, tm_record,
@@ -202,7 +201,7 @@ class Enumerator(object):
         Macro_Simulator.run_options(tm.get_TTable(), self.options, tm_record)
     except:
       print("ERROR: Exception raised while simulating TM:",
-            tm_record.tm.ttable, file=sys.stderr)
+            Output_Machine.display_ttable(tm.get_TTable()), file=sys.stderr)
       raise
     return tm_record
 
@@ -236,8 +235,8 @@ class Enumerator(object):
       # Push the list of TMs onto the stack
       self.stack.push_jobs(new_tms)
 
-  def add_result(self, tm, tm_record : io_pb2.IORecord):
-    sim_result = tm_record.simulator_info.result
+  def add_result(self, tm, tm_record : io_pb2.TMRecord):
+    sim_result = tm_record.filter.simulator.result
     if sim_result.undefined_cell_info.reached_undefined_cell:
       # Push all the possible non-halting transitions onto the stack.
       self.add_transitions(tm,
@@ -247,94 +246,20 @@ class Enumerator(object):
       # halting below the ttable reflects that.
       tm.set_halt(state_in = sim_result.undefined_cell_info.state,
                   symbol_in = sim_result.undefined_cell_info.symbol)
+      tm_record.tm.ttable_packed = IO_proto.pack_ttable(tm.get_TTable())
 
-    if tm_record.status.halt_status.is_decided:
-      if tm_record.status.halt_status.is_halting:
-        self.add_halt(tm, tm_record.status.halt_status)
-      else:
-        self.add_infinite(tm, tm_record.status.halt_status.reason,
-                          tm_record.status.quasihalt_status)
-    else:
-      self.add_unknown(tm, sim_result.unknown_info)
+    self.io.write_protobuf(tm_record)
 
-  def add_halt(self, tm,
-               halt_info : io_pb2.HaltInfo):
-    """Note a halting TM. Add statistics and output it with score/steps."""
-    self.num_halt += 1
+    # Update stats
     self.tm_num += 1
-
-    steps = Halting_Lib.get_big_int(halt_info.halt_steps)
-    score = Halting_Lib.get_big_int(halt_info.halt_score)
-    self.best_steps = max(self.best_steps, steps)
-    self.best_score = max(self.best_score, score)
-
-    if self.pout:
-      io_record = IO.Record()
-      io_record.ttable = tm.get_TTable()
-      io_record.category = Exit_Condition.HALT
-      io_record.category_reason = (score, steps)
-      self.io.write_record(io_record)
-
-  def add_infinite(self, tm, reason, quasihalt_status):
-    """Note an infinite TM. Add statistics and output it with reason."""
-    self.num_infinite += 1
-    self.tm_num += 1
-
-    if not quasihalt_status.is_decided:
-      # Quasihalt unknown
-      quasihalt_info = ("Quasihalt_Not_Computed", "N/A")
-    elif quasihalt_status.is_quasihalting:
-      quasihalt_info = (quasihalt_status.quasihalt_state,
-                        Halting_Lib.get_big_int(quasihalt_status.quasihalt_steps))
+    if not tm_record.status.halt_status.is_decided:
+      self.num_unknown += 1
+    elif tm_record.status.halt_status.is_halting:
+      self.num_halt += 1
+    elif tm_record.status.quasihalt_status.is_quasihalting:
+      self.num_quasihalt += 1
     else:
-      # Not quasihalting
-      quasihalt_info = ("No_Quasihalt", "N/A")
-
-    if self.pout:
-      io_record = IO.Record()
-      io_record.ttable = tm.get_TTable()
-      io_record.category = Exit_Condition.INFINITE
-      io_record.category_reason = (reason,) + quasihalt_info
-      self.io.write_record(io_record)
-
-  def add_unknown(self, tm,
-                  unknown_info : io_pb2.UnknownInfo):
-    """Note an unresolved TM. Add statistics and output it with reason."""
-    self.num_unresolved += 1
-    self.tm_num += 1
-
-    unk_reason = unknown_info.WhichOneof("reason")
-    if unk_reason is None:
-      # If we haven't run this TM, there will not exist any unknown_info at all.
-      reason_old = Exit_Condition.NOT_RUN
-      args = ()
-    elif unk_reason == "over_loops_info":
-      reason_old = Exit_Condition.MAX_STEPS
-      args = (unknown_info.over_loops_info.num_loops,)
-    elif unk_reason == "over_tape_info":
-      reason_old = Exit_Condition.OVER_TAPE
-      args = (unknown_info.over_tape_info.compressed_tape_size,)
-    elif unk_reason == "over_time_info":
-      reason_old = Exit_Condition.TIME_OUT
-      args = (unknown_info.over_time_info.elapsed_time_sec,)
-      print("WARNING: TIMEOUT",
-            Output_Machine.display_ttable(tm.get_TTable()), file=sys.stderr)
-    elif unk_reason == "over_steps_in_macro_info":
-      reason_old = Exit_Condition.OVER_STEPS_IN_MACRO
-      args = (unknown_info.over_steps_in_macro_info.macro_symbol,
-              unknown_info.over_steps_in_macro_info.macro_state,
-              unknown_info.over_steps_in_macro_info.macro_dir_is_right)
-      print("WARNING: OVER_STEPS_IN_MACRO",
-            Output_Machine.display_ttable(tm.get_TTable()), file=sys.stderr)
-    else:
-      raise Exception(unknown_info)
-
-    if self.pout:
-      io_record = IO.Record()
-      io_record.ttable = tm.get_TTable()
-      io_record.category = Exit_Condition.UNKNOWN
-      io_record.category_reason = (Exit_Condition.name(reason_old),) + args
-      self.io.write_record(io_record)
+      self.num_infinite += 1
 
 def initialize_stack(options, stack):
   if options.infilename:

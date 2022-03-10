@@ -26,11 +26,25 @@ message BigInt {
 }
 
 message TuringMachine {
-  // TODO: We may want to encode this in a more efficient way.
-  // Ex: a bytes with transitions bit-packed into 1 byte each? (~4x smaller).
-  string ttable = 1;
+  // High density, bit-packed version of ttable.
+  // Each transition is represented by one byte from least significant to most:
+  //   * 3 bits for (symbol + 1)  [symbol == -1 means undefined cell]
+  //   * 3 bits for (state + 1)   [state == -1 means halt]
+  //   * 1 bit for dir
+  //   * 1 bit for is_newrow  [indicates where to add row breaks to matrix]
+  bytes ttable_packed = 1;
 }
 
+
+enum InfReason {
+  INF_UNSPECIFIED = 0;
+  INF_MACRO_STEP = 1;
+  INF_CHAIN_STEP = 2;
+  INF_PROOF_SYSTEM = 3;
+  INF_REVERSE_ENGINEER = 4;
+  INF_LIN_RECUR = 5;
+  INF_CTL = 6;
+}
 
 // Statuses for various searches (BB, BBB, ...)
 message HaltStatus {
@@ -42,7 +56,8 @@ message HaltStatus {
   BigInt halt_steps = 3;
   BigInt halt_score = 4;
 
-  string reason = 5;
+  // Only meaningful if is_halting = True.
+  InfReason reason = 5;
 }
 
 message QuasihaltStatus {
@@ -58,7 +73,7 @@ message QuasihaltStatus {
 message BBStatus {
   HaltStatus halt_status = 1;
   QuasihaltStatus quasihalt_status = 2;
-  // TODO: Add more, like lin_recur_info and blanking_info?
+  // TODO: Add more, like lin_recur_status and blanking_status?
 }
 
 
@@ -113,9 +128,9 @@ message InfProofSystemInfo {
 
 message InfiniteInfo {
   oneof reason {
-    InfMacroRepeatInfo macro_repeat_info = 1;
-    InfChainMoveInfo   chain_move_info   = 2;
-    InfProofSystemInfo proof_system_info = 3;
+    InfMacroRepeatInfo macro_repeat = 1;
+    InfChainMoveInfo   chain_move   = 2;
+    InfProofSystemInfo proof_system = 3;
     // TODO: ...
   }
 }
@@ -142,10 +157,10 @@ message OverStepsInMacroInfo {
 
 message UnknownInfo {
   oneof reason {
-    OverLoopsInfo over_loops_info = 1;
-    OverTapeInfo over_tape_info = 2;
-    OverTimeInfo over_time_info = 3;
-    OverStepsInMacroInfo over_steps_in_macro_info = 4;
+    OverLoopsInfo over_loops = 1;
+    OverTapeInfo over_tape = 2;
+    OverTimeInfo over_time = 3;
+    OverStepsInMacroInfo over_steps_in_macro = 4;
   }
 }
 
@@ -284,22 +299,33 @@ message CTLFilterInfo {
 }
 
 
+message FilterResults {
+  // parameters, results and stats from various filters.
+  SimulatorInfo simulator = 1;
+  BlockFinderInfo block_finder = 2;
+
+  FilterInfo reverse_engineer = 3;
+  LinRecurFilterInfo lin_recur = 4;
+  CTLFilterInfo ctl = 5;
+  // TODO: Add results for other filters
+}
+
 // The top level message for a TM. It contains:
 //  * TM specification (ttable)
-//  * Results for all filters that have been run
+//  * Results for all simulations and filters that have been run
 //  * Concluded "Statuses" for Halting, etc. conditions
-message IORecord {
-  TuringMachine tm = 1;
+message TMRecord {
+  // Version of the specification this Protobuf was written for.
+  // Version only needs to change in case non-backwards/forwards compatible
+  // changes are made to the specification (changing message hierarchy or
+  // tag numbers).
+  int64 spec_version = 1;
+
+  TuringMachine tm = 2;
 
   // Status of this machine with respect to BB, BBB, etc. criteria.
-  BBStatus status = 2;
+  BBStatus status = 3;
 
-  // parameters, results and stats from various filters.
-  SimulatorInfo simulator_info = 3;
-  BlockFinderInfo block_finder_info = 4;
-
-  FilterInfo reverse_engineer_filter_info = 5;
-  LinRecurFilterInfo lin_recur_filter_info = 6;
-  CTLFilterInfo ctl_filter_info = 7;
-  // TODO: Add results for other filters
+  // Detailed results and stats for all filters run.
+  FilterResults filter = 4;
 }
