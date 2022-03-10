@@ -67,7 +67,7 @@ message QuasihaltStatus {
   bool is_quasihalting = 2;
 
   BigInt quasihalt_steps = 3;
-  int64 quasihalt_state = 4;
+  uint64 quasihalt_state = 4;
 }
 
 message BBStatus {
@@ -79,11 +79,11 @@ message BBStatus {
 
 message SimulatorParams {
   // Maximum number of simulator "loops" to run for.
-  int64 max_loops = 1;
+  uint64 max_loops = 1;
   // Maximum wall time to run the simuator for.
   float max_time_sec = 2;
   // Maximum size of compressed tape before we give up.
-  int64 max_tape_blocks = 3;
+  uint64 max_tape_blocks = 3;
 
   // Prover Params
   bool use_prover = 4;
@@ -137,11 +137,11 @@ message InfiniteInfo {
 
 
 message OverLoopsInfo {
-  int64 num_loops = 1;
+  uint64 num_loops = 1;
 }
 
 message OverTapeInfo {
-  int64 compressed_tape_size = 1;
+  uint64 compressed_tape_size = 1;
 }
 
 message OverTimeInfo {
@@ -166,8 +166,8 @@ message UnknownInfo {
 
 message UnfinedCellInfo {
   bool reached_undefined_cell = 1;
-  int64 state = 2;
-  int64 symbol = 3;
+  uint64 state = 2;
+  uint64 symbol = 3;
 }
 
 message SimulatorResult {
@@ -189,12 +189,12 @@ message SimulatorResult {
   // Stats
   float elapsed_time_sec = 5;
 
-  int64 num_loops = 6;
+  uint64 num_loops = 6;
   BigInt num_steps = 7;
   // TODO: loops/steps by category (Macro, Chain, Proof, ...)
 
-  int64 num_rules_proven = 8;
-  int64 num_proofs_failed = 9;
+  uint64 num_rules_proven = 8;
+  uint64 num_proofs_failed = 9;
 }
 
 message SimulatorInfo {
@@ -205,37 +205,37 @@ message SimulatorInfo {
 
 message BlockFinderParams {
   // # loops to run Sim searching for least-compressed tape.
-  int64 compression_search_loops = 1;
+  uint64 compression_search_loops = 1;
   // # loops to run sim for each multiple of optimal compression size.
-  int64 mult_sim_loops = 2;
+  uint64 mult_sim_loops = 2;
   // While searching for optimal multiple: How far should we look beyond
   // current best mult?
-  int64 extra_mult = 3;
+  uint64 extra_mult = 3;
 }
 
 message BlockFinderResult {
   // Results
   // Overall heuristically decided best block size.
-  int64 best_block_size = 1;
+  uint64 best_block_size = 1;
 
   // Stats
   float elapsed_time_sec = 2;
 
   // Chain Sim loop (with block size 1) where compressed tape was largest
   // (least effectively compressed).
-  int64 least_compressed_loop = 3;
+  uint64 least_compressed_loop = 3;
   // # Blocks (with compression) on this least compressed tape.
-  int64 least_compressed_tape_size_chain = 4;
+  uint64 least_compressed_tape_size_chain = 4;
   // Total # symbols (no compression) on this least compressed tape.
-  int64 least_compressed_tape_size_raw = 5;
+  uint64 least_compressed_tape_size_raw = 5;
   // Best block size for compression on this least compressed tape.
-  int64 best_compression_block_size = 6;
+  uint64 best_compression_block_size = 6;
   // # Blocks (with compression) using best_compression_block_size on this
   // least compressed tape.
-  int64 best_compression_tape_size = 7;
+  uint64 best_compression_tape_size = 7;
 
   // Best multiple of best_compression_block_size found.
-  int64 best_mult = 8;
+  uint64 best_mult = 8;
   // "Chain factor" (steps_from_chain / steps_from_macro) at best_mult.
   float best_chain_factor = 9;
 }
@@ -254,7 +254,7 @@ message FilterInfo {
 
 message LinRecurFilterParams {
   // Parameters
-  int64 max_steps = 1;
+  uint64 max_steps = 1;
   // Is start_step the min start time of LR?
   // Or just a time at which it had started by?
   bool find_min_start_step = 2;
@@ -267,12 +267,12 @@ message LinRecurFilterResult {
   // A step at which the machine is in Lin Recurrence.
   // If is_start_step_min=True, this is the smallest such step (i.e. the
   // step that Lin Recurrence began).
-  int64 start_step = 2;
+  uint64 start_step = 2;
   // Period of LR cycle.
-  int64 period = 3;
+  uint64 period = 3;
   // Tape offset distance from one cycle to the next
   // (+ means right, - means left, 0 means it repeats in place).
-  int64 offset = 4;
+  sint64 offset = 4;
 
   // Stats
   float elapsed_time_sec = 6;
@@ -288,7 +288,7 @@ message LinRecurFilterInfo {
 
 message CTLFilterInfo {
   // Parameters
-  int64 init_step = 1;
+  uint64 init_step = 1;
 
   // Results
   // CTL_A*
@@ -318,7 +318,7 @@ message TMRecord {
   // Version only needs to change in case non-backwards/forwards compatible
   // changes are made to the specification (changing message hierarchy or
   // tag numbers).
-  int64 spec_version = 1;
+  uint64 spec_version = 1;
 
   TuringMachine tm = 2;
 
