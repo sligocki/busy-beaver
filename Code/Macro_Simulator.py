@@ -112,9 +112,8 @@ def run_options(ttable, options,
     lr_info = tm_record.filter.lin_recur
     lr_info.parameters.max_steps = options.lin_steps
     lr_info.parameters.find_min_start_step = options.lin_min
-    Lin_Recur_Detect.filter(ttable, lr_info.parameters, lr_info.result)
+    Lin_Recur_Detect.filter(ttable, lr_info, tm_record.status)
     if lr_info.result.success:
-      tm_record.status.CopyFrom(lr_info.result.status)
       return
 
   ## Construct the Macro Turing Machine (Backsymbol-k-Block-Macro-Machine)

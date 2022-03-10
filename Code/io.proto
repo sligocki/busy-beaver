@@ -274,11 +274,10 @@ message LinRecurFilterResult {
   // (+ means right, - means left, 0 means it repeats in place).
   int64 offset = 4;
 
-  // Halting or Quasihalting conclusions.
-  BBStatus status = 5;
-
   // Stats
   float elapsed_time_sec = 6;
+
+  // next id: 5
 }
 
 message LinRecurFilterInfo {
