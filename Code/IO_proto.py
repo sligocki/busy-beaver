@@ -58,6 +58,7 @@ def unpack_ttable(pack : bytes):
 def create_record(ttable) -> io_pb2.TMRecord:
   """Create TMRecord protobuf based on a machine ttable."""
   tm_record = io_pb2.TMRecord()
+  tm_record.version = 0
   tm_record.tm.ttable_packed = pack_ttable(ttable)
   return tm_record
 
