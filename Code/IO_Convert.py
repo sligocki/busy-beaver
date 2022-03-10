@@ -24,7 +24,7 @@ if args.infile.suffix == ".pb":
     reader = IO_proto.Reader(infile)
     writer = IO.IO(None, outfile)
     for tm_record in reader:
-      writer.write_protobuf(tm_record)
+      writer.write_record(tm_record)
 
 else:
   print("Converting from text to protobuf")

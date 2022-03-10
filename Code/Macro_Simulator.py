@@ -139,11 +139,11 @@ def run_options(ttable, options,
 
   if options.ctl:
     ctl_filter_info = tm_record.filter.ctl
-    ctl_filter_info.init_step = options.bf_limit1
     CTL_config = setup_CTL(machine, options.bf_limit1)
 
     # Run CTL filters unless machine halted
     if CTL_config:
+      ctl_filter_info.init_step = options.bf_limit1
       CTL_config_copy = copy.deepcopy(CTL_config)
       ctl_filter_info.ctl_as.tested = True
       if CTL1.CTL(machine, CTL_config_copy):

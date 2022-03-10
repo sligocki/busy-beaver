@@ -34,13 +34,6 @@ import Work_Queue
 
 import io_pb2
 
-try:
-  import MPI_Work_Queue
-  num_proc = MPI_Work_Queue.num_proc
-except ImportError:
-  # Allow this to work even if mpi4py is not installed.
-  num_proc = 1
-
 def long_to_eng_str(number, left, right):
   if number != 0:
     expo = int(math.log(abs(number), 10))
@@ -59,12 +52,12 @@ def long_to_eng_str(number, left, right):
 
 class Enumerator(object):
   """Holds enumeration state information for checkpointing."""
-  def __init__(self, options, stack, io, pout):
+  def __init__(self, options, stack, writer, pout):
     self.options = options
 
     # Main TM attributes
     # I/O info
-    self.io = io
+    self.writer = writer
     self.pout = pout
     self.save_freq = options.save_freq
     self.checkpoint_filename = options.checkpoint
@@ -92,7 +85,7 @@ class Enumerator(object):
     """Gets state of TM for checkpoint file."""
     d = self.__dict__.copy()
     del d["pout"]
-    del d["io"]
+    del d["writer"]
     if self.randomize:
       del d["random"]
       d["random_state"] = self.random.getstate()
@@ -248,7 +241,7 @@ class Enumerator(object):
                   symbol_in = sim_result.undefined_cell_info.symbol)
       tm_record.tm.ttable_packed = IO_proto.pack_ttable(tm.get_TTable())
 
-    self.io.write_protobuf(tm_record)
+    self.writer.write_record(tm_record)
 
     # Update stats
     self.tm_num += 1
@@ -264,14 +257,17 @@ class Enumerator(object):
 def initialize_stack(options, stack):
   if options.infilename:
     # Initialize with all machines from infile.
-    infile = open(options.infilename, "r")
-    for record in IO.IO(infile, None, None):
-      # TODO(shawn): Allow these TMs to be expanded from read size to
-      # options size. Ex: if record.ttable is 2x2, but options are 2x3.
-      # Currently that will be treated like a normal 2x2 machine here.
-      tm = old_tm_mod.Turing_Machine(record.ttable)
-      stack.push_job(tm)
-    infile.close()
+    if options.informat == "protobuf":
+      with open(options.infilename, "rb") as infile:
+        for tm_record in IO_proto.Reader(infile):
+          tm = old_tm_mod.Turing_Machine(
+            IO_proto.unpack_ttable(tm_record.tm.ttable_packed))
+          stack.push_job(tm)
+    elif options.informat == "text":
+      with open(options.infilename, "r") as infile:
+        for io_record in IO.IO(infile, None):
+          tm = old_tm_mod.Turing_Machine(io_record.ttable)
+          stack.push_job(tm)
   else:
     # If no infile is specified, then default to the NxM blank TM.
     blank_tm = old_tm_mod.Turing_Machine(options.states, options.symbols, options.first_1rb)
@@ -314,15 +310,20 @@ def main(args):
                          help="Don't generate any output.")
   out_parser.add_option("--outfile", dest="outfilename", metavar="OUTFILE",
                         help="Output file name "
-                        "[Default: Enum.STATES.SYMBOLS.STEPS.out]")
+                        "[Default: Enum.STATES.SYMBOLS.STEPS.out.txt/pb]")
   out_parser.add_option("--infile", dest="infilename",
                         help="If specified, enumeration is started from "
                         "these input machines instead of the single empty "
                         "Turing Machine.")
+  out_parser.add_option("--outformat",
+                        choices = ["text", "protobuf"], default="text",
+                        help="Format to write --outfile.")
+  out_parser.add_option("--informat",
+                        choices = ["text", "protobuf"], default="text",
+                        help="Format to read --infile.")
+
   out_parser.add_option("--force", action="store_true", default=False,
                         help="Force overwriting outfile (don't ask).")
-  out_parser.add_option("--log_number", type=int, metavar="NUM",
-                        help="Log number to use in output file")
   out_parser.add_option("--no-checkpoint", action="store_true", default=False,
                         help="Don't save a checkpoint file.")
   out_parser.add_option("--checkpoint", metavar="FILE",
@@ -342,38 +343,19 @@ def main(args):
     options.seed = int(1000*time.time())
 
   if not options.outfilename:
-    options.outfilename = "Enum.%d.%d.%s.out" % (options.states, options.symbols, options.max_loops)
-
-  if num_proc > 1:
-    field_size = len(str(num_proc - 1))
-    field_format = ".%0" + str(field_size) + "d"
-    options.outfilename += field_format % MPI_Work_Queue.rank
+    if options.outformat == "protobuf":
+      suffix = "pb"
+    elif options.outformat == "text":
+      suffix = "txt"
+    options.outfilename = "Enum.%d.%d.%s.out.%s" % (
+      options.states, options.symbols, options.max_loops, suffix)
 
   if not options.checkpoint:
     options.checkpoint = options.outfilename + ".check"
 
   pout = None
-
   if not options.no_output:
-    if num_proc == 1:
-      pout = sys.stdout
-    else:
-      pout = open("pout.%03d" % MPI_Work_Queue.rank,"w")
-
-  ## Set up I/O
-  if pout:
-    if os.path.exists(options.outfilename) and not options.force:
-      if num_proc > 1:
-        # TODO(shawn): MPI abort here and other failure places.
-        parser.error("Output file %r already exists" % options.outfilename)
-      reply = input("File '%s' exists, overwrite it? " % options.outfilename)
-      if reply.lower() not in ("y", "yes"):
-        parser.error("Choose different outfilename")
-    outfile = open(options.outfilename, "w")
-  else:
-    outfile = sys.stdout
-
-  io = IO.IO(None, outfile, options.log_number)
+    pout = sys.stdout
 
   ## Print command line
   if pout:
@@ -383,49 +365,35 @@ def main(args):
       pout.write(" --randomize --seed=%d" % options.seed)
 
     pout.write(" --outfile=%s" % options.outfilename)
-    if options.log_number:
-      pout.write(" --log_number=%d" % options.log_number)
     pout.write(" --checkpoint=%s --save-freq=%d" % (options.checkpoint, options.save_freq))
     pout.write("\n")
 
   # Set up work queue and populate with blank machine.
-  if num_proc == 1:
-    if options.breadth_first:
-      stack = Work_Queue.Basic_FIFO_Work_Queue()
-    else:
-      stack = Work_Queue.Basic_LIFO_Work_Queue()
-    initialize_stack(options, stack)
+  if options.breadth_first:
+    stack = Work_Queue.Basic_FIFO_Work_Queue()
   else:
-    if options.num_enum:
-      parser.error("--num-enum cannot be used in parallel runs.")
-    if MPI_Work_Queue.rank == 0:
-      master = MPI_Work_Queue.Master(pout=pout)
-      initialize_stack(options, master)
+    stack = Work_Queue.Basic_LIFO_Work_Queue()
+  initialize_stack(options, stack)
 
-      if master.run_master():
-        end_time = time.time()
-        if pout:
-          pout.write("\nTotal time %.2f\n" % (end_time - start_time,))
-          pout.close()
-        else:
-          print("\nTotal time %.2f\n" % (end_time - start_time,))
-        sys.exit(0)
-      else:
-        end_time = time.time()
-        if pout:
-          pout.write("\nTotal time %.2f\n" % (end_time - start_time,))
-          pout.close()
-        else:
-          print("\nTotal time %.2f\n" % (end_time - start_time,))
-        sys.exit(1)
-    else:
-      stack = MPI_Work_Queue.MPI_Worker_Work_Queue(master_proc_num=0, pout=pout)
+  # Set up output
+  if os.path.exists(options.outfilename) and not options.force:
+    parser.error("Output file already exits. Delete or use --force")
+
+  if options.outformat == "protobuf":
+    outfile = open(options.outfilename, "wb")
+    writer = IO_proto.Writer(outfile)
+
+  elif options.outformat == "text":
+    outfile = open(options.outfilename, "w")
+    writer = IO.IO(None, outfile)
 
   ## Enumerate machines
-  enumerator = Enumerator(options, stack, io, pout)
+  enumerator = Enumerator(options, stack, writer, pout)
   enumerator.continue_enum()
 
   outfile.close()
+  os.remove(enumerator.checkpoint_filename)
+  os.remove(enumerator.backup_checkpoint_filename)
 
 if __name__ == "__main__":
   main(sys.argv[1:])

@@ -17,6 +17,7 @@ class IO_Error(Exception): pass
 
 
 def pack_trans(symbol, dir, state, is_newrow) -> int:
+  # TODO(shawn): Add out-of-bounds checking.
   if dir not in [0, 1]:
     dir = 0
   byte_int =  (symbol + 1) | ((state + 1) << 3) | (dir << 6) | (is_newrow << 7)
@@ -138,6 +139,7 @@ def load_TTable(filename, record_num):
 
 if __name__ == "__main__":
   import argparse
+  import Output_Machine
 
   parser = argparse.ArgumentParser()
   parser.add_argument("infile")
@@ -146,3 +148,8 @@ if __name__ == "__main__":
 
   tm_record = load_record(args.infile, args.record_num)
   print(tm_record)
+  print("ttable:", Output_Machine.display_ttable(
+    unpack_ttable(tm_record.tm.ttable_packed)))
+  print("Serialized sizes:", tm_record.ByteSize(),
+        tm_record.tm.ByteSize(), tm_record.status.ByteSize(),
+        tm_record.filter.ByteSize())
