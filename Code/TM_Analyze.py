@@ -17,6 +17,8 @@ class Stat:
     self.count = 0
     self.total = 0
     self.max_value = 0
+
+    # Histogram of the order of magnitudes.
     # self.log_hist[n] == # values in range [10^n, 10^(n+1))
     self.log_hist = collections.Counter()
 
@@ -46,9 +48,13 @@ class TMStats:
     self.halt_score = Stat()
     self.inf_reason = collections.Counter()
 
+    self.filters_run = collections.Counter()
+
     self.sim_num_loops = Stat()
     self.sim_num_steps = Stat()
+    self.lr_start_step = Stat()
     self.lr_period = Stat()
+    self.lr_abs_offset = Stat()
 
     self.timings = collections.defaultdict(Stat)
     self.sizes = collections.defaultdict(Stat)
@@ -71,12 +77,20 @@ class TMStats:
       self.num_inf += 1
       self.inf_reason[tm_record.status.halt_status.inf_reason] += 1
 
+    # Which filters were run
+    for descr in tm_record.filter.DESCRIPTOR.fields:
+      filter = descr.name
+      if tm_record.filter.HasField(filter):
+        self.filters_run[filter] += 1
+
     # Simulator stats
     self.sim_num_loops.add(tm_record.filter.simulator.result.num_loops)
     sim_num_steps = Halting_Lib.get_big_int(tm_record.filter.simulator.result.num_steps)
     self.sim_num_steps.add(sim_num_steps)
 
+    self.lr_start_step.add(tm_record.filter.lin_recur.result.start_step)
     self.lr_period.add(tm_record.filter.lin_recur.result.period)
+    self.lr_abs_offset.add(abs(tm_record.filter.lin_recur.result.offset))
 
     # Timing
     self.timings["total"].add(tm_record.elapsed_time_us)
@@ -109,16 +123,32 @@ class TMStats:
     print(f"Infinite: {self.num_inf:_} ({self.num_inf / self.count:.3%})")
     for (reason, count) in sorted(self.inf_reason.items(), key=lambda x: x[1], reverse=True):
       print(f"  - {io_pb2.InfReason.Name(reason):20s} : "
-            f"{count:15_} ({count / self.num_inf:7.2%})")
+            f"{count:15_}  ({count / self.num_inf:7.2%})")
+    print()
+
+    print("Filters Run:")
+    for (filter, num_run) in self.filters_run.items():
+      print(f"  - {filter:20s} : {num_run:15_d}  ({num_run / self.count:7.2%})")
+    print()
+
+    print("Lin Recur:")
+    print(f"  - start_step  : Mean {self.lr_start_step.mean():_.0f}  "
+          f"Max {self.lr_start_step.max_value:_}  "
+          f"(Set in {self.lr_start_step.count / self.count:4.0%})")
+    print(f"  - period      : Mean {self.lr_period.mean():_.0f}  "
+          f"Max {self.lr_period.max_value:_}  "
+          f"(Set in {self.lr_period.count / self.count:4.0%})")
+    print(f"  - abs(offset) : Mean {self.lr_abs_offset.mean():_.0f}  "
+          f"Max {self.lr_abs_offset.max_value:_}  "
+          f"(Set in {self.lr_abs_offset.count / self.count:4.0%})")
     print()
 
     print("Simulator:")
     print(f"  - num_loops : Mean {self.sim_num_loops.mean():9_.0f}  Max {self.sim_num_loops.max_value:9_d}  (Set in {self.sim_num_loops.count / self.count:4.0%})")
     self.print_hist(self.sim_num_loops.log_hist)
+    print()
     print(f"  - num_steps : Mean {self.sim_num_steps.mean():_.3e}  Max {self.sim_num_steps.max_value:_.3e}  (Set in {self.sim_num_steps.count / self.count:4.0%})")
     self.print_hist(self.sim_num_steps.log_hist)
-    print("Lin Recur:")
-    print(f"  - period : Mean {self.lr_period.mean():_.0f}  Max {self.lr_period.max_value:_}  (Set in {self.lr_period.count / self.count:4.0%})")
     print()
 
     print("Timings:")

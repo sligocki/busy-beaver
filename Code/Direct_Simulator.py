@@ -6,7 +6,7 @@ import Common
 
 
 class DirectTape:
-  def __init__(self, init_symbol, tape_increment=1000):
+  def __init__(self, init_symbol, tape_increment=10):
     self.init_symbol = init_symbol
     self.tape_increment = tape_increment
 
@@ -17,6 +17,8 @@ class DirectTape:
     # Exposed position relative to start position.
     # - is Left, + is Right.
     self.position = 0
+    self.pos_min = 0
+    self.pos_max = 0
 
   def read(self, pos=None):
     if pos == None:
@@ -35,12 +37,14 @@ class DirectTape:
   def move(self, dir):
     if dir:  # Right
       self.position += 1
+      self.pos_max = max(self.pos_max, self.position)
       self.index += 1
       # Expand tape if necessary
       if self.index >= len(self.tape):
         self.tape += [self.init_symbol] * self.tape_increment
     else:  # Left
       self.position -= 1
+      self.pos_min = min(self.pos_min, self.position)
       self.index -= 1
       # Expand tape if necessary
       if self.index < 0:
@@ -52,12 +56,12 @@ class DirectTape:
     new_tape.tape = self.tape[:]  # Copy tape
     new_tape.index = self.index
     new_tape.position = self.position
+    new_tape.pos_min = self.pos_min
+    new_tape.pos_max = self.pos_max
     return new_tape
 
   def in_range(self, pos):
-    index_pos_diff = self.index - self.position
-    index = pos + index_pos_diff
-    return (0 <= index < len(self.tape))
+    return (self.pos_min <= pos <= self.pos_max)
 
   def count_nonzero(self):
     return sum(1 for symb in self.tape if symb != self.init_symbol)

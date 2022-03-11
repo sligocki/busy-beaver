@@ -5,7 +5,7 @@ Manages writing and reading TMs and simulation/filter results based upon
 protobuffers defined in io.proto.
 
 Protobuffers are written using custom length-delimed sequential format. See ex:
-  https://seb-nyberg.medium.com/length-delimited-protobuf-streams-a39ebc4a4565)
+  https://seb-nyberg.medium.com/length-delimited-protobuf-streams-a39ebc4a4565
 """
 
 import io
