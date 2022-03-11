@@ -38,7 +38,9 @@ else:
         score, num_steps = io_record.category_reason
         Halting_Lib.set_halting(tm_record.status,
                                 halt_steps = int(num_steps),
-                                halt_score = int(score))
+                                halt_score = int(score),
+                                from_state = None,
+                                from_symbol = None)
 
       elif io_record.category == Exit_Condition.INFINITE:
         inf_reason, qhalt_state, qhalt_steps = io_record.category_reason

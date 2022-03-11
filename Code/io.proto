@@ -53,11 +53,18 @@ message HaltStatus {
   // Does this machine halt? (Only meaningful if is_decided = True)
   bool is_halting = 2;
 
+  // Only meaningful if is_halting = True.
   BigInt halt_steps = 3;
   BigInt halt_score = 4;
 
-  // Only meaningful if is_halting = True.
-  InfReason reason = 5;
+  // Which transition led to halt (important for enumerating in TNF).
+  uint64 from_state = 6;
+  uint64 from_symbol = 7;
+
+  // Only meaningful if is_halting = False.
+  InfReason inf_reason = 5;
+
+  // next id: 8
 }
 
 message QuasihaltStatus {
@@ -164,12 +171,6 @@ message UnknownInfo {
   }
 }
 
-message UnfinedCellInfo {
-  bool reached_undefined_cell = 1;
-  uint64 state = 2;
-  uint64 symbol = 3;
-}
-
 message SimulatorResult {
   // Results
   oneof exit_condition {
@@ -180,12 +181,6 @@ message SimulatorResult {
     UnknownInfo unknown_info = 3;
   }
 
-  // Machine reached undefined transition and thus we must enumerate all
-  // possible transitions that could be there (ex: during TNF enumeration).
-  // Note: We will also include HaltInfo for this machine (what would have
-  // happened if this transition had been defined as a halting one).
-  UnfinedCellInfo undefined_cell_info = 4;
-
   // Stats
   uint64 elapsed_time_us = 5;
 
@@ -195,6 +190,8 @@ message SimulatorResult {
 
   uint64 num_rules_proven = 8;
   uint64 num_proofs_failed = 9;
+
+  // next id: 4
 }
 
 message SimulatorInfo {
@@ -249,6 +246,9 @@ message BlockFinderInfo {
 message FilterInfo {
   bool tested = 1;
   bool success = 2;
+
+  // Stats
+  uint64 elapsed_time_us = 3;
 }
 
 
@@ -328,4 +328,9 @@ message TMRecord {
 
   // Detailed results and stats for all filters run.
   FilterResults filter = 4;
+
+  // Total time spent on this TM (across all filters).
+  // TODO: For now it will be reset each time we run a filter, change this to
+  // add each time.
+  uint64 elapsed_time_us = 5;
 }

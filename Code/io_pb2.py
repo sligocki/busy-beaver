@@ -15,7 +15,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x08io.proto\x12\x0b\x62usy_beaver\"1\n\x06\x42igInt\x12\r\n\x03int\x18\x01 \x01(\x04H\x00\x12\r\n\x03str\x18\x02 \x01(\tH\x00\x42\t\n\x07\x62ig_int\"&\n\rTuringMachine\x12\x15\n\rttable_packed\x18\x01 \x01(\x0c\"\xae\x01\n\nHaltStatus\x12\x12\n\nis_decided\x18\x01 \x01(\x08\x12\x12\n\nis_halting\x18\x02 \x01(\x08\x12\'\n\nhalt_steps\x18\x03 \x01(\x0b\x32\x13.busy_beaver.BigInt\x12\'\n\nhalt_score\x18\x04 \x01(\x0b\x32\x13.busy_beaver.BigInt\x12&\n\x06reason\x18\x05 \x01(\x0e\x32\x16.busy_beaver.InfReason\"\x85\x01\n\x0fQuasihaltStatus\x12\x12\n\nis_decided\x18\x01 \x01(\x08\x12\x17\n\x0fis_quasihalting\x18\x02 \x01(\x08\x12,\n\x0fquasihalt_steps\x18\x03 \x01(\x0b\x32\x13.busy_beaver.BigInt\x12\x17\n\x0fquasihalt_state\x18\x04 \x01(\x04\"p\n\x08\x42\x42Status\x12,\n\x0bhalt_status\x18\x01 \x01(\x0b\x32\x17.busy_beaver.HaltStatus\x12\x36\n\x10quasihalt_status\x18\x02 \x01(\x0b\x32\x1c.busy_beaver.QuasihaltStatus\"\xdc\x01\n\x0fSimulatorParams\x12\x11\n\tmax_loops\x18\x01 \x01(\x04\x12\x14\n\x0cmax_time_sec\x18\x02 \x01(\x02\x12\x17\n\x0fmax_tape_blocks\x18\x03 \x01(\x04\x12\x12\n\nuse_prover\x18\x04 \x01(\x08\x12 \n\x18only_log_configs_at_edge\x18\x05 \x01(\x08\x12\x19\n\x11use_limited_rules\x18\x06 \x01(\x08\x12\x1b\n\x13use_recursive_rules\x18\x07 \x01(\x08\x12\x19\n\x11use_collatz_rules\x18\x08 \x01(\x08\"\x1e\n\x08HaltInfo\x12\x12\n\nis_halting\x18\x01 \x01(\x08\"[\n\x12InfMacroRepeatInfo\x12\x14\n\x0cmacro_symbol\x18\x01 \x01(\t\x12\x13\n\x0bmacro_state\x18\x02 \x01(\t\x12\x1a\n\x12macro_dir_is_right\x18\x03 \x01(\x08\"=\n\x10InfChainMoveInfo\x12\x13\n\x0bmacro_state\x18\x01 \x01(\t\x12\x14\n\x0c\x64ir_is_right\x18\x02 \x01(\x08\"\"\n\x12InfProofSystemInfo\x12\x0c\n\x04rule\x18\x01 \x01(\t\"\xbf\x01\n\x0cInfiniteInfo\x12\x37\n\x0cmacro_repeat\x18\x01 \x01(\x0b\x32\x1f.busy_beaver.InfMacroRepeatInfoH\x00\x12\x33\n\nchain_move\x18\x02 \x01(\x0b\x32\x1d.busy_beaver.InfChainMoveInfoH\x00\x12\x37\n\x0cproof_system\x18\x03 \x01(\x0b\x32\x1f.busy_beaver.InfProofSystemInfoH\x00\x42\x08\n\x06reason\"\"\n\rOverLoopsInfo\x12\x11\n\tnum_loops\x18\x01 \x01(\x04\",\n\x0cOverTapeInfo\x12\x1c\n\x14\x63ompressed_tape_size\x18\x01 \x01(\x04\"(\n\x0cOverTimeInfo\x12\x18\n\x10\x65lapsed_time_sec\x18\x01 \x01(\x02\"]\n\x14OverStepsInMacroInfo\x12\x14\n\x0cmacro_symbol\x18\x01 \x01(\t\x12\x13\n\x0bmacro_state\x18\x02 \x01(\t\x12\x1a\n\x12macro_dir_is_right\x18\x03 \x01(\x08\"\xeb\x01\n\x0bUnknownInfo\x12\x30\n\nover_loops\x18\x01 \x01(\x0b\x32\x1a.busy_beaver.OverLoopsInfoH\x00\x12.\n\tover_tape\x18\x02 \x01(\x0b\x32\x19.busy_beaver.OverTapeInfoH\x00\x12.\n\tover_time\x18\x03 \x01(\x0b\x32\x19.busy_beaver.OverTimeInfoH\x00\x12@\n\x13over_steps_in_macro\x18\x04 \x01(\x0b\x32!.busy_beaver.OverStepsInMacroInfoH\x00\x42\x08\n\x06reason\"P\n\x0fUnfinedCellInfo\x12\x1e\n\x16reached_undefined_cell\x18\x01 \x01(\x08\x12\r\n\x05state\x18\x02 \x01(\x04\x12\x0e\n\x06symbol\x18\x03 \x01(\x04\"\xf9\x02\n\x0fSimulatorResult\x12*\n\thalt_info\x18\x01 \x01(\x0b\x32\x15.busy_beaver.HaltInfoH\x00\x12\x32\n\rinfinite_info\x18\x02 \x01(\x0b\x32\x19.busy_beaver.InfiniteInfoH\x00\x12\x30\n\x0cunknown_info\x18\x03 \x01(\x0b\x32\x18.busy_beaver.UnknownInfoH\x00\x12\x39\n\x13undefined_cell_info\x18\x04 \x01(\x0b\x32\x1c.busy_beaver.UnfinedCellInfo\x12\x17\n\x0f\x65lapsed_time_us\x18\x05 \x01(\x04\x12\x11\n\tnum_loops\x18\x06 \x01(\x04\x12&\n\tnum_steps\x18\x07 \x01(\x0b\x32\x13.busy_beaver.BigInt\x12\x18\n\x10num_rules_proven\x18\x08 \x01(\x04\x12\x19\n\x11num_proofs_failed\x18\t \x01(\x04\x42\x10\n\x0e\x65xit_condition\"o\n\rSimulatorInfo\x12\x30\n\nparameters\x18\x01 \x01(\x0b\x32\x1c.busy_beaver.SimulatorParams\x12,\n\x06result\x18\x02 \x01(\x0b\x32\x1c.busy_beaver.SimulatorResult\"a\n\x11\x42lockFinderParams\x12 \n\x18\x63ompression_search_loops\x18\x01 \x01(\x04\x12\x16\n\x0emult_sim_loops\x18\x02 \x01(\x04\x12\x12\n\nextra_mult\x18\x03 \x01(\x04\"\xad\x02\n\x11\x42lockFinderResult\x12\x17\n\x0f\x62\x65st_block_size\x18\x01 \x01(\x04\x12\x17\n\x0f\x65lapsed_time_us\x18\x02 \x01(\x04\x12\x1d\n\x15least_compressed_loop\x18\x03 \x01(\x04\x12(\n least_compressed_tape_size_chain\x18\x04 \x01(\x04\x12&\n\x1eleast_compressed_tape_size_raw\x18\x05 \x01(\x04\x12#\n\x1b\x62\x65st_compression_block_size\x18\x06 \x01(\x04\x12\"\n\x1a\x62\x65st_compression_tape_size\x18\x07 \x01(\x04\x12\x11\n\tbest_mult\x18\x08 \x01(\x04\x12\x19\n\x11\x62\x65st_chain_factor\x18\t \x01(\x02\"u\n\x0f\x42lockFinderInfo\x12\x32\n\nparameters\x18\x01 \x01(\x0b\x32\x1e.busy_beaver.BlockFinderParams\x12.\n\x06result\x18\x02 \x01(\x0b\x32\x1e.busy_beaver.BlockFinderResult\"-\n\nFilterInfo\x12\x0e\n\x06tested\x18\x01 \x01(\x08\x12\x0f\n\x07success\x18\x02 \x01(\x08\"F\n\x14LinRecurFilterParams\x12\x11\n\tmax_steps\x18\x01 \x01(\x04\x12\x1b\n\x13\x66ind_min_start_step\x18\x02 \x01(\x08\"t\n\x14LinRecurFilterResult\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x12\n\nstart_step\x18\x02 \x01(\x04\x12\x0e\n\x06period\x18\x03 \x01(\x04\x12\x0e\n\x06offset\x18\x04 \x01(\x12\x12\x17\n\x0f\x65lapsed_time_us\x18\x05 \x01(\x04\"~\n\x12LinRecurFilterInfo\x12\x35\n\nparameters\x18\x01 \x01(\x0b\x32!.busy_beaver.LinRecurFilterParams\x12\x31\n\x06result\x18\x02 \x01(\x0b\x32!.busy_beaver.LinRecurFilterResult\"\x8f\x01\n\rCTLFilterInfo\x12\x11\n\tinit_step\x18\x01 \x01(\x04\x12\'\n\x06\x63tl_as\x18\x02 \x01(\x0b\x32\x17.busy_beaver.FilterInfo\x12)\n\x08\x63tl_as_b\x18\x03 \x01(\x0b\x32\x17.busy_beaver.FilterInfo\x12\x17\n\x0f\x65lapsed_time_us\x18\x04 \x01(\x04\"\x82\x02\n\rFilterResults\x12-\n\tsimulator\x18\x01 \x01(\x0b\x32\x1a.busy_beaver.SimulatorInfo\x12\x32\n\x0c\x62lock_finder\x18\x02 \x01(\x0b\x32\x1c.busy_beaver.BlockFinderInfo\x12\x31\n\x10reverse_engineer\x18\x03 \x01(\x0b\x32\x17.busy_beaver.FilterInfo\x12\x32\n\tlin_recur\x18\x04 \x01(\x0b\x32\x1f.busy_beaver.LinRecurFilterInfo\x12\'\n\x03\x63tl\x18\x05 \x01(\x0b\x32\x1a.busy_beaver.CTLFilterInfo\"\x9b\x01\n\x08TMRecord\x12\x14\n\x0cspec_version\x18\x01 \x01(\x04\x12&\n\x02tm\x18\x02 \x01(\x0b\x32\x1a.busy_beaver.TuringMachine\x12%\n\x06status\x18\x03 \x01(\x0b\x32\x15.busy_beaver.BBStatus\x12*\n\x06\x66ilter\x18\x04 \x01(\x0b\x32\x1a.busy_beaver.FilterResults*\x98\x01\n\tInfReason\x12\x13\n\x0fINF_UNSPECIFIED\x10\x00\x12\x12\n\x0eINF_MACRO_STEP\x10\x01\x12\x12\n\x0eINF_CHAIN_STEP\x10\x02\x12\x14\n\x10INF_PROOF_SYSTEM\x10\x03\x12\x18\n\x14INF_REVERSE_ENGINEER\x10\x04\x12\x11\n\rINF_LIN_RECUR\x10\x05\x12\x0b\n\x07INF_CTL\x10\x06\x62\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x08io.proto\x12\x0b\x62usy_beaver\"1\n\x06\x42igInt\x12\r\n\x03int\x18\x01 \x01(\x04H\x00\x12\r\n\x03str\x18\x02 \x01(\tH\x00\x42\t\n\x07\x62ig_int\"&\n\rTuringMachine\x12\x15\n\rttable_packed\x18\x01 \x01(\x0c\"\xdb\x01\n\nHaltStatus\x12\x12\n\nis_decided\x18\x01 \x01(\x08\x12\x12\n\nis_halting\x18\x02 \x01(\x08\x12\'\n\nhalt_steps\x18\x03 \x01(\x0b\x32\x13.busy_beaver.BigInt\x12\'\n\nhalt_score\x18\x04 \x01(\x0b\x32\x13.busy_beaver.BigInt\x12\x12\n\nfrom_state\x18\x06 \x01(\x04\x12\x13\n\x0b\x66rom_symbol\x18\x07 \x01(\x04\x12*\n\ninf_reason\x18\x05 \x01(\x0e\x32\x16.busy_beaver.InfReason\"\x85\x01\n\x0fQuasihaltStatus\x12\x12\n\nis_decided\x18\x01 \x01(\x08\x12\x17\n\x0fis_quasihalting\x18\x02 \x01(\x08\x12,\n\x0fquasihalt_steps\x18\x03 \x01(\x0b\x32\x13.busy_beaver.BigInt\x12\x17\n\x0fquasihalt_state\x18\x04 \x01(\x04\"p\n\x08\x42\x42Status\x12,\n\x0bhalt_status\x18\x01 \x01(\x0b\x32\x17.busy_beaver.HaltStatus\x12\x36\n\x10quasihalt_status\x18\x02 \x01(\x0b\x32\x1c.busy_beaver.QuasihaltStatus\"\xdc\x01\n\x0fSimulatorParams\x12\x11\n\tmax_loops\x18\x01 \x01(\x04\x12\x14\n\x0cmax_time_sec\x18\x02 \x01(\x02\x12\x17\n\x0fmax_tape_blocks\x18\x03 \x01(\x04\x12\x12\n\nuse_prover\x18\x04 \x01(\x08\x12 \n\x18only_log_configs_at_edge\x18\x05 \x01(\x08\x12\x19\n\x11use_limited_rules\x18\x06 \x01(\x08\x12\x1b\n\x13use_recursive_rules\x18\x07 \x01(\x08\x12\x19\n\x11use_collatz_rules\x18\x08 \x01(\x08\"\x1e\n\x08HaltInfo\x12\x12\n\nis_halting\x18\x01 \x01(\x08\"[\n\x12InfMacroRepeatInfo\x12\x14\n\x0cmacro_symbol\x18\x01 \x01(\t\x12\x13\n\x0bmacro_state\x18\x02 \x01(\t\x12\x1a\n\x12macro_dir_is_right\x18\x03 \x01(\x08\"=\n\x10InfChainMoveInfo\x12\x13\n\x0bmacro_state\x18\x01 \x01(\t\x12\x14\n\x0c\x64ir_is_right\x18\x02 \x01(\x08\"\"\n\x12InfProofSystemInfo\x12\x0c\n\x04rule\x18\x01 \x01(\t\"\xbf\x01\n\x0cInfiniteInfo\x12\x37\n\x0cmacro_repeat\x18\x01 \x01(\x0b\x32\x1f.busy_beaver.InfMacroRepeatInfoH\x00\x12\x33\n\nchain_move\x18\x02 \x01(\x0b\x32\x1d.busy_beaver.InfChainMoveInfoH\x00\x12\x37\n\x0cproof_system\x18\x03 \x01(\x0b\x32\x1f.busy_beaver.InfProofSystemInfoH\x00\x42\x08\n\x06reason\"\"\n\rOverLoopsInfo\x12\x11\n\tnum_loops\x18\x01 \x01(\x04\",\n\x0cOverTapeInfo\x12\x1c\n\x14\x63ompressed_tape_size\x18\x01 \x01(\x04\"(\n\x0cOverTimeInfo\x12\x18\n\x10\x65lapsed_time_sec\x18\x01 \x01(\x02\"]\n\x14OverStepsInMacroInfo\x12\x14\n\x0cmacro_symbol\x18\x01 \x01(\t\x12\x13\n\x0bmacro_state\x18\x02 \x01(\t\x12\x1a\n\x12macro_dir_is_right\x18\x03 \x01(\x08\"\xeb\x01\n\x0bUnknownInfo\x12\x30\n\nover_loops\x18\x01 \x01(\x0b\x32\x1a.busy_beaver.OverLoopsInfoH\x00\x12.\n\tover_tape\x18\x02 \x01(\x0b\x32\x19.busy_beaver.OverTapeInfoH\x00\x12.\n\tover_time\x18\x03 \x01(\x0b\x32\x19.busy_beaver.OverTimeInfoH\x00\x12@\n\x13over_steps_in_macro\x18\x04 \x01(\x0b\x32!.busy_beaver.OverStepsInMacroInfoH\x00\x42\x08\n\x06reason\"\xbe\x02\n\x0fSimulatorResult\x12*\n\thalt_info\x18\x01 \x01(\x0b\x32\x15.busy_beaver.HaltInfoH\x00\x12\x32\n\rinfinite_info\x18\x02 \x01(\x0b\x32\x19.busy_beaver.InfiniteInfoH\x00\x12\x30\n\x0cunknown_info\x18\x03 \x01(\x0b\x32\x18.busy_beaver.UnknownInfoH\x00\x12\x17\n\x0f\x65lapsed_time_us\x18\x05 \x01(\x04\x12\x11\n\tnum_loops\x18\x06 \x01(\x04\x12&\n\tnum_steps\x18\x07 \x01(\x0b\x32\x13.busy_beaver.BigInt\x12\x18\n\x10num_rules_proven\x18\x08 \x01(\x04\x12\x19\n\x11num_proofs_failed\x18\t \x01(\x04\x42\x10\n\x0e\x65xit_condition\"o\n\rSimulatorInfo\x12\x30\n\nparameters\x18\x01 \x01(\x0b\x32\x1c.busy_beaver.SimulatorParams\x12,\n\x06result\x18\x02 \x01(\x0b\x32\x1c.busy_beaver.SimulatorResult\"a\n\x11\x42lockFinderParams\x12 \n\x18\x63ompression_search_loops\x18\x01 \x01(\x04\x12\x16\n\x0emult_sim_loops\x18\x02 \x01(\x04\x12\x12\n\nextra_mult\x18\x03 \x01(\x04\"\xad\x02\n\x11\x42lockFinderResult\x12\x17\n\x0f\x62\x65st_block_size\x18\x01 \x01(\x04\x12\x17\n\x0f\x65lapsed_time_us\x18\x02 \x01(\x04\x12\x1d\n\x15least_compressed_loop\x18\x03 \x01(\x04\x12(\n least_compressed_tape_size_chain\x18\x04 \x01(\x04\x12&\n\x1eleast_compressed_tape_size_raw\x18\x05 \x01(\x04\x12#\n\x1b\x62\x65st_compression_block_size\x18\x06 \x01(\x04\x12\"\n\x1a\x62\x65st_compression_tape_size\x18\x07 \x01(\x04\x12\x11\n\tbest_mult\x18\x08 \x01(\x04\x12\x19\n\x11\x62\x65st_chain_factor\x18\t \x01(\x02\"u\n\x0f\x42lockFinderInfo\x12\x32\n\nparameters\x18\x01 \x01(\x0b\x32\x1e.busy_beaver.BlockFinderParams\x12.\n\x06result\x18\x02 \x01(\x0b\x32\x1e.busy_beaver.BlockFinderResult\"F\n\nFilterInfo\x12\x0e\n\x06tested\x18\x01 \x01(\x08\x12\x0f\n\x07success\x18\x02 \x01(\x08\x12\x17\n\x0f\x65lapsed_time_us\x18\x03 \x01(\x04\"F\n\x14LinRecurFilterParams\x12\x11\n\tmax_steps\x18\x01 \x01(\x04\x12\x1b\n\x13\x66ind_min_start_step\x18\x02 \x01(\x08\"t\n\x14LinRecurFilterResult\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x12\n\nstart_step\x18\x02 \x01(\x04\x12\x0e\n\x06period\x18\x03 \x01(\x04\x12\x0e\n\x06offset\x18\x04 \x01(\x12\x12\x17\n\x0f\x65lapsed_time_us\x18\x05 \x01(\x04\"~\n\x12LinRecurFilterInfo\x12\x35\n\nparameters\x18\x01 \x01(\x0b\x32!.busy_beaver.LinRecurFilterParams\x12\x31\n\x06result\x18\x02 \x01(\x0b\x32!.busy_beaver.LinRecurFilterResult\"\x8f\x01\n\rCTLFilterInfo\x12\x11\n\tinit_step\x18\x01 \x01(\x04\x12\'\n\x06\x63tl_as\x18\x02 \x01(\x0b\x32\x17.busy_beaver.FilterInfo\x12)\n\x08\x63tl_as_b\x18\x03 \x01(\x0b\x32\x17.busy_beaver.FilterInfo\x12\x17\n\x0f\x65lapsed_time_us\x18\x04 \x01(\x04\"\x82\x02\n\rFilterResults\x12-\n\tsimulator\x18\x01 \x01(\x0b\x32\x1a.busy_beaver.SimulatorInfo\x12\x32\n\x0c\x62lock_finder\x18\x02 \x01(\x0b\x32\x1c.busy_beaver.BlockFinderInfo\x12\x31\n\x10reverse_engineer\x18\x03 \x01(\x0b\x32\x17.busy_beaver.FilterInfo\x12\x32\n\tlin_recur\x18\x04 \x01(\x0b\x32\x1f.busy_beaver.LinRecurFilterInfo\x12\'\n\x03\x63tl\x18\x05 \x01(\x0b\x32\x1a.busy_beaver.CTLFilterInfo\"\xb4\x01\n\x08TMRecord\x12\x14\n\x0cspec_version\x18\x01 \x01(\x04\x12&\n\x02tm\x18\x02 \x01(\x0b\x32\x1a.busy_beaver.TuringMachine\x12%\n\x06status\x18\x03 \x01(\x0b\x32\x15.busy_beaver.BBStatus\x12*\n\x06\x66ilter\x18\x04 \x01(\x0b\x32\x1a.busy_beaver.FilterResults\x12\x17\n\x0f\x65lapsed_time_us\x18\x05 \x01(\x04*\x98\x01\n\tInfReason\x12\x13\n\x0fINF_UNSPECIFIED\x10\x00\x12\x12\n\x0eINF_MACRO_STEP\x10\x01\x12\x12\n\x0eINF_CHAIN_STEP\x10\x02\x12\x14\n\x10INF_PROOF_SYSTEM\x10\x03\x12\x18\n\x14INF_REVERSE_ENGINEER\x10\x04\x12\x11\n\rINF_LIN_RECUR\x10\x05\x12\x0b\n\x07INF_CTL\x10\x06\x62\x06proto3')
 
 _INFREASON = DESCRIPTOR.enum_types_by_name['InfReason']
 InfReason = enum_type_wrapper.EnumTypeWrapper(_INFREASON)
@@ -44,7 +44,6 @@ _OVERTAPEINFO = DESCRIPTOR.message_types_by_name['OverTapeInfo']
 _OVERTIMEINFO = DESCRIPTOR.message_types_by_name['OverTimeInfo']
 _OVERSTEPSINMACROINFO = DESCRIPTOR.message_types_by_name['OverStepsInMacroInfo']
 _UNKNOWNINFO = DESCRIPTOR.message_types_by_name['UnknownInfo']
-_UNFINEDCELLINFO = DESCRIPTOR.message_types_by_name['UnfinedCellInfo']
 _SIMULATORRESULT = DESCRIPTOR.message_types_by_name['SimulatorResult']
 _SIMULATORINFO = DESCRIPTOR.message_types_by_name['SimulatorInfo']
 _BLOCKFINDERPARAMS = DESCRIPTOR.message_types_by_name['BlockFinderParams']
@@ -169,13 +168,6 @@ UnknownInfo = _reflection.GeneratedProtocolMessageType('UnknownInfo', (_message.
   })
 _sym_db.RegisterMessage(UnknownInfo)
 
-UnfinedCellInfo = _reflection.GeneratedProtocolMessageType('UnfinedCellInfo', (_message.Message,), {
-  'DESCRIPTOR' : _UNFINEDCELLINFO,
-  '__module__' : 'io_pb2'
-  # @@protoc_insertion_point(class_scope:busy_beaver.UnfinedCellInfo)
-  })
-_sym_db.RegisterMessage(UnfinedCellInfo)
-
 SimulatorResult = _reflection.GeneratedProtocolMessageType('SimulatorResult', (_message.Message,), {
   'DESCRIPTOR' : _SIMULATORRESULT,
   '__module__' : 'io_pb2'
@@ -263,64 +255,62 @@ _sym_db.RegisterMessage(TMRecord)
 if _descriptor._USE_C_DESCRIPTORS == False:
 
   DESCRIPTOR._options = None
-  _INFREASON._serialized_start=3669
-  _INFREASON._serialized_end=3821
+  _INFREASON._serialized_start=3623
+  _INFREASON._serialized_end=3775
   _BIGINT._serialized_start=25
   _BIGINT._serialized_end=74
   _TURINGMACHINE._serialized_start=76
   _TURINGMACHINE._serialized_end=114
   _HALTSTATUS._serialized_start=117
-  _HALTSTATUS._serialized_end=291
-  _QUASIHALTSTATUS._serialized_start=294
-  _QUASIHALTSTATUS._serialized_end=427
-  _BBSTATUS._serialized_start=429
-  _BBSTATUS._serialized_end=541
-  _SIMULATORPARAMS._serialized_start=544
-  _SIMULATORPARAMS._serialized_end=764
-  _HALTINFO._serialized_start=766
-  _HALTINFO._serialized_end=796
-  _INFMACROREPEATINFO._serialized_start=798
-  _INFMACROREPEATINFO._serialized_end=889
-  _INFCHAINMOVEINFO._serialized_start=891
-  _INFCHAINMOVEINFO._serialized_end=952
-  _INFPROOFSYSTEMINFO._serialized_start=954
-  _INFPROOFSYSTEMINFO._serialized_end=988
-  _INFINITEINFO._serialized_start=991
-  _INFINITEINFO._serialized_end=1182
-  _OVERLOOPSINFO._serialized_start=1184
-  _OVERLOOPSINFO._serialized_end=1218
-  _OVERTAPEINFO._serialized_start=1220
-  _OVERTAPEINFO._serialized_end=1264
-  _OVERTIMEINFO._serialized_start=1266
-  _OVERTIMEINFO._serialized_end=1306
-  _OVERSTEPSINMACROINFO._serialized_start=1308
-  _OVERSTEPSINMACROINFO._serialized_end=1401
-  _UNKNOWNINFO._serialized_start=1404
-  _UNKNOWNINFO._serialized_end=1639
-  _UNFINEDCELLINFO._serialized_start=1641
-  _UNFINEDCELLINFO._serialized_end=1721
-  _SIMULATORRESULT._serialized_start=1724
-  _SIMULATORRESULT._serialized_end=2101
-  _SIMULATORINFO._serialized_start=2103
-  _SIMULATORINFO._serialized_end=2214
-  _BLOCKFINDERPARAMS._serialized_start=2216
-  _BLOCKFINDERPARAMS._serialized_end=2313
-  _BLOCKFINDERRESULT._serialized_start=2316
-  _BLOCKFINDERRESULT._serialized_end=2617
-  _BLOCKFINDERINFO._serialized_start=2619
-  _BLOCKFINDERINFO._serialized_end=2736
-  _FILTERINFO._serialized_start=2738
-  _FILTERINFO._serialized_end=2783
-  _LINRECURFILTERPARAMS._serialized_start=2785
-  _LINRECURFILTERPARAMS._serialized_end=2855
-  _LINRECURFILTERRESULT._serialized_start=2857
-  _LINRECURFILTERRESULT._serialized_end=2973
-  _LINRECURFILTERINFO._serialized_start=2975
-  _LINRECURFILTERINFO._serialized_end=3101
-  _CTLFILTERINFO._serialized_start=3104
-  _CTLFILTERINFO._serialized_end=3247
-  _FILTERRESULTS._serialized_start=3250
-  _FILTERRESULTS._serialized_end=3508
-  _TMRECORD._serialized_start=3511
-  _TMRECORD._serialized_end=3666
+  _HALTSTATUS._serialized_end=336
+  _QUASIHALTSTATUS._serialized_start=339
+  _QUASIHALTSTATUS._serialized_end=472
+  _BBSTATUS._serialized_start=474
+  _BBSTATUS._serialized_end=586
+  _SIMULATORPARAMS._serialized_start=589
+  _SIMULATORPARAMS._serialized_end=809
+  _HALTINFO._serialized_start=811
+  _HALTINFO._serialized_end=841
+  _INFMACROREPEATINFO._serialized_start=843
+  _INFMACROREPEATINFO._serialized_end=934
+  _INFCHAINMOVEINFO._serialized_start=936
+  _INFCHAINMOVEINFO._serialized_end=997
+  _INFPROOFSYSTEMINFO._serialized_start=999
+  _INFPROOFSYSTEMINFO._serialized_end=1033
+  _INFINITEINFO._serialized_start=1036
+  _INFINITEINFO._serialized_end=1227
+  _OVERLOOPSINFO._serialized_start=1229
+  _OVERLOOPSINFO._serialized_end=1263
+  _OVERTAPEINFO._serialized_start=1265
+  _OVERTAPEINFO._serialized_end=1309
+  _OVERTIMEINFO._serialized_start=1311
+  _OVERTIMEINFO._serialized_end=1351
+  _OVERSTEPSINMACROINFO._serialized_start=1353
+  _OVERSTEPSINMACROINFO._serialized_end=1446
+  _UNKNOWNINFO._serialized_start=1449
+  _UNKNOWNINFO._serialized_end=1684
+  _SIMULATORRESULT._serialized_start=1687
+  _SIMULATORRESULT._serialized_end=2005
+  _SIMULATORINFO._serialized_start=2007
+  _SIMULATORINFO._serialized_end=2118
+  _BLOCKFINDERPARAMS._serialized_start=2120
+  _BLOCKFINDERPARAMS._serialized_end=2217
+  _BLOCKFINDERRESULT._serialized_start=2220
+  _BLOCKFINDERRESULT._serialized_end=2521
+  _BLOCKFINDERINFO._serialized_start=2523
+  _BLOCKFINDERINFO._serialized_end=2640
+  _FILTERINFO._serialized_start=2642
+  _FILTERINFO._serialized_end=2712
+  _LINRECURFILTERPARAMS._serialized_start=2714
+  _LINRECURFILTERPARAMS._serialized_end=2784
+  _LINRECURFILTERRESULT._serialized_start=2786
+  _LINRECURFILTERRESULT._serialized_end=2902
+  _LINRECURFILTERINFO._serialized_start=2904
+  _LINRECURFILTERINFO._serialized_end=3030
+  _CTLFILTERINFO._serialized_start=3033
+  _CTLFILTERINFO._serialized_end=3176
+  _FILTERRESULTS._serialized_start=3179
+  _FILTERRESULTS._serialized_end=3437
+  _TMRECORD._serialized_start=3440
+  _TMRECORD._serialized_end=3620
 # @@protoc_insertion_point(module_scope)

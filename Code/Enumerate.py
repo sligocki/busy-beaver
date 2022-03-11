@@ -228,30 +228,32 @@ class Enumerator(object):
       self.stack.push_jobs(new_tms)
 
   def add_result(self, tm, tm_record : io_pb2.TMRecord):
-    sim_result = tm_record.filter.simulator.result
-    if sim_result.undefined_cell_info.reached_undefined_cell:
-      # Push all the possible non-halting transitions onto the stack.
-      self.add_transitions(tm,
-                           state_in = sim_result.undefined_cell_info.state,
-                           symbol_in = sim_result.undefined_cell_info.symbol)
-      # Modify this TM to halt on this transition so that when we save it as
-      # halting below the ttable reflects that.
-      tm.set_halt(state_in = sim_result.undefined_cell_info.state,
-                  symbol_in = sim_result.undefined_cell_info.symbol)
-      tm_record.tm.ttable_packed = IO.Proto.pack_ttable(tm.get_TTable())
-
-    self.writer.write_record(tm_record)
-
     # Update stats
     self.tm_num += 1
     if not tm_record.status.halt_status.is_decided:
       self.num_unknown += 1
+
     elif tm_record.status.halt_status.is_halting:
       self.num_halt += 1
+      # All halting machines (during enumeration) are actually reaching
+      # undefined cells.
+      # Push all the possible non-halting transitions onto the stack.
+      self.add_transitions(tm,
+                           state_in  = tm_record.status.halt_status.from_state,
+                           symbol_in = tm_record.status.halt_status.from_symbol)
+      # Modify this TM to explicitly halt on this transition so that when we
+      # save it as halting below the ttable reflects that.
+      tm.set_halt(state_in  = tm_record.status.halt_status.from_state,
+                  symbol_in = tm_record.status.halt_status.from_symbol)
+      tm_record.tm.ttable_packed = IO.Proto.pack_ttable(tm.get_TTable())
+
     elif tm_record.status.quasihalt_status.is_quasihalting:
       self.num_quasihalt += 1
+
     else:
       self.num_infinite += 1
+
+    self.writer.write_record(tm_record)
 
 def initialize_stack(options, stack):
   if options.infilename:

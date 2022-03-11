@@ -62,7 +62,11 @@ def lin_detect_not_min(ttable,
         # If a machine halts, it will never Lin Recur.
         result.success = False
         # NOTE: We do not currently evaluate `halt_score`
-        Halting_Lib.set_halting(bb_status, sim.step_num, halt_score = None)
+        Halting_Lib.set_halting(bb_status,
+                                halt_steps = sim.step_num,
+                                halt_score = sim.halt_score,
+                                from_state = sim.halt_from_state,
+                                from_symbol = sim.halt_from_symbol)
         return
 
       most_left_pos = min(most_left_pos, sim.tape.position)

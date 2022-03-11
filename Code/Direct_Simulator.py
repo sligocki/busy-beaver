@@ -59,6 +59,9 @@ class DirectTape:
     index = pos + index_pos_diff
     return (0 <= index < len(self.tape))
 
+  def count_nonzero(self):
+    return sum(1 for symb in self.tape if symb != self.init_symbol)
+
 
 class DirectSimulator:
   def __init__(self, ttable):
@@ -85,6 +88,10 @@ class DirectSimulator:
       self.state = state_out
       if self.state == Common.HALT_STATE:
         self.halted = True
+        self.halt_score = self.tape.count_nonzero()
+        # Record which (state, symbol) -> Halt. Useful while enumerating TMs.
+        self.halt_from_state = state_in
+        self.halt_from_symbol = symbol_in
 
       self.step_num += 1
 

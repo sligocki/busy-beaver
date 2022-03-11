@@ -168,7 +168,7 @@ class ReaderWriter(object):
 
     else:
       io_record.category = Exit_Condition.INFINITE
-      reason_str = inf_reason2str[tm_record.status.halt_status.reason]
+      reason_str = inf_reason2str[tm_record.status.halt_status.inf_reason]
 
       if not tm_record.status.quasihalt_status.is_decided:
         quasihalt_info = ("Quasihalt_Not_Computed", "N/A")

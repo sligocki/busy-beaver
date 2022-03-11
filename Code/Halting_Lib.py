@@ -27,24 +27,30 @@ def get_big_int(field : io_pb2.BigInt) -> Optional[int]:
 
 def set_halting(tm_status  : io_pb2.BBStatus,
                 halt_steps : int,
-                halt_score : Optional[int]):
+                halt_score : int,
+                from_state  : Optional[int],
+                from_symbol : Optional[int]):
   """Specify that we know that this machine halts."""
   tm_status.halt_status.is_decided = True
   tm_status.halt_status.is_halting = True
   set_big_int(tm_status.halt_status.halt_steps, halt_steps)
   if halt_score is not None:
     set_big_int(tm_status.halt_status.halt_score, halt_score)
+  if from_state is not None:
+    tm_status.halt_status.from_state = from_state
+  if from_symbol is not None:
+    tm_status.halt_status.from_symbol = from_symbol
 
   # NOTE: We are treating Halting machines as Not Quasihalting.
   # Technically, Aaronson's definition calls Halting machines Quasihalting also.
   set_not_quasihalting(tm_status)
 
-def set_not_halting(tm_status : io_pb2.BBStatus,
-                    reason    : io_pb2.InfReason):
+def set_not_halting(tm_status  : io_pb2.BBStatus,
+                    inf_reason : io_pb2.InfReason):
   """Specify that we know that this machine does not halt."""
   tm_status.halt_status.is_decided = True
   tm_status.halt_status.is_halting = False
-  tm_status.halt_status.reason = reason
+  tm_status.halt_status.inf_reason = inf_reason
 
 def set_not_quasihalting(tm_status : io_pb2.BBStatus):
   """Specify that we know that this machine does not quasihalt."""

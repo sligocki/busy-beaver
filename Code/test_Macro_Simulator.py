@@ -141,7 +141,7 @@ class SystemTest(unittest.TestCase):
     # Non halting
     self.assertTrue(tm_record.status.halt_status.is_decided)
     self.assertFalse(tm_record.status.halt_status.is_halting)
-    self.assertEqual(tm_record.status.halt_status.reason, io_pb2.INF_CTL)
+    self.assertEqual(tm_record.status.halt_status.inf_reason, io_pb2.INF_CTL)
 
 if __name__ == '__main__':
   unittest.main()

@@ -97,78 +97,83 @@ def run_options(ttable, options,
   """Run the Accelerated Turing Machine Simulator, running a few simple filters
   first and using intelligent blockfinding."""
   ## Test for quickly for infinite machine
-  if options.reverse_engineer:
-    tm_record.filter.reverse_engineer.tested = True
-    if Reverse_Engineer_Filter.test(ttable):
-      tm_record.filter.reverse_engineer.success = True
-      Halting_Lib.set_not_halting(tm_record.status, io_pb2.INF_REVERSE_ENGINEER)
-      # Note: quasihalting result is not computable when using Reverse_Engineer filter.
-      tm_record.status.quasihalt_status.is_decided = False
-      return
-    else:
-      tm_record.filter.reverse_engineer.success = False
-
-  if options.lin_steps:
-    lr_info = tm_record.filter.lin_recur
-    lr_info.parameters.max_steps = options.lin_steps
-    lr_info.parameters.find_min_start_step = options.lin_min
-    Lin_Recur_Detect.filter(ttable, lr_info, tm_record.status)
-    if lr_info.result.success:
-      return
-
-  ## Construct the Macro Turing Machine (Backsymbol-k-Block-Macro-Machine)
-  machine = Turing_Machine.make_machine(ttable)
-
-  # If no explicit block-size given, use heuristics to find one.
-  block_size = options.block_size
-  if not block_size:
-    bf_info = tm_record.filter.block_finder
-    bf_info.parameters.compression_search_loops = options.bf_limit1
-    bf_info.parameters.mult_sim_loops = options.bf_limit2
-    bf_info.parameters.extra_mult = options.bf_extra_mult
-    Block_Finder.block_finder(machine, options,
-                              bf_info.parameters, bf_info.result)
-    block_size = bf_info.result.best_block_size
-
-  # Do not create a 1-Block Macro-Machine (just use base machine)
-  if block_size != 1:
-    machine = Turing_Machine.Block_Macro_Machine(machine, block_size)
-  if options.backsymbol:
-    machine = Turing_Machine.Backsymbol_Macro_Machine(machine)
-
-  if options.ctl:
-    ctl_filter_info = tm_record.filter.ctl
-    with IO.Timer(ctl_filter_info):
-      CTL_config = setup_CTL(machine, options.bf_limit1)
-
-      # Run CTL filters unless machine halted
-      if CTL_config:
-        ctl_filter_info.init_step = options.bf_limit1
-        CTL_config_copy = copy.deepcopy(CTL_config)
-        ctl_filter_info.ctl_as.tested = True
-        if CTL1.CTL(machine, CTL_config_copy):
-          ctl_filter_info.ctl_as.success = True
-          Halting_Lib.set_not_halting(tm_record.status, io_pb2.INF_CTL)
-          # Note: quasihalting result is not computed when using CTL filters.
+  with IO.Timer(tm_record):
+    if options.reverse_engineer:
+      with IO.Timer(tm_record.filter.reverse_engineer):
+        tm_record.filter.reverse_engineer.tested = True
+        if Reverse_Engineer_Filter.test(ttable):
+          tm_record.filter.reverse_engineer.success = True
+          Halting_Lib.set_not_halting(tm_record.status, io_pb2.INF_REVERSE_ENGINEER)
+          # Note: quasihalting result is not computable when using Reverse_Engineer filter.
           tm_record.status.quasihalt_status.is_decided = False
           return
         else:
-          ctl_filter_info.ctl_as.success = False
+          tm_record.filter.reverse_engineer.success = False
 
-        CTL_config_copy = copy.deepcopy(CTL_config)
-        ctl_filter_info.ctl_as_b.tested = True
-        if CTL2.CTL(machine, CTL_config_copy):
-          ctl_filter_info.ctl_as_b.success = True
-          Halting_Lib.set_not_halting(tm_record.status, io_pb2.INF_CTL)
-          # Note: quasihalting result is not computed when using CTL filters.
-          tm_record.status.quasihalt_status.is_decided = False
-          return
-        else:
-          ctl_filter_info.ctl_as_b.success = False
+    if options.lin_steps:
+      lr_info = tm_record.filter.lin_recur
+      lr_info.parameters.max_steps = options.lin_steps
+      lr_info.parameters.find_min_start_step = options.lin_min
+      Lin_Recur_Detect.filter(ttable, lr_info, tm_record.status)
+      if tm_record.status.halt_status.is_decided:
+        # Return if halt status has been decided (either inf or halting).
+        # LR filter is meant to detect halting, but it does run the TM for 100
+        # steps or so, so it will detect many halting machines.
+        return
 
-  # Finally: Do the actual Macro Machine / Chain simulation.
-  sim_info = tm_record.filter.simulator
-  simulate_machine(machine, options, sim_info, tm_record.status)
+    ## Construct the Macro Turing Machine (Backsymbol-k-Block-Macro-Machine)
+    machine = Turing_Machine.make_machine(ttable)
+
+    # If no explicit block-size given, use heuristics to find one.
+    block_size = options.block_size
+    if not block_size:
+      bf_info = tm_record.filter.block_finder
+      bf_info.parameters.compression_search_loops = options.bf_limit1
+      bf_info.parameters.mult_sim_loops = options.bf_limit2
+      bf_info.parameters.extra_mult = options.bf_extra_mult
+      Block_Finder.block_finder(machine, options,
+                                bf_info.parameters, bf_info.result)
+      block_size = bf_info.result.best_block_size
+
+    # Do not create a 1-Block Macro-Machine (just use base machine)
+    if block_size != 1:
+      machine = Turing_Machine.Block_Macro_Machine(machine, block_size)
+    if options.backsymbol:
+      machine = Turing_Machine.Backsymbol_Macro_Machine(machine)
+
+    if options.ctl:
+      ctl_filter_info = tm_record.filter.ctl
+      with IO.Timer(ctl_filter_info):
+        CTL_config = setup_CTL(machine, options.bf_limit1)
+
+        # Run CTL filters unless machine halted
+        if CTL_config:
+          ctl_filter_info.init_step = options.bf_limit1
+          CTL_config_copy = copy.deepcopy(CTL_config)
+          ctl_filter_info.ctl_as.tested = True
+          if CTL1.CTL(machine, CTL_config_copy):
+            ctl_filter_info.ctl_as.success = True
+            Halting_Lib.set_not_halting(tm_record.status, io_pb2.INF_CTL)
+            # Note: quasihalting result is not computed when using CTL filters.
+            tm_record.status.quasihalt_status.is_decided = False
+            return
+          else:
+            ctl_filter_info.ctl_as.success = False
+
+          CTL_config_copy = copy.deepcopy(CTL_config)
+          ctl_filter_info.ctl_as_b.tested = True
+          if CTL2.CTL(machine, CTL_config_copy):
+            ctl_filter_info.ctl_as_b.success = True
+            Halting_Lib.set_not_halting(tm_record.status, io_pb2.INF_CTL)
+            # Note: quasihalting result is not computed when using CTL filters.
+            tm_record.status.quasihalt_status.is_decided = False
+            return
+          else:
+            ctl_filter_info.ctl_as_b.success = False
+
+    # Finally: Do the actual Macro Machine / Chain simulation.
+    sim_info = tm_record.filter.simulator
+    simulate_machine(machine, options, sim_info, tm_record.status)
 
 def simulate_machine(machine : Turing_Machine.Turing_Machine,
                      options,
@@ -214,10 +219,6 @@ def simulate_machine(machine : Turing_Machine.Turing_Machine,
       over_steps_in_macro_info.macro_state = str(sim.state)
       over_steps_in_macro_info.macro_dir_is_right = (sim.dir == Turing_Machine.RIGHT)
 
-    elif sim.op_state == Turing_Machine.HALT:
-      halt_info = sim_info.result.halt_info.is_halting = True
-      Halting_Lib.set_halting(bb_status, sim.step_num, sim.get_nonzeros())
-
     elif sim.op_state == Turing_Machine.INF_REPEAT:
       Halting_Lib.set_not_halting(bb_status, sim.inf_reason)
 
@@ -245,15 +246,17 @@ def simulate_machine(machine : Turing_Machine.Turing_Machine,
       else:
         raise Exception(sim.inf_reason)
 
-    elif sim.op_state == Turing_Machine.UNDEFINED:
-      on_symbol, on_state = sim.op_details[0][:2]
-      undefined_cell_info = sim_info.result.undefined_cell_info
-      undefined_cell_info.reached_undefined_cell = True
-      undefined_cell_info.state = on_state
-      undefined_cell_info.symbol = on_symbol
-      # Set halt info as well so we don't have to re-simulate.
+    elif sim.op_state in (Turing_Machine.UNDEFINED, Turing_Machine.HALT):
+      # TM Halting and reaching UNDEFINED are treated the same here.
+      # For enumeration, TMs never have halt transition when run, so we
+      # will always hit the UNDEFINED case, but then treat it like a halt.
+      from_symbol, from_state = sim.op_details[0][:2]
       halt_info = sim_info.result.halt_info.is_halting = True
-      Halting_Lib.set_halting(bb_status, sim.step_num, sim.get_nonzeros())
+      Halting_Lib.set_halting(bb_status,
+                              halt_steps = sim.step_num,
+                              halt_score = sim.get_nonzeros(),
+                              from_state = from_state,
+                              from_symbol = from_symbol)
 
     else:
       raise Exception(sim.op_state, ttable, sim)

@@ -1,11 +1,13 @@
+#! /usr/bin/env python3
 """Analyze all TMRecords in a file and print various statistics."""
 
 import argparse
 import collections
+import math
 from pathlib import Path
 
 import Halting_Lib
-import IO_proto
+import IO
 
 import io_pb2
 
@@ -15,12 +17,15 @@ class Stat:
     self.count = 0
     self.total = 0
     self.max_value = 0
+    # self.log_hist[n] == # values in range [10^n, 10^(n+1))
+    self.log_hist = collections.Counter()
 
   def add(self, value):
     if value:
       self.count += 1
       self.total += value
       self.max_value = max(self.max_value, value)
+      self.log_hist[int(math.log10(value))] += 1
 
   def mean(self):
     if self.count:
@@ -41,23 +46,12 @@ class TMStats:
     self.halt_score = Stat()
     self.inf_reason = collections.Counter()
 
-    self.timings = {
-      "simulator": Stat(),
-      "block_finder": Stat(),
-      "lin_recur": Stat(),
-      "ctl": Stat(),
-    }
+    self.sim_num_loops = Stat()
+    self.sim_num_steps = Stat()
+    self.lr_period = Stat()
 
-    self.sizes = {
-      "total": Stat(),
-      "tm": Stat(),
-      "status": Stat(),
-      "filter": Stat(),
-      "simulator": Stat(),
-      "block_finder": Stat(),
-      "lin_recur": Stat(),
-      "ctl": Stat(),
-    }
+    self.timings = collections.defaultdict(Stat)
+    self.sizes = collections.defaultdict(Stat)
 
   def add_record(self, tm_record):
     self.count += 1
@@ -75,13 +69,22 @@ class TMStats:
 
     else:
       self.num_inf += 1
-      self.inf_reason[tm_record.status.halt_status.reason] += 1
+      self.inf_reason[tm_record.status.halt_status.inf_reason] += 1
+
+    # Simulator stats
+    self.sim_num_loops.add(tm_record.filter.simulator.result.num_loops)
+    sim_num_steps = Halting_Lib.get_big_int(tm_record.filter.simulator.result.num_steps)
+    self.sim_num_steps.add(sim_num_steps)
+
+    self.lr_period.add(tm_record.filter.lin_recur.result.period)
 
     # Timing
-    self.timings["simulator"].add(tm_record.filter.simulator.result.elapsed_time_sec)
-    self.timings["block_finder"].add(tm_record.filter.block_finder.result.elapsed_time_sec)
-    self.timings["lin_recur"].add(tm_record.filter.lin_recur.result.elapsed_time_sec)
-    self.timings["ctl"].add(tm_record.filter.ctl.elapsed_time_sec)
+    self.timings["total"].add(tm_record.elapsed_time_us)
+    self.timings["simulator"].add(tm_record.filter.simulator.result.elapsed_time_us)
+    self.timings["block_finder"].add(tm_record.filter.block_finder.result.elapsed_time_us)
+    self.timings["reverse_engineer"].add(tm_record.filter.reverse_engineer.elapsed_time_us)
+    self.timings["lin_recur"].add(tm_record.filter.lin_recur.result.elapsed_time_us)
+    self.timings["ctl"].add(tm_record.filter.ctl.elapsed_time_us)
 
     # Serialized Size
     self.sizes["total"].add(tm_record.ByteSize())
@@ -109,17 +112,25 @@ class TMStats:
             f"{count:15_} ({count / self.num_inf:7.2%})")
     print()
 
+    print("Simulator:")
+    print(f"  - num_loops : Mean {self.sim_num_loops.mean():9_.0f}  Max {self.sim_num_loops.max_value:9_d}  (Set in {self.sim_num_loops.count / self.count:4.0%})")
+    self.print_hist(self.sim_num_loops.log_hist)
+    print(f"  - num_steps : Mean {self.sim_num_steps.mean():_.3e}  Max {self.sim_num_steps.max_value:_.3e}  (Set in {self.sim_num_steps.count / self.count:4.0%})")
+    self.print_hist(self.sim_num_steps.log_hist)
+    print("Lin Recur:")
+    print(f"  - period : Mean {self.lr_period.mean():_.0f}  Max {self.lr_period.max_value:_}  (Set in {self.lr_period.count / self.count:4.0%})")
+    print()
+
     print("Timings:")
     # Note: These are the mean timings for each filter over all TMs
     # (even ones that never ran).
     mean_timings = sorted([(timing.total / self.count, filter)
                            for (filter, timing) in self.timings.items()],
                           reverse=True)
-    for (mean_time_s, filter) in mean_timings:
-      x = 1_000_000
-      print(f"  - {filter:16s} : Mean(all) {mean_time_s * x:7_.0f} µs  "
-            f"Mean(run) {self.timings[filter].mean() * x:7_.0f} µs  "
-            f"Max {self.timings[filter].max_value * x:7_.0f} µs  "
+    for (mean_time_us, filter) in mean_timings:
+      print(f"  - {filter:16s} : Mean(all) {mean_time_us:7_.0f} µs  "
+            f"Mean(run) {self.timings[filter].mean():7_.0f} µs  "
+            f"Max {self.timings[filter].max_value:7_.0f} µs  "
             f"(Set in {self.timings[filter].count / self.count:4.0%})")
     print()
 
@@ -137,11 +148,25 @@ class TMStats:
             f"(Set in {self.sizes[message].count / self.count:4.0%})")
     print()
 
+  def print_hist(self, hist):
+    cum_total = 0
+    total = sum(hist.values())
+    # Only show up to the millions bucket.
+    max_n = min(max(hist.keys()), 6)
+    for n in range(max_n + 1):
+      val = hist[n]
+      cum_total += val
+      print(f"     {10**n:9_} - {10**(n+1)-1:9_} : {val:9_} ({val / total:4.0%})  Cumulative: {cum_total:9_} ({cum_total / total:4.0%})")
+    if cum_total < total:
+      val = total - cum_total
+      cum_total += val
+      print(f"     > {10**(max_n+1):<20_}: {val:9_} ({val / total:4.0%})  Cumulative: {cum_total:9_} ({cum_total / total:4.0%})")
+
 
 def analyze(tm_filename):
   stats = TMStats()
   with open(tm_filename, "rb") as infile:
-    reader = IO_proto.Reader(infile)
+    reader = IO.Proto.Reader(infile)
     for tm_record in reader:
       stats.add_record(tm_record)
       if stats.count % 1_000_000 == 0:

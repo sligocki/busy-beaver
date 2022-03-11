@@ -254,7 +254,7 @@ def ttable_to_transition(TTable, state_in, symbol_in):
   # Historical signaling of final cell (transition to halt): (1, 1, -1)
   elif state_out == -1:
     condition = HALT
-    condition_details = None
+    condition_details = [(symbol_in, state_in)]
   # Otherwise, the transition is normal
   else:
     condition = RUNNING
