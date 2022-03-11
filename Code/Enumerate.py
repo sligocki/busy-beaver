@@ -25,7 +25,6 @@ import time
 from Common import Exit_Condition, GenContainer
 import Halting_Lib
 import IO
-import IO_proto
 from Macro import Block_Finder, Turing_Machine
 import Macro_Simulator
 import Output_Machine
@@ -146,7 +145,7 @@ class Enumerator(object):
     if self.options.num_enum:
       tm = self.stack.pop_job()
       while tm:
-        tm_record = IO_proto.create_record(tm.get_TTable())
+        tm_record = IO.create_record(tm.get_TTable())
         # Empty tm_record (no filter results) indicates that the TM hasn't been run.
         self.add_result(tm, tm_record)
         tm = self.stack.pop_job()
@@ -185,7 +184,7 @@ class Enumerator(object):
 
   def run(self, tm) -> io_pb2.TMRecord:
     """Simulate TM"""
-    tm_record = IO_proto.create_record(tm.get_TTable())
+    tm_record = IO.create_record(tm.get_TTable())
     try:
       if self.options.time > 0:
         Macro_Simulator.run_timer(tm.get_TTable(), self.options, tm_record,
@@ -239,7 +238,7 @@ class Enumerator(object):
       # halting below the ttable reflects that.
       tm.set_halt(state_in = sim_result.undefined_cell_info.state,
                   symbol_in = sim_result.undefined_cell_info.symbol)
-      tm_record.tm.ttable_packed = IO_proto.pack_ttable(tm.get_TTable())
+      tm_record.tm.ttable_packed = IO.Proto.pack_ttable(tm.get_TTable())
 
     self.writer.write_record(tm_record)
 
@@ -259,13 +258,13 @@ def initialize_stack(options, stack):
     # Initialize with all machines from infile.
     if options.informat == "protobuf":
       with open(options.infilename, "rb") as infile:
-        for tm_record in IO_proto.Reader(infile):
+        for tm_record in IO.Proto.Reader(infile):
           tm = old_tm_mod.Turing_Machine(
-            IO_proto.unpack_ttable(tm_record.tm.ttable_packed))
+            IO.Proto.unpack_ttable(tm_record.tm.ttable_packed))
           stack.push_job(tm)
     elif options.informat == "text":
       with open(options.infilename, "r") as infile:
-        for io_record in IO.IO(infile, None):
+        for io_record in IO.Text.ReaderWriter(infile, None):
           tm = old_tm_mod.Turing_Machine(io_record.ttable)
           stack.push_job(tm)
   else:
@@ -381,11 +380,11 @@ def main(args):
 
   if options.outformat == "protobuf":
     outfile = open(options.outfilename, "wb")
-    writer = IO_proto.Writer(outfile)
+    writer = IO.Proto.Writer(outfile)
 
   elif options.outformat == "text":
     outfile = open(options.outfilename, "w")
-    writer = IO.IO(None, outfile)
+    writer = IO.Text.ReaderWriter(None, outfile)
 
   ## Enumerate machines
   enumerator = Enumerator(options, stack, writer, pout)

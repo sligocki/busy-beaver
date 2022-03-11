@@ -12,6 +12,7 @@ from optparse import OptionParser, OptionGroup
 import sys
 import time
 
+import IO
 from Macro.Simulator import Simulator
 from Macro import Turing_Machine
 
@@ -49,104 +50,96 @@ def block_finder(machine : Turing_Machine.Turing_Machine,
                  params : io_pb2.BlockFinderParams,
                  result : io_pb2.BlockFinderResult) -> None:
   """Tries to find the optimal block-size for macro machines using heuristics."""
-  start_time = time.time()
+  with IO.Timer(result):
+    ## First find the minimum efficient tape compression size.
+    new_options = copy.copy(options)
+    new_options.compute_steps = True  # Even if --no-steps, we need steps here.
+    new_options.prover = False
+    new_options.verbose_simulator = False
 
-  ## First find the minimum efficient tape compression size.
-  new_options = copy.copy(options)
-  new_options.compute_steps = True  # Even if --no-steps, we need steps here.
-  new_options.prover = False
-  new_options.verbose_simulator = False
+    sim = Simulator(machine, new_options)
 
-  block_finder_internal(machine, new_options, params, result)
-  result.elapsed_time_sec = time.time() - start_time
+    ## Find the least compressed time in before limit
+    # Run sim to find when the tape is least compressed with macro size 1
+    max_length = len(sim.tape.tape[0]) + len(sim.tape.tape[1])
+    worst_loop = 0
+    for i in range(params.compression_search_loops):
+      sim.step()
+      tape_length = len(sim.tape.tape[0]) + len(sim.tape.tape[1])
+      if tape_length > max_length:
+        max_length = tape_length
+        worst_loop = sim.num_loops
+      # If it has stopped running then this is a good block size!
+      if sim.op_state != Turing_Machine.RUNNING:
+        result.best_block_size = 1
+        return
 
-def block_finder_internal(machine : Turing_Machine.Turing_Machine,
-                          options : optparse.Values,
-                          params : io_pb2.BlockFinderParams,
-                          result : io_pb2.BlockFinderResult) -> None:
-  sim = Simulator(machine, options)
+    result.least_compressed_loop = worst_loop
+    result.least_compressed_tape_size_chain = max_length
 
-  ## Find the least compressed time in before limit
-  # Run sim to find when the tape is least compressed with macro size 1
-  max_length = len(sim.tape.tape[0]) + len(sim.tape.tape[1])
-  worst_loop = 0
-  for i in range(params.compression_search_loops):
-    sim.step()
-    tape_length = len(sim.tape.tape[0]) + len(sim.tape.tape[1])
-    if tape_length > max_length:
-      max_length = tape_length
-      worst_loop = sim.num_loops
-    # If it has stopped running then this is a good block size!
-    if sim.op_state != Turing_Machine.RUNNING:
-      result.best_block_size = 1
+    # TODO: Instead of re-seeking, keep going till next bigger tape?
+    sim = Simulator(machine, new_options)
+    sim.loop_seek(worst_loop)
+    assert len(sim.tape.tape[0]) + len(sim.tape.tape[1]) == max_length
+
+    # Analyze this time to see which block size provides greatest compression
+    tape = uncompress_tape(sim.tape.tape)
+    result.least_compressed_tape_size_raw = len(tape)
+
+    min_compr = len(tape) + 1 # Worse than no compression
+    opt_size = 1
+    for block_size in range(1, len(tape)//2):
+      compr_size = compression_efficiency(tape, block_size)
+      if compr_size < min_compr:
+        if block_size <= options.max_block_size:
+          min_compr = compr_size
+          opt_size = block_size
+        else:
+          break
+
+    result.best_compression_block_size = opt_size
+    result.best_compression_tape_size = min_compr
+
+    if params.mult_sim_loops <= 0:
+      result.best_block_size = opt_size
       return
 
-  result.least_compressed_loop = worst_loop
-  result.least_compressed_tape_size_chain = max_length
+    ## Then try a couple different multiples of this base size to find best speed
+    if options.verbose_block_finder:
+      print("Searching for optimal mult for block size")
+    max_chain_factor = 0
+    opt_mult = 1
+    mult = 1
+    while (mult <= opt_mult + params.extra_mult and
+           mult * opt_size <= options.max_block_size):
+      block_machine = Turing_Machine.Block_Macro_Machine(machine, mult*opt_size)
+      back_machine = Turing_Machine.Backsymbol_Macro_Machine(block_machine)
+      sim = Simulator(back_machine, new_options)
+      sim.loop_seek(params.mult_sim_loops)
+      if sim.op_state != Turing_Machine.RUNNING:
+        result.best_block_size = mult * opt_size
+        return
+      chain_factor = sim.steps_from_chain / sim.steps_from_macro
 
-  # TODO: Instead of re-seeking, keep going till next bigger tape?
-  sim = Simulator(machine, options)
-  sim.loop_seek(worst_loop)
-  assert len(sim.tape.tape[0]) + len(sim.tape.tape[1]) == max_length
+      if options.verbose_block_finder:
+        print(" *", mult, chain_factor)
 
-  # Analyze this time to see which block size provides greatest compression
-  tape = uncompress_tape(sim.tape.tape)
-  result.least_compressed_tape_size_raw = len(tape)
+      # Note that we prefer smaller multiples
+      # We only choose larger multiples if they perform much better
+      if chain_factor > 2 * max_chain_factor:
+        max_chain_factor = chain_factor
+        opt_mult = mult
+      mult += 1
 
-  min_compr = len(tape) + 1 # Worse than no compression
-  opt_size = 1
-  for block_size in range(1, len(tape)//2):
-    compr_size = compression_efficiency(tape, block_size)
-    if compr_size < min_compr:
-      if block_size <= options.max_block_size:
-        min_compr = compr_size
-        opt_size = block_size
-      else:
-        break
-
-  result.best_compression_block_size = opt_size
-  result.best_compression_tape_size = min_compr
-
-  if params.mult_sim_loops <= 0:
-    result.best_block_size = opt_size
-    return
-
-  ## Then try a couple different multiples of this base size to find best speed
-  if options.verbose_block_finder:
-    print("Searching for optimal mult for block size")
-  max_chain_factor = 0
-  opt_mult = 1
-  mult = 1
-  while (mult <= opt_mult + params.extra_mult and
-         mult * opt_size <= options.max_block_size):
-    block_machine = Turing_Machine.Block_Macro_Machine(machine, mult*opt_size)
-    back_machine = Turing_Machine.Backsymbol_Macro_Machine(block_machine)
-    sim = Simulator(back_machine, options)
-    sim.loop_seek(params.mult_sim_loops)
-    if sim.op_state != Turing_Machine.RUNNING:
-      result.best_block_size = mult * opt_size
-      return
-    chain_factor = sim.steps_from_chain / sim.steps_from_macro
+    result.best_mult = opt_mult
+    result.best_chain_factor = max_chain_factor
+    result.best_block_size = opt_mult * opt_size
 
     if options.verbose_block_finder:
-      print(" *", mult, chain_factor)
-
-    # Note that we prefer smaller multiples
-    # We only choose larger multiples if they perform much better
-    if chain_factor > 2 * max_chain_factor:
-      max_chain_factor = chain_factor
-      opt_mult = mult
-    mult += 1
-
-  result.best_mult = opt_mult
-  result.best_chain_factor = max_chain_factor
-  result.best_block_size = opt_mult * opt_size
-
-  if options.verbose_block_finder:
-    print()
-    print("Block Finder finished")
-    print(result)
-    sys.stdout.flush()
+      print()
+      print("Block Finder finished")
+      print(result)
+      sys.stdout.flush()
 
 def uncompress_tape(compr_tape):
   """Expand out repatition counts in tape."""

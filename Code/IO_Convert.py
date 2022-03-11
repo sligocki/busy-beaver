@@ -10,7 +10,6 @@ from Common import Exit_Condition
 import Halting_Lib
 import Input_Machine
 import IO
-import IO_proto
 
 
 parser = argparse.ArgumentParser()
@@ -21,18 +20,18 @@ args = parser.parse_args()
 if args.infile.suffix == ".pb":
   print("Converting from protobuf to text")
   with open(args.infile, "rb") as infile, open(args.outfile, "w") as outfile:
-    reader = IO_proto.Reader(infile)
-    writer = IO.IO(None, outfile)
+    reader = IO.Proto.Reader(infile)
+    writer = IO.Text.ReaderWriter(None, outfile)
     for tm_record in reader:
       writer.write_record(tm_record)
 
 else:
   print("Converting from text to protobuf")
   with open(args.infile, "r") as infile, open(args.outfile, "wb") as outfile:
-    reader = IO.IO(infile, None)
-    writer = IO_proto.Writer(outfile)
+    reader = IO.Text.ReaderWriter(infile, None)
+    writer = IO.Proto.Writer(outfile)
     for io_record in reader:
-      tm_record = IO_proto.create_record(io_record.ttable)
+      tm_record = IO.create_record(io_record.ttable)
 
       # Set basic status
       if io_record.category == Exit_Condition.HALT:

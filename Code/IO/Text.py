@@ -1,7 +1,5 @@
 """
-New IO for Busy Beaver results.
-
-It should be both shorter and more readable than the old format in IO_old.py.
+Text IO for Busy Beaver results.
 
 Format looks like:
 1RB ---  1LB 0LB | 1 Infinite CTL2 3 5
@@ -17,7 +15,7 @@ import sys
 from Common import Exit_Condition
 import Halting_Lib
 import Input_Machine
-import IO_proto
+import IO
 import Output_Machine
 
 import io_pb2
@@ -111,7 +109,7 @@ class Record(object):
       return s
 
 
-class IO(object):
+class ReaderWriter(object):
   """
   Reads and writes Busy Beaver results:
     input_file  - file to read*
@@ -132,7 +130,7 @@ class IO(object):
     io_record = Record()
     if self.log_number is not None:
       io_record.log_number = self.log_number
-    io_record.ttable = IO_proto.unpack_ttable(tm_record.tm.ttable_packed)
+    io_record.ttable = IO.Proto.unpack_ttable(tm_record.tm.ttable_packed)
 
     if not tm_record.status.halt_status.is_decided:
       io_record.category = Exit_Condition.UNKNOWN

@@ -4,7 +4,6 @@ Search for Lin Recurrence (as discussed in https://nickdrozd.github.io/2021/02/2
 """
 
 import argparse
-import time
 from typing import Tuple
 
 import Direct_Simulator
@@ -157,18 +156,17 @@ def filter(ttable,
            bb_status : io_pb2.BBStatus) -> None:
   """Applies Lin Recur filter to `ttable` using `params`.
   The results are stored in `result`."""
-  start_time = time.time()
-  lin_detect_not_min(ttable, max_steps=lr_info.parameters.max_steps,
-                     result=lr_info.result, bb_status=bb_status)
-  if lr_info.result.success and lr_info.parameters.find_min_start_step:
-    # NOTE: lr_info.result.start_step is not necessarily the earliest time that
-    # recurrence starts, it is simply a time after which recurrence is in effect.
+  with IO.Timer(lr_info.result):
+    lin_detect_not_min(ttable, max_steps=lr_info.parameters.max_steps,
+                       result=lr_info.result, bb_status=bb_status)
+    if lr_info.result.success and lr_info.parameters.find_min_start_step:
+      # NOTE: lr_info.result.start_step is not necessarily the earliest time that
+      # recurrence starts, it is simply a time after which recurrence is in effect.
 
-    # Do a second search, now that we know the recurrence period to find the
-    # earliest start time of the recurrence.
-    lr_info.result.start_step = period_search(ttable, lr_info.result.start_step,
-                                              lr_info.result.period)
-  lr_info.result.elapsed_time_sec = time.time() - start_time
+      # Do a second search, now that we know the recurrence period to find the
+      # earliest start time of the recurrence.
+      lr_info.result.start_step = period_search(ttable, lr_info.result.start_step,
+                                                lr_info.result.period)
 
 
 def main():
@@ -180,7 +178,7 @@ def main():
                       dest="min_start_step")
   args = parser.parse_args()
 
-  ttable = IO.load_TTable_filename(args.tm_file, args.tm_line)
+  ttable = IO.Text.load_TTable_filename(args.tm_file, args.tm_line)
   lr_info = io_pb2.LinRecurFilterInfo()
   lr_info.parameters.max_steps = args.max_steps
   lr_info.parameters.find_min_start_step = args.min_start_step

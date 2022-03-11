@@ -80,7 +80,7 @@ message BBStatus {
 message SimulatorParams {
   // Maximum number of simulator "loops" to run for.
   uint64 max_loops = 1;
-  // Maximum wall time to run the simuator for.
+  // Maximum wall time to run the simulator for.
   float max_time_sec = 2;
   // Maximum size of compressed tape before we give up.
   uint64 max_tape_blocks = 3;
@@ -187,7 +187,7 @@ message SimulatorResult {
   UnfinedCellInfo undefined_cell_info = 4;
 
   // Stats
-  float elapsed_time_sec = 5;
+  uint64 elapsed_time_us = 5;
 
   uint64 num_loops = 6;
   BigInt num_steps = 7;
@@ -219,7 +219,7 @@ message BlockFinderResult {
   uint64 best_block_size = 1;
 
   // Stats
-  float elapsed_time_sec = 2;
+  uint64 elapsed_time_us = 2;
 
   // Chain Sim loop (with block size 1) where compressed tape was largest
   // (least effectively compressed).
@@ -275,9 +275,7 @@ message LinRecurFilterResult {
   sint64 offset = 4;
 
   // Stats
-  float elapsed_time_sec = 6;
-
-  // next id: 5
+  uint64 elapsed_time_us = 5;
 }
 
 message LinRecurFilterInfo {
@@ -295,6 +293,9 @@ message CTLFilterInfo {
   FilterInfo ctl_as = 2;
   // CTL_A*_B
   FilterInfo ctl_as_b = 3;
+
+  // Stats
+  uint64 elapsed_time_us = 4;
 }
 
 

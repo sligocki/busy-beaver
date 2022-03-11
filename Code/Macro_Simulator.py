@@ -138,32 +138,33 @@ def run_options(ttable, options,
 
   if options.ctl:
     ctl_filter_info = tm_record.filter.ctl
-    CTL_config = setup_CTL(machine, options.bf_limit1)
+    with IO.Timer(ctl_filter_info):
+      CTL_config = setup_CTL(machine, options.bf_limit1)
 
-    # Run CTL filters unless machine halted
-    if CTL_config:
-      ctl_filter_info.init_step = options.bf_limit1
-      CTL_config_copy = copy.deepcopy(CTL_config)
-      ctl_filter_info.ctl_as.tested = True
-      if CTL1.CTL(machine, CTL_config_copy):
-        ctl_filter_info.ctl_as.success = True
-        Halting_Lib.set_not_halting(tm_record.status, io_pb2.INF_CTL)
-        # Note: quasihalting result is not computed when using CTL filters.
-        tm_record.status.quasihalt_status.is_decided = False
-        return
-      else:
-        ctl_filter_info.ctl_as.success = False
+      # Run CTL filters unless machine halted
+      if CTL_config:
+        ctl_filter_info.init_step = options.bf_limit1
+        CTL_config_copy = copy.deepcopy(CTL_config)
+        ctl_filter_info.ctl_as.tested = True
+        if CTL1.CTL(machine, CTL_config_copy):
+          ctl_filter_info.ctl_as.success = True
+          Halting_Lib.set_not_halting(tm_record.status, io_pb2.INF_CTL)
+          # Note: quasihalting result is not computed when using CTL filters.
+          tm_record.status.quasihalt_status.is_decided = False
+          return
+        else:
+          ctl_filter_info.ctl_as.success = False
 
-      CTL_config_copy = copy.deepcopy(CTL_config)
-      ctl_filter_info.ctl_as_b.tested = True
-      if CTL2.CTL(machine, CTL_config_copy):
-        ctl_filter_info.ctl_as_b.success = True
-        Halting_Lib.set_not_halting(tm_record.status, io_pb2.INF_CTL)
-        # Note: quasihalting result is not computed when using CTL filters.
-        tm_record.status.quasihalt_status.is_decided = False
-        return
-      else:
-        ctl_filter_info.ctl_as_b.success = False
+        CTL_config_copy = copy.deepcopy(CTL_config)
+        ctl_filter_info.ctl_as_b.tested = True
+        if CTL2.CTL(machine, CTL_config_copy):
+          ctl_filter_info.ctl_as_b.success = True
+          Halting_Lib.set_not_halting(tm_record.status, io_pb2.INF_CTL)
+          # Note: quasihalting result is not computed when using CTL filters.
+          tm_record.status.quasihalt_status.is_decided = False
+          return
+        else:
+          ctl_filter_info.ctl_as_b.success = False
 
   # Finally: Do the actual Macro Machine / Chain simulation.
   sim_info = tm_record.filter.simulator
@@ -175,93 +176,89 @@ def simulate_machine(machine : Turing_Machine.Turing_Machine,
                      bb_status : io_pb2.BBStatus) -> None:
   """Simulate a TM using the Macro Machine / Chain Simulator.
   Save the results into `sim_info`."""
-  start_time = time.time()
+  with IO.Timer(sim_info.result):
+    sim_info.parameters.max_loops = options.max_loops
+    sim_info.parameters.max_time_sec = options.time
+    sim_info.parameters.max_tape_blocks = options.tape_limit
+    sim_info.parameters.use_prover = options.prover
+    sim_info.parameters.use_limited_rules = options.limited_rules
+    sim_info.parameters.use_recursive_rules = options.recursive
+    sim_info.parameters.use_collatz_rules = options.allow_collatz
 
-  sim_info.parameters.max_loops = options.max_loops
-  sim_info.parameters.max_time_sec = options.time
-  sim_info.parameters.max_tape_blocks = options.tape_limit
-  sim_info.parameters.use_prover = options.prover
-  sim_info.parameters.use_limited_rules = options.limited_rules
-  sim_info.parameters.use_recursive_rules = options.recursive
-  sim_info.parameters.use_collatz_rules = options.allow_collatz
+    sim = Simulator.Simulator(machine, options)
 
-  sim = Simulator.Simulator(machine, options)
+    ## Run the simulator
+    while ((sim_info.parameters.max_loops == 0 or
+            sim.num_loops < sim_info.parameters.max_loops) and
+           sim.op_state == Turing_Machine.RUNNING and
+           sim.tape.compressed_size() <= sim_info.parameters.max_tape_blocks):
+      sim.step()
 
-  ## Run the simulator
-  while ((sim_info.parameters.max_loops == 0 or
-          sim.num_loops < sim_info.parameters.max_loops) and
-         sim.op_state == Turing_Machine.RUNNING and
-         sim.tape.compressed_size() <= sim_info.parameters.max_tape_blocks):
-    sim.step()
+    sim_info.result.num_loops = sim.num_loops
+    Halting_Lib.set_big_int(sim_info.result.num_steps, sim.step_num)
+    sim_info.result.num_rules_proven = sim.prover.rule_num - 1
+    # TODO: add num_recursive_rules, num_collatz_rules, etc.
+    sim_info.result.num_proofs_failed = sim.prover.num_failed_proofs
 
-  sim_info.result.num_loops = sim.num_loops
-  Halting_Lib.set_big_int(sim_info.result.num_steps, sim.step_num)
-  sim_info.result.num_rules_proven = sim.prover.rule_num - 1
-  # TODO: add num_recursive_rules, num_collatz_rules, etc.
-  sim_info.result.num_proofs_failed = sim.prover.num_failed_proofs
+    # Various Unknown conditions
+    if sim.tape.compressed_size() > sim_info.parameters.max_tape_blocks:
+      sim_info.result.unknown_info.over_tape.compressed_tape_size = sim.tape.compressed_size()
 
-  # Various Unknown conditions
-  if sim.tape.compressed_size() > sim_info.parameters.max_tape_blocks:
-    sim_info.result.unknown_info.over_tape.compressed_tape_size = sim.tape.compressed_size()
+    elif sim.op_state == Turing_Machine.RUNNING:
+      sim_info.result.unknown_info.over_loops.num_loops = sim.num_loops
 
-  elif sim.op_state == Turing_Machine.RUNNING:
-    sim_info.result.unknown_info.over_loops.num_loops = sim.num_loops
+    # TODO: Stop calling this "GAVE_UP" if we're only using it for one failure type.
+    elif sim.op_state == Turing_Machine.GAVE_UP:
+      over_steps_in_macro_info = sim_info.result.unknown_info.over_steps_in_macro
+      over_steps_in_macro_info.macro_symbol = str(sim.tape.get_top_symbol())
+      over_steps_in_macro_info.macro_state = str(sim.state)
+      over_steps_in_macro_info.macro_dir_is_right = (sim.dir == Turing_Machine.RIGHT)
 
-  # TODO: Stop calling this "GAVE_UP" if we're only using it for one failure type.
-  elif sim.op_state == Turing_Machine.GAVE_UP:
-    over_steps_in_macro_info = sim_info.result.unknown_info.over_steps_in_macro
-    over_steps_in_macro_info.macro_symbol = str(sim.tape.get_top_symbol())
-    over_steps_in_macro_info.macro_state = str(sim.state)
-    over_steps_in_macro_info.macro_dir_is_right = (sim.dir == Turing_Machine.RIGHT)
+    elif sim.op_state == Turing_Machine.HALT:
+      halt_info = sim_info.result.halt_info.is_halting = True
+      Halting_Lib.set_halting(bb_status, sim.step_num, sim.get_nonzeros())
 
-  elif sim.op_state == Turing_Machine.HALT:
-    halt_info = sim_info.result.halt_info.is_halting = True
-    Halting_Lib.set_halting(bb_status, sim.step_num, sim.get_nonzeros())
+    elif sim.op_state == Turing_Machine.INF_REPEAT:
+      Halting_Lib.set_not_halting(bb_status, sim.inf_reason)
 
-  elif sim.op_state == Turing_Machine.INF_REPEAT:
-    Halting_Lib.set_not_halting(bb_status, sim.inf_reason)
+      if sim.states_last_seen is None:
+        bb_status.quasihalt_status.is_decided = False
+      else:
+        Halting_Lib.set_inf_recur(bb_status,
+                                  states_to_ignore=sim.inf_recur_states,
+                                  states_last_seen=sim.states_last_seen)
 
-    if sim.states_last_seen is None:
-      bb_status.quasihalt_status.is_decided = False
+      inf_info = sim_info.result.infinite_info
+      if sim.inf_reason == io_pb2.INF_MACRO_STEP:
+        inf_info.macro_repeat.macro_symbol = str(sim.tape.get_top_symbol())
+        inf_info.macro_repeat.macro_state = str(sim.state)
+        inf_info.macro_repeat.macro_dir_is_right = (sim.dir == Turing_Machine.RIGHT)
+
+      elif sim.inf_reason == io_pb2.INF_CHAIN_STEP:
+        inf_info.chain_move.macro_state = str(sim.state)
+        inf_info.chain_move.dir_is_right = (sim.dir == Turing_Machine.RIGHT)
+
+      elif sim.inf_reason == io_pb2.INF_PROOF_SYSTEM:
+        # TODO(shawn): Actually list rule here somehow.
+        inf_info.proof_system.rule = "?"
+
+      else:
+        raise Exception(sim.inf_reason)
+
+    elif sim.op_state == Turing_Machine.UNDEFINED:
+      on_symbol, on_state = sim.op_details[0][:2]
+      undefined_cell_info = sim_info.result.undefined_cell_info
+      undefined_cell_info.reached_undefined_cell = True
+      undefined_cell_info.state = on_state
+      undefined_cell_info.symbol = on_symbol
+      # Set halt info as well so we don't have to re-simulate.
+      halt_info = sim_info.result.halt_info.is_halting = True
+      Halting_Lib.set_halting(bb_status, sim.step_num, sim.get_nonzeros())
+
     else:
-      Halting_Lib.set_inf_recur(bb_status,
-                                states_to_ignore=sim.inf_recur_states,
-                                states_last_seen=sim.states_last_seen)
-
-    inf_info = sim_info.result.infinite_info
-    if sim.inf_reason == io_pb2.INF_MACRO_STEP:
-      inf_info.macro_repeat.macro_symbol = str(sim.tape.get_top_symbol())
-      inf_info.macro_repeat.macro_state = str(sim.state)
-      inf_info.macro_repeat.macro_dir_is_right = (sim.dir == Turing_Machine.RIGHT)
-
-    elif sim.inf_reason == io_pb2.INF_CHAIN_STEP:
-      inf_info.chain_move.macro_state = str(sim.state)
-      inf_info.chain_move.dir_is_right = (sim.dir == Turing_Machine.RIGHT)
-
-    elif sim.inf_reason == io_pb2.INF_PROOF_SYSTEM:
-      # TODO(shawn): Actually list rule here somehow.
-      inf_info.proof_system.rule = "?"
-
-    else:
-      raise Exception(sim.inf_reason)
-
-  elif sim.op_state == Turing_Machine.UNDEFINED:
-    on_symbol, on_state = sim.op_details[0][:2]
-    undefined_cell_info = sim_info.result.undefined_cell_info
-    undefined_cell_info.reached_undefined_cell = True
-    undefined_cell_info.state = on_state
-    undefined_cell_info.symbol = on_symbol
-    # Set halt info as well so we don't have to re-simulate.
-    halt_info = sim_info.result.halt_info.is_halting = True
-    Halting_Lib.set_halting(bb_status, sim.step_num, sim.get_nonzeros())
-
-  else:
-    raise Exception(sim.op_state, ttable, sim)
-
-  sim_info.result.elapsed_time_sec = time.time() - start_time
+      raise Exception(sim.op_state, ttable, sim)
 
 
-# Main script
 if __name__ == "__main__":
   # Parse command line options.
   usage = "usage: %prog [options] machine_file [line_number]"
