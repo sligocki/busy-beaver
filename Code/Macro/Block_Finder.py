@@ -24,8 +24,8 @@ def add_option_group(parser : OptionParser):
 
   group = OptionGroup(parser, "Block Finder options")
 
-  group.add_option("--max-block-size", type=int, default=6,
-                   help="Maximum block size to try when using Block Finder. "
+  group.add_option("--max-block-size", type=int, default=5,
+                   help="Maximum block size to try when using Block Finder [Default: %default]. "
                    "Note: This is ignored if --block-size is set explicitly.")
 
   group.add_option("--verbose-block-finder", action="store_true")
