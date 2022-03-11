@@ -70,7 +70,7 @@ class SystemTest(unittest.TestCase):
       filename = os.path.join(self.root_dir, name)
       ttable = IO.load_TTable_filename(filename)
       try:
-        tm_record = io_pb2.IORecord()
+        tm_record = io_pb2.TMRecord()
         Macro_Simulator.run_options(ttable, self.options, tm_record)
       except:
         print("Error")
@@ -93,7 +93,7 @@ class SystemTest(unittest.TestCase):
       filename = os.path.join(self.root_dir, name)
       ttable = IO.load_TTable_filename(filename)
       try:
-        tm_record = io_pb2.IORecord()
+        tm_record = io_pb2.TMRecord()
         Macro_Simulator.run_options(ttable, self.options, tm_record)
       except:
         print("Error")
@@ -119,7 +119,7 @@ class SystemTest(unittest.TestCase):
       filename = os.path.join(self.root_dir, name)
       ttable = IO.load_TTable_filename(filename)
       try:
-        tm_record = io_pb2.IORecord()
+        tm_record = io_pb2.TMRecord()
         Macro_Simulator.run_options(ttable, self.options, tm_record)
       except:
         print("Error")
@@ -135,13 +135,13 @@ class SystemTest(unittest.TestCase):
   def test_non_halting(self):
     self.options.recursive = True
     ttable = IO.parse_ttable("1RB --- 2LA  2LB 2RA 0LB")
-    tm_record = io_pb2.IORecord()
+    tm_record = io_pb2.TMRecord()
     simulated_result = Macro_Simulator.run_options(ttable, self.options, tm_record)
 
     # Non halting
     self.assertTrue(tm_record.status.halt_status.is_decided)
     self.assertFalse(tm_record.status.halt_status.is_halting)
-    self.assertEqual(tm_record.status.halt_status.reason, "CTL_A*")
+    self.assertEqual(tm_record.status.halt_status.reason, io_pb2.INF_CTL)
 
 if __name__ == '__main__':
   unittest.main()

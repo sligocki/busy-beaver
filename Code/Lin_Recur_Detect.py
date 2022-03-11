@@ -34,7 +34,8 @@ def are_sections_equal(start_tape, end_tape, most_left_pos, most_right_pos, offs
 
 def lin_detect_not_min(ttable,
                        max_steps : int,
-                       result : io_pb2.LinRecurFilterResult) -> None:
+                       result : io_pb2.LinRecurFilterResult,
+                       bb_status : io_pb2.BBStatus) -> None:
   """Detect Lin Recurrence without knowing the period or start time.
   The result is a point at which it is in Lin Recurrence, not necessarily the
   time that it has started LR."""
@@ -62,7 +63,7 @@ def lin_detect_not_min(ttable,
         # If a machine halts, it will never Lin Recur.
         result.success = False
         # NOTE: We do not currently evaluate `halt_score`
-        Halting_Lib.set_halting(result.status, sim.step_num, halt_score = None)
+        Halting_Lib.set_halting(bb_status, sim.step_num, halt_score = None)
         return
 
       most_left_pos = min(most_left_pos, sim.tape.position)
@@ -86,10 +87,10 @@ def lin_detect_not_min(ttable,
     result.start_step = init_step_num
     result.period = sim.step_num - init_step_num
     result.offset = offset
-    Halting_Lib.set_inf_recur(result.status,
+    Halting_Lib.set_inf_recur(bb_status,
                               states_to_ignore = states_used,
                               states_last_seen = states_last_seen)
-    Halting_Lib.set_not_halting(result.status, "Lin_Recur")
+    Halting_Lib.set_not_halting(bb_status, io_pb2.INF_LIN_RECUR)
     return
   else:
     assert sim.step_num == steps_reset, (sim.step_num, steps_reset)
@@ -152,20 +153,22 @@ def period_search(ttable, init_step, period):
 
 
 def filter(ttable,
-           params : io_pb2.LinRecurFilterParams,
-           result : io_pb2.LinRecurFilterResult) -> None:
+           lr_info : io_pb2.LinRecurFilterInfo,
+           bb_status : io_pb2.BBStatus) -> None:
   """Applies Lin Recur filter to `ttable` using `params`.
   The results are stored in `result`."""
   start_time = time.time()
-  lin_detect_not_min(ttable, max_steps=params.max_steps, result=result)
-  if result.success and params.find_min_start_step:
-    # NOTE: result.start_step is not necessarily the earliest time that recurrence
-    # starts, it is simply a time after which recurrence is in effect.
+  lin_detect_not_min(ttable, max_steps=lr_info.parameters.max_steps,
+                     result=lr_info.result, bb_status=bb_status)
+  if lr_info.result.success and lr_info.parameters.find_min_start_step:
+    # NOTE: lr_info.result.start_step is not necessarily the earliest time that
+    # recurrence starts, it is simply a time after which recurrence is in effect.
 
     # Do a second search, now that we know the recurrence period to find the
     # earliest start time of the recurrence.
-    result.start_step = period_search(ttable, result.start_step, result.period)
-  result.elapsed_time_sec = time.time() - start_time
+    lr_info.result.start_step = period_search(ttable, lr_info.result.start_step,
+                                              lr_info.result.period)
+  lr_info.result.elapsed_time_sec = time.time() - start_time
 
 
 def main():
@@ -181,9 +184,11 @@ def main():
   lr_info = io_pb2.LinRecurFilterInfo()
   lr_info.parameters.max_steps = args.max_steps
   lr_info.parameters.find_min_start_step = args.min_start_step
-  filter(ttable, lr_info.parameters, lr_info.result)
+  bb_status = io_pb2.BBStatus()
+  filter(ttable, lr_info, bb_status)
 
   print(lr_info)
+  print(bb_status)
 
 if __name__ == "__main__":
   main()

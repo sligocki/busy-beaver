@@ -29,6 +29,7 @@ class Exit_Condition(object):
   MAX_STEPS = 2
   TIME_OUT = 5
   NOT_RUN = 7
+  OVER_STEPS_IN_MACRO = 8
   # Set of all unkown conditions
   UNKNOWN_SET = (UNKNOWN, OVER_TAPE, MAX_STEPS, TIME_OUT, NOT_RUN)
 
@@ -42,8 +43,9 @@ class Exit_Condition(object):
             MAX_STEPS: "Max_Steps",
             TIME_OUT: "Time_Out",
             NOT_RUN: "Not_Run",
+            OVER_STEPS_IN_MACRO: "Macro_Over_Steps",
             }
-  condition_from_name = dict((name, cond) for (cond, name) in list(names.items()))
+  condition_from_name = {name: cond for (cond, name) in names.items()}
 
   @classmethod
   def name(cls, cond):

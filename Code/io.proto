@@ -26,11 +26,25 @@ message BigInt {
 }
 
 message TuringMachine {
-  // TODO: We may want to encode this in a more efficient way.
-  // Ex: a bytes with transitions bit-packed into 1 byte each? (~4x smaller).
-  string ttable = 1;
+  // High density, bit-packed version of ttable.
+  // Each transition is represented by one byte from least significant to most:
+  //   * 3 bits for (symbol + 1)  [symbol == -1 means undefined cell]
+  //   * 3 bits for (state + 1)   [state == -1 means halt]
+  //   * 1 bit for dir
+  //   * 1 bit for is_newrow  [indicates where to add row breaks to matrix]
+  bytes ttable_packed = 1;
 }
 
+
+enum InfReason {
+  INF_UNSPECIFIED = 0;
+  INF_MACRO_STEP = 1;
+  INF_CHAIN_STEP = 2;
+  INF_PROOF_SYSTEM = 3;
+  INF_REVERSE_ENGINEER = 4;
+  INF_LIN_RECUR = 5;
+  INF_CTL = 6;
+}
 
 // Statuses for various searches (BB, BBB, ...)
 message HaltStatus {
@@ -42,7 +56,8 @@ message HaltStatus {
   BigInt halt_steps = 3;
   BigInt halt_score = 4;
 
-  string reason = 5;
+  // Only meaningful if is_halting = True.
+  InfReason reason = 5;
 }
 
 message QuasihaltStatus {
@@ -52,23 +67,23 @@ message QuasihaltStatus {
   bool is_quasihalting = 2;
 
   BigInt quasihalt_steps = 3;
-  int64 quasihalt_state = 4;
+  uint64 quasihalt_state = 4;
 }
 
 message BBStatus {
   HaltStatus halt_status = 1;
   QuasihaltStatus quasihalt_status = 2;
-  // TODO: Add more, like lin_recur_info and blanking_info?
+  // TODO: Add more, like lin_recur_status and blanking_status?
 }
 
 
 message SimulatorParams {
   // Maximum number of simulator "loops" to run for.
-  int64 max_loops = 1;
+  uint64 max_loops = 1;
   // Maximum wall time to run the simuator for.
   float max_time_sec = 2;
   // Maximum size of compressed tape before we give up.
-  int64 max_tape_blocks = 3;
+  uint64 max_tape_blocks = 3;
 
   // Prover Params
   bool use_prover = 4;
@@ -113,20 +128,20 @@ message InfProofSystemInfo {
 
 message InfiniteInfo {
   oneof reason {
-    InfMacroRepeatInfo macro_repeat_info = 1;
-    InfChainMoveInfo   chain_move_info   = 2;
-    InfProofSystemInfo proof_system_info = 3;
+    InfMacroRepeatInfo macro_repeat = 1;
+    InfChainMoveInfo   chain_move   = 2;
+    InfProofSystemInfo proof_system = 3;
     // TODO: ...
   }
 }
 
 
 message OverLoopsInfo {
-  int64 num_loops = 1;
+  uint64 num_loops = 1;
 }
 
 message OverTapeInfo {
-  int64 compressed_tape_size = 1;
+  uint64 compressed_tape_size = 1;
 }
 
 message OverTimeInfo {
@@ -142,17 +157,17 @@ message OverStepsInMacroInfo {
 
 message UnknownInfo {
   oneof reason {
-    OverLoopsInfo over_loops_info = 1;
-    OverTapeInfo over_tape_info = 2;
-    OverTimeInfo over_time_info = 3;
-    OverStepsInMacroInfo over_steps_in_macro_info = 4;
+    OverLoopsInfo over_loops = 1;
+    OverTapeInfo over_tape = 2;
+    OverTimeInfo over_time = 3;
+    OverStepsInMacroInfo over_steps_in_macro = 4;
   }
 }
 
 message UnfinedCellInfo {
   bool reached_undefined_cell = 1;
-  int64 state = 2;
-  int64 symbol = 3;
+  uint64 state = 2;
+  uint64 symbol = 3;
 }
 
 message SimulatorResult {
@@ -174,12 +189,12 @@ message SimulatorResult {
   // Stats
   float elapsed_time_sec = 5;
 
-  int64 num_loops = 6;
+  uint64 num_loops = 6;
   BigInt num_steps = 7;
   // TODO: loops/steps by category (Macro, Chain, Proof, ...)
 
-  int64 num_rules_proven = 8;
-  int64 num_proofs_failed = 9;
+  uint64 num_rules_proven = 8;
+  uint64 num_proofs_failed = 9;
 }
 
 message SimulatorInfo {
@@ -190,37 +205,37 @@ message SimulatorInfo {
 
 message BlockFinderParams {
   // # loops to run Sim searching for least-compressed tape.
-  int64 compression_search_loops = 1;
+  uint64 compression_search_loops = 1;
   // # loops to run sim for each multiple of optimal compression size.
-  int64 mult_sim_loops = 2;
+  uint64 mult_sim_loops = 2;
   // While searching for optimal multiple: How far should we look beyond
   // current best mult?
-  int64 extra_mult = 3;
+  uint64 extra_mult = 3;
 }
 
 message BlockFinderResult {
   // Results
   // Overall heuristically decided best block size.
-  int64 best_block_size = 1;
+  uint64 best_block_size = 1;
 
   // Stats
   float elapsed_time_sec = 2;
 
   // Chain Sim loop (with block size 1) where compressed tape was largest
   // (least effectively compressed).
-  int64 least_compressed_loop = 3;
+  uint64 least_compressed_loop = 3;
   // # Blocks (with compression) on this least compressed tape.
-  int64 least_compressed_tape_size_chain = 4;
+  uint64 least_compressed_tape_size_chain = 4;
   // Total # symbols (no compression) on this least compressed tape.
-  int64 least_compressed_tape_size_raw = 5;
+  uint64 least_compressed_tape_size_raw = 5;
   // Best block size for compression on this least compressed tape.
-  int64 best_compression_block_size = 6;
+  uint64 best_compression_block_size = 6;
   // # Blocks (with compression) using best_compression_block_size on this
   // least compressed tape.
-  int64 best_compression_tape_size = 7;
+  uint64 best_compression_tape_size = 7;
 
   // Best multiple of best_compression_block_size found.
-  int64 best_mult = 8;
+  uint64 best_mult = 8;
   // "Chain factor" (steps_from_chain / steps_from_macro) at best_mult.
   float best_chain_factor = 9;
 }
@@ -239,7 +254,7 @@ message FilterInfo {
 
 message LinRecurFilterParams {
   // Parameters
-  int64 max_steps = 1;
+  uint64 max_steps = 1;
   // Is start_step the min start time of LR?
   // Or just a time at which it had started by?
   bool find_min_start_step = 2;
@@ -252,18 +267,17 @@ message LinRecurFilterResult {
   // A step at which the machine is in Lin Recurrence.
   // If is_start_step_min=True, this is the smallest such step (i.e. the
   // step that Lin Recurrence began).
-  int64 start_step = 2;
+  uint64 start_step = 2;
   // Period of LR cycle.
-  int64 period = 3;
+  uint64 period = 3;
   // Tape offset distance from one cycle to the next
   // (+ means right, - means left, 0 means it repeats in place).
-  int64 offset = 4;
-
-  // Halting or Quasihalting conclusions.
-  BBStatus status = 5;
+  sint64 offset = 4;
 
   // Stats
   float elapsed_time_sec = 6;
+
+  // next id: 5
 }
 
 message LinRecurFilterInfo {
@@ -274,7 +288,7 @@ message LinRecurFilterInfo {
 
 message CTLFilterInfo {
   // Parameters
-  int64 init_step = 1;
+  uint64 init_step = 1;
 
   // Results
   // CTL_A*
@@ -284,22 +298,33 @@ message CTLFilterInfo {
 }
 
 
+message FilterResults {
+  // parameters, results and stats from various filters.
+  SimulatorInfo simulator = 1;
+  BlockFinderInfo block_finder = 2;
+
+  FilterInfo reverse_engineer = 3;
+  LinRecurFilterInfo lin_recur = 4;
+  CTLFilterInfo ctl = 5;
+  // TODO: Add results for other filters
+}
+
 // The top level message for a TM. It contains:
 //  * TM specification (ttable)
-//  * Results for all filters that have been run
+//  * Results for all simulations and filters that have been run
 //  * Concluded "Statuses" for Halting, etc. conditions
-message IORecord {
-  TuringMachine tm = 1;
+message TMRecord {
+  // Version of the specification this Protobuf was written for.
+  // Version only needs to change in case non-backwards/forwards compatible
+  // changes are made to the specification (changing message hierarchy or
+  // tag numbers).
+  uint64 spec_version = 1;
+
+  TuringMachine tm = 2;
 
   // Status of this machine with respect to BB, BBB, etc. criteria.
-  BBStatus status = 2;
+  BBStatus status = 3;
 
-  // parameters, results and stats from various filters.
-  SimulatorInfo simulator_info = 3;
-  BlockFinderInfo block_finder_info = 4;
-
-  FilterInfo reverse_engineer_filter_info = 5;
-  LinRecurFilterInfo lin_recur_filter_info = 6;
-  CTLFilterInfo ctl_filter_info = 7;
-  // TODO: Add results for other filters
+  // Detailed results and stats for all filters run.
+  FilterResults filter = 4;
 }

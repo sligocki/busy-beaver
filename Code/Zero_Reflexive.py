@@ -3,7 +3,6 @@ import sys
 
 from Common import Exit_Condition
 import IO
-import Lin_Recur_Detect
 import Option_Parser
 
 

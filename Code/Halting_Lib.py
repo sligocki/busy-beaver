@@ -25,7 +25,7 @@ def get_big_int(field : io_pb2.BigInt) -> Optional[int]:
     return None
 
 
-def set_halting(tm_status : io_pb2.BBStatus,
+def set_halting(tm_status  : io_pb2.BBStatus,
                 halt_steps : int,
                 halt_score : Optional[int]):
   """Specify that we know that this machine halts."""
@@ -40,7 +40,7 @@ def set_halting(tm_status : io_pb2.BBStatus,
   set_not_quasihalting(tm_status)
 
 def set_not_halting(tm_status : io_pb2.BBStatus,
-                    reason : str):
+                    reason    : io_pb2.InfReason):
   """Specify that we know that this machine does not halt."""
   tm_status.halt_status.is_decided = True
   tm_status.halt_status.is_halting = False
