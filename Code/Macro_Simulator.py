@@ -37,7 +37,7 @@ def add_option_group(parser):
                    "[Default: %default]")
   group.add_option("--tape-limit", type=int, default=50,
                    help="Max tape size to allow.")
-  group.add_option("--lin-steps", type=int, default=100,
+  group.add_option("--lin-steps", type=int, default=127,
                    help="Number of steps to run Lin_Recur detection (0 means skip).")
   group.add_option("--lin-min", action="store_true", default = False)
   group.add_option("--no-reverse-engineer", dest="reverse_engineer",
