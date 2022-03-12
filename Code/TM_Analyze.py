@@ -127,7 +127,7 @@ class TMStats:
     print()
 
     print("Filters Run:")
-    for (filter, num_run) in self.filters_run.items():
+    for (filter, num_run) in sorted(self.filters_run.items(), key=lambda x: x[1], reverse=True):
       print(f"  - {filter:20s} : {num_run:15_d}  ({num_run / self.count:7.2%})")
     print()
 

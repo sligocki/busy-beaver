@@ -57,48 +57,52 @@ def block_finder(machine : Turing_Machine.Turing_Machine,
     new_options.prover = False
     new_options.verbose_simulator = False
 
-    sim = Simulator(machine, new_options)
+    if params.compression_search_loops:
+      sim = Simulator(machine, new_options)
 
-    ## Find the least compressed time in before limit
-    # Run sim to find when the tape is least compressed with macro size 1
-    max_length = len(sim.tape.tape[0]) + len(sim.tape.tape[1])
-    worst_loop = 0
-    for i in range(params.compression_search_loops):
-      sim.step()
-      tape_length = len(sim.tape.tape[0]) + len(sim.tape.tape[1])
-      if tape_length > max_length:
-        max_length = tape_length
-        worst_loop = sim.num_loops
-      # If it has stopped running then this is a good block size!
-      if sim.op_state != Turing_Machine.RUNNING:
-        result.best_block_size = 1
-        return
+      ## Find the least compressed time in before limit
+      # Run sim to find when the tape is least compressed with macro size 1
+      max_length = len(sim.tape.tape[0]) + len(sim.tape.tape[1])
+      worst_loop = 0
+      for i in range(params.compression_search_loops):
+        sim.step()
+        tape_length = len(sim.tape.tape[0]) + len(sim.tape.tape[1])
+        if tape_length > max_length:
+          max_length = tape_length
+          worst_loop = sim.num_loops
+        # If it has stopped running then this is a good block size!
+        if sim.op_state != Turing_Machine.RUNNING:
+          result.best_block_size = 1
+          return
 
-    result.least_compressed_loop = worst_loop
-    result.least_compressed_tape_size_chain = max_length
+      result.least_compressed_loop = worst_loop
+      result.least_compressed_tape_size_chain = max_length
 
-    # TODO: Instead of re-seeking, keep going till next bigger tape?
-    sim = Simulator(machine, new_options)
-    sim.loop_seek(worst_loop)
-    assert len(sim.tape.tape[0]) + len(sim.tape.tape[1]) == max_length
+      # TODO: Instead of re-seeking, keep going till next bigger tape?
+      sim = Simulator(machine, new_options)
+      sim.loop_seek(worst_loop)
+      assert len(sim.tape.tape[0]) + len(sim.tape.tape[1]) == max_length
 
-    # Analyze this time to see which block size provides greatest compression
-    tape = uncompress_tape(sim.tape.tape)
-    result.least_compressed_tape_size_raw = len(tape)
+      # Analyze this time to see which block size provides greatest compression
+      tape = uncompress_tape(sim.tape.tape)
+      result.least_compressed_tape_size_raw = len(tape)
 
-    min_compr = len(tape) + 1 # Worse than no compression
-    opt_size = 1
-    for block_size in range(1, len(tape)//2):
-      compr_size = compression_efficiency(tape, block_size)
-      if compr_size < min_compr:
-        if block_size <= options.max_block_size:
-          min_compr = compr_size
-          opt_size = block_size
-        else:
-          break
+      min_compr = len(tape) + 1 # Worse than no compression
+      opt_size = 1
+      for block_size in range(1, len(tape)//2):
+        compr_size = compression_efficiency(tape, block_size)
+        if compr_size < min_compr:
+          if block_size <= options.max_block_size:
+            min_compr = compr_size
+            opt_size = block_size
+          else:
+            break
 
-    result.best_compression_block_size = opt_size
-    result.best_compression_tape_size = min_compr
+      result.best_compression_block_size = opt_size
+      result.best_compression_tape_size = min_compr
+
+    else:  # if not params.compression_search_loops
+      opt_size = 1
 
     if params.mult_sim_loops <= 0:
       result.best_block_size = opt_size
