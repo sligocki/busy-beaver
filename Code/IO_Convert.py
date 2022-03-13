@@ -45,7 +45,7 @@ else:
       elif io_record.category == Exit_Condition.INFINITE:
         inf_reason, qhalt_state, qhalt_steps = io_record.category_reason
         Halting_Lib.set_not_halting(tm_record.status,
-                                    reason = IO.str2inf_reason[inf_reason])
+                                    inf_reason = IO.Text.str2inf_reason[inf_reason])
         if qhalt_state == "No_Quasihalt":
           Halting_Lib.set_not_quasihalting(tm_record.status)
         elif qhalt_state not in ("Quasihalt_Not_Computed", "N/A"):
