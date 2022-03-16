@@ -78,8 +78,9 @@ def run(machine, block_size, back, prover, recursive, options):
                               states_last_seen=sim.states_last_seen)
     print()
     print("Turing Machine proven Infinite")
-    print("Reason:", sim.inf_reason)
-    print("Quasihalt:", bb_status.quasihalt_status)
+    print("Reason:", io_pb2.InfReason.Name(sim.inf_reason))
+    print("Quasihalt:")
+    print(bb_status.quasihalt_status)
   elif sim.op_state == Turing_Machine.UNDEFINED:
     print()
     print("Turing Machine reached Undefined transition")
