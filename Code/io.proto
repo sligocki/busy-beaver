@@ -184,16 +184,21 @@ message SimulatorResult {
   // Stats
   uint64 elapsed_time_us = 5;
 
+  // Number of simulator steps (or loops). One simulator step is either a
+  // basic Macro Machine step, a Chain Step or a Rule Step.
   uint64 num_loops = 6;
-  // We don't need to know the precise num_steps, just want ballpark (order
-  // of magnitude).
+  uint64 num_macro_moves = 7;
+  uint64 num_chain_moves = 10;
+  uint64 num_rule_moves = 11;
+
+  // Number of base TM steps that this TM was simulated up to. We don't need
+  // to know the precise num_steps, just want ballpark (order of magnitude).
   uint64 log10_num_steps = 4;
-  // TODO: loops/steps by category (Macro, Chain, Proof, ...)
 
   uint64 num_rules_proven = 8;
   uint64 num_proofs_failed = 9;
 
-  // next id: 7
+  // next id: 12
 }
 
 message SimulatorInfo {
