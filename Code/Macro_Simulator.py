@@ -5,6 +5,7 @@ the Proof System.
 """
 
 import copy
+import math
 from optparse import OptionParser, OptionGroup
 import sys
 import time
@@ -200,7 +201,8 @@ def simulate_machine(machine : Turing_Machine.Turing_Machine,
       sim.step()
 
     sim_info.result.num_loops = sim.num_loops
-    Halting_Lib.set_big_int(sim_info.result.num_steps, sim.step_num)
+    if sim.step_num > 0:
+      sim_info.result.log10_num_steps = int(math.log10(sim.step_num))
     sim_info.result.num_rules_proven = sim.prover.rule_num - 1
     # TODO: add num_recursive_rules, num_collatz_rules, etc.
     sim_info.result.num_proofs_failed = sim.prover.num_failed_proofs
