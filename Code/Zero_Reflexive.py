@@ -29,8 +29,10 @@ def main():
     num_total += 1
     if is_zero_reflexive(io_record.ttable):
       num_zero_reflexive += 1
+    if num_total % 100_000 == 0:
+      print(f" ... {num_zero_reflexive:_} / {num_total:_} = {num_zero_reflexive / num_total:.2%}")
 
-  print(f"# Zero Reflexive TMs: {num_zero_reflexive:_} / {num_total:_} = {num_zero_reflexive / num_total:.0%}")
+  print(f"# Zero Reflexive TMs: {num_zero_reflexive:_} / {num_total:_} = {num_zero_reflexive / num_total:.2%}")
 
 if __name__ == "__main__":
   main()
