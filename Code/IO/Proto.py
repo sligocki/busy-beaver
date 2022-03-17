@@ -120,8 +120,10 @@ class Reader:
     >>> for tm_record in reader:
     ...   # do something with tm_record
     """
-    while (tm_record := self.read_record()) != None:
+    tm_record = self.read_record()
+    while tm_record != None:
       yield tm_record
+      tm_record = self.read_record()
 
 
 def load_record(filename, record_num):
