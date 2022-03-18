@@ -202,24 +202,25 @@ class TMStats:
       print(f"     > {10**(max_n+1):<20_}: {val:9_} ({val / total:4.0%})  Cumulative: {cum_total:9_} ({cum_total / total:4.0%})")
 
 
-def analyze(tm_filename, args):
-  stats = TMStats()
-  with open(tm_filename, "rb") as infile:
-    reader = IO.Proto.Reader(infile)
-    for tm_record in reader:
-      stats.add_record(tm_record)
-      if args.print_freq and (stats.count % args.print_freq == 0):
-        stats.print()
-
-  stats.print()
-
 def main():
   parser = argparse.ArgumentParser()
-  parser.add_argument("tm_file", type=Path)
+  parser.add_argument("tm_file", type=Path, nargs="+")
   parser.add_argument("--print-freq", type=int, default=1_000_000)
   args = parser.parse_args()
 
-  analyze(args.tm_file, args)
+  stats = TMStats()
+  for filename in args.tm_file:
+    try:
+      with open(filename, "rb") as infile:
+        reader = IO.Proto.Reader(infile)
+        for tm_record in reader:
+          stats.add_record(tm_record)
+          if args.print_freq and (stats.count % args.print_freq == 0):
+            stats.print()
+    except IO.Proto.IO_Error:
+      print(f"ERROR: {filename} has unexpected EOF. Moving on.")
+
+  stats.print()
 
 if __name__ == "__main__":
   main()

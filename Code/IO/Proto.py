@@ -99,12 +99,16 @@ class Reader:
     # Read message length
     len_bytes = self.infile.read(4)
     if len(len_bytes) > 0:
-      assert len(len_bytes) == 4
+      if len(len_bytes) != 4:
+        raise IO_Error("Unexpected EOF while reading length block "
+                       f"(expected 4 bytes, got {len(len_bytes)}).")
       pb_len = struct.unpack('<L', len_bytes)[0]
 
       # Read protobuf bytes
       pb_bytes = self.infile.read(pb_len)
-      assert len(pb_bytes) == pb_len
+      if  len(pb_bytes) != pb_len:
+        raise IO_Error("Unexpected EOF while reading data block "
+                       f"(expected {pb_len}, got {len(pb_bytes)})")
 
       # Parse protobuf
       tm_record = io_pb2.TMRecord()
