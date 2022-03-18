@@ -147,7 +147,7 @@ class TMStats:
     print(f"  - num_loops : Mean {self.sim_num_loops.mean():9_.0f}  Max {self.sim_num_loops.max_value:9_d}  (Set in {self.sim_num_loops.count / self.count:4.0%})")
     self.print_hist(self.sim_num_loops.log_hist)
     print()
-    print(f"  - log10(num_steps) : Mean {self.sim_log10_num_steps.mean():_.3e}  Max {self.sim_log10_num_steps.max_value:_.3e}  (Set in {self.sim_log10_num_steps.count / self.count:4.0%})")
+    print(f"  - log10(num_steps) : Mean {self.sim_log10_num_steps.mean():9_.0f}  Max {self.sim_log10_num_steps.max_value:9_d}  (Set in {self.sim_log10_num_steps.count / self.count:4.0%})")
     print()
 
     print("Timings:")
