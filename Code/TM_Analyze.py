@@ -141,7 +141,7 @@ class TMStats:
             f"{count:15_}  ({count / self.num_inf:7.2%})")
     print()
     print(f"Quasihalt: {self.num_qhalt:_} ({self.num_qhalt / self.count:.3%})")
-    print(f"  - Steps: Max {self.qhalt_steps.max_value:_} Mean {self.qhalt_steps.mean():_.0f}")
+    print(f"  - Steps: Max {self.qhalt_steps.max_value:.3e} Mean {self.qhalt_steps.mean():.3e}")
     print()
 
     print("Filters Run:")
