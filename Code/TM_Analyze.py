@@ -43,10 +43,12 @@ class TMStats:
     self.num_unknown = 0
     self.num_halt = 0
     self.num_inf = 0
+    self.num_qhalt = 0
 
     self.halt_steps = Stat()
     self.halt_score = Stat()
     self.inf_reason = collections.Counter()
+    self.qhalt_steps = Stat()
 
     self.filters_run = collections.Counter()
 
@@ -80,6 +82,12 @@ class TMStats:
     else:
       self.num_inf += 1
       self.inf_reason[tm_record.status.halt_status.inf_reason] += 1
+
+    # Quasihalt status
+    if tm_record.status.quasihalt_status.is_quasihalting:
+      self.num_qhalt += 1
+      num_steps = Halting_Lib.get_big_int(tm_record.status.quasihalt_status.quasihalt_steps)
+      self.qhalt_steps.add(num_steps)
 
     # Which filters were run
     for descr in tm_record.filter.DESCRIPTOR.fields:
@@ -131,6 +139,9 @@ class TMStats:
     for (reason, count) in sorted(self.inf_reason.items(), key=lambda x: x[1], reverse=True):
       print(f"  - {io_pb2.InfReason.Name(reason):20s} : "
             f"{count:15_}  ({count / self.num_inf:7.2%})")
+    print()
+    print(f"Quasihalt: {self.num_qhalt:_} ({self.num_qhalt / self.count:.3%})")
+    print(f"  - Steps: Max {self.qhalt_steps.max_value:_} Mean {self.qhalt_steps.mean():_.0f}")
     print()
 
     print("Filters Run:")
