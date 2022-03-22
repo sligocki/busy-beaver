@@ -85,6 +85,10 @@ message BBStatus {
 
 
 message SimulatorParams {
+  // Macro machine configuration.
+  uint64 block_size = 9;
+  bool has_blocksymbol_macro = 10;
+
   // Maximum number of simulator "loops" to run for.
   uint64 max_loops = 1;
   // Maximum wall time to run the simulator for.

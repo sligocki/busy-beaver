@@ -174,6 +174,8 @@ def run_options(ttable, options,
 
     # Finally: Do the actual Macro Machine / Chain simulation.
     sim_info = tm_record.filter.simulator
+    sim_info.parameters.block_size = block_size
+    sim_info.parameters.has_blocksymbol_macro = options.backsymbol
     simulate_machine(machine, options, sim_info, tm_record.status)
 
 def simulate_machine(machine : Turing_Machine.Turing_Machine,
