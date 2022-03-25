@@ -68,14 +68,24 @@ class DirectTape:
 
 
 class DirectSimulator:
-  def __init__(self, ttable):
+  def __init__(self, ttable, initialize = True,
+               init_state = 0, init_symbol = 0):
     self.ttable = ttable
 
-    self.state = 0  # Init state
-    self.halted = False
-    self.tape = DirectTape(init_symbol = 0)
+    if initialize:
+      self.state = init_state
+      self.halted = False
+      self.tape = DirectTape(init_symbol = init_symbol)
 
-    self.step_num = 0
+      self.step_num = 0
+
+  def copy(self):
+    new_sim = DirectSimulator(self.ttable, initialize=False)
+    new_sim.state = self.state
+    new_sim.halted = self.halted
+    new_sim.tape = self.tape.copy()
+    new_sim.step_num = self.step_num
+    return new_sim
 
   def step(self):
     if not self.halted:
