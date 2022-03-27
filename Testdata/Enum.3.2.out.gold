@@ -2173,7 +2173,7 @@
 1RB 1RC  0LC 1RA  --- 1LA | None Infinite Lin_Recur 1 7
 1RB 1LC  0LC 1RA  1RZ 1LA | None Halt 5 16
 1RB 0RC  0LC 1RA  --- 1LA | None Infinite Lin_Recur No_Quasihalt N/A
-1RB 0LC  0LC 1RA  --- 1LA | None Infinite Proof_System No_Quasihalt N/A
+1RB 0LC  0LC 1RA  --- 1LA | None Infinite CTL Quasihalt_Not_Computed N/A
 1RB 1RB  0LC 1RA  --- 1LA | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1LB  0LC 1RA  --- 1LA | None Infinite Lin_Recur 2 8
 1RB 0RB  0LC 1RA  --- 1LA | None Infinite Lin_Recur No_Quasihalt N/A
@@ -3917,7 +3917,7 @@
 1RB 1LC  0LA 0LC  1LA 1RZ | None Halt 2 7
 1RB 1LC  0LA 1RB  1LA 1RZ | None Halt 3 10
 1RB 1LC  0LA 1LB  1LA --- | None Infinite Lin_Recur No_Quasihalt N/A
-1RB 1LC  0LA 0RB  1LA --- | None Unknown Max_Steps 1000
+1RB 1LC  0LA 0RB  1LA --- | None Unknown Max_Steps 10000
 1RB 1LC  0LA 0LB  1LA --- | None Infinite Lin_Recur No_Quasihalt N/A
 1RB 1LC  0LA 1RA  1LA 1RZ | None Halt 3 8
 1RB 1LC  0LA 1LA  1LA --- | None Infinite Lin_Recur No_Quasihalt N/A

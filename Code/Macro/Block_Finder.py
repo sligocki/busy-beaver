@@ -30,14 +30,6 @@ def add_option_group(parser : OptionParser):
 
   group.add_option("--verbose-block-finder", action="store_true")
 
-  group.add_option("--bf-limit1", type=int, default=200, metavar="LIMIT",
-                   help="Number of steps to run the first half of the "
-                   "block finder (0 to not run at all) [Default: %default].")
-
-  group.add_option("--bf-limit2", type=int, default=200, metavar="LIMIT",
-                   help="Number of steps to run the second half of the "
-                   "block finder (0 to not run at all) [Default: %default].")
-
   group.add_option("--bf-extra-mult", type=int, default=2, metavar="N",
                    help="How far ahead to search in second half of the "
                    " block finder.")

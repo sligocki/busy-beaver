@@ -73,7 +73,7 @@ def filter(in_filenames, out_dir):
 def main():
   parser = argparse.ArgumentParser()
   parser.add_argument("in_files", nargs="*", type=Path)
-  parser.add_argument("--out-dir", type=Path)
+  parser.add_argument("--out-dir", type=Path, required=True)
   args = parser.parse_args()
 
   filter(args.in_files, args.out_dir)

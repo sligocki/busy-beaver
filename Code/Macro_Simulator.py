@@ -30,7 +30,7 @@ def add_option_group(parser):
 
   group = OptionGroup(parser, "Macro Simulator options")
 
-  group.add_option("--max-loops", type=int, default=0,
+  group.add_option("--max-loops", type=int, default=1000,
                    help="Max simulator loops to run each simulation (0 for infinite). "
                    "[Default: infinite]")
   group.add_option("--time", type=int, default=15,
@@ -40,7 +40,7 @@ def add_option_group(parser):
                    help="Max tape size to allow.")
   group.add_option("--lin-steps", type=int, default=127,
                    help="Number of steps to run Lin_Recur detection (0 means skip).")
-  group.add_option("--lin-min", action="store_true", default = False)
+  group.add_option("--lin-min", action="store_true", default=False)
   group.add_option("--no-reverse-engineer", dest="reverse_engineer",
                    action="store_false", default=True,
                    help="Don't try Reverse_Engineer_Filter.")
@@ -128,9 +128,14 @@ def run_options(ttable, options,
     # If no explicit block-size given, use heuristics to find one.
     block_size = options.block_size
     if not block_size:
+      if options.max_loops:
+        bf_loops = options.max_loops // 100
+      else:
+        bf_loops = 100
+
       bf_info = tm_record.filter.block_finder
-      bf_info.parameters.compression_search_loops = options.bf_limit1
-      bf_info.parameters.mult_sim_loops = options.bf_limit2
+      bf_info.parameters.compression_search_loops = bf_loops
+      bf_info.parameters.mult_sim_loops = bf_loops
       bf_info.parameters.extra_mult = options.bf_extra_mult
       Block_Finder.block_finder(machine, options,
                                 bf_info.parameters, bf_info.result)
@@ -145,11 +150,16 @@ def run_options(ttable, options,
     if options.ctl:
       ctl_filter_info = tm_record.filter.ctl
       with IO.Timer(ctl_filter_info):
-        CTL_config = setup_CTL(machine, options.bf_limit1)
+        if options.max_loops:
+          ctl_init_step = options.max_loops // 10
+        else:
+          ctl_init_step = 1000
+
+        CTL_config = setup_CTL(machine, ctl_init_step)
 
         # Run CTL filters unless machine halted
         if CTL_config:
-          ctl_filter_info.init_step = options.bf_limit1
+          ctl_filter_info.init_step = ctl_init_step
           CTL_config_copy = copy.deepcopy(CTL_config)
           ctl_filter_info.ctl_as.tested = True
           if CTL1.CTL(machine, CTL_config_copy):

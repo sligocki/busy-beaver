@@ -22,8 +22,8 @@ def run(machine, block_size, back, prover, recursive, options):
   # If no explicit block-size given, use heuristics to find one.
   if not block_size:
     bf_info = io_pb2.BlockFinderInfo()
-    bf_info.parameters.compression_search_loops = options.bf_limit1
-    bf_info.parameters.mult_sim_loops = options.bf_limit2
+    bf_info.parameters.compression_search_loops = options.bf_loops
+    bf_info.parameters.mult_sim_loops = options.bf_loops
     bf_info.parameters.extra_mult = options.bf_extra_mult
     Block_Finder.block_finder(machine, options,
                               bf_info.parameters, bf_info.result)
@@ -48,7 +48,7 @@ def run(machine, block_size, back, prover, recursive, options):
       total_loops = 0;
 
       while (sim.op_state == Turing_Machine.RUNNING and
-             (options.loops == 0 or total_loops < options.loops)):
+             (options.max_loops == 0 or total_loops < options.max_loops)):
         sim.step()
         total_loops += 1;
     else:
@@ -56,7 +56,7 @@ def run(machine, block_size, back, prover, recursive, options):
       total_loops = 0;
 
       while (sim.op_state == Turing_Machine.RUNNING and
-             (options.loops == 0 or total_loops < options.loops)):
+             (options.max_loops == 0 or total_loops < options.max_loops)):
         sim.print_self()
         sim.loop_run(options.print_loops)
         total_loops += options.print_loops;
@@ -162,8 +162,12 @@ if __name__ == "__main__":
   parser.add_option("-v", "--verbose", action="store_true",
                     help="Print step-by-step informaion from simulator "
                     "and prover (Overrides other --verbose-* flags).")
-  parser.add_option("-l", "--loops", type=int, default=0,
+
+  parser.add_option("--max-loops", type=int, default=0,
                     help="Specify a maximum number of loops.")
+  parser.add_option("--bf-loops", type=int, default=1000,
+                    help="Number of steps to run Block Finder.")
+
   parser.add_option("--print-loops", type=int, default=10000, metavar="LOOPS",
                     help="Print every LOOPS loops [Default %default].")
   parser.add_option("--print-macro-ttable", action="store_true")
@@ -187,8 +191,8 @@ if __name__ == "__main__":
     options.verbose_prover = True
     options.verbose_block_finder = True
 
-  if options.loops and options.print_loops > options.loops:
-    options.print_loops = options.loops
+  if options.max_loops and options.print_loops > options.max_loops:
+    options.print_loops = options.max_loops
 
   if len(args) < 1:
     parser.error("Must have at least one argument, machine_file")
