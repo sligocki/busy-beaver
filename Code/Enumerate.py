@@ -28,7 +28,6 @@ import IO
 from IO.TM_Record import TM_Record
 from Macro import Block_Finder, Turing_Machine
 import Macro_Simulator
-import Output_Machine
 import TM_Enum
 import Work_Queue
 

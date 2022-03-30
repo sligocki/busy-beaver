@@ -6,6 +6,6 @@ from IO import Proto
 
 from IO.Timer import Timer
 
-# TODO: Remove this as we move everything to new way:
+# TODO: This is just to support old code which is looking for IO.IO().
 from IO.Text import ReaderWriter as IO
 from IO.Text import parse_ttable, parse_tm, load_TTable_filename
