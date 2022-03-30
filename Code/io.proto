@@ -33,6 +33,9 @@ message TuringMachine {
   //   * 1 bit for dir
   //   * 1 bit for is_newrow  [indicates where to add row breaks to matrix]
   bytes ttable_packed = 1;
+
+  // Enumeration options
+  bool allow_no_halt = 2;
 }
 
 

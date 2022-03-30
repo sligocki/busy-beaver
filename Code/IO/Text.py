@@ -14,11 +14,9 @@ import sys
 
 from Common import Exit_Condition
 import Halting_Lib
-import Input_Machine
 import IO
 from IO import TM_Record
 from Macro import Turing_Machine
-import Output_Machine
 
 import io_pb2
 
@@ -35,6 +33,46 @@ inf_reason2str = {
 str2inf_reason = {s: inf_reason for (inf_reason, s) in inf_reason2str.items()}
 
 
+SYMBOLS_DISPLAY = string.digits
+DIRS_DISPLAY = "LRS"
+STATES_DISPLAY = string.ascii_uppercase[:7]
+def display_ttable(table):
+  """Pretty print the ttable."""
+  s = ""
+  for row in table:
+    for cell in row:
+      if cell[0] == -1:
+        s += "--- "
+      else:
+        symbol = SYMBOLS_DISPLAY[cell[0]]
+        dir = DIRS_DISPLAY[cell[1]]
+        state = STATES_DISPLAY[cell[2]] if cell[2] >= 0 else "Z"
+        s += "%c%c%c " % (symbol, dir, state)
+    s += " "
+  return s.strip()
+
+def read_ttable(line):
+  """Read transition table given a string representation."""
+  ttable = []
+  rows = line.strip().split("  ")
+  for row in rows:
+    cells = row.split()
+    ttable_row = []
+    for cell in cells:
+      assert len(cell) == 3, (cell, row, rows, line)
+      if cell == "---":
+        ttable_row.append((-1, 0, -1))
+      else:
+        symb_out = SYMBOLS_DISPLAY.find(cell[0])
+        dir_out = DIRS_DISPLAY.find(cell[1])
+        state_out = STATES_DISPLAY.find(cell[2])
+        assert symb_out >= 0
+        assert dir_out in [0, 1]
+        assert state_out >= -1
+        ttable_row.append((symb_out, dir_out, state_out))
+    ttable.append(ttable_row)
+  return ttable
+
 class Record(object):
   """Structuring of information in a Turing machine result line."""
   def __init__(self):
@@ -50,7 +88,7 @@ class Record(object):
 
   def write(self, out):
     """Write out a Record object result."""
-    out.write(Output_Machine.display_ttable(self.ttable))
+    out.write(display_ttable(self.ttable))
     if self.category != None:
       out.write(" | %r %s" % (self.log_number, Exit_Condition.name(self.category)))
       self.write_list(self.category_reason, out)
@@ -68,7 +106,7 @@ class Record(object):
     line = line.split("#")[0]  # Cleave off comment.
 
     parts = line.split("|", 2)
-    self.ttable = Input_Machine.read_ttable(parts[0])
+    self.ttable = read_ttable(parts[0])
     if len(parts) >= 2:
       subparts = parts[1].split()  # Split by whitespace
       try:

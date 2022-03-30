@@ -69,7 +69,8 @@ class TM_Record:
       self.update_tm(tm)
     else:
       tm = unpack_tm(self.proto.tm.ttable_packed)
-      self.tm_enum = TM_Enum.TM_Enum(tm)
+      self.tm_enum = TM_Enum.TM_Enum(
+        tm, allow_no_halt = self.proto.tm.allow_no_halt)
 
   def update_tm(self, tm_enum : TM_Enum.TM_Enum):
     self.tm_enum = tm_enum
