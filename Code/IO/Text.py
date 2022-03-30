@@ -16,6 +16,8 @@ from Common import Exit_Condition
 import Halting_Lib
 import Input_Machine
 import IO
+from IO import TM_Record
+from Macro import Turing_Machine
 import Output_Machine
 
 import io_pb2
@@ -124,18 +126,18 @@ class ReaderWriter(object):
     self.output_file = output_file
     self.log_number = log_number
 
-  def write_record(self, tm_record : io_pb2.TMRecord):
-    assert isinstance(tm_record, io_pb2.TMRecord), tm_record
+  def write_record(self, tm_record : TM_Record.TM_Record):
+    assert isinstance(tm_record, TM_Record.TM_Record), tm_record
 
     io_record = Record()
     if self.log_number is not None:
       io_record.log_number = self.log_number
-    io_record.ttable = IO.Proto.unpack_ttable(tm_record.tm.ttable_packed)
+    io_record.ttable = TM_Record.unpack_ttable(tm_record.proto.tm.ttable_packed)
 
-    if not tm_record.status.halt_status.is_decided:
+    if tm_record.is_unknown_halting():
       io_record.category = Exit_Condition.UNKNOWN
 
-      unknown_info = tm_record.filter.simulator.result.unknown_info
+      unknown_info = tm_record.proto.filter.simulator.result.unknown_info
       unk_reason = unknown_info.WhichOneof("reason")
       if unk_reason is None:
         # If we haven't run this TM, there will not exist any unknown_info at all.
@@ -160,23 +162,23 @@ class ReaderWriter(object):
 
       io_record.category_reason = (Exit_Condition.name(reason),) + args
 
-    elif tm_record.status.halt_status.is_halting:
+    elif tm_record.is_halting():
       io_record.category = Exit_Condition.HALT
       io_record.category_reason = (
-        Halting_Lib.get_big_int(tm_record.status.halt_status.halt_score),
-        Halting_Lib.get_big_int(tm_record.status.halt_status.halt_steps))
+        Halting_Lib.get_big_int(tm_record.proto.status.halt_status.halt_score),
+        Halting_Lib.get_big_int(tm_record.proto.status.halt_status.halt_steps))
 
     else:
       io_record.category = Exit_Condition.INFINITE
-      reason_str = inf_reason2str[tm_record.status.halt_status.inf_reason]
+      reason_str = inf_reason2str[tm_record.proto.status.halt_status.inf_reason]
 
-      if not tm_record.status.quasihalt_status.is_decided:
+      if tm_record.is_unknown_quasihalting():
         quasihalt_info = ("Quasihalt_Not_Computed", "N/A")
 
-      elif tm_record.status.quasihalt_status.is_quasihalting:
+      elif tm_record.is_quasihalting():
         quasihalt_info = (
-          tm_record.status.quasihalt_status.quasihalt_state,
-          Halting_Lib.get_big_int(tm_record.status.quasihalt_status.quasihalt_steps))
+          tm_record.proto.status.quasihalt_status.quasihalt_state,
+          Halting_Lib.get_big_int(tm_record.proto.status.quasihalt_status.quasihalt_steps))
 
       else:
         quasihalt_info = ("No_Quasihalt", "N/A")
@@ -276,7 +278,10 @@ def load_TTable(infile, line_num = 1):
   line = infile.readline()
   return parse_ttable(line)
 
-def parse_ttable(line):
+def parse_ttable(ttable_str):
   result = Record()
-  result.read(line)
+  result.read(ttable_str)
   return result.ttable
+
+def parse_tm(ttable_str):
+  return Turing_Machine.Simple_Machine(parse_ttable(ttable_str))

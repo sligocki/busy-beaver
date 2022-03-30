@@ -13,66 +13,21 @@ import struct
 
 import io_pb2
 
+from IO.TM_Record import TM_Record
+
 class IO_Error(Exception): pass
-
-
-def pack_trans(symbol, dir, state, is_newrow) -> int:
-  # TODO(shawn): Add out-of-bounds checking.
-  if dir not in [0, 1]:
-    dir = 0
-  byte_int =  (symbol + 1) | ((state + 1) << 3) | (dir << 6) | (is_newrow << 7)
-  return byte_int
-
-def unpack_trans(byte_int : int):
-  symbol = (byte_int & 0b111) - 1
-  state = ((byte_int >> 3) & 0b111) - 1
-  dir = (byte_int >> 6) & 0b1
-  is_newrow = bool((byte_int >> 7) & 0b1)
-  return symbol, dir, state, is_newrow
-
-
-def pack_ttable(ttable) -> bytes:
-  num_states = len(ttable)
-  num_symbols = len(ttable[0])
-  pack = bytearray(num_states * num_symbols)
-  i = 0
-  for row in ttable:
-    is_newrow = True
-    for cell in row:
-      (symbol, dir, state) = cell
-      pack[i] = pack_trans(symbol, dir, state, is_newrow)
-      is_newrow = False
-      i += 1
-  return bytes(pack)
-
-def unpack_ttable(pack : bytes):
-  ttable = []
-  for byte in pack:
-    (symbol, dir, state, is_newrow) = unpack_trans(byte)
-    if is_newrow:
-      ttable.append([])
-    ttable[-1].append((symbol, dir, state))
-  return ttable
-
-
-def create_record(ttable) -> io_pb2.TMRecord:
-  """Create TMRecord protobuf based on a machine ttable."""
-  tm_record = io_pb2.TMRecord()
-  tm_record.spec_version = 0
-  tm_record.tm.ttable_packed = pack_ttable(ttable)
-  return tm_record
 
 
 class Writer:
   """Class to manage writing TMRecords to a file."""
   def __init__(self, output_file : io.BufferedWriter):
-    assert isinstance(output_file, io.BufferedWriter), type(input_file)
+    assert isinstance(output_file, io.BufferedWriter), type(output_file)
     self.outfile = output_file
 
-  def write_record(self, tm_record : io_pb2.TMRecord):
+  def write_record(self, tm_record : TM_Record) -> None:
     """Write TMRecord protobuf using length-delimited format."""
     # Serialize the protobuf into a bytes object
-    pb_bytes = tm_record.SerializeToString()
+    pb_bytes = tm_record.proto.SerializeToString()
 
     # Serialize length of pb_bytes.
     #   Use fixed 4 byte (L), little endian (<) encoding for this length.
@@ -94,7 +49,7 @@ class Reader:
     assert isinstance(input_file, io.BufferedReader), type(input_file)
     self.infile = input_file
 
-  def read_record(self):
+  def read_record(self) -> TM_Record:
     """Read TMRecord protobuf using length-delimited format (written by `Writer`)."""
     # Read message length
     len_bytes = self.infile.read(4)
@@ -111,8 +66,9 @@ class Reader:
                        f"(expected {pb_len}, got {len(pb_bytes)})")
 
       # Parse protobuf
-      tm_record = io_pb2.TMRecord()
-      tm_record.ParseFromString(pb_bytes)
+      tm_proto = io_pb2.TMRecord()
+      tm_proto.ParseFromString(pb_bytes)
+      tm_record = TM_Record(proto = tm_proto)
       return tm_record
 
   def __iter__(self):
@@ -130,7 +86,7 @@ class Reader:
       tm_record = self.read_record()
 
 
-def load_record(filename, record_num):
+def load_record(filename : str, record_num : int) -> TM_Record:
   """Load one record from a filename."""
   with open(filename, "rb") as infile:
     reader = Reader(infile)
@@ -138,7 +94,3 @@ def load_record(filename, record_num):
       if index == record_num:
         return tm_record
   raise IO_Error("Not enough lines in file")
-
-def load_TTable(filename, record_num):
-  tm_record = load_record(filename, record_num)
-  return unpack_ttable(tm_record.tm.ttable_packed)

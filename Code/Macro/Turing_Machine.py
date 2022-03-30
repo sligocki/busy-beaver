@@ -61,6 +61,16 @@ class Transition(object):
             (self.symbol_out, self.state_out, self.dir_out),
             self.num_base_steps)
 
+  def to_ttable_str(self):
+    if self.condition == UNDEFINED:
+      return "---"
+    else:
+      symbol = string.digits[self.symbol_out]
+      dir = "LRS"[self.dir_out]
+      # Note: We use Python magic to convert state -1 (Halt) into "Z".
+      state = string.ascii_uppercase[self.state_out]
+      return "%c%c%c" % (symbol, dir, state)
+
 
 # TODO: Make max_loops configurable via command-line options.
 def sim_limited(tm, state, start_tape, pos, dir, max_loops=10000):
@@ -274,7 +284,7 @@ class Simple_Machine(Turing_Machine):
     self.num_states = len(TTable)
     self.num_symbols = len(TTable[0])
     self.init_state = Simple_Machine_State(0)
-    self.init_dir = 1
+    self.init_dir = RIGHT
     self.init_symbol = 0
 
     # Convert from raw (historical) TTable to a table which returns
@@ -285,6 +295,13 @@ class Simple_Machine(Turing_Machine):
       for symbol_in in range(self.num_symbols):
         self.trans_table[state_in][symbol_in] = \
           ttable_to_transition(TTable, state_in, symbol_in)
+
+  def ttable_str(self):
+    row_strs = []
+    for row in self.trans_table:
+      row_strs.append(" ".join(trans.to_ttable_str()
+                               for trans in row))
+    return "  ".join(row_strs)
 
   def eval_symbol(self, symbol):
     if symbol != self.init_symbol:
@@ -298,7 +315,7 @@ class Simple_Machine(Turing_Machine):
   def list_base_states(self):
     return list(range(self.num_states))
 
-  def get_trans_object(self, symbol_in, state_in, dir_in):
+  def get_trans_object(self, symbol_in, state_in, dir_in = None):
     # Note: Simple_Machine ignores dir_in.
     return self.trans_table[state_in][symbol_in]
 
@@ -370,7 +387,7 @@ class Block_Macro_Machine(Macro_Machine):
 
 @total_ordering
 class Backsymbol_Macro_Machine_State:
-  def __init__(self,base_state,back_symbol):
+  def __init__(self, base_state, back_symbol):
     assert isinstance(base_state, Simple_Machine_State), base_state
     self.base_state  = base_state
     self.back_symbol = back_symbol

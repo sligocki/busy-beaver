@@ -3,6 +3,7 @@ Class for managing direct simulations (non-chain tape).
 """
 
 import Common
+from Macro import Turing_Machine
 
 
 class DirectTape:
@@ -68,19 +69,21 @@ class DirectTape:
 
 
 class DirectSimulator:
-  def __init__(self, ttable, initialize = True,
-               init_state = 0, init_symbol = 0):
-    self.ttable = ttable
+  def __init__(self, tm : Turing_Machine.Simple_Machine,
+               initialize : bool = True, blank_init_symbol : bool = False):
+    self.tm = tm
 
     if initialize:
-      self.state = init_state
       self.halted = False
+      self.state = tm.init_state
+
+      init_symbol = tm.init_symbol if not blank_init_symbol else None
       self.tape = DirectTape(init_symbol = init_symbol)
 
       self.step_num = 0
 
   def copy(self):
-    new_sim = DirectSimulator(self.ttable, initialize=False)
+    new_sim = DirectSimulator(self.tm, initialize=False)
     new_sim.state = self.state
     new_sim.halted = self.halted
     new_sim.tape = self.tape.copy()
@@ -91,15 +94,11 @@ class DirectSimulator:
     if not self.halted:
       state_in = self.state
       symbol_in = self.tape.read()
-      try:
-        symbol_out, dir_out, state_out = self.ttable[state_in][symbol_in]
-      except IndexError:
-        print("Error", state_in, symbol_in, len(self.ttable), len(self.ttable[0]))
-        raise
+      trans = self.tm.trans_table[state_in][symbol_in]
 
-      self.tape.write(symbol_out)
-      self.tape.move(dir_out)
-      self.state = state_out
+      self.tape.write(trans.symbol_out)
+      self.tape.move(trans.dir_out)
+      self.state = trans.state_out
       if self.state == Common.HALT_STATE:
         self.halted = True
         self.halt_score = self.tape.count_nonzero()

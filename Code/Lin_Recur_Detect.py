@@ -9,6 +9,7 @@ from typing import Tuple
 import Direct_Simulator
 import Halting_Lib
 import IO
+from Macro import Turing_Machine
 
 import io_pb2
 
@@ -31,14 +32,14 @@ def are_sections_equal(start_tape, end_tape, most_left_pos, most_right_pos, offs
       return False
   return True
 
-def lin_detect_not_min(ttable,
+def lin_detect_not_min(tm : Turing_Machine.Simple_Machine,
                        max_steps : int,
                        result : io_pb2.LinRecurFilterResult,
                        bb_status : io_pb2.BBStatus) -> None:
   """Detect Lin Recurrence without knowing the period or start time.
   The result is a point at which it is in Lin Recurrence, not necessarily the
   time that it has started LR."""
-  sim = Direct_Simulator.DirectSimulator(ttable)
+  sim = Direct_Simulator.DirectSimulator(tm)
   states_last_seen = {sim.state: sim.step_num}
   sim.step()
 
@@ -102,8 +103,8 @@ def lin_detect_not_min(ttable,
     return
 
 
-def check_recur(ttable, init_step, period):
-  sim = Direct_Simulator.DirectSimulator(ttable)
+def check_recur(tm : Turing_Machine.Simple_Machine, init_step, period):
+  sim = Direct_Simulator.DirectSimulator(tm)
   sim.seek(init_step)
 
   # Save initial tape info.
@@ -141,27 +142,27 @@ def check_recur(ttable, init_step, period):
 # For Machines/4x2-LR-158491-17620:
 #  * lin_detect_not_min() takes 0.5s
 #  * period_search() takes 4.5s!
-def period_search(ttable, init_step, period):
+def period_search(tm : Turing_Machine.Simple_Machine, init_step, period):
   # Binary search on init_step for earliest time that recurrence began.
   low = -1          # Largest unsuccessful start of recurrence
   high = init_step  # Smallest successful start of recurrence
   while high - low > 1:
     mid = (high + low) // 2
     # print "period_search", low, mid, high
-    if check_recur(ttable, mid, period):
+    if check_recur(tm, mid, period):
       high = mid
     else:
       low = mid
   return high
 
 
-def filter(ttable,
+def filter(tm : Turing_Machine.Simple_Machine,
            lr_info : io_pb2.LinRecurFilterInfo,
            bb_status : io_pb2.BBStatus) -> None:
-  """Applies Lin Recur filter to `ttable` using `params`.
+  """Applies Lin Recur filter to `tm` using `params`.
   The results are stored in `result`."""
   with IO.Timer(lr_info.result):
-    lin_detect_not_min(ttable, max_steps=lr_info.parameters.max_steps,
+    lin_detect_not_min(tm, max_steps=lr_info.parameters.max_steps,
                        result=lr_info.result, bb_status=bb_status)
     if lr_info.result.success and lr_info.parameters.find_min_start_step:
       # NOTE: lr_info.result.start_step is not necessarily the earliest time that
@@ -169,7 +170,7 @@ def filter(ttable,
 
       # Do a second search, now that we know the recurrence period to find the
       # earliest start time of the recurrence.
-      lr_info.result.start_step = period_search(ttable, lr_info.result.start_step,
+      lr_info.result.start_step = period_search(tm, lr_info.result.start_step,
                                                 lr_info.result.period)
 
 
@@ -187,7 +188,7 @@ def main():
   lr_info.parameters.max_steps = args.max_steps
   lr_info.parameters.find_min_start_step = args.min_start_step
   bb_status = io_pb2.BBStatus()
-  filter(ttable, lr_info, bb_status)
+  filter(Turing_Machine.Simple_Machine(ttable), lr_info, bb_status)
 
   print(lr_info)
   print(bb_status)

@@ -25,13 +25,15 @@ import time
 from Common import Exit_Condition, GenContainer
 import Halting_Lib
 import IO
+from IO.TM_Record import TM_Record
 from Macro import Block_Finder, Turing_Machine
 import Macro_Simulator
 import Output_Machine
-import Turing_Machine as old_tm_mod
+import TM_Enum
 import Work_Queue
 
 import io_pb2
+
 
 def long_to_eng_str(number, left, right):
   if number != 0:
@@ -75,6 +77,7 @@ class Enumerator(object):
     # Statistics
     self.tm_num = 0
     self.num_halt = 0
+    self.num_inf_quasi_unknown = 0
     self.num_quasihalt = 0
     self.num_infinite = 0
     self.num_unknown = 0
@@ -118,15 +121,15 @@ class Enumerator(object):
         break
 
       # While we have machines to run, pop one off the stack ...
-      tm = self.stack.pop_job()
+      tm_record = self.stack.pop_job()
 
-      if not tm:
+      if not tm_record:
         # tm == None is the indication that we have no more machines to run.
         self.pout.write("Ran out of TMs...\n");
         break
 
       if self.options.debug_print_current:
-        print("----- Debug - Current TM:",Output_Machine.display_ttable(tm.get_TTable()))
+        print("----- Debug - Current TM:", tm_record.ttable_str())
         sys.stdout.flush()
 
       # Periodically save state
@@ -135,20 +138,19 @@ class Enumerator(object):
 
       # ... and run it.
       start_time = time.time()
-      tm_record = self.run(tm)
+      self.run(tm_record)
       sim_time = time.time() - start_time
       self.max_sim_time_s = max(sim_time, self.max_sim_time_s)
 
-      self.add_result(tm, tm_record)
+      self.add_result(tm_record)
 
     # Save any remaining machines on the stack.
     if self.options.num_enum:
-      tm = self.stack.pop_job()
-      while tm:
-        tm_record = IO.create_record(tm.get_TTable())
+      tm_record = self.stack.pop_job()
+      while tm_record:
         # Empty tm_record (no filter results) indicates that the TM hasn't been run.
-        self.add_result(tm, tm_record)
-        tm = self.stack.pop_job()
+        self.add_result(tm_record)
+        tm_record = self.stack.pop_job()
 
     # Done
     self.save()
@@ -160,8 +162,9 @@ class Enumerator(object):
     if self.pout:
       # Print out statistical data
       self.pout.write("%s -" % self.tm_num)
-      self.pout.write(" %s %s %s %s -" % (
-        self.num_halt, self.num_quasihalt, self.num_infinite, self.num_unknown))
+      self.pout.write(" %s (%s) %s %s (%s) -" % (
+        self.num_halt, self.num_quasihalt, self.num_infinite,
+        self.num_unknown, self.num_inf_quasi_unknown))
       self.pout.write(" %.0fms " % (self.max_sim_time_s * 1000,))
       self.pout.write(" (%.2fs)\n" % (self.end_time - self.start_time,))
       self.pout.flush()
@@ -182,72 +185,54 @@ class Enumerator(object):
     self.start_time = time.time()
     self.max_sim_time_s = 0.0
 
-  def run(self, tm) -> io_pb2.TMRecord:
+  def run(self, tm_record : TM_Record) -> None:
     """Simulate TM"""
-    tm_record = IO.create_record(tm.get_TTable())
     try:
       if self.options.time > 0:
-        Macro_Simulator.run_timer(tm.get_TTable(), self.options, tm_record,
+        Macro_Simulator.run_timer(tm_record, self.options,
                                   self.options.time)
       else:
-        Macro_Simulator.run_options(tm.get_TTable(), self.options, tm_record)
+        Macro_Simulator.run_options(tm_record, self.options)
     except:
       print("ERROR: Exception raised while simulating TM:",
-            Output_Machine.display_ttable(tm.get_TTable()), file=sys.stderr)
+            tm_record.ttable_str(), file=sys.stderr)
       raise
     return tm_record
 
-  def add_transitions(self, old_tm, state_in, symbol_in):
+  def expand_undefined_transition(self, old_tm_record : TM_Record) -> None:
     """Push Turing Machines with each possible transition at this state and symbol"""
-    # 'max_state' and 'max_symbol' are the state and symbol numbers for the
-    # smallest state/symbol not yet written (i.e. available to add to TTable).
-    max_state  = old_tm.get_num_states_available()
-    max_symbol = old_tm.get_num_symbols_available()
-    num_dirs = old_tm.num_dirs_available
+    assert old_tm_record.is_halting()
+    state_in = old_tm_record.proto.status.halt_status.from_state
+    symbol_in = old_tm_record.proto.status.halt_status.from_symbol
+    new_tms = [TM_Record(tm = tm_enum) for tm_enum in
+               old_tm_record.tm_enum.enum_children(state_in, symbol_in)]
 
-    # If this is the last undefined cell, then it must be a halt, so only try
-    # other values for cell if this is not the last undefined cell.
-    # (Or if we are explicitly enumerating machines without halt states.
-    # For example, while searching for Beeping Busy Beavers.)
-    if self.options.allow_no_halt or old_tm.num_empty_cells > 1:
-      # 'state_out' in [0, 1, ... max_state] == xrange(max_state + 1)
-      new_tms = []
-      for state_out in range(max_state + 1):
-        for symbol_out in range(max_symbol + 1):
-          for direction_out in range(2 - num_dirs, 2):  # If only one dir available, default to R.
-            new_tm = copy.deepcopy(old_tm)
-            new_tm.add_cell(state_in , symbol_in ,
-                            state_out, symbol_out, direction_out)
-            new_tms.append(new_tm)
-
-      # If we are randomizing TM order, do so
+    if new_tms:
       if self.randomize:
         self.random.shuffle(new_tms)
 
-      # Push the list of TMs onto the stack
       self.stack.push_jobs(new_tms)
 
-  def add_result(self, tm, tm_record : io_pb2.TMRecord):
+  def add_result(self, tm_record : TM_Record) -> None:
     # Update stats
     self.tm_num += 1
-    if not tm_record.status.halt_status.is_decided:
+    if tm_record.is_unknown_halting():
       self.num_unknown += 1
 
-    elif tm_record.status.halt_status.is_halting:
+    elif tm_record.is_halting():
       self.num_halt += 1
       # All halting machines (during enumeration) are actually reaching
       # undefined cells.
       # Push all the possible non-halting transitions onto the stack.
-      self.add_transitions(tm,
-                           state_in  = tm_record.status.halt_status.from_state,
-                           symbol_in = tm_record.status.halt_status.from_symbol)
+      self.expand_undefined_transition(tm_record)
       # Modify this TM to explicitly halt on this transition so that when we
       # save it as halting below the ttable reflects that.
-      tm.set_halt(state_in  = tm_record.status.halt_status.from_state,
-                  symbol_in = tm_record.status.halt_status.from_symbol)
-      tm_record.tm.ttable_packed = IO.Proto.pack_ttable(tm.get_TTable())
+      tm_record.standardize_halt_trans()
 
-    elif tm_record.status.quasihalt_status.is_quasihalting:
+    elif tm_record.is_unknown_quasihalting():
+      self.num_inf_quasi_unknown += 1
+
+    elif tm_record.is_quasihalting():
       self.num_quasihalt += 1
 
     else:
@@ -261,18 +246,21 @@ def initialize_stack(options, stack):
     if options.informat == "protobuf":
       with open(options.infilename, "rb") as infile:
         for tm_record in IO.Proto.Reader(infile):
-          tm = old_tm_mod.Turing_Machine(
-            IO.Proto.unpack_ttable(tm_record.tm.ttable_packed))
-          stack.push_job(tm)
+          stack.push_job(tm_record)
     elif options.informat == "text":
       with open(options.infilename, "r") as infile:
         for io_record in IO.Text.ReaderWriter(infile, None):
-          tm = old_tm_mod.Turing_Machine(io_record.ttable)
-          stack.push_job(tm)
+          tm = Turing_Machine.Simple_Machine(io_record.ttable)
+          tm_enum = TM_Enum.TM_Enum(tm, allow_no_halt = options.allow_no_halt)
+          tm_record = TM_Record(tm = tm_enum)
+          stack.push_job(tm_record)
   else:
     # If no infile is specified, then default to the NxM blank TM.
-    blank_tm = old_tm_mod.Turing_Machine(options.states, options.symbols, options.first_1rb)
-    stack.push_job(blank_tm)
+    blank_tm = TM_Enum.blank_tm_enum(options.states, options.symbols,
+                                     first_1rb = options.first_1rb,
+                                     allow_no_halt = options.allow_no_halt)
+    tm_record = TM_Record(tm = blank_tm)
+    stack.push_job(tm_record)
 
 def main(args):
   start_time = time.time()

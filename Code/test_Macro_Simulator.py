@@ -16,8 +16,10 @@ import unittest
 from Common import Exit_Condition
 import Halting_Lib
 import IO
+from IO import TM_Record
 from Macro import Simulator, Turing_Machine
 from Macro.Tape import INF
+import TM_Enum
 
 import io_pb2
 
@@ -38,6 +40,12 @@ class SystemTest(unittest.TestCase):
     # Don't use time limits during test.
     self.options.time = 0
 
+  def load_tm_record_filename(self, filename):
+    ttable = IO.load_TTable_filename(filename)
+    tm = Turing_Machine.Simple_Machine(ttable)
+    tm_enum = TM_Enum.TM_Enum(tm, allow_no_halt = False)
+    return TM_Record.TM_Record(tm = tm_enum)
+
   def test_previous_bugs(self):
     # This machine failed:
     #   File ".../Code/Macro/Simulator.py", line 120, in calc_quasihalt
@@ -45,10 +53,9 @@ class SystemTest(unittest.TestCase):
     # while proving a rule because last_seen / q_state_last_seen were
     # Algebraic_Expressions.
 
-    ttable = IO.parse_ttable("1RB 1RC  0LC 1LA  0LD 1LB  0RD 1RE  1LC 0RA")
-    m = Turing_Machine.make_machine(ttable)
-    m = Turing_Machine.Backsymbol_Macro_Machine(m)
-    sim = Simulator.Simulator(m, self.options)
+    tm = IO.parse_tm("1RB 1RC  0LC 1LA  0LD 1LB  0RD 1RE  1LC 0RA")
+    tm = Turing_Machine.Backsymbol_Macro_Machine(tm)
+    sim = Simulator.Simulator(tm, self.options)
     sim.loop_run(100)
     self.assertEqual(sim.op_state, Turing_Machine.INF_REPEAT)
 
@@ -69,19 +76,18 @@ class SystemTest(unittest.TestCase):
             ]
     for name, expected_steps, expected_score in data:
       filename = os.path.join(self.root_dir, name)
-      ttable = IO.load_TTable_filename(filename)
+      tm_record = self.load_tm_record_filename(filename)
       try:
-        tm_record = io_pb2.TMRecord()
-        Macro_Simulator.run_options(ttable, self.options, tm_record)
+        Macro_Simulator.run_options(tm_record, self.options)
       except:
         print("Error")
         print(name)
         raise
-      self.assertTrue(tm_record.status.halt_status.is_decided)
-      self.assertTrue(tm_record.status.halt_status.is_halting)
-      self.assertEqual(Halting_Lib.get_big_int(tm_record.status.halt_status.halt_steps),
+      self.assertFalse(tm_record.is_unknown_halting())
+      self.assertTrue(tm_record.is_halting())
+      self.assertEqual(Halting_Lib.get_big_int(tm_record.proto.status.halt_status.halt_steps),
                        expected_steps)
-      self.assertEqual(Halting_Lib.get_big_int(tm_record.status.halt_status.halt_score),
+      self.assertEqual(Halting_Lib.get_big_int(tm_record.proto.status.halt_status.halt_score),
                        expected_score)
 
   def test_medium_halting(self):
@@ -93,19 +99,18 @@ class SystemTest(unittest.TestCase):
             ]
     for name, expected_steps, expected_score in data:
       filename = os.path.join(self.root_dir, name)
-      ttable = IO.load_TTable_filename(filename)
+      tm_record = self.load_tm_record_filename(filename)
       try:
-        tm_record = io_pb2.TMRecord()
-        Macro_Simulator.run_options(ttable, self.options, tm_record)
+        Macro_Simulator.run_options(tm_record, self.options)
       except:
         print("Error")
         print(name)
         raise
-      self.assertTrue(tm_record.status.halt_status.is_decided)
-      self.assertTrue(tm_record.status.halt_status.is_halting)
-      self.assertEqual(Halting_Lib.get_big_int(tm_record.status.halt_status.halt_steps),
+      self.assertFalse(tm_record.is_unknown_halting())
+      self.assertTrue(tm_record.is_halting())
+      self.assertEqual(Halting_Lib.get_big_int(tm_record.proto.status.halt_status.halt_steps),
                        expected_steps)
-      self.assertEqual(Halting_Lib.get_big_int(tm_record.status.halt_status.halt_score),
+      self.assertEqual(Halting_Lib.get_big_int(tm_record.proto.status.halt_status.halt_score),
                        expected_score)
 
   def test_large_halting(self):
@@ -120,31 +125,32 @@ class SystemTest(unittest.TestCase):
             ]
     for name, expected_steps, expected_score in data:
       filename = os.path.join(self.root_dir, name)
-      ttable = IO.load_TTable_filename(filename)
+      tm_record = self.load_tm_record_filename(filename)
       try:
-        tm_record = io_pb2.TMRecord()
-        Macro_Simulator.run_options(ttable, self.options, tm_record)
+        Macro_Simulator.run_options(tm_record, self.options)
       except:
         print("Error")
         print(name)
         raise
-      self.assertTrue(tm_record.status.halt_status.is_decided)
-      self.assertTrue(tm_record.status.halt_status.is_halting)
-      self.assertEqual(Halting_Lib.get_big_int(tm_record.status.halt_status.halt_steps),
+      self.assertFalse(tm_record.is_unknown_halting())
+      self.assertTrue(tm_record.is_halting())
+      self.assertEqual(Halting_Lib.get_big_int(tm_record.proto.status.halt_status.halt_steps),
                        expected_steps)
-      self.assertEqual(Halting_Lib.get_big_int(tm_record.status.halt_status.halt_score),
+      self.assertEqual(Halting_Lib.get_big_int(tm_record.proto.status.halt_status.halt_score),
                        expected_score)
 
   def test_non_halting(self):
     self.options.recursive = True
-    ttable = IO.parse_ttable("1RB --- 2LA  2LB 2RA 0LB")
-    tm_record = io_pb2.TMRecord()
-    simulated_result = Macro_Simulator.run_options(ttable, self.options, tm_record)
+    tm = IO.parse_tm("1RB --- 2LA  2LB 2RA 0LB")
+    tm_enum = TM_Enum.TM_Enum(tm, allow_no_halt = False)
+    tm_record = TM_Record.TM_Record(tm = tm_enum)
+    simulated_result = Macro_Simulator.run_options(tm_record, self.options)
 
     # Non halting
-    self.assertTrue(tm_record.status.halt_status.is_decided)
-    self.assertFalse(tm_record.status.halt_status.is_halting)
-    self.assertEqual(tm_record.status.halt_status.inf_reason, io_pb2.INF_CTL)
+    self.assertFalse(tm_record.is_unknown_halting())
+    self.assertFalse(tm_record.is_halting())
+    self.assertEqual(tm_record.proto.status.halt_status.inf_reason,
+                     io_pb2.INF_CTL)
 
 if __name__ == '__main__':
   unittest.main()

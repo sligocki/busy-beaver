@@ -16,6 +16,7 @@ import CTL1
 import CTL2
 import Halting_Lib
 import IO
+from IO import TM_Record
 import Lin_Recur_Detect
 from Macro import Turing_Machine, Simulator, Block_Finder
 from Macro.Tape import INF
@@ -77,53 +78,49 @@ def setup_CTL(machine, cutoff):
   config = GenContainer(state=sim.state, dir=sim.dir, tape=tape)
   return config
 
-def run_timer(ttable, options,
-              tm_record : io_pb2.TMRecord,
+def run_timer(tm_record : TM_Record, options,
               time_limit_sec : int):
   try:
     start_time = time.time()
     Alarm.ALARM.set_alarm(time_limit_sec)
 
-    run_options(ttable, options, tm_record)
+    run_options(tm_record, options)
     Alarm.ALARM.cancel_alarm()
 
   except Alarm.AlarmException:
     Alarm.ALARM.cancel_alarm()
-    tm_record.filter.simulator.ClearField("result")
-    tm_record.filter.simulator.result.unknown_info.over_time.elapsed_time_sec = (
+    tm_record.proto.filter.simulator.ClearField("result")
+    tm_record.proto.filter.simulator.result.unknown_info.over_time.elapsed_time_sec = (
       time.time() - start_time)
 
-def run_options(ttable, options,
-                tm_record : io_pb2.TMRecord) -> None:
+def run_options(tm_record : TM_Record, options) -> None:
   """Run the Accelerated Turing Machine Simulator, running a few simple filters
   first and using intelligent blockfinding."""
+  base_tm = tm_record.tm_enum.tm
   ## Test for quickly for infinite machine
-  with IO.Timer(tm_record):
+  with IO.Timer(tm_record.proto):
     if options.reverse_engineer:
-      with IO.Timer(tm_record.filter.reverse_engineer):
-        tm_record.filter.reverse_engineer.tested = True
-        if Reverse_Engineer_Filter.test(ttable):
-          tm_record.filter.reverse_engineer.success = True
-          Halting_Lib.set_not_halting(tm_record.status, io_pb2.INF_REVERSE_ENGINEER)
+      with IO.Timer(tm_record.proto.filter.reverse_engineer):
+        tm_record.proto.filter.reverse_engineer.tested = True
+        if Reverse_Engineer_Filter.is_infinite(base_tm):
+          tm_record.proto.filter.reverse_engineer.success = True
+          Halting_Lib.set_not_halting(tm_record.proto.status, io_pb2.INF_REVERSE_ENGINEER)
           # Note: quasihalting result is not computable when using Reverse_Engineer filter.
-          tm_record.status.quasihalt_status.is_decided = False
+          tm_record.proto.status.quasihalt_status.is_decided = False
           return
         else:
-          tm_record.filter.reverse_engineer.success = False
+          tm_record.proto.filter.reverse_engineer.success = False
 
     if options.lin_steps:
-      lr_info = tm_record.filter.lin_recur
+      lr_info = tm_record.proto.filter.lin_recur
       lr_info.parameters.max_steps = options.lin_steps
       lr_info.parameters.find_min_start_step = options.lin_min
-      Lin_Recur_Detect.filter(ttable, lr_info, tm_record.status)
-      if tm_record.status.halt_status.is_decided:
+      Lin_Recur_Detect.filter(base_tm, lr_info, tm_record.proto.status)
+      if tm_record.proto.status.halt_status.is_decided:
         # Return if halt status has been decided (either inf or halting).
         # LR filter is meant to detect halting, but it does run the TM for 100
         # steps or so, so it will detect many halting machines.
         return
-
-    ## Construct the Macro Turing Machine (Backsymbol-k-Block-Macro-Machine)
-    machine = Turing_Machine.make_machine(ttable)
 
     # If no explicit block-size given, use heuristics to find one.
     block_size = options.block_size
@@ -133,14 +130,15 @@ def run_options(ttable, options,
       else:
         bf_loops = 100
 
-      bf_info = tm_record.filter.block_finder
+      bf_info = tm_record.proto.filter.block_finder
       bf_info.parameters.compression_search_loops = bf_loops
       bf_info.parameters.mult_sim_loops = bf_loops
       bf_info.parameters.extra_mult = options.bf_extra_mult
-      Block_Finder.block_finder(machine, options,
+      Block_Finder.block_finder(base_tm, options,
                                 bf_info.parameters, bf_info.result)
       block_size = bf_info.result.best_block_size
 
+    machine = base_tm
     # Do not create a 1-Block Macro-Machine (just use base machine)
     if block_size != 1:
       machine = Turing_Machine.Block_Macro_Machine(machine, block_size)
@@ -148,7 +146,7 @@ def run_options(ttable, options,
       machine = Turing_Machine.Backsymbol_Macro_Machine(machine)
 
     if options.ctl:
-      ctl_filter_info = tm_record.filter.ctl
+      ctl_filter_info = tm_record.proto.filter.ctl
       with IO.Timer(ctl_filter_info):
         if options.max_loops:
           ctl_init_step = options.max_loops // 10
@@ -164,9 +162,9 @@ def run_options(ttable, options,
           ctl_filter_info.ctl_as.tested = True
           if CTL1.CTL(machine, CTL_config_copy):
             ctl_filter_info.ctl_as.success = True
-            Halting_Lib.set_not_halting(tm_record.status, io_pb2.INF_CTL)
+            Halting_Lib.set_not_halting(tm_record.proto.status, io_pb2.INF_CTL)
             # Note: quasihalting result is not computed when using CTL filters.
-            tm_record.status.quasihalt_status.is_decided = False
+            tm_record.proto.status.quasihalt_status.is_decided = False
             return
           else:
             ctl_filter_info.ctl_as.success = False
@@ -175,18 +173,18 @@ def run_options(ttable, options,
           ctl_filter_info.ctl_as_b.tested = True
           if CTL2.CTL(machine, CTL_config_copy):
             ctl_filter_info.ctl_as_b.success = True
-            Halting_Lib.set_not_halting(tm_record.status, io_pb2.INF_CTL)
+            Halting_Lib.set_not_halting(tm_record.proto.status, io_pb2.INF_CTL)
             # Note: quasihalting result is not computed when using CTL filters.
-            tm_record.status.quasihalt_status.is_decided = False
+            tm_record.proto.status.quasihalt_status.is_decided = False
             return
           else:
             ctl_filter_info.ctl_as_b.success = False
 
     # Finally: Do the actual Macro Machine / Chain simulation.
-    sim_info = tm_record.filter.simulator
+    sim_info = tm_record.proto.filter.simulator
     sim_info.parameters.block_size = block_size
     sim_info.parameters.has_blocksymbol_macro = options.backsymbol
-    simulate_machine(machine, options, sim_info, tm_record.status)
+    simulate_machine(machine, options, sim_info, tm_record.proto.status)
 
 def simulate_machine(machine : Turing_Machine.Turing_Machine,
                      options,
@@ -278,34 +276,4 @@ def simulate_machine(machine : Turing_Machine.Turing_Machine,
                               from_symbol = from_symbol)
 
     else:
-      raise Exception(sim.op_state, ttable, sim)
-
-
-if __name__ == "__main__":
-  # Parse command line options.
-  usage = "usage: %prog [options] machine_file [line_number]"
-  parser = OptionParser(usage=usage)
-  add_option_group(parser)
-  (options, args) = parser.parse_args()
-
-
-  if len(args) < 1:
-    parser.error("Must have at least one argument, machine_file")
-  filename = args[0]
-
-  if len(args) >= 2:
-    try:
-      line = int(args[1])
-    except ValueError:
-      parser.error("line_number must be an integer.")
-    if line < 1:
-      parser.error("line_number must be >= 1")
-  else:
-    line = 1
-
-  ttable = IO.load_TTable_filename(filename, line)
-
-  if options.time > 0:
-    print(run_timer(ttable, options, None, options.time))
-  else:
-    print(run_options(ttable, options))
+      raise Exception(sim.op_state, tm.ttable_str(), sim)

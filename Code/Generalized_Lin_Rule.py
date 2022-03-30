@@ -35,8 +35,10 @@ import IO
 class Rule:
   def __init__(self, ttable=None, start_state=None):
     if ttable:
+      tm = Turing_Machine.Simple_Machine(ttable)
+      tm.init_state = start_state
       # Start with a tape that is entirely undefined (None).
-      self.sim = Direct_Simulator.DirectSimulator(ttable, init_state=start_state, init_symbol=None)
+      self.sim = Direct_Simulator.DirectSimulator(tm, blank_init_symbol=True)
       self.start_state = start_state
       self.start_tape = {}
 
