@@ -2,39 +2,57 @@
 """Convert TMs from generic form to Tree Normal Form."""
 
 import argparse
+import copy
 from pathlib import Path
 
 import Direct_Simulator
 import IO
-import Output_Machine
+from Macro import Turing_Machine
 
 import io_pb2
 
 
-def permute_table(old_ttable, state_order, symbol_order):
+def permute_table(old_tm, state_order, symbol_order):
   state_old2new = {old: new for (new, old) in enumerate(state_order)}
   symbol_old2new = {old: new for (new, old) in enumerate(symbol_order)}
-  new_ttable = [[None] * len(symbol_order)
-                for _ in range(len(state_order))]
+  new_tm = copy.deepcopy(old_tm)
   for new_state, old_state in enumerate(state_order):
     for new_symbol, old_symbol in enumerate(symbol_order):
-      (old_symbol_out, dir_out, old_state_out) = old_ttable[old_state][old_symbol]
+      old_trans = old_tm.trans_table[old_state][old_symbol]
 
-      new_symbol_out = symbol_old2new[old_symbol_out]
-      new_state_out = state_old2new[old_state_out]
+      if old_trans.condition == Turing_Machine.RUNNING:
+        new_tm.trans_table[new_state][new_symbol] = Turing_Machine.Transition(
+          symbol_out = symbol_old2new[old_trans.symbol_out],
+          # NOTE: We do not currently support swapping dirs.
+          dir_out = old_trans.dir_out,
+          state_out = state_old2new[old_trans.state_out],
+          # Rest is copied from old_trans
+          condition = old_trans.condition,
+          condition_details = old_trans.condition_details,
+          num_base_steps = old_trans.num_base_steps,
+          # We don't need/use this field.
+          states_last_seen = None
+        )
+      else:
+        assert old_trans.condition in [Turing_Machine.HALT, Turing_Machine.UNDEFINED]
+        new_tm.trans_table[new_state][new_symbol] = Turing_Machine.Transition(
+          condition = old_trans.condition,
+          symbol_out = 1, dir_out = Turing_Machine.RIGHT,
+          state_out = Turing_Machine.Simple_Machine_State(-1),  # Halt
+          num_base_steps = 1,
+          # We don't need/use this field.
+          states_last_seen = None
+        )
 
-      new_ttable[new_state][new_symbol] = (
-        new_symbol_out, dir_out, new_state_out)
+  return new_tm
 
-  return new_ttable
-
-def to_TNF(old_ttable, max_steps):
+def to_TNF(tm, max_steps):
   state_order = [0]
   symbol_order = [0]
-  unordered_states = set(range(len(old_ttable))) - set(state_order)
-  unordered_symbols = set(range(len(old_ttable[0]))) - set(symbol_order)
+  unordered_states = set(range(tm.num_states)) - set(state_order)
+  unordered_symbols = set(range(tm.num_symbols)) - set(symbol_order)
 
-  sim = Direct_Simulator.DirectSimulator(old_ttable)
+  sim = Direct_Simulator.DirectSimulator(tm)
   while unordered_states or unordered_symbols:
     if sim.step_num > max_steps:
       raise Exception
@@ -54,7 +72,7 @@ def to_TNF(old_ttable, max_steps):
     if len(unordered_symbols) == 1:
       symbol_order.append(unordered_symbols.pop())
 
-  return permute_table(old_ttable, state_order, symbol_order)
+  return permute_table(tm, state_order, symbol_order)
 
 
 def main():
@@ -65,8 +83,9 @@ def main():
 
   with open(args.tm_file, "r") as infile:
     for io_record in IO.IO(infile, None):
-      new_ttable = to_TNF(io_record.ttable, args.max_steps)
-      print(Output_Machine.display_ttable(new_ttable))
+      old_tm = Turing_Machine.Simple_Machine(io_record.ttable)
+      new_tm = to_TNF(old_tm, args.max_steps)
+      print(new_tm.ttable_str())
 
 if __name__ == "__main__":
   main()
