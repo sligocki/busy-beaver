@@ -7,7 +7,7 @@ from Macro import Turing_Machine
 
 
 class DirectTape:
-  def __init__(self, init_symbol, tape_increment=10):
+  def __init__(self, init_symbol, tape_increment = 10):
     self.init_symbol = init_symbol
     self.tape_increment = tape_increment
 
@@ -69,8 +69,9 @@ class DirectTape:
 
 
 class DirectSimulator:
-  def __init__(self, tm : Turing_Machine.Simple_Machine,
-               initialize : bool = True, blank_init_symbol : bool = False):
+  def __init__(self, tm : Turing_Machine.Simple_Machine, *,
+               initialize : bool = True, blank_init_symbol : bool = False,
+               tape_increment : int = 10):
     self.tm = tm
 
     if initialize:
@@ -78,7 +79,8 @@ class DirectSimulator:
       self.state = tm.init_state
 
       init_symbol = tm.init_symbol if not blank_init_symbol else None
-      self.tape = DirectTape(init_symbol = init_symbol)
+      self.tape = DirectTape(init_symbol = init_symbol,
+                             tape_increment = tape_increment)
 
       self.step_num = 0
 
