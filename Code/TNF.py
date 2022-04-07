@@ -46,7 +46,7 @@ def permute_table(old_tm, state_order, symbol_order):
 
   return new_tm
 
-def to_TNF(tm, max_steps):
+def to_TNF(tm, max_steps, skip_over_steps):
   state_order = [0]
   symbol_order = [0]
   unordered_states = set(range(tm.num_states)) - set(state_order)
@@ -55,7 +55,10 @@ def to_TNF(tm, max_steps):
   sim = Direct_Simulator.DirectSimulator(tm)
   while unordered_states or unordered_symbols:
     if sim.step_num > max_steps:
-      raise Exception
+      if skip_over_steps:
+        return
+      else:
+        raise Exception
 
     sim.step()
 
@@ -79,13 +82,15 @@ def main():
   parser = argparse.ArgumentParser()
   parser.add_argument("tm_file", type=Path)
   parser.add_argument("--max-steps", type=int, default=1_000)
+  parser.add_argument("--skip-over-steps", action="store_true")
   args = parser.parse_args()
 
   with open(args.tm_file, "r") as infile:
     for io_record in IO.IO(infile, None):
       old_tm = Turing_Machine.Simple_Machine(io_record.ttable)
-      new_tm = to_TNF(old_tm, args.max_steps)
-      print(new_tm.ttable_str())
+      new_tm = to_TNF(old_tm, args.max_steps, args.skip_over_steps)
+      if new_tm:
+        print(new_tm.ttable_str())
 
 if __name__ == "__main__":
   main()
