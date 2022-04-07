@@ -7,6 +7,7 @@ Proof System which observes and attempts to prove patterns in computation.
 
 import copy
 from collections import defaultdict
+from fractions import Fraction
 import math
 import operator
 import optparse
@@ -999,7 +1000,7 @@ class Proof_System(object):
               self.print_this("")
             return False, None
           delta_value[x] = diff_block.num
-          assert(isinstance(delta_value[x], int))
+          assert isinstance(delta_value[x], (int, Fraction)), repr(delta_value[x])
           # If this block's repetitions will be depleted during this transition,
           #   count the number of repetitions that it can allow while staying
           #   above the minimum requirement.
