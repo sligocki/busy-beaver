@@ -15,6 +15,18 @@ class BadOperation(Exception):
 def is_scalar(value):
   return isinstance(value, (int, Fraction))
 
+def simp_frac(val):
+  """Simplify Fraction -> int if it is integral."""
+  if isinstance(val, Fraction) and val.denominator == 1:
+    return int(val)
+  else:
+    return val
+
+def div(a, b):
+  """Return a / b as either int or Fraction."""
+  val = Fraction(a, b)
+  return simp_frac(val)
+
 class Variable:
   """A distinct variable in an algebraic expression"""
   num_vars = 0
@@ -178,21 +190,19 @@ class Expression:
   def __truediv__(self, other):
     """Divide the expression by a scalar."""
     assert isinstance(other, int), (self, other)
-    # We just force consts and coefs to be Fractions for simplicity.
+    if other == 1:
+      return self
     return Expression(
       terms = tuple(Term(var_powers = term.vars,
-                         coefficient = Fraction(term.coef, other))
+                         coefficient = div(term.coef, other))
                     for term in self.terms),
-      constant = Fraction(self.const, other))
+      constant = div(self.const, other))
   __floordiv__ = __truediv__
 
   def substitute(self, subs):
     """Substitute values from dict 'subs' to get an int."""
     val = sum([t.substitute(subs) for t in self.terms]) + self.const
-    if isinstance(val, Fraction) and val.denominator == 1:
-      return int(val)
-    else:
-      return val
+    return simp_frac(val)
 
 
   def always_greater_than(self, other):
