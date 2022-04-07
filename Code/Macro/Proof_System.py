@@ -1108,17 +1108,11 @@ class Proof_System(object):
       diff_steps = rule.num_steps.const * num_reps
       # Effects of each variable in the formula:
       for term in rule.num_steps.terms:
-        assert len(term.vars) == 1
+        assert len(term.vars) == 1, term
         coef = term.coef; x = term.vars[0].var
         # We don't factor out the coef, because it might make this work
         # better for some recursive rules.
-        try:
-          diff_steps += series_sum(coef * init_value[x], coef * delta_value[x], num_reps)
-        except TypeError:
-          if self.verbose:
-            self.print_this("++ Cannot divide expression by 2 ++")
-            print()
-          return False, None
+        diff_steps += series_sum(coef * init_value[x], coef * delta_value[x], num_reps)
       # Compute diff_steps until each state was last seen.
       last_value = {var: init_value[var] + delta_value[var] * (num_reps - 1)
                     for var in init_value}
