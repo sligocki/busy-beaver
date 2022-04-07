@@ -8,7 +8,7 @@ Unit test for "Macro/Proof_System.py".
 
 from Macro import Proof_System, Turing_Machine, Tape
 
-from Numbers import Algebraic_Expression
+import Algebraic_Expression
 
 from optparse import OptionParser
 import os

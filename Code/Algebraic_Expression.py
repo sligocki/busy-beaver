@@ -1,22 +1,21 @@
-#
-# Algebraic_Expression.py
-#
 """
 Classes to do various algebraic operations on different abstract expression
 which contain number and variables.
 """
 
-import string, operator
-from Numbers.Number import Number, Rational
+from fractions import Fraction
 from functools import reduce
+import operator
+import string
+
 
 class BadOperation(Exception):
   """This operation cannot be performed on this Expression."""
 
 def is_scalar(value):
-  return isinstance(value, (int, Rational))
+  return isinstance(value, (int, Fraction))
 
-class Variable(object):
+class Variable:
   """A distinct variable in an algebraic expression"""
   num_vars = 0
 
@@ -48,7 +47,7 @@ def Variable_from_string(input):
   else:
     raise ValueError("Unable to interpret '%s' as a Term" % (input,))
 
-class Var_Power(object):
+class Var_Power:
   """A variable raised to some power (eg: a^3)"""
   def __init__(self, variable, power):
     self.var = variable
@@ -79,7 +78,7 @@ def Var_Power_from_string(input):
 
   return Var_Power(vari,power)
 
-class Term(object):
+class Term:
   """A term in a (multi-variable) polynomial (eg: 4 x^3 y^2)"""
   def __init__(self, var_powers, coefficient):
     self.vars = var_powers # Always assumed to be a non-empty tuple
@@ -116,7 +115,7 @@ def Term_from_string(input):
 
   return Term(var_powers,coef)
 
-class Expression(Number):
+class Expression:
   """An algebraic expression, i.e. a multi-variable polynomial."""
   def __init__(self, terms, constant):
     self.terms = terms
@@ -137,7 +136,9 @@ class Expression(Number):
     if is_scalar(other):
       return Expression(self.terms, self.const + other)
     else:
+      assert isinstance(other, Expression), other
       return Expression(term_sum(self.terms, other.terms), self.const + other.const)
+
 
   def __mul__(self, other):
     if is_scalar(other):
@@ -147,52 +148,52 @@ class Expression(Number):
         new_terms = tuple([Term(t.vars, t.coef*other) for t in self.terms])
         return Expression(new_terms, self.const*other)
     else:
+      assert isinstance(other, Expression), other
       return expr_prod(self, other)
 
-  def __div__(self, other):
-    """Divide the expression by a scalar.
+  def __pow__(self, power):
+    """x^n == x * x^(n-1)"""
+    assert isinstance(power, int), (self, power)
+    prod = 1
+    for _ in range(power):
+      prod *= self
+    return prod
 
-    If the scalar does not perfectly divide all the coefficients and constant,
-    we raise BadOperation
-    """
-    # TODO: Implement some way of dealing with situations like (d + d^2) / 2
-    if other == 1:
-      return self
-    elif is_scalar(other):
-      new_const = self.const.__div__(other)
-      if new_const * other != self.const:
-        raise BadOperation
-      new_terms = []
-      for old_term in self.terms:
-        new_coef = old_term.coef.__div__(other)
-        if new_coef * other != old_term.coef:
-          raise BadOperation
-        new_terms.append(Term(old_term.vars, new_coef))
-      return Expression(tuple(new_terms), new_const)
-    else:
-      ### TODO: We could (actually) divide, say (8x+8) / (x+1) = 8 !
-      raise BadOperation
+  def __neg__(self):
+    """-x == -1*x"""
+    return self.__mul__(-1)
+  def __sub__(self, other):
+    """x - y == x + -y"""
+    return self.__add__(other.__neg__())
+  def __radd__(self, other):
+    """x+y == y+x"""
+    return self.__add__(other)
+  def __rmul__(self, other):
+    """x*y == y*x"""
+    return self.__mul__(other)
+  def __rsub__(self, other):
+    """x - y == -y + x"""
+    return (self.__neg__()).__add__(other)
 
   def __truediv__(self, other):
-    if other == 1:
-      return self
-    if is_scalar(other):
-      new_terms = tuple([Term(t.vars, t.coef.__truediv__(other)) for t in self.terms])
-      return Expression(new_terms, self.const.__truediv__(other))
-    else:
-      ### TODO: We could (actually) divide, say (8x+8) / (x+1) = 8 !
-      raise BadOperation
-
-  def __floordiv__(self, other):
-    if other == 1:
-      return self
-    else:
-      ### TODO: We could (actually) divide, say (8x+8) // 8 = (x+1) !
-      raise BadOperation
+    """Divide the expression by a scalar."""
+    assert isinstance(other, int), (self, other)
+    # We just force consts and coefs to be Fractions for simplicity.
+    return Expression(
+      terms = tuple(Term(var_powers = term.vars,
+                         coefficient = Fraction(term.coef, other))
+                    for term in self.terms),
+      constant = Fraction(self.const, other))
+  __floordiv__ = __truediv__
 
   def substitute(self, subs):
     """Substitute values from dict 'subs' to get an int."""
-    return sum([t.substitute(subs) for t in self.terms]) + self.const
+    val = sum([t.substitute(subs) for t in self.terms]) + self.const
+    if isinstance(val, Fraction) and val.denominator == 1:
+      return int(val)
+    else:
+      return val
+
 
   def always_greater_than(self, other):
     """True if self > other for any non-negative variable assignment."""
@@ -204,9 +205,8 @@ class Expression(Number):
         return False
     return True
 
-  # Temporary methods
   def __eq__(self, other):
-    if isinstance(other, Algebraic_Expression):
+    if isinstance(other, Expression):
       # Is this a hack?
       return repr(self) == repr(other)
     else:
@@ -214,10 +214,10 @@ class Expression(Number):
 
   def __ne__(self, other):
     return not self == other
-  
+
   def __lt__(self, other):
     return self.__cmp__(other) < 0
-  
+
   def __gt__(self, other):
     return self.__cmp__(other) > 0
 
@@ -289,6 +289,8 @@ class Expression(Number):
       return self.terms[0].coef
     else:
       return None
+
+Algebraic_Expression = Expression
 
 def Expression_from_string(input):
   if input[0] == '(':
@@ -369,7 +371,9 @@ def compare_terms(t1, t2):
   # Otherwise the two terms are completely identical
   return 0
 
-def expr_prod(e1, e2):
+def expr_prod(e1 : Expression, e2 : Expression) -> Expression:
+  assert isinstance(e1, Expression), e1
+  assert isinstance(e2, Expression), e2
   new_expr = Expression([], 0)
   for t1 in e1.terms:
     for t2 in e2.terms:
@@ -412,5 +416,3 @@ def VariableToExpression(var):
 def ConstantToExpression(const):
   """Produce an Algebraic Expression from a lone constant."""
   return Expression([], const)
-
-Algebraic_Expression = Expression

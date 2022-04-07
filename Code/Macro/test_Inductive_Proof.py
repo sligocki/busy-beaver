@@ -9,15 +9,12 @@ from optparse import OptionParser
 import sys
 import unittest
 
+import Algebraic_Expression
+
 import Macro_Simulator
 import Proof_System
 import Tape
 import Turing_Machine
-
-parent_dir = sys.path[0][:sys.path[0].rfind("/")] # pwd path with last directory removed
-sys.path.insert(1, parent_dir)
-import IO
-from Numbers import Algebraic_Expression
 
 class InductiveProofTest(unittest.TestCase):
   """Test that some manually discovered rules work."""

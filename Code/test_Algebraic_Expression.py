@@ -3,7 +3,7 @@
 Unit test for "Numbers/Algebraic_Expression.py"
 """
 
-from Numbers import Algebraic_Expression
+import Algebraic_Expression
 
 import os
 import sys
@@ -35,12 +35,20 @@ class SystemTest(unittest.TestCase):
     self.assertGreater(expr("x + 1"), expr("x + 0"))
     self.assertGreater(expr("x + 1"), expr("0 x + 1"))
     self.assertGreater(expr("x + 2 y + 1"), expr("x + y + 1"))
-    
+
     with self.assertRaises(Algebraic_Expression.BadOperation):
       expr("x + 1") < expr("2 x + 0")
-    
+
     with self.assertRaises(Algebraic_Expression.BadOperation):
       expr("x + 2 y") < expr("2 x + y")
+
+  def test_divide(self):
+    n = expr("n")
+    sum_n = n * (n+1) / 2
+    n_var = n.variable()
+
+    self.assertEqual(sum_n.substitute({n_var : 10}), 55)
+    self.assertEqual(sum_n.substitute({n_var : 13}), 91)
 
 
 if __name__ == '__main__':

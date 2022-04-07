@@ -20,12 +20,10 @@ X 1^2k+3 B> Y             1
 import copy
 import sys
 
+import Algebraic_Expression
+
 from Macro import Proof_System
 from Macro import Simulator
-
-parent_dir = sys.path[0][:sys.path[0].rfind("/")] # pwd path with last directory removed
-sys.path.insert(1, parent_dir)
-from Numbers import Algebraic_Expression
 
 def Inductive_Proof(machine, options, rule):
   assert isinstance(rule, Proof_System.General_Rule)

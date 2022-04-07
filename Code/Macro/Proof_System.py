@@ -13,10 +13,11 @@ import optparse
 from optparse import OptionParser, OptionGroup
 import sys
 
+from Algebraic_Expression import Algebraic_Expression, Variable, NewVariableExpression, VariableToExpression, ConstantToExpression, is_scalar, BadOperation
+
 from Macro import Simulator
 from Macro import Tape
 from Macro import Turing_Machine
-from Numbers.Algebraic_Expression import Algebraic_Expression, Variable, NewVariableExpression, VariableToExpression, ConstantToExpression, is_scalar, BadOperation
 
 
 def add_option_group(parser):

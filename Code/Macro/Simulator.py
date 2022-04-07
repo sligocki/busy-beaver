@@ -12,10 +12,11 @@ from optparse import OptionParser, OptionGroup
 import sys
 import time
 
+from Algebraic_Expression import Algebraic_Expression
+
 from Macro import Proof_System
 from Macro import Tape
 from Macro import Turing_Machine
-from Numbers.Algebraic_Expression import Algebraic_Expression
 
 import io_pb2
 
