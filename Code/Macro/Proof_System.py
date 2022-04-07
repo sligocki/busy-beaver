@@ -14,7 +14,7 @@ import optparse
 from optparse import OptionParser, OptionGroup
 import sys
 
-from Algebraic_Expression import Algebraic_Expression, Variable, NewVariableExpression, VariableToExpression, ConstantToExpression, is_scalar, BadOperation
+from Algebraic_Expression import Algebraic_Expression, Variable, NewVariableExpression, VariableToExpression, ConstantToExpression, is_scalar, BadOperation, Term
 
 from Macro import Simulator
 from Macro import Tape
@@ -1104,15 +1104,14 @@ class Proof_System(object):
 
     ## Determine number of base steps taken by applying rule.
     if self.compute_steps:
-      # Effect of the constant factor:
-      diff_steps = rule.num_steps.const * num_reps
-      # Effects of each variable in the formula:
-      for term in rule.num_steps.terms:
-        assert len(term.vars) == 1, term
-        coef = term.coef; x = term.vars[0].var
-        # We don't factor out the coef, because it might make this work
-        # better for some recursive rules.
-        diff_steps += series_sum(coef * init_value[x], coef * delta_value[x], num_reps)
+      # Convert this to an expression of one variable (k) which represents the
+      # number of steps to apply rule once (after rule has already been applied
+      # k times).
+      k = NewVariableExpression()
+      this_num_steps = rule.num_steps.substitute({
+        x : init_value[x] + delta_value[x] * k
+        for x in init_value})
+      diff_steps = series_sum(this_num_steps, k.variable(), num_reps)
       # Compute diff_steps until each state was last seen.
       last_value = {var: init_value[var] + delta_value[var] * (num_reps - 1)
                     for var in init_value}
@@ -1359,8 +1358,41 @@ def config_is_above_min(var_list, min_list, current_list, assignment={}):
     assignment[var] = current_val
   return True
 
-def series_sum(V0, dV, n):
-  """Sums the arithmetic series V0, V0+dV, ... V0+(n-1)*dV."""
-  # = sum(V0 + p*dV for p in range(n)) = V0*Sum(1) + dV*Sum(p)
-  # = V0*n + dV*(n*(n-1) // 2)
-  return V0*n + (dV*n*(n-1)) // 2
+def factor_var(term : Term, k : Variable):
+  """Factor out largest power of `k` from `term`."""
+  assert isinstance(term, Term), term
+  rest_vars = []
+  k_pow = 0
+  for var_power in term.vars:
+    if var_power.var == k:
+      k_pow = var_power.pow
+    else:
+      rest_vars.append(var_power)
+  if rest_vars:
+    term = Term(var_powers = tuple(rest_vars), coefficient = term.coef)
+    return k_pow, Algebraic_Expression(terms = [term], constant = 0)
+  else:
+    # In the common case that there are no other variables, just return an int.
+    return k_pow, term.coef
+
+def series_sum(expr : Algebraic_Expression, k : Variable, N):
+  """Sums the series expr over k = 0 to N-1 if we can."""
+  if isinstance(expr, int):
+    return expr * N
+
+  assert isinstance(expr, Algebraic_Expression), expr
+  assert isinstance(k, Variable), k
+  total = expr.const * N
+  for term in expr.terms:
+    k_pow, rest = factor_var(term, k)
+    if k_pow == 0:
+      total += rest * N
+    elif k_pow == 1:
+      # sum_{k=0}^{N-1}(coef * k) = coef * N(N-1)/2
+      total += (rest * N * (N - 1)) // 2
+    elif k_pow == 2:
+      # sum_{k=0}^{N-1}(coef * k^2) = coef * N(N-1)(2N-1)/6
+      total += (rest * N * (N - 1) * (2 * N - 1)) // 6
+    else:
+      raise NotImplementedError(f"Cannot series sum {term} over {k}")
+  return total

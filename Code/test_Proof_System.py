@@ -1,7 +1,4 @@
 #! /usr/bin/env python3
-#
-# test_Macro_Proof_System.py
-#
 """
 Unit test for "Macro/Proof_System.py".
 """
@@ -22,7 +19,13 @@ from Macro import Tape
 from Macro import Turing_Machine
 
 
-class SystemTest(unittest.TestCase):
+def factor_expr(expr, var):
+  """Helper method to simplify tests for factor_var()."""
+  assert len(expr.terms) == 1, expr
+  assert expr.const == 0, expr
+  return Proof_System.factor_var(expr.terms[0], var)
+
+class ProofSystemTest(unittest.TestCase):
   # Test the "apply_rule" method of "Proof_System" for the "Limited_Diff_Rule".
   #
   # This is a VERY limited test but I (TJL) needed it at figured it was a
@@ -43,6 +46,47 @@ class SystemTest(unittest.TestCase):
     self.options.verbose_prover = False
     self.options.html_format = False
     self.options.full_reps = False
+
+  def test_factor_var(self):
+    k = Algebraic_Expression.Expression_from_string("k")
+    k_var = k.variable()
+
+    self.assertEqual(factor_expr(k, k_var), (1, 1))
+    self.assertEqual(factor_expr(13 * k, k_var), (1, 13))
+    self.assertEqual(factor_expr(k**2, k_var), (2, 1))
+    self.assertEqual(factor_expr(-2 * k**2, k_var), (2, -2))
+    self.assertEqual(factor_expr(81 * k**13, k_var), (13, 81))
+
+    n = Algebraic_Expression.Expression_from_string("n")
+    self.assertEqual(factor_expr(n, k_var), (0, n))
+    self.assertEqual(factor_expr(13 * n, k_var), (0, 13 * n))
+    self.assertEqual(factor_expr(-3 * n * k, k_var), (1, -3 * n))
+    self.assertEqual(factor_expr(138 * k * n * k, k_var), (2, 138 * n))
+
+  def test_series_sum(self):
+    k = Algebraic_Expression.Expression_from_string("k")
+    k_var = k.variable()
+
+    # Constant
+    self.assertEqual(Proof_System.series_sum(13, k_var, 10), 130)
+
+    # Linear
+    self.assertEqual(Proof_System.series_sum(k + 1, k_var, 10), 10 * 9 / 2 + 10)
+    self.assertEqual(Proof_System.series_sum(2 * k + 3, k_var, 10), 10 * 9 + 30)
+
+    # Quadratic
+    self.assertEqual(Proof_System.series_sum(k**2 + 1, k_var, 10), 10 * 9 * 19 / 6 + 10)
+    self.assertEqual(Proof_System.series_sum(5 * k**2 - 2 * k + 13, k_var, 10),
+                     5 * 10 * 9 * 19 / 6 - 10 * 9 + 130)
+
+    # With other variables
+    n = Algebraic_Expression.Expression_from_string("n")
+    self.assertEqual(Proof_System.series_sum(k * n, k_var, 10),
+                     n * 10 * 9 / 2)
+    self.assertEqual(Proof_System.series_sum(3 * k * n + 5 * k + 7 * n + 13, k_var, 10),
+                     (3 * n + 5) * 10 * 9 / 2 + (7 * n + 13) * 10)
+
+
 
   def test_apply_rule_limited_diff_rule(self):
     # To construct a "Proof_System", a TM is needed.  This will be a
@@ -135,7 +179,7 @@ class SystemTest(unittest.TestCase):
 
   def test_complex_recursive(self):
     """
-    Test evaluation for a complex recursive rule where # steps is non-linear.
+    Test evaluation for a complex recursive diff rule where # steps is non-linear.
     """
     # Hand-built TM to demonstrate this situation simply.
     tm = IO.parse_tm("1RB --- ---  "
@@ -185,9 +229,10 @@ class SystemTest(unittest.TestCase):
 
     # Second-level (recursive) rule:
     #   0^inf 1^a A> 0^b 2^d
-    #     -> 0^inf 1^1 A> 0^a+1 1^b 2^d-1  (in 2b+a+2 steps)
-    #     -> 0^inf 1^b+1 A> 0^a+1 2^d-1    (in b * (2(a+1) + 1) steps)
-    #  Total steps: 2ab + 5b + a + 2
+    #     -> 0^inf 1^1 A> 0^a+1 1^b 2^d-1  (Steps: 2b+a+2)
+    #     -> 0^inf 1^b+1 A> 0^a+1 2^d-1    (Steps: b * (2(a+1) + 1) / Cumulative: 2ab + 5b + a + 2
+    #     -> 0^inf 1^a+2 A> 0^b+2 2^d-2    (Steps: 2(b+1)(a+1) + 5(a+1) + (b+1) + 2)
+    #   Total steps: 4ab + 8a + 8b + 12
     tape = Tape.Chain_Tape()
     tape.init(0, 0, self.options)
     tape.dir = Turing_Machine.RIGHT
@@ -203,32 +248,27 @@ class SystemTest(unittest.TestCase):
     full_config = (state_A, tape, None, None)
     stripped_config = Proof_System.strip_config(
       state_A, Turing_Machine.RIGHT, tape.tape)
-    rec_rule = prover.prove_rule(stripped_config, full_config, delta_loop = 18)
+    rec_rule = prover.prove_rule(stripped_config, full_config, delta_loop = 36)
 
     # Check that rule was proven successfully
     self.assertIsNotNone(rec_rule)
 
-    # Test rule once on an example:
-    #   1^10 A> 0^20 2^40 -> 1^21 A> 0^11 2^39
-    prover.max_num_reps = 1
+    # Test rule on an example:
+    #   1^10 A> 0^20 2^40 -> 1^48 A> 0^58 2^2
     success, rest = prover.apply_rule(rec_rule, full_config)
     self.assertTrue(success)
     result, _ = rest
     self.assertEqual(result.condition, Proof_System.APPLY_RULE)
-    self.assertEqual(str(result.new_tape), "0^inf 1^21 -> 0^11 2^39 0^inf")
-    #  Total steps: 2ab + 5b + a + 2
-    a = 10
-    b = 20
-    self.assertEqual(result.num_base_steps, 2 * a * b + 5 * b + a + 2)
-
-    # Test rule repeatedly on an example:
-    #   1^10 A> 0^20 2^40 -> 1^59 A> 0^49 2^1
-    prover.max_num_reps = math.inf
-    success, rest = prover.apply_rule(rec_rule, full_config)
-    self.assertTrue(success)
-    result, _ = rest
-    self.assertEqual(result.condition, Proof_System.APPLY_RULE)
-    self.assertEqual(str(result.new_tape), "0^inf 1^59 -> 0^49 2^1 0^inf")
+    self.assertEqual(str(result.new_tape), "0^inf 1^48 -> 0^58 2^2 0^inf")
+    # a = 10 + 2k ; b = 20 + 2k
+    # Total steps = sum_{k=0}^{N-1} (4ab + 8a + 8b + 12)
+    #   = sum_k (4 (10+2k) (20+2k) + 8 (10+2k + 20+2k) + 12)
+    #   = 16 sum_k k^2  +  (240+32) sum_k k  +  (800+240+12) sum_k 1
+    #   = 8/3 N(N-1)(2N-1) + 136 N(N-1) + 1052 N
+    N = 19
+    self.assertEqual(result.num_base_steps,
+                     N * (N-1) * (2*N-1) * 8 / 3 +
+                     136 * N * (N-1) + 1052 * N)
 
 
 if __name__ == '__main__':

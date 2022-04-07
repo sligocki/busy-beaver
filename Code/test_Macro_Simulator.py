@@ -1,7 +1,4 @@
 #! /usr/bin/env python3
-#
-# test_Macro_Simulator.py
-#
 """
 Unit test for "Macro_Simulator.py"
 """
@@ -24,7 +21,7 @@ import TM_Enum
 import io_pb2
 
 
-class SystemTest(unittest.TestCase):
+class MacroSimulatorTest(unittest.TestCase):
   # Test that Macro_Simulator simulates known machines for the correct number
   # of steps and symbols.
 
@@ -46,18 +43,32 @@ class SystemTest(unittest.TestCase):
     tm_enum = TM_Enum.TM_Enum(tm, allow_no_halt = False)
     return TM_Record.TM_Record(tm = tm_enum)
 
-  def test_previous_bugs(self):
+  def test_bug_qhalt(self):
     # This machine failed:
     #   File ".../Code/Macro/Simulator.py", line 120, in calc_quasihalt
     #     if last_seen > q_state_last_seen:
     # while proving a rule because last_seen / q_state_last_seen were
     # Algebraic_Expressions.
-
     tm = IO.parse_tm("1RB 1RC  0LC 1LA  0LD 1LB  0RD 1RE  1LC 0RA")
     tm = Turing_Machine.Backsymbol_Macro_Machine(tm)
     sim = Simulator.Simulator(tm, self.options)
     sim.loop_run(100)
     self.assertEqual(sim.op_state, Turing_Machine.INF_REPEAT)
+
+  def test_bug_rec_diff(self):
+    # This machine failed:
+    #   File ".../Code/Macro/Proof_System.py", line 1113, in apply_diff_rule
+    #     assert len(term.vars) == 1, term
+    # AssertionError: 16 h j
+    tm = IO.parse_tm("1RB 1RD  1LC 1RA  1RB 1LD  1RE 0LC  0LC 0RA")
+    tm = Turing_Machine.Block_Macro_Machine(tm, 2)
+    tm = Turing_Machine.Backsymbol_Macro_Machine(tm)
+    self.options.recursive = True
+    sim = Simulator.Simulator(tm, self.options)
+    # The failure happened at loop 919 on 7 Apr 2022.
+    sim.loop_run(10_000)
+    # Just make sure that we run long enough (and actually prove the rec rule)
+    # we don't expect to actually prove the machine.
 
   def test_small_halting(self):
     self.options.max_loops = 10_000
