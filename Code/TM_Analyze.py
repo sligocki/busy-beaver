@@ -226,7 +226,7 @@ def main():
       with open(filename, "rb") as infile:
         reader = IO.Proto.Reader(infile)
         for tm_record in reader:
-          stats.add_record(tm_record)
+          stats.add_record(tm_record.proto)
           if args.print_freq and (stats.count % args.print_freq == 0):
             stats.print()
     except IO.Proto.IO_Error:

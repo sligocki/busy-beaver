@@ -53,7 +53,7 @@ class OutputFiles:
       return "infinite"
 
   def write_record(self, tm_record):
-    type = self.categorize_record(tm_record)
+    type = self.categorize_record(tm_record.proto)
     self.writer[type].write_record(tm_record)
     self.num_written += 1
 
