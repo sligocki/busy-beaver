@@ -47,6 +47,8 @@ def add_option_group(parser):
                    help="Don't try Reverse_Engineer_Filter.")
   group.add_option("--no-ctl", dest="ctl", action="store_false", default=True,
                    help="Don't try CTL optimization.")
+  group.add_option("--no-sim", dest="run_sim", action="store_false", default=True,
+                   help="Don't even run Macro/Simulator (ex: only run Lin_Recur).")
 
   parser.add_option_group(group)
 
@@ -122,69 +124,70 @@ def run_options(tm_record : TM_Record, options) -> None:
         # steps or so, so it will detect many halting machines.
         return
 
-    # If no explicit block-size given, use heuristics to find one.
-    block_size = options.block_size
-    if not block_size:
-      if options.max_loops:
-        bf_loops = options.max_loops // 100
-      else:
-        bf_loops = 100
-
-      bf_info = tm_record.proto.filter.block_finder
-      bf_info.parameters.compression_search_loops = bf_loops
-      bf_info.parameters.mult_sim_loops = bf_loops
-      bf_info.parameters.extra_mult = options.bf_extra_mult
-      Block_Finder.block_finder(base_tm, options,
-                                bf_info.parameters, bf_info.result)
-      block_size = bf_info.result.best_block_size
-
-    machine = base_tm
-    # Do not create a 1-Block Macro-Machine (just use base machine)
-    if block_size != 1:
-      machine = Turing_Machine.Block_Macro_Machine(machine, block_size)
-    if options.backsymbol:
-      machine = Turing_Machine.Backsymbol_Macro_Machine(machine)
-
-    if options.ctl:
-      ctl_filter_info = tm_record.proto.filter.ctl
-      with IO.Timer(ctl_filter_info):
+    if options.run_sim:
+      # If no explicit block-size given, use heuristics to find one.
+      block_size = options.block_size
+      if not block_size:
         if options.max_loops:
-          ctl_init_step = options.max_loops // 10
+          bf_loops = options.max_loops // 100
         else:
-          ctl_init_step = 1000
+          bf_loops = 100
 
-        CTL_config = setup_CTL(machine, ctl_init_step)
+        bf_info = tm_record.proto.filter.block_finder
+        bf_info.parameters.compression_search_loops = bf_loops
+        bf_info.parameters.mult_sim_loops = bf_loops
+        bf_info.parameters.extra_mult = options.bf_extra_mult
+        Block_Finder.block_finder(base_tm, options,
+                                  bf_info.parameters, bf_info.result)
+        block_size = bf_info.result.best_block_size
 
-        # Run CTL filters unless machine halted
-        if CTL_config:
-          ctl_filter_info.init_step = ctl_init_step
-          CTL_config_copy = copy.deepcopy(CTL_config)
-          ctl_filter_info.ctl_as.tested = True
-          if CTL1.CTL(machine, CTL_config_copy):
-            ctl_filter_info.ctl_as.success = True
-            Halting_Lib.set_not_halting(tm_record.proto.status, io_pb2.INF_CTL)
-            # Note: quasihalting result is not computed when using CTL filters.
-            tm_record.proto.status.quasihalt_status.is_decided = False
-            return
+      machine = base_tm
+      # Do not create a 1-Block Macro-Machine (just use base machine)
+      if block_size != 1:
+        machine = Turing_Machine.Block_Macro_Machine(machine, block_size)
+      if options.backsymbol:
+        machine = Turing_Machine.Backsymbol_Macro_Machine(machine)
+
+      if options.ctl:
+        ctl_filter_info = tm_record.proto.filter.ctl
+        with IO.Timer(ctl_filter_info):
+          if options.max_loops:
+            ctl_init_step = options.max_loops // 10
           else:
-            ctl_filter_info.ctl_as.success = False
+            ctl_init_step = 1000
 
-          CTL_config_copy = copy.deepcopy(CTL_config)
-          ctl_filter_info.ctl_as_b.tested = True
-          if CTL2.CTL(machine, CTL_config_copy):
-            ctl_filter_info.ctl_as_b.success = True
-            Halting_Lib.set_not_halting(tm_record.proto.status, io_pb2.INF_CTL)
-            # Note: quasihalting result is not computed when using CTL filters.
-            tm_record.proto.status.quasihalt_status.is_decided = False
-            return
-          else:
-            ctl_filter_info.ctl_as_b.success = False
+          CTL_config = setup_CTL(machine, ctl_init_step)
 
-    # Finally: Do the actual Macro Machine / Chain simulation.
-    sim_info = tm_record.proto.filter.simulator
-    sim_info.parameters.block_size = block_size
-    sim_info.parameters.has_blocksymbol_macro = options.backsymbol
-    simulate_machine(machine, options, sim_info, tm_record.proto.status)
+          # Run CTL filters unless machine halted
+          if CTL_config:
+            ctl_filter_info.init_step = ctl_init_step
+            CTL_config_copy = copy.deepcopy(CTL_config)
+            ctl_filter_info.ctl_as.tested = True
+            if CTL1.CTL(machine, CTL_config_copy):
+              ctl_filter_info.ctl_as.success = True
+              Halting_Lib.set_not_halting(tm_record.proto.status, io_pb2.INF_CTL)
+              # Note: quasihalting result is not computed when using CTL filters.
+              tm_record.proto.status.quasihalt_status.is_decided = False
+              return
+            else:
+              ctl_filter_info.ctl_as.success = False
+
+            CTL_config_copy = copy.deepcopy(CTL_config)
+            ctl_filter_info.ctl_as_b.tested = True
+            if CTL2.CTL(machine, CTL_config_copy):
+              ctl_filter_info.ctl_as_b.success = True
+              Halting_Lib.set_not_halting(tm_record.proto.status, io_pb2.INF_CTL)
+              # Note: quasihalting result is not computed when using CTL filters.
+              tm_record.proto.status.quasihalt_status.is_decided = False
+              return
+            else:
+              ctl_filter_info.ctl_as_b.success = False
+
+      # Finally: Do the actual Macro Machine / Chain simulation.
+      sim_info = tm_record.proto.filter.simulator
+      sim_info.parameters.block_size = block_size
+      sim_info.parameters.has_blocksymbol_macro = options.backsymbol
+      simulate_machine(machine, options, sim_info, tm_record.proto.status)
 
 def simulate_machine(machine : Turing_Machine.Turing_Machine,
                      options,
