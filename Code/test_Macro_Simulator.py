@@ -70,6 +70,21 @@ class MacroSimulatorTest(unittest.TestCase):
     # Just make sure that we run long enough (and actually prove the rec rule)
     # we don't expect to actually prove the machine.
 
+  def test_bug_rec_comp(self):
+    # This machine failed:
+    #   File ".../Code/Macro/Proof_System.py", line 1356, in config_is_above_min
+    #     if current_val < min_val:
+    # Algebraic_Expression.BadOperation
+    tm = IO.parse_tm("1RB 0LC  0RC 0RD  1LA 1RE  1RC 0LE  0LD 0RC")
+    tm = Turing_Machine.Block_Macro_Machine(tm, 2)
+    tm = Turing_Machine.Backsymbol_Macro_Machine(tm)
+    self.options.recursive = True
+    sim = Simulator.Simulator(tm, self.options)
+    # The failure happened at loop 123 on 7 Apr 2022 (before fix).
+    # TM is proven infinite at loop 333 (after fix).
+    sim.loop_run(1000)
+    self.assertEqual(sim.op_state, Turing_Machine.INF_REPEAT)
+
   def test_small_halting(self):
     self.options.max_loops = 10_000
     # TODO(shawn): Should we just list the machine ttables directly instead?

@@ -1163,8 +1163,7 @@ class Proof_System(object):
     current_list = [block.num for block in start_tape.tape[0] + start_tape.tape[1]]
 
     # If this recursive rule is infinite.
-    if rule.infinite and config_is_above_min(rule.var_list, rule.min_list,
-                                             current_list):
+    if rule.infinite and config_fits_min(rule.var_list, rule.min_list, current_list):
       if self.verbose:
         self.print_this("++ Rule applies infinitely ++")
         print()
@@ -1183,7 +1182,8 @@ class Proof_System(object):
     diff_steps = 0
     # Get variable assignments for this case and check minimums.
     assignment = {}
-    while config_is_above_min(rule.var_list, rule.min_list, current_list, assignment) and num_reps < self.max_num_reps:
+    while (config_fits_min(rule.var_list, rule.min_list, current_list, assignment) and
+           num_reps < self.max_num_reps):
       if self.verbose:
         self.print_this(num_reps, current_list)
 
@@ -1240,7 +1240,7 @@ class Proof_System(object):
       if self.verbose:
         self.print_this("++ Current config is below rule minimum ++")
         self.print_this("Config tape:", start_tape)
-        self.print_this("Rule min vals:", min_list)
+        self.print_this("Rule min vals:", rule.min_list)
         print()
       return False, None
 
@@ -1256,7 +1256,7 @@ class Proof_System(object):
     # If this recursive rule is infinite.
     if group.infinite:
       # TODO(shawn): Check that we are above min! This is broken.
-      #if config_is_above_min(rule.var_list, rule.min_list, current_list):
+      #if config_fits_min(rule.var_list, rule.min_list, current_list):
       if self.verbose:
         self.print_this("++ Rule applies infinitely ++")
         print()
@@ -1350,12 +1350,22 @@ class Proof_System(object):
         print()
       return False, reason
 
-def config_is_above_min(var_list, min_list, current_list, assignment={}):
-  """Tests if current_list is above min_list setting assignment along the way"""
+def config_fits_min(var_list, min_list, current_list, assignment=None):
+  """Does `current_list` attain the minimum values (in `min_list`)?
+  sets `assignment` along the way."""
   for var, min_val, current_val in zip(var_list, min_list, current_list):
-    if current_val < min_val:
-      return False
-    assignment[var] = current_val
+    assert is_scalar(min_val) or min_val == math.inf, min_val
+    if is_scalar(current_val) or current_val == math.inf:
+      if current_val < min_val:
+        return False
+    else:
+      assert isinstance(current_val, Algebraic_Expression), current_val
+      # If `current_val` is an expression, we only say that it meets the `min_val`
+      # if it is >= `min_val` for all variable assignments (>= 0).
+      if not current_val.always_ge(min_val):
+        return False
+    if assignment != None:
+      assignment[var] = current_val
   return True
 
 def factor_var(term : Term, k : Variable):

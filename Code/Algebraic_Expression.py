@@ -5,6 +5,7 @@ which contain number and variables.
 
 from fractions import Fraction
 from functools import reduce
+import math
 import operator
 import string
 
@@ -208,19 +209,32 @@ class Expression:
   def always_greater_than(self, other):
     """True if self > other for any non-negative variable assignment."""
     diff = self - other
-    if not diff.const > 0:
+    if diff.const <= 0:
       return False
     for term in diff.terms:
-      if not term.coef >= 0:
+      if term.coef < 0:
         return False
     return True
 
-  def __eq__(self, other):
-    if isinstance(other, Expression):
-      # Is this a hack?
-      return repr(self) == repr(other)
+  def always_ge(self, other):
+    diff = self - other
+    if diff.always_greater_than(0):
+      return True
     else:
-      return len(self.terms) == 0 and self.const == other
+      return diff == 0
+
+  def __eq__(self, other):
+    if other == math.inf:
+      return False
+
+    diff = self - other
+    if diff.const != 0:
+      return False
+    for term in diff.terms:
+      if term.coef != 0:
+        return False
+    # diff = 0 x + 0 y z + ... + 0 = 0
+    return True
 
   def __ne__(self, other):
     return not self == other
