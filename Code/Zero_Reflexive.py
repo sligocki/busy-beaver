@@ -1,38 +1,43 @@
 import argparse
 import sys
+import time
 
-from Common import Exit_Condition
 import IO
-import Option_Parser
+from Macro import Turing_Machine
 
 
-def is_zero_reflexive(ttable):
-  for state_in in range(len(ttable)):
+def is_zero_reflexive(tm : Turing_Machine.Simple_Machine) -> bool:
+  for state_in in range(tm.num_states):
     # Only consider the 0 symbol transition.
-    symbol_out, dir_out, state_out = ttable[state_in][0]
-    if state_in == state_out:
+    trans = tm.get_trans_object(state_in = state_in, symbol_in = tm.init_symbol)
+    # NOTE: We count TMs with undefined transitions as ZF (some of their children will be).
+    if state_in == trans.state_out or trans.condition == Turing_Machine.UNDEFINED:
       return True
   return False
 
 
 def main():
   parser = argparse.ArgumentParser()
-  parser.add_argument("tm_file")
+  parser.add_argument("infile")
+  parser.add_argument("outfile")
   args = parser.parse_args()
-
-  infile = Option_Parser.open_infile(args.tm_file)
-  io = IO.IO(infile, None)
 
   num_total = 0
   num_zero_reflexive = 0
-  for io_record in io:
-    num_total += 1
-    if is_zero_reflexive(io_record.ttable):
-      num_zero_reflexive += 1
-    if num_total % 100_000 == 0:
-      print(f" ... {num_zero_reflexive:_} / {num_total:_} = {num_zero_reflexive / num_total:.2%}")
+  start_time = time.time()
+  with open(args.outfile, "wb") as outfile:
+    writer = IO.Proto.Writer(outfile)
+    with open(args.infile, "rb") as infile:
+      reader = IO.Proto.Reader(infile)
+      for tm_record in reader:
+        num_total += 1
+        if is_zero_reflexive(tm_record.tm_enum.tm):
+          writer.write_record(tm_record)
+          num_zero_reflexive += 1
+        if num_total % 100_000 == 0:
+          print(f" ... {num_zero_reflexive:_} / {num_total:_} = {num_zero_reflexive / num_total:.2%} ({time.time() - start_time:.0f}s)")
 
-  print(f"# Zero Reflexive TMs: {num_zero_reflexive:_} / {num_total:_} = {num_zero_reflexive / num_total:.2%}")
+  print(f"# Zero Reflexive TMs: {num_zero_reflexive:_} / {num_total:_} = {num_zero_reflexive / num_total:.2%} ({time.time() - start_time:.0f}s)")
 
 if __name__ == "__main__":
   main()
