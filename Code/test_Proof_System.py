@@ -265,11 +265,9 @@ class ProofSystemTest(unittest.TestCase):
     stripped_config = Proof_System.strip_config(
       state_A, Turing_Machine.RIGHT, tape.tape)
     base_rule = prover.prove_rule(stripped_config, full_config, delta_loop = 5)
-    # Add rule so that proof of rec_rule below works
-    prover.rules[stripped_config] = base_rule
-
-    # Check that rule was proven successfully
     self.assertIsNotNone(base_rule)
+    prover.add_rule(base_rule, stripped_config)
+    self.assertGreaterEqual(len(prover.rules), 1)
 
     # Test rule on an example
     #   1^10 A> 0^20 1^30 -> 1^39 A> 0^20 1^1
