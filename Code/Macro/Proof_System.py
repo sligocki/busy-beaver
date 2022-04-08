@@ -19,6 +19,7 @@ from Algebraic_Expression import Algebraic_Expression, Variable, NewVariableExpr
 from Macro import Simulator
 from Macro import Tape
 from Macro import Turing_Machine
+from Macro.Turing_Machine import LEFT, RIGHT
 
 
 def add_option_group(parser):
@@ -348,65 +349,6 @@ class Proof_System(object):
       print(arg, end=' ')
     print()
 
-  def delete_rule(self, name):
-    found = False
-
-    if self.options.limited_rules:
-      for key, rules in self.rules.items():
-        for rule in rules:
-          if name == rule.name:
-            rules.remove(rule)
-            found = True
-            break
-
-      if not found:
-        print("\nRule %s not found\n" % (name,))
-    else:
-      for key, rule in self.rules.items():
-        if name == rule.name:
-          del self.rules[key]
-          found = True
-          break
-
-      if not found:
-        print("\nRule %s not found\n" % (name,))
-
-  def rename_rule(self, src, dest):
-    found_src  = False
-    found_dest = False
-
-    if self.options.limited_rules:
-      for key, rules in self.rules.items():
-        for rule in rules:
-          if src == rule.name:
-            found_src = True
-          if dest == rule.name:
-            found_dest = True
-
-      if not found_src:
-        print("\nRule %s not found\n" % (src,))
-      elif found_dest:
-        print("\nRule %s already exists\n" % (dest,))
-      else:
-        for key, rules in self.rules.items():
-          for rule in rules:
-            if src == rule.name:
-              rule.name = dest
-    else:
-      for key, rule in self.rules.items():
-        if src == rule.name:
-          key_src = key
-          found_src = True
-        if dest == rule.name:
-          found_dest = True
-
-      if not found_src:
-        print("\nRule %s not found\n" % (src,))
-      elif found_dest:
-        print("\nRule %s already exists\n" % (dest,))
-      else:
-        self.rules[key_src].name = dest
-
   def print_rules(self, args=None):
     if self.options.limited_rules:
       rules = list(set([(rule.name, rule) for key in list(self.rules.keys()) for rule in self.rules[key]]))
@@ -458,42 +400,44 @@ class Proof_System(object):
     stripped_config = strip_config(state, tape.dir, tape.tape)
     full_config = (state, tape, step_num, loop_num)
 
-    ## If we're already proven a rule for this stripped_config, try to apply it.
-    # TODO: stripped_config in self.rules.
+    # Try to apply an already proven rule.
+    result = self.try_apply_a_rule(stripped_config, full_config)
+    if result:
+      return result
+
+    # self.past_configs is only None if we have disabled prover.
+    if self.past_configs is None:
+      return ProverResult(NOTHING_TO_DO)
+
+    # Otherwise log it into past_configs and see if we should try and prove
+    # a new rule.
+    if (self.pause_until_loop == None or loop_num >= self.pause_until_loop or
+        stripped_config in self.past_configs):
+      past_config = self.past_configs[stripped_config]
+      if past_config.log_config(step_num, loop_num):
+        # We see enough of a pattern to try and prove a rule.
+        rule = self.prove_rule(stripped_config, full_config,
+                               loop_num - past_config.last_loop_num)
+        if not rule:
+          self.num_failed_proofs += 1
+        else:
+          self.add_rule(rule, stripped_config)
+
+          # Try to apply transition
+          is_good, res = self.apply_rule(rule, full_config)
+          if is_good:
+            result, large_delta = res
+            rule.num_uses += 1
+            assert isinstance(result, ProverResult), result
+            if self.options.compute_steps and not result.states_last_seen:
+              print("UNIMPLEMENTED: Prover missing states_last_seen for rule:", rule, result, file=sys.stderr)
+            return result
+
+    return ProverResult(NOTHING_TO_DO)
+
+  def try_apply_a_rule(self, stripped_config, full_config):
     if self.options.limited_rules:
-      (state, dir, stripped_tape_left, stripped_tape_right) = stripped_config
-
-      stripped_tape_left = (Tape.Repeated_Symbol(0,-1),) + stripped_tape_left
-      stripped_configs_left = [(0, state, dir, stripped_tape_left[-i:], i) for i in range(1,len(stripped_tape_left)+1)]
-
-      list_left = [rule for config in stripped_configs_left if config in self.rules for rule in self.rules[config]]
-
-      stripped_tape_right = (Tape.Repeated_Symbol(0,-1),) + stripped_tape_right
-      stripped_configs_right = [(1, state, dir, stripped_tape_right[-i:], i) for i in range(1,len(stripped_tape_right)+1)]
-
-      list_right = [rule for config in stripped_configs_right if config in self.rules for rule in self.rules[config]]
-
-      rules = list(set(list_left) & set(list_right))
-
-      for rule in rules:
-        is_good, res = self.apply_rule(rule, full_config)
-        if is_good:
-          result, large_delta = res
-          # Optimization: If we apply a rule and we are not trying to perform
-          # recursive proofs, clear past configuration memory.
-          # Likewise, even normal recursive proofs cannot use every subrule
-          # as a step. Specifically, if there are any negative deltas other
-          # than -1, we cannot apply the rule in a proof because
-          # e.g. (x + 3 // 2) is unresolvable. However, Collatz proofs can
-          # include such large negative deltas.
-          if not self.recursive or (large_delta and not self.allow_collatz):
-            if self.past_configs is not None:
-              self.past_configs.clear()
-          rule.num_uses += 1
-          assert isinstance(result, ProverResult), result
-          if self.options.compute_steps and not result.states_last_seen:
-            print("UNIMPLEMENTED: Prover missing states_last_seen for rule:", rule, result, file=sys.stderr)
-          return result
+      return self.try_apply_a_limited_rule(stripped_config, full_config)
     else:
       if stripped_config in self.rules:
         rule = self.rules[stripped_config]
@@ -515,85 +459,94 @@ class Proof_System(object):
         if res != UNPROVEN_PARITY:
           return ProverResult(NOTHING_TO_DO)
 
-    # If we are not trying to prove new rules, quit.
-    if self.past_configs is None:
-      return ProverResult(NOTHING_TO_DO)
+  def try_apply_a_limited_rule(self, stripped_config, full_config):
+    (state, dir, stripped_tape_left, stripped_tape_right) = stripped_config
 
-    # Otherwise log it into past_configs and see if we should try and prove
-    # a new rule.
-    if (self.pause_until_loop == None or loop_num >= self.pause_until_loop or
-        stripped_config in self.past_configs):
-      past_config = self.past_configs[stripped_config]
-      if past_config.log_config(step_num, loop_num):
-        # We see enough of a pattern to try and prove a rule.
-        rule = self.prove_rule(stripped_config, full_config,
-                               loop_num - past_config.last_loop_num)
-        if not rule:
-          self.num_failed_proofs += 1
-        else:  # If we successfully proved a rule:
-          # Collatz_Rules need to be stored inside Collatz_Rule_Groups.
-          if isinstance(rule, Collatz_Rule):
-            self.pause_until_loop = loop_num + 100 * rule.num_loops
-            if stripped_config in self.rules:
-              group = self.rules[stripped_config]
-              if not group.add_rule(rule):
-                if self.verbose:
-                  self.print_this("++ Collatz Rule doesn't match Group ++")
-                  self.print_this("Rule:", str(rule).replace(
-                      "\n", "\n" + self.verbose_prefix + "       "))
-                  self.print_this("Group:", str(group).replace(
-                      "\n", "\n" + self.verbose_prefix + "        "))
-            else:
-              group = Collatz_Rule_Group(rule, self.rule_num)
-            rule = group
+    stripped_tape_left = (Tape.Repeated_Symbol(0,-1),) + stripped_tape_left
+    stripped_configs_left = [(0, state, dir, stripped_tape_left[-i:], i) for i in range(1,len(stripped_tape_left)+1)]
 
-          # Remember rule.
-          if isinstance(rule, Limited_Diff_Rule):
-            (state, dir, stripped_tape_left, stripped_tape_right) = stripped_config
-            stripped_tape_left = (Tape.Repeated_Symbol(0,-1),) + stripped_tape_left
-            stripped_config_left  = (0, state, dir, stripped_tape_left[-rule.left_dist:],  rule.left_dist )
+    list_left = [rule for config in stripped_configs_left if config in self.rules for rule in self.rules[config]]
 
-            stripped_tape_right = (Tape.Repeated_Symbol(0,-1),) + stripped_tape_right
-            stripped_config_right = (1, state, dir, stripped_tape_right[-rule.right_dist:], rule.right_dist)
+    stripped_tape_right = (Tape.Repeated_Symbol(0,-1),) + stripped_tape_right
+    stripped_configs_right = [(1, state, dir, stripped_tape_right[-i:], i) for i in range(1,len(stripped_tape_right)+1)]
 
-            # Note: Every Limited_Diff_Rule actually becomes two values
-            # in `self.rules`
-            if stripped_config_left in self.rules:
-              self.rules[stripped_config_left].append(rule)
-            else:
-              self.rules[stripped_config_left] = [rule,]
+    list_right = [rule for config in stripped_configs_right if config in self.rules for rule in self.rules[config]]
 
-            if stripped_config_right in self.rules:
-              self.rules[stripped_config_right].append(rule)
-            else:
-              self.rules[stripped_config_right] = [rule,]
+    rules = list(set(list_left) & set(list_right))
 
-            self.rule_num += 1
-          else:
-            self.rules[stripped_config] = rule
-            self.rule_num += 1
+    for rule in rules:
+      is_good, res = self.apply_rule(rule, full_config)
+      if is_good:
+        result, large_delta = res
+        # Optimization: If we apply a rule and we are not trying to perform
+        # recursive proofs, clear past configuration memory.
+        # Likewise, even normal recursive proofs cannot use every subrule
+        # as a step. Specifically, if there are any negative deltas other
+        # than -1, we cannot apply the rule in a proof because
+        # e.g. (x + 3 // 2) is unresolvable. However, Collatz proofs can
+        # include such large negative deltas.
+        if not self.recursive or (large_delta and not self.allow_collatz):
+          if self.past_configs is not None:
+            self.past_configs.clear()
+        rule.num_uses += 1
+        assert isinstance(result, ProverResult), result
+        if self.options.compute_steps and not result.states_last_seen:
+          print("UNIMPLEMENTED: Prover missing states_last_seen for rule:", rule, result, file=sys.stderr)
+        return result
 
-          # Clear our memory. We cannot use it for future rules because the
-          # number of steps will be wrong now that we have proven this rule.
-          #
-          # Note: We save the past_config for this stripped_config so that
-          # information for Collatz rules is not lost.
-          saved = self.past_configs[stripped_config]
-          self.past_configs.clear()
-          saved.last_loop_num = None
-          self.past_configs[stripped_config] = saved
+  def add_rule(self, rule, stripped_config):
+    """Add a proven rule"""
+    # Collatz_Rules need to be stored inside Collatz_Rule_Groups.
+    if isinstance(rule, Collatz_Rule):
+      self.pause_until_loop = loop_num + 100 * rule.num_loops
+      if stripped_config in self.rules:
+        group = self.rules[stripped_config]
+        if not group.add_rule(rule):
+          if self.verbose:
+            self.print_this("++ Collatz Rule doesn't match Group ++")
+            self.print_this("Rule:", str(rule).replace(
+                "\n", "\n" + self.verbose_prefix + "       "))
+            self.print_this("Group:", str(group).replace(
+                "\n", "\n" + self.verbose_prefix + "        "))
+      else:
+        group = Collatz_Rule_Group(rule, self.rule_num)
+      rule = group
 
-          # Try to apply transition
-          is_good, res = self.apply_rule(rule, full_config)
-          if is_good:
-            result, large_delta = res
-            rule.num_uses += 1
-            assert isinstance(result, ProverResult), result
-            if self.options.compute_steps and not result.states_last_seen:
-              print("UNIMPLEMENTED: Prover missing states_last_seen for rule:", rule, result, file=sys.stderr)
-            return result
+    # Remember rule.
+    if isinstance(rule, Limited_Diff_Rule):
+      (state, dir, stripped_tape_left, stripped_tape_right) = stripped_config
+      stripped_tape_left = (Tape.Repeated_Symbol(0,-1),) + stripped_tape_left
+      stripped_config_left  = (0, state, dir, stripped_tape_left[-rule.left_dist:],  rule.left_dist )
 
-    return ProverResult(NOTHING_TO_DO)
+      stripped_tape_right = (Tape.Repeated_Symbol(0,-1),) + stripped_tape_right
+      stripped_config_right = (1, state, dir, stripped_tape_right[-rule.right_dist:], rule.right_dist)
+
+      # Note: Every Limited_Diff_Rule actually becomes two values
+      # in `self.rules`
+      if stripped_config_left in self.rules:
+        self.rules[stripped_config_left].append(rule)
+      else:
+        self.rules[stripped_config_left] = [rule,]
+
+      if stripped_config_right in self.rules:
+        self.rules[stripped_config_right].append(rule)
+      else:
+        self.rules[stripped_config_right] = [rule,]
+
+      self.rule_num += 1
+    else:
+      self.rules[stripped_config] = rule
+      self.rule_num += 1
+
+    # Clear our memory. We cannot use it for future rules because the
+    # number of steps will be wrong now that we have proven this rule.
+    #
+    # Note: We save the past_config for this stripped_config so that
+    # information for Collatz rules is not lost.
+    saved = self.past_configs[stripped_config]
+    self.past_configs.clear()
+    saved.last_loop_num = None
+    self.past_configs[stripped_config] = saved
 
   def prove_rule(self, stripped_config, full_config, delta_loop):
     """Try to prove a general rule based upon specific example.
@@ -636,6 +589,9 @@ class Proof_System(object):
     for direction in range(2):
       offset = len(gen_sim.tape.tape[direction])
       for block in gen_sim.tape.tape[direction]:
+        # Mark all starting blocks with IDs to indicate their offset from the
+        # starting TM head. If we allow Limited_Diff_Rules, then we will use
+        # this to detect which blocks were touched.
         block.id = offset
         offset -= 1
         # Generalize, eg. (abc)^5 -> (abc)^(n+5)
@@ -648,22 +604,20 @@ class Proof_System(object):
     initial_tape = gen_sim.tape.copy()
     gen_sim.dir = gen_sim.tape.dir
 
+    max_offset_touched = {LEFT: 0, RIGHT: 0}
     # Run the simulator
     gen_sim.verbose_print()
-    gen_sim.step()
-    dist = [1, 1]
-    cur_dir = gen_sim.tape.dir
-    cur_dist = gen_sim.tape.tape[cur_dir][-1].id
-    if cur_dist and cur_dist > dist[cur_dir]:
-      dist[cur_dir] = cur_dist
-    self.num_loops += 1
-    #for i in xrange(delta_loop):
     while gen_sim.num_loops < delta_loop:
-      # We cannot step onto/over a block with 0 repetitions.
       block = gen_sim.tape.get_top_block()
       if isinstance(block.num, Algebraic_Expression) and block.num.const <= 0:
-        # TODO: A more sophisticated system might try to make this block
-        # fixed sized.
+        # This corresponds to a block which looks like 2^n+0 .
+        # In this situation, we can no longer generalize over all n >= 0.
+        # Instead the simulator will act differently if n == 0 or n > 0.
+        #
+        # TODO(shawn): We could force this block to be fixed size (force n == 0).
+        # This would also allow us to avoid treating rep count 1 as special in
+        # the stripped config.
+        #
         # For now we just fail. It may not be worth implimenting this anyway
         if self.verbose:
           print()
@@ -671,14 +625,21 @@ class Proof_System(object):
           self.print_this(gen_sim.tape.print_with_state(gen_sim.state))
           print()
         return False
-      gen_sim.step()
+
+      # Before step: Record the block we are looking at (about to read).
       cur_dir = gen_sim.tape.dir
-      cur_dist = gen_sim.tape.tape[cur_dir][-1].id
-      if cur_dist and cur_dist > dist[cur_dir]:
-        dist[cur_dir] = cur_dist
+      facing_offset = gen_sim.tape.get_top_block().id
+      if facing_offset:
+        max_offset_touched[cur_dir] = max(max_offset_touched[cur_dir],
+                                          facing_offset)
+      gen_sim.step()
+      # After step: Record the block behind us (which we just wrote to).
+      back_dir = Turing_Machine.other_dir(gen_sim.tape.dir)
+      wrote_offset = gen_sim.tape.tape[back_dir][-1].id
+      if wrote_offset:
+        max_offset_touched[back_dir] = max(max_offset_touched[back_dir],
+                                           wrote_offset)
       self.num_loops += 1
-      # TODO(shawn): Perhaps we should check in applying a rule failed this
-      # step and if so cancel the proof?
 
       if gen_sim.replace_vars:
         assert self.allow_collatz
@@ -894,8 +855,8 @@ class Proof_System(object):
         num_steps = ConstantToExpression(num_steps)
 
       if self.options.limited_rules:
-        left_dist  = dist[0]
-        right_dist = dist[1]
+        left_dist = max_offset_touched[LEFT]
+        right_dist = max_offset_touched[RIGHT]
 
         initial_tape.tape[0] = initial_tape.tape[0][-left_dist:]
         initial_tape.tape[1] = initial_tape.tape[1][-right_dist:]
@@ -903,8 +864,9 @@ class Proof_System(object):
         diff_tape.tape[0] = diff_tape.tape[0][-left_dist:]
         diff_tape.tape[1] = diff_tape.tape[1][-right_dist:]
 
-        rule = Limited_Diff_Rule(initial_tape, left_dist, right_dist, diff_tape, new_state, num_steps, gen_sim.num_loops, self.rule_num,
-                                 states_last_seen=states_last_seen)
+        rule = Limited_Diff_Rule(initial_tape, left_dist, right_dist, diff_tape,
+                                 new_state, num_steps, gen_sim.num_loops,
+                                 self.rule_num, states_last_seen=states_last_seen)
       else:
         rule = Diff_Rule(initial_tape, diff_tape, new_state, num_steps, gen_sim.num_loops, self.rule_num, states_last_seen=states_last_seen)
 

@@ -87,10 +87,64 @@ class ProofSystemTest(unittest.TestCase):
                      (3 * n + 5) * 10 * 9 / 2 + (7 * n + 13) * 10)
 
 
+  def test_bug_limited_diff_rule(self):
+    # See: https://github.com/sligocki/busy-beaver/issues/2
+    tm = IO.parse_tm("1RB 3RB 3LB 0RB 0LA  2LB 3RA 3RB 4RA 2LA")
+    self.options.recursive = True
+    self.options.limited_rules = True
+    prover = Proof_System.Proof_System(tm, self.options, "")
+
+    # Rule should be:
+    #   34 A> 2 -> 034 A>   or   0^m 3^1 4^1 A> 2^n+1 -> 0^m+1 3^1 4^1 A> 2^n
+    # but the bug led to a rule:
+    #   3^1 4^1 A> 2^b+2 -> 3^1 4^1 A> 2^b+1
+    # which is clearly wrong since it is deleting a 2 without adding anything in exchange.
+    tape = Tape.Chain_Tape()
+    tape.init(0, 0, self.options)
+    tape.dir = Turing_Machine.RIGHT
+    tape.tape[0] = [
+      Tape.Repeated_Symbol(0,math.inf),
+      Tape.Repeated_Symbol(3, 1),
+      Tape.Repeated_Symbol(4, 1),
+    ]
+    tape.tape[1] = [
+      Tape.Repeated_Symbol(0,math.inf),
+      Tape.Repeated_Symbol(2, 10),
+    ]
+
+    state_A = Turing_Machine.Simple_Machine_State(0)
+    full_config = (state_A, tape, None, None)
+    stripped_config = Proof_System.strip_config(
+      state_A, Turing_Machine.RIGHT, tape.tape)
+
+    rule = prover.prove_rule(stripped_config, full_config, delta_loop = 5)
+    self.assertIsNotNone(rule)
+    prover.add_rule(rule, stripped_config)
+    self.assertGreaterEqual(len(prover.rules), 1)
+
+    # Try to apply the rule to a situation it certainly should not apply in.
+    bad_tape = Tape.Chain_Tape()
+    bad_tape.init(0, 0, self.options)
+    bad_tape.dir = Turing_Machine.RIGHT
+    bad_tape.tape[0] = [
+      Tape.Repeated_Symbol(0,math.inf),
+      Tape.Repeated_Symbol(1, 10),  # Note: This 1 is the key to the bug.
+      Tape.Repeated_Symbol(3, 1),
+      Tape.Repeated_Symbol(4, 1),
+    ]
+    bad_tape.tape[1] = [
+      Tape.Repeated_Symbol(0,math.inf),
+      Tape.Repeated_Symbol(2, 10),
+    ]
+    bad_full_config = (state_A, bad_tape, None, None)
+    bad_stripped_config = Proof_System.strip_config(
+      state_A, Turing_Machine.RIGHT, bad_tape.tape)
+
+    result = prover.try_apply_a_limited_rule(bad_stripped_config, bad_full_config)
+    self.assertIsNone(result)
+
 
   def test_apply_rule_limited_diff_rule(self):
-    # To construct a "Proof_System", a TM is needed.  This will be a
-    # "Simple_Machine" which needs a transition table ("2x5-e704" machine).
     ttable_filename = os.path.join(self.root_dir, "Machines/2x5-e704")
     ttable = IO.load_TTable_filename(ttable_filename)
 
@@ -176,6 +230,7 @@ class ProofSystemTest(unittest.TestCase):
     self.assertEqual(prover_result.condition, Proof_System.APPLY_RULE)
     self.assertEqual(prover_result.new_tape, expected_tape)
     self.assertEqual(prover_result.num_base_steps, 44)
+
 
   def test_complex_recursive(self):
     """

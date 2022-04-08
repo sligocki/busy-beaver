@@ -38,6 +38,13 @@ INF_REPEAT = "Inf_Repeat" # Machine proven not to halt within move
 UNDEFINED  = "Undefined"  # Machine encountered undefined transition
 GAVE_UP   = "Gave_Up"     # For some reason, we bailed on computation (maybe too many steps).
 
+def other_dir(dir):
+  if dir == LEFT:
+    return RIGHT
+  else:
+    assert dir == RIGHT, dir
+    return LEFT
+
 
 class Transition(object):
   """Class representing the result of a transition."""
