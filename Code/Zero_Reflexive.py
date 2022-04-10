@@ -31,13 +31,13 @@ def main():
       reader = IO.Proto.Reader(infile)
       for tm_record in reader:
         num_total += 1
-        if is_zero_reflexive(tm_record.tm_enum.tm):
+        if is_zero_reflexive(tm_record.tm()):
           writer.write_record(tm_record)
           num_zero_reflexive += 1
         if num_total % 100_000 == 0:
-          print(f" ... {num_zero_reflexive:_} / {num_total:_} = {num_zero_reflexive / num_total:.2%} ({time.time() - start_time:.0f}s)")
+          print(f" ... {num_zero_reflexive:_} / {num_total:_} = {num_zero_reflexive / num_total:.2%} ({time.time() - start_time:_.0f}s)")
 
-  print(f"# Zero Reflexive TMs: {num_zero_reflexive:_} / {num_total:_} = {num_zero_reflexive / num_total:.2%} ({time.time() - start_time:.0f}s)")
+  print(f"# Zero Reflexive TMs: {num_zero_reflexive:_} / {num_total:_} = {num_zero_reflexive / num_total:.2%} ({time.time() - start_time:_.0f}s)")
 
 if __name__ == "__main__":
   main()

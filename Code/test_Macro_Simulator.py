@@ -41,7 +41,7 @@ class MacroSimulatorTest(unittest.TestCase):
     ttable = IO.load_TTable_filename(filename)
     tm = Turing_Machine.Simple_Machine(ttable)
     tm_enum = TM_Enum.TM_Enum(tm, allow_no_halt = False)
-    return TM_Record.TM_Record(tm = tm_enum)
+    return TM_Record.TM_Record(tm_enum = tm_enum)
 
   def test_bug_qhalt(self):
     # This machine failed:
@@ -169,7 +169,7 @@ class MacroSimulatorTest(unittest.TestCase):
     self.options.recursive = True
     tm = IO.parse_tm("1RB --- 2LA  2LB 2RA 0LB")
     tm_enum = TM_Enum.TM_Enum(tm, allow_no_halt = False)
-    tm_record = TM_Record.TM_Record(tm = tm_enum)
+    tm_record = TM_Record.TM_Record(tm_enum = tm_enum)
     simulated_result = Macro_Simulator.run_options(tm_record, self.options)
 
     # Non halting

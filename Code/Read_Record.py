@@ -14,7 +14,7 @@ args = parser.parse_args()
 
 tm_record = IO.Proto.load_record(args.infile, args.record_num)
 print(tm_record.proto)
-print("ttable:", tm_record.tm_enum.tm.ttable_str())
+print("ttable:", tm_record.ttable_str())
 print("Serialized sizes:", tm_record.proto.ByteSize(),
       tm_record.proto.tm.ByteSize(), tm_record.proto.status.ByteSize(),
       tm_record.proto.filter.ByteSize())

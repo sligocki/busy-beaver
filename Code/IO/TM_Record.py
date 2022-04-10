@@ -59,25 +59,35 @@ def unpack_tm(pack : bytes):
 
 class TM_Record:
   """Collection of TM (TM_Enum) and results (io_pb2.TMRecord)."""
-  def __init__(self, *, proto=None, tm=None):
+  def __init__(self, *, proto=None, tm_enum=None):
     if proto:
       self.proto = proto
     else:
       self.proto = io_pb2.TMRecord()
 
-    if tm:
-      self.update_tm(tm)
+    if tm_enum:
+      self.update_tm(tm_enum)
     else:
-      tm = unpack_tm(self.proto.tm.ttable_packed)
-      self.tm_enum = TM_Enum.TM_Enum(
-        tm, allow_no_halt = self.proto.tm.allow_no_halt)
+      # Don't create TM unless needed (by calling tm_enum() or tm() below.)
+      self.tme = None
+
 
   def update_tm(self, tm_enum : TM_Enum.TM_Enum):
-    self.tm_enum = tm_enum
-    self.proto.tm.ttable_packed = pack_tm(self.tm_enum.tm)
+    self.tme = tm_enum
+    self.proto.tm.ttable_packed = pack_tm(self.tme.tm)
+
+  def tm_enum(self):
+    if not self.tme:
+      tm = unpack_tm(self.proto.tm.ttable_packed)
+      self.tme = TM_Enum.TM_Enum(
+        tm, allow_no_halt = self.proto.tm.allow_no_halt)
+    return self.tme
+
+  def tm(self):
+    return self.tm_enum().tm
 
   def ttable_str(self):
-    return self.tm_enum.tm.ttable_str()
+    return self.tm().ttable_str()
 
 
   def standardize_halt_trans(self):
@@ -85,10 +95,10 @@ class TM_Record:
     undefined transition. In that case, edit the transition to be a standard
     halt transition."""
     assert self.is_halting()
-    self.tm_enum.set_halt_trans(
+    self.tme.set_halt_trans(
       state_in = self.proto.status.halt_status.from_state,
       symbol_in = self.proto.status.halt_status.from_symbol)
-    self.proto.tm.ttable_packed = pack_tm(self.tm_enum.tm)
+    self.proto.tm.ttable_packed = pack_tm(self.tme.tm)
 
 
   def is_unknown_halting(self):

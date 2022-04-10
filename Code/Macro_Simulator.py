@@ -98,7 +98,7 @@ def run_timer(tm_record : TM_Record, options,
 def run_options(tm_record : TM_Record, options) -> None:
   """Run the Accelerated Turing Machine Simulator, running a few simple filters
   first and using intelligent blockfinding."""
-  base_tm = tm_record.tm_enum.tm
+  base_tm = tm_record.tm()
   ## Test for quickly for infinite machine
   with IO.Timer(tm_record.proto):
     if options.reverse_engineer:

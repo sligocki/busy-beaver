@@ -203,8 +203,8 @@ class Enumerator(object):
     assert old_tm_record.is_halting()
     state_in = old_tm_record.proto.status.halt_status.from_state
     symbol_in = old_tm_record.proto.status.halt_status.from_symbol
-    new_tms = [TM_Record(tm = tm_enum) for tm_enum in
-               old_tm_record.tm_enum.enum_children(state_in, symbol_in)]
+    new_tms = [TM_Record(tm_enum = tm_enum) for tm_enum in
+               old_tm_record.tm_enum().enum_children(state_in, symbol_in)]
 
     if new_tms:
       if self.randomize:
@@ -251,14 +251,14 @@ def initialize_stack(options, stack):
         for io_record in IO.Text.ReaderWriter(infile, None):
           tm = Turing_Machine.Simple_Machine(io_record.ttable)
           tm_enum = TM_Enum.TM_Enum(tm, allow_no_halt = options.allow_no_halt)
-          tm_record = TM_Record(tm = tm_enum)
+          tm_record = TM_Record(tm_enum = tm_enum)
           stack.push_job(tm_record)
   else:
     # If no infile is specified, then default to the NxM blank TM.
     blank_tm = TM_Enum.blank_tm_enum(options.states, options.symbols,
                                      first_1rb = options.first_1rb,
                                      allow_no_halt = options.allow_no_halt)
-    tm_record = TM_Record(tm = blank_tm)
+    tm_record = TM_Record(tm_enum = blank_tm)
     stack.push_job(tm_record)
 
 def main(args):
