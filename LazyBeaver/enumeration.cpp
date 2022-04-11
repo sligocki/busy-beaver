@@ -11,6 +11,7 @@
 #include <string>
 #include <vector>
 
+#include "simulator.h"
 #include "turing_machine.h"
 #include "util.h"
 
@@ -67,7 +68,8 @@ void Enumerate(std::stack<TuringMachine*>* todos,
   while (todos->size() > 0) {
     std::unique_ptr<TuringMachine> tm(todos->top());
     todos->pop();
-    auto result = DirectSimulate(*tm, max_steps);
+    DirectSimulator sim(*tm);
+    sim.Seek(max_steps);
     num_tms += 1;
 
     if ((num_tms == 1) || ((num_tms % 10000000) == 0)) {
@@ -85,15 +87,15 @@ void Enumerate(std::stack<TuringMachine*>* todos,
                 << std::endl;
     }
 
-    if (result.type == kHalt) {
+    if (sim.is_halted()) {
       if (tm->num_halts() > 1) {
-        ExpandTM(*tm, result.last_state, result.last_symbol, todos);
+        ExpandTM(*tm, sim.last_state(), sim.last_symbol(), todos);
       }
-      if (steps_run->count(result.num_steps) == 0) {
-        steps_run->insert(result.num_steps);
+      if (steps_run->count(sim.step_num()) == 0) {
+        steps_run->insert(sim.step_num());
         // We found a new run-length, write it to steps_example file.
         if (out_steps_example_stream != nullptr) {
-          *out_steps_example_stream << result.num_steps << "\t";
+          *out_steps_example_stream << sim.step_num() << "\t";
           WriteTuringMachine(*tm, out_steps_example_stream);
           // out_steps_example_stream->flush();
         }

@@ -71,23 +71,10 @@ void WriteTuringMachine(const TuringMachine& tm, std::ostream* outstream);
 
 // Read one TM from file (written in WriteTuringMachine() format).
 // Returns nullptr if there are no TMs left.
-TuringMachine* ReadTuringMachine(std::istream* instream, const std::string& base_name);
-
-
-enum ResultType {
-  kHalt,
-  kMaxSteps
-};
-
-struct SimResult {
-  ResultType type;
-  long num_steps;
-  State last_state;
-  Symbol last_symbol;
-};
-
-// Directly simulate at Turing Machine on a finite tape without tape compression.
-SimResult DirectSimulate(const TuringMachine& tm, const long max_steps);
+TuringMachine* ReadTuringMachine(std::istream* instream,
+                                 const std::string& base_name);
+TuringMachine* ReadTuringMachine(const std::string& filename,
+                                 const long line_num);
 
 }  // namespace lazy_beaver
 

@@ -7,7 +7,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_CXX_FLAGS "-O3 -Wall -g")
 
 # Libraries
-add_library(all_libs util.cpp turing_machine.cpp enumeration.cpp)
+add_library(all_libs util.cpp turing_machine.cpp simulator.cpp
+                     enumeration.cpp)
 
 # Executables
 add_executable(lazy_beaver_enum lazy_beaver_enum.cpp)
@@ -19,3 +20,6 @@ target_link_libraries(continue_enum PUBLIC all_libs)
 
 add_executable(direct_sim direct_sim.cpp)
 target_link_libraries(direct_sim PUBLIC all_libs)
+
+add_executable(lin_recur lin_recur_main.cpp lin_recur.cpp)
+target_link_libraries(lin_recur PUBLIC all_libs)

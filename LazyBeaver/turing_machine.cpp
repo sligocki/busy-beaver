@@ -1,5 +1,6 @@
 #include "turing_machine.h"
 
+#include <fstream>
 #include <iostream>
 #include <string>
 
@@ -111,7 +112,8 @@ void WriteTuringMachine(const TuringMachine& tm, std::ostream* outstream) {
   *outstream << "\n";
 }
 
-TuringMachine* ReadTuringMachine(std::istream* instream, const std::string& base_name) {
+TuringMachine* ReadTuringMachine(std::istream* instream,
+                                 const std::string& base_name) {
   std::string line;
   if (std::getline(*instream, line)) {
     int i = 0;
@@ -154,40 +156,14 @@ TuringMachine* ReadTuringMachine(std::istream* instream, const std::string& base
   }
 }
 
-
-SimResult DirectSimulate(const TuringMachine& tm, const long max_steps) {
-  const int unit_size = std::max(max_steps/10,(long)10);
-  std::vector<Symbol> tape(unit_size, EmptySymbol);
-  long pos = tape.size() / 2;
-  State state = InitialState;
-
-  long num_steps = 0;
-
-  while (true) {
-    State in_state = state;
-    Symbol in_symbol = tape[pos];
-    auto lookup_res = tm.Lookup(in_state, in_symbol);
-    tape[pos] = lookup_res.symbol;
-    pos += lookup_res.move;
-    state = lookup_res.state;
-    num_steps += 1;
-
-    if (state == HaltState) {
-      return {kHalt, num_steps, in_state, in_symbol};
-    }
-
-    if (num_steps >= max_steps) {
-      return {kMaxSteps, num_steps, in_state, in_symbol};
-    }
-
-    // Extend tape if necessary.
-    if (pos < 0) {
-      tape.insert(tape.begin(), unit_size, EmptySymbol);
-      pos += unit_size;
-    } else if (pos >= tape.size()) {
-      tape.insert(tape.end(), unit_size, EmptySymbol);
-    }
+TuringMachine* ReadTuringMachine(const std::string& filename,
+                                 const long line_num) {
+  std::ifstream instream(filename, std::ios::in);
+  for (long i = line_num; i > 1; i -= 1) {
+    std::string line;
+    std::getline(instream, line);
   }
+  return lazy_beaver::ReadTuringMachine(&instream, "");
 }
 
 }  // namespace lazy_beaver
