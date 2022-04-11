@@ -1,0 +1,24 @@
+#ifndef BUSY_BEAVER_LAZY_BEAVER_UTIL_H_
+#define BUSY_BEAVER_LAZY_BEAVER_UTIL_H_
+
+#include <chrono>
+
+
+namespace lazy_beaver {
+
+class Timer {
+ public:
+  Timer();
+  void restart_timer();
+
+  // Time elapsed_time since Timer was created (or most recent call to
+  // restart_timer()) in seconds.
+  double time_elapsed_s();
+
+ private:
+  std::chrono::time_point<std::chrono::system_clock> start_time_;
+};
+
+}  // namespace lazy_beaver
+
+#endif  // BUSY_BEAVER_LAZY_BEAVER_UTIL_H_

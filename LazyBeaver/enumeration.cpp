@@ -11,9 +11,8 @@
 #include <string>
 #include <vector>
 
-#include <ctime>
-
 #include "turing_machine.h"
+#include "util.h"
 
 
 namespace lazy_beaver {
@@ -37,12 +36,6 @@ void ExpandTM(const TuringMachine& tm,
   }
 }
 
-double TimeSince(std::chrono::time_point<std::chrono::system_clock> start_time) {
-  const auto end_time = std::chrono::system_clock::now();
-  std::chrono::duration<double> diff = end_time - start_time;
-  return diff.count();
-}
-
 }  // namespace
 
 
@@ -62,8 +55,8 @@ void Enumerate(std::stack<TuringMachine*>* todos,
                std::ostream* save_stack_stream,
                int proc_num,
                std::string stop_name) {
-  const auto start_time = std::chrono::system_clock::now();
-  auto check_time = start_time;
+  Timer timer;
+  Timer check_timer;
 
   // Stats
   long num_tms = 0;
@@ -88,7 +81,7 @@ void Enumerate(std::stack<TuringMachine*>* todos,
                 << " Provisional LB: " << MinMissing(*steps_run)
                 << " Current TM hereditary_order: " << tm->hereditary_name()
                 << " Stack size: " << todos->size()
-                << " Runtime: " << TimeSince(start_time)
+                << " Runtime: " << timer.time_elapsed_s()
                 << std::endl;
     }
 
@@ -114,12 +107,12 @@ void Enumerate(std::stack<TuringMachine*>* todos,
     }
 
     if (save_stack_stream != nullptr) {
-      if (TimeSince(check_time) >= 10.0) {
+      if (check_timer.time_elapsed_s() >= 10.0) {
         if (std::filesystem::exists(stop_name.c_str())) {
           break;
         }
 
-        check_time = std::chrono::system_clock::now();
+        check_timer.restart_timer();
       }
     }
   }
@@ -127,11 +120,11 @@ void Enumerate(std::stack<TuringMachine*>* todos,
   if (proc_num >= 0) {
     std::cout << "Stat " << proc_num << ": # TMs simulated = " << num_tms << std::endl;
     std::cout << "Stat " << proc_num << ": # TMs halted = " << num_tms_halt << std::endl;
-    std::cout << "Stat " << proc_num << ": Runtime = " << TimeSince(start_time) << std::endl;
+    std::cout << "Stat " << proc_num << ": Runtime = " << timer.time_elapsed_s() << std::endl;
   } else {
     std::cout << "Stat: # TMs simulated = " << num_tms << std::endl;
     std::cout << "Stat: # TMs halted = " << num_tms_halt << std::endl;
-    std::cout << "Stat: Runtime = " << TimeSince(start_time) << std::endl;
+    std::cout << "Stat: Runtime = " << timer.time_elapsed_s() << std::endl;
   }
 
   if (save_stack_stream != nullptr) {
