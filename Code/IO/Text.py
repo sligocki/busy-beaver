@@ -225,6 +225,9 @@ class ReaderWriter(object):
 
     io_record.write(self.output_file)
 
+  def flush(self):
+    self.output_file.flush()
+
   def read_record(self):
     """
     New interface for reading an IO.Record object.

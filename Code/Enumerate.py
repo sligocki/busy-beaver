@@ -158,14 +158,17 @@ class Enumerator(object):
     """Save a checkpoint file so that computation can be restarted if it fails."""
     self.end_time = time.time()
 
+    # Actually write to disk.
+    self.writer.flush()
+
     if self.pout:
       # Print out statistical data
-      self.pout.write("%s -" % self.tm_num)
-      self.pout.write(" %s (%s) %s %s (%s) -" % (
-        self.num_halt, self.num_quasihalt, self.num_infinite,
-        self.num_unknown, self.num_inf_quasi_unknown))
-      self.pout.write(" %.0fms " % (self.max_sim_time_s * 1000,))
-      self.pout.write(" (%.2fs)\n" % (self.end_time - self.start_time,))
+      self.pout.write(f"{self.tm_num:_} - "
+                      f"halt {self.num_halt:_} (qhalt {self.num_quasihalt:_}) "
+                      f"inf {self.num_infinite:_} (qunk {self.num_inf_quasi_unknown:_}) "
+                      f"unk {self.num_unknown:_} - "
+                      f"max {self.max_sim_time_s * 1000:_.0f}ms / "
+                      f"total {self.end_time - self.start_time:_.2f}s\n")
       self.pout.flush()
 
       # Note: We are overloading self.pout = None to mean don't write any output

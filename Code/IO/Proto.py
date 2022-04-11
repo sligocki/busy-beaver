@@ -42,6 +42,9 @@ class Writer:
     self.outfile.write(len_bytes)
     self.outfile.write(pb_bytes)
 
+  def flush(self):
+    self.outfile.flush()
+
 
 class Reader:
   """Class to manage reading TMRecords from a file."""
