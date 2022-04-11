@@ -1,0 +1,10 @@
+1RB 1LD  1RC 1RB  1LC 1LA  0RC 0RD | None Infinite Chain_Move 3 32779478
+1RB 0LD  1LC 0LA  1LA 0LC  1RD 1RC | None Infinite Chain_Move 0 66349
+1RB 1RC  1LC 1RD  1RA 1LD  0RD 0LB | None Infinite Chain_Move 1 2819
+1RB 1RA  0RC 0RB  0RD 1RA  1LD 1LB | None Infinite Chain_Move 2 2568
+1RB 1RA  0RC 1LA  1LC 1LD  0RB 0RD | None Infinite Chain_Move 1 2512
+1RB 1RD  1RC 0LD  1LB 0RA  1LC 0LC | None Infinite Chain_Move 1 2332
+1RB 0LD  1LC 0RD  0LC 1LA  1RA 0RB | None Infinite Chain_Move 1 1459
+1RB 0LC  1RC 1LD  1RD 0RB  0LB 1LA | None Infinite Chain_Move 2 1459
+1RB 1LC  1LC 0RD  1LA 0LB  1LD 0RA | None Infinite Chain_Move 1 1164
+1RB 1LB  1RC 0LD  0RD 0RA  1LD 0LA | None Infinite Chain_Move 1 1153
