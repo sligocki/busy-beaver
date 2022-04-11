@@ -2,31 +2,32 @@
 Class for managing direct simulations (non-chain tape).
 """
 
+import collections
+
 import Common
 from Macro import Turing_Machine
 
 
 class DirectTape:
-  def __init__(self, init_symbol, tape_increment = 10):
+  def __init__(self, init_symbol):
     self.init_symbol = init_symbol
-    self.tape_increment = tape_increment
 
     # Internal storage
-    self.tape = [self.init_symbol] * self.tape_increment
-    self.index = len(self.tape) // 2
+    self.tape = collections.deque([self.init_symbol])
+    self.index = 0
 
     # Exposed position relative to start position.
     # - is Left, + is Right.
     self.position = 0
-    self.pos_min = 0
-    self.pos_max = 0
+
+  def pos2index(self, pos):
+    return pos - self.position + self.index
 
   def read(self, pos=None):
     if pos == None:
       index = self.index
     else:
-      index_pos_diff = self.index - self.position
-      index = pos + index_pos_diff
+      index = self.pos2index(pos)
     if 0 <= index < len(self.tape):
       return self.tape[index]
     else:
@@ -38,31 +39,27 @@ class DirectTape:
   def move(self, dir):
     if dir:  # Right
       self.position += 1
-      self.pos_max = max(self.pos_max, self.position)
       self.index += 1
       # Expand tape if necessary
       if self.index >= len(self.tape):
-        self.tape += [self.init_symbol] * self.tape_increment
+        self.tape.append(self.init_symbol)
     else:  # Left
       self.position -= 1
-      self.pos_min = min(self.pos_min, self.position)
       self.index -= 1
       # Expand tape if necessary
       if self.index < 0:
-        self.tape = [self.init_symbol] * self.tape_increment + self.tape
-        self.index += self.tape_increment
+        self.tape.appendleft(self.init_symbol)
+        self.index += 1
 
   def copy(self):
-    new_tape = DirectTape(self.init_symbol, self.tape_increment)
-    new_tape.tape = self.tape[:]  # Copy tape
+    new_tape = DirectTape(self.init_symbol)
+    new_tape.tape = self.tape.copy()
     new_tape.index = self.index
     new_tape.position = self.position
-    new_tape.pos_min = self.pos_min
-    new_tape.pos_max = self.pos_max
     return new_tape
 
   def in_range(self, pos):
-    return (self.pos_min <= pos <= self.pos_max)
+    return (0 <= self.pos2index(pos) < len(self.tape))
 
   def count_nonzero(self):
     return sum(1 for symb in self.tape if symb != self.init_symbol)
@@ -70,8 +67,7 @@ class DirectTape:
 
 class DirectSimulator:
   def __init__(self, tm : Turing_Machine.Simple_Machine, *,
-               initialize : bool = True, blank_init_symbol : bool = False,
-               tape_increment : int = 10):
+               initialize : bool = True, blank_init_symbol : bool = False):
     self.tm = tm
 
     if initialize:
@@ -79,8 +75,7 @@ class DirectSimulator:
       self.state = tm.init_state
 
       init_symbol = tm.init_symbol if not blank_init_symbol else None
-      self.tape = DirectTape(init_symbol = init_symbol,
-                             tape_increment = tape_increment)
+      self.tape = DirectTape(init_symbol = init_symbol)
 
       self.step_num = 0
 
@@ -113,3 +108,30 @@ class DirectSimulator:
   def seek(self, target_step_num):
     while not self.halted and self.step_num < target_step_num:
       self.step()
+
+
+if __name__ == "__main__":
+  import argparse
+  import time
+
+  import IO
+
+
+  def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("tm_file")
+    parser.add_argument("tm_line", type=int, default=1)
+    parser.add_argument("num_steps", type=int)
+    args = parser.parse_args()
+
+    ttable = IO.Text.load_TTable_filename(args.tm_file, args.tm_line)
+    tm = Turing_Machine.Simple_Machine(ttable)
+    sim = DirectSimulator(tm)
+
+    print("Starting simulation")
+    start_time = time.time()
+    sim.seek(args.num_steps)
+    print(f"Simulated {sim.step_num:_} steps in {time.time() - start_time:_.1f}s")
+
+  if __name__ == "__main__":
+    main()
