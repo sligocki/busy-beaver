@@ -12,13 +12,7 @@ add_library(all_libs turing_machine.cpp enumeration.cpp)
 # Executables
 add_executable(lazy_beaver_enum lazy_beaver_enum.cpp)
 target_link_libraries(lazy_beaver_enum PUBLIC all_libs)
-target_link_libraries(lazy_beaver_enum PUBLIC stdc++fs)
 target_include_directories(lazy_beaver_enum PRIVATE $ENV{MPI_INC})
 
 add_executable(continue_enum continue_enum.cpp)
 target_link_libraries(continue_enum PUBLIC all_libs)
-target_link_libraries(continue_enum PUBLIC stdc++fs)
-
-add_executable(time_test time_test.cpp)
-target_link_libraries(continue_enum PUBLIC all_libs)
-target_link_libraries(continue_enum PUBLIC stdc++fs)

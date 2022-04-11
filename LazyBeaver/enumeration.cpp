@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <filesystem>
 #include <iostream>
 #include <map>
 #include <memory>
@@ -9,7 +10,6 @@
 #include <stack>
 #include <string>
 #include <vector>
-#include <experimental/filesystem>
 
 #include <ctime>
 
@@ -70,7 +70,7 @@ void Enumerate(std::stack<TuringMachine*>* todos,
   long num_tms_halt = 0;
 
   // while (todos->size() > 0 &&
-  //        (save_stack_stream == nullptr || !std::experimental::filesystem::exists("stop.enumeration"))) {
+  //        (save_stack_stream == nullptr || !std::filesystem::exists("stop.enumeration"))) {
   while (todos->size() > 0) {
     std::unique_ptr<TuringMachine> tm(todos->top());
     todos->pop();
@@ -115,7 +115,7 @@ void Enumerate(std::stack<TuringMachine*>* todos,
 
     if (save_stack_stream != nullptr) {
       if (TimeSince(check_time) >= 10.0) {
-        if (std::experimental::filesystem::exists(stop_name.c_str())) {
+        if (std::filesystem::exists(stop_name.c_str())) {
           break;
         }
 
