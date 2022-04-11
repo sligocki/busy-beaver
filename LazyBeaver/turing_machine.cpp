@@ -120,7 +120,7 @@ TuringMachine* ReadTuringMachine(std::istream* instream, const std::string& base
       std::vector<TuringMachine::LookupResult> row;
       // Each trans in a row takes up exactly 4 bytes, Ex: "1RB ".
       // End of row is indicated by a double space ("  ").
-      for (;line[i] != ' '; i += 4) {
+      for (;i < line.size() && line[i] != ' '; i += 4) {
         TuringMachine::LookupResult trans;
         // Format: 1RB (write symbol, move dir, next state).
         // '0' -> 0, '1' -> 1, ...
@@ -140,7 +140,7 @@ TuringMachine* ReadTuringMachine(std::istream* instream, const std::string& base
           trans.state = state_char - 'A';
           ASSERT(0 <= trans.state && trans.state < 26);
         }
-        ASSERT(line[i+3] == ' ');
+        ASSERT(i+3 >= line.size() || line[i+3] == ' ');
         row.push_back(trans);
       }
       // We've reached "  " which indicates the end of a row.
