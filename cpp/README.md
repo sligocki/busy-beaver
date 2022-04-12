@@ -68,10 +68,13 @@ With this code we can verify the following values for the Lazy Beaver function:
 
 ## Runtimes
 
-These computation escalate quickly in runtime:
+Runtime appears to be about 200M TM-steps / sec (running serially on my Mac laptop).
+However, since number of TMs escalates quickly, these computations also grow quick:
+
 * 2x2, 3x2, 2x3 all compute in milliseconds using serial enumeration.
 * 4x2 and 2x4 both compute in ~1s.
-* 3x3 takes ~2 min serially.
-* 5x2 takes ~10 min serially or ~2 min with 10x parallelism.
+* 3x3 takes ~1 min serially (31M TMs x 400 steps).
+* 2x5 takes ~6 min serially (78M TMs x 1000 steps).
+* 5x2 takes ~10 min serially or ~3 min with 10x parallelism (181M TMs x 500 steps).
 * 6x2 took __4.5 days__ running in parallel on a __48 core machine__.
 * 2x6 took about __7 days__ running in parallel on a __48 core machine__.
