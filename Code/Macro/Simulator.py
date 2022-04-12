@@ -256,12 +256,13 @@ class Simulator(object):
     print(template("Chain:", self.steps_from_chain, self.num_chain_moves))
     if self.prover:
       print(template("Rule:", self.steps_from_rule, self.num_rule_moves))
-      print("Rules proven:", len(self.prover.rules))
+      print("Rules proven:", self.prover.num_rules)
       if self.prover.recursive:
         print("Recursive rules proven:", self.prover.num_recursive_rules)
         if self.prover.allow_collatz:
           print("Collatz rules proven:", self.prover.num_collatz_rules)
       print("Failed proofs:", self.prover.num_failed_proofs)
+      print(f"Prover num past configs: {len(self.prover.past_configs):_}")
     print("Tape copies:", Tape.Chain_Tape.num_copies)
 
   def verbose_print(self):

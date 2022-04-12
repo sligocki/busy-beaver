@@ -221,7 +221,7 @@ def simulate_machine(machine : Turing_Machine.Turing_Machine,
     if sim.step_num > 0:
       sim_info.result.log10_num_steps = int(math.log10(sim.step_num))
 
-    sim_info.result.num_rules_proven = sim.prover.rule_num - 1
+    sim_info.result.num_rules_proven = sim.prover.num_rules
     # TODO: add num_recursive_rules, num_collatz_rules, etc.
     sim_info.result.num_proofs_failed = sim.prover.num_failed_proofs
 

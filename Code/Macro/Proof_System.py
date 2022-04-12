@@ -36,8 +36,12 @@ def add_option_group(parser):
   group.add_option("--limited-rules", action="store_true", default=False,
                    help="Rules are saved and applied based on the maximum they "
                    "effect the tape to the left and right. [Experimental]")
+
+  # A quick experiment shows that 100k past_configs -> 100MB, 1M -> 1GB RAM.
+  group.add_option("--max-prover-configs", type=int, default=100_000,
+                   help="Limit size of prover's previous configs (so avoid memory issues in situations where we're not applying any rules ...).")
   group.add_option("--max-num-reps", type=int, default=10,
-                    help="Specify a maximum consecutive number of times a recursive (General) rule is applied (Does not apply to standard Diff Rules).")
+                    help="Maximum consecutive number of times a General rule is applied (Does not apply to standard Diff Rules).")
 
   parser.add_option_group(group)
 
@@ -327,7 +331,7 @@ class Proof_System(object):
     self.past_configs = defaultdict(Past_Config)
     # Colection of proven rules indexed by stripped configurations.
     self.rules = {}
-    self.rule_num = 1
+    self.num_rules = 0
 
     # After proving a part of a Collatz rule, do not try to log any other
     # rules until we have a chance to prove the rest of the Collatz rule.
@@ -411,7 +415,8 @@ class Proof_System(object):
 
     # Otherwise log it into past_configs and see if we should try and prove
     # a new rule.
-    if (self.pause_until_loop == None or loop_num >= self.pause_until_loop or
+    if (self.pause_until_loop == None or
+        loop_num >= self.pause_until_loop or
         stripped_config in self.past_configs):
       past_config = self.past_configs[stripped_config]
       if past_config.log_config(step_num, loop_num):
@@ -432,6 +437,9 @@ class Proof_System(object):
             if self.options.compute_steps and not result.states_last_seen:
               print("UNIMPLEMENTED: Prover missing states_last_seen for rule:", rule, result, file=sys.stderr)
             return result
+      elif len(self.past_configs) > self.options.max_prover_configs:
+        print("Walrus: Resetting past_configs")
+        self.past_configs.clear()
 
     return ProverResult(NOTHING_TO_DO)
 
@@ -509,7 +517,7 @@ class Proof_System(object):
             self.print_this("Group:", str(group).replace(
                 "\n", "\n" + self.verbose_prefix + "        "))
       else:
-        group = Collatz_Rule_Group(rule, self.rule_num)
+        group = Collatz_Rule_Group(rule, self.num_rules)
       rule = group
 
     # Remember rule.
@@ -533,10 +541,10 @@ class Proof_System(object):
       else:
         self.rules[stripped_config_right] = [rule,]
 
-      self.rule_num += 1
+      self.num_rules += 1
     else:
       self.rules[stripped_config] = rule
-      self.rule_num += 1
+      self.num_rules += 1
 
     # Clear our memory. We cannot use it for future rules because the
     # number of steps will be wrong now that we have proven this rule.
@@ -753,7 +761,7 @@ class Proof_System(object):
 
       self.num_recursive_rules += 1
       rule = General_Rule(var_list, min_list, result_tape, num_steps,
-                          gen_sim.num_loops, self.rule_num,
+                          gen_sim.num_loops, self.num_rules,
                           states_last_seen=states_last_seen)
 
       if self.verbose:
@@ -866,9 +874,9 @@ class Proof_System(object):
 
         rule = Limited_Diff_Rule(initial_tape, left_dist, right_dist, diff_tape,
                                  new_state, num_steps, gen_sim.num_loops,
-                                 self.rule_num, states_last_seen=states_last_seen)
+                                 self.num_rules, states_last_seen=states_last_seen)
       else:
-        rule = Diff_Rule(initial_tape, diff_tape, new_state, num_steps, gen_sim.num_loops, self.rule_num, states_last_seen=states_last_seen)
+        rule = Diff_Rule(initial_tape, diff_tape, new_state, num_steps, gen_sim.num_loops, self.num_rules, states_last_seen=states_last_seen)
 
       if self.verbose:
         print()
