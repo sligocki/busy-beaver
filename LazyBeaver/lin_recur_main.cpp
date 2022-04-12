@@ -13,17 +13,17 @@
 
 namespace lazy_beaver {
 
-void DirectSimMain(const std::string& tm_filename, const long line_num,
-                   const long max_steps) {
+void LinRecurMain(const std::string& tm_filename, const long line_num,
+                  const long max_steps) {
   std::unique_ptr<TuringMachine> tm(
     ReadTuringMachine(tm_filename, line_num));
 
-  std::cout << "Starting simulation" << std::endl;
+  std::cout << "Running Lin Recur Detection" << std::endl;
   Timer timer;
   auto result = LinRecurDetect(*tm, max_steps);
 
-  std::cout << "Simulated " << sim.step_num()
-            << " in " << timer.time_elapsed_s() << "s" << std::endl;
+  std::cout << "Finished Lin Recur Detection in "
+            << timer.time_elapsed_s() << "s" << std::endl;
   std::cout << "is_halted: " << result.is_halted << std::endl;
   std::cout << "is_lin_recurrent: " << result.is_lin_recurrent << std::endl;
   if (result.is_lin_recurrent) {

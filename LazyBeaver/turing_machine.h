@@ -10,7 +10,7 @@ namespace lazy_beaver {
 
 using Symbol = int;
 using State = int;
-const Symbol EmptySymbol = 0;
+const Symbol BlankSymbol = 0;
 const State InitialState = 0;
 const State HaltState = -1;
 
