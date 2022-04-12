@@ -11,7 +11,7 @@
 #include "util.h"
 
 
-namespace lazy_beaver {
+namespace busy_beaver {
 
 void LinRecurMain(const std::string& tm_filename, const long line_num,
                   const long max_steps) {
@@ -33,7 +33,7 @@ void LinRecurMain(const std::string& tm_filename, const long line_num,
   }
 }
 
-}  // namespace lazy_beaver
+}  // namespace busy_beaver
 
 
 int main(int argc, char* argv[]) {
@@ -45,7 +45,7 @@ int main(int argc, char* argv[]) {
     const long line_num = std::stol(argv[2]);
     const long max_steps = std::stol(argv[3]);
 
-    lazy_beaver::LinRecurMain(tm_filename, line_num, max_steps);
+    busy_beaver::LinRecurMain(tm_filename, line_num, max_steps);
 
     return 0;
   }

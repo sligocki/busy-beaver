@@ -16,7 +16,7 @@
 #include "util.h"
 
 
-namespace lazy_beaver {
+namespace busy_beaver {
 namespace {
 
 void ExpandTM(const TuringMachine& tm,
@@ -138,4 +138,4 @@ void Enumerate(std::stack<TuringMachine*>* todos,
   }
 }
 
-}  // namespace lazy_beaver
+}  // namespace busy_beaver

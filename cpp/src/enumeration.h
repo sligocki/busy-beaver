@@ -1,5 +1,5 @@
-#ifndef BUSY_BEAVER_LAZY_BEAVER_ENUMERATION_H_
-#define BUSY_BEAVER_LAZY_BEAVER_ENUMERATION_H_
+#ifndef BUSY_BEAVER_ENUMERATION_H_
+#define BUSY_BEAVER_ENUMERATION_H_
 
 #include <iostream>
 #include <map>
@@ -8,7 +8,7 @@
 #include "turing_machine.h"
 
 
-namespace lazy_beaver {
+namespace busy_beaver {
 
 // Enumerates TMs in TNF starting from tms (up to max_steps).
 // Prints a bunch of info.
@@ -29,6 +29,6 @@ void Enumerate(std::stack<TuringMachine*>* tms,
 // Useful for calculating Lazy Beaver.
 long MinMissing(const std::set<long>& collection);
 
-}  // namespace lazy_beaver
+}  // namespace busy_beaver
 
-#endif  // BUSY_BEAVER_LAZY_BEAVER_ENUMERATION_H_
+#endif  // BUSY_BEAVER_ENUMERATION_H_

@@ -9,7 +9,7 @@
 #include "util.h"
 
 
-namespace lazy_beaver {
+namespace busy_beaver {
 
 void DirectSimMain(const std::string& tm_filename, const long line_num,
                    const long num_steps) {
@@ -25,7 +25,7 @@ void DirectSimMain(const std::string& tm_filename, const long line_num,
             << " in " << timer.time_elapsed_s() << "s" << std::endl;
 }
 
-}  // namespace lazy_beaver
+}  // namespace busy_beaver
 
 
 int main(int argc, char* argv[]) {
@@ -37,7 +37,7 @@ int main(int argc, char* argv[]) {
     const long line_num = std::stol(argv[2]);
     const long num_steps = std::stol(argv[3]);
 
-    lazy_beaver::DirectSimMain(tm_filename, line_num, num_steps);
+    busy_beaver::DirectSimMain(tm_filename, line_num, num_steps);
 
     return 0;
   }

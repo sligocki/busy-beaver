@@ -1,12 +1,12 @@
-#ifndef BUSY_BEAVER_LAZY_BEAVER_SIMULATOR_H_
-#define BUSY_BEAVER_LAZY_BEAVER_SIMULATOR_H_
+#ifndef BUSY_BEAVER_SIMULATOR_H_
+#define BUSY_BEAVER_SIMULATOR_H_
 
 #include <vector>
 
 #include "turing_machine.h"
 
 
-namespace lazy_beaver {
+namespace busy_beaver {
 
 class Tape {
  public:
@@ -58,6 +58,6 @@ class DirectSimulator {
   Symbol last_symbol_;
 };
 
-}  // namespace lazy_beaver
+}  // namespace busy_beaver
 
-#endif  // BUSY_BEAVER_LAZY_BEAVER_SIMULATOR_H_
+#endif  // BUSY_BEAVER_SIMULATOR_H_

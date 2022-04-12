@@ -6,7 +6,7 @@
 #include "turing_machine.h"
 
 
-namespace lazy_beaver {
+namespace busy_beaver {
 
 namespace {
 
@@ -102,4 +102,4 @@ LinRecurResult LinRecurDetect(const TuringMachine& tm, const long max_steps) {
   return {false, false, 0, 0, 0};
 }
 
-}  // namespace lazy_beaver
+}  // namespace busy_beaver

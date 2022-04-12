@@ -5,7 +5,7 @@
 #include <string>
 
 
-namespace lazy_beaver {
+namespace busy_beaver {
 
 // Empty TM
 TuringMachine::TuringMachine(int num_states, int num_symbols)
@@ -163,7 +163,7 @@ TuringMachine* ReadTuringMachine(const std::string& filename,
     std::string line;
     std::getline(instream, line);
   }
-  return lazy_beaver::ReadTuringMachine(&instream, "");
+  return ReadTuringMachine(&instream, "");
 }
 
-}  // namespace lazy_beaver
+}  // namespace busy_beaver

@@ -1,12 +1,12 @@
-#ifndef BUSY_BEAVER_LAZY_BEAVER_TURING_MACHINE_H_
-#define BUSY_BEAVER_LAZY_BEAVER_TURING_MACHINE_H_
+#ifndef BUSY_BEAVER_TURING_MACHINE_H_
+#define BUSY_BEAVER_TURING_MACHINE_H_
 
 #include <set>
 #include <string>
 #include <vector>
 
 
-namespace lazy_beaver {
+namespace busy_beaver {
 
 using Symbol = int;
 using State = int;
@@ -76,6 +76,6 @@ TuringMachine* ReadTuringMachine(std::istream* instream,
 TuringMachine* ReadTuringMachine(const std::string& filename,
                                  const long line_num);
 
-}  // namespace lazy_beaver
+}  // namespace busy_beaver
 
-#endif  // BUSY_BEAVER_LAZY_BEAVER_TURING_MACHINE_H_
+#endif  // BUSY_BEAVER_TURING_MACHINE_H_

@@ -1,10 +1,10 @@
-#ifndef BUSY_BEAVER_LAZY_BEAVER_UTIL_H_
-#define BUSY_BEAVER_LAZY_BEAVER_UTIL_H_
+#ifndef BUSY_BEAVER_UTIL_H_
+#define BUSY_BEAVER_UTIL_H_
 
 #include <chrono>
 
 
-namespace lazy_beaver {
+namespace busy_beaver {
 
 class Timer {
  public:
@@ -19,6 +19,6 @@ class Timer {
   std::chrono::time_point<std::chrono::system_clock> start_time_;
 };
 
-}  // namespace lazy_beaver
+}  // namespace busy_beaver
 
-#endif  // BUSY_BEAVER_LAZY_BEAVER_UTIL_H_
+#endif  // BUSY_BEAVER_UTIL_H_

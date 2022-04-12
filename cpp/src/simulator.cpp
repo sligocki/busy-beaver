@@ -6,7 +6,7 @@
 #include "turing_machine.h"
 
 
-namespace lazy_beaver {
+namespace busy_beaver {
 
 Tape::Tape()
   : unit_size_(100),  // TODO: Optimize
@@ -65,4 +65,4 @@ void DirectSimulator::Seek(const long step_goal) {
   }
 }
 
-}  // namespace lazy_beaver
+}  // namespace busy_beaver

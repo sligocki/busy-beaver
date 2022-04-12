@@ -15,7 +15,7 @@
 #include "turing_machine.h"
 
 
-namespace lazy_beaver {
+namespace busy_beaver {
 
 // Optimization parameters
 // TODO(shawn or terry): These probably need to increase 5x2 case is spending
@@ -92,7 +92,7 @@ void EnumerateAll(int num_states, int num_symbols, long max_steps,
   }
 }
 
-}  // namespace lazy_beaver
+}  // namespace busy_beaver
 
 
 int main(int argc, char* argv[]) {
@@ -109,12 +109,12 @@ int main(int argc, char* argv[]) {
     if (argc >= 6) {
       // Write all non-halting machines to a file.
       std::ofstream out_nonhalt_stream(argv[5], std::ios::out | std::ios::binary);
-      lazy_beaver::EnumerateAll(num_states, num_symbols, max_steps,
+      busy_beaver::EnumerateAll(num_states, num_symbols, max_steps,
                                 &out_steps_example_stream, &out_nonhalt_stream);
       out_nonhalt_stream.close();
     } else {
       // Don't write all non-halting machines to a file.
-      lazy_beaver::EnumerateAll(num_states, num_symbols, max_steps,
+      busy_beaver::EnumerateAll(num_states, num_symbols, max_steps,
                                 &out_steps_example_stream, nullptr);
     }
 

@@ -1,10 +1,10 @@
-#ifndef BUSY_BEAVER_LAZY_BEAVER_LIN_RECUR_H_
-#define BUSY_BEAVER_LAZY_BEAVER_LIN_RECUR_H_
+#ifndef BUSY_BEAVER_LIN_RECUR_H_
+#define BUSY_BEAVER_LIN_RECUR_H_
 
 #include "turing_machine.h"
 
 
-namespace lazy_beaver {
+namespace busy_beaver {
 
 struct LinRecurResult {
   bool is_halted;
@@ -16,6 +16,6 @@ struct LinRecurResult {
 
 LinRecurResult LinRecurDetect(const TuringMachine& tm, const long max_steps);
 
-}  // namespace lazy_beaver
+}  // namespace busy_beaver
 
-#endif  // BUSY_BEAVER_LAZY_BEAVER_LIN_RECUR_H_
+#endif  // BUSY_BEAVER_LIN_RECUR_H_

@@ -3,7 +3,7 @@
 #include <chrono>
 
 
-namespace lazy_beaver {
+namespace busy_beaver {
 
 Timer::Timer() : start_time_(std::chrono::system_clock::now()) {}
 void Timer::restart_timer() { start_time_ = std::chrono::system_clock::now(); }
@@ -14,4 +14,4 @@ double Timer::time_elapsed_s() {
   return diff.count();
 }
 
-}  // namespace lazy_beaver
+}  // namespace busy_beaver
