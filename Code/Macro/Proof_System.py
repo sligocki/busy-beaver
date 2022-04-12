@@ -438,7 +438,6 @@ class Proof_System(object):
               print("UNIMPLEMENTED: Prover missing states_last_seen for rule:", rule, result, file=sys.stderr)
             return result
       elif len(self.past_configs) > self.options.max_prover_configs:
-        print("Walrus: Resetting past_configs")
         self.past_configs.clear()
 
     return ProverResult(NOTHING_TO_DO)
