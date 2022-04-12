@@ -8,7 +8,8 @@ set(CMAKE_CXX_FLAGS "-O3 -Wall -g")
 
 # Libraries
 add_library(all_libs src/util.cpp src/turing_machine.cpp src/simulator.cpp
-                     src/enumerator.cpp src/lin_recur.cpp)
+                     src/enumerator.cpp src/lin_recur.cpp
+                     src/lazy_beaver_enumerator.cpp)
 
 # Executables
 add_executable(direct_sim src/direct_sim.cpp)
@@ -17,7 +18,7 @@ target_link_libraries(direct_sim PUBLIC all_libs)
 add_executable(lin_recur src/lin_recur_main.cpp)
 target_link_libraries(lin_recur PUBLIC all_libs)
 
-add_executable(lb_enum src/lazy_beaver_enum.cpp)
+add_executable(lb_enum src/lb_enum.cpp)
 target_link_libraries(lb_enum PUBLIC all_libs)
 target_include_directories(lb_enum PRIVATE $ENV{MPI_INC})
 
