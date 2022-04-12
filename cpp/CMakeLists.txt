@@ -8,7 +8,7 @@ set(CMAKE_CXX_FLAGS "-O3 -Wall -g")
 
 # Libraries
 add_library(all_libs src/util.cpp src/turing_machine.cpp src/simulator.cpp
-                     src/enumeration.cpp src/lin_recur.cpp)
+                     src/enumerator.cpp src/lin_recur.cpp)
 
 # Executables
 add_executable(direct_sim src/direct_sim.cpp)

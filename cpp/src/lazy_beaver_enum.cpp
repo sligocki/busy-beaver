@@ -3,90 +3,127 @@
 
 #include <fstream>
 #include <iostream>
-#include <map>
-#include <stack>
+#include <set>
 #include <string>
-#include <chrono>
-#include <memory>
 
-// #include <mpi.h>
-
-#include "enumeration.h"
+#include "enumerator.h"
+#include "simulator.h"
 #include "turing_machine.h"
+#include "util.h"
 
 
 namespace busy_beaver {
 
-// Optimization parameters
-// TODO(shawn or terry): These probably need to increase 5x2 case is spending
-// 96% of time in communication.
-#define MIN_NUM_JOBS_PER_BATCH 10
-#define MAX_NUM_JOBS_PER_BATCH 25
-
-#define DEFAULT_MAX_LOCAL_JOBS    30
-#define DEFAULT_TARGET_LOCAL_JOBS 25
-
-class WorkerWorkQueue {
-  public:
-    WorkerWorkQueue(int master_proc_num) {
-      master_proc_num_ = master_proc_num;
-
-      max_queue_size_    = DEFAULT_MAX_LOCAL_JOBS;
-      target_queue_size_ = DEFAULT_TARGET_LOCAL_JOBS;
+class LazyBeaverEnum : public BaseEnumerator {
+ public:
+  LazyBeaverEnum(const long max_steps,
+                 const std::string& out_witness_filename,
+                 const std::string& out_nonhalt_filename,
+                 const std::string& print_prefix = "")
+    : BaseEnumerator(/* allow_no_halt = */ false),
+      max_steps_(max_steps),
+      print_prefix_(print_prefix) {
+    out_witness_stream_.reset(
+      new std::ofstream(out_witness_filename, std::ios::out | std::ios::binary));
+    if (!out_nonhalt_filename.empty()) {
+      out_nonhalt_stream_.reset(
+        new std::ofstream(out_nonhalt_filename, std::ios::out | std::ios::binary));
     }
+  }
 
-    ~WorkerWorkQueue() {
+  virtual ~LazyBeaverEnum() {
+    out_witness_stream_->close();
+    if (out_nonhalt_stream_) {
+      out_nonhalt_stream_->close();
     }
+  }
 
-    TuringMachine *pop() {
-      TuringMachine* tm = NULL;
-
-      if (!local_queue_.empty()) {
-        tm = local_queue_.top();
-        local_queue_.pop();
-      } else {
+  // Find minimum non-realized step count (Lazy Beaver value).
+  long min_missing() const {
+    for (long i = 1;; ++i) {
+      if (steps_realized_.count(i) == 0) {
+        return i;
       }
+    }
+  }
 
-      return tm;
+  void print_stats() const {
+    std::cout << "Stat " << print_prefix_
+              << ": # TMs simulated = " << num_tms_total_ << std::endl;
+    std::cout << "Stat " << print_prefix_
+              << ": # TMs halted = " << num_tms_halt_ << std::endl;
+  }
+
+ private:
+  virtual EnumExpandParams filter_tm(const TuringMachine& tm) {
+    if ((num_tms_total_ % 10000000) == 0) {
+        std::cout << "Progress " << print_prefix_ << ":"
+                  << " TMs simulated: " << num_tms_total_
+                  << " Provisional LB: " << min_missing()
+                  << " Current TM hereditary_order: " << tm.hereditary_name()
+                  << std::endl;
     }
 
-  private:
-    int master_proc_num_;
+    DirectSimulator sim(tm);
+    sim.Seek(max_steps_);
 
-    std::stack<TuringMachine*> local_queue_;
+    num_tms_total_ += 1;
+    if (sim.is_halted()) {
+      num_tms_halt_ += 1;
+      if (steps_realized_.count(sim.step_num()) == 0) {
+        // Log this TM
+        steps_realized_.insert(sim.step_num());
 
-    int max_queue_size_;
-    int target_queue_size_;
+        // Write witness
+        *out_witness_stream_ << sim.step_num() << "\t";
+        WriteTuringMachine(tm, out_witness_stream_.get());
+      }
+    } else {
+      // Non-halting machine.
+      if (out_nonhalt_stream_) {
+        WriteTuringMachine(tm, out_nonhalt_stream_.get());
+      }
+    }
+
+    // TODO: Print progress.
+
+    // Data needed for enumeration expansion.
+    return {sim.is_halted(), sim.last_state(), sim.last_symbol()};
+  }
+
+  const long max_steps_;
+  // Set of all step counts that are realized by a TM.
+  std::set<long> steps_realized_;
+
+  // Output streams
+  std::unique_ptr<std::ofstream> out_witness_stream_;
+  std::unique_ptr<std::ofstream> out_nonhalt_stream_;
+
+  // Stats
+  std::string print_prefix_;
+  long num_tms_total_ = 0;
+  long num_tms_halt_ = 0;
 };
 
-
-/*
-class MasterWorkQueue {
-  public:
-
-};
-*/
-
-void EnumerateAll(int num_states, int num_symbols, long max_steps,
-                  std::ofstream* out_steps_example_stream,
-                  std::ofstream* out_nonhalt_stream) {
-  const auto start_time = std::chrono::system_clock::now();
-  const std::time_t start_time_t = std::chrono::system_clock::to_time_t(start_time);
-
+void EnumerateAll(const int num_states, const int num_symbols, const long max_steps,
+                  const std::string& out_witness_filename,
+                  const std::string& out_nonhalt_filename) {
+  Timer timer;
   std::cout << std::endl;
-  std::cout << "Start: " << num_states << "x" << num_symbols << " : " << std::ctime(&start_time_t) << std::endl;
+  std::cout << "Start: " << num_states << "x" << num_symbols << " : " << NowTimestamp() << std::endl;
 
-  // Depth-first search of all TMs in TNF (but allowing A0->0RB).
-  // Note: These TMs will be deleted by the unique_ptr in the while loop below.
-  std::stack<TuringMachine*> todos;
-  // Start with empty TM.
-  todos.push(new TuringMachine(num_states, num_symbols));
-  std::set<long> steps_run;
-  Enumerate(&todos, max_steps, &steps_run, out_steps_example_stream, out_nonhalt_stream);
+  // Depth-first search of all TMs in TNF (but allowing A0->0R?).
+  LazyBeaverEnum enumerator(max_steps, out_witness_filename, out_nonhalt_filename);
+  enumerator.enumerate(new TuringMachine(num_states, num_symbols));
+  const long lb = enumerator.min_missing();
 
-  long lb = MinMissing(steps_run);
+  enumerator.print_stats();
+  std::cout << "Stat : Runtime = " << timer.time_elapsed_s() << std::endl;
+
+  // Print LB result
+  std::cout << std::endl;
   if (lb < max_steps) {
-    std::cout << "LB(" << num_states << "," << num_symbols << ") = " << lb << std::endl;
+    std::cout << "LB(" << num_states << ", " << num_symbols << ") = " << lb << std::endl;
   } else {
     std::cout << "Inconclusive: max_steps too small." << std::endl;
   }
@@ -97,27 +134,19 @@ void EnumerateAll(int num_states, int num_symbols, long max_steps,
 
 int main(int argc, char* argv[]) {
   if (argc < 5) {
-    std::cerr << "Usage: lazy_beaver_enum num_states num_symbols max_steps out_steps_example_file [out_nonhalt_file]" << std::endl;
+    std::cerr << "Usage: lazy_beaver_enum num_states num_symbols max_steps out_witness_file [out_nonhalt_file]" << std::endl;
     return 1;
   } else {
     const int num_states = std::stoi(argv[1]);
     const int num_symbols = std::stoi(argv[2]);
     const long max_steps = std::stol(argv[3]);
-    std::ofstream out_steps_example_stream(argv[4], std::ios::out | std::ios::binary);
-
-    std::unique_ptr<std::ofstream> out_nonhalt_stream;
+    const std::string out_witness_filename(argv[4]);
+    std::string out_nonhalt_filename;
     if (argc >= 6) {
-      // Write all non-halting machines to a file.
-      std::ofstream out_nonhalt_stream(argv[5], std::ios::out | std::ios::binary);
-      busy_beaver::EnumerateAll(num_states, num_symbols, max_steps,
-                                &out_steps_example_stream, &out_nonhalt_stream);
-      out_nonhalt_stream.close();
-    } else {
-      // Don't write all non-halting machines to a file.
-      busy_beaver::EnumerateAll(num_states, num_symbols, max_steps,
-                                &out_steps_example_stream, nullptr);
+      out_nonhalt_filename.assign(argv[5]);
     }
 
-    out_steps_example_stream.close();
+    busy_beaver::EnumerateAll(num_states, num_symbols, max_steps,
+                              out_witness_filename, out_nonhalt_filename);
   }
 }

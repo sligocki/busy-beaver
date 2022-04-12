@@ -14,4 +14,10 @@ double Timer::time_elapsed_s() {
   return diff.count();
 }
 
+char* NowTimestamp() {
+  const auto start_time = std::chrono::system_clock::now();
+  const std::time_t start_time_t = std::chrono::system_clock::to_time_t(start_time);
+  return std::ctime(&start_time_t);
+}
+
 }  // namespace busy_beaver
