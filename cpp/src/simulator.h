@@ -49,6 +49,8 @@ class DirectSimulator {
   Symbol last_symbol() const { return last_symbol_; }
 
  private:
+  void StepSafe();
+
   const TuringMachine& tm_;
   Tape tape_;
   State state_;

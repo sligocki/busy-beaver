@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.10.2)
 
-project(LazyBeaver)
+project(BusyBeaver)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
@@ -18,6 +18,11 @@ target_link_libraries(direct_sim PUBLIC all_libs)
 add_executable(lin_recur src/lin_recur_main.cpp)
 target_link_libraries(lin_recur PUBLIC all_libs)
 
+add_executable(lr_enum src/lr_enum.cpp)
+target_link_libraries(lr_enum PUBLIC all_libs)
+
+
+# Lazy Beaver
 add_executable(lb_enum src/lb_enum.cpp)
 target_link_libraries(lb_enum PUBLIC all_libs)
 target_include_directories(lb_enum PRIVATE $ENV{MPI_INC})

@@ -48,7 +48,8 @@ DirectSimulator::DirectSimulator(const TuringMachine& tm)
     state_(InitialState),
     step_num_(0) {}
 
-void DirectSimulator::Step() {
+void DirectSimulator::StepSafe() {
+  // Step w/o checking halt status. Only for internal use.
   last_state_ = state_;
   last_symbol_ = tape_.read();
   auto lookup_res = tm_.Lookup(last_state_, last_symbol_);
@@ -59,9 +60,15 @@ void DirectSimulator::Step() {
   step_num_ += 1;
 }
 
+void DirectSimulator::Step() {
+  if (!is_halted()) {
+    StepSafe();
+  }
+}
+
 void DirectSimulator::Seek(const long step_goal) {
   while (!is_halted() && step_num_ < step_goal) {
-    Step();
+    StepSafe();
   }
 }
 

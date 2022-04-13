@@ -1,6 +1,7 @@
 #include "enumerator.h"
 
 #include <memory>
+#include <iostream>
 #include <stack>
 
 #include "turing_machine.h"
@@ -20,9 +21,6 @@ void BaseEnumerator::enumerate(TuringMachine* init_tm) {
    if (result.reached_undecided) {
      expand_tm(*tm, result, &todos);
    }
-
-   // TODO: Write results?
-   // TODO: Print progress?
  }
 }
 

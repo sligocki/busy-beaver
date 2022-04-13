@@ -59,7 +59,7 @@ LinRecurResult LinRecurDetect(const TuringMachine& tm, const long max_steps) {
       // states_used.add(sim.state)
       sim.Step();
       if (sim.is_halted()) {
-        return {true, false, 0, 0, 0};
+        return {true, false, 0, 0, 0, sim.last_state(), sim.last_symbol()};
       }
 
       most_left_pos = std::min(most_left_pos, sim.tape().position());
@@ -82,24 +82,20 @@ LinRecurResult LinRecurDetect(const TuringMachine& tm, const long max_steps) {
         } else {  // In place
           if (are_sections_equal(init_tape, sim.tape(),
                                  most_left_pos, most_right_pos)) {
-            std::cout << "Walrus" << std::endl;
-            init_tape.print();
-            sim.tape().print();
-            std::cout << most_left_pos << " " << most_right_pos << " " << offset << std::endl;
             success = true;
           }
         }
 
         if (success) {
           const long period = sim.step_num() - init_step_num;
-          return {false, true, init_step_num, period, offset};
+          return {false, true, init_step_num, period, offset, 0, 0};
         }
       }
     }
   }
 
   // Neither halting nor LR detected.
-  return {false, false, 0, 0, 0};
+  return {false, false, 0, 0, 0, 0, 0};
 }
 
 }  // namespace busy_beaver

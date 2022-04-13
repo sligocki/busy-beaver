@@ -41,7 +41,7 @@ void EnumerateAll(const int num_states, const int num_symbols, const long max_st
 
 int main(int argc, char* argv[]) {
   if (argc < 5) {
-    std::cerr << "Usage: lazy_beaver_enum num_states num_symbols max_steps out_witness_file [out_nonhalt_file]" << std::endl;
+    std::cerr << "Usage: lb_enum num_states num_symbols max_steps out_witness_file [out_nonhalt_file]" << std::endl;
     return 1;
   } else {
     const int num_states = std::stoi(argv[1]);

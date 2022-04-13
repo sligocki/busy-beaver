@@ -31,6 +31,8 @@ void LinRecurMain(const std::string& tm_filename, const long line_num,
     std::cout << "period: " << result.lr_period << std::endl;
     std::cout << "offset: " << result.lr_offset << std::endl;
   }
+  std::cout << "last_state: " << result.last_state << std::endl;
+  std::cout << "last_symbol: " << result.last_symbol << std::endl;
 }
 
 }  // namespace busy_beaver
