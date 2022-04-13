@@ -108,8 +108,6 @@ void WriteTuringMachine(const TuringMachine& tm, std::ostream* outstream) {
     // Double space separate each row in the transition table.
     *outstream << " ";
   }
-  // Each TM goes on it's own newline.
-  *outstream << "\n";
 }
 
 TuringMachine* ReadTuringMachine(std::istream* instream,

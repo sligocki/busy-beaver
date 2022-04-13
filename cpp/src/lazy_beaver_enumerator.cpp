@@ -72,11 +72,13 @@ EnumExpandParams LazyBeaverEnum::filter_tm(const TuringMachine& tm) {
       // Write witness
       *out_witness_stream_ << sim.step_num() << "\t";
       WriteTuringMachine(tm, out_witness_stream_.get());
+      *out_witness_stream_ << "\n";
     }
   } else {
     // Non-halting machine.
     if (out_nonhalt_stream_) {
       WriteTuringMachine(tm, out_nonhalt_stream_.get());
+      *out_nonhalt_stream_ << "\n";
     }
   }
 

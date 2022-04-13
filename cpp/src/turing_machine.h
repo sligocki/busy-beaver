@@ -51,10 +51,6 @@ class TuringMachine {
                 const LookupResult& next_trans,
                 int hereditary_sub_order);
 
-  // Avoid implicit copy/assignment constructors.
-  TuringMachine(const TuringMachine&) = delete;
-  TuringMachine& operator=(const TuringMachine&) = delete;
-
  private:
   int num_states_;
   int num_symbols_;
