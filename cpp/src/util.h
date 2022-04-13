@@ -13,7 +13,7 @@ class Timer {
 
   // Time elapsed_time since Timer was created (or most recent call to
   // restart_timer()) in seconds.
-  double time_elapsed_s();
+  double time_elapsed_s() const;
 
  private:
   std::chrono::time_point<std::chrono::system_clock> start_time_;

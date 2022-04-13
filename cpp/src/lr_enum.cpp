@@ -34,6 +34,8 @@ class LinRecurEnum : public BaseEnumerator {
   std::ofstream out_unknown_stream_;
 
   // Stats
+  Timer timer_;
+  Timer last_print_;
   long num_tms_total_ = 0;
   long num_tms_halt_ = 0;
   long num_tms_inf_ = 0;
@@ -66,12 +68,13 @@ void LinRecurEnum::print_stats() const {
   if (max_period_tm_) {
     WriteTuringMachine(*max_period_tm_, &std::cout);
   }
-  std::cout << std::endl;
+  std::cout << " (" << timer_.time_elapsed_s() << "s)" << std::endl;
 }
 
 EnumExpandParams LinRecurEnum::filter_tm(const TuringMachine& tm) {
-  if ((num_tms_total_ % 10000000) == 0) {
+  if (last_print_.time_elapsed_s() > 60.0) {
     print_stats();
+    last_print_.restart_timer();
   }
 
   auto result = LinRecurDetect(tm, max_steps_);
@@ -105,7 +108,6 @@ void LinRecurEnumerate(
     const long max_steps, const bool allow_no_halt, const bool first_1rb,
     const std::string& out_inf_filename,
     const std::string& out_unknown_filename) {
-  Timer timer;
   std::cout << "Start: " << num_states << "x" << num_symbols << std::endl;
 
   // Depth-first search of all TMs in TNF.
@@ -121,7 +123,6 @@ void LinRecurEnumerate(
   enumerator.enumerate(init_tm.release());
 
   enumerator.print_stats();
-  std::cout << "Finished in " << timer.time_elapsed_s() << "s" << std::endl;
 }
 
 }  // namespace busy_beaver
