@@ -28,8 +28,8 @@ LinRecurEnum::~LinRecurEnum() {
   out_unknown_stream_.close();
 }
 
-void LinRecurEnum::print_stats() const {
-  std::cout << proc_id_ << "  Total: " << num_tms_total_
+void LinRecurEnum::print_stats(const std::string& prefix) const {
+  std::cout << prefix << " " << proc_id_ << ": Total: " << num_tms_total_
             << "  Halt: " << num_tms_halt_
             << "  Infinite: " << num_tms_inf_
             << "  Unknown: " << num_tms_unknown_
@@ -42,7 +42,7 @@ void LinRecurEnum::print_stats() const {
 
 EnumExpandParams LinRecurEnum::filter_tm(const TuringMachine& tm) {
   if (last_print_.time_elapsed_s() > 60.0) {
-    print_stats();
+    print_stats("Progress");
     last_print_.restart_timer();
   }
 

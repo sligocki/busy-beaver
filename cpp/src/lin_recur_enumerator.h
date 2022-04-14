@@ -3,6 +3,7 @@
 
 #include <fstream>
 #include <iostream>
+#include <memory>
 #include <string>
 
 #include "enumerator.h"
@@ -22,7 +23,7 @@ class LinRecurEnum : public BaseEnumerator {
 
   virtual ~LinRecurEnum();
 
-  void print_stats() const;
+  void print_stats(const std::string& prefix) const;
 
  private:
   virtual EnumExpandParams filter_tm(const TuringMachine& tm);

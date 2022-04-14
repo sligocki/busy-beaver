@@ -35,9 +35,7 @@ void ContinueLinRecurEnumerate(
     }
   }
 
-  enumerator.print_stats();
-
-  std::cout << "Finished " << proc_id << std::endl;
+  enumerator.print_stats("Final");
 }
 
 }  // namespace busy_beaver

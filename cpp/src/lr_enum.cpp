@@ -30,7 +30,7 @@ void LinRecurEnumerate(
   }
   enumerator.enumerate(init_tm.release());
 
-  enumerator.print_stats();
+  enumerator.print_stats("Final");
 }
 
 }  // namespace busy_beaver
