@@ -25,6 +25,7 @@ def run(machine, block_size, back, prover, recursive, options):
     bf_info.parameters.compression_search_loops = options.bf_loops
     bf_info.parameters.mult_sim_loops = options.bf_loops
     bf_info.parameters.extra_mult = options.bf_extra_mult
+    bf_info.parameters.max_block_size = 0  # No max for Quick_Sim
     Block_Finder.block_finder(machine, options,
                               bf_info.parameters, bf_info.result)
     block_size = bf_info.result.best_block_size
@@ -165,10 +166,10 @@ if __name__ == "__main__":
 
   parser.add_option("--max-loops", type=int, default=0,
                     help="Specify a maximum number of loops.")
-  parser.add_option("--bf-loops", type=int, default=1000,
+  parser.add_option("--bf-loops", type=int, default=10_000,
                     help="Number of steps to run Block Finder.")
 
-  parser.add_option("--print-loops", type=int, default=10000, metavar="LOOPS",
+  parser.add_option("--print-loops", type=int, default=10_000, metavar="LOOPS",
                     help="Print every LOOPS loops [Default %default].")
   parser.add_option("--print-macro-ttable", action="store_true")
 
@@ -182,14 +183,13 @@ if __name__ == "__main__":
 
   (options, args) = parser.parse_args()
 
+  options.verbose_block_finder = True
   if options.quiet:
     options.verbose_simulator = False
     options.verbose_prover = False
-    options.verbose_block_finder = False
   elif options.verbose:
     options.verbose_simulator = True
     options.verbose_prover = True
-    options.verbose_block_finder = True
 
   if options.max_loops and options.print_loops > options.max_loops:
     options.print_loops = options.max_loops

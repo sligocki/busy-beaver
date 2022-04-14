@@ -348,6 +348,9 @@ def main(args):
   if not options.no_output:
     pout = sys.stdout
 
+  if options.max_block_size:
+    options.max_block_size = 5
+
   ## Print command line
   if pout:
     pout.write("Enumerate.py --states=%d --symbols=%d --max-loops=%s --time=%f" \

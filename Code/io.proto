@@ -222,6 +222,7 @@ message BlockFinderParams {
   // While searching for optimal multiple: How far should we look beyond
   // current best mult?
   uint64 extra_mult = 3;
+  uint64 max_block_size = 4;
 }
 
 message BlockFinderResult {
