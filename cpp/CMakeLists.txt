@@ -9,6 +9,7 @@ set(CMAKE_CXX_FLAGS "-O3 -Wall -g")
 # Libraries
 add_library(all_libs src/util.cpp src/turing_machine.cpp src/simulator.cpp
                      src/enumerator.cpp src/lin_recur.cpp
+                     src/lin_recur_enumerator.cpp
                      src/lazy_beaver_enumerator.cpp)
 
 # Executables
@@ -20,6 +21,9 @@ target_link_libraries(lin_recur PUBLIC all_libs)
 
 add_executable(lr_enum src/lr_enum.cpp)
 target_link_libraries(lr_enum PUBLIC all_libs)
+
+add_executable(lr_enum_continue src/lr_enum_continue.cpp)
+target_link_libraries(lr_enum_continue PUBLIC all_libs)
 
 
 # Lazy Beaver

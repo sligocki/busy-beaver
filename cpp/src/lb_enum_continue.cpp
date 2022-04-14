@@ -43,7 +43,7 @@ void ContinueEnumerateFromFile(const std::string& in_tms_filename,
 
 int main(int argc, char* argv[]) {
   if (argc != 5) {
-    std::cerr << "Usage: continue_enum in_tm_file max_steps out_witness_file proc_num" << std::endl;
+    std::cerr << "Usage: lb_enum_continue in_tm_file max_steps out_witness_file proc_num" << std::endl;
     return 1;
   } else {
     const std::string in_tms_filename(argv[1]);
