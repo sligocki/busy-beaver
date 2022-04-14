@@ -14,7 +14,7 @@ INIT_STEPS=$3
 MAX_STEPS=$4
 NUM_PROCESSES=$5
 
-DATA_DIR="./data/lin_recur/${NUM_STATES}x${NUM_SYMBOLS}/${INIT_STEPS}/"
+DATA_DIR="./data/lin_recur/${NUM_STATES}x${NUM_SYMBOLS}/${MAX_STEPS}/${NUM_PROCESSES}/"
 
 rm -rf $DATA_DIR
 mkdir -p $DATA_DIR
