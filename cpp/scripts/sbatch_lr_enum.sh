@@ -5,7 +5,7 @@
 #SBATCH -c 24
 #SBATCH -t 24:00:00
 #SBATCH -p long
-#SBATCH -o lr_enum-%A_%a.txt
+#SBATCH -o lr_enum-%J.txt
 
 set -e
 set -u

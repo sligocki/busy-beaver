@@ -4,7 +4,7 @@ project(BusyBeaver)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
-set(CMAKE_CXX_FLAGS "-O3 -Wall -g")
+set(CMAKE_CXX_FLAGS "-O3 -Wall -g -Wno-sign-compare")
 
 # Libraries
 add_library(all_libs src/util.cpp src/turing_machine.cpp src/simulator.cpp
