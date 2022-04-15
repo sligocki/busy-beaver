@@ -114,6 +114,15 @@ TuringMachine* ReadTuringMachine(std::istream* instream,
                                  const std::string& base_name) {
   std::string line;
   if (std::getline(*instream, line)) {
+    // Remove comment and description
+    auto pos = line.find_first_of("#|");
+    if (pos != std::string::npos) {
+      line.erase(pos);
+    }
+    // Remove trailing whitespace
+    pos = line.find_last_not_of(" \n\t");
+    line.erase(pos + 1);
+
     int i = 0;
     std::vector<std::vector<TuringMachine::LookupResult>> transitions;
     while (i < line.size()) {
