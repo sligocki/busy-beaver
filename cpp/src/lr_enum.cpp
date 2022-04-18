@@ -49,7 +49,8 @@ int main(int argc, char* argv[]) {
 
     // TODO: Allow configuring allow_no_halt and first_1rb.
     busy_beaver::LinRecurEnumerate(num_states, num_symbols, max_steps,
-                                   true, true,
+                                   /* allow_no_halt = */ true,
+                                   /* first_1rb = */ true,
                                    out_inf_filename, out_unknown_filename);
   }
 }
