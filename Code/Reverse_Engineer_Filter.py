@@ -13,8 +13,13 @@ on a simple end case fact:
 """
 
 from Common import Exit_Condition, HALT_STATE
+import Halting_Lib
 import IO
+from IO.TM_Record import TM_Record
 from Macro import Turing_Machine
+import TM_Enum
+
+import io_pb2
 
 def get_stats(tm):
   """Finds all halt transitions and other statistical info"""
@@ -79,25 +84,23 @@ def is_infinite(tm : Turing_Machine.Simple_Machine) -> bool:
   return True
 
 
-def apply_results(results, old_line, log_number):
-  old_results = next[5]
-  return next[0:5]+(results, next[6], log_number, old_results)
-
 if __name__ == "__main__":
   import sys
   from Option_Parser import Filter_Option_Parser
   # Get command line options.
   opts, args = Filter_Option_Parser(sys.argv, [])
 
-  log_number = opts["log_number"]
-  io = IO.IO(opts["infile"], opts["outfile"], log_number)
-  next = io.read_result()
-  while next:
-    TTable = next[6]
-    # Run the simulator/filter on this machine
-    results = test(TTable)
-    # Deal with result
-    if results:
-      next = apply_results(results, next, log_number)
-    io.write_result_raw(*next)
-    next = io.read_result()
+  io = IO.Text.ReaderWriter(opts["infile"], opts["outfile"], opts["log_number"])
+  for io_record in io:
+    tm = Turing_Machine.Simple_Machine(io_record.ttable)
+    tm_enum = TM_Enum.TM_Enum(tm, allow_no_halt = False)
+    tm_record = TM_Record(tm_enum = tm_enum)
+    if is_infinite(tm):
+      tm_record.proto.filter.reverse_engineer.success = True
+      Halting_Lib.set_not_halting(tm_record.proto.status,
+                                  io_pb2.INF_REVERSE_ENGINEER)
+      # Note: quasihalting result is not computable when using Reverse_Engineer filter.
+      tm_record.proto.status.quasihalt_status.is_decided = False
+    else:
+      tm_record.proto.filter.reverse_engineer.success = False
+    io.write_record(tm_record)
