@@ -378,8 +378,9 @@ def main(args):
   enumerator.save()
 
   outfile.close()
-  os.remove(enumerator.checkpoint_filename)
-  os.remove(enumerator.backup_checkpoint_filename)
+  if not options.no_checkpoint:
+    os.remove(enumerator.checkpoint_filename)
+    os.remove(enumerator.backup_checkpoint_filename)
 
 if __name__ == "__main__":
   main(sys.argv[1:])
