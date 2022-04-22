@@ -144,7 +144,10 @@ class Record(object):
   def read_generic(self, s):
     """Read generic structure from string."""
     if s[0] in string.digits:
-      return int(s)
+      if "." in s:
+        return float(s)
+      else:
+        return int(s)
     else:
       return s
 
