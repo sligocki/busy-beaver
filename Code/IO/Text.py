@@ -144,7 +144,7 @@ class Record(object):
   def read_generic(self, s):
     """Read generic structure from string."""
     if s[0] in string.digits:
-      return eval(s)
+      return int(s)
     else:
       return s
 
@@ -192,9 +192,7 @@ class ReaderWriter(object):
         args = (unknown_info.over_time.elapsed_time_sec,)
       elif unk_reason == "over_steps_in_macro":
         reason = Exit_Condition.OVER_STEPS_IN_MACRO
-        args = (unknown_info.over_steps_in_macro.macro_symbol,
-                unknown_info.over_steps_in_macro.macro_state,
-                unknown_info.over_steps_in_macro.macro_dir_is_right)
+        args = ()
       else:
         raise Exception(unknown_info)
 
