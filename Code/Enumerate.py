@@ -81,6 +81,7 @@ class Enumerator(object):
     self.num_infinite = 0
     self.num_unknown = 0
     self.max_sim_time_s = 0.0
+    self.start_time = time.time()
 
   def __getstate__(self):
     """Gets state of TM for checkpoint file."""
@@ -105,16 +106,7 @@ class Enumerator(object):
     Pull one machine off of the stack and simulate it, perhaps creating more
     machines to push back onto the stack.
     """
-    self.start_time = time.time()
-    last_time = self.start_time
-
     while True:
-      cur_time = time.time()
-
-      if cur_time - last_time > 120:
-        self.stack.print_stats()
-        last_time = cur_time
-
       if self.options.num_enum and self.tm_num >= self.options.num_enum:
         self.pout.write("Ran requested number of TMs...\n");
         break
@@ -123,8 +115,6 @@ class Enumerator(object):
       tm_record = self.stack.pop_job()
 
       if not tm_record:
-        # tm == None is the indication that we have no more machines to run.
-        self.pout.write("Ran out of TMs...\n");
         break
 
       if self.options.debug_print_current:
@@ -151,13 +141,8 @@ class Enumerator(object):
         self.add_result(tm_record)
         tm_record = self.stack.pop_job()
 
-    # Done
-    self.save()
-
   def save(self):
     """Save a checkpoint file so that computation can be restarted if it fails."""
-    self.end_time = time.time()
-
     # Actually write to disk.
     self.writer.flush()
 
@@ -168,7 +153,7 @@ class Enumerator(object):
                       f"inf {self.num_infinite:_} (qunk {self.num_inf_quasi_unknown:_}) "
                       f"unk {self.num_unknown:_} - "
                       f"max {self.max_sim_time_s * 1000:_.0f}ms / "
-                      f"total {self.end_time - self.start_time:_.2f}s\n")
+                      f"total {time.time() - self.start_time:_.2f}s\n")
       self.pout.flush()
 
       # Note: We are overloading self.pout = None to mean don't write any output
@@ -242,27 +227,27 @@ class Enumerator(object):
 
     self.writer.write_record(tm_record)
 
-def initialize_stack(options, stack):
+def enum_initial_tms(options):
   if options.infilename:
     # Initialize with all machines from infile.
     if options.informat == "protobuf":
       with open(options.infilename, "rb") as infile:
         for tm_record in IO.Proto.Reader(infile):
-          stack.push_job(tm_record)
+          yield tm_record
     elif options.informat == "text":
       with open(options.infilename, "r") as infile:
         for io_record in IO.Text.ReaderWriter(infile, None):
           tm = Turing_Machine.Simple_Machine(io_record.ttable)
           tm_enum = TM_Enum.TM_Enum(tm, allow_no_halt = options.allow_no_halt)
           tm_record = TM_Record(tm_enum = tm_enum)
-          stack.push_job(tm_record)
+          yield tm_record
   else:
     # If no infile is specified, then default to the NxM blank TM.
     blank_tm = TM_Enum.blank_tm_enum(options.states, options.symbols,
                                      first_1rb = options.first_1rb,
                                      allow_no_halt = options.allow_no_halt)
     tm_record = TM_Record(tm_enum = blank_tm)
-    stack.push_job(tm_record)
+    yield tm_record
 
 def main(args):
   start_time = time.time()
@@ -367,7 +352,6 @@ def main(args):
     stack = Work_Queue.Basic_FIFO_Work_Queue()
   else:
     stack = Work_Queue.Basic_LIFO_Work_Queue()
-  initialize_stack(options, stack)
 
   # Set up output
   if os.path.exists(options.outfilename) and not options.force:
@@ -383,7 +367,15 @@ def main(args):
 
   ## Enumerate machines
   enumerator = Enumerator(options, stack, writer, pout)
-  enumerator.continue_enum()
+
+  # Push input TMs one at a time so we don't blow up memory if there are a
+  # lot of input machines.
+  for tm_record in enum_initial_tms(options):
+    stack.push_job(tm_record)
+    enumerator.continue_enum()
+
+  # Done
+  enumerator.save()
 
   outfile.close()
   os.remove(enumerator.checkpoint_filename)
