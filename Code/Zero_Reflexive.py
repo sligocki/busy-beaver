@@ -19,23 +19,34 @@ def is_zero_reflexive(tm : Turing_Machine.Simple_Machine) -> bool:
 def main():
   parser = argparse.ArgumentParser()
   parser.add_argument("infile")
-  parser.add_argument("outfile")
+  parser.add_argument("zr_outfile", nargs="?")
+  parser.add_argument("non_zr_outfile", nargs="?")
   args = parser.parse_args()
+
+  zr_writer = None
+  if args.zr_outfile:
+    zr_outfile = open(args.zr_outfile, "wb")
+    zr_writer = IO.Proto.Writer(zr_outfile)
+  non_zr_writer = None
+  if args.non_zr_outfile:
+    non_zr_outfile = open(args.non_zr_outfile, "wb")
+    non_zr_writer = IO.Proto.Writer(non_zr_outfile)
 
   num_total = 0
   num_zero_reflexive = 0
   start_time = time.time()
-  with open(args.outfile, "wb") as outfile:
-    writer = IO.Proto.Writer(outfile)
-    with open(args.infile, "rb") as infile:
-      reader = IO.Proto.Reader(infile)
-      for tm_record in reader:
-        num_total += 1
-        if is_zero_reflexive(tm_record.tm()):
-          writer.write_record(tm_record)
-          num_zero_reflexive += 1
-        if num_total % 100_000 == 0:
-          print(f" ... {num_zero_reflexive:_} / {num_total:_} = {num_zero_reflexive / num_total:.2%} ({time.time() - start_time:_.0f}s)")
+  with open(args.infile, "rb") as infile:
+    for tm_record in IO.Proto.Reader(infile):
+      num_total += 1
+      if is_zero_reflexive(tm_record.tm()):
+        if zr_writer:
+          zr_writer.write_record(tm_record)
+        num_zero_reflexive += 1
+      else:
+        if non_zr_writer:
+          non_zr_writer.write_record(tm_record)
+      if num_total % 100_000 == 0:
+        print(f" ... {num_zero_reflexive:_} / {num_total:_} = {num_zero_reflexive / num_total:.2%} ({time.time() - start_time:_.0f}s)")
 
   print(f"# Zero Reflexive TMs: {num_zero_reflexive:_} / {num_total:_} = {num_zero_reflexive / num_total:.2%} ({time.time() - start_time:_.0f}s)")
 
