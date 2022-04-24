@@ -35,6 +35,11 @@ class Stat:
     else:
       return 0.0
 
+def bigint_to_str(big):
+  if big < 1_000_000_000_000:
+    return f"{big:_}"
+  else:
+    return f"10^{math.log10(big):_.2f}"
 
 class TMStats:
   def __init__(self):
@@ -132,8 +137,8 @@ class TMStats:
     print(f"Unknown: {self.num_unknown:_} ({self.num_unknown / self.count:.3%})")
     print()
     print(f"Halt: {self.num_halt:_} ({self.num_halt / self.count:.3%})")
-    print(f"  - Steps: Max {self.halt_steps.max_value:_} Mean {self.halt_steps.mean():_.1f}")
-    print(f"  - Score: Max {self.halt_score.max_value:_} Mean {self.halt_score.mean():_.1f}")
+    print(f"  - Steps: Max {bigint_to_str(self.halt_steps.max_value)}")
+    print(f"  - Score: Max {bigint_to_str(self.halt_steps.max_value)}")
     print()
     print(f"Infinite: {self.num_inf:_} ({self.num_inf / self.count:.3%})")
     for (reason, count) in sorted(self.inf_reason.items(), key=lambda x: x[1], reverse=True):
@@ -141,8 +146,7 @@ class TMStats:
             f"{count:15_}  ({count / self.num_inf:7.2%})")
     print()
     print(f"Quasihalt: {self.num_qhalt:_} ({self.num_qhalt / self.count:.3%})")
-    if self.qhalt_steps.max_value > 0:
-      print(f"  - Steps: Max 10^{math.log10(self.qhalt_steps.max_value):.1f}")
+    print(f"  - Steps: Max {bigint_to_str(self.qhalt_steps.max_value)}")
     print()
 
     print("Filters Run:")
