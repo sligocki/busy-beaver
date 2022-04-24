@@ -16,12 +16,14 @@ parser.add_argument("infile", type=Path)
 parser.add_argument("outfile", type=Path)
 args = parser.parse_args()
 
+num_records = 0
 if args.infile.suffix == ".pb":
   print("Converting from protobuf to text")
   with open(args.infile, "rb") as infile, open(args.outfile, "w") as outfile:
     reader = IO.Proto.Reader(infile)
     writer = IO.Text.ReaderWriter(None, outfile)
     for tm_record in reader:
+      num_records += 1
       writer.write_record(tm_record)
 
 else:
@@ -30,6 +32,7 @@ else:
     reader = IO.Text.ReaderWriter(infile, None)
     writer = IO.Proto.Writer(outfile)
     for io_record in reader:
+      num_records += 1
       tm_record = IO.create_record(io_record.ttable)
 
       # Set basic status
@@ -85,3 +88,5 @@ else:
         raise Exception(f"Unexpected exit condition: {io_record.category}")
 
       writer.write_record(tm_record)
+
+print(f"Done: Converted {num_records:_} records")
