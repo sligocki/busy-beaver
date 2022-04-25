@@ -235,6 +235,7 @@ def enum_initial_tms(options):
       for tm_record in reader:
         yield tm_record
   else:
+    assert options.states and options.symbols, (options.states, options.symbols)
     # If no infile is specified, then default to the NxM blank TM.
     blank_tm = TM_Enum.blank_tm_enum(options.states, options.symbols,
                                      first_1rb = options.first_1rb,
@@ -246,14 +247,11 @@ def main(args):
   start_time = time.time()
 
   ## Parse command line options.
-  usage = "usage: %prog --states= --symbols= [options]"
+  usage = "usage: %prog [options]"
   parser = OptionParser(usage=usage)
-  req_parser = OptionGroup(parser, "Required Parameters")  # Oxymoron?
-  req_parser.add_option("--states",  type=int, help="Number of states")
-  req_parser.add_option("--symbols", type=int, help="Number of symbols")
-  parser.add_option_group(req_parser)
-
   enum_parser = OptionGroup(parser, "Enumeration Options")
+  enum_parser.add_option("--states",  type=int, help="Number of states")
+  enum_parser.add_option("--symbols", type=int, help="Number of symbols")
   enum_parser.add_option("--breadth-first", action="store_true", default=False,
                          help="Run search breadth first (only works in single "
                          "process mode).")
@@ -278,8 +276,7 @@ def main(args):
   enum_parser.add_option("--no-output", action="store_true", default=False,
                          help="Don't generate any output.")
   out_parser.add_option("--outfile", dest="outfilename", metavar="OUTFILE",
-                        help="Output file name "
-                        "[Default: Enum.STATES.SYMBOLS.STEPS.out.txt/pb]")
+                        help="Output file name (required)")
   out_parser.add_option("--infile", dest="infilename",
                         help="If specified, enumeration is started from "
                         "these input machines instead of the single empty "
@@ -300,21 +297,12 @@ def main(args):
 
   (options, args) = parser.parse_args(args)
 
-  ## Enforce required parameters
-  if not options.states or not options.symbols:
-    parser.error("--states= and --symbols= are required parameters")
-
   ## Set complex defaults
   if options.randomize and not options.seed:
     options.seed = int(1000*time.time())
 
   if not options.outfilename:
-    if options.outformat == "protobuf":
-      suffix = "pb"
-    elif options.outformat == "text":
-      suffix = "txt"
-    options.outfilename = "Enum.%d.%d.%s.out.%s" % (
-      options.states, options.symbols, options.max_loops, suffix)
+    parser.error("--outfilename is required")
 
   if not options.checkpoint:
     options.checkpoint = options.outfilename + ".check"
@@ -325,17 +313,6 @@ def main(args):
 
   if options.max_block_size:
     options.max_block_size = 5
-
-  ## Print command line
-  if pout:
-    pout.write("Enumerate.py --states=%d --symbols=%d --max-loops=%s --time=%f" \
-      % (options.states, options.symbols, options.max_loops, options.time))
-    if options.randomize:
-      pout.write(" --randomize --seed=%d" % options.seed)
-
-    pout.write(" --outfile=%s" % options.outfilename)
-    pout.write(" --checkpoint=%s --save-freq=%d" % (options.checkpoint, options.save_freq))
-    pout.write("\n")
 
   # Set up work queue and populate with blank machine.
   if options.breadth_first:
