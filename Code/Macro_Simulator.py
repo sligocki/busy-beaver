@@ -12,8 +12,7 @@ import time
 
 import Alarm
 from Common import Exit_Condition, GenContainer
-import CTL1
-import CTL2
+import CTL_Filter
 import Halting_Lib
 import IO
 from IO import TM_Record
@@ -150,39 +149,14 @@ def run_options(tm_record : TM_Record, options) -> None:
         machine = Turing_Machine.Backsymbol_Macro_Machine(machine)
 
       if options.ctl:
-        ctl_filter_info = tm_record.proto.filter.ctl
-        with IO.Timer(ctl_filter_info):
-          if options.max_loops:
-            ctl_init_step = options.max_loops // 10
-          else:
-            ctl_init_step = 1000
+        if options.max_loops:
+          ctl_init_step = options.max_loops // 10
+        else:
+          ctl_init_step = 1000
 
-          CTL_config = setup_CTL(machine, ctl_init_step)
-
-          # Run CTL filters unless machine halted
-          if CTL_config:
-            ctl_filter_info.init_step = ctl_init_step
-            CTL_config_copy = copy.deepcopy(CTL_config)
-            ctl_filter_info.ctl_as.tested = True
-            if CTL1.CTL(machine, CTL_config_copy):
-              ctl_filter_info.ctl_as.success = True
-              Halting_Lib.set_not_halting(tm_record.proto.status, io_pb2.INF_CTL)
-              # Note: quasihalting result is not computed when using CTL filters.
-              tm_record.proto.status.quasihalt_status.is_decided = False
-              return
-            else:
-              ctl_filter_info.ctl_as.success = False
-
-            CTL_config_copy = copy.deepcopy(CTL_config)
-            ctl_filter_info.ctl_as_b.tested = True
-            if CTL2.CTL(machine, CTL_config_copy):
-              ctl_filter_info.ctl_as_b.success = True
-              Halting_Lib.set_not_halting(tm_record.proto.status, io_pb2.INF_CTL)
-              # Note: quasihalting result is not computed when using CTL filters.
-              tm_record.proto.status.quasihalt_status.is_decided = False
-              return
-            else:
-              ctl_filter_info.ctl_as_b.success = False
+        if CTL_Filter.filter(tm_record, "CTL2", block_size, offset = 0,
+                             cutoff = ctl_init_step):
+          return
 
       # Finally: Do the actual Macro Machine / Chain simulation.
       sim_info = tm_record.proto.filter.simulator
