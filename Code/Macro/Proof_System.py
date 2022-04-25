@@ -960,6 +960,8 @@ class Proof_System(object):
           x = init_block.num.variable_restricted()
           # init_block.num.const == min_value for this exponent.
           init_value[x] = new_block.num - init_block.num.const
+          # TODO: We must do something if isinstance(init_value[x], Algebraic_Expression)!
+          # This is part of https://github.com/sligocki/busy-beaver/issues/4
           if (not isinstance(init_value[x], Algebraic_Expression) and
               init_value[x] < 0):
             if self.verbose:

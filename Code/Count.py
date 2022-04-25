@@ -1,17 +1,23 @@
 #! /usr/bin/env python3
-#
-# Count.py
-#
 """
 Count the number of distinct TM represented by machines in tree-normal-form
-with the restriction that A0->1RB and Halt=1RH.
+with the restriction that A0->1RB and Halt=1RH and either:
+ A) Exactly 1 halt if allow-no-halts is False or
+ B) 1 or fewer halts if allow-no-halts is True
 
-Note that for the space of Q-state, S-symbol TMs, the number of distinct
-TM's is (QS-1) * (2QS)^(QS-2) with such restrictions. Thus, if we run this
-count over a completed TNF set of machines, we should get this value.
+For the entire space of Q-state, S-symbol TMs, the number of distinct TM's is:
+ A) (QS-1) * (2QS)^(QS-2)
+ B) (QS-1) * (2QS)^(QS-2) + (2QS)^(QS-1)
 """
 
-def fact2(n, m=0):
+import argparse
+
+import IO
+from Macro import Turing_Machine
+from pathlib import Path
+
+
+def fact2(n, m):
   """Computes n!/m! = n*(n-1)*...*(m+1)"""
   assert n >= m >= 0
   if n == m:
@@ -19,72 +25,62 @@ def fact2(n, m=0):
   else:
     return n*fact2(n-1, m)
 
-def count(ttable):
+
+def count(tm : Turing_Machine.Simple_Machine,
+          allow_no_halt : bool) -> int:
   """Count the number of TM's that are equivolent to this one.
      With the restriction that A0->1RB and Halt=1RH."""
-  undefs = 0
+  num_undefs = 0
   has_halt = False
   max_symbol = 0
   max_state = 0
-  num_states = len(ttable)
-  num_symbols = len(ttable[0])
   # Get stats.  Number of undefined transitions, whether there is a halt
   # and the max-symbol/states
-  for state_in in range(num_states):
-    for symbol_in in range(num_symbols):
-      symbol, dir, state = ttable[state_in][symbol_in]
-      if symbol == -1:
-        undefs += 1
-      elif state == -1:
+  for state_in in range(tm.num_states):
+    for symbol_in in range(tm.num_symbols):
+      trans = tm.get_trans_object(symbol_in = symbol_in, state_in = state_in)
+      if trans.condition == Turing_Machine.UNDEFINED:
+        num_undefs += 1
+      elif trans.condition == Turing_Machine.HALT:
         has_halt = True
       else:
-        max_symbol = max(max_symbol, symbol)
-        max_state = max(max_state, state)
-  symbols_used = max_symbol + 1
-  states_used = max_state + 1
+        assert trans.condition == Turing_Machine.RUNNING, trans.condition
+        max_symbol = max(max_symbol, trans.symbol_out)
+        max_state = max(max_state, trans.state_out)
+  num_symbols_used = max_symbol + 1
+  num_states_used = max_state + 1
   # Count the number of permutations of symbols/states possible
-  result = fact2(num_symbols - 2, num_symbols - symbols_used) \
-         * fact2(num_states - 2, num_states - states_used)
+  num_tms = fact2(tm.num_symbols - 2, tm.num_symbols - num_symbols_used) \
+          * fact2(tm.num_states  - 2, tm.num_states  - num_states_used)
   if has_halt:
-    result *= (2*num_states*num_symbols)**undefs
+    # All possible assignments of trans for each undefined transition.
+    # num_dirs * num_states * num_symbols for each trans.
+    num_tms *= (2*tm.num_states*tm.num_symbols)**num_undefs
   else:
-    result *= undefs * (2*num_states*num_symbols)**(undefs - 1)
-  return result, num_states, num_symbols
+    this_mult = 0
+    if num_undefs >= 1:
+      # Count with 1 halt added.
+      this_mult += num_undefs * (2*tm.num_states*tm.num_symbols)**(num_undefs - 1)
+    if allow_no_halt:
+      # Count with 0 halts added.
+      this_mult += (2*tm.num_states*tm.num_symbols)**num_undefs
+    num_tms *= this_mult
+  return num_tms
 
-#main prog
-import sys
 
-import IO
-
-def count_all(filename):
-  """Count total number of machines represented in a file."""
-  if filename == "-":
-    infile = sys.stdin
-  else:
-    infile = open(filename, "r")
-  io = IO.IO(infile, None)
+def main():
+  parser = argparse.ArgumentParser()
+  parser.add_argument("tm_file", nargs="+", type=Path)
+  parser.add_argument("--allow-no-halt", action="store_true")
+  args = parser.parse_args()
 
   total = 0
-  states = None
-  symbols = None
-  for io_record in io.catch_error_iter():
-    # Skip unparsable lines (io_record == None
-    if io_record:
-      n, states, symbols = count(io_record.ttable)
-      total += n
+  for filename in args.tm_file:
+    with IO.Reader(filename) as reader:
+      for tm_record in reader:
+        total += count(tm_record.tm(), args.allow_no_halt)
 
-  infile.close()
-  return total, states, symbols
+  print(total)
 
 if __name__ == "__main__":
-  total = 0
-  for filename in sys.argv[1:]:
-    subtotal, states, symbols = count_all(filename)
-    print("", filename, subtotal)
-    sys.stdout.flush()
-    total += subtotal
-  print("Total", total)
-  if states and symbols:
-    expected = ((states * symbols - 1) *
-                (2 * states * symbols)**(states * symbols - 2))
-    print("Expected %dx%d: %d" % (states, symbols, expected))
+  main()

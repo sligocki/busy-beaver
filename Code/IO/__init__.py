@@ -4,6 +4,7 @@
 from IO import Text
 from IO import Proto
 
+from IO.General import Reader #, Writer
 from IO.Timer import Timer
 
 # TODO: This is just to support old code which is looking for IO.IO().

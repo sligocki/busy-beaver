@@ -17,6 +17,7 @@ import Halting_Lib
 import IO
 from IO import TM_Record
 from Macro import Turing_Machine
+import TM_Enum
 
 import io_pb2
 
@@ -301,6 +302,18 @@ class ReaderWriter(object):
                 [result.category] + result.category_reason,
                 result.ttable, result.log_number,
                 [result.extended] + result.extended_reason)
+
+class Reader:
+  def __init__(self, infile, *, allow_no_halt = False):
+    self.rw = ReaderWriter(input_file = infile, output_file = None)
+    self.allow_no_halt = allow_no_halt
+
+  def __iter__(self):
+    for io_record in self.rw:
+      tm = Turing_Machine.Simple_Machine(io_record.ttable)
+      tm_enum = TM_Enum.TM_Enum(tm, allow_no_halt = self.allow_no_halt)
+      tm_record = TM_Record.TM_Record(tm_enum = tm_enum)
+      yield tm_record
 
 
 def load_TTable_filename(filename, line_num = 1):
