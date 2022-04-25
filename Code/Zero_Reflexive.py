@@ -35,8 +35,8 @@ def main():
   num_total = 0
   num_zero_reflexive = 0
   start_time = time.time()
-  with open(args.infile, "rb") as infile:
-    for tm_record in IO.Proto.Reader(infile):
+  with IO.Reader(args.infile) as reader:
+    for tm_record in reader:
       num_total += 1
       if is_zero_reflexive(tm_record.tm()):
         if zr_writer:
@@ -49,6 +49,11 @@ def main():
         print(f" ... {num_zero_reflexive:_} / {num_total:_} = {num_zero_reflexive / num_total:.2%} ({time.time() - start_time:_.0f}s)")
 
   print(f"# Zero Reflexive TMs: {num_zero_reflexive:_} / {num_total:_} = {num_zero_reflexive / num_total:.2%} ({time.time() - start_time:_.0f}s)")
+
+  if zr_writer:
+    zr_writer.close()
+  if non_zr_writer:
+    non_zr_writer.close()
 
 if __name__ == "__main__":
   main()
