@@ -2,7 +2,7 @@
 #SBATCH -J bb
 #SBATCH -N 1
 #SBATCH -n 1
-#SBATCH -c 2
+#SBATCH -c 1
 #SBATCH -o enum-%A_%a.txt
 
 set -e
