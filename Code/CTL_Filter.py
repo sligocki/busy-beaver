@@ -1,90 +1,127 @@
 #! /usr/bin/env python3
-#
-# CTL_Filter.py
-#
 """
 Run one of the CTL algorithms - CTL1, CTL2, CTL3, CTL4.
 """
 
-import sys
+import argparse
+from optparse import OptionParser
+from pathlib import Path
 
-from Common import Exit_Condition
+from Common import GenContainer
 import IO
 import CTL1
 import CTL2
 import CTL3
 import CTL4
-from Option_Parser import Filter_Option_Parser
-from Alarm import ALARM, AlarmException
+import Halting_Lib
+from Macro import Simulator, Turing_Machine
 
-#
-# Get command line options.
-#                                     Form: (opt, type, def_val, req?, has_val?)
-opts, args = Filter_Option_Parser(sys.argv,
-  [("block-size", int, 1 , False, True),
-   ("offset", int  , 0   , False, True),
-   ("cutoff", int  , 200 , False, True),
-   ("type"  , str  , None, True , True),
-   ("time"  , float, None, False, True)]
-)
+import io_pb2
 
-log_number = opts["log_number"]
 
-block_size = opts["block-size"]   # Block size for macro machine
-offset     = opts["offset"] # Offset for block size to resolve parity errors
+def build_tm(base_tm, block_size, offset):
+  tm = base_tm
+  if block_size > 1:
+    tm = Turing_Machine.Block_Macro_Machine(tm, block_size, offset)
+  tm = Turing_Machine.Backsymbol_Macro_Machine(tm)
+  return tm
 
-cutoff     = opts["cutoff"] # Steps to run to get advanced config before trying CTL
+def build_config(tm, cutoff):
+  # Default options
+  parser = OptionParser()
+  Simulator.add_option_group(parser)
+  options, args = parser.parse_args([])
+  options.prover = False
 
-type       = opts["type"]   # CTL algorithm to run
+  sim = Simulator.Simulator(tm, options)
+  sim.seek(cutoff)
 
-runtime    = opts["time"]   # Timer value
+  if sim.op_state != Turing_Machine.RUNNING:
+    return False
 
-if type == "CTL1":
-  type_str  = "CTL1_A*"
-  type_func = CTL1
-elif type == "CTL2":
-  type_str  = "CTL2_A*_B"
-  type_func = CTL2
-elif type == "CTL3":
-  type_str  = "CTL3_A_B*"
-  type_func = CTL3
-elif type == "CTL4":
-  type_str  = "CTL4_A*_B_C"
-  type_func = CTL4
-else:
-  print("Unknown CTL: %s" % (type,))
-  sys.exit(1)
+  tape = [None, None]
 
-inf_reasons = (type_str, cutoff, block_size, offset)
+  for d in range(2):
+    tape[d] = [block.symbol for block in reversed(sim.tape.tape[d])
+               if block.num != "Inf"]
 
-io = IO.IO(opts["infile"], opts["outfile"], log_number)
+  config = GenContainer(state=sim.state, dir=sim.dir, tape=tape)
+  return config
 
-for io_record in io:
-  # Run the simulator/filter on this machine (with an optional timer)
-  try:
-    if runtime:
-      ALARM.set_alarm(runtime)
+def get_module(type):
+  if type == "CTL1":
+    return CTL1
+  if type == "CTL2":
+    return CTL2
+  if type == "CTL3":
+    return CTL3
+  if type == "CTL4":
+    return CTL4
+  raise Exception(type)
 
-    success = type_func.test_CTL(io_record.ttable, cutoff, block_size, offset)
+def get_proto(type, tm_record):
+  if type == "CTL1":
+    return tm_record.proto.filter.ctl.ctl_as
+  if type == "CTL2":
+    return tm_record.proto.filter.ctl.ctl_as_b
+  if type == "CTL3":
+    return tm_record.proto.filter.ctl.ctl_a_bs
+  if type == "CTL4":
+    return tm_record.proto.filter.ctl.ctl_as_b_c
+  raise Exception(type)
 
-    ALARM.cancel_alarm()
 
-  except AlarmException:
-    ALARM.cancel_alarm()
+def filter(tm_record, type, block_size, offset, cutoff):
+  info = get_proto(type, tm_record)
+  with IO.Timer(info.result):
+    tm = build_tm(tm_record.tm(), block_size, offset)
+    config = build_config(tm, cutoff)
+    if config:
+      module = get_module(type)
+      if module.CTL(tm, config):
+        info.parameters.block_size = block_size
+        info.parameters.offset = offset
+        info.result.success = True
+        Halting_Lib.set_not_halting(tm_record.proto.status, io_pb2.INF_CTL)
+        # Note: quasihalting result is not computed when using CTL filters.
+        tm_record.proto.status.quasihalt_status.is_decided = False
+        return True
+  return False
 
-    success = False
 
-  if not success:
-    # If we could not decide anything, leave the old result alone.
-    io.write_record(io_record)
+def filter_all(tm_record, args):
+  if args.max_block_size:
+    for block_size in range(1, args.max_block_size + 1):
+      for offset in range(block_size):
+        # TODO: non-0 offsets are broken.
+        if offset == 0:
+          if filter(tm_record, args.type, block_size, offset, args.cutoff):
+            return
+
   else:
-    # Otherwise classify it as being decided in some way.
-    io_record.log_number = log_number
+    filter(tm_record, args.type, args.block_size, args.offset, args.cutoff)
 
-    io_record.extended        = io_record.category
-    io_record.extended_reason = io_record.category_reason
 
-    io_record.category        = Exit_Condition.INFINITE
-    io_record.category_reason = inf_reasons
+def main():
+  parser = argparse.ArgumentParser()
+  parser.add_argument("--infile", type=Path, required=True)
+  parser.add_argument("--outfile", type=Path, required=True)
 
-    io.write_record(io_record)
+  parser.add_argument("--type", choices=["CTL1", "CTL2", "CTL3", "CTL4"], required=True)
+  parser.add_argument("--block-size", type=int)
+  parser.add_argument("--offset", type=int, default=0)
+  parser.add_argument("--cutoff", type=int, default=200,
+                      help="Number of loops to run before starting CTL algorithm.")
+
+  parser.add_argument("--max-block-size", type=int)
+  args = parser.parse_args()
+
+  with open(args.outfile, "wb") as outfile:
+    writer = IO.Proto.Writer(outfile)
+    with IO.Reader(args.infile) as reader:
+      for tm_record in reader:
+        filter_all(tm_record, args)
+        writer.write_record(tm_record)
+
+if __name__ == "__main__":
+  main()

@@ -118,7 +118,11 @@ class TMStats:
     self.timings["block_finder"].add(tm_record.filter.block_finder.result.elapsed_time_us)
     self.timings["reverse_engineer"].add(tm_record.filter.reverse_engineer.elapsed_time_us)
     self.timings["lin_recur"].add(tm_record.filter.lin_recur.result.elapsed_time_us)
-    self.timings["ctl"].add(tm_record.filter.ctl.elapsed_time_us)
+    self.timings["ctl"].add(
+      tm_record.filter.ctl.ctl_as.result.elapsed_time_us +
+      tm_record.filter.ctl.ctl_as_b.result.elapsed_time_us +
+      tm_record.filter.ctl.ctl_a_bs.result.elapsed_time_us +
+      tm_record.filter.ctl.ctl_as_b_c.result.elapsed_time_us)
 
     # Serialized Size
     self.sizes["total"].add(tm_record.ByteSize())

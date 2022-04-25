@@ -299,18 +299,38 @@ message LinRecurFilterInfo {
 }
 
 
-message CTLFilterInfo {
-  // Parameters
-  uint64 init_step = 1;
 
+message CTLParams {
+  // Parameters
+  uint64 block_size = 1;
+  uint64 offset = 2;
+  uint64 cutoff = 3;
+}
+
+message CTLResult {
   // Results
-  // CTL_A*
-  FilterInfo ctl_as = 2;
-  // CTL_A*_B
-  FilterInfo ctl_as_b = 3;
+  bool success = 1;
 
   // Stats
-  uint64 elapsed_time_us = 4;
+  uint64 elapsed_time_us = 2;
+}
+
+message CTLInfo {
+  CTLParams parameters = 1;
+  CTLResult result = 2;
+}
+
+message CTLFilterInfo {
+  // CTL1: CTL_A*
+  CTLInfo ctl_as = 5;
+  // CTL2: CTL_A*_B
+  CTLInfo ctl_as_b = 6;
+  // CTL3: CTL_A_B*
+  CTLInfo ctl_a_bs = 7;
+  // CTL4: CTL_A*_B_C
+  CTLInfo ctl_as_b_c = 8;
+
+  // Previously used tags: 1-4
 }
 
 
