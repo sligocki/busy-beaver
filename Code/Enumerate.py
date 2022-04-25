@@ -230,17 +230,10 @@ class Enumerator(object):
 def enum_initial_tms(options):
   if options.infilename:
     # Initialize with all machines from infile.
-    if options.informat == "protobuf":
-      with open(options.infilename, "rb") as infile:
-        for tm_record in IO.Proto.Reader(infile):
-          yield tm_record
-    elif options.informat == "text":
-      with open(options.infilename, "r") as infile:
-        for io_record in IO.Text.ReaderWriter(infile, None):
-          tm = Turing_Machine.Simple_Machine(io_record.ttable)
-          tm_enum = TM_Enum.TM_Enum(tm, allow_no_halt = options.allow_no_halt)
-          tm_record = TM_Record(tm_enum = tm_enum)
-          yield tm_record
+    with IO.Reader(options.infilename,
+                   text_allow_no_halt = options.allow_no_halt) as reader:
+      for tm_record in reader:
+        yield tm_record
   else:
     # If no infile is specified, then default to the NxM blank TM.
     blank_tm = TM_Enum.blank_tm_enum(options.states, options.symbols,
@@ -294,9 +287,6 @@ def main(args):
   out_parser.add_option("--outformat",
                         choices = ["text", "protobuf"], default="text",
                         help="Format to write --outfile.")
-  out_parser.add_option("--informat",
-                        choices = ["text", "protobuf"], default="text",
-                        help="Format to read --infile.")
 
   out_parser.add_option("--force", action="store_true", default=False,
                         help="Force overwriting outfile (don't ask).")
