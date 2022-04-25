@@ -14,7 +14,7 @@ shift
 
 INDEX=$(printf "%08d" $SLURM_ARRAY_TASK_ID)
 OUT_DIR=${WORK_DIR}/${INDEX}/
-IN_FILE=${WORK_DIR}/in/init.split.unknown.${INDEX}
+IN_FILE=${WORK_DIR}/in/in.${INDEX}
 
 rm -rf ${OUT_DIR}
 mkdir -p ${OUT_DIR}
