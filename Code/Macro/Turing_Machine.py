@@ -350,6 +350,7 @@ class Block_Macro_Machine(Macro_Machine):
     self.init_state = base_machine.init_state
     self.init_dir = base_machine.init_dir
     if offset:
+      raise NotImplementedError
       assert 0 < offset < block_size
       self.save = self.init_state, offset
       self.init_state = Block_Macro_Machine.DUMMY_OFFSET_STATE
@@ -395,7 +396,8 @@ class Block_Macro_Machine(Macro_Machine):
 @total_ordering
 class Backsymbol_Macro_Machine_State:
   def __init__(self, base_state, back_symbol):
-    assert isinstance(base_state, Simple_Machine_State), base_state
+    assert (isinstance(base_state, Simple_Machine_State) or
+            base_state == Block_Macro_Machine.DUMMY_OFFSET_STATE), base_state
     self.base_state  = base_state
     self.back_symbol = back_symbol
 
