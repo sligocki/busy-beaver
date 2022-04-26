@@ -54,31 +54,6 @@ def add_option_group(parser):
   Simulator.add_option_group(parser)
   Block_Finder.add_option_group(parser)
 
-def create_default_options():
-  """Returns a set of default options."""
-  parser = OptionParser()
-  add_option_group(parser)
-  options, args = parser.parse_args([])
-  return options
-
-def setup_CTL(machine, cutoff):
-  options = create_default_options()
-  options.prover = False
-  sim = Simulator.Simulator(machine, options)
-  sim.seek(cutoff)
-
-  if sim.op_state != Turing_Machine.RUNNING:
-    return False
-
-  tape = [None, None]
-
-  for d in range(2):
-    tape[d] = [block.symbol for block in reversed(sim.tape.tape[d])
-               if block.num != "Inf"]
-
-  config = GenContainer(state=sim.state, dir=sim.dir, tape=tape)
-  return config
-
 def run_timer(tm_record : TM_Record, options,
               time_limit_sec : int):
   try:
