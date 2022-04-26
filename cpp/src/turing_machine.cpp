@@ -13,7 +13,7 @@ TuringMachine::TuringMachine(int num_states, int num_symbols)
       max_next_state_(1), max_next_symbol_(1),
       next_move_left_ok_(false), num_halts_(num_states * num_symbols),
       hereditary_name_() {
-  const LookupResult empty_trans = {1, +1, HaltState};
+  const LookupResult empty_trans = {1, +1, HaltState, true};
   for (int i = 0; i < num_states; ++i) {
     transitions_.emplace_back(num_symbols, empty_trans);
   }
@@ -86,22 +86,27 @@ void WriteTuringMachine(const TuringMachine& tm, std::ostream* outstream) {
   for (State in_state = 0; in_state < tm.num_states(); ++in_state) {
     for (Symbol in_symbol = 0; in_symbol < tm.num_symbols(); ++in_symbol) {
       auto trans = tm.Lookup(in_state, in_symbol);
-      // Output format: 1RB (write symbol, move dir, next state).
-      *outstream << trans.symbol;
-      if (trans.move == +1) {
-        *outstream << "R";
+      if (trans.undecided) {
+        // Undecided transition
+        *outstream << "---";
       } else {
-        ASSERT(trans.move == -1);
-        *outstream << "L";
+        // Output format: 1RB (write symbol, move dir, next state).
+        *outstream << trans.symbol;
+        if (trans.move == +1) {
+          *outstream << "R";
+        } else {
+          ASSERT(trans.move == -1);
+          *outstream << "L";
+        }
+        char out_state_char;
+        if (trans.state >= 0) {
+          // 0 -> 'A', 1 -> 'B', ...
+          out_state_char = trans.state + 'A';
+        } else {
+          out_state_char = 'Z';
+        }
+        *outstream << out_state_char;
       }
-      char out_state_char;
-      if (trans.state >= 0) {
-        // 0 -> 'A', 1 -> 'B', ...
-        out_state_char = trans.state + 'A';
-      } else {
-        out_state_char = 'Z';
-      }
-      *outstream << out_state_char;
       // Space separate each cell in a row.
       *outstream << " ";
     }
@@ -131,23 +136,29 @@ TuringMachine* ReadTuringMachine(std::istream* instream,
       // End of row is indicated by a double space ("  ").
       for (;i < line.size() && line[i] != ' '; i += 4) {
         TuringMachine::LookupResult trans;
-        // Format: 1RB (write symbol, move dir, next state).
-        // '0' -> 0, '1' -> 1, ...
-        trans.symbol = line[i] - '0';
-        ASSERT(0 <= trans.symbol && trans.symbol <= 9);
-        if (line[i+1] == 'R') {
-          trans.move = +1;
+        if (line[i] == '-') {
+          // Undecided transition
+          trans = {1, +1, HaltState, true};
         } else {
-          ASSERT(line[i+1] == 'L');
-          trans.move = -1;
-        }
-        char state_char = line[i+2];
-        if (state_char == 'Z') {
-          trans.state = -1;
-        } else {
-          // 'A' -> 0, 'B' -> 1, ...
-          trans.state = state_char - 'A';
-          ASSERT(0 <= trans.state && trans.state < 26);
+          ASSERT(!trans.undecided);
+          // Format: 1RB (write symbol, move dir, next state).
+          // '0' -> 0, '1' -> 1, ...
+          trans.symbol = line[i] - '0';
+          ASSERT(0 <= trans.symbol && trans.symbol <= 9);
+          if (line[i+1] == 'R') {
+            trans.move = +1;
+          } else {
+            ASSERT(line[i+1] == 'L');
+            trans.move = -1;
+          }
+          char state_char = line[i+2];
+          if (state_char == 'Z') {
+            trans.state = -1;
+          } else {
+            // 'A' -> 0, 'B' -> 1, ...
+            trans.state = state_char - 'A';
+            ASSERT(0 <= trans.state && trans.state < 26);
+          }
         }
         ASSERT(i+3 >= line.size() || line[i+3] == ' ');
         row.push_back(trans);

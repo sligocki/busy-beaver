@@ -20,6 +20,7 @@ class TuringMachine {
     Symbol symbol;
     int move;  // +1 for Right, -1 for Left.
     State state;
+    bool undecided = false;
   };
 
   LookupResult Lookup(State state, Symbol symbol) const {

@@ -35,7 +35,8 @@ void BaseEnumerator::expand_tm(
       for (Symbol next_symbol = 0; next_symbol <= tm.max_next_symbol(); ++next_symbol) {
         for (int next_move : {+1, -1}) {
           if (next_move == +1 || tm.next_move_left_ok()) {
-            const TuringMachine::LookupResult next = {next_symbol, next_move, next_state};
+            const TuringMachine::LookupResult next = {
+              next_symbol, next_move, next_state};
             todos->push(new TuringMachine(tm, result.last_state, result.last_symbol,
                                           next, order));
             order += 1;

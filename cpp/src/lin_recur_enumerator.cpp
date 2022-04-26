@@ -51,9 +51,10 @@ EnumExpandParams LinRecurEnum::filter_tm(const TuringMachine& tm) {
   num_tms_total_ += 1;
   if (result.is_halted) {
     num_tms_halt_ += 1;
+    // TODO: If writing Halting TMs. Add the halt state.
   } else if (result.is_lin_recurrent) {
     num_tms_inf_ += 1;
-    // Write TM that entered Lin Recurence allong with it's period, etc.
+    // Write TM that entered Lin Recurence along with it's period, etc.
     WriteTuringMachine(tm, &out_inf_stream_);
     out_inf_stream_ << " | Lin_Recur " << result.lr_period << " "
                     << result.lr_offset << " <" << result.lr_start_step << std::endl;

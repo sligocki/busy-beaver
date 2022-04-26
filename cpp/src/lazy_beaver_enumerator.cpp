@@ -70,6 +70,7 @@ EnumExpandParams LazyBeaverEnum::filter_tm(const TuringMachine& tm) {
       steps_realized_.insert(sim.step_num());
 
       // Write witness
+      // TODO: Write with Halt inserted.
       *out_witness_stream_ << sim.step_num() << "\t";
       WriteTuringMachine(tm, out_witness_stream_.get());
       *out_witness_stream_ << "\n";
