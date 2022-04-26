@@ -1,7 +1,4 @@
 #! /usr/bin/env python3
-#
-# Reverse_Engineer_Filter.py
-#
 """
 Filters out machines whose halt states obviously cannot be reached based
 on a simple end case fact:
@@ -12,12 +9,12 @@ on a simple end case fact:
   then it cannot ever halt.
 """
 
-from Common import Exit_Condition, HALT_STATE
+import argparse
+from pathlib import Path
+
 import Halting_Lib
 import IO
-from IO.TM_Record import TM_Record
 from Macro import Turing_Machine
-import TM_Enum
 
 import io_pb2
 
@@ -83,24 +80,29 @@ def is_infinite(tm : Turing_Machine.Simple_Machine) -> bool:
   # No halt transitions can be reached -> proven infinite!
   return True
 
+def filter(tm_record):
+  if is_infinite(tm_record.tm()):
+    tm_record.proto.filter.reverse_engineer.success = True
+    Halting_Lib.set_not_halting(tm_record.proto.status,
+                                io_pb2.INF_REVERSE_ENGINEER)
+    # Note: quasihalting result is not computable when using Reverse_Engineer filter.
+    tm_record.proto.status.quasihalt_status.is_decided = False
+  else:
+    tm_record.proto.filter.reverse_engineer.success = False
+
+
+def main():
+  parser = argparse.ArgumentParser()
+  parser.add_argument("--infile", type=Path, required=True)
+  parser.add_argument("--outfile", type=Path, required=True)
+  args = parser.parse_args()
+
+  with open(args.outfile, "wb") as outfile:
+    writer = IO.Proto.Writer(outfile)
+    with IO.Reader(args.infile) as reader:
+      for tm_record in reader:
+        filter(tm_record)
+        writer.write_record(tm_record)
 
 if __name__ == "__main__":
-  import sys
-  from Option_Parser import Filter_Option_Parser
-  # Get command line options.
-  opts, args = Filter_Option_Parser(sys.argv, [])
-
-  io = IO.Text.ReaderWriter(opts["infile"], opts["outfile"], opts["log_number"])
-  for io_record in io:
-    tm = Turing_Machine.Simple_Machine(io_record.ttable)
-    tm_enum = TM_Enum.TM_Enum(tm, allow_no_halt = False)
-    tm_record = TM_Record(tm_enum = tm_enum)
-    if is_infinite(tm):
-      tm_record.proto.filter.reverse_engineer.success = True
-      Halting_Lib.set_not_halting(tm_record.proto.status,
-                                  io_pb2.INF_REVERSE_ENGINEER)
-      # Note: quasihalting result is not computable when using Reverse_Engineer filter.
-      tm_record.proto.status.quasihalt_status.is_decided = False
-    else:
-      tm_record.proto.filter.reverse_engineer.success = False
-    io.write_record(tm_record)
+  main()
