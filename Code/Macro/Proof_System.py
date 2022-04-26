@@ -14,7 +14,7 @@ import optparse
 from optparse import OptionParser, OptionGroup
 import sys
 
-from Algebraic_Expression import Algebraic_Expression, Variable, NewVariableExpression, VariableToExpression, ConstantToExpression, is_scalar, BadOperation, Term
+from Algebraic_Expression import Algebraic_Expression, Variable, NewVariableExpression, VariableToExpression, ConstantToExpression, is_scalar, BadOperation, Term, always_ge
 
 from Macro import Simulator
 from Macro import Tape
@@ -952,7 +952,8 @@ class Proof_System(object):
     has_variable = False
     replace_vars = {}  # Dict of variable substitutions made by Collatz applier.
     for dir in range(2):
-      for init_block, diff_block, new_block in zip(rule.initial_tape.tape[dir], rule.diff_tape.tape[dir], new_tape.tape[dir]):
+      for init_block, diff_block, new_block in zip(
+          rule.initial_tape.tape[dir], rule.diff_tape.tape[dir], new_tape.tape[dir]):
         # The constant term in init_block.num represents the minimum
         # required value.
         if isinstance(init_block.num, Algebraic_Expression):
@@ -960,10 +961,7 @@ class Proof_System(object):
           x = init_block.num.variable_restricted()
           # init_block.num.const == min_value for this exponent.
           init_value[x] = new_block.num - init_block.num.const
-          # TODO: We must do something if isinstance(init_value[x], Algebraic_Expression)!
-          # This is part of https://github.com/sligocki/busy-beaver/issues/4
-          if (not isinstance(init_value[x], Algebraic_Expression) and
-              init_value[x] < 0):
+          if (not always_ge(init_value[x], 0)):
             if self.verbose:
               self.print_this("++ Current config is below rule minimum ++")
               self.print_this("Config block:", new_block)

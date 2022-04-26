@@ -28,6 +28,12 @@ def div(a, b):
   val = Fraction(a, b)
   return simp_frac(val)
 
+def always_ge(a, b):
+  if isinstance(a, Algebraic_Expression):
+    return a.always_ge(b)
+  else:
+    return a >= b
+
 class Variable:
   """A distinct variable in an algebraic expression"""
   num_vars = 0

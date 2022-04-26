@@ -85,6 +85,19 @@ class MacroSimulatorTest(unittest.TestCase):
     sim.loop_run(1000)
     self.assertEqual(sim.op_state, Turing_Machine.INF_REPEAT)
 
+  def test_bug_rec_rule_mins(self):
+    # See: https://github.com/sligocki/busy-beaver/issues/4
+    tm = IO.parse_tm("1RB 1LA  1RC 0LE  1RD 1LC  1LA 0RF  1RD 0LA  1RZ 0RE")
+    tm = Turing_Machine.Backsymbol_Macro_Machine(tm)
+    self.options.recursive = True
+    sim = Simulator.Simulator(tm, self.options)
+    # TM was declared Halting (incorrect) at loop 96 on 26 Apr 2022 (before fix).
+    # Then, same issue at loop 164 after partial fix.
+    # TM is proven infinite at loop ? (after fix).
+    sim.loop_run(1000)
+    #self.assertEqual(sim.op_state, Turing_Machine.INF_REPEAT)
+
+
   def test_small_halting(self):
     self.options.max_loops = 10_000
     # TODO(shawn): Should we just list the machine ttables directly instead?
