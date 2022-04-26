@@ -203,9 +203,11 @@ message SimulatorResult {
   uint64 log10_num_steps = 4;
 
   uint64 num_rules_proven = 8;
+  uint64 num_meta_diff_rules_proven = 12;
+  uint64 num_gen_rules_proven = 13;
   uint64 num_proofs_failed = 9;
 
-  // next id: 12
+  // next id: 14
 }
 
 message SimulatorInfo {

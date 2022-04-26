@@ -258,7 +258,8 @@ class Simulator(object):
       print(template("Rule:", self.steps_from_rule, self.num_rule_moves))
       print("Rules proven:", self.prover.num_rules)
       if self.prover.recursive:
-        print("Recursive rules proven:", self.prover.num_recursive_rules)
+        print("Meta Diff rules proven:", self.prover.num_meta_diff_rules)
+        print("General rules proven:", self.prover.num_gen_rules)
         if self.prover.allow_collatz:
           print("Collatz rules proven:", self.prover.num_collatz_rules)
       print("Failed proofs:", self.prover.num_failed_proofs)

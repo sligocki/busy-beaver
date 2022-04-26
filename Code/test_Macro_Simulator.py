@@ -95,7 +95,7 @@ class MacroSimulatorTest(unittest.TestCase):
     # Then, same issue at loop 164 after partial fix.
     # TM is proven infinite at loop ? (after fix).
     sim.loop_run(1000)
-    #self.assertEqual(sim.op_state, Turing_Machine.INF_REPEAT)
+    self.assertEqual(sim.op_state, Turing_Machine.INF_REPEAT)
 
 
   def test_small_halting(self):

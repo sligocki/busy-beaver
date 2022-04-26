@@ -53,7 +53,7 @@ class Rule(object):
 
 class Diff_Rule(Rule):
   """A rule that specifies constant deltas for each tape block's exponent."""
-  def __init__(self, initial_tape, diff_tape, initial_state, num_steps, num_loops, rule_num, states_last_seen):
+  def __init__(self, initial_tape, diff_tape, initial_state, num_steps, num_loops, rule_num, is_meta_rule : bool, states_last_seen):
     # TODO: Use basic lists instead of tapes, we never use the symbols.
     # TODO: Have a variable list and a min list instead of packing both
     # into init_tape.
@@ -67,13 +67,19 @@ class Diff_Rule(Rule):
     self.initial_state = initial_state
     self.num_loops = num_loops
     self.name = str(rule_num)  # Unique identifier.
+    self.is_meta_rule = is_meta_rule
     self.states_last_seen = states_last_seen
 
     self.num_uses = 0  # Number of times this rule has been applied.
 
   def __repr__(self):
-    return ("Diff Rule %s\nInitial Config: %s\nDiff Config:    %s\nSteps: %s, Loops: %s\nStates last seen: %r"
-            % (self.name, self.initial_tape.print_with_state(self.initial_state),
+    if self.is_meta_rule:
+      type = "Meta Diff Rule"
+    else:
+      type = "Diff Rule"
+
+    return ("%s %s\nInitial Config: %s\nDiff Config:    %s\nSteps: %s, Loops: %s\nStates last seen: %r"
+            % (type, self.name, self.initial_tape.print_with_state(self.initial_state),
                self.diff_tape.print_with_state(self.initial_state),
                self.num_steps, self.num_loops, self.states_last_seen))
 
@@ -331,7 +337,6 @@ class Proof_System(object):
     self.past_configs = defaultdict(Past_Config)
     # Colection of proven rules indexed by stripped configurations.
     self.rules = {}
-    self.num_rules = 0
 
     # After proving a part of a Collatz rule, do not try to log any other
     # rules until we have a chance to prove the rest of the Collatz rule.
@@ -340,10 +345,12 @@ class Proof_System(object):
     self.max_num_reps = options.max_num_reps
 
     # Stats
-    self.num_loops = 0
-    self.num_recursive_rules = 0
+    self.num_rules = 0
+    self.num_meta_diff_rules = 0
+    self.num_gen_rules = 0
     self.num_collatz_rules = 0
     self.num_failed_proofs = 0
+    self.num_loops = 0
     # TODO: Record how many steps are taken by recursive rules in simulator.
 
   def print_this(self, *args):
@@ -539,11 +546,12 @@ class Proof_System(object):
         self.rules[stripped_config_right].append(rule)
       else:
         self.rules[stripped_config_right] = [rule,]
-
-      self.num_rules += 1
     else:
       self.rules[stripped_config] = rule
-      self.num_rules += 1
+
+    self.num_rules += 1
+    if isinstance(rule, Diff_Rule) and rule.is_meta_rule:
+      self.num_meta_diff_rules += 1
 
     # Clear our memory. We cannot use it for future rules because the
     # number of steps will be wrong now that we have proven this rule.
@@ -758,7 +766,7 @@ class Proof_System(object):
         num_steps = 0
         states_last_seen = None
 
-      self.num_recursive_rules += 1
+      self.num_gen_rules += 1
       rule = General_Rule(var_list, min_list, result_tape, num_steps,
                           gen_sim.num_loops, self.num_rules,
                           states_last_seen=states_last_seen)
@@ -861,7 +869,9 @@ class Proof_System(object):
       if not isinstance(num_steps, Algebraic_Expression):
         num_steps = ConstantToExpression(num_steps)
 
-      if self.options.limited_rules:
+      # NOTE: We do not prove limited rules for meta (recursive) rules because
+      # are not correctly accounting for the context that was seen.
+      if self.options.limited_rules and gen_sim.num_rule_moves == 0:
         left_dist = max_offset_touched[LEFT]
         right_dist = max_offset_touched[RIGHT]
 
@@ -875,7 +885,10 @@ class Proof_System(object):
                                  new_state, num_steps, gen_sim.num_loops,
                                  self.num_rules, states_last_seen=states_last_seen)
       else:
-        rule = Diff_Rule(initial_tape, diff_tape, new_state, num_steps, gen_sim.num_loops, self.num_rules, states_last_seen=states_last_seen)
+        rule = Diff_Rule(initial_tape, diff_tape, new_state, num_steps,
+                         gen_sim.num_loops, self.num_rules,
+                         is_meta_rule = (gen_sim.num_rule_moves > 0),
+                         states_last_seen=states_last_seen)
 
       if self.verbose:
         print()
