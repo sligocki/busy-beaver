@@ -142,7 +142,7 @@ class TMStats:
     print()
     print(f"Halt: {self.num_halt:_} ({self.num_halt / self.count:.3%})")
     print(f"  - Steps: Max {bigint_to_str(self.halt_steps.max_value)}")
-    print(f"  - Score: Max {bigint_to_str(self.halt_steps.max_value)}")
+    print(f"  - Score: Max {bigint_to_str(self.halt_score.max_value)}")
     print()
     print(f"Infinite: {self.num_inf:_} ({self.num_inf / self.count:.3%})")
     for (reason, count) in sorted(self.inf_reason.items(), key=lambda x: x[1], reverse=True):
