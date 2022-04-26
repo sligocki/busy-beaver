@@ -61,11 +61,8 @@ def filter(tm_record, type, block_size, offset, cutoff):
 def filter_all(tm_record, args):
   if args.max_block_size:
     for block_size in range(1, args.max_block_size + 1):
-      for offset in range(block_size):
-        # TODO: non-0 offsets are broken.
-        if offset == 0:
-          if filter(tm_record, args.type, block_size, offset, args.cutoff):
-            return
+      if filter(tm_record, args.type, block_size, offset = 0, cutoff = args.cutoff):
+        return
 
   else:
     filter(tm_record, args.type, args.block_size, args.offset, args.cutoff)
