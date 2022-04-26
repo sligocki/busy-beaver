@@ -232,9 +232,9 @@ class ProofSystemTest(unittest.TestCase):
     self.assertEqual(prover_result.num_base_steps, 44)
 
 
-  def test_complex_recursive(self):
+  def test_complex_meta(self):
     """
-    Test evaluation for a complex recursive diff rule where # steps is non-linear.
+    Test evaluation for a complex meta diff rule where # steps is non-linear.
     """
     # Hand-built TM to demonstrate this situation simply.
     tm = IO.parse_tm("1RB --- ---  "
@@ -280,7 +280,7 @@ class ProofSystemTest(unittest.TestCase):
     self.assertEqual(result.num_base_steps, 29 * (2 * 20 + 1))
 
 
-    # Second-level (recursive) rule:
+    # Second-level (meta) rule:
     #   0^inf 1^a A> 0^b 2^d
     #     -> 0^inf 1^1 A> 0^a+1 1^b 2^d-1  (Steps: 2b+a+2)
     #     -> 0^inf 1^b+1 A> 0^a+1 2^d-1    (Steps: b * (2(a+1) + 1) / Cumulative: 2ab + 5b + a + 2
@@ -293,7 +293,7 @@ class ProofSystemTest(unittest.TestCase):
                     Tape.Repeated_Symbol(1, 10),
                    ]
     tape.tape[1] = [Tape.Repeated_Symbol(0, math.inf),
-                    Tape.Repeated_Symbol(2, 40),
+                    Tape.Repeated_Symbol(2, 4),
                     Tape.Repeated_Symbol(0, 20),
                    ]
 
@@ -301,14 +301,28 @@ class ProofSystemTest(unittest.TestCase):
     full_config = (state_A, tape, None, None)
     stripped_config = Proof_System.strip_config(
       state_A, Turing_Machine.RIGHT, tape.tape)
-    rec_rule = prover.prove_rule(stripped_config, full_config, delta_loop = 36)
+    meta_rule = prover.prove_rule(stripped_config, full_config, delta_loop = 36)
 
     # Check that rule was proven successfully
-    self.assertIsNotNone(rec_rule)
+    self.assertTrue(meta_rule)
+    self.assertTrue(meta_rule.is_meta_rule)
 
     # Test rule on an example:
     #   1^10 A> 0^20 2^40 -> 1^48 A> 0^58 2^2
-    success, rest = prover.apply_rule(rec_rule, full_config)
+    tape = Tape.Chain_Tape()
+    tape.init(0, 0, self.options)
+    tape.dir = Turing_Machine.RIGHT
+    tape.tape[0] = [Tape.Repeated_Symbol(0, math.inf),
+                    Tape.Repeated_Symbol(1, 10),
+                   ]
+    tape.tape[1] = [Tape.Repeated_Symbol(0, math.inf),
+                    Tape.Repeated_Symbol(2, 40),
+                    Tape.Repeated_Symbol(0, 20),
+                   ]
+
+    full_config = (state_A, tape, None, None)
+
+    success, rest = prover.apply_rule(meta_rule, full_config)
     self.assertTrue(success)
     result, _ = rest
     self.assertEqual(result.condition, Proof_System.APPLY_RULE)

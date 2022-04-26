@@ -93,9 +93,8 @@ class MacroSimulatorTest(unittest.TestCase):
     sim = Simulator.Simulator(tm, self.options)
     # TM was declared Halting (incorrect) at loop 96 on 26 Apr 2022 (before fix).
     # Then, same issue at loop 164 after partial fix.
-    # TM is proven infinite at loop ? (after fix).
     sim.loop_run(1000)
-    self.assertEqual(sim.op_state, Turing_Machine.INF_REPEAT)
+    self.assertNotEqual(sim.op_state, Turing_Machine.HALT)
 
 
   def test_small_halting(self):

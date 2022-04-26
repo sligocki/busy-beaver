@@ -838,31 +838,38 @@ class Proof_System(object):
         print()
 
       return rule
-    else:
-      # Else if a normal diff rule:
-      # Tighten up rule to be as general as possible
-      # (e.g. by replacing x+5 with x+1 if the rule holds for 1).
-      replaces = {}
-      for dir in range(2):
-        for init_block in initial_tape.tape[dir]:
-          if isinstance(init_block.num, Algebraic_Expression):
-            x = init_block.num.variable_restricted()
-            new_value = VariableToExpression(x) - min_val[x] + 1
-            init_block.num = init_block.num.substitute({x: new_value})
-            replaces[x] = new_value
-      # Fix diff_tape.  # TODO: rm, only happens for recursive_rules
-      for dir in range(2):
-        for diff_block in diff_tape.tape[dir]:
-          if isinstance(diff_block.num, Algebraic_Expression):
-            diff_block.num = diff_block.num.substitute(replaces)
-      # Fix num_steps.
-      if self.compute_steps:
-        num_steps = gen_sim.step_num.substitute(replaces)
-        states_last_seen = {state: last_seen.substitute(replaces)
-                            for state, last_seen in gen_sim.states_last_seen.items()}
-      else:
-        num_steps = 0
-        states_last_seen = None
+
+    else:  # Diff Rule
+      is_meta_rule = (gen_sim.num_rule_moves > 0)
+      if not is_meta_rule:
+        # Tighten up rule to be as general as possible
+        # (e.g. by replacing x+5 with x+1 if the rule holds for 1).
+        # This is only safe for basic rules (not meta rules. See Issue 4).
+        replaces = {}
+        for dir in range(2):
+          for init_block in initial_tape.tape[dir]:
+            if isinstance(init_block.num, Algebraic_Expression):
+              x = init_block.num.variable_restricted()
+              new_value = VariableToExpression(x) - min_val[x] + 1
+              init_block.num = init_block.num.substitute({x: new_value})
+              replaces[x] = new_value
+        # Fix diff_tape.  # TODO: rm, only happens for recursive_rules
+        for dir in range(2):
+          for diff_block in diff_tape.tape[dir]:
+            if isinstance(diff_block.num, Algebraic_Expression):
+              diff_block.num = diff_block.num.substitute(replaces)
+        # Fix num_steps.
+        if self.compute_steps:
+          num_steps = gen_sim.step_num.substitute(replaces)
+          states_last_seen = {state: last_seen.substitute(replaces)
+                              for state, last_seen in gen_sim.states_last_seen.items()}
+        else:
+          num_steps = 0
+          states_last_seen = None
+
+      else:  # is_meta_rule
+        num_steps = gen_sim.step_num
+        states_last_seen = gen_sim.states_last_seen
 
       # Cast num_steps as an Algebraic Expression (if it somehow got through
       # as simply an int)
@@ -871,7 +878,7 @@ class Proof_System(object):
 
       # NOTE: We do not prove limited rules for meta (recursive) rules because
       # are not correctly accounting for the context that was seen.
-      if self.options.limited_rules and gen_sim.num_rule_moves == 0:
+      if self.options.limited_rules and not is_meta_rule:
         left_dist = max_offset_touched[LEFT]
         right_dist = max_offset_touched[RIGHT]
 
@@ -886,8 +893,7 @@ class Proof_System(object):
                                  self.num_rules, states_last_seen=states_last_seen)
       else:
         rule = Diff_Rule(initial_tape, diff_tape, new_state, num_steps,
-                         gen_sim.num_loops, self.num_rules,
-                         is_meta_rule = (gen_sim.num_rule_moves > 0),
+                         gen_sim.num_loops, self.num_rules, is_meta_rule,
                          states_last_seen=states_last_seen)
 
       if self.verbose:
