@@ -85,8 +85,10 @@ class GenContainer:
     for atr in args:
       self.__dict__[atr] = args[atr]
 
-def test_CTL(ttable, cutoff, block_size=1, offset=None):
-  m = Turing_Machine.Simple_Machine(ttable)
+def test_CTL(base_tm, cutoff, block_size=1, offset=None):
+  if VERBOSE:
+    print(base_tm.ttable_str())
+  m = base_tm
   if block_size != 1:
     m = Turing_Machine.Block_Macro_Machine(m, block_size, offset)
   m = Turing_Machine.Backsymbol_Macro_Machine(m)
@@ -111,11 +113,8 @@ def test_CTL(ttable, cutoff, block_size=1, offset=None):
 
 def test_from_file(filename, line, cutoff, block_size, offset):
   ttable = IO.load_TTable_filename(filename, line)
-  if VERBOSE:
-    for term in ttable:
-      print(term)
-    print()
-  if test_CTL(ttable, cutoff, block_size, offset):
+  tm = Turing_Machine.Simple_Machine(ttable)
+  if test_CTL(tm, cutoff, block_size, offset):
     if VERBOSE:
       print("Success :)")
   else:

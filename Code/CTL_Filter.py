@@ -46,9 +46,7 @@ def filter(tm_record, type, block_size, offset, cutoff):
   info = get_proto(type, tm_record)
   with IO.Timer(info.result):
     module = get_module(type)
-    # TODO: Yikes, stop this madness! (Don't string -> parse!)
-    ttable = IO.parse_ttable(tm_record.ttable_str())
-    if module.test_CTL(ttable, cutoff, block_size, offset):
+    if module.test_CTL(tm_record.tm(), cutoff, block_size, offset):
       info.parameters.block_size = block_size
       info.parameters.offset = offset
       info.parameters.cutoff = cutoff
