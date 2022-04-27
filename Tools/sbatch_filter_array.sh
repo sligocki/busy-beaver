@@ -20,11 +20,10 @@ rm -rf ${OUT_DIR}
 mkdir -p ${OUT_DIR}
 
 
-# Do enumeration
-time python3 Code/Enumerate.py \
+# Run filter
+time python3 "$@" \
   --infile=${IN_FILE} \
-  --outfile=${OUT_DIR}/out.pb --outformat=protobuf --force \
-  "$@"
+  --outfile=${OUT_DIR}/out.pb
 
 # Check that we didn't lose any TMs
 NUM_BEFORE=$(python3 Code/Count.py ${IN_FILE})
