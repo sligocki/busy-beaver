@@ -37,6 +37,9 @@ fi
 # Categorize TMs by type
 time python3 Code/IO_Categorize.py ${OUT_DIR}/out.pb --out-dir=${OUT_DIR}
 
+# Convert unknown to text so that it will be easier to start next filter.
+time python3 Code/IO_Convert.py ${OUT_DIR}/unknown.{pb,txt}
+
 # Create file (empty) to indicate that this array job succeeded.
 touch ${OUT_DIR}/success
 
