@@ -60,7 +60,7 @@ def filter(tm_record, type, block_size, offset, cutoff):
 
 def filter_all(tm_record, args):
   if args.max_block_size:
-    for block_size in range(1, args.max_block_size + 1):
+    for block_size in range(args.min_block_size, args.max_block_size + 1):
       if filter(tm_record, args.type, block_size, offset = 0, cutoff = args.cutoff):
         return
 
@@ -79,6 +79,7 @@ def main():
   parser.add_argument("--cutoff", type=int, default=200,
                       help="Number of loops to run before starting CTL algorithm.")
 
+  parser.add_argument("--min-block-size", type=int, default=1)
   parser.add_argument("--max-block-size", type=int)
   args = parser.parse_args()
 
