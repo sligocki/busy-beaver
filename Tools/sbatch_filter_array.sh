@@ -3,7 +3,7 @@
 #SBATCH -N 1
 #SBATCH -n 1
 #SBATCH -c 1
-#SBATCH -o enum-%A_%a.txt
+#SBATCH -o bb-%A_%a.txt
 
 set -e
 set -u
