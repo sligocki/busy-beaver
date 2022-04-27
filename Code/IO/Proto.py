@@ -52,19 +52,22 @@ class Reader:
     assert isinstance(input_file, io.BufferedReader), type(input_file)
     self.infile = input_file
 
-  def read_record(self) -> TM_Record:
-    """Read TMRecord protobuf using length-delimited format (written by `Writer`)."""
-    # Read message length
+  def _read_message_len(self):
     len_bytes = self.infile.read(4)
     if len(len_bytes) > 0:
       if len(len_bytes) != 4:
         raise IO_Error("Unexpected EOF while reading length block "
                        f"(expected 4 bytes, got {len(len_bytes)}).")
-      pb_len = struct.unpack('<L', len_bytes)[0]
+      return struct.unpack('<L', len_bytes)[0]
 
+
+  def read_record(self) -> TM_Record:
+    """Read TMRecord protobuf using length-delimited format (written by `Writer`)."""
+    pb_len = self._read_message_len()
+    if pb_len != None:
       # Read protobuf bytes
       pb_bytes = self.infile.read(pb_len)
-      if  len(pb_bytes) != pb_len:
+      if len(pb_bytes) != pb_len:
         raise IO_Error("Unexpected EOF while reading data block "
                        f"(expected {pb_len}, got {len(pb_bytes)})")
 
@@ -73,6 +76,15 @@ class Reader:
       tm_proto.ParseFromString(pb_bytes)
       tm_record = TM_Record(proto = tm_proto)
       return tm_record
+
+  def skip_record(self) -> bool:
+    """Skip ahead 1 record. Return False if no records left in file."""
+    pb_len = self._read_message_len()
+    if pb_len != None:
+      # Skip ahead pb_len bytes.
+      pb_bytes = self.infile.seek(pb_len, 1)
+      return True
+    return False
 
   def __iter__(self):
     """
@@ -93,7 +105,6 @@ def load_record(filename : str, record_num : int) -> TM_Record:
   """Load one record from a filename."""
   with open(filename, "rb") as infile:
     reader = Reader(infile)
-    for index, tm_record in enumerate(reader):
-      if index == record_num:
-        return tm_record
-  raise IO_Error("Not enough lines in file")
+    for _ in range(record_num):
+      reader.skip_record()
+    return reader.read_record()

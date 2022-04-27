@@ -21,7 +21,7 @@ def main():
     try:
       with open(filename, "rb") as infile:
         reader = IO.Proto.Reader(infile)
-        for tm_record in reader:
+        while reader.skip_record():
           file_count += 1
           if args.print_freq and (file_count % args.print_freq == 0):
             print(f" ... {file_count:_} ({time.time() - start_time:_.2f}s)")
