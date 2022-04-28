@@ -57,15 +57,25 @@ def filter(tm_record, type, block_size, offset, cutoff):
       return True
   return False
 
+def filter_block_size(tm_record, block_size, args):
+  if args.all_offsets:
+    for offset in range(block_size):
+      if filter(tm_record, args.type, block_size, offset, args.cutoff):
+        return True
+    return False
+
+  else:
+    return filter(tm_record, args.type, block_size, args.offset, args.cutoff)
 
 def filter_all(tm_record, args):
   if args.max_block_size:
     for block_size in range(args.min_block_size, args.max_block_size + 1):
-      if filter(tm_record, args.type, block_size, offset = 0, cutoff = args.cutoff):
-        return
+      if filter_block_size(tm_record, block_size, args):
+        return True
+    return False
 
   else:
-    filter(tm_record, args.type, args.block_size, args.offset, args.cutoff)
+    return filter_block_size(tm_record, args.block_size, args)
 
 
 def main():
@@ -81,6 +91,8 @@ def main():
 
   parser.add_argument("--min-block-size", type=int, default=1)
   parser.add_argument("--max-block-size", type=int)
+  parser.add_argument("--all-offsets", action="store_true",
+                      help="Try all offsets for a given block size.")
   args = parser.parse_args()
 
   with open(args.outfile, "wb") as outfile:

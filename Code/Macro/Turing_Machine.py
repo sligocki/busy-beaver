@@ -334,10 +334,16 @@ class Block_Symbol(tuple):
     # TODO: this assumes single digit sub-symbols
     return "".join((str(x) for x in self))
 
+class OffsetStartState:
+  """Dummy initial state for running block size with an offset (starting in
+  the middle of a symbol)."""
+  def __init__(self, state, offset):
+    self.state = state
+    self.offset = offset
+
 class Block_Macro_Machine(Macro_Machine):
   """A derivative Turing Machine which simulates another machine clumping k-symbols together into a block-symbol"""
   MAX_TTABLE_CELLS = 100000
-  DUMMY_OFFSET_STATE = "Dummy_Offset_State"
 
   def __init__(self, base_machine, block_size, offset=None):
     assert block_size > 0
@@ -347,15 +353,16 @@ class Block_Macro_Machine(Macro_Machine):
     self.num_symbols = base_machine.num_symbols ** block_size
     # A lazy evaluation hashed macro transition table
     self.trans_table = {}
-    self.init_state = base_machine.init_state
     self.init_dir = base_machine.init_dir
-    if offset:
-      raise NotImplementedError
-      assert 0 < offset < block_size
-      self.save = self.init_state, offset
-      self.init_state = Block_Macro_Machine.DUMMY_OFFSET_STATE
     # initial symbol is (0, 0, 0, ..., 0) not just 0
     self.init_symbol = Block_Symbol((base_machine.init_symbol,) * block_size)
+
+    if offset:
+      assert 0 < offset < block_size, offset
+      self.init_state = OffsetStartState(base_machine.init_state, offset)
+    else:
+      self.init_state = base_machine.init_state
+
     # Maximum number of base-steps per macro-step evaluation w/o repeat
     # #positions (within block) * #states * #macro_symbols (base symbols ** block_size)
     self.max_steps = block_size * self.num_states * self.num_symbols
@@ -378,7 +385,12 @@ class Block_Macro_Machine(Macro_Machine):
     return self.trans_table[args]
 
   def eval_trans(self, macro_symbol_in, macro_state_in, macro_dir_in):
-    if macro_dir_in == RIGHT:
+    # One-off check for dealing with initial offset.
+    if isinstance(macro_state_in, OffsetStartState):
+      pos = macro_state_in.offset
+      macro_state_in = macro_state_in.state
+
+    elif macro_dir_in == RIGHT:
       pos = 0
     else:
       assert macro_dir_in == LEFT, macro_dir_in
@@ -396,8 +408,7 @@ class Block_Macro_Machine(Macro_Machine):
 @total_ordering
 class Backsymbol_Macro_Machine_State:
   def __init__(self, base_state, back_symbol):
-    assert (isinstance(base_state, Simple_Machine_State) or
-            base_state == Block_Macro_Machine.DUMMY_OFFSET_STATE), base_state
+    assert isinstance(base_state, (Simple_Machine_State, OffsetStartState)), base_state
     self.base_state  = base_state
     self.back_symbol = back_symbol
 
