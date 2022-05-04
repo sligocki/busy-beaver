@@ -302,7 +302,7 @@ def main(args):
     options.seed = int(1000*time.time())
 
   if not options.outfilename:
-    parser.error("--outfilename is required")
+    parser.error("--outfile is required")
 
   if not options.checkpoint:
     options.checkpoint = options.outfilename + ".check"
