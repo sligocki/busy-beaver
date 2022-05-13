@@ -311,7 +311,7 @@ def main(args):
   if not options.no_output:
     pout = sys.stdout
 
-  if options.max_block_size:
+  if not options.max_block_size:
     options.max_block_size = 5
 
   # Set up work queue and populate with blank machine.
