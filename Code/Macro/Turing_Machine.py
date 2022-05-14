@@ -78,6 +78,14 @@ class Transition(object):
       state = string.ascii_uppercase[self.state_out]
       return "%c%c%c" % (symbol, dir, state)
 
+  def equals(self, other):
+    # Note: We ignore metadata fields (num_base_steps, etc). This probably only
+    # makes sense for use with Simple_Machines where those are trivial.
+    return (self.condition == other.condition and
+            self.symbol_out == other.symbol_out and
+            self.state_out == other.state_out and
+            self.dir_out == other.dir_out)
+
 
 # TODO: Make max_loops configurable via command-line options.
 def sim_limited(tm, state, start_tape, pos, dir, max_loops=10000):

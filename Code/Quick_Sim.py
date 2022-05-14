@@ -7,6 +7,7 @@ A TM simulator with a variety of advanced features, options, and output
 formats.
 """
 
+from pathlib import Path
 import string
 import sys
 
@@ -196,20 +197,17 @@ if __name__ == "__main__":
 
   if len(args) < 1:
     parser.error("Must have at least one argument, machine_file")
-  filename = args[0]
+  filename = Path(args[0])
 
   if len(args) >= 2:
     try:
-      line = int(args[1])
+      record_num = int(args[1])
     except ValueError:
-      parser.error("line_number must be an integer.")
-    if line < 1:
-      parser.error("line_number must be >= 1")
+      parser.error("record_num must be an integer.")
   else:
-    line = 1
+    record_num = 0
 
-  ttable = IO.load_TTable_filename(filename, line)
-  machine = Turing_Machine.make_machine(ttable)
+  machine = IO.load_tm(filename, record_num)
   if not options.quiet:
     print(Turing_Machine.machine_ttable_to_str(machine))
 

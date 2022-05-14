@@ -8,30 +8,58 @@ import sys
 
 import IO
 from Macro import Turing_Machine
+import TNF
 
 
-def adjacent(ttable):
-  num_states = len(ttable)
-  num_symbols = len(ttable[0])
-  machines = []
-  for state_in in range(num_states):
-    for symbol_in in range(num_symbols):
-      new_ttable = copy.deepcopy(ttable)
-      for state_out in range(num_states):
-        for symbol_out in range(num_symbols):
-          for dir_out in range(2):
-            if ttable[state_in][symbol_in] != (symbol_out, dir_out, state_out):
-              new_ttable[state_in][symbol_in] = (symbol_out, dir_out, state_out)
-              yield new_ttable
+def enum_cell(old_tm : Turing_Machine.Simple_Machine,
+              state_in, symbol_in):
+  """Enumerate all TTables where cell (state_in, symbol_in) is modified."""
+  new_tm = copy.deepcopy(old_tm)
+  for state_out in range(old_tm.num_states):
+    for symbol_out in range(old_tm.num_symbols):
+      for dir_out in range(2):
+        new_trans = Turing_Machine.Transition(
+          condition = Turing_Machine.RUNNING,
+          symbol_out = symbol_out, state_out = state_out, dir_out = dir_out,
+          num_base_steps = 1, states_last_seen = {state_in: 0})
+        if not old_tm.trans_table[state_in][symbol_in].equals(new_trans):
+          new_tm.trans_table[state_in][symbol_in] = new_trans
+          yield new_tm
 
-if __name__ == "__main__":
+def adjacent(tm : Turing_Machine.Simple_Machine):
+  # All TMs which differ in only one cell are adjacent.
+  for state_in in range(tm.num_states):
+    for symbol_in in range(tm.num_symbols):
+      # Don't modify Halt since this will most likely lead to a machine with no halts.
+      if tm.trans_table[state_in][symbol_in].condition == Turing_Machine.RUNNING:
+        for new_tm in enum_cell(tm, state_in, symbol_in):
+          yield new_tm
+
+def permute_start_state(tm : Turing_Machine.Simple_Machine):
+  """Enumerate all TMs with the same ttable (just different start states)."""
+  old_start_state = 0
+  symbol_order = list(range(tm.num_symbols))
+  for new_start_state in range(tm.num_states):
+    state_order = list(range(tm.num_states))
+    state_order[new_start_state] = old_start_state
+    state_order[old_start_state] = new_start_state
+    yield TNF.permute_table(tm, state_order, symbol_order)
+
+
+def main():
   if len(sys.argv) >= 3:
     line = int(sys.argv[2])
   else:
     line = 1
 
   ttable = IO.load_TTable_filename(sys.argv[1], line)
+  tm = Turing_Machine.Simple_Machine(ttable)
 
-  for out_ttable in adjacent(ttable):
-    tm = Turing_Machine.Simple_Machine(out_ttable)
-    print(tm.ttable_str())
+  for perm_tm in permute_start_state(tm):
+    print(perm_tm.ttable_str())
+  for adj_tm in adjacent(tm):
+    for perm_tm in permute_start_state(adj_tm):
+      print(perm_tm.ttable_str())
+
+if __name__ == "__main__":
+  main()

@@ -128,14 +128,14 @@ if __name__ == "__main__":
 
   parser = argparse.ArgumentParser()
   parser.add_argument("tm_file")
-  parser.add_argument("tm_line", type=int, nargs="?", default=1)
+  parser.add_argument("record_num", type=int, nargs="?", default=0)
   parser.add_argument("--width", type=int, default=term_width,
                       help="width to print to terminal.")
   args = parser.parse_args()
 
-  ttable = IO.Text.load_TTable_filename(args.tm_file, args.tm_line)
-  tm = Turing_Machine.Simple_Machine(ttable)
-
+  tm = IO.load_tm(args.tm_file, args.record_num)
   print(Turing_Machine.machine_ttable_to_str(tm))
+  # Hacky way of getting back to ttable.
+  ttable = IO.parse_ttable(tm.ttable_str())
   run_visual(ttable, args.width)
   sys.stdout.flush()

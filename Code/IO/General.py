@@ -2,8 +2,10 @@
 Generalized reader that can read from either Proto or Text format.
 """
 
-import IO
 from pathlib import Path
+
+import IO
+from Macro import Turing_Machine
 
 
 # File types
@@ -37,3 +39,13 @@ class Reader:
 
   def __exit__(self, *args):
     self.file.close()
+
+def load_tm(filename : Path, record_num : int) -> Turing_Machine.Simple_Machine:
+  filename = Path(filename)
+  if ".pb" in filename.suffixes:
+    record = IO.Proto.load_record(filename, record_num)
+    return record.tm()
+  else:
+    line = record_num + 1
+    ttable = IO.Text.load_TTable_filename(filename, line)
+    return Turing_Machine.Simple_Machine(ttable)

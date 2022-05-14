@@ -43,7 +43,6 @@ def permute_table(old_tm, state_order, symbol_order):
           # We don't need/use this field.
           states_last_seen = None
         )
-
   return new_tm
 
 def to_TNF(tm, max_steps, skip_over_steps):
@@ -85,10 +84,9 @@ def main():
   parser.add_argument("--skip-over-steps", action="store_true")
   args = parser.parse_args()
 
-  with open(args.tm_file, "r") as infile:
-    for io_record in IO.IO(infile, None):
-      old_tm = Turing_Machine.Simple_Machine(io_record.ttable)
-      new_tm = to_TNF(old_tm, args.max_steps, args.skip_over_steps)
+  with IO.Reader(args.tm_file) as reader:
+    for tm_record in reader:
+      new_tm = to_TNF(tm_record.tm(), args.max_steps, args.skip_over_steps)
       if new_tm:
         print(new_tm.ttable_str())
 
