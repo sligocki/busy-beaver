@@ -177,18 +177,19 @@ def filter(tm : Turing_Machine.Simple_Machine,
 def main():
   parser = argparse.ArgumentParser()
   parser.add_argument("tm_file")
-  parser.add_argument("tm_line", type=int, nargs="?", default=1)
+  parser.add_argument("record_num", type=int, nargs="?", default=0)
   parser.add_argument("--max-steps", type=int, default = 0)
   parser.add_argument("--no-min-start-step", action="store_false",
                       dest="min_start_step")
   args = parser.parse_args()
 
-  ttable = IO.Text.load_TTable_filename(args.tm_file, args.tm_line)
   lr_info = io_pb2.LinRecurFilterInfo()
   lr_info.parameters.max_steps = args.max_steps
   lr_info.parameters.find_min_start_step = args.min_start_step
   bb_status = io_pb2.BBStatus()
-  filter(Turing_Machine.Simple_Machine(ttable), lr_info, bb_status)
+
+  tm = IO.load_tm(args.tm_file, args.record_num)
+  filter(tm, lr_info, bb_status)
 
   print(lr_info)
   print(bb_status)
