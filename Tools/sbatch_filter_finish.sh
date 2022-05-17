@@ -19,7 +19,7 @@ NUM_SHARDS=$3
 WORK_DIR=${ROOT_DIR}/${SUBDIR}/
 TMP_DIR=/tmp/${USER}-$$/
 rm -rf ${TMP_DIR}
-mkdip -p ${TMP_DIR}
+mkdir -p ${TMP_DIR}
 
 # Make sure all shards succeeded.
 if (( $(ls ${WORK_DIR}/split/0*/success | wc -l) != ${NUM_SHARDS})); then
