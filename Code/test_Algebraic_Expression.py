@@ -26,6 +26,12 @@ class SystemTest(unittest.TestCase):
     self.assertEqual(str(expr("2 x^2 y z^13 - 3")), "(2 x^2 y z^13 - 3)")
     self.assertEqual(str(expr("x + -1 y + 3")), "(x + -y + 3)")
 
+  def test_always_cmp(self):
+    # Always: 2x >= x
+    self.assertTrue(Algebraic_Expression.always_ge(expr("2 x"), expr("x")))
+    # Not always 2x > x  (could be == if x = 0)
+    self.assertFalse(Algebraic_Expression.always_greater_than(expr("2 x"), expr("x")))
+
   def test_expression_cmp(self):
     self.assertEqual(expr("x + 1"), expr("1 x + 1"))
     self.assertLess(expr("x + 1"), expr("x + 2"))

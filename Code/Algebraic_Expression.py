@@ -28,10 +28,18 @@ def div(a, b):
   val = Fraction(a, b)
   return simp_frac(val)
 
+def always_greater_than(a, b):
+  if isinstance(a, Algebraic_Expression):
+    return a.always_greater_than(b)
+  else:
+    assert not isinstance(b, Algebraic_Expression)
+    return a >= b
+
 def always_ge(a, b):
   if isinstance(a, Algebraic_Expression):
     return a.always_ge(b)
   else:
+    assert not isinstance(b, Algebraic_Expression)
     return a >= b
 
 class Variable:
@@ -223,11 +231,14 @@ class Expression:
     return True
 
   def always_ge(self, other):
+    """True if self >= other for any non-negative variable assignment."""
     diff = self - other
-    if diff.always_greater_than(0):
-      return True
-    else:
-      return diff == 0
+    if diff.const < 0:
+      return False
+    for term in diff.terms:
+      if term.coef < 0:
+        return False
+    return True
 
   def __eq__(self, other):
     if other == math.inf:
@@ -245,6 +256,7 @@ class Expression:
   def __ne__(self, other):
     return not self == other
 
+  # TODO: Remove these hopefull overloads ...
   def __lt__(self, other):
     return self.__cmp__(other) < 0
 
