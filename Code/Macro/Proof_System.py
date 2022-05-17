@@ -1187,8 +1187,10 @@ class Proof_System(object):
                    for val in rule.result_list]
 
       if next_list == current_list:
-        return True, (ProverResult(INF_REPEAT, states_last_seen={
-          state: math.inf for state in rule.states_last_seen}),
+        states_last_seen = None
+        if rule.states_last_seen:
+          states_last_seen = {state: math.inf for state in rule.states_last_seen}
+        return True, (ProverResult(INF_REPEAT, states_last_seen=states_last_seen),
                       large_delta)
       else:
         current_list = next_list
