@@ -104,7 +104,7 @@ class General_Rule(Rule):
     self.infinite = True
     for var, result in zip(self.var_list, self.result_list):
       if var:  # If this exponent changes in this rule (has a variable)
-        if is_scalar(result) or not result.always_greater_than(VariableToExpression(var)):
+        if not always_ge(result, VariableToExpression(var)):
           # If any exponent can decrease, this is not an infinite rule.
           self.infinite = False
           break
