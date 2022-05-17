@@ -60,6 +60,7 @@ class TMStats:
     self.sim_num_loops = Stat()
     self.sim_log10_num_steps = Stat()
     self.sim_num_rules_proven = Stat()
+    self.sim_num_gen_rules_proven = Stat()
     self.sim_num_proofs_failed = Stat()
     self.sim_num_rule_moves = Stat()
 
@@ -108,6 +109,7 @@ class TMStats:
     sim_log10_num_steps = tm_record.filter.simulator.result.log10_num_steps
     self.sim_log10_num_steps.add(sim_log10_num_steps)
     self.sim_num_rules_proven.add(tm_record.filter.simulator.result.num_rules_proven)
+    self.sim_num_gen_rules_proven.add(tm_record.filter.simulator.result.num_gen_rules_proven)
     self.sim_num_proofs_failed.add(tm_record.filter.simulator.result.num_proofs_failed)
     self.sim_num_rule_moves.add(tm_record.filter.simulator.result.num_rule_moves)
 
@@ -196,6 +198,7 @@ class TMStats:
     # print()
     print(f"  - log10(num_steps) : Mean {self.sim_log10_num_steps.mean():9_.0f}  Max {self.sim_log10_num_steps.max_value:9_d}  (Set in {self.sim_log10_num_steps.count / self.count:4.0%})")
     print(f"  - num_rules_proven : Mean {self.sim_num_rules_proven.mean():9_.0f}  Max {self.sim_num_rules_proven.max_value:9_d}  (Set in {self.sim_num_rules_proven.count / self.count:4.0%})")
+    print(f"  - num_gen_rules_proven : Mean {self.sim_num_gen_rules_proven.mean():9_.0f}  Max {self.sim_num_gen_rules_proven.max_value:9_d}  (Set in {self.sim_num_gen_rules_proven.count / self.count:4.0%})")
     print(f"  - num_proofs_failed : Mean {self.sim_num_proofs_failed.mean():9_.0f}  Max {self.sim_num_proofs_failed.max_value:9_d}  (Set in {self.sim_num_proofs_failed.count / self.count:4.0%})")
     print(f"  - num_rule_moves : Mean {self.sim_num_rule_moves.mean():9_.0f}  Max {self.sim_num_rule_moves.max_value:9_d}  (Set in {self.sim_num_rule_moves.count / self.count:4.0%})")
     print()
