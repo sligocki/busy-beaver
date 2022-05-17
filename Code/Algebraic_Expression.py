@@ -29,18 +29,20 @@ def div(a, b):
   return simp_frac(val)
 
 def always_greater_than(a, b):
-  if isinstance(a, Algebraic_Expression):
-    return a.always_greater_than(b)
+  if is_scalar(a) and is_scalar(b):
+    return a > b
   else:
-    assert not isinstance(b, Algebraic_Expression)
-    return a >= b
+    if not isinstance(a, Algebraic_Expression):
+      a = ConstantToExpression(a)
+    return a.always_greater_than(b)
 
 def always_ge(a, b):
-  if isinstance(a, Algebraic_Expression):
-    return a.always_ge(b)
-  else:
-    assert not isinstance(b, Algebraic_Expression)
+  if is_scalar(a) and is_scalar(b):
     return a >= b
+  else:
+    if not isinstance(a, Algebraic_Expression):
+      a = ConstantToExpression(a)
+    return a.always_ge(b)
 
 class Variable:
   """A distinct variable in an algebraic expression"""
