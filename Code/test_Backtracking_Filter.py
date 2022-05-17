@@ -13,9 +13,6 @@ import sys
 import tempfile
 import unittest
 
-import tracemalloc
-tracemalloc.start()
-
 class SystemTest(unittest.TestCase):
   def setUp(self):
     # Get busy-beaver root direcory.

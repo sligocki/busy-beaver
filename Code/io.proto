@@ -47,6 +47,7 @@ enum InfReason {
   INF_REVERSE_ENGINEER = 4;
   INF_LIN_RECUR = 5;
   INF_CTL = 6;
+  INF_BACKTRACK = 7;
 }
 
 // Statuses for various searches (BB, BBB, ...)
@@ -335,6 +336,27 @@ message CTLFilterInfo {
   // Previously used tags: 1-4
 }
 
+message BacktrackFilterParams {
+  uint64 num_steps = 1;
+  uint64 max_configs = 2;
+}
+
+message BacktrackFilterResult {
+  bool success = 1;
+
+  // Number of steps needed to search backwards from halt before proving that
+  // halt is unreachable.
+  uint64 max_steps = 2;
+
+  // Stats
+  uint64 elapsed_time_us = 3;
+}
+
+message BacktrackFilterInfo {
+  BacktrackFilterParams parameters = 1;
+  BacktrackFilterResult result = 2;
+}
+
 
 message FilterResults {
   // parameters, results and stats from various filters.
@@ -344,6 +366,7 @@ message FilterResults {
   FilterInfo reverse_engineer = 3;
   LinRecurFilterInfo lin_recur = 4;
   CTLFilterInfo ctl = 5;
+  BacktrackFilterInfo backtrack = 6;
   // TODO: Add results for other filters
 }
 

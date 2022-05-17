@@ -1,23 +1,26 @@
 #! /usr/bin/env python3
-#
-# Backtracking_Filter.py
-#
 """
 Filters out machines whose halt states obviously cannot be reached based
 on backtracking.
 """
 
-
+import argparse
 import copy
+from pathlib import Path
+import sys
 
 from Common import Exit_Condition, HALT_STATE
+import Halting_Lib
 import IO
+
+import io_pb2
+
 
 # Constants
 BACKTRACK = "Backtrack"
 
 def get_info(TTable):
-  """Finds all halt transitions, transitions that could get to 
+  """Finds all halt transitions, transitions that could get to
   each state and all of the single-sided symbols."""
   num_states = len(TTable)
   num_symbols = len(TTable[0])
@@ -67,7 +70,7 @@ class Partial_Config:
     # Step onto the symbol we came from.
     if len(new_config.dir[not dir_out]) != 0:
       del new_config.dir[not dir_out][0]
-    # Set the symbol and state to what they must have been to apply this 
+    # Set the symbol and state to what they must have been to apply this
     # transition.
     new_config.current = symbol_in
     new_config.state = state_in
@@ -144,41 +147,50 @@ def backtrack_ttable(TTable, steps, max_configs):
     if condition == Exit_Condition.UNKNOWN:
       return False
     if condition == Exit_Condition.HALT:
-      return Exit_Condition.HALT, "?", this_steps
+      return False
     max_steps = max(max_steps, this_steps)
-  # If all halt states cannot be reached:
-  return Exit_Condition.INFINITE, BACKTRACK, max_steps, "Backtrack"
+  # If all halt states cannot be reached, we have succeeded!
+  return max_steps
 
 def apply_results(results, old_line, log_number):
   old_results = old_line[5]
   return old_line[0:5]+(results, old_line[6], log_number, old_results)
 
-from Option_Parser import Filter_Option_Parser
+def backtrack(tm_record, num_steps, max_configs):
+  info = tm_record.proto.filter.backtrack
+  with IO.Timer(info.result):
+    TTable = IO.parse_ttable(tm_record.tm().ttable_str())
+    # Run the simulator/filter on this machine
+    max_steps = backtrack_ttable(TTable, num_steps, max_configs)
+    if max_steps:
+      info.parameters.num_steps = num_steps
+      info.parameters.max_configs = max_configs
+      info.result.success = True
+      info.result.max_steps = max_steps
+      Halting_Lib.set_not_halting(tm_record.proto.status, io_pb2.INF_BACKTRACK)
+      # Note: quasihalting result is not computed when using CTL filters.
+      tm_record.proto.status.quasihalt_status.is_decided = False
+      return True
+  return False
+
 
 def main(argv):
-  # Get command line options.
-  opts, args = Filter_Option_Parser(argv, [
-      ("backsteps" , int, None, True, True),
-      ("limit",     int, None, False, True)])
+  parser = argparse.ArgumentParser()
+  parser.add_argument("--infile", type=Path, required=True)
+  parser.add_argument("--outfile", type=Path, required=True)
 
-  limit = opts["limit"]
-  if limit is None:
-    limit = opts["backsteps"]
-  log_number = opts["log_number"]
-  io = IO.IO(opts["infile"], opts["outfile"], log_number)
-  next_entry = io.read_result()
-  while next_entry:
-    TTable = next_entry[6]
-    # Run the simulator/filter on this machine
-    results = backtrack_ttable(TTable, opts["backsteps"], limit)
-    # Deal with result
-    if results:
-      next_entry = apply_results(results, next_entry, log_number)
-    io.write_result_raw(*next_entry)
-    next_entry = io.read_result()
-  opts["infile"].close()
-  opts["outfile"].close()
+  parser.add_argument("--steps", type=int, required=True,
+                      help="Number of steps to backtrack.")
+  parser.add_argument("--max-configs", type=int, default=10,
+                      help="Maximum width of backtracking tree.")
+  args = parser.parse_args()
+
+  with open(args.outfile, "wb") as outfile:
+    writer = IO.Proto.Writer(outfile)
+    with IO.Reader(args.infile) as reader:
+      for tm_record in reader:
+        backtrack(tm_record, args.steps, args.max_configs)
+        writer.write_record(tm_record)
 
 if __name__ == "__main__":
-  import sys
   main(sys.argv)

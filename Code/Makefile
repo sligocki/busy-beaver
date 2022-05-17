@@ -7,7 +7,6 @@ test: test-small test-large
 
 test-small:
 	./test_Algebraic_Expression.py
-	./test_Backtracking_Filter.py
 	./test_Proof_System.py
 	./test_TNF.py
 	./test_Turing_Machine.py
