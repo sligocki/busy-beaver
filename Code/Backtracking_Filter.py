@@ -96,12 +96,26 @@ def is_possible_config(config, dir_to_symbol):
         return False
   return True
 
+class BacktrackResult:
+  def __init__(self, success, halted, max_steps, max_width):
+    self.success = success
+    self.halted = halted
+    self.max_steps = max_steps
+    self.max_width = max_width
+
+  def merge(self, other):
+    self.success = self.success and other.success
+    self.halted = self.halted or other.halted
+    self.max_steps = max(self.max_steps, other.max_steps)
+    self.max_width = max(self.max_width, other.max_width)
+
 def backtrack_single_halt(halt_state, halt_symbol,
-                          to_state, dir_to_symbol, steps, max_configs):
+                          to_state, dir_to_symbol, steps, max_width_allowed):
   """Try backtrackying |steps| steps from this specific halting
   config. |to_state| is a list of transitions that lead to each state.
   |dir_to_symbol| indicates which direction symbols can be found."""
   pos_configs = [Partial_Config(halt_state, halt_symbol)]
+  max_width_seen = len(pos_configs)
   for i in range(steps):
     # All configurations that could lead to pos_configs in one step.
     prev_configs = []
@@ -114,22 +128,26 @@ def backtrack_single_halt(halt_state, halt_symbol,
             # Probably this should not happen in practice because we will
             # simulate all machines for more steps forwards before trying
             # to simulate them backwards, but we keep this for correctness.
-            return Exit_Condition.HALT, i + 2
+            return BacktrackResult(success = False, halted = True,
+                                   max_steps = i + 1, max_width = max_width_seen)
           if is_possible_config(prev_config, dir_to_symbol):
             prev_configs.append(prev_config)
     pos_configs = prev_configs
+    max_width_seen = max(max_width_seen, len(pos_configs))
     if len(pos_configs) == 0:
-      return Exit_Condition.INFINITE, i + 1
-    elif len(pos_configs) > max_configs:
+      return BacktrackResult(success = True, halted = False,
+                             max_steps = i + 1, max_width = max_width_seen)
+    elif max_width_seen > max_width_allowed:
       break
-  return Exit_Condition.UNKNOWN, i + 1
+  return BacktrackResult(success = False, halted = False,
+                         max_steps = i + 1, max_width = max_width_seen)
 
-def backtrack_ttable(TTable, steps, max_configs):
+def backtrack_ttable(TTable, steps, max_width):
   """Try backtracking |steps| steps for each halting config in TTable,
-  giving up if there are more than |max_configs| possible configs."""
+  giving up if there are more than |max_width| possible configs."""
   # Get initial ttable info.
   halts, to_state, dir_to_symbol = get_info(TTable)
-  max_steps = -1
+  combined_result = None
   # See if all halts cannot be reached
   for halt_state, halt_symbol in halts:
     # Initial Criterion: no halt_state transition goes to the halt_state
@@ -139,37 +157,39 @@ def backtrack_ttable(TTable, steps, max_configs):
     # For example, this is why we cannot prove "1RB ---  1LB 1RZ" Halting.
     for symbol_out, dir_out, state_out in TTable[halt_state]:
       if state_out == halt_state:
-        return False
-    condition, this_steps = backtrack_single_halt(halt_state, halt_symbol,
-                                                  to_state, dir_to_symbol,
-                                                  steps, max_configs)
+        return
+    result = backtrack_single_halt(halt_state, halt_symbol,
+                                   to_state, dir_to_symbol,
+                                   steps, max_width)
     # If any of the backtracks fail, the whole thing fails.
-    if condition == Exit_Condition.UNKNOWN:
-      return False
-    if condition == Exit_Condition.HALT:
-      return False
-    max_steps = max(max_steps, this_steps)
+    if not result.success:
+      return result
+
+    if combined_result:
+      combined_result.merge(result)
+    else:
+      combined_result = result
+
   # If all halt states cannot be reached, we have succeeded!
-  return max_steps
+  return combined_result
 
-def apply_results(results, old_line, log_number):
-  old_results = old_line[5]
-  return old_line[0:5]+(results, old_line[6], log_number, old_results)
-
-def backtrack(tm_record, num_steps, max_configs):
+def backtrack(tm_record, num_steps, max_width):
   info = tm_record.proto.filter.backtrack
   with IO.Timer(info.result):
     TTable = IO.parse_ttable(tm_record.tm().ttable_str())
     # Run the simulator/filter on this machine
-    max_steps = backtrack_ttable(TTable, num_steps, max_configs)
-    if max_steps:
-      info.parameters.num_steps = num_steps
-      info.parameters.max_configs = max_configs
-      info.result.success = True
-      info.result.max_steps = max_steps
+    result = backtrack_ttable(TTable, num_steps, max_width)
+
+    info.parameters.num_steps = num_steps
+    info.parameters.max_width = max_width
+    info.result.success = result.success
+    info.result.max_steps = result.max_steps
+    info.result.max_width = result.max_width
+    # Note: quasihalting result is not computed when using Backtracking filter.
+    tm_record.proto.status.quasihalt_status.is_decided = False
+    if result.success:
+      assert not result.halted
       Halting_Lib.set_not_halting(tm_record.proto.status, io_pb2.INF_BACKTRACK)
-      # Note: quasihalting result is not computed when using CTL filters.
-      tm_record.proto.status.quasihalt_status.is_decided = False
       return True
   return False
 
@@ -181,15 +201,16 @@ def main(argv):
 
   parser.add_argument("--steps", type=int, required=True,
                       help="Number of steps to backtrack.")
-  parser.add_argument("--max-configs", type=int, default=10,
-                      help="Maximum width of backtracking tree.")
+  parser.add_argument("--max-width", type=int, default=10,
+                      help="Maximum width of backtracking tree. (Maximum number "
+                      "of configs to keep track of while backtracking.)")
   args = parser.parse_args()
 
   with open(args.outfile, "wb") as outfile:
     writer = IO.Proto.Writer(outfile)
     with IO.Reader(args.infile) as reader:
       for tm_record in reader:
-        backtrack(tm_record, args.steps, args.max_configs)
+        backtrack(tm_record, args.steps, args.max_width)
         writer.write_record(tm_record)
 
 if __name__ == "__main__":

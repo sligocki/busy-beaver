@@ -337,19 +337,22 @@ message CTLFilterInfo {
 }
 
 message BacktrackFilterParams {
+  // Maximum depth of BFS search tree to try before giving up.
   uint64 num_steps = 1;
-  uint64 max_configs = 2;
+  // Maximum width of BFS search tree to try before giving up.
+  uint64 max_width = 2;
 }
 
 message BacktrackFilterResult {
   bool success = 1;
 
-  // Number of steps needed to search backwards from halt before proving that
-  // halt is unreachable.
-  uint64 max_steps = 2;
+  // Maximum depth of BFS search tree reached.
+  uint64 max_steps = 3;
+  // Maximum width of BFS search tree reached.
+  uint64 max_width = 4;
 
   // Stats
-  uint64 elapsed_time_us = 3;
+  uint64 elapsed_time_us = 2;
 }
 
 message BacktrackFilterInfo {

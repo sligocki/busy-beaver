@@ -67,6 +67,9 @@ class TMStats:
     self.lr_period = Stat()
     self.lr_abs_offset = Stat()
 
+    self.bt_max_steps = Stat()
+    self.bt_max_width = Stat()
+
     self.timings = collections.defaultdict(Stat)
     self.sizes = collections.defaultdict(Stat)
 
@@ -112,6 +115,11 @@ class TMStats:
     self.lr_period.add(tm_record.filter.lin_recur.result.period)
     self.lr_abs_offset.add(abs(tm_record.filter.lin_recur.result.offset))
 
+    # Backtrack stats
+    if tm_record.filter.backtrack.result.success:
+      self.bt_max_steps.add(tm_record.filter.backtrack.result.max_steps)
+      self.bt_max_width.add(tm_record.filter.backtrack.result.max_width)
+
     # Timing
     self.timings["total"].add(tm_record.elapsed_time_us)
     self.timings["simulator"].add(tm_record.filter.simulator.result.elapsed_time_us)
@@ -123,16 +131,19 @@ class TMStats:
       tm_record.filter.ctl.ctl_as_b.result.elapsed_time_us +
       tm_record.filter.ctl.ctl_a_bs.result.elapsed_time_us +
       tm_record.filter.ctl.ctl_as_b_c.result.elapsed_time_us)
+    self.timings["backtrack"].add(tm_record.filter.backtrack.result.elapsed_time_us)
 
     # Serialized Size
     self.sizes["total"].add(tm_record.ByteSize())
     self.sizes["tm"].add(tm_record.tm.ByteSize())
     self.sizes["status"].add(tm_record.status.ByteSize())
     self.sizes["filter"].add(tm_record.filter.ByteSize())
+
     self.sizes["simulator"].add(tm_record.filter.simulator.ByteSize())
     self.sizes["block_finder"].add(tm_record.filter.block_finder.ByteSize())
     self.sizes["lin_recur"].add(tm_record.filter.lin_recur.ByteSize())
     self.sizes["ctl"].add(tm_record.filter.ctl.ByteSize())
+    self.sizes["backtrack"].add(tm_record.filter.backtrack.ByteSize())
 
   def print(self):
     print()
@@ -168,6 +179,15 @@ class TMStats:
     print(f"  - abs(offset) : Mean {self.lr_abs_offset.mean():_.0f}  "
           f"Max {self.lr_abs_offset.max_value:_}  "
           f"(Set in {self.lr_abs_offset.count / self.count:4.0%})")
+    print()
+
+    print("Backtrack:")
+    print(f"  - max_steps  : Mean {self.bt_max_steps.mean():_.2f}  "
+          f"Max {self.bt_max_steps.max_value:_}  "
+          f"(Set in {self.bt_max_steps.count / self.count:4.0%})")
+    print(f"  - max_width  : Mean {self.bt_max_width.mean():_.2f}  "
+          f"Max {self.bt_max_width.max_value:_}  "
+          f"(Set in {self.bt_max_width.count / self.count:4.0%})")
     print()
 
     print("Simulator:")
