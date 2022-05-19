@@ -52,6 +52,7 @@ class TMStats:
 
     self.halt_steps = Stat()
     self.halt_score = Stat()
+    self.unknown_reason = collections.Counter()
     self.inf_reason = collections.Counter()
     self.qhalt_steps = Stat()
 
@@ -80,6 +81,7 @@ class TMStats:
     # Halt status
     if not tm_record.status.halt_status.is_decided:
       self.num_unknown += 1
+      self.unknown_reason[tm_record.filter.simulator.result.unknown_info.WhichOneof("reason")] += 1
 
     elif tm_record.status.halt_status.is_halting:
       self.num_halt += 1
@@ -152,6 +154,9 @@ class TMStats:
     print(f"Total: {self.count:_}")
     print()
     print(f"Unknown: {self.num_unknown:_} ({self.num_unknown / self.count:.3%})")
+    for (reason, count) in sorted(self.unknown_reason.items(), key=lambda x: x[1], reverse=True):
+      print(f"  - {reason:20s} : "
+            f"{count:15_}  ({count / self.num_unknown:7.2%})")
     print()
     print(f"Halt: {self.num_halt:_} ({self.num_halt / self.count:.3%})")
     print(f"  - Steps: Max {bigint_to_str(self.halt_steps.max_value)}")
