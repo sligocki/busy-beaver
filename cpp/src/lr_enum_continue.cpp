@@ -54,7 +54,7 @@ int main(int argc, char* argv[]) {
 
     // TODO: Allow configuring allow_no_halt and first_1rb.
     busy_beaver::ContinueLinRecurEnumerate(in_tms_filename, max_steps,
-                                           /* allow_no_halt = */ true,
+                                           /* allow_no_halt = */ false,  // TODO: Allow configuring this.
                                            /* first_1rb = */ true,
                                            out_inf_filename, out_unknown_filename,
                                            proc_id);

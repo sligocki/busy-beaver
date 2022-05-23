@@ -155,7 +155,7 @@ class TMStats:
     print()
     print(f"Unknown: {self.num_unknown:_} ({self.num_unknown / self.count:.3%})")
     for (reason, count) in sorted(self.unknown_reason.items(), key=lambda x: x[1], reverse=True):
-      print(f"  - {reason:20s} : "
+      print(f"  - {str(reason):20s} : "
             f"{count:15_}  ({count / self.num_unknown:7.2%})")
     print()
     print(f"Halt: {self.num_halt:_} ({self.num_halt / self.count:.3%})")

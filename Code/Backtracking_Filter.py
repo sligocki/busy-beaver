@@ -150,14 +150,16 @@ def backtrack_ttable(TTable, steps, max_width):
   combined_result = None
   # See if all halts cannot be reached
   for halt_state, halt_symbol in halts:
-    # Initial Criterion: no halt_state transition goes to the halt_state
-    # For efficiency esp. in multi-symbol situations
-    # TODO(shawn): With new improvements, this initial criterion may be
-    # stifling.
-    # For example, this is why we cannot prove "1RB ---  1LB 1RZ" Halting.
     for symbol_out, dir_out, state_out in TTable[halt_state]:
       if state_out == halt_state:
-        return
+        # Optimization: Fail early if there are any Q -> Q transitions
+        # (for any Q -> Halt).
+        # TODO(shawn): With new improvements, this initial criterion may be
+        # stifling.
+        # For example, this is why we cannot prove "1RB ---  1LB 1RZ" Halting.
+        return BacktrackResult(success = False, halted = False,
+                               max_steps = 0, max_width = 0)
+
     result = backtrack_single_halt(halt_state, halt_symbol,
                                    to_state, dir_to_symbol,
                                    steps, max_width)
