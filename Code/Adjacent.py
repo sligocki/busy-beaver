@@ -3,11 +3,15 @@
 Enumerate all adjacent machines to an input one.
 """
 
+import argparse
 import copy
+from pathlib import Path
 import sys
 
 import IO
+from IO.TM_Record import TM_Record
 from Macro import Turing_Machine
+from TM_Enum import TM_Enum
 import TNF
 
 
@@ -47,19 +51,29 @@ def permute_start_state(tm : Turing_Machine.Simple_Machine):
 
 
 def main():
-  if len(sys.argv) >= 3:
-    line = int(sys.argv[2])
-  else:
-    line = 1
+  parser = argparse.ArgumentParser()
+  parser.add_argument("infile", type=Path)
+  parser.add_argument("outfile", type=Path)
 
-  ttable = IO.load_TTable_filename(sys.argv[1], line)
-  tm = Turing_Machine.Simple_Machine(ttable)
+  parser.add_argument("--only-perms", action="store_true",
+                      help="Only list permutations.")
+  args = parser.parse_args()
 
-  for perm_tm in permute_start_state(tm):
-    print(perm_tm.ttable_str())
-  for adj_tm in adjacent(tm):
-    for perm_tm in permute_start_state(adj_tm):
-      print(perm_tm.ttable_str())
+  with open(args.outfile, "wb") as outfile:
+    writer = IO.Proto.Writer(outfile)
+    with IO.Reader(args.infile) as reader:
+      for tm_record in reader:
+        allow_no_halt = tm_record.tm_enum().allow_no_halt
+        for perm_tm in permute_start_state(tm_record.tm()):
+          new_tm_enum = TM_Enum(perm_tm, allow_no_halt = allow_no_halt)
+          new_tm_record = TM_Record(tm_enum = new_tm_enum)
+          writer.write_record(new_tm_record)
+        if not args.only_perms:
+          for adj_tm in adjacent(tm_record.tm()):
+            for perm_tm in permute_start_state(adj_tm):
+              new_tm_enum = TM_Enum(perm_tm, allow_no_halt = allow_no_halt)
+              new_tm_record = TM_Record(tm_enum = new_tm_enum)
+              writer.write_record(new_tm_record)
 
 if __name__ == "__main__":
   main()
