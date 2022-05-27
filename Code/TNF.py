@@ -12,7 +12,7 @@ from Macro import Turing_Machine
 import io_pb2
 
 
-def permute_table(old_tm, state_order, symbol_order):
+def permute_table(old_tm, state_order, symbol_order, swap_dirs=False):
   state_old2new = {old: new for (new, old) in enumerate(state_order)}
   symbol_old2new = {old: new for (new, old) in enumerate(symbol_order)}
   new_tm = copy.deepcopy(old_tm)
@@ -21,10 +21,14 @@ def permute_table(old_tm, state_order, symbol_order):
       old_trans = old_tm.trans_table[old_state][old_symbol]
 
       if old_trans.condition == Turing_Machine.RUNNING:
+        if swap_dirs:
+          new_dir = Turing_Machine.other_dir(old_trans.dir_out)
+        else:
+          new_dir = old_trans.dir_out
+
         new_tm.trans_table[new_state][new_symbol] = Turing_Machine.Transition(
           symbol_out = symbol_old2new[old_trans.symbol_out],
-          # NOTE: We do not currently support swapping dirs.
-          dir_out = old_trans.dir_out,
+          dir_out = new_dir,
           state_out = state_old2new[old_trans.state_out],
           # Rest is copied from old_trans
           condition = old_trans.condition,
@@ -50,6 +54,9 @@ def to_TNF(tm, max_steps, skip_over_steps):
   symbol_order = [0]
   unordered_states = set(range(tm.num_states)) - set(state_order)
   unordered_symbols = set(range(tm.num_symbols)) - set(symbol_order)
+  # If first trans is to the LEFT, swap dirs.
+  swap_dirs = (tm.get_trans_object(tm.init_symbol, tm.init_state).dir_out
+               == Turing_Machine.LEFT)
 
   sim = Direct_Simulator.DirectSimulator(tm)
   while unordered_states or unordered_symbols:
@@ -74,7 +81,7 @@ def to_TNF(tm, max_steps, skip_over_steps):
     if len(unordered_symbols) == 1:
       symbol_order.append(unordered_symbols.pop())
 
-  return permute_table(tm, state_order, symbol_order)
+  return permute_table(tm, state_order, symbol_order, swap_dirs)
 
 
 def main():
