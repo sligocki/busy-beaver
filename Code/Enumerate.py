@@ -233,6 +233,9 @@ def enum_initial_tms(options):
     with IO.Reader(options.infilename,
                    text_allow_no_halt = options.allow_no_halt) as reader:
       for tm_record in reader:
+        # Clear previous results, so that we only see the results from this run.
+        tm_record.proto.ClearField("status")
+        tm_record.proto.ClearField("filter")
         yield tm_record
   else:
     assert options.states and options.symbols, (options.states, options.symbols)

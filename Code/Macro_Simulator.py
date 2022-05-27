@@ -65,7 +65,6 @@ def run_timer(tm_record : TM_Record, options,
 
   except Alarm.AlarmException:
     Alarm.ALARM.cancel_alarm()
-    tm_record.proto.filter.simulator.ClearField("result")
     tm_record.proto.filter.simulator.result.unknown_info.over_time.elapsed_time_sec = (
       time.time() - start_time)
 
@@ -157,24 +156,27 @@ def simulate_machine(machine : Turing_Machine.Turing_Machine,
     sim = Simulator.Simulator(machine, options)
 
     ## Run the simulator
-    while ((sim_info.parameters.max_loops == 0 or
-            sim.num_loops < sim_info.parameters.max_loops) and
-           sim.op_state == Turing_Machine.RUNNING and
-           sim.tape.compressed_size() <= sim_info.parameters.max_tape_blocks):
-      sim.step()
+    try:
+      while ((sim_info.parameters.max_loops == 0 or
+              sim.num_loops < sim_info.parameters.max_loops) and
+             sim.op_state == Turing_Machine.RUNNING and
+             sim.tape.compressed_size() <= sim_info.parameters.max_tape_blocks):
+        sim.step()
 
-    sim_info.result.num_loops = sim.num_loops
-    sim_info.result.num_macro_moves = sim.num_macro_moves
-    sim_info.result.num_chain_moves = sim.num_chain_moves
-    sim_info.result.num_rule_moves = sim.num_rule_moves
+    finally:
+      # Set these stats even if timeout (exception) is raised.
+      sim_info.result.num_loops = sim.num_loops
+      sim_info.result.num_macro_moves = sim.num_macro_moves
+      sim_info.result.num_chain_moves = sim.num_chain_moves
+      sim_info.result.num_rule_moves = sim.num_rule_moves
 
-    if sim.step_num > 0:
-      sim_info.result.log10_num_steps = int(math.log10(sim.step_num))
+      if sim.step_num > 0:
+        sim_info.result.log10_num_steps = int(math.log10(sim.step_num))
 
-    sim_info.result.num_rules_proven = sim.prover.num_rules
-    sim_info.result.num_meta_diff_rules_proven = sim.prover.num_meta_diff_rules
-    sim_info.result.num_gen_rules_proven = sim.prover.num_gen_rules
-    sim_info.result.num_proofs_failed = sim.prover.num_failed_proofs
+      sim_info.result.num_rules_proven = sim.prover.num_rules
+      sim_info.result.num_meta_diff_rules_proven = sim.prover.num_meta_diff_rules
+      sim_info.result.num_gen_rules_proven = sim.prover.num_gen_rules
+      sim_info.result.num_proofs_failed = sim.prover.num_failed_proofs
 
     # Various Unknown conditions
     if sim.tape.compressed_size() > sim_info.parameters.max_tape_blocks:
