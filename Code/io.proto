@@ -350,6 +350,8 @@ message BacktrackFilterResult {
   uint64 max_steps = 3;
   // Maximum width of BFS search tree reached.
   uint64 max_width = 4;
+  // Number of nodes in BFS search tree.
+  uint64 num_nodes = 5;
 
   // Stats
   uint64 elapsed_time_us = 2;

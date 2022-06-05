@@ -97,17 +97,19 @@ def is_possible_config(config, dir_to_symbol):
   return True
 
 class BacktrackResult:
-  def __init__(self, success, halted, max_steps, max_width):
+  def __init__(self, success, halted, max_steps, max_width, num_nodes):
     self.success = success
     self.halted = halted
     self.max_steps = max_steps
     self.max_width = max_width
+    self.num_nodes = num_nodes
 
   def merge(self, other):
     self.success = self.success and other.success
     self.halted = self.halted or other.halted
     self.max_steps = max(self.max_steps, other.max_steps)
     self.max_width = max(self.max_width, other.max_width)
+    self.num_nodes += other.num_nodes
 
 def backtrack_single_halt(halt_state, halt_symbol,
                           to_state, dir_to_symbol, steps, max_width_allowed):
@@ -116,10 +118,12 @@ def backtrack_single_halt(halt_state, halt_symbol,
   |dir_to_symbol| indicates which direction symbols can be found."""
   pos_configs = [Partial_Config(halt_state, halt_symbol)]
   max_width_seen = len(pos_configs)
+  num_nodes = 0
   for i in range(steps):
     # All configurations that could lead to pos_configs in one step.
     prev_configs = []
     for config in pos_configs:
+      num_nodes += 1
       for addr, cell in to_state[config.state]:
         if config.applies(addr, cell):
           prev_config = config.apply_trans(addr, cell)
@@ -129,18 +133,21 @@ def backtrack_single_halt(halt_state, halt_symbol,
             # simulate all machines for more steps forwards before trying
             # to simulate them backwards, but we keep this for correctness.
             return BacktrackResult(success = False, halted = True,
-                                   max_steps = i + 1, max_width = max_width_seen)
+                                   max_steps = i + 1, max_width = max_width_seen,
+                                   num_nodes = num_nodes)
           if is_possible_config(prev_config, dir_to_symbol):
             prev_configs.append(prev_config)
     pos_configs = prev_configs
     max_width_seen = max(max_width_seen, len(pos_configs))
     if len(pos_configs) == 0:
       return BacktrackResult(success = True, halted = False,
-                             max_steps = i + 1, max_width = max_width_seen)
+                             max_steps = i + 1, max_width = max_width_seen,
+                             num_nodes = num_nodes)
     elif max_width_seen > max_width_allowed:
       break
   return BacktrackResult(success = False, halted = False,
-                         max_steps = i + 1, max_width = max_width_seen)
+                         max_steps = i + 1, max_width = max_width_seen,
+                         num_nodes = num_nodes)
 
 def backtrack_ttable(TTable, steps, max_width):
   """Try backtracking |steps| steps for each halting config in TTable,
@@ -187,6 +194,7 @@ def backtrack(tm_record, num_steps, max_width):
     info.result.success = result.success
     info.result.max_steps = result.max_steps
     info.result.max_width = result.max_width
+    info.result.num_nodes = result.num_nodes
     # Note: quasihalting result is not computed when using Backtracking filter.
     tm_record.proto.status.quasihalt_status.is_decided = False
     if result.success:
