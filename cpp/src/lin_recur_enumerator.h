@@ -17,9 +17,10 @@ class LinRecurEnum : public BaseEnumerator {
  public:
   LinRecurEnum(const bool allow_no_halt,
                const long max_steps,
+               const std::string& out_halt_filename,
                const std::string& out_inf_filename,
                const std::string& out_nonhalt_filename,
-               const std::string& proc_id = "");
+               const std::string& proc_id);
 
   virtual ~LinRecurEnum();
 
@@ -31,6 +32,7 @@ class LinRecurEnum : public BaseEnumerator {
   const long max_steps_;
 
   // Output streams
+  std::ofstream out_halt_stream_;
   std::ofstream out_inf_stream_;
   std::ofstream out_unknown_stream_;
 

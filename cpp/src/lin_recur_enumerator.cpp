@@ -14,11 +14,13 @@ namespace busy_beaver {
 
 LinRecurEnum::LinRecurEnum(const bool allow_no_halt,
                            const long max_steps,
+                           const std::string& out_halt_filename,
                            const std::string& out_inf_filename,
                            const std::string& out_unknown_filename,
                            const std::string& proc_id)
   : BaseEnumerator(allow_no_halt),
     max_steps_(max_steps),
+    out_halt_stream_(out_halt_filename, std::ios::out | std::ios::binary),
     out_inf_stream_(out_inf_filename, std::ios::out | std::ios::binary),
     out_unknown_stream_(out_unknown_filename, std::ios::out | std::ios::binary),
     proc_id_(proc_id) {
@@ -52,6 +54,7 @@ EnumExpandParams LinRecurEnum::filter_tm(const TuringMachine& tm) {
   if (result.is_halted) {
     num_tms_halt_ += 1;
     // TODO: If writing Halting TMs. Add the halt state.
+    WriteTuringMachine(tm, &out_halt_stream_);
   } else if (result.is_lin_recurrent) {
     num_tms_inf_ += 1;
     // Write TM that entered Lin Recurence along with it's period, etc.
