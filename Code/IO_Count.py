@@ -19,8 +19,7 @@ def main():
   for filename in args.tm_file:
     file_count = 0
     try:
-      with open(filename, "rb") as infile:
-        reader = IO.Proto.Reader(infile)
+      with IO.Proto.Reader(filename) as reader:
         while reader.skip_record():
           file_count += 1
           if args.print_freq and (file_count % args.print_freq == 0):

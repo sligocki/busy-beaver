@@ -31,20 +31,23 @@ class GoldTest(unittest.TestCase):
     subprocess.call(["rm", "-rf", test_dir])
     os.makedirs(test_dir)
     for states, symbols in [(2, 2), (2, 3), (3, 2)]:
-      outfile = os.path.join(test_dir, "Enum.%d.%d.out" % (states, symbols))
+      outfile_pb = os.path.join(test_dir, "out.pb")
+      outfile_txt = os.path.join(test_dir, "out.txt")
       goldfile = os.path.join(
           self.root_dir, "Testdata/Enum.%d.%d.out.gold" % (states, symbols))
       Enumerate.main(["--states=%d" % states,
                       "--symbols=%d" % symbols,
-                      "--outfile=%s" % outfile,
+                      "--outfile=%s" % outfile_pb,
                       # Makes tests deterministic
                       "--max-loops=10_000",
                       "--time=0",
+                      "--force",
                       ])
+      subprocess.call(["python", "IO_Convert.py", outfile_pb, outfile_txt])
       if regold:
-        subprocess.call(["mv", outfile, goldfile])
+        subprocess.call(["mv", outfile_txt, goldfile])
       else:
-        proc = subprocess.run(["diff", goldfile, outfile])
+        proc = subprocess.run(["diff", goldfile, outfile_txt])
         self.assertEqual(0, proc.returncode)
     # Clean up after ourselves.
     subprocess.call(["rm", "-rf", test_dir])

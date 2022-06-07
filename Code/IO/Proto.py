@@ -20,9 +20,17 @@ class IO_Error(Exception): pass
 
 class Writer:
   """Class to manage writing TMRecords to a file."""
-  def __init__(self, output_file : io.BufferedWriter):
-    assert isinstance(output_file, io.BufferedWriter), type(output_file)
-    self.outfile = output_file
+  def __init__(self, outfilename : str):
+    self.outfilename = outfilename
+    self.outfile = None
+
+  def __enter__(self):
+    self.outfile = open(self.outfilename, "wb")
+    return self
+
+  def __exit__(self, *args):
+    self.outfile.close()
+
 
   def write_record(self, tm_record : TM_Record) -> None:
     """Write TMRecord protobuf using length-delimited format."""
@@ -48,9 +56,17 @@ class Writer:
 
 class Reader:
   """Class to manage reading TMRecords from a file."""
-  def __init__(self, input_file : io.BufferedReader):
-    assert isinstance(input_file, io.BufferedReader), type(input_file)
-    self.infile = input_file
+  def __init__(self, infilename : str):
+    self.infilename = infilename
+    self.infile = None
+
+  def __enter__(self):
+    self.infile = open(self.infilename, "rb")
+    return self
+
+  def __exit__(self, *args):
+    self.infile.close()
+
 
   def _read_message_len(self):
     len_bytes = self.infile.read(4)
@@ -103,8 +119,7 @@ class Reader:
 
 def load_record(filename : str, record_num : int) -> TM_Record:
   """Load one record from a filename."""
-  with open(filename, "rb") as infile:
-    reader = Reader(infile)
+  with Reader(filename) as reader:
     for _ in range(record_num):
       reader.skip_record()
     return reader.read_record()

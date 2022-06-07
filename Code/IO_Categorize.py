@@ -14,7 +14,6 @@ import io_pb2
 class OutputFiles:
   def __init__(self, dir):
     self.dir = dir
-    self.file = {}
     self.writer = {}
     self.num_written = 0
 
@@ -22,14 +21,14 @@ class OutputFiles:
     for type in ["halt.small", "halt.large",
                  "qhalt.small", "qhalt.large",
                  "infinite", "unknown"]:
-      self.file[type] = open(Path(self.dir, f"{type}.pb"), "wb")
-      self.writer[type] = IO.Proto.Writer(self.file[type])
+      self.writer[type] = IO.Proto.Writer(Path(self.dir, f"{type}.pb"))
+      self.writer[type].__enter__()
     return self
 
   def __exit__(self, *args):
     """Close all files"""
     for type in self.file:
-      self.file[type].close()
+      self.writer[type].__exit__(*args)
 
   def categorize_record(self, tm_record):
     if not tm_record.status.halt_status.is_decided:
@@ -61,8 +60,7 @@ class OutputFiles:
 def filter(in_filenames, out_dir):
   with OutputFiles(out_dir) as out:
     for in_filename in in_filenames:
-      with open(in_filename, "rb") as infile:
-        reader = IO.Proto.Reader(infile)
+      with IO.Proto.Reader(in_filename) as reader:
         for tm_record in reader:
           out.write_record(tm_record)
 

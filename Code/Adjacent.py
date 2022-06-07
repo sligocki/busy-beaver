@@ -59,8 +59,7 @@ def main():
                       help="Only list permutations.")
   args = parser.parse_args()
 
-  with open(args.outfile, "wb") as outfile:
-    writer = IO.Proto.Writer(outfile)
+  with IO.Proto.Writer(args.outfile) as writer:
     with IO.Reader(args.infile) as reader:
       for tm_record in reader:
         allow_no_halt = tm_record.tm_enum().allow_no_halt

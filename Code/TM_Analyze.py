@@ -259,8 +259,7 @@ def main():
   stats = TMStats()
   for filename in args.tm_file:
     try:
-      with open(filename, "rb") as infile:
-        reader = IO.Proto.Reader(infile)
+      with IO.Proto.Reader(filename) as reader:
         for tm_record in reader:
           stats.add_record(tm_record.proto)
           if args.print_freq and (stats.count % args.print_freq == 0):

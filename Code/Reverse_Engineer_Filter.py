@@ -97,8 +97,7 @@ def main():
   parser.add_argument("--outfile", type=Path, required=True)
   args = parser.parse_args()
 
-  with open(args.outfile, "wb") as outfile:
-    writer = IO.Proto.Writer(outfile)
+  with IO.Proto.Writer(args.outfile) as writer:
     with IO.Reader(args.infile) as reader:
       for tm_record in reader:
         filter(tm_record)

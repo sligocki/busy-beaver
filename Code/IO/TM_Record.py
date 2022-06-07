@@ -53,7 +53,7 @@ def unpack_ttable(pack : bytes):
     ttable[-1].append((symbol, dir, state))
   return ttable
 
-def unpack_tm(pack : bytes):
+def unpack_tm(pack : bytes) -> Turing_Machine.Simple_Machine:
   return Turing_Machine.Simple_Machine(unpack_ttable(pack))
 
 

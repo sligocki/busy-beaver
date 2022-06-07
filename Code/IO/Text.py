@@ -304,9 +304,40 @@ class ReaderWriter(object):
                 [result.extended] + result.extended_reason)
 
 class Reader:
-  def __init__(self, infile, *, allow_no_halt = False):
-    self.rw = ReaderWriter(input_file = infile, output_file = None)
+  def __init__(self, infilename : str, *, allow_no_halt):
+    self.infilename = infilename
     self.allow_no_halt = allow_no_halt
+    self.infile = None
+
+  def __enter__(self):
+    self.infile = open(self.infilename, "r")
+    self.rw = ReaderWriter(input_file = self.infile, output_file = None)
+    return self
+
+  def __exit__(self, *args):
+    self.infile.close()
+
+
+  def __iter__(self):
+    for io_record in self.rw:
+      tm = Turing_Machine.Simple_Machine(io_record.ttable)
+      tm_enum = TM_Enum.TM_Enum(tm, allow_no_halt = self.allow_no_halt)
+      tm_record = TM_Record.TM_Record(tm_enum = tm_enum)
+      yield tm_record
+
+class Writer:
+  def __init__(self, outfilename : str):
+    self.outfilename = outfilename
+    self.outfile = None
+
+  def __enter__(self):
+    self.outfile = open(self.outfilename, "w")
+    self.rw = ReaderWriter(input_file = None, output_file = self.outfile)
+    return self.rw
+
+  def __exit__(self, *args):
+    self.outfile.close()
+
 
   def __iter__(self):
     for io_record in self.rw:

@@ -284,9 +284,6 @@ def main(args):
                         help="If specified, enumeration is started from "
                         "these input machines instead of the single empty "
                         "Turing Machine.")
-  out_parser.add_option("--outformat",
-                        choices = ["text", "protobuf"], default="text",
-                        help="Format to write --outfile.")
 
   out_parser.add_option("--force", action="store_true", default=False,
                         help="Force overwriting outfile (don't ask).")
@@ -327,27 +324,19 @@ def main(args):
   if os.path.exists(options.outfilename) and not options.force:
     parser.error("Output file already exits. Delete or use --force")
 
-  if options.outformat == "protobuf":
-    outfile = open(options.outfilename, "wb")
-    writer = IO.Proto.Writer(outfile)
+  with IO.Proto.Writer(options.outfilename) as writer:
+    ## Enumerate machines
+    enumerator = Enumerator(options, stack, writer, pout)
 
-  elif options.outformat == "text":
-    outfile = open(options.outfilename, "w")
-    writer = IO.Text.ReaderWriter(None, outfile)
+    # Push input TMs one at a time so we don't blow up memory if there are a
+    # lot of input machines.
+    for tm_record in enum_initial_tms(options):
+      stack.push_job(tm_record)
+      enumerator.continue_enum()
 
-  ## Enumerate machines
-  enumerator = Enumerator(options, stack, writer, pout)
+    # Done
+    enumerator.save()
 
-  # Push input TMs one at a time so we don't blow up memory if there are a
-  # lot of input machines.
-  for tm_record in enum_initial_tms(options):
-    stack.push_job(tm_record)
-    enumerator.continue_enum()
-
-  # Done
-  enumerator.save()
-
-  outfile.close()
   if not options.no_checkpoint:
     os.remove(enumerator.checkpoint_filename)
     os.remove(enumerator.backup_checkpoint_filename)
