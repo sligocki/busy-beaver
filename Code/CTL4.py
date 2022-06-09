@@ -6,10 +6,10 @@
 Runs the CTL (A* B C) on a machine to discover infinite behavior
 """
 
+import argparse
+
 import IO
 from Macro import Turing_Machine, Simulator
-
-VERBOSE = False
 
 class CTL_Table(dict):
   def __getitem__(self, key):
@@ -17,7 +17,7 @@ class CTL_Table(dict):
       self[key] = ((set(), set(), set()), (set(), set(), set()))
     return dict.__getitem__(self, key)
 
-def CTL(machine, config):
+def CTL(machine, config, verbose=False):
   """Runs the CTL on a machine given an advaced tape config"""
   # Initialize the table with the current configuration
   new_table = CTL_Table()
@@ -26,8 +26,9 @@ def CTL(machine, config):
   #   1) It includes a halt (Failure)
   #   2) The table is unchanged after iteration (Success)
   table = None
+  num_iters = 0
   while table != new_table:
-    if VERBOSE:
+    if verbose:
       for term in new_table:
         print(term,":",new_table[term])
       print()
@@ -39,7 +40,7 @@ def CTL(machine, config):
       for symb in table[state, dir][dir][0]:
         cond, trans, steps = machine.get_transition(symb, state, dir)
         if cond[0] != Turing_Machine.RUNNING:
-          return False
+          return False, num_iters
         new_symb, new_state, new_dir = trans
         # Ex: (2) (3) (1|5)* A> 4 (1|4|5)* (1) (0)
         #  -> (2) (3) (1|5)* <B 2 (1|4|5)* (1) (0)
@@ -52,7 +53,7 @@ def CTL(machine, config):
       for symb in table[state, dir][dir][1]:
         cond, trans, steps = machine.get_transition(symb, state, dir)
         if cond[0] != Turing_Machine.RUNNING:
-          return False
+          return False, num_iters
         new_symb, new_state, new_dir = trans
         for s in range(3):
           new_table[new_state, new_dir][not dir][s].update(table[state, dir][not dir][s])
@@ -72,7 +73,7 @@ def CTL(machine, config):
       for d in range(2):
         for s in range(3):
           new_table[x][d][s].update(table[x][d][s])
-  return True
+  return True, num_iters
 
 class GenContainer:
   """Generic Container class"""
@@ -80,20 +81,21 @@ class GenContainer:
     for atr in args:
       self.__dict__[atr] = args[atr]
 
-def test_CTL(base_tm, cutoff, block_size=1, offset=None):
-  if VERBOSE:
+def test_CTL(base_tm, cutoff, block_size=1, offset=None, verbose=False):
+  if verbose:
     print(base_tm.ttable_str())
   m = base_tm
   if block_size != 1:
     m = Turing_Machine.Block_Macro_Machine(m, block_size, offset)
-  m = Turing_Machine.Backsymbol_Macro_Machine(m)
+  if use_backsymbol:
+    m = Turing_Machine.Backsymbol_Macro_Machine(m)
   options = Simulator.create_default_options()
   options.prover = False
   sim = Simulator.Simulator(m, options)
   sim.seek(cutoff)
   if sim.op_state != Turing_Machine.RUNNING:
-    return False
-  if VERBOSE:
+    return False, 0
+  if verbose:
     print(sim.state, sim.tape)
     print()
   sets = [None, None]
@@ -131,29 +133,28 @@ def test_CTL(base_tm, cutoff, block_size=1, offset=None):
       B = set([sim.tape.tape[d][0].symbol])
     sets[d] = (A, B, C)
   config = GenContainer(state=sim.state, dir=sim.dir, init_sets=tuple(sets))
-  return CTL(m, config)
+  return CTL(m, config, verbose=verbose)
 
-def test_from_file(filename, line, cutoff, block_size, offset):
-  ttable = IO.load_TTable_filename(filename, line)
-  tm = Turing_Machine.Simple_Machine(ttable)
-  if test_CTL(tm, cutoff, block_size, offset):
-    if VERBOSE:
-      print("Success :)")
+
+def main():
+  parser = argparse.ArgumentParser()
+  parser.add_argument("filename")
+  parser.add_argument("record_num", type=int)
+  parser.add_argument("cutoff", type=int)
+  parser.add_argument("block_size", type=int)
+  parser.add_argument("offset", type=int)
+  parser.add_argument("--no-backsymbol", action="store_true")
+  args = parser.parse_args()
+
+  tm = IO.load_tm(args.filename, args.record_num)
+  success, num_iters = test_CTL(
+    tm, cutoff=args.cutoff, block_size=args.block_size, offset=args.offset,
+    use_backsymbol=(not args.no_backsymbol), verbose=True)
+  print()
+  if success:
+    print("Success :) in", num_iters, "iterations")
   else:
-    if VERBOSE:
-      print("Failure :(")
+    print("Failure :( in", num_iters, "iterations")
 
-# Main
 if __name__ == "__main__":
-  import sys
-  try:
-    filename = sys.argv[1]
-    line = int(sys.argv[2])
-    cutoff = int(sys.argv[3])
-    block_size = int(sys.argv[4])
-    offset = int(sys.argv[5])
-  except:
-    print("CTL4.py filename line_num cutoff block_size offset")
-    sys.exit(1)
-  VERBOSE = True
-  test_from_file(filename, line, cutoff, block_size, offset)
+  main()

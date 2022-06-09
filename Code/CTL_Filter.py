@@ -42,15 +42,19 @@ def get_proto(type, tm_record):
   raise Exception(type)
 
 
-def filter(tm_record, type, block_size, offset, cutoff):
+def filter(tm_record, type, block_size, offset, cutoff, use_backsymbol):
   info = get_proto(type, tm_record)
   with IO.Timer(info.result):
     module = get_module(type)
-    if module.test_CTL(tm_record.tm(), cutoff, block_size, offset):
+    success, num_iters = module.test_CTL(
+      tm_record.tm(), cutoff=cutoff, block_size=block_size, offset=offset,
+      use_backsymbol=use_backsymbol)
+    if success:
       info.parameters.block_size = block_size
       info.parameters.offset = offset
       info.parameters.cutoff = cutoff
       info.result.success = True
+      info.result.num_iters = num_iters
       Halting_Lib.set_not_halting(tm_record.proto.status, io_pb2.INF_CTL)
       # Note: quasihalting result is not computed when using CTL filters.
       tm_record.proto.status.quasihalt_status.is_decided = False
@@ -60,7 +64,9 @@ def filter(tm_record, type, block_size, offset, cutoff):
 def filter_block_size(tm_record, block_size, args):
   if args.all_offsets:
     for offset in range(block_size):
-      if filter(tm_record, args.type, block_size, offset, args.cutoff):
+      if filter(tm_record, args.type,
+                block_size=block_size, offset=offset, cutoff=args.cutoff,
+                use_backsymbol=(not args.no_backsymbol)):
         return True
     return False
 
@@ -86,6 +92,7 @@ def main():
   parser.add_argument("--type", choices=["CTL1", "CTL2", "CTL3", "CTL4"], required=True)
   parser.add_argument("--block-size", type=int)
   parser.add_argument("--offset", type=int, default=0)
+  parser.add_argument("--no-backsymbol", action="store_true")
   parser.add_argument("--cutoff", type=int, default=200,
                       help="Number of loops to run before starting CTL algorithm.")
 

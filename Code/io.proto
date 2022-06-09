@@ -315,6 +315,8 @@ message CTLResult {
   bool success = 1;
 
   // Stats
+  uint64 num_iters = 3;
+
   uint64 elapsed_time_us = 2;
 }
 
