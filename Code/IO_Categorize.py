@@ -27,7 +27,7 @@ class OutputFiles:
 
   def __exit__(self, *args):
     """Close all files"""
-    for type in self.file:
+    for type in self.writer:
       self.writer[type].__exit__(*args)
 
   def categorize_record(self, tm_record):
