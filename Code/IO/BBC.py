@@ -4,9 +4,6 @@ Reader for converting from bbchallenge.org zip'd binary format into our format.
 See: https://bbchallenge.org/method#format
 """
 
-import argparse
-import io
-from pathlib import Path
 import struct
 import zipfile
 
@@ -14,8 +11,8 @@ from IO.TM_Record import TM_Record
 from Macro import Turing_Machine
 import TM_Enum
 
-import io_pb2
 
+class IO_Error(Exception): pass
 
 # Global constants for this format.
 _BYTES_HEADER = 30
@@ -159,24 +156,13 @@ class IndexReader:
     for index in self.indexes():
       yield self.db_reader.get_tm(index)
 
-
-def main():
-  parser = argparse.ArgumentParser()
-  parser.add_argument("db_file", type=Path)
-  parser.add_argument("index_file", nargs="?", type=Path)
-  parser.add_argument("--outfile", type=Path, required=True)
-  args = parser.parse_args()
-
-  if args.index_file:
-    reader = IndexReader(args.db_file, args.index_file)
-  else:
-    reader = Reader(args.db_file)
-
-  with IO.Proto.Writer(args.outfile) as writer:
-    with reader:
-      for tm_record in reader:
-        writer.write_record(tm_record)
-
-
-if __name__ == "__main__":
-  main()
+  def indexes(self):
+    while True:
+      n_bytes = self.index_file.read(4)
+      if not n_bytes:
+        return
+      elif len(n_bytes) != 4:
+        raise IO_Error("Unexpected EOF while reading block "
+                       f"(expected 4 bytes, got {len(len_bytes)}).")
+      # Big Endian (>), 4 bytes (L).
+      yield struct.unpack(">L", n_bytes)[0]

@@ -44,7 +44,7 @@ class Writer:
     #   Note: We could consider using varint which would allow us to only use
     #         1 byte for pbs < 128 bytes, and 2 for < 16KB. But, unless
     #         protobufs are really small, this might not make a huge difference.
-    len_bytes = struct.pack('<L', len(pb_bytes))
+    len_bytes = struct.pack("<L", len(pb_bytes))
 
     # Write size followed by message
     self.outfile.write(len_bytes)
@@ -74,7 +74,7 @@ class Reader:
       if len(len_bytes) != 4:
         raise IO_Error("Unexpected EOF while reading length block "
                        f"(expected 4 bytes, got {len(len_bytes)}).")
-      return struct.unpack('<L', len_bytes)[0]
+      return struct.unpack("<L", len_bytes)[0]
 
 
   def read_record(self) -> TM_Record:
