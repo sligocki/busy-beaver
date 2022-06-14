@@ -81,7 +81,7 @@ class GenContainer:
     for atr in args:
       self.__dict__[atr] = args[atr]
 
-def test_CTL(base_tm, cutoff, block_size=1, offset=None, verbose=False):
+def test_CTL(base_tm, cutoff, block_size=1, offset=None, use_backsymbol=True, verbose=False):
   if verbose:
     print(base_tm.ttable_str())
   m = base_tm
