@@ -11,4 +11,8 @@ bazel-*
 CMakeCache.txt
 CMakeFiles/
 cmake_install.cmake
-LazyBeaver/Makefile
+cpp/Makefile
+cpp/direct_sim
+cpp/lb_enum*
+cpp/lin_recur
+cpp/lr_enum*
