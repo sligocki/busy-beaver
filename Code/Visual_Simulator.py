@@ -18,7 +18,7 @@ from Macro import Turing_Machine
 color = [49, 41, 42, 44, 45, 46, 43]
 # Note: Halt will be "Z"
 states = string.ascii_uppercase
-def run_visual(TTable, print_width, tape_length=100_000):
+def run_visual(TTable, print_width, start_state, tape_length=100_000):
   """
   Start the tape and run it until it halts with visual output.
   """
@@ -35,7 +35,7 @@ def run_visual(TTable, print_width, tape_length=100_000):
   position_left  = position
   position_right = position
 
-  state = 0
+  state = start_state
 
   half_width = (print_width - 18) // 2
   if half_width < 1:
@@ -131,11 +131,12 @@ if __name__ == "__main__":
   parser.add_argument("record_num", type=int, nargs="?", default=0)
   parser.add_argument("--width", type=int, default=term_width,
                       help="width to print to terminal.")
+  parser.add_argument("--start-state", type=int, default=0)
   args = parser.parse_args()
 
   tm = IO.load_tm(args.tm_file, args.record_num)
   print(Turing_Machine.machine_ttable_to_str(tm))
   # Hacky way of getting back to ttable.
   ttable = IO.parse_ttable(tm.ttable_str())
-  run_visual(ttable, args.width)
+  run_visual(ttable, args.width, args.start_state)
   sys.stdout.flush()
