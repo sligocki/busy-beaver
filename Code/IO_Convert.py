@@ -11,7 +11,7 @@ import IO
 
 def Detect_Format(path):
   # Currently, this detection is very primative ... perhaps improve over time?
-  if path.suffix == ".pb":
+  if ".pb" in path.suffixes:
     return "proto"
   else:
     return "text"

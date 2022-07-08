@@ -11,9 +11,10 @@ Protobuffers are written using custom length-delimed sequential format. See ex:
 import io
 import struct
 
+from IO.TM_Record import TM_Record
+
 import io_pb2
 
-from IO.TM_Record import TM_Record
 
 class IO_Error(Exception): pass
 

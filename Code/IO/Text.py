@@ -35,8 +35,8 @@ str2inf_reason = {s: inf_reason for (inf_reason, s) in inf_reason2str.items()}
 
 
 SYMBOLS_DISPLAY = string.digits
-DIRS_DISPLAY = "LRS"
-STATES_DISPLAY = string.ascii_uppercase[:7]
+DIRS_DISPLAY = "LR"
+STATES_DISPLAY = string.ascii_uppercase[:-1]  # Don't allow Z
 def display_ttable(table):
   """Pretty print the ttable."""
   s = ""
