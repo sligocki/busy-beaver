@@ -165,7 +165,7 @@ def backtrack_ttable(TTable, steps, max_width):
         # stifling.
         # For example, this is why we cannot prove "1RB ---  1LB 1RZ" Halting.
         return BacktrackResult(success = False, halted = False,
-                               max_steps = 0, max_width = 0)
+                               max_steps = 0, max_width = 0, num_nodes = 0)
 
     result = backtrack_single_halt(halt_state, halt_symbol,
                                    to_state, dir_to_symbol,

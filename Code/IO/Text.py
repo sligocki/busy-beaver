@@ -304,7 +304,7 @@ class ReaderWriter(object):
                 [result.extended] + result.extended_reason)
 
 class Reader:
-  def __init__(self, infilename : str, *, allow_no_halt):
+  def __init__(self, infilename : str, *, allow_no_halt = False):
     self.infilename = infilename
     self.allow_no_halt = allow_no_halt
     self.infile = None

@@ -71,7 +71,8 @@ def filter_block_size(tm_record, block_size, args):
     return False
 
   else:
-    return filter(tm_record, args.type, block_size, args.offset, args.cutoff)
+    return filter(tm_record, args.type, block_size, args.offset, args.cutoff,
+                  use_backsymbol=(not args.no_backsymbol))
 
 def filter_all(tm_record, args):
   if args.max_block_size:
