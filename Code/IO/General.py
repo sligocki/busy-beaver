@@ -8,7 +8,7 @@ import IO
 from Macro import Turing_Machine
 
 
-def Reader(filename : Path, *, text_allow_no_halt = False):
+def Reader(filename : Path, *, text_allow_no_halt : bool = False):
   # Currently we depend upon filename suffixes to decide filetype.
   #
   # TODO-maybe: Look at first 4 bytes to make an educated guess perhaps.
@@ -19,7 +19,7 @@ def Reader(filename : Path, *, text_allow_no_halt = False):
   if ".pb" in filename.suffixes:
     return IO.Proto.Reader(filename)
   else:
-    return IO.Text.Reader(filename, allow_no_halt = text_allow_no_halt)
+    return IO.StdText.Reader(filename)
 
 def load_tm(filename : Path, record_num : int) -> Turing_Machine.Simple_Machine:
   filename = Path(filename)
@@ -27,6 +27,5 @@ def load_tm(filename : Path, record_num : int) -> Turing_Machine.Simple_Machine:
     record = IO.Proto.load_record(filename, record_num)
     return record.tm()
   else:
-    line = record_num + 1
-    ttable = IO.Text.load_TTable_filename(filename, line)
-    return Turing_Machine.Simple_Machine(ttable)
+    record = IO.StdText.load_record(filename, record_num)
+    return record.tm()

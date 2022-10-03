@@ -14,13 +14,14 @@ def Detect_Format(path):
   if ".pb" in path.suffixes:
     return "proto"
   else:
-    return "text"
+    return "std"
 
 
 FORMATS = {
   "auto": None,
+  "std": IO.StdText,
   "proto": IO.Proto,
-  "text": IO.Text,
+  "text_old": IO.Text,
   "bbc": IO.BBC,
 }
 

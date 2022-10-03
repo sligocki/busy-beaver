@@ -1,9 +1,7 @@
 """Tools for working with TM IO in various formats."""
 
 # List of names we want available upon `import IO`
-from IO import Text
-from IO import Proto
-from IO import BBC
+from IO import StdText, Proto, Text, BBC
 
 from IO.General import Reader, load_tm
 from IO.Timer import Timer
