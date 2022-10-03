@@ -66,7 +66,10 @@ def read_ttable(line):
       else:
         symb_out = SYMBOLS_DISPLAY.find(cell[0])
         dir_out = DIRS_DISPLAY.find(cell[1])
-        state_out = STATES_DISPLAY.find(cell[2])
+        if cell[2] in "HZ":
+          state_out = -1
+        else:
+          state_out = STATES_DISPLAY.find(cell[2])
         assert symb_out >= 0
         assert dir_out in [0, 1]
         assert state_out >= -1

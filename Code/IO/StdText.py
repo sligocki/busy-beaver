@@ -23,7 +23,7 @@ import TM_Enum
 
 SYMBOLS_DISPLAY = string.digits
 DIRS_DISPLAY = "LR"
-STATES_DISPLAY = string.ascii_uppercase[:-1]  # Don't allow Z
+STATES_DISPLAY = string.ascii_uppercase
 
 def tm_to_string(tm : Turing_Machine.Simple_Machine) -> str:
   # Building strings using lists is more efficient.
@@ -50,6 +50,7 @@ def parse_ttable(line : str):
   """Read transition table given a string representation."""
   ttable = []
   rows = line.strip().split("_")
+  num_states = len(rows)
   for row in rows:
     for i in range(0, len(row), 3):
       trans_str = row[i:i+3]
@@ -59,8 +60,9 @@ def parse_ttable(line : str):
       else:
         symb_out = SYMBOLS_DISPLAY.find(trans_str[0])
         dir_out = DIRS_DISPLAY.find(trans_str[1])
-        # NOTE: This depends upon find() returning -1 on "Z" to correspond to halt!
         state_out = STATES_DISPLAY.find(trans_str[2])
+        if state_out >= num_states:
+          state_out = -1
         assert symb_out >= 0
         assert dir_out in [0, 1]
         assert state_out >= -1
