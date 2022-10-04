@@ -52,6 +52,7 @@ def parse_ttable(line : str):
   rows = line.strip().split("_")
   num_states = len(rows)
   for row in rows:
+    ttable_row = []
     for i in range(0, len(row), 3):
       trans_str = row[i:i+3]
       assert len(trans_str) == 3, trans_str

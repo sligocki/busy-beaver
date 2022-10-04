@@ -13,6 +13,8 @@ def Detect_Format(path):
   # Currently, this detection is very primative ... perhaps improve over time?
   if ".pb" in path.suffixes:
     return "proto"
+  elif ".old" in path.suffixes:
+    return "text_old"
   else:
     return "std"
 
