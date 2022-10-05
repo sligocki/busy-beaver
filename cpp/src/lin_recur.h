@@ -14,6 +14,8 @@ struct LinRecurResult {
   long lr_offset;
   State last_state;
   Symbol last_symbol;
+  long max_ref_config_step;
+  long steps_run;
 };
 
 LinRecurResult LinRecurDetect(const TuringMachine& tm, const long max_steps);

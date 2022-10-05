@@ -45,8 +45,9 @@ LinRecurResult LinRecurDetect(const TuringMachine& tm, const long max_steps) {
   // TODO: Consider Seek(1024) or something like this to avoid lots of early copies.
   sim.Step();
 
+  long init_step_num;
   while (sim.step_num() < max_steps) {
-    const long init_step_num = sim.step_num();
+    init_step_num = sim.step_num();
     const long steps_reset = 2 * init_step_num;
     const State init_state = sim.state();
     const Tape init_tape = sim.tape();
@@ -59,7 +60,8 @@ LinRecurResult LinRecurDetect(const TuringMachine& tm, const long max_steps) {
       // states_used.add(sim.state)
       sim.Step();
       if (sim.is_halted()) {
-        return {true, false, 0, 0, 0, sim.last_state(), sim.last_symbol()};
+        return {true, false, 0, 0, 0, sim.last_state(), sim.last_symbol(),
+                init_step_num, sim.step_num()};
       }
 
       most_left_pos = std::min(most_left_pos, sim.tape().position());
@@ -88,14 +90,15 @@ LinRecurResult LinRecurDetect(const TuringMachine& tm, const long max_steps) {
 
         if (success) {
           const long period = sim.step_num() - init_step_num;
-          return {false, true, init_step_num, period, offset, 0, 0};
+          return {false, true, init_step_num, period, offset, 0, 0,
+                  init_step_num, sim.step_num()};
         }
       }
     }
   }
 
   // Neither halting nor LR detected.
-  return {false, false, 0, 0, 0, 0, 0};
+  return {false, false, 0, 0, 0, 0, 0, init_step_num, sim.step_num()};
 }
 
 }  // namespace busy_beaver
