@@ -48,6 +48,7 @@ enum InfReason {
   INF_LIN_RECUR = 5;
   INF_CTL = 6;
   INF_BACKTRACK = 7;
+  INF_CLOSED_GRAPH = 8;
 }
 
 // Statuses for various searches (BB, BBB, ...)
@@ -301,8 +302,6 @@ message LinRecurFilterInfo {
   LinRecurFilterResult result = 2;
 }
 
-
-
 message CTLParams {
   // Parameters
   uint64 block_size = 1;
@@ -364,6 +363,29 @@ message BacktrackFilterInfo {
   BacktrackFilterResult result = 2;
 }
 
+message ClosedGraphFilterParams {
+  // Parameters
+  uint64 block_size = 1;
+  uint64 offset = 2;
+  uint64 max_num_configs = 3;
+}
+
+message ClosedGraphFilterResult {
+  // Results
+  bool success = 1;
+
+  // Stats
+  uint64 num_configs = 3;
+  uint64 num_iters = 4;
+
+  uint64 elapsed_time_us = 2;
+}
+
+message ClosedGraphFilterInfo {
+  ClosedGraphFilterParams parameters = 1;
+  ClosedGraphFilterResult result = 2;
+}
+
 
 message FilterResults {
   // parameters, results and stats from various filters.
@@ -374,6 +396,8 @@ message FilterResults {
   LinRecurFilterInfo lin_recur = 4;
   CTLFilterInfo ctl = 5;
   BacktrackFilterInfo backtrack = 6;
+  ClosedGraphFilterInfo closed_graph = 7;
+
   // TODO: Add results for other filters
 }
 

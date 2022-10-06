@@ -121,7 +121,7 @@ class Reader:
     self.infile.readline()
 
   def __iter__(self):
-    while tm_record := read_record():
+    while tm_record := self.read_record():
       yield tm_record
 
 

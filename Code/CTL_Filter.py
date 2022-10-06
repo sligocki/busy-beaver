@@ -4,10 +4,8 @@ Run one of the CTL algorithms - CTL1, CTL2, CTL3, CTL4.
 """
 
 import argparse
-from optparse import OptionParser
 from pathlib import Path
 
-from Common import GenContainer
 import IO
 import CTL1
 import CTL2
