@@ -368,6 +368,7 @@ message ClosedGraphFilterParams {
   uint64 block_size = 1;
   uint64 offset = 2;
   uint64 max_num_configs = 3;
+  uint64 max_steps_per_rule = 4;
 }
 
 message ClosedGraphFilterResult {

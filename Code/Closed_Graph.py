@@ -12,6 +12,7 @@ are captured directly in the Block Macro Machine idea.
 
 import argparse
 from collections import defaultdict
+import math
 from pathlib import Path
 
 import IO
@@ -69,7 +70,7 @@ class GraphSet:
 
     return graph_set
 
-  def step(self, tm, config : Config):
+  def step(self, tm, config : Config, max_macro_steps : int):
     """Evaluate TM on this Config until it leaves the limited tape.
     Returns a pair: (TM condition, was_modified)."""
     was_modified = False
@@ -79,8 +80,10 @@ class GraphSet:
       pos = 0
     else:
       pos = len(config.subtape) - 1
+    # Limit max_loops so that we don't run for too long on extreme examples.
     trans = Turing_Machine.sim_limited(
-      tm, config.state, config.subtape, pos, config.dir)
+      tm, config.state, config.subtape, pos, config.dir,
+      max_loops=max_macro_steps)
 
     # DEBUG: print("    End config", trans.condition, trans.symbol_out, trans.dir_out, trans.state_out)
     if trans.condition == RUNNING:
@@ -142,18 +145,33 @@ class GraphSet:
 
     print()
     print("* Configs:")
-    for config in self.configs:
-      print("   ", str(config))
+    config_strs = [str(config) for config in self.configs]
+    for config_str in sorted(config_strs):
+      print("   ", config_str)
 
     print()
     print(f"* #configs={len(self.configs)}")
 
 
+# TODO
+class ClosedGraphResult:
+  def __init__(self, success : bool, num_iters : int, num_configs : int,
+               had_inf_rep_macro_step : bool):
+    self.success = success
+    self.num_iters = num_iters
+    self.num_configs = num_configs
+    self.had_inf_rep_macro_step = had_inf_rep_macro_step
+
 
 def test_closed_graph(tm : Turing_Machine.Simple_Machine,
-                      block_size : int, offset : int, max_configs : int):
+                      block_size : int, offset : int,
+                      max_configs : int, max_steps_per_rule : int):
+  sqrt_max_steps = int(math.sqrt(max_steps_per_rule))
   if block_size > 1:
-    tm = Turing_Machine.Block_Macro_Machine(tm, block_size, offset)
+    # Limit max_sim_steps_per_symbol so that we don't run for too long on
+    # extreme examples.
+    tm = Turing_Machine.Block_Macro_Machine(tm, block_size, offset,
+                                            max_sim_steps_per_symbol = sqrt_max_steps)
 
   # We maintain a set of Configs (1 block neighborhoods around TM head) and
   # graphs which tell us which new symbols we must search once this TM makes
@@ -173,7 +191,7 @@ def test_closed_graph(tm : Turing_Machine.Simple_Machine,
       # we've already stepped from in a previous iteration?
       # NOTE: This is not trivial because if graph_set.graph changed, that can
       # change the new configs!
-      tm_condition, this_modified = graph_set.step(tm, config)
+      tm_condition, this_modified = graph_set.step(tm, config, sqrt_max_steps)
       if this_modified:
         was_modified = True
       if tm_condition not in (RUNNING, INF_REPEAT):
@@ -185,7 +203,7 @@ def test_closed_graph(tm : Turing_Machine.Simple_Machine,
 
     num_iters += 1
     if not was_modified:
-      # DEBUG: graph_set.print_debug()
+      graph_set.print_debug()
       # Success, we've found a GraphSet closed under step() with no Halting
       # configs, so we have proven that this TM will never halt.
       return True, num_iters, len(graph_set.configs)
@@ -202,11 +220,13 @@ def main():
   parser.add_argument("block_size", type=int)
   parser.add_argument("offset", type=int)
   parser.add_argument("max_configs", type=int)
+  parser.add_argument("--max-steps-per-rule", type=int, default=1_000_000)
   args = parser.parse_args()
 
   tm = IO.load_tm(args.filename, args.record_num)
   success, num_iters, num_configs = test_closed_graph(
-    tm, block_size=args.block_size, offset=args.offset, max_configs=args.max_configs)
+    tm, block_size=args.block_size, offset=args.offset, max_configs=args.max_configs,
+    max_steps_per_rule=args.max_steps_per_rule)
   print()
   print("Proven Infinite?:", success)
   print("Iterations:", num_iters)

@@ -88,7 +88,7 @@ class Transition(object):
 
 
 # TODO: Make max_loops configurable via command-line options.
-def sim_limited(tm, state, start_tape, pos, dir, max_loops=10000) -> Transition:
+def sim_limited(tm, state, start_tape, pos, dir, max_loops=10_000) -> Transition:
   """Simulate TM on a limited tape segment.
   Can detect HALT and INF_REPEAT. Used by Macro Machines."""
   # num_base_steps in the bottom level Simple_Machine.
@@ -353,7 +353,8 @@ class Block_Macro_Machine(Macro_Machine):
   """A derivative Turing Machine which simulates another machine clumping k-symbols together into a block-symbol"""
   MAX_TTABLE_CELLS = 100000
 
-  def __init__(self, base_machine, block_size, offset=None):
+  def __init__(self, base_machine, block_size, offset=None,
+               max_sim_steps_per_symbol=10_000):
     assert block_size > 0
     self.block_size = block_size
     self.base_machine = base_machine
@@ -375,6 +376,7 @@ class Block_Macro_Machine(Macro_Machine):
     # #positions (within block) * #states * #macro_symbols (base symbols ** block_size)
     self.max_steps = block_size * self.num_states * self.num_symbols
     self.max_cells = Block_Macro_Machine.MAX_TTABLE_CELLS
+    self.max_sim_steps_per_symbol = max_sim_steps_per_symbol
 
   def eval_symbol(self, macro_symbol):
     return sum(map(self.base_machine.eval_symbol, macro_symbol))
@@ -406,7 +408,8 @@ class Block_Macro_Machine(Macro_Machine):
 
     trans = sim_limited(self.base_machine,
                         state=macro_state_in, dir=macro_dir_in,
-                        start_tape=macro_symbol_in, pos=pos)
+                        start_tape=macro_symbol_in, pos=pos,
+                        max_loops=self.max_sim_steps_per_symbol)
 
     # Convert symbol into the correct format.
     trans.symbol_out = Block_Symbol(trans.symbol_out)
@@ -444,7 +447,7 @@ class Backsymbol_Macro_Machine_State:
 
 class Backsymbol_Macro_Machine(Macro_Machine):
   MAX_TTABLE_CELLS = 100000
-  def __init__(self, base_machine):
+  def __init__(self, base_machine, max_sim_steps_per_symbol = 1_000):
     self.base_machine = base_machine
     self.num_states = base_machine.num_states
     self.num_symbols = base_machine.num_symbols
@@ -459,6 +462,7 @@ class Backsymbol_Macro_Machine(Macro_Machine):
     # #positions (2) * #states * #symbols_in_front * #symbols_behind
     self.max_steps = 2 * self.num_states * self.num_symbols**2
     self.max_cells = Backsymbol_Macro_Machine.MAX_TTABLE_CELLS
+    self.max_sim_steps_per_symbol = max_sim_steps_per_symbol
 
   def eval_symbol(self, symbol):
     return self.base_machine.eval_symbol(symbol)
@@ -487,7 +491,8 @@ class Backsymbol_Macro_Machine(Macro_Machine):
 
     trans = sim_limited(self.base_machine,
                         state=macro_state_in.base_state, dir=macro_dir_in,
-                        start_tape=tape, pos=pos)
+                        start_tape=tape, pos=pos,
+                        max_loops=self.max_sim_steps_per_symbol)
 
     # sim_limited just leaves the final tape in `trans.symbol_out`, we
     # need to split out the backsymbol and printed_symbol ourselves.

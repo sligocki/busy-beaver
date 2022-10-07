@@ -72,6 +72,10 @@ class TMStats:
     self.bt_max_steps = Stat()
     self.bt_max_width = Stat()
 
+    self.cg_block_size = Stat()
+    self.cg_num_iters = Stat()
+    self.cg_num_configs = Stat()
+
     self.timings = collections.defaultdict(Stat)
     self.sizes = collections.defaultdict(Stat)
 
@@ -124,6 +128,11 @@ class TMStats:
       self.bt_max_steps.add(tm_record.filter.backtrack.result.max_steps)
       self.bt_max_width.add(tm_record.filter.backtrack.result.max_width)
 
+    if tm_record.filter.closed_graph.result.success:
+      self.cg_block_size.add(tm_record.filter.closed_graph.parameters.block_size)
+      self.cg_num_configs.add(tm_record.filter.closed_graph.result.num_configs)
+      self.cg_num_iters.add(tm_record.filter.closed_graph.result.num_iters)
+
     # Timing
     self.timings["total"].add(tm_record.elapsed_time_us)
     self.timings["simulator"].add(tm_record.filter.simulator.result.elapsed_time_us)
@@ -136,6 +145,7 @@ class TMStats:
       tm_record.filter.ctl.ctl_a_bs.result.elapsed_time_us +
       tm_record.filter.ctl.ctl_as_b_c.result.elapsed_time_us)
     self.timings["backtrack"].add(tm_record.filter.backtrack.result.elapsed_time_us)
+    self.timings["closed_graph"].add(tm_record.filter.closed_graph.result.elapsed_time_us)
 
     # Serialized Size
     self.sizes["total"].add(tm_record.ByteSize())
@@ -148,6 +158,7 @@ class TMStats:
     self.sizes["lin_recur"].add(tm_record.filter.lin_recur.ByteSize())
     self.sizes["ctl"].add(tm_record.filter.ctl.ByteSize())
     self.sizes["backtrack"].add(tm_record.filter.backtrack.ByteSize())
+    self.sizes["closed_graph"].add(tm_record.filter.closed_graph.ByteSize())
 
   def print(self):
     print()
@@ -195,6 +206,18 @@ class TMStats:
     print(f"  - max_width  : Mean {self.bt_max_width.mean():_.2f}  "
           f"Max {self.bt_max_width.max_value:_}  "
           f"(Set in {self.bt_max_width.count / self.count:4.0%})")
+    print()
+
+    print("Closed Graph:")
+    print(f"  - block_size   : Mean {self.cg_block_size.mean():_.2f}  "
+          f"Max {self.cg_block_size.max_value:_}  "
+          f"(Set in {self.cg_num_configs.count / self.count:4.0%})")
+    print(f"  - num_configs  : Mean {self.cg_num_configs.mean():_.2f}  "
+          f"Max {self.cg_num_configs.max_value:_}  "
+          f"(Set in {self.cg_num_configs.count / self.count:4.0%})")
+    print(f"  - num_iters    : Mean {self.cg_num_iters.mean():_.2f}  "
+          f"Max {self.cg_num_iters.max_value:_}  "
+          f"(Set in {self.cg_num_iters.count / self.count:4.0%})")
     print()
 
     print("Simulator:")
