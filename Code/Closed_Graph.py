@@ -203,7 +203,7 @@ def test_closed_graph(tm : Turing_Machine.Simple_Machine,
 
     num_iters += 1
     if not was_modified:
-      graph_set.print_debug()
+      # DEBUG: graph_set.print_debug()
       # Success, we've found a GraphSet closed under step() with no Halting
       # configs, so we have proven that this TM will never halt.
       return True, num_iters, len(graph_set.configs)
