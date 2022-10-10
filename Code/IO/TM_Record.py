@@ -72,7 +72,7 @@ class TM_Record:
       self.tme = None
 
 
-  def update_tm(self, tm_enum : TM_Enum.TM_Enum):
+  def update_tm(self, tm_enum : TM_Enum.TM_Enum) -> None:
     self.tme = tm_enum
     self.proto.tm.ttable_packed = pack_tm(self.tme.tm)
 
@@ -86,8 +86,12 @@ class TM_Record:
   def tm(self):
     return self.tm_enum().tm
 
-  def ttable_str(self):
+  def ttable_str(self) -> str:
     return self.tm().ttable_str()
+
+  def clear_proto(self) -> None:
+    for field in "status", "filter", "elapsed_time_us":
+      self.proto.ClearField(field)
 
 
   def standardize_halt_trans(self):

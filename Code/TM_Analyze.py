@@ -73,8 +73,11 @@ class TMStats:
     self.bt_max_width = Stat()
 
     self.cg_block_size = Stat()
-    self.cg_num_iters = Stat()
+    self.cg_num_steps = Stat()
     self.cg_num_configs = Stat()
+    self.cg_num_edges = Stat()
+    self.cg_num_iters = Stat()
+    self.cg_found_inf_loop = Stat()
 
     self.timings = collections.defaultdict(Stat)
     self.sizes = collections.defaultdict(Stat)
@@ -129,9 +132,12 @@ class TMStats:
       self.bt_max_width.add(tm_record.filter.backtrack.result.max_width)
 
     if tm_record.filter.closed_graph.result.success:
-      self.cg_block_size.add(tm_record.filter.closed_graph.parameters.block_size)
+      self.cg_block_size.add(tm_record.filter.closed_graph.result.block_size)
+      self.cg_num_steps.add(tm_record.filter.closed_graph.result.num_steps)
       self.cg_num_configs.add(tm_record.filter.closed_graph.result.num_configs)
+      self.cg_num_edges.add(tm_record.filter.closed_graph.result.num_edges)
       self.cg_num_iters.add(tm_record.filter.closed_graph.result.num_iters)
+      self.cg_found_inf_loop.add(tm_record.filter.closed_graph.result.found_inf_loop)
 
     # Timing
     self.timings["total"].add(tm_record.elapsed_time_us)
@@ -210,14 +216,16 @@ class TMStats:
 
     print("Closed Graph:")
     print(f"  - block_size   : Mean {self.cg_block_size.mean():_.2f}  "
-          f"Max {self.cg_block_size.max_value:_}  "
-          f"(Set in {self.cg_num_configs.count / self.count:4.0%})")
+          f"Max {self.cg_block_size.max_value:_}")
+    print(f"  - num_steps    : Mean {self.cg_num_steps.mean():_.0f}  "
+          f"Max {self.cg_num_steps.max_value:_}")
     print(f"  - num_configs  : Mean {self.cg_num_configs.mean():_.2f}  "
-          f"Max {self.cg_num_configs.max_value:_}  "
-          f"(Set in {self.cg_num_configs.count / self.count:4.0%})")
+          f"Max {self.cg_num_configs.max_value:_}")
+    print(f"  - num_edges    : Mean {self.cg_num_edges.mean():_.2f}  "
+          f"Max {self.cg_num_edges.max_value:_}")
     print(f"  - num_iters    : Mean {self.cg_num_iters.mean():_.2f}  "
-          f"Max {self.cg_num_iters.max_value:_}  "
-          f"(Set in {self.cg_num_iters.count / self.count:4.0%})")
+          f"Max {self.cg_num_iters.max_value:_}")
+    print(f"  - found_inf_loop : {self.cg_found_inf_loop.mean():8.4%}")
     print()
 
     print("Simulator:")

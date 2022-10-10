@@ -1,6 +1,6 @@
 #! /usr/bin/env python3
 """
-Closed Graph Filter is a twist on CTL where the langauge is a graph-based language.
+Closed Graph Filter (aka CPS, aka Markov) is a twist on CTL where the langauge is a graph-based language.
 
 This is my implementation of savask's Closed Position Set (CPS) decider
   https://gist.github.com/savask/1c43a0e5cdd81229f236dcf2b0611c3f
@@ -15,222 +15,310 @@ from collections import defaultdict
 import math
 from pathlib import Path
 
+import Halting_Lib
 import IO
 from Macro import Turing_Machine
 from Macro.Turing_Machine import (LEFT, RIGHT, other_dir,
                                   RUNNING, INF_REPEAT, HALT, UNDEFINED, GAVE_UP)
 
+import io_pb2
+
 
 DIRS = (LEFT, RIGHT)
 
 
+def block_to_str(block) -> str:
+  return "".join(str(symbol) for symbol in block)
+
 class Config:
-  """A fixed-sized (3 symbol) subset of a TM configuration. Includes TM state,
-  dir and subset of tape (always 1 symbol in front and 2 behind)."""
-  def __init__(self, state, dir, subtape):
+  """A subset of a TM configuration. Includes TM state, dir,
+  subset of tape and pos on that subtape."""
+  def __init__(self, state, dir, subtape, block_size, pos = None):
     self.state = state
     self.dir = dir
-    # |subtape| is a sequence of 3 symbols around the TM head (1 in front, 2 behind).
-    # It is always interpretted left to right so context[0] is the left-most symbol
-    # That's the one in front of the TM if TM is pointed left, or 2 behind if it's
-    # pointed right.
     self.subtape = tuple(subtape)
+    self.block_size = block_size
+
+    if pos == None:
+      # TM should have block_size symbols in front of it.
+      if dir == LEFT:
+        pos = block_size - 1
+      else:
+        assert dir == RIGHT
+        pos = len(subtape) - block_size
+    self.pos = pos
+
+  def get_block(self, dir, index):
+    start = index * self.block_size
+    end = (index + 1) * self.block_size
+    if dir == RIGHT:
+      # Flip
+      start, end = len(self.subtape) - end, len(self.subtape) - start
+    return self.subtape[start:end]
+
+  def shift_front(self, new_front):
+    if self.dir == LEFT:
+      new_subtape = new_front + self.subtape[:len(self.subtape) - self.block_size]
+    else:
+      new_subtape = self.subtape[self.block_size:] + new_front
+    return Config(self.state, self.dir, new_subtape, self.block_size)
 
   def __str__(self):
+    # TM is "looking" at self.pos so different TM directions need slight
+    # tweaks for printing.
     if self.dir == LEFT:
-      return f"{self.subtape[0]} <{self.state} {self.subtape[1]} {self.subtape[2]}"
+      return f"{block_to_str(self.subtape[:self.pos + 1])} <{self.state} {block_to_str(self.subtape[self.pos + 1:])}"
     else:
-      return f"{self.subtape[0]} {self.subtape[1]} {self.state}> {self.subtape[2]}"
+      return f"{block_to_str(self.subtape[:self.pos])} {self.state}> {block_to_str(self.subtape[self.pos:])}"
 
   # Needed to make these work in a set.
   def __hash__(self):
-    return hash((self.state, self.dir, self.subtape))
+    return hash((self.state, self.dir, self.subtape, self.pos))
   def __eq__(self, other):
     return (self.state == other.state and self.dir == other.dir and
-            self.subtape == other.subtape)
+            self.subtape == other.subtape and self.pos == other.pos)
 
 
-class GraphSet:
-  @classmethod
-  def BlankTape(cls, init_state, init_symbol):
-    graph_set = GraphSet()
+class ClosedGraphSim:
+  def __init__(self, tm : Turing_Machine.Simple_Machine,
+               block_size : int, subtape_size : int,
+               max_steps : int, max_iters : int, max_configs : int, max_edges : int,
+               result : io_pb2.ClosedGraphFilterResult):
+    self.tm = tm
+    self.block_size = block_size
+    self.subtape_size = subtape_size
+    self.max_steps = max_steps
+    self.max_iters = max_iters
+    self.max_configs = max_configs
+    self.max_edges = max_edges
+    self.result = result
 
-    # Start position on blank tape.
-    graph_set.configs = {
-      Config(init_state, RIGHT, (init_symbol, init_symbol, init_symbol))
+    blank_block = (tm.init_symbol,) * self.block_size
+    blank_subtape = (tm.init_symbol,) * self.subtape_size
+
+    # set of |Config|s to evaluate and add to |transitions|
+    self.todo_configs = {
+      Config(tm.init_state, RIGHT, blank_subtape, self.block_size)
     }
-
-    # graph[dir][block] = set of blocks that can appear directly after |block|
-    # on that half-tape. This forms a directed graph of blocks (macro symbols).
-    # Initially the only allowed blocks are 0 blocks following 0 blocks (empty tape).
-    graph_set.graph = {}
+    # dict of Config -> PostConfig saving evaluation on subtape.
+    self.transitions = {}
+    # continuations[dir][block] = set of blocks that can appear directly after
+    # |block| on that half-tape.
+    self.continuations = {}
+    # Initially, the only continuations are blank block -> blank block
     for dir in DIRS:
-      graph_set.graph[dir] = defaultdict(set)
-      graph_set.graph[dir][init_symbol].add(init_symbol)
+      self.continuations[dir] = defaultdict(set)
+      self.continuations[dir][blank_block].add(blank_block)
 
-    return graph_set
 
-  def step(self, tm, config : Config, max_macro_steps : int):
-    """Evaluate TM on this Config until it leaves the limited tape.
-    Returns a pair: (TM condition, was_modified)."""
-    was_modified = False
-    # DEBUG: print("  Start config", str(config))
+  def run(self):
+    self.result.num_iters = 0
+    while True:
+      self.result.num_iters += 1
+      while self.todo_configs:
+        # Note: We need to make a copy, since step() updates todo_configs.
+        configs = self.todo_configs
+        self.todo_configs = set()
+        for config in configs:
+          sim_condition = self.sim_config(config)
+          if sim_condition == RUNNING:
+            # Update self.todo_configs and self.continuations
+            self.update_set(config)
 
-    if config.dir == LEFT:
-      pos = 0
-    else:
-      pos = len(config.subtape) - 1
-    # Limit max_loops so that we don't run for too long on extreme examples.
+          elif sim_condition != INF_REPEAT:
+            # Failure: Our Closed Graph Set grew too large and now includes
+            # a halting config (or a config we gave up trying to simulate ...)
+            # NOTE: We allow INF_REPEAT. In this case we know that the TM will
+            # for sure be infinite if it gets to this config, so that's great!
+            self.result.success = False
+            return
+
+      # Re-examine self.transitions to see if any have grown.
+      was_modified = False
+      configs = frozenset(self.transitions.keys())
+      for config in configs:
+        if self.update_set(config):
+          was_modified = True
+
+      if not was_modified:
+        # Success: This set is now closed and thus we have successfully proven
+        # that this TM will never halt!
+        self.result.success = True
+        return
+
+      if (self.result.num_iters >= self.max_iters or
+          self.result.num_configs >= self.max_configs or
+          self.result.num_edges >= self.max_edges):
+        # Failure: Over one of the limits.
+        self.result.success = False
+        return
+
+  def sim_config(self, old_config : Config):
+    """Simulate TM on |old_config| until it leaves the tape, halts, is
+    detected infinite or runs too long."""
+    max_steps = self.max_steps - self.result.num_steps
+    # assert 0 <= old_config.pos < len(old_config.subtape), str(old_config)
     trans = Turing_Machine.sim_limited(
-      tm, config.state, config.subtape, pos, config.dir,
-      max_loops=max_macro_steps)
+      self.tm, old_config.state, old_config.subtape,
+      old_config.pos, old_config.dir, max_loops=max_steps)
 
-    # DEBUG: print("    End config", trans.condition, trans.symbol_out, trans.dir_out, trans.state_out)
     if trans.condition == RUNNING:
+      # new_pos is outside the subtape, because we ran off the edge of it.
       if trans.dir_out == LEFT:
-        behind_post_close, behind_post_mid, behind_post_far = trans.symbol_out
-        front_pre, behid_pre_mid, behind_pre_far = config.subtape
+        new_pos = -1
       else:
         assert trans.dir_out == RIGHT
-        behind_post_far, behind_post_mid, behind_post_close = trans.symbol_out
-        behind_pre_far, behid_pre_mid, front_pre = config.subtape
+        new_pos = len(trans.symbol_out)
+      new_config = Config(trans.state_out, trans.dir_out, trans.symbol_out,
+                          self.block_size, new_pos)
+    else:
+      new_config = None
 
-      # Update self.graph by adding edges between blocks behind us.
-      # One edge between the two furthest blocks behind us.
-      if self.add_edge(other_dir(trans.dir_out), behind_post_mid, behind_post_far):
+    if trans.condition == INF_REPEAT:
+      self.result.found_inf_loop = True
+
+    self.transitions[old_config] = (trans, new_config)
+    self.result.num_steps += trans.num_base_steps
+
+    return trans.condition
+
+  def update_set(self, old_config : Config) -> bool:
+    """Evaluate TM on this Config until it leaves the limited tape.
+    Returns True iff any edges or configs were added."""
+    trans, new_config = self.transitions[old_config]
+
+    was_modified = False
+    if trans.condition == RUNNING:
+      front_dir = trans.dir_out
+      behind_dir = other_dir(trans.dir_out)
+      # The block furthest behind us in new_config, this is the block that will
+      # be removed form the config.
+      new_behind_furthest = new_config.get_block(behind_dir, 0)
+      # The second furthest block behind us. This will be the new furthest behind
+      # block after removing behind_furthest.
+      new_behind_second_furthest = new_config.get_block(behind_dir, 1)
+
+      # Update self.continuations by adding edges between blocks behind us.
+      # One edge between the two furthest blocks behind us inside of new_config.
+      if self.add_edge(behind_dir, new_behind_second_furthest, new_behind_furthest):
         was_modified = True
       # And an edge for all old edges from the previous furthest back
       # to the new furthest back.
-      for dst in self.graph[other_dir(trans.dir_out)][behind_pre_far]:
-        if self.add_edge(other_dir(trans.dir_out), behind_post_far, dst):
+      # NOTE: This block may not have been behind in old_config. It is instead
+      # the original contents of |new_behind_furthest|.
+      old_behind_furthest = old_config.get_block(behind_dir, 0)
+      for dst in self.continuations[behind_dir][old_behind_furthest]:
+        if self.add_edge(behind_dir, new_behind_furthest, dst):
           was_modified = True
 
       # Update self.configs by using graphs to find new front block options.
-      for new_front in self.graph[trans.dir_out][front_pre]:
-        if trans.dir_out == LEFT:
-          new_subtape = (new_front, behind_post_close, behind_post_mid)
-        else:
-          assert trans.dir_out == RIGHT
-          new_subtape = (behind_post_mid, behind_post_close, new_front)
-
-        if self.add_config(Config(trans.state_out, trans.dir_out, new_subtape)):
+      old_front = old_config.get_block(trans.dir_out, 0)
+      for new_front in self.continuations[front_dir][old_front]:
+        next_config = new_config.shift_front(new_front)
+        if self.add_config(next_config):
           was_modified = True
 
-    return trans.condition, was_modified
+    return was_modified
 
   def add_edge(self, dir, src, dst) -> bool:
     # DEBUG: print("    Adding edge", dir, src, dst)
-    if dst not in self.graph[dir][src]:
-      self.graph[dir][src].add(dst)
+    if dst not in self.continuations[dir][src]:
+      self.continuations[dir][src].add(dst)
+      self.result.num_edges += 1
       return True
     return False
 
   def add_config(self, config) -> bool:
     # DEBUG: print("    Adding config", str(config))
-    if config not in self.configs:
-      self.configs.add(config)
+    # assert 0 <= config.pos < len(config.subtape), str(config)
+    if config not in self.transitions and config not in self.todo_configs:
+      self.todo_configs.add(config)
+      self.result.num_configs += 1
       return True
     return False
 
+  def trans_to_string(self, old_config : Config) -> str:
+    trans, new_config = self.transitions[old_config]
+    if trans.condition == RUNNING:
+      return f"{old_config}  --({trans.num_base_steps:3d})-->  {new_config}"
+    elif trans.condition == INF_REPEAT:
+      return f"{old_config}  -->  (Infinite Loop)"
+    elif trans.condition == GAVE_UP:
+      return f"{old_config}  --({trans.num_base_steps:3d})-->  (Over Max Steps)"
+    else:
+      assert trans.condition in (HALT, UNDEFINED)
+      return f"{old_config}  --({trans.num_base_steps:3d})-->  (Halt)"
+
   def print_debug(self):
     print()
-    print("* Left continuations:")
-    for src, dsts in sorted(self.graph[LEFT].items()):
-      print("   ", src, "->", dsts)
-
-    print()
-    print("* Right continuations:")
-    for src, dsts in sorted(self.graph[RIGHT].items()):
-      print("   ", src, "->", dsts)
+    for dir in DIRS:
+      print(f"* {dir} continuations:")
+      for src in sorted(self.continuations[dir].keys()):
+        dst_strs = sorted(block_to_str(dst) for dst in self.continuations[dir][src])
+        dsts_str = "{" + ", ".join(dst_strs) + "}"
+        print("   ", block_to_str(src), "->", dsts_str)
 
     print()
     print("* Configs:")
-    config_strs = [str(config) for config in self.configs]
-    for config_str in sorted(config_strs):
-      print("   ", config_str)
+    for config in self.transitions:
+      print("   ", self.trans_to_string(config))
+
+    if self.todo_configs:
+      for config in self.todo_configs:
+        print("   ", str(config))
 
     print()
-    print(f"* #configs={len(self.configs)}")
+    print(f"* #configs={self.result.num_configs} #adj={self.result.num_edges}")
 
 
-# TODO
-class ClosedGraphResult:
-  def __init__(self, success : bool, num_iters : int, num_configs : int,
-               had_inf_rep_macro_step : bool):
-    self.success = success
-    self.num_iters = num_iters
-    self.num_configs = num_configs
-    self.had_inf_rep_macro_step = had_inf_rep_macro_step
-
-
-def test_closed_graph(tm : Turing_Machine.Simple_Machine,
-                      block_size : int, offset : int,
-                      max_configs : int, max_steps_per_rule : int):
-  sqrt_max_steps = int(math.sqrt(max_steps_per_rule))
-  if block_size > 1:
-    # Limit max_sim_steps_per_symbol so that we don't run for too long on
-    # extreme examples.
-    tm = Turing_Machine.Block_Macro_Machine(tm, block_size, offset,
-                                            max_sim_steps_per_symbol = sqrt_max_steps)
-
-  # We maintain a set of Configs (1 block neighborhoods around TM head) and
-  # graphs which tell us which new symbols we must search once this TM makes
-  # a macro step.
-  # We iteratively increase these sets until either:
-  #   1) We add a Halt transition -> failure.
-  #   2) They stabilize (closed under TM step) with no Halt positions -> success!
-  graph_set = GraphSet.BlankTape(tm.init_state, tm.init_symbol)
-  num_iters = 0
-  while True:
-    # DEBUG: print("Num Iters", num_iters)
-    was_modified = False
-    # Note: We need to make a copy, since graph_set.step() updates graph_set.configs.
-    old_configs = frozenset(graph_set.configs)
-    for config in old_configs:
-      # TODO-maybe: Make this more efficient by avoiding re-stepping for configs
-      # we've already stepped from in a previous iteration?
-      # NOTE: This is not trivial because if graph_set.graph changed, that can
-      # change the new configs!
-      tm_condition, this_modified = graph_set.step(tm, config, sqrt_max_steps)
-      if this_modified:
-        was_modified = True
-      if tm_condition not in (RUNNING, INF_REPEAT):
-        # Failure, Our Closed Graph Set grew too large and now includes
-        # a halting config (or a config we gave up trying to simulate ...)
-        # NOTE: We allow INF_REPEAT. In this case we know that the TM will
-        # for sure be infinite if it gets to this config, so that's great!
-        return False, num_iters, len(graph_set.configs)
-
-    num_iters += 1
-    if not was_modified:
-      # DEBUG: graph_set.print_debug()
-      # Success, we've found a GraphSet closed under step() with no Halting
-      # configs, so we have proven that this TM will never halt.
-      return True, num_iters, len(graph_set.configs)
-
-    if len(graph_set.configs) >= max_configs:
-      # Failure, we gave up trying to find the closure of the GraphSet.
-      return False, num_iters, len(graph_set.configs)
+def filter(tm : Turing_Machine.Simple_Machine,
+           block_size : int, subtape_size : int,
+           max_steps : int, max_iters : int, max_configs : int, max_edges : int,
+           cg_result : io_pb2.ClosedGraphFilterResult,
+           bb_status : io_pb2.BBStatus):
+  graph_set = ClosedGraphSim(tm, block_size, subtape_size,
+                             max_steps, max_iters, max_configs, max_edges,
+                             cg_result)
+  graph_set.run()
+  if cg_result.success:
+    cg_result.block_size = block_size
+    cg_result.subtape_size = subtape_size
+    Halting_Lib.set_not_halting(bb_status, io_pb2.INF_CLOSED_GRAPH)
+    # Note: quasihalting result is not computed when using Closed Graph filters.
+  # Return graph_set in case you want to debug / print the verification details.
+  return graph_set
 
 
 def main():
   parser = argparse.ArgumentParser()
-  parser.add_argument("filename")
+  parser.add_argument("tm_file", type=Path)
   parser.add_argument("record_num", type=int)
   parser.add_argument("block_size", type=int)
-  parser.add_argument("offset", type=int)
-  parser.add_argument("max_configs", type=int)
-  parser.add_argument("--max-steps-per-rule", type=int, default=1_000_000)
+  parser.add_argument("subtape_size", type=int, nargs="?")
+
+  parser.add_argument("--max-steps", type=int, default=1_000_000)
+  parser.add_argument("--max-iters", type=int, default=1_000)
+  parser.add_argument("--max-configs", type=int, default=10_000)
+  parser.add_argument("--max-edges", type=int, default=10_000)
   args = parser.parse_args()
 
-  tm = IO.load_tm(args.filename, args.record_num)
-  success, num_iters, num_configs = test_closed_graph(
-    tm, block_size=args.block_size, offset=args.offset, max_configs=args.max_configs,
-    max_steps_per_rule=args.max_steps_per_rule)
+  if not args.subtape_size:
+    args.subtape_size = 3 * args.block_size
+
+  assert args.subtape_size >= 2 * args.block_size
+
+  cg_result = io_pb2.ClosedGraphFilterResult()
+  bb_status = io_pb2.BBStatus()
+
+  tm = IO.load_tm(args.tm_file, args.record_num)
+  graph_set = filter(tm, args.block_size, args.subtape_size,
+                     args.max_steps, args.max_iters, args.max_configs, args.max_edges,
+                     cg_result, bb_status)
+
+  graph_set.print_debug()
   print()
-  print("Proven Infinite?:", success)
-  print("Iterations:", num_iters)
-  print("Num Configs:", num_configs)
+  print(cg_result)
+  print(bb_status)
 
 if __name__ == "__main__":
   main()

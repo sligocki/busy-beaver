@@ -365,19 +365,30 @@ message BacktrackFilterInfo {
 
 message ClosedGraphFilterParams {
   // Parameters
-  uint64 block_size = 1;
-  uint64 offset = 2;
-  uint64 max_num_configs = 3;
-  uint64 max_steps_per_rule = 4;
+  uint64 min_block_size = 6;
+  uint64 max_block_size = 1;
+  bool searched_all_subtapes = 5;
+  uint64 max_steps = 4;
+  uint64 max_iters = 7;
+  uint64 max_configs = 8;
+  uint64 max_edges = 9;
 }
 
 message ClosedGraphFilterResult {
   // Results
   bool success = 1;
 
+  // Which parameters worked?
+  uint64 block_size = 8;
+  uint64 subtape_size = 9;
+  // TODO: Implement with offset?
+
   // Stats
+  uint64 num_steps = 5;
   uint64 num_configs = 3;
+  uint64 num_edges = 7;
   uint64 num_iters = 4;
+  bool found_inf_loop = 6;
 
   uint64 elapsed_time_us = 2;
 }
