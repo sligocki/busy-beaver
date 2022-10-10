@@ -68,7 +68,7 @@ class Writer:
     self.outfile.close()
 
   def write_record(self, tm_record : TM_Record) -> None:
-    self.outfile.write(tm_record.tm().ttable_string())
+    self.outfile.write(tm_record.tm().ttable_str())
     self.outfile.write("\n")
 
   def flush(self):
