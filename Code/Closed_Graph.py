@@ -280,9 +280,9 @@ def filter(tm : Turing_Machine.Simple_Machine,
                              max_steps, max_iters, max_configs, max_edges,
                              cg_result)
   graph_set.run()
+  cg_result.block_size = block_size
+  cg_result.subtape_size = subtape_size
   if cg_result.success:
-    cg_result.block_size = block_size
-    cg_result.subtape_size = subtape_size
     Halting_Lib.set_not_halting(bb_status, io_pb2.INF_CLOSED_GRAPH)
     # Note: quasihalting result is not computed when using Closed Graph filters.
   # Return graph_set in case you want to debug / print the verification details.
@@ -297,9 +297,11 @@ def main():
   parser.add_argument("subtape_size", type=int, nargs="?")
 
   parser.add_argument("--max-steps", type=int, default=1_000_000)
-  parser.add_argument("--max-iters", type=int, default=1_000)
+  parser.add_argument("--max-iters", type=int, default=500)
   parser.add_argument("--max-configs", type=int, default=10_000)
   parser.add_argument("--max-edges", type=int, default=10_000)
+
+  parser.add_argument("--verbose", "-v", action="store_true")
   args = parser.parse_args()
 
   if not args.subtape_size:
@@ -315,7 +317,8 @@ def main():
                      args.max_steps, args.max_iters, args.max_configs, args.max_edges,
                      cg_result, bb_status)
 
-  graph_set.print_debug()
+  if args.verbose:
+    graph_set.print_debug()
   print()
   print(cg_result)
   print(bb_status)

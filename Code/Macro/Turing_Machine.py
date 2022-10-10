@@ -74,8 +74,10 @@ class Transition(object):
     else:
       symbol = string.digits[self.symbol_out]
       dir = "LRS"[self.dir_out]
-      # Note: We use Python magic to convert state -1 (Halt) into "Z".
-      state = string.ascii_uppercase[self.state_out]
+      if self.condition == HALT:
+        state = "Z"
+      else:
+        state = string.ascii_uppercase[self.state_out]
       return "%c%c%c" % (symbol, dir, state)
 
   def equals(self, other):
@@ -311,12 +313,12 @@ class Simple_Machine(Turing_Machine):
         self.trans_table[state_in][symbol_in] = \
           ttable_to_transition(TTable, state_in, symbol_in)
 
-  def ttable_str(self):
+  def ttable_str(self) -> str:
     row_strs = []
     for row in self.trans_table:
-      row_strs.append(" ".join(trans.to_ttable_str()
+      row_strs.append("".join(trans.to_ttable_str()
                                for trans in row))
-    return "  ".join(row_strs)
+    return "_".join(row_strs)
 
   def eval_symbol(self, symbol):
     if symbol != self.init_symbol:

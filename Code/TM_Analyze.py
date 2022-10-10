@@ -79,7 +79,7 @@ class TMStats:
     self.cg_num_iters = Stat()
     self.cg_found_inf_loop = Stat()
 
-    self.timings = collections.defaultdict(Stat)
+    self.timings_s = collections.defaultdict(Stat)
     self.sizes = collections.defaultdict(Stat)
 
   def add_record(self, tm_record):
@@ -140,18 +140,19 @@ class TMStats:
       self.cg_found_inf_loop.add(tm_record.filter.closed_graph.result.found_inf_loop)
 
     # Timing
-    self.timings["total"].add(tm_record.elapsed_time_us)
-    self.timings["simulator"].add(tm_record.filter.simulator.result.elapsed_time_us)
-    self.timings["block_finder"].add(tm_record.filter.block_finder.result.elapsed_time_us)
-    self.timings["reverse_engineer"].add(tm_record.filter.reverse_engineer.elapsed_time_us)
-    self.timings["lin_recur"].add(tm_record.filter.lin_recur.result.elapsed_time_us)
-    self.timings["ctl"].add(
+    self.timings_s["total"].add(tm_record.elapsed_time_us / 1e6)
+    self.timings_s["simulator"].add(tm_record.filter.simulator.result.elapsed_time_us / 1e6)
+    self.timings_s["block_finder"].add(tm_record.filter.block_finder.result.elapsed_time_us / 1e6)
+    self.timings_s["reverse_engineer"].add(tm_record.filter.reverse_engineer.elapsed_time_us / 1e6)
+    self.timings_s["lin_recur"].add(tm_record.filter.lin_recur.result.elapsed_time_us / 1e6)
+    self.timings_s["ctl"].add((
       tm_record.filter.ctl.ctl_as.result.elapsed_time_us +
       tm_record.filter.ctl.ctl_as_b.result.elapsed_time_us +
       tm_record.filter.ctl.ctl_a_bs.result.elapsed_time_us +
-      tm_record.filter.ctl.ctl_as_b_c.result.elapsed_time_us)
-    self.timings["backtrack"].add(tm_record.filter.backtrack.result.elapsed_time_us)
-    self.timings["closed_graph"].add(tm_record.filter.closed_graph.result.elapsed_time_us)
+      tm_record.filter.ctl.ctl_as_b_c.result.elapsed_time_us
+      ) / 1e6)
+    self.timings_s["backtrack"].add(tm_record.filter.backtrack.result.elapsed_time_us / 1e6)
+    self.timings_s["closed_graph"].add(tm_record.filter.closed_graph.result.elapsed_time_us / 1e6)
 
     # Serialized Size
     self.sizes["total"].add(tm_record.ByteSize())
@@ -242,14 +243,15 @@ class TMStats:
     print("Timings:")
     # Note: These are the mean timings for each filter over all TMs
     # (even ones that never ran).
-    mean_timings = sorted([(timing.total / self.count, filter)
-                           for (filter, timing) in self.timings.items()],
-                          reverse=True)
-    for (mean_time_us, filter) in mean_timings:
-      print(f"  - {filter:16s} : Mean(all) {mean_time_us:7_.0f} µs  "
-            f"Mean(run) {self.timings[filter].mean():7_.0f} µs  "
-            f"Max {self.timings[filter].max_value:7_.0f} µs  "
-            f"(Set in {self.timings[filter].count / self.count:4.0%})")
+    mean_timings_s = sorted(
+      [(timing.total / self.count, filter)
+       for (filter, timing) in self.timings_s.items()],
+      reverse=True)
+    for (mean_time_s, filter) in mean_timings_s:
+      print(f"  - {filter:16s} : Mean(all) {mean_time_s:7_.3f} s  "
+            f"Mean(run) {self.timings_s[filter].mean():7_.3f} s  "
+            f"Max {self.timings_s[filter].max_value:7_.3f} s  "
+            f"(Set in {self.timings_s[filter].count / self.count:4.0%})")
     print()
 
     print("Serialized Sizes:")
@@ -298,7 +300,8 @@ def main():
     except IO.Proto.IO_Error:
       print(f"ERROR: {filename} has unexpected EOF. Moving on.")
 
-  stats.print()
+  if stats.count > 0:
+    stats.print()
 
 if __name__ == "__main__":
   main()

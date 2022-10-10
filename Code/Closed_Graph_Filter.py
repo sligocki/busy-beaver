@@ -51,7 +51,7 @@ def main():
   # A few TMs are not decided (even with inf maxes) but take a looong time to
   # fail (30min+). So we restrict these to keep max time down.
   parser.add_argument("--max-steps", type=int, default=1_000_000)
-  parser.add_argument("--max-iters", type=int, default=1_000)
+  parser.add_argument("--max-iters", type=int, default=500)
   parser.add_argument("--max-configs", type=int, default=10_000)
   parser.add_argument("--max-edges", type=int, default=10_000)
   args = parser.parse_args()

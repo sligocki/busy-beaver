@@ -25,27 +25,6 @@ SYMBOLS_DISPLAY = string.digits
 DIRS_DISPLAY = "LR"
 STATES_DISPLAY = string.ascii_uppercase
 
-def tm_to_string(tm : Turing_Machine.Simple_Machine) -> str:
-  # Building strings using lists is more efficient.
-  rows = []
-  for state_in in range(tm.num_states):
-    row = []
-    for symbol_in in range(tm.num_symbols):
-      trans = tm.get_trans_object(symbol_in = symbol_in, state_in = state_in)
-      if trans.condition == Turing_Machine.UNDEFINED:
-        row.append("---")
-      else:
-        assert trans.condition in (Turing_Machine.RUNNING, Turing_Machine.HALT), trans.condition
-        symbol_str = SYMBOLS_DISPLAY[trans.symbol_out]
-        dir_str = DIRS_DISPLAY[trans.dir_out]
-        if trans.condition == Turing_Machine.HALT:
-          state_str = "Z"
-        else:
-          state_str = STATES_DISPLAY[trans.state_out]
-        row.append("%c%c%c" % (symbol_str, dir_str, state_str))
-    rows.append("".join(row))
-  return "_".join(rows)
-
 def parse_ttable(line : str):
   """Read transition table given a string representation."""
   ttable = []
@@ -89,7 +68,7 @@ class Writer:
     self.outfile.close()
 
   def write_record(self, tm_record : TM_Record) -> None:
-    self.outfile.write(tm_to_string(tm_record.tm()))
+    self.outfile.write(tm_record.tm().ttable_string())
     self.outfile.write("\n")
 
   def flush(self):
