@@ -42,8 +42,9 @@ def main():
   parser.add_argument("--infile", type=Path, required=True)
   parser.add_argument("--outfile", type=Path, required=True)
 
+  parser.add_argument("--block-size", type=int)
   parser.add_argument("--min-block-size", type=int, default=1)
-  parser.add_argument("--max-block-size", type=int, required=True,
+  parser.add_argument("--max-block-size", type=int,
                       help="If set, try all block sizes between "
                       "--min-block-size and --max-block-size (inclusive).")
 
@@ -55,6 +56,11 @@ def main():
   parser.add_argument("--max-configs", type=int, default=10_000)
   parser.add_argument("--max-edges", type=int, default=10_000)
   args = parser.parse_args()
+
+  if args.block_size:
+    args.min_block_size = args.block_size
+    args.max_block_size = args.block_size
+  assert args.max_block_size, "Must specify either --block-size or --max-block-size"
 
   with IO.Proto.Writer(args.outfile) as writer:
     with IO.Reader(args.infile) as reader:
