@@ -302,6 +302,8 @@ def main():
 
   if stats.count > 0:
     stats.print()
+  else:
+    print("No Records in file")
 
 if __name__ == "__main__":
   main()
