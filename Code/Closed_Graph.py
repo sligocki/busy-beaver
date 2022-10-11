@@ -32,11 +32,11 @@ def block_to_str(block) -> str:
 
 class Config:
   """A subset of a TM configuration. Includes TM state, dir,
-  subset of tape and pos on that subtape."""
-  def __init__(self, state, dir, subtape, block_size, pos = None):
+  subset of tape (window) and pos on that window."""
+  def __init__(self, state, dir, window, block_size, pos = None):
     self.state = state
     self.dir = dir
-    self.subtape = tuple(subtape)
+    self.window = tuple(window)
     self.block_size = block_size
 
     if pos == None:
@@ -45,7 +45,7 @@ class Config:
         pos = block_size - 1
       else:
         assert dir == RIGHT
-        pos = len(subtape) - block_size
+        pos = len(window) - block_size
     self.pos = pos
 
   def get_block(self, dir, index):
@@ -53,40 +53,40 @@ class Config:
     end = (index + 1) * self.block_size
     if dir == RIGHT:
       # Flip
-      start, end = len(self.subtape) - end, len(self.subtape) - start
-    return self.subtape[start:end]
+      start, end = len(self.window) - end, len(self.window) - start
+    return self.window[start:end]
 
   def shift_front(self, new_front):
     if self.dir == LEFT:
-      new_subtape = new_front + self.subtape[:len(self.subtape) - self.block_size]
+      new_window = new_front + self.window[:len(self.window) - self.block_size]
     else:
-      new_subtape = self.subtape[self.block_size:] + new_front
-    return Config(self.state, self.dir, new_subtape, self.block_size)
+      new_window = self.window[self.block_size:] + new_front
+    return Config(self.state, self.dir, new_window, self.block_size)
 
   def __str__(self):
     # TM is "looking" at self.pos so different TM directions need slight
     # tweaks for printing.
     if self.dir == LEFT:
-      return f"{block_to_str(self.subtape[:self.pos + 1])} <{self.state} {block_to_str(self.subtape[self.pos + 1:])}"
+      return f"{block_to_str(self.window[:self.pos + 1])} <{self.state} {block_to_str(self.window[self.pos + 1:])}"
     else:
-      return f"{block_to_str(self.subtape[:self.pos])} {self.state}> {block_to_str(self.subtape[self.pos:])}"
+      return f"{block_to_str(self.window[:self.pos])} {self.state}> {block_to_str(self.window[self.pos:])}"
 
   # Needed to make these work in a set.
   def __hash__(self):
-    return hash((self.state, self.dir, self.subtape, self.pos))
+    return hash((self.state, self.dir, self.window, self.pos))
   def __eq__(self, other):
     return (self.state == other.state and self.dir == other.dir and
-            self.subtape == other.subtape and self.pos == other.pos)
+            self.window == other.window and self.pos == other.pos)
 
 
 class ClosedGraphSim:
   def __init__(self, tm : Turing_Machine.Simple_Machine,
-               block_size : int, subtape_size : int,
+               block_size : int, window_size : int,
                max_steps : int, max_iters : int, max_configs : int, max_edges : int,
                result : io_pb2.ClosedGraphFilterResult):
     self.tm = tm
     self.block_size = block_size
-    self.subtape_size = subtape_size
+    self.window_size = window_size
     self.max_steps = max_steps
     self.max_iters = max_iters
     self.max_configs = max_configs
@@ -94,13 +94,13 @@ class ClosedGraphSim:
     self.result = result
 
     blank_block = (tm.init_symbol,) * self.block_size
-    blank_subtape = (tm.init_symbol,) * self.subtape_size
+    blank_window = (tm.init_symbol,) * self.window_size
 
     # set of |Config|s to evaluate and add to |transitions|
     self.todo_configs = {
-      Config(tm.init_state, RIGHT, blank_subtape, self.block_size)
+      Config(tm.init_state, RIGHT, blank_window, self.block_size)
     }
-    # dict of Config -> PostConfig saving evaluation on subtape.
+    # dict of Config -> PostConfig saving evaluation on window.
     self.transitions = {}
     # continuations[dir][block] = set of blocks that can appear directly after
     # |block| on that half-tape.
@@ -157,13 +157,13 @@ class ClosedGraphSim:
     """Simulate TM on |old_config| until it leaves the tape, halts, is
     detected infinite or runs too long."""
     max_steps = self.max_steps - self.result.num_steps
-    # assert 0 <= old_config.pos < len(old_config.subtape), str(old_config)
+    # assert 0 <= old_config.pos < len(old_config.window), str(old_config)
     trans = Turing_Machine.sim_limited(
-      self.tm, old_config.state, old_config.subtape,
+      self.tm, old_config.state, old_config.window,
       old_config.pos, old_config.dir, max_loops=max_steps)
 
     if trans.condition == RUNNING:
-      # new_pos is outside the subtape, because we ran off the edge of it.
+      # new_pos is outside the window, because we ran off the edge of it.
       if trans.dir_out == LEFT:
         new_pos = -1
       else:
@@ -230,7 +230,7 @@ class ClosedGraphSim:
 
   def add_config(self, config) -> bool:
     # DEBUG: print("    Adding config", str(config))
-    # assert 0 <= config.pos < len(config.subtape), str(config)
+    # assert 0 <= config.pos < len(config.window), str(config)
     if config not in self.transitions and config not in self.todo_configs:
       self.todo_configs.add(config)
       self.result.num_configs += 1
@@ -272,16 +272,16 @@ class ClosedGraphSim:
 
 
 def filter(tm : Turing_Machine.Simple_Machine,
-           block_size : int, subtape_size : int,
+           block_size : int, window_size : int,
            max_steps : int, max_iters : int, max_configs : int, max_edges : int,
            cg_result : io_pb2.ClosedGraphFilterResult,
            bb_status : io_pb2.BBStatus):
-  graph_set = ClosedGraphSim(tm, block_size, subtape_size,
+  graph_set = ClosedGraphSim(tm, block_size, window_size,
                              max_steps, max_iters, max_configs, max_edges,
                              cg_result)
   graph_set.run()
   cg_result.block_size = block_size
-  cg_result.subtape_size = subtape_size
+  cg_result.window_size = window_size
   if cg_result.success:
     Halting_Lib.set_not_halting(bb_status, io_pb2.INF_CLOSED_GRAPH)
     # Note: quasihalting result is not computed when using Closed Graph filters.
@@ -294,7 +294,7 @@ def main():
   parser.add_argument("tm_file", type=Path)
   parser.add_argument("record_num", type=int)
   parser.add_argument("block_size", type=int)
-  parser.add_argument("subtape_size", type=int, nargs="?")
+  parser.add_argument("window_size", type=int, nargs="?")
 
   parser.add_argument("--max-steps", type=int, default=1_000_000)
   parser.add_argument("--max-iters", type=int, default=500)
@@ -304,16 +304,16 @@ def main():
   parser.add_argument("--verbose", "-v", action="store_true")
   args = parser.parse_args()
 
-  if not args.subtape_size:
-    args.subtape_size = 3 * args.block_size
+  if not args.window_size:
+    args.window_size = 3 * args.block_size
 
-  assert args.subtape_size >= 2 * args.block_size
+  assert args.window_size >= 2 * args.block_size
 
   cg_result = io_pb2.ClosedGraphFilterResult()
   bb_status = io_pb2.BBStatus()
 
   tm = IO.load_tm(args.tm_file, args.record_num)
-  graph_set = filter(tm, args.block_size, args.subtape_size,
+  graph_set = filter(tm, args.block_size, args.window_size,
                      args.max_steps, args.max_iters, args.max_configs, args.max_edges,
                      cg_result, bb_status)
 

@@ -367,7 +367,7 @@ message ClosedGraphFilterParams {
   // Parameters
   uint64 min_block_size = 1;
   uint64 max_block_size = 2;
-  bool search_all_subtapes = 3;
+  bool search_all_windows = 3;
   uint64 max_steps = 4;
   uint64 max_iters = 5;
   uint64 max_configs = 6;
@@ -380,7 +380,7 @@ message ClosedGraphFilterResult {
 
   // Which parameters worked?
   uint64 block_size = 3;
-  uint64 subtape_size = 4;
+  uint64 window_size = 4;
   // TODO: Implement with offset?
 
   // Stats

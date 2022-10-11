@@ -11,9 +11,9 @@ from Macro import Turing_Machine
 import io_pb2
 
 
-def filter(tm_record, block_size : int, subtape_size : int,
+def filter(tm_record, block_size : int, window_size : int,
            max_steps : int, max_iters : int, max_configs : int, max_edges : int) -> None:
-  Closed_Graph.filter(tm_record.tm(), block_size, subtape_size,
+  Closed_Graph.filter(tm_record.tm(), block_size, window_size,
                       max_steps, max_iters, max_configs, max_edges,
                       tm_record.proto.filter.closed_graph.result,
                       tm_record.proto.status)
@@ -24,22 +24,22 @@ def filter_all(tm_record, args) -> None:
   with IO.Timer(info.result):
     info.parameters.min_block_size = args.min_block_size
     info.parameters.max_block_size = args.max_block_size
-    info.parameters.search_all_subtapes = args.search_all_subtapes
+    info.parameters.search_all_windows = args.search_all_windows
     info.parameters.max_steps = args.max_steps
     info.parameters.max_iters = args.max_iters
     info.parameters.max_configs = args.max_configs
     info.parameters.max_edges = args.max_edges
 
-    if args.search_all_subtapes:
-      subtape_mult_min = 2
-      subtape_mult_max = 6
+    if args.search_all_windows:
+      window_mult_min = 2
+      window_mult_max = 6
     else:
-      subtape_mult_min = subtape_mult_max = 3
+      window_mult_min = window_mult_max = 3
 
     for block_size in range(args.min_block_size, args.max_block_size + 1):
-      for subtape_size in range(subtape_mult_min * block_size,
-                                subtape_mult_max * block_size + 1):
-        filter(tm_record, block_size, subtape_size,
+      for window_size in range(window_mult_min * block_size,
+                               window_mult_max * block_size + 1):
+        filter(tm_record, block_size, window_size,
                args.max_steps, args.max_iters, args.max_configs, args.max_edges)
         if info.result.success:
           return
@@ -55,8 +55,8 @@ def main():
   parser.add_argument("--max-block-size", type=int,
                       help="If set, try all block sizes between "
                       "--min-block-size and --max-block-size (inclusive).")
-  parser.add_argument("--search-all-subtapes", action="store_true", default=False,
-                      help="Allow subtape_size to range from 2*block_size to 6*block_size (instead of being fixed at 3*block_size).")
+  parser.add_argument("--search-all-windows", action="store_true", default=False,
+                      help="Allow window_size to range from 2*block_size to 6*block_size (instead of being fixed at 3*block_size).")
 
   # The vast majority of TMs are decided within 1/10 of these parameters.
   # A few TMs are not decided (even with inf maxes) but take a looong time to
