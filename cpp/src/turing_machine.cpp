@@ -80,10 +80,16 @@ TuringMachine::TuringMachine(
     exit(1); \
   }
 
+// Standard one-line Text format
+//   See: https://www.sligocki.com/2022/10/09/standard-tm-format.html
 void WriteTuringMachine(const TuringMachine& tm, std::ostream* outstream) {
   ASSERT(tm.num_states() < 26);
   ASSERT(tm.num_symbols() < 10);
   for (State in_state = 0; in_state < tm.num_states(); ++in_state) {
+    if (in_state != 0) {
+      // Double space separate each row in the transition table.
+      *outstream << "_";
+    }
     for (Symbol in_symbol = 0; in_symbol < tm.num_symbols(); ++in_symbol) {
       auto trans = tm.Lookup(in_state, in_symbol);
       if (trans.undecided) {
@@ -107,11 +113,7 @@ void WriteTuringMachine(const TuringMachine& tm, std::ostream* outstream) {
         }
         *outstream << out_state_char;
       }
-      // Space separate each cell in a row.
-      *outstream << " ";
     }
-    // Double space separate each row in the transition table.
-    *outstream << " ";
   }
 }
 
@@ -119,22 +121,19 @@ TuringMachine* ReadTuringMachine(std::istream* instream,
                                  const std::string& base_name) {
   std::string line;
   if (std::getline(*instream, line)) {
-    // Remove comment and description
-    auto pos = line.find_first_of("#|");
+    // Trim non-TM extra data.
+    auto pos = line.find_first_of(" \n\t,#|");
     if (pos != std::string::npos) {
       line.erase(pos);
     }
-    // Remove trailing whitespace
-    pos = line.find_last_not_of(" \n\t");
-    line.erase(pos + 1);
 
     int i = 0;
     std::vector<std::vector<TuringMachine::LookupResult>> transitions;
     while (i < line.size()) {
       std::vector<TuringMachine::LookupResult> row;
-      // Each trans in a row takes up exactly 4 bytes, Ex: "1RB ".
-      // End of row is indicated by a double space ("  ").
-      for (;i < line.size() && line[i] != ' '; i += 4) {
+      // Each trans in a row takes up exactly 3 bytes, Ex: "1RB".
+      // End of row is indicated by an underscore ("_").
+      for (;i < line.size() && line[i] != '_'; i += 3) {
         TuringMachine::LookupResult trans;
         if (line[i] == '-') {
           // Undecided transition
@@ -160,7 +159,6 @@ TuringMachine* ReadTuringMachine(std::istream* instream,
             ASSERT(0 <= trans.state && trans.state < 26);
           }
         }
-        ASSERT(i+3 >= line.size() || line[i+3] == ' ');
         row.push_back(trans);
       }
       // We've reached "  " which indicates the end of a row.

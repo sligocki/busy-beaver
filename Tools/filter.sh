@@ -29,5 +29,6 @@ time Code/IO_Categorize.py ${WORK_DIR}/out.pb --out-dir=${WORK_DIR}/
 
 # Update for next filter
 cp ${WORK_DIR}/unknown.pb ${ROOT_DIR}/unknown.pb
+Code/IO_Convert.py ${ROOT_DIR}/unknown.{pb,txt}
 
 time Code/TM_Analyze.py ${WORK_DIR}/out.pb

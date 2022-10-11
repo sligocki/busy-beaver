@@ -16,6 +16,9 @@ add_library(all_libs src/util.cpp src/turing_machine.cpp src/simulator.cpp
 add_executable(direct_sim src/direct_sim.cpp)
 target_link_libraries(direct_sim PUBLIC all_libs)
 
+add_executable(direct_sim_all src/direct_sim_all.cpp)
+target_link_libraries(direct_sim_all PUBLIC all_libs)
+
 add_executable(lin_recur src/lin_recur_main.cpp)
 target_link_libraries(lin_recur PUBLIC all_libs)
 
