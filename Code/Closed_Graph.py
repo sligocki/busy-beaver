@@ -276,6 +276,7 @@ def filter(tm : Turing_Machine.Simple_Machine,
            max_steps : int, max_iters : int, max_configs : int, max_edges : int,
            cg_result : io_pb2.ClosedGraphFilterResult,
            bb_status : io_pb2.BBStatus):
+  cg_result.Clear()
   graph_set = ClosedGraphSim(tm, block_size, window_size,
                              max_steps, max_iters, max_configs, max_edges,
                              cg_result)
@@ -313,6 +314,7 @@ def main():
   bb_status = io_pb2.BBStatus()
 
   tm = IO.load_tm(args.tm_file, args.record_num)
+  print(tm.ttable_str())
   graph_set = filter(tm, args.block_size, args.window_size,
                      args.max_steps, args.max_iters, args.max_configs, args.max_edges,
                      cg_result, bb_status)

@@ -226,7 +226,7 @@ class TMStats:
           f"Max {self.cg_num_edges.max_value:_}")
     print(f"  - num_iters    : Mean {self.cg_num_iters.mean():_.2f}  "
           f"Max {self.cg_num_iters.max_value:_}")
-    print(f"  - found_inf_loop : {self.cg_found_inf_loop.mean():8.4%}")
+    print(f"  - found_inf_loop : {self.cg_found_inf_loop.count:_d} ({self.cg_found_inf_loop.count / self.count:8.4%})")
     print()
 
     print("Simulator:")
