@@ -270,6 +270,27 @@ class ClosedGraphSim:
     print()
     print(f"* #configs={self.result.num_configs} #adj={self.result.num_edges}")
 
+  def savask_cert(self):
+    if not self.result.success:
+      return "Nothing"
+    else:
+      # Flatten edges dictionary into list.
+      edges = {}
+      edges_str = {}
+      for dir in DIRS:
+        edges[dir] = []
+        for src, dsts in self.continuations[dir].items():
+          for dst in dsts:
+            edges[dir].append((src, dst))
+        edges[dir].sort()
+        edges_str[dir] = " ".join(f"{block_to_str(src)} {block_to_str(dst)}"
+                                  for src, dst in edges[dir])
+      configs = sorted(str(config).replace(" ", "")
+                       for config in self.transitions.keys())
+      configs_str = " ".join(configs)
+
+      return f"Result {len(edges[LEFT])} {edges_str[LEFT]} {len(edges[RIGHT])} {edges_str[RIGHT]} {len(configs)} {configs_str}"
+
 
 def filter(tm : Turing_Machine.Simple_Machine,
            block_size : int, window_size : int,
@@ -303,6 +324,8 @@ def main():
   parser.add_argument("--max-edges", type=int, default=10_000)
 
   parser.add_argument("--verbose", "-v", action="store_true")
+  parser.add_argument("--savask-cert", action="store_true",
+                      help="Print proof certificate in @savask's format.")
   args = parser.parse_args()
 
   if not args.window_size:
@@ -321,6 +344,9 @@ def main():
 
   if args.verbose:
     graph_set.print_debug()
+  if args.savask_cert:
+    print(tm.ttable_str(), graph_set.savask_cert())
+
   print()
   print(cg_result)
   print(bb_status)

@@ -22,27 +22,33 @@ def filter_all(tm_record, args) -> None:
   tm_record.clear_proto()
   info = tm_record.proto.filter.closed_graph
   with IO.Timer(info.result):
-    info.parameters.min_block_size = args.min_block_size
-    info.parameters.max_block_size = args.max_block_size
-    info.parameters.search_all_windows = args.search_all_windows
+    if args.max_block_size:
+      info.parameters.min_block_size = args.min_block_size
+      info.parameters.max_block_size = args.max_block_size
+    info.parameters.search_all_windows = bool(args.max_window_size)
     info.parameters.max_steps = args.max_steps
     info.parameters.max_iters = args.max_iters
     info.parameters.max_configs = args.max_configs
     info.parameters.max_edges = args.max_edges
 
-    if args.search_all_windows:
-      window_mult_min = 2
-      window_mult_max = 6
-    else:
-      window_mult_min = window_mult_max = 3
-
-    for block_size in range(args.min_block_size, args.max_block_size + 1):
-      for window_size in range(window_mult_min * block_size,
-                               window_mult_max * block_size + 1):
+    if not args.max_window_size:
+      # Use "standard" 3*block_size window.
+      for block_size in range(args.min_block_size, args.max_block_size + 1):
+        window_size = 3 * block_size
         filter(tm_record, block_size, window_size,
                args.max_steps, args.max_iters, args.max_configs, args.max_edges)
         if info.result.success:
           return
+
+    else:
+      # Use "vertical scan" starting with smallest windows
+      for window_size in range(2, args.max_window_size + 1):
+        max_block_size = window_size // 2
+        for block_size in range(1, max_block_size + 1):
+          filter(tm_record, block_size, window_size,
+                 args.max_steps, args.max_iters, args.max_configs, args.max_edges)
+          if info.result.success:
+            return
 
 
 def main():
@@ -55,8 +61,7 @@ def main():
   parser.add_argument("--max-block-size", type=int,
                       help="If set, try all block sizes between "
                       "--min-block-size and --max-block-size (inclusive).")
-  parser.add_argument("--search-all-windows", action="store_true", default=False,
-                      help="Allow window_size to range from 2*block_size to 6*block_size (instead of being fixed at 3*block_size).")
+  parser.add_argument("--max-window-size", type=int)
 
   # The vast majority of TMs are decided within 1/10 of these parameters.
   # A few TMs are not decided (even with inf maxes) but take a looong time to
@@ -68,9 +73,10 @@ def main():
   args = parser.parse_args()
 
   if args.block_size:
+    assert not args.max_window_size
     args.min_block_size = args.block_size
     args.max_block_size = args.block_size
-  assert args.max_block_size, "Must specify either --block-size or --max-block-size"
+  assert args.max_block_size or args.max_window_size, "Must specify either --block-size or --max-block-size or --max-window-size"
 
   with IO.Proto.Writer(args.outfile) as writer:
     with IO.Reader(args.infile) as reader:

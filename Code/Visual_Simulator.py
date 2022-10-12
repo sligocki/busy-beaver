@@ -137,6 +137,6 @@ if __name__ == "__main__":
   tm = IO.load_tm(args.tm_file, args.record_num)
   print(Turing_Machine.machine_ttable_to_str(tm))
   # Hacky way of getting back to ttable.
-  ttable = IO.parse_ttable(tm.ttable_str())
+  ttable = IO.StdText.parse_ttable(tm.ttable_str())
   run_visual(ttable, args.width, args.start_state)
   sys.stdout.flush()
