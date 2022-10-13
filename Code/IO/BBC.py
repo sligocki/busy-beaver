@@ -166,3 +166,24 @@ class IndexReader:
                        f"(expected 4 bytes, got {len(len_bytes)}).")
       # Big Endian (>), 4 bytes (L).
       yield struct.unpack(">L", n_bytes)[0]
+
+
+class TextIndexReader:
+  """Reader for Mateon's text index format."""
+  def __init__(self, db_filename, index_filename):
+    self.db_reader = Reader(db_filename)
+    self.index_filename = index_filename
+
+  def __enter__(self):
+    self.db_reader.__enter__()
+    self.index_file = open(self.index_filename, "r")
+
+  def __exit__(self, *args):
+    self.db_reader.__exit__(args)
+    self.index_file.close()
+
+
+  def __iter__(self):
+    for line in self.index_file:
+      index = int(line)
+      yield self.db_reader.get_tm(index)
