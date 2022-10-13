@@ -89,7 +89,7 @@ class ProofSystemTest(unittest.TestCase):
 
   def test_bug_limited_diff_rule(self):
     # See: https://github.com/sligocki/busy-beaver/issues/2
-    tm = IO.parse_tm("1RB 3RB 3LB 0RB 0LA  2LB 3RA 3RB 4RA 2LA")
+    tm = IO.parse_tm("1RB3RB3LB0RB0LA_2LB3RA3RB4RA2LA")
     self.options.recursive = True
     self.options.limited_rules = True
     prover = Proof_System.Proof_System(tm, self.options, "")
@@ -145,10 +145,8 @@ class ProofSystemTest(unittest.TestCase):
 
 
   def test_apply_rule_limited_diff_rule(self):
-    ttable_filename = os.path.join(self.root_dir, "Machines/2x5-e704")
-    ttable = IO.load_TTable_filename(ttable_filename)
-
-    tm = Turing_Machine.Simple_Machine(ttable)
+    tm_filename = os.path.join(self.root_dir, "Machines/2x5-e704")
+    tm = IO.load_tm(tm_filename, 0)
 
     proof = Proof_System.Proof_System(tm, self.options, "")
 
@@ -237,11 +235,11 @@ class ProofSystemTest(unittest.TestCase):
     Test evaluation for a complex meta diff rule where # steps is non-linear.
     """
     # Hand-built TM to demonstrate this situation simply.
-    tm = IO.parse_tm("1RB --- ---  "
-                     "0RB 0LC 1LD  "
-                     "0LC 1RA ---  "
-                     "1LD 0LE ---  "
-                     "1RA 0LE ---")
+    tm = IO.parse_tm("1RB------_"
+                     "0RB0LC1LD_"
+                     "0LC1RA---_"
+                     "1LD0LE---_"
+                     "1RA0LE---")
     self.options.recursive = True
     prover = Proof_System.Proof_System(tm, self.options, "")
 

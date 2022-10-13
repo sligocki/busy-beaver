@@ -12,7 +12,7 @@ import io_pb2
 
 class SystemTest(unittest.TestCase):
   def test_simple(self):
-    tm = IO.parse_tm("1RB 1LA  0LA 1RA")
+    tm = IO.parse_tm("1RB1LA_0LA1RA")
 
     lr_info = io_pb2.LinRecurFilterInfo()
     lr_info.parameters.max_steps = 100
@@ -31,7 +31,7 @@ class SystemTest(unittest.TestCase):
     self.assertFalse(bb_status.quasihalt_status.is_quasihalting)
 
   def test_in_place(self):
-    tm = IO.parse_tm("1RB ---  0LB 1RB")
+    tm = IO.parse_tm("1RB---_0LB1RB")
 
     lr_info = io_pb2.LinRecurFilterInfo()
     lr_info.parameters.max_steps = 100
@@ -54,7 +54,7 @@ class SystemTest(unittest.TestCase):
 
   def test_complex(self):
     # Super-long period and recurrence start. One of Boyd's machines.
-    tm = IO.parse_tm("1RB 0RA  1RC 0RB  1LD 1LC  1RA 0LC")
+    tm = IO.parse_tm("1RB0RA_1RC0RB_1LD1LC_1RA0LC")
 
     lr_info = io_pb2.LinRecurFilterInfo()
     lr_info.parameters.max_steps = 1_000_000
@@ -75,7 +75,7 @@ class SystemTest(unittest.TestCase):
   def test_complex_no_min_start(self):
     # Make sure that find_min_start_step=False is still finding all correct
     # values (except for start_step which might be big).
-    tm = IO.parse_tm("1RB 0RA  1RC 0RB  1LD 1LC  1RA 0LC")
+    tm = IO.parse_tm("1RB0RA_1RC0RB_1LD1LC_1RA0LC")
 
     lr_info = io_pb2.LinRecurFilterInfo()
     lr_info.parameters.max_steps = 1_000_000
@@ -95,7 +95,7 @@ class SystemTest(unittest.TestCase):
 
   def test_quasihalt(self):
     # Test a non-trivial quasihalting machine.
-    tm = IO.parse_tm("1RB 1LC  1RC 0RC  0LD 0LA  0RA 0LA")
+    tm = IO.parse_tm("1RB1LC_1RC0RC_0LD0LA_0RA0LA")
 
     lr_info = io_pb2.LinRecurFilterInfo()
     lr_info.parameters.max_steps = 100
@@ -114,7 +114,7 @@ class SystemTest(unittest.TestCase):
 
   def test_halt(self):
     # Test a non-trivial halting machine.
-    tm = IO.parse_tm("1RB 1LB  1LA 0LC  1RZ 1LD  1RD 0RA")
+    tm = IO.parse_tm("1RB1LB_1LA0LC_1RZ1LD_1RD0RA")
 
     lr_info = io_pb2.LinRecurFilterInfo()
     lr_info.parameters.max_steps = 200

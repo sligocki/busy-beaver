@@ -4,8 +4,5 @@
 from IO import StdText, Proto, Text, BBC
 
 from IO.General import Reader, load_tm
+from IO.StdText import parse_tm
 from IO.Timer import Timer
-
-# TODO: This is just to support old code which is looking for IO.IO().
-from IO.Text import ReaderWriter as IO
-from IO.Text import parse_ttable, parse_tm, load_TTable_filename

@@ -23,13 +23,11 @@ class SystemTest(unittest.TestCase):
 
   def load_tm(self, name):
     filename = os.path.join(self.root_dir, "Machines", name)
-    ttable = IO.load_TTable_filename(filename)
-    return Turing_Machine.make_machine(ttable)
-  
+    return IO.load_tm(filename, 0)
+
   def test_block_repeat(self):
     """Test that Block_Macro_Machine can detect repeats efficiently even for giant block sizes."""
-    ttable = IO.parse_ttable("0RA 1LA")
-    tm = Turing_Machine.make_machine(ttable)
+    tm = IO.parse_tm("0RA1LA")
     block_size = 100
     macro_machine = Turing_Machine.Block_Macro_Machine(tm, block_size)
     macro_symbol = Turing_Machine.Block_Symbol((0, 1) + (0,) * (block_size - 2))
@@ -39,11 +37,10 @@ class SystemTest(unittest.TestCase):
                                            Turing_Machine.RIGHT)
 
     self.assertEqual(trans.condition, Turing_Machine.INF_REPEAT)
-  
+
   def test_backsymbol_repeat(self):
     """Test that Backsymbol_Macro_Machine can detect repeats efficiently even for giant block sizes."""
-    ttable = IO.parse_ttable("0RA 1LA")
-    tm = Turing_Machine.make_machine(ttable)
+    tm = IO.parse_tm("0RA1LA")
     block_size = 100
     block_m = Turing_Machine.Block_Macro_Machine(tm, block_size)
     macro_machine = Turing_Machine.Backsymbol_Macro_Machine(block_m)
@@ -71,7 +68,7 @@ Transition table:
    +---+-----+-----+
 
 """)
-    
+
     # Test machine with >2 states and symbols
     self.assertEqual(Turing_Machine.machine_ttable_to_str(self.load_tm("3x3-e17")),
                      """
@@ -88,7 +85,7 @@ Transition table:
    +---+-----+-----+-----+
 
 """)
-    
+
     # Test machine with Unused transition (---)
     self.assertEqual(Turing_Machine.machine_ttable_to_str(self.load_tm("Lafitte.Papazian.complex")),
                      """

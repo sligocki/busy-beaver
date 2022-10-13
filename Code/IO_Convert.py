@@ -96,11 +96,9 @@ def main():
 
 
   print(f"Converting from {args.informat} to {args.outformat}")
-  reader = get_reader(args.informat, args.infile, args)
-  writer = get_writer(args.outformat, args.outfile, args)
   num_records = 0
-  with writer:
-    with reader:
+  with get_writer(args.outformat, args.outfile, args) as writer:
+    with get_reader(args.informat, args.infile, args) as reader:
       for tm_record in reader:
         num_records += 1
         writer.write_record(tm_record)

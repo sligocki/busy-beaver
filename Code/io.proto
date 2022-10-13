@@ -17,11 +17,8 @@ message BigInt {
     // If the int is small enough, it is stored as a uint64.
     uint64 int = 1;
     // If it is too big (>= 2^64), serialize it as a text string.
-    //
-    // Note: If we have a lot of these, we could consider a more efficient
-    // format, like byte-packing into a bytes object ... but I think it is
-    // uncommon enough, that using this inefficient solution is fine.
-    string str = 2;
+    string hex_str = 3;
+    // DEPRECTATED base 10 version: string str = 2;
   }
 }
 

@@ -13,14 +13,15 @@ def set_big_int(field : io_pb2.BigInt, value : int):
     field.int = value
   else:
     # For "big" integers, store them as serialized text.
-    field.str = str(value)
+    # Store as hex to avoid https://docs.python.org/3/library/stdtypes.html#integer-string-conversion-length-limitation
+    field.hex_str = hex(value)
 
 def get_big_int(field : io_pb2.BigInt) -> Optional[int]:
   type = field.WhichOneof("big_int")
   if type == "int":
     return field.int
-  elif type == "str":
-    return int(field.str)
+  elif type == "hex_str":
+    return int(field.hex_str, base=16)
   else:
     return None
 

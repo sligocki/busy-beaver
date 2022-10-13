@@ -129,7 +129,7 @@ def run_options(tm_record : TM_Record, options) -> None:
           ctl_init_step = 1000
 
         if CTL_Filter.filter(tm_record, "CTL2", block_size, offset = 0,
-                             cutoff = ctl_init_step):
+                             cutoff = ctl_init_step, use_backsymbol = True):
           return
 
       # Finally: Do the actual Macro Machine / Chain simulation.

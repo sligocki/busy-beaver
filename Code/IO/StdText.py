@@ -27,6 +27,7 @@ STATES_DISPLAY = string.ascii_uppercase
 
 def parse_ttable(line : str):
   """Read transition table given a string representation."""
+  assert " " not in line, f"Invalid TM format: {line}"
   ttable = []
   rows = line.strip().split("_")
   num_states = len(rows)

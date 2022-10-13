@@ -320,13 +320,13 @@ class Reader:
   def __exit__(self, *args):
     self.infile.close()
 
-
   def __iter__(self):
     for io_record in self.rw:
       tm = Turing_Machine.Simple_Machine(io_record.ttable)
       tm_enum = TM_Enum.TM_Enum(tm, allow_no_halt = self.allow_no_halt)
       tm_record = TM_Record.TM_Record(tm_enum = tm_enum)
       yield tm_record
+
 
 class Writer:
   def __init__(self, outfilename : str):
@@ -340,14 +340,6 @@ class Writer:
 
   def __exit__(self, *args):
     self.outfile.close()
-
-
-  def __iter__(self):
-    for io_record in self.rw:
-      tm = Turing_Machine.Simple_Machine(io_record.ttable)
-      tm_enum = TM_Enum.TM_Enum(tm, allow_no_halt = self.allow_no_halt)
-      tm_record = TM_Record.TM_Record(tm_enum = tm_enum)
-      yield tm_record
 
 
 def load_TTable_filename(filename, line_num = 1):

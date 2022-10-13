@@ -43,7 +43,9 @@ class GoldTest(unittest.TestCase):
                       "--time=0",
                       "--force",
                       ])
-      subprocess.call(["python", "IO_Convert.py", outfile_pb, outfile_txt])
+      # For now, use old style text so that we have extra info.
+      subprocess.call(["python3", "IO_Convert.py", outfile_pb, outfile_txt,
+                       "--outformat=text_old"])
       if regold:
         subprocess.call(["mv", outfile_txt, goldfile])
       else:
