@@ -282,17 +282,14 @@ def template(title, steps, loops):
   """Pretty print row of the steps table."""
   return "%-8s %-20s %20d" % (title, format_power(steps), loops)
 
-def with_power(value, max_width=60):
+def with_power(value):
   """Pretty print log(value) and value (if it's not too big)"""
   output = format_power(value) + "  "
 
-  value_string = str(value)
-  if len(output) + len(value_string) < max_width:
-    output += value_string
+  if value < 10**40:
+    output += str(value)
   else:
-    margin = (max_width - len(output) - 2) // 2
-    if margin > 0:
-      output += value_string[:margin] + ".." + value_string[-margin:]
+    output += "..."
 
   return output
 

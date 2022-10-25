@@ -23,13 +23,18 @@ message BigInt {
 }
 
 message TuringMachine {
-  // High density, bit-packed version of ttable.
-  // Each transition is represented by one byte from least significant to most:
-  //   * 3 bits for (symbol + 1)  [symbol == -1 means undefined cell]
-  //   * 3 bits for (state + 1)   [state == -1 means halt]
-  //   * 1 bit for dir
-  //   * 1 bit for is_newrow  [indicates where to add row breaks to matrix]
-  bytes ttable_packed = 1;
+  oneof ttable {
+    // High density, bit-packed version of ttable.
+    // Each transition is represented by one byte from least significant to most:
+    //   * 3 bits for (symbol + 1)  [symbol == -1 means undefined cell]
+    //   * 3 bits for (state + 1)   [state == -1 means halt]
+    //   * 1 bit for dir
+    //   * 1 bit for is_newrow  [indicates where to add row breaks to matrix]
+    bytes ttable_packed = 1;
+    // Lower density, std text format.
+    // Allows up to 25 states.
+    string ttable_str = 3;
+  }
 
   // Enumeration options
   bool allow_no_halt = 2;

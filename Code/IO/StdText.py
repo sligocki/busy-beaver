@@ -9,52 +9,14 @@ Format looks like:
 1RB2LA1RA1RA_1LB1LA3RB1RZ
 """
 
-import io
-import string
-import sys
-
-from Common import Exit_Condition
-import Halting_Lib
 import IO
 from IO import TM_Record
 from Macro import Turing_Machine
 import TM_Enum
 
 
-SYMBOLS_DISPLAY = string.digits
-DIRS_DISPLAY = "LR"
-STATES_DISPLAY = string.ascii_uppercase
-
-def parse_ttable(line : str):
-  """Read transition table given a string representation."""
-  assert " " not in line, f"Invalid TM format: {line}"
-  ttable = []
-  rows = line.strip().split("_")
-  num_states = len(rows)
-  for row in rows:
-    ttable_row = []
-    for i in range(0, len(row), 3):
-      trans_str = row[i:i+3]
-      assert len(trans_str) == 3, trans_str
-      if trans_str == "---":
-        ttable_row.append((-1, 0, -1))
-      else:
-        symb_out = SYMBOLS_DISPLAY.find(trans_str[0])
-        dir_out = DIRS_DISPLAY.find(trans_str[1])
-        state_out = STATES_DISPLAY.find(trans_str[2])
-        if state_out >= num_states:
-          state_out = -1
-        assert symb_out >= 0
-        assert dir_out in [0, 1]
-        assert state_out >= -1
-        ttable_row.append((symb_out, dir_out, state_out))
-    ttable.append(ttable_row)
-  return ttable
-
-def parse_tm(line : str) -> Turing_Machine.Simple_Machine:
-  ttable = parse_ttable(line)
-  return Turing_Machine.Simple_Machine(ttable)
-
+parse_ttable = TM_Record.parse_ttable
+parse_tm = TM_Record.parse_tm
 
 class Writer:
   def __init__(self, outfilename : str):
@@ -70,6 +32,9 @@ class Writer:
 
   def write_record(self, tm_record : TM_Record) -> None:
     self.outfile.write(tm_record.tm().ttable_str())
+    cps = tm_record.proto.filter.closed_graph.result
+    if cps.success:
+      self.outfile.write(f" Inf CPS {cps.block_size} {cps.window_size} {cps.num_steps} {cps.num_configs} {cps.num_edges} {cps.num_iters} {cps.found_inf_loop}")
     self.outfile.write("\n")
 
   def flush(self):

@@ -1,8 +1,45 @@
+import string
+
 import TM_Enum
 
 import io_pb2
 
 from Macro import Turing_Machine
+
+
+# Parse TMs in standard text format.
+SYMBOLS_DISPLAY = string.digits
+DIRS_DISPLAY = "LR"
+STATES_DISPLAY = string.ascii_uppercase
+def parse_ttable(line : str):
+  """Read transition table given a standard text representation."""
+  assert " " not in line, f"Invalid TM format: {line}"
+  ttable = []
+  rows = line.strip().split("_")
+  num_states = len(rows)
+  for row in rows:
+    ttable_row = []
+    for i in range(0, len(row), 3):
+      trans_str = row[i:i+3]
+      assert len(trans_str) == 3, trans_str
+      if trans_str == "---":
+        ttable_row.append((-1, 0, -1))
+      else:
+        symb_out = SYMBOLS_DISPLAY.find(trans_str[0])
+        dir_out = DIRS_DISPLAY.find(trans_str[1])
+        state_out = STATES_DISPLAY.find(trans_str[2])
+        if state_out >= num_states:
+          state_out = -1
+        assert symb_out >= 0
+        assert dir_out in [0, 1]
+        assert state_out >= -1
+        ttable_row.append((symb_out, dir_out, state_out))
+    ttable.append(ttable_row)
+  return ttable
+
+def parse_tm(line : str) -> Turing_Machine.Simple_Machine:
+  ttable = parse_ttable(line)
+  return Turing_Machine.Simple_Machine(ttable)
 
 
 def pack_trans_ints(symbol : int, dir : int, state : int,
@@ -53,8 +90,23 @@ def unpack_ttable(pack : bytes):
     ttable[-1].append((symbol, dir, state))
   return ttable
 
-def unpack_tm(pack : bytes) -> Turing_Machine.Simple_Machine:
-  return Turing_Machine.Simple_Machine(unpack_ttable(pack))
+
+def read_tm(proto_tm : io_pb2.TuringMachine) -> Turing_Machine.Simple_Machine:
+  type = proto_tm.WhichOneof("ttable")
+  if type == "ttable_packed":
+    return Turing_Machine.Simple_Machine(unpack_ttable(proto_tm.ttable_packed))
+  elif type == "ttable_str":
+    return IO.StdText.parse_tm(proto_tm.ttable_str)
+  else:
+    raise NotImplementedError(f"Unexpected ttable type: {type}")
+
+def write_tm(tm : Turing_Machine.Simple_Machine, proto_tm : io_pb2.TuringMachine):
+  if tm.num_states <= 7 and tm.num_symbols <= 8:
+    proto_tm.ttable_packed = pack_tm(tm)
+  elif tm.num_states <= 25 and tm.num_symbols <= 10:
+    proto_tm.ttable_str = tm.ttable_str()
+  else:
+    raise NotImplementedError("Storing large TMs in protobuf has not been implemented yet. Max states = 25, max symbols = 10.")
 
 
 class TM_Record:
@@ -74,11 +126,11 @@ class TM_Record:
 
   def update_tm(self, tm_enum : TM_Enum.TM_Enum) -> None:
     self.tme = tm_enum
-    self.proto.tm.ttable_packed = pack_tm(self.tme.tm)
+    write_tm(self.tme.tm, self.proto.tm)
 
   def tm_enum(self):
     if not self.tme:
-      tm = unpack_tm(self.proto.tm.ttable_packed)
+      tm = read_tm(self.proto.tm)
       self.tme = TM_Enum.TM_Enum(
         tm, allow_no_halt = self.proto.tm.allow_no_halt)
     return self.tme

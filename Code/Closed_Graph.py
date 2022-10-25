@@ -252,7 +252,8 @@ class ClosedGraphSim:
   def print_debug(self):
     print()
     for dir in DIRS:
-      print(f"* {dir} continuations:")
+      dir_name = {LEFT: "Left", RIGHT: "Right"}
+      print(f"* {dir_name[dir]} continuations:")
       for src in sorted(self.continuations[dir].keys()):
         dst_strs = sorted(block_to_str(dst) for dst in self.continuations[dir][src])
         dsts_str = "{" + ", ".join(dst_strs) + "}"
@@ -345,6 +346,7 @@ def main():
   if args.verbose:
     graph_set.print_debug()
   if args.savask_cert:
+    print()
     print(tm.ttable_str(), graph_set.savask_cert())
 
   print()
