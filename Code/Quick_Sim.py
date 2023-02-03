@@ -33,9 +33,12 @@ def run(machine, block_size, back, prover, recursive, options):
 
   # Do not create a 1-Block Macro-Machine (just use base machine)
   if block_size != 1:
-    machine = Turing_Machine.Block_Macro_Machine(machine, block_size)
+    machine = Turing_Machine.Block_Macro_Machine(
+      machine, block_size,
+      max_sim_steps_per_symbol=options.max_steps_in_block)
   if back:
-    machine = Turing_Machine.Backsymbol_Macro_Machine(machine)
+    machine = Turing_Machine.Backsymbol_Macro_Machine(machine,
+      max_sim_steps_per_symbol=options.max_steps_in_backsymbol)
 
   global sim  # For debugging, especially with --manual
   sim = Simulator.Simulator(machine, options)
@@ -169,6 +172,9 @@ if __name__ == "__main__":
                     help="Specify a maximum number of loops.")
   parser.add_option("--bf-loops", type=int, default=10_000,
                     help="Number of steps to run Block Finder.")
+
+  parser.add_option("--max-steps-in-block", type=int, default=1_000_000)
+  parser.add_option("--max-steps-in-backsymbol", type=int, default=1_000)
 
   parser.add_option("--print-loops", type=int, default=10_000, metavar="LOOPS",
                     help="Print every LOOPS loops [Default %default].")
