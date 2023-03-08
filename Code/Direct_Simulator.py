@@ -2,9 +2,12 @@
 Class for managing direct simulations (non-chain tape).
 """
 
+import argparse
 import collections
+import time
 
 import Common
+import IO
 from Macro import Turing_Machine
 
 
@@ -110,28 +113,20 @@ class DirectSimulator:
       self.step()
 
 
+def main():
+  parser = argparse.ArgumentParser()
+  parser.add_argument("tm_file")
+  parser.add_argument("record_num", type=int, nargs="?", default=0)
+  parser.add_argument("num_steps", type=int)
+  args = parser.parse_args()
+
+  tm = IO.load_tm(args.tm_file, args.record_num)
+  print(tm.ttable_str())
+  sim = DirectSimulator(tm)
+
+  start_time = time.time()
+  sim.seek(args.num_steps)
+  print(f"Simulated {sim.step_num:_} steps in {time.time() - start_time:_.1f}s")
+
 if __name__ == "__main__":
-  import argparse
-  import time
-
-  import IO
-
-
-  def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("tm_file")
-    parser.add_argument("tm_line", type=int, default=1)
-    parser.add_argument("num_steps", type=int)
-    args = parser.parse_args()
-
-    ttable = IO.Text.load_TTable_filename(args.tm_file, args.tm_line)
-    tm = Turing_Machine.Simple_Machine(ttable)
-    sim = DirectSimulator(tm)
-
-    print("Starting simulation")
-    start_time = time.time()
-    sim.seek(args.num_steps)
-    print(f"Simulated {sim.step_num:_} steps in {time.time() - start_time:_.1f}s")
-
-  if __name__ == "__main__":
-    main()
+  main()

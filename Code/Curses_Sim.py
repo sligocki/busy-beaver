@@ -28,7 +28,7 @@ class VisSim:
     print(*args, file=self.logfile)
 
   def reset_sim(self):
-    self.sim = DirectSimulator(self.tm, tape_increment = self.buffer_size)
+    self.sim = DirectSimulator(self.tm)
     # Clear pad
     self.pad.clear()
     self.pad.bkgd(" ", curses.color_pair(1))
@@ -103,8 +103,10 @@ class VisSim:
 
   def write_tape(self, line_num : int,
                  tape, state : int):
-    col_min = max(tape.pos_min + self.pos_offset, 0)
-    col_max = min(tape.pos_max + self.pos_offset, self.pad_width() - 1)
+    pos_min = tape.position - tape.index
+    pos_max = pos_min + len(tape.tape)
+    col_min = max(pos_min + self.pos_offset, 0)
+    col_max = min(pos_max + self.pos_offset, self.pad_width() - 1)
     self.log("write_tape", line_num, col_min, col_max)
     for col_num in range(col_min, col_max + 1):
       pos = col_num - self.pos_offset
@@ -183,14 +185,13 @@ def sim(stdscr, tm, buffer_size, logfile):
 def main():
   parser = argparse.ArgumentParser()
   parser.add_argument("tm_file")
-  parser.add_argument("tm_line", type=int, nargs="?", default=1)
+  parser.add_argument("record_num", type=int, nargs="?", default=0)
   parser.add_argument("--buffer-size", type=int, default=1000,
                       help="Number of rows and columns to buffer out to incrementally.")
   parser.add_argument("--log-file", default="curses_log.txt")
   args = parser.parse_args()
 
-  ttable = IO.Text.load_TTable_filename(args.tm_file, args.tm_line)
-  tm = Turing_Machine.Simple_Machine(ttable)
+  tm = IO.load_tm(args.tm_file, args.record_num)
 
   with open(args.log_file, "w") as logfile:
     curses.wrapper(sim, tm, args.buffer_size, logfile)
