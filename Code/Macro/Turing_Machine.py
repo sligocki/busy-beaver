@@ -129,10 +129,11 @@ def sim_limited(tm, state, start_tape, pos, dir, max_loops=10_000) -> Transition
       condition_details = [pos]
       break
     if num_loops >= next_config_save:
-      # At various checkpoints we update old_config.
-      # With the exponential growth of next_config_save we guarantee that for
-      # any repeat which starts at `init_time` and has period `period`
-      # we'll detect the repeat by step `2 * max(init_time, period)`.
+      # Brent's algorithm for loop detection:
+      #   At various checkpoints we update old_config.
+      #   With the exponential growth of next_config_save we guarantee that for
+      #   any repeat which starts at `init_time` and has period `period`
+      #   we'll detect the repeat by step `2 * max(init_time, period)`.
       old_config = (state, dir, pos, list(tape))
       next_config_save *= 2
 

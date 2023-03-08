@@ -112,6 +112,7 @@ def run_visual(TTable, print_width, start_state, tape_length=100_000):
     state = new_state
 
     if state == -1:
+      print("TM Halted on step", step_num)
       break
 
 

@@ -44,10 +44,11 @@ def lin_detect_not_min(tm : Turing_Machine.Simple_Machine,
   sim.step()
 
   while (not max_steps or sim.step_num < max_steps) and not result.success:
-    # Instead of comparing each config to all previous configs, we try at one
-    # starting steps up til 2x those steps. Then fix at 2x and repeat.
-    # Thus instead of doing N^2 tape comparisons, we do N.
-    # This works because once the TM repeats, it will keep repeating forever!
+    # Brent's algorithm for loop detection:
+    #   Instead of comparing each config to all previous configs, we try at one
+    #   starting steps up til 2x those steps. Then fix at 2x and repeat.
+    #   Thus instead of doing N^2 tape comparisons, we do N.
+    #   This works because once the TM repeats, it will keep repeating forever!
     init_step_num = sim.step_num
     steps_reset = 2 * init_step_num
     init_pos = sim.tape.position

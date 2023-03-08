@@ -1,7 +1,4 @@
 #! /usr/bin/env python3
-#
-# Quick_Sim.py
-#
 """
 A TM simulator with a variety of advanced features, options, and output
 formats.
