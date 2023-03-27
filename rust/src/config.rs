@@ -1,3 +1,5 @@
+use enum_map::EnumMap;
+
 use crate::tm::{Dir, State, Symbol};
 
 // A block of TM symbols with a repetition count. Ex:
@@ -12,7 +14,7 @@ pub type HalfTape<RepT> = Vec<RepBlock<RepT>>;
 
 #[derive(Debug)]
 pub struct Config<RepT> {
-    pub tape: [HalfTape<RepT>; 2],
+    pub tape: EnumMap::<Dir, HalfTape<RepT>>,
     pub state: State,
     pub dir: Dir,
 }
@@ -35,6 +37,26 @@ pub type Const = u64;
 // Config where all reptitions are fixed integer values.
 // Used for simulating concrete TM configs.
 pub type ConfigConcrete = Config<Const>;
+
+impl ConfigConcrete {
+    pub fn pop_front(&mut self) -> RepBlock<Const> {
+        match  self.tape[ self.dir].pop() {
+            None => todo!(),
+            Some(x) => x,
+        }
+    }
+
+    pub fn push_back(&mut self, x : RepBlock<Const>) {
+        if let Some(mut top) = self.tape[self.dir.opp()].last_mut() {
+            if top.block == x.block {
+                // Merge equal blocks
+                top.rep += x.rep;
+                return;
+            }
+        }
+        self.tape[self.dir.opp()].push(x);
+    }
+}
 
 
 // TODO:
