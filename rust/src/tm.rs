@@ -1,3 +1,5 @@
+use std::fmt;
+
 use enum_map::Enum;
 
 pub type Symbol = u8;
@@ -25,6 +27,16 @@ pub struct Transition {
 #[derive(Debug)]
 pub struct TM {
     transitions: Vec<Vec<Option<Transition>>>,
+}
+
+
+impl fmt::Display for State {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            State::Halt => write!(f, "H"),
+            State::Run(state) => write!(f, "{}", (b'A' + state) as char),
+        }
+    }
 }
 
 

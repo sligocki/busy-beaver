@@ -1,3 +1,5 @@
+use std::fmt;
+
 use enum_map::EnumMap;
 
 use crate::tm::{Dir, State, Symbol};
@@ -55,6 +57,29 @@ impl ConfigConcrete {
             }
         }
         self.tape[self.dir.opp()].push(x);
+    }
+}
+
+impl fmt::Display for RepBlock<Const> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let block_str = self.block.iter().map(|x| x.to_string()).collect::<String>();
+        write!(f, "{}^{}", block_str, self.rep)
+    }
+}
+
+impl fmt::Display for ConfigConcrete {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        for x in self.tape[Dir::Left].iter() {
+            write!(f, "{} ", x)?;
+        }
+        match self.dir {
+            Dir::Left  => { write!(f, "<{} ", self.state)?; },
+            Dir::Right => { write!(f, "{}> ", self.state)?; },
+        };
+        for x in self.tape[Dir::Right].iter().rev() {
+            write!(f, "{} ", x)?;
+        }
+        return Ok(());
     }
 }
 

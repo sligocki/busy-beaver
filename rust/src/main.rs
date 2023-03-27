@@ -27,7 +27,7 @@ fn main() {
         num_base_steps: 0,
     };
     loop {
+        println!("{}", sim.tm_config);
         sim.step();
-        println!("{:?}", sim.tm_config.tape);
     }
 }
