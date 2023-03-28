@@ -109,7 +109,8 @@ def run_options(tm_record : TM_Record, options) -> None:
         bf_info = tm_record.proto.filter.block_finder
         bf_info.parameters.compression_search_loops = bf_loops
         bf_info.parameters.mult_sim_loops = bf_loops
-        bf_info.parameters.extra_mult = options.bf_extra_mult
+        bf_info.parameters.max_block_mult = options.max_block_mult
+        bf_info.parameters.block_mult = options.block_mult
         bf_info.parameters.max_block_size = options.max_block_size
         Block_Finder.block_finder(base_tm, options,
                                   bf_info.parameters, bf_info.result)

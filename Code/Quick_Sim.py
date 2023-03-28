@@ -30,7 +30,8 @@ def run(machine, block_size, back, prover, recursive, options):
     bf_info = io_pb2.BlockFinderInfo()
     bf_info.parameters.compression_search_loops = options.bf_loops
     bf_info.parameters.mult_sim_loops = options.bf_loops
-    bf_info.parameters.extra_mult = options.bf_extra_mult
+    bf_info.parameters.max_block_mult = options.max_block_mult
+    bf_info.parameters.block_mult = options.block_mult
     bf_info.parameters.max_block_size = 0  # No max for Quick_Sim
     Block_Finder.block_finder(machine, options,
                               bf_info.parameters, bf_info.result)

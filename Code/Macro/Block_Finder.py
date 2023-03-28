@@ -31,7 +31,10 @@ def add_option_group(parser : OptionParser):
                    help="Maximum block size to try when using Block Finder. "
                    "Note: This is ignored if --block-size is set explicitly.")
 
-  group.add_option("--bf-extra-mult", type=int, default=2, metavar="N",
+  group.add_option("--block-mult", type=int, default=0,
+                   help="Set fixed multiple of the block sized decided by block finder (often better than setting --block-size directly in order to avoid sizes that completely fail to compress the tape).")
+
+  group.add_option("--max-block-mult", type=int, default=2, metavar="N",
                    help="How far ahead to search in second half of the "
                    " block finder.")
 
@@ -112,6 +115,15 @@ def block_finder(machine : Turing_Machine.Turing_Machine,
     else:  # if not params.compression_search_loops
       opt_size = 1
 
+    if params.block_mult:
+      result.best_block_size = params.block_mult * opt_size
+      if options.verbose_block_finder:
+        print("BF: Block Finder finished")
+        print()
+        print(result)
+        sys.stdout.flush()
+      return
+
     if params.mult_sim_loops <= 0:
       result.best_block_size = opt_size
       return
@@ -122,7 +134,7 @@ def block_finder(machine : Turing_Machine.Turing_Machine,
     max_chain_factor = 0
     opt_mult = 1
     mult = 1
-    while (mult <= opt_mult + params.extra_mult and
+    while (mult <= opt_mult + params.max_block_mult and
            mult * opt_size <= max_block_size):
       block_machine = Turing_Machine.Block_Macro_Machine(machine, mult*opt_size)
       back_machine = Turing_Machine.Backsymbol_Macro_Machine(block_machine)
