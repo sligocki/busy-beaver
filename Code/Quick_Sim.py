@@ -14,6 +14,14 @@ import IO
 
 import io_pb2
 
+MAX_INT_STR = 10**4000
+def int2str(x):
+  """Avoid python's obnoxious ValueError for giant ints."""
+  if x > MAX_INT_STR:
+    return hex(x)
+  else:
+    return str(x)
+
 def run(machine, block_size, back, prover, recursive, options):
   # Construct Machine (Backsymbol-k-Block-Macro-Machine)
 
@@ -70,9 +78,8 @@ def run(machine, block_size, back, prover, recursive, options):
     print("Turing Machine Halted")
     print()
     if options.compute_steps:
-      print("Steps:   ", sim.step_num)
-    print("Nonzeros:", sim.get_nonzeros())
-    print()
+      print("Steps:   ", int2str(sim.step_num))
+    print("Nonzeros:", int2str(sim.get_nonzeros()))
   elif sim.op_state == Turing_Machine.INF_REPEAT:
     bb_status = io_pb2.BBStatus()
     Halting_Lib.set_inf_recur(bb_status,
@@ -90,9 +97,8 @@ def run(machine, block_size, back, prover, recursive, options):
     print("Symbol:", sim.op_details[0][0])
     print()
     if options.compute_steps:
-      print("Steps:   ", sim.step_num)
-    print("Nonzeros:", sim.get_nonzeros())
-    print()
+      print("Steps:   ", int2str(sim.step_num))
+    print("Nonzeros:", int2str(sim.get_nonzeros()))
   elif sim.op_state == Turing_Machine.GAVE_UP:
     print()
     print("Gave up while simulating Turing Machine")
@@ -170,6 +176,9 @@ if __name__ == "__main__":
   parser.add_option("--bf-loops", type=int, default=10_000,
                     help="Number of steps to run Block Finder.")
 
+  parser.add_option("--start-state", "-s", default="A",
+                    help="Override start state (Default A).")
+
   parser.add_option("--max-steps-in-block", type=int, default=1_000_000)
   parser.add_option("--max-steps-in-backsymbol", type=int, default=1_000)
 
@@ -211,6 +220,12 @@ if __name__ == "__main__":
     record_num = 0
 
   machine = IO.load_tm(filename, record_num)
+
+  # Override start state
+  start_state = ord(options.start_state) - ord("A")
+  assert 0 <= start_state < machine.num_states, args.start_state
+  machine.init_state = Turing_Machine.Simple_Machine_State(start_state)
+
   if not options.quiet:
     print(Turing_Machine.machine_ttable_to_str(machine))
 
