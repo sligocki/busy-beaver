@@ -253,9 +253,6 @@ def machine_ttable_to_str(machine):
   return result
 
 
-# Characters to use for states.
-states = string.ascii_uppercase + string.ascii_lowercase + string.digits + "!@#$%^&*" + "Z"
-
 class Simple_Machine_State(int):
   """Wrapper provides a pretty-printer for a Turing machine's integer state."""
   def print_with_dir(self, dir):
