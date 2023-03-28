@@ -41,14 +41,29 @@ pub type Const = u64;
 pub type ConfigConcrete = Config<Const>;
 
 impl ConfigConcrete {
-    pub fn pop_front(&mut self) -> RepBlock<Const> {
-        match  self.tape[ self.dir].pop() {
+    pub fn front_block(&self) -> Vec<Symbol> {
+        match  self.tape[self.dir].last() {
+            None => todo!(),
+            Some(x) => x.block.clone(),  // TODO: Make this more efficient.
+        }
+    }
+
+    pub fn pop_rep_front(&mut self) -> RepBlock<Const> {
+        match  self.tape[self.dir].pop() {
             None => todo!(),
             Some(x) => x,
         }
     }
 
-    pub fn push_back(&mut self, x : RepBlock<Const>) {
+    pub fn drop_one_front(&mut self) {
+        match  self.tape[self.dir].last_mut() {
+            None => todo!(),
+            Some(RepBlock { rep: 0, .. }) => { self.tape[self.dir].pop(); },
+            Some(RepBlock { rep, .. }) => { *rep -= 1; },
+        }
+    }
+
+    pub fn push_rep_back(&mut self, x : RepBlock<Const>) {
         if let Some(mut top) = self.tape[self.dir.opp()].last_mut() {
             if top.block == x.block {
                 // Merge equal blocks

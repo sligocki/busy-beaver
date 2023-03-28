@@ -106,6 +106,23 @@ fn sim_block(tm : &TM, c : BlockConfig) -> BlockResult {
     BlockResult::from(sim_fixed(tm, c.into()))
 }
 
+#[derive(Debug)]
+enum StepType {
+    // Single step in macro machine A> 1010 -> <D 1101
+    MacroStep {
+        trans: BlockConfig,
+        num_base_steps: Const,
+    },
+    // Chainable step: A> 1101 -> 0101 A>
+    ChainStep {
+        write_block: Vec<Symbol>,
+        num_base_steps_per_rep: Const,
+    },
+
+    // Step leading to TM not running (Halting, Infinite, etc.)
+    TerminateStep(BlockResult),
+}
+
 // Simulate on ConfigConcrete
 #[derive(Debug)]
 pub struct Simulator {
@@ -117,26 +134,59 @@ pub struct Simulator {
 }
 
 impl Simulator {
+    fn next_trans(&self) -> StepType {
+        let read_block = self.tm_config.front_block();
+        let in_state = self.tm_config.state;
+        let in_dir = self.tm_config.dir;
+        let in_conf = BlockConfig { state: in_state, dir: in_dir, block: read_block };
+        println!(" Debug: In: {:?}", in_conf);
+        let out = sim_block(&self.tm, in_conf);
+        println!(" Debug: Out: {:?}", out);
+        if let SimFixedStatus::Running = out.status {
+            if out.config.state == in_state && out.config.dir == in_dir {
+                return StepType::ChainStep {
+                    write_block: out.config.block,
+                    num_base_steps_per_rep: out.num_base_steps,
+                };
+            } else {
+                return StepType::MacroStep {
+                    trans: out.config,
+                    num_base_steps: out.num_base_steps,
+                };
+            }
+        } else {
+            // TM is no longer running
+            return StepType::TerminateStep(out);
+        }
+    }
+
+    fn apply(&mut self, step : StepType) {
+        match step {
+            StepType::MacroStep { trans, num_base_steps } => {
+                self.tm_config.drop_one_front();
+                self.tm_config.dir = trans.dir;
+                self.tm_config.state = trans.state;
+                self.tm_config.push_rep_back(RepBlock {
+                    block: trans.block, rep: 1 });
+                self.num_base_steps += num_base_steps;
+            },
+            StepType::ChainStep { write_block, num_base_steps_per_rep } => {
+                let read_rep_block = self.tm_config.pop_rep_front();
+                self.tm_config.push_rep_back(RepBlock {
+                    block: write_block, rep: read_rep_block.rep });
+                self.num_base_steps += num_base_steps_per_rep * read_rep_block.rep;
+            },
+            StepType::TerminateStep(_res) => {
+                todo!();
+            },
+        }
+    }
+
     pub fn step(&mut self) {
         if let State::Run(_) = self.tm_config.state {
-            let rep_block = self.tm_config.pop_front();
-            let in_conf = BlockConfig { state: self.tm_config.state, dir: self.tm_config.dir, block: rep_block.block };
-            println!(" Debug: In: {:?}", in_conf);
-            let out = sim_block(&self.tm, in_conf);
-            println!(" Debug: Out: {:?}", out);
-            if let SimFixedStatus::Running = out.status {
-                if out.config.state == self.tm_config.state &&
-                   out.config.dir == self.tm_config.dir {
-                    // Chain step
-                    self.tm_config.push_back(RepBlock { block: out.config.block, rep: rep_block.rep });
-                    self.num_sim_steps += 1;
-                    self.num_base_steps += out.num_base_steps * rep_block.rep;
-                } else {
-                    todo!();
-                }
-            } else {
-                todo!();
-            }
+            let step = self.next_trans();
+            self.apply(step);
+            self.num_sim_steps += 1;
         }
     }
 }
