@@ -4,7 +4,7 @@ import argparse
 import math
 from pathlib import Path
 
-import Closed_Graph
+import CPS
 import IO
 from Macro import Turing_Machine
 
@@ -13,10 +13,10 @@ import io_pb2
 
 def filter(tm_record, block_size : int, window_size : int,
            max_steps : int, max_iters : int, max_configs : int, max_edges : int) -> None:
-  Closed_Graph.filter(tm_record.tm(), block_size, window_size,
-                      max_steps, max_iters, max_configs, max_edges,
-                      tm_record.proto.filter.closed_graph.result,
-                      tm_record.proto.status)
+  CPS.filter(tm_record.tm(), block_size, window_size,
+             max_steps, max_iters, max_configs, max_edges,
+             tm_record.proto.filter.closed_graph.result,
+             tm_record.proto.status)
 
 def filter_all(tm_record, args) -> None:
   tm_record.clear_proto()
