@@ -29,7 +29,6 @@ pub struct TM {
     transitions: Vec<Vec<Option<Transition>>>,
 }
 
-
 impl fmt::Display for State {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
@@ -38,7 +37,6 @@ impl fmt::Display for State {
         }
     }
 }
-
 
 impl Dir {
     pub fn opp(self) -> Dir {
@@ -58,14 +56,21 @@ impl Dir {
 
 impl TM {
     #[inline]
-    pub fn trans(&self, state_in : RunState, symb_in : Symbol) -> Option<Transition> {
+    pub fn trans(&self, state_in: RunState, symb_in: Symbol) -> Option<Transition> {
         self.transitions[state_in as usize][symb_in as usize]
     }
 
     pub fn parse(tm_str: &str) -> TM {
-        fn parse_trans(trans_str : &[u8]) -> Option<Transition> {
-            if trans_str == b"---" { return None; }
-            let (symb_char, dir_char, state_char) = if let [symb_char, dir_char, state_char] = trans_str { (symb_char, dir_char, state_char) } else { unreachable!() };
+        fn parse_trans(trans_str: &[u8]) -> Option<Transition> {
+            if trans_str == b"---" {
+                return None;
+            }
+            let (symb_char, dir_char, state_char) =
+                if let [symb_char, dir_char, state_char] = trans_str {
+                    (symb_char, dir_char, state_char)
+                } else {
+                    unreachable!()
+                };
             Some(Transition {
                 symbol: (symb_char - b'0') as Symbol,
                 dir: match dir_char {
@@ -76,14 +81,16 @@ impl TM {
                 state: match state_char {
                     b'Z' | b'H' => State::Halt,
                     x => State::Run(x - b'A'),
-                }
+                },
             })
         }
 
-        fn parse_row(row_str : &str) -> Vec<Option<Transition>> {
+        fn parse_row(row_str: &str) -> Vec<Option<Transition>> {
             row_str.as_bytes().chunks(3).map(parse_trans).collect()
         }
 
-        TM { transitions: tm_str.trim().split("_").map(parse_row).collect() }
+        TM {
+            transitions: tm_str.trim().split("_").map(parse_row).collect(),
+        }
     }
 }

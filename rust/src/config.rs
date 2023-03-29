@@ -16,11 +16,10 @@ pub type HalfTape<RepT> = Vec<RepBlock<RepT>>;
 
 #[derive(Debug)]
 pub struct Config<RepT> {
-    pub tape: EnumMap::<Dir, HalfTape<RepT>>,
+    pub tape: EnumMap<Dir, HalfTape<RepT>>,
     pub state: State,
     pub dir: Dir,
 }
-
 
 // An implementation of RepT for concrete repetitions (not with variables).
 #[derive(Debug, Copy, Clone)]
@@ -61,33 +60,39 @@ pub type ConfigConcrete = Config<Rep>;
 
 impl ConfigConcrete {
     pub fn front_block(&self) -> Vec<Symbol> {
-        match  self.tape[self.dir].last() {
+        match self.tape[self.dir].last() {
             None => todo!(),
-            Some(x) => x.block.clone(),  // TODO: Make this more efficient.
+            Some(x) => x.block.clone(), // TODO: Make this more efficient.
         }
     }
 
     pub fn pop_rep_front(&mut self) -> RepBlock<Rep> {
-        match  self.tape[self.dir].pop() {
+        match self.tape[self.dir].pop() {
             None => todo!(),
             Some(x) => x,
         }
     }
 
     pub fn drop_one_front(&mut self) {
-        match  self.tape[self.dir].last_mut() {
+        match self.tape[self.dir].last_mut() {
             None => todo!(),
-            Some(RepBlock { rep: Rep::Infinite, .. }) => {},
-            Some(RepBlock { rep: Rep::Int(1), .. }) => {
+            Some(RepBlock {
+                rep: Rep::Infinite, ..
+            }) => {}
+            Some(RepBlock {
+                rep: Rep::Int(1), ..
+            }) => {
                 self.tape[self.dir].pop();
-            },
-            Some(RepBlock { rep: Rep::Int(rep), .. }) => {
+            }
+            Some(RepBlock {
+                rep: Rep::Int(rep), ..
+            }) => {
                 *rep -= 1;
-            },
+            }
         }
     }
 
-    pub fn push_rep_back(&mut self, x : RepBlock<Rep>) {
+    pub fn push_rep_back(&mut self, x: RepBlock<Rep>) {
         if let Some(top) = self.tape[self.dir.opp()].last_mut() {
             if top.block == x.block {
                 // Merge equal blocks
@@ -112,8 +117,12 @@ impl fmt::Display for ConfigConcrete {
             write!(f, "{} ", x)?;
         }
         match self.dir {
-            Dir::Left  => { write!(f, "<{} ", self.state)?; },
-            Dir::Right => { write!(f, "{}> ", self.state)?; },
+            Dir::Left => {
+                write!(f, "<{} ", self.state)?;
+            }
+            Dir::Right => {
+                write!(f, "{}> ", self.state)?;
+            }
         };
         for x in self.tape[Dir::Right].iter().rev() {
             write!(f, "{} ", x)?;
@@ -121,7 +130,6 @@ impl fmt::Display for ConfigConcrete {
         return Ok(());
     }
 }
-
 
 // TODO:
 // pub type VariableId = u64;

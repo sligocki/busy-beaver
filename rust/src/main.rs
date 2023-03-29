@@ -1,16 +1,14 @@
-use busy_beaver::tm::*;
 use busy_beaver::config::*;
 use busy_beaver::sim::*;
+use busy_beaver::tm::*;
 
 use enum_map::enum_map;
 
 fn main() {
-    // test_sim();
-
     let mut sim = Simulator {
         // BB(6) champ
         // tm: TM::parse("1RB0LD_1RC0RF_1LC1LA_0LE1RZ_1LF0RB_0RC0RE"),
-        tm : TM::parse("1RB1LD_1RC1RB_1LC1LA_0RC0RD"),
+        tm: TM::parse("1RB1LD_1RC1RB_1LC1LA_0RC0RD"),
         tm_config: ConfigConcrete {
             tape: enum_map! {
                 Dir::Left =>  vec![ RepBlock{ block: vec![0], rep: Rep::Infinite }, ],
@@ -24,10 +22,8 @@ fn main() {
         num_base_steps: 0,
     };
     println!("{} {:?} {}", sim.num_sim_steps, sim.status, sim.tm_config);
-    while let SimStatus::Running = sim.status {
-        sim.step();
-        println!("{} {:?} {}", sim.num_sim_steps, sim.status, sim.tm_config);
-    }
+    sim.run(100_000);
+    println!("{} {:?} {}", sim.num_sim_steps, sim.status, sim.tm_config);
     println!("Status: {:?}", sim.status);
     println!("Num Steps: {}", sim.num_base_steps);
 }
