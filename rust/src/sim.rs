@@ -60,11 +60,11 @@ fn sim_fixed(tm: &TM, start_config: SimFixedConfig) -> SimFixedResult {
             };
         }
     }
-    return SimFixedResult {
+    SimFixedResult {
         status: SimStatus::Halted,
         config,
         num_steps,
-    };
+    }
 }
 
 #[derive(Debug)]
@@ -121,20 +121,20 @@ fn sim_block(tm: &TM, c: BlockConfig) -> BlockResult {
 }
 
 #[derive(Debug)]
-enum StepType {
+enum Step {
     // Single step in macro machine A> 1010 -> <D 1101
-    MacroStep {
+    Macro {
         trans: BlockConfig,
         num_base_steps: u64,
     },
     // Chainable step: A> 1101 -> 0101 A>
-    ChainStep {
+    Chain {
         write_block: Vec<Symbol>,
         num_base_steps_per_rep: u64,
     },
 
     // Step leading to TM not running (Halting, Infinite, etc.)
-    TerminateStep(BlockResult),
+    Terminate(BlockResult),
 }
 
 // Simulate on ConfigConcrete
@@ -150,7 +150,7 @@ pub struct Simulator {
 }
 
 impl Simulator {
-    fn next_trans(&self) -> StepType {
+    fn next_trans(&self) -> Step {
         let read_block = self.tm_config.front_block();
         let in_state = self.tm_config.state;
         let in_dir = self.tm_config.dir;
@@ -164,25 +164,25 @@ impl Simulator {
         // println!(" Debug: Out: {:?}", out);
         if let SimStatus::Running = out.status {
             if out.config.state == in_state && out.config.dir == in_dir {
-                return StepType::ChainStep {
+                return Step::Chain {
                     write_block: out.config.block,
                     num_base_steps_per_rep: out.num_base_steps,
                 };
             } else {
-                return StepType::MacroStep {
+                return Step::Macro {
                     trans: out.config,
                     num_base_steps: out.num_base_steps,
                 };
             }
         } else {
             // TM is no longer running
-            return StepType::TerminateStep(out);
+            return Step::Terminate(out);
         }
     }
 
-    fn apply(&mut self, step: StepType) {
+    fn apply(&mut self, step: Step) {
         match step {
-            StepType::MacroStep {
+            Step::Macro {
                 trans,
                 num_base_steps,
             } => {
@@ -195,7 +195,7 @@ impl Simulator {
                 });
                 self.num_base_steps += num_base_steps;
             }
-            StepType::ChainStep {
+            Step::Chain {
                 write_block,
                 num_base_steps_per_rep,
             } => {
@@ -214,7 +214,7 @@ impl Simulator {
                     }
                 }
             }
-            StepType::TerminateStep(res) => {
+            Step::Terminate(res) => {
                 self.status = res.status;
                 todo!();
             }

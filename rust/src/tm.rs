@@ -90,7 +90,7 @@ impl TM {
         }
 
         TM {
-            transitions: tm_str.trim().split("_").map(parse_row).collect(),
+            transitions: tm_str.trim().split('_').map(parse_row).collect(),
         }
     }
 }

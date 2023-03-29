@@ -127,7 +127,7 @@ impl fmt::Display for ConfigConcrete {
         for x in self.tape[Dir::Right].iter().rev() {
             write!(f, "{} ", x)?;
         }
-        return Ok(());
+        Ok(())
     }
 }
 
