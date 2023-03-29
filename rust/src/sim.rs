@@ -11,18 +11,18 @@ struct SimFixedConfig {
     pos: i64,
 }
 #[derive(Debug)]
-enum SimFixedStatus {
+pub enum SimStatus {
     Running,
     Halted,
     UndefinedTrans,
-    // TODO: Infinite,
+    Infinite,
     OverSteps,
 }
 #[derive(Debug)]
 struct SimFixedResult {
-    status: SimFixedStatus,
+    status: SimStatus,
     config: SimFixedConfig,
-    num_steps: Const,
+    num_steps: u64,
 }
 
 const MAX_STEPS : u64 = 1_000_000;
@@ -31,10 +31,10 @@ fn sim_fixed(tm : &TM, start_config: SimFixedConfig) -> SimFixedResult {
     let mut num_steps = 0;
     while let State::Run(state_in) = config.state {
         if config.pos < 0 || config.pos >= config.tape.len().try_into().unwrap() {
-            return SimFixedResult { status: SimFixedStatus::Running, config, num_steps };
+            return SimFixedResult { status: SimStatus::Running, config, num_steps };
         }
         if num_steps >= MAX_STEPS {
-            return SimFixedResult { status: SimFixedStatus::OverSteps, config, num_steps };
+            return SimFixedResult { status: SimStatus::OverSteps, config, num_steps };
         }
         let symb_in = config.tape[config.pos as usize];
         num_steps += 1;
@@ -45,10 +45,10 @@ fn sim_fixed(tm : &TM, start_config: SimFixedConfig) -> SimFixedResult {
             config.pos += trans.dir.delta();
             config.state = trans.state;
         } else {
-            return SimFixedResult { status: SimFixedStatus::UndefinedTrans, config, num_steps };
+            return SimFixedResult { status: SimStatus::UndefinedTrans, config, num_steps };
         }
     }
-    return SimFixedResult { status: SimFixedStatus::Halted, config, num_steps };
+    return SimFixedResult { status: SimStatus::Halted, config, num_steps };
 }
 
 pub fn test_sim() {
@@ -74,9 +74,9 @@ struct BlockConfig {
 
 #[derive(Debug)]
 struct BlockResult {
-    status: SimFixedStatus,
+    status: SimStatus,
     config: BlockConfig,
-    num_base_steps: Const,
+    num_base_steps: u64,
 }
 
 impl From<SimFixedConfig> for BlockConfig {
@@ -111,12 +111,12 @@ enum StepType {
     // Single step in macro machine A> 1010 -> <D 1101
     MacroStep {
         trans: BlockConfig,
-        num_base_steps: Const,
+        num_base_steps: u64,
     },
     // Chainable step: A> 1101 -> 0101 A>
     ChainStep {
         write_block: Vec<Symbol>,
-        num_base_steps_per_rep: Const,
+        num_base_steps_per_rep: u64,
     },
 
     // Step leading to TM not running (Halting, Infinite, etc.)
@@ -128,9 +128,11 @@ enum StepType {
 pub struct Simulator {
     pub tm: TM,
     pub tm_config: ConfigConcrete,
+    pub status: SimStatus,
+
     // Stats
     pub num_sim_steps: u64,
-    pub num_base_steps: Const,
+    pub num_base_steps: u64,
 }
 
 impl Simulator {
@@ -139,10 +141,10 @@ impl Simulator {
         let in_state = self.tm_config.state;
         let in_dir = self.tm_config.dir;
         let in_conf = BlockConfig { state: in_state, dir: in_dir, block: read_block };
-        println!(" Debug: In: {:?}", in_conf);
+        // println!(" Debug: In: {:?}", in_conf);
         let out = sim_block(&self.tm, in_conf);
-        println!(" Debug: Out: {:?}", out);
-        if let SimFixedStatus::Running = out.status {
+        // println!(" Debug: Out: {:?}", out);
+        if let SimStatus::Running = out.status {
             if out.config.state == in_state && out.config.dir == in_dir {
                 return StepType::ChainStep {
                     write_block: out.config.block,
@@ -167,23 +169,33 @@ impl Simulator {
                 self.tm_config.dir = trans.dir;
                 self.tm_config.state = trans.state;
                 self.tm_config.push_rep_back(RepBlock {
-                    block: trans.block, rep: 1 });
+                    block: trans.block, rep: Rep::Int(1), });
                 self.num_base_steps += num_base_steps;
             },
             StepType::ChainStep { write_block, num_base_steps_per_rep } => {
                 let read_rep_block = self.tm_config.pop_rep_front();
                 self.tm_config.push_rep_back(RepBlock {
-                    block: write_block, rep: read_rep_block.rep });
-                self.num_base_steps += num_base_steps_per_rep * read_rep_block.rep;
+                    block: write_block, rep: read_rep_block.rep, });
+                match read_rep_block.rep {
+                    Rep::Int(read_rep) => {
+                        self.num_base_steps += num_base_steps_per_rep * read_rep;
+                    },
+                    Rep::Infinite => {
+                        // Chain step over 0^inf => TM will never halt!
+                        self.status = SimStatus::Infinite;
+                    }
+                }
+
             },
-            StepType::TerminateStep(_res) => {
+            StepType::TerminateStep(res) => {
+                self.status = res.status;
                 todo!();
             },
         }
     }
 
     pub fn step(&mut self) {
-        if let State::Run(_) = self.tm_config.state {
+        if let SimStatus::Running = self.status {
             let step = self.next_trans();
             self.apply(step);
             self.num_sim_steps += 1;

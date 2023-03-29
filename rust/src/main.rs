@@ -9,25 +9,25 @@ fn main() {
 
     let mut sim = Simulator {
         // BB(6) champ
-        tm: TM::parse("1RB0LD_1RC0RF_1LC1LA_0LE1RZ_1LF0RB_0RC0RE"),
+        // tm: TM::parse("1RB0LD_1RC0RF_1LC1LA_0LE1RZ_1LF0RB_0RC0RE"),
+        tm : TM::parse("1RB1LD_1RC1RB_1LC1LA_0RC0RD"),
         tm_config: ConfigConcrete {
-            // 10^10 11 0^14 <C 1
             tape: enum_map! {
-                Dir::Left => vec![
-                    RepBlock{ block: vec![1, 0], rep: 10 },
-                    RepBlock{ block: vec![1, 1], rep: 11 },
-                    RepBlock{ block: vec![0], rep: 14},
-                ],
-                Dir::Right => vec![ RepBlock{ block: vec![1], rep: 1 } ],
+                Dir::Left =>  vec![ RepBlock{ block: vec![0], rep: Rep::Infinite }, ],
+                Dir::Right => vec![ RepBlock{ block: vec![0], rep: Rep::Infinite }, ],
             },
-            state: State::Run(2),
-            dir: Dir::Left,
+            state: State::Run(0),
+            dir: Dir::Right,
         },
+        status: SimStatus::Running,
         num_sim_steps: 0,
         num_base_steps: 0,
     };
-    loop {
-        println!("{}", sim.tm_config);
+    println!("{} {:?} {}", sim.num_sim_steps, sim.status, sim.tm_config);
+    while let SimStatus::Running = sim.status {
         sim.step();
+        println!("{} {:?} {}", sim.num_sim_steps, sim.status, sim.tm_config);
     }
+    println!("Status: {:?}", sim.status);
+    println!("Num Steps: {}", sim.num_base_steps);
 }

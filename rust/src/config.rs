@@ -1,4 +1,4 @@
-use std::fmt;
+use std::{fmt, ops};
 
 use enum_map::EnumMap;
 
@@ -23,22 +23,41 @@ pub struct Config<RepT> {
 
 
 // An implementation of RepT for concrete repetitions (not with variables).
-// TODO: Allow more complex expressions here, something like:
-// pub enum Const {
-//     direct: u64;
-//     expo_not {
-//         base: u64,
-//         power: RepConcrete,
-//         coef: u64,
-//         const: u64,
-//         denom: u64,
-//     }
-// }
-pub type Const = u64;
+#[derive(Debug, Copy, Clone)]
+pub enum Rep {
+    Int(u64),
+    Infinite,
+}
+
+impl ops::Add<Rep> for Rep {
+    type Output = Rep;
+    fn add(self, rhs: Rep) -> Rep {
+        match (self, rhs) {
+            (Rep::Infinite, _) => Rep::Infinite,
+            (_, Rep::Infinite) => Rep::Infinite,
+            (Rep::Int(x), Rep::Int(y)) => Rep::Int(x + y),
+        }
+    }
+}
+
+impl ops::AddAssign<Rep> for Rep {
+    fn add_assign(&mut self, rhs: Rep) {
+        *self = *self + rhs;
+    }
+}
+
+impl fmt::Display for Rep {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Rep::Infinite => write!(f, "inf"),
+            Rep::Int(x) => write!(f, "{}", x),
+        }
+    }
+}
 
 // Config where all reptitions are fixed integer values.
 // Used for simulating concrete TM configs.
-pub type ConfigConcrete = Config<Const>;
+pub type ConfigConcrete = Config<Rep>;
 
 impl ConfigConcrete {
     pub fn front_block(&self) -> Vec<Symbol> {
@@ -48,7 +67,7 @@ impl ConfigConcrete {
         }
     }
 
-    pub fn pop_rep_front(&mut self) -> RepBlock<Const> {
+    pub fn pop_rep_front(&mut self) -> RepBlock<Rep> {
         match  self.tape[self.dir].pop() {
             None => todo!(),
             Some(x) => x,
@@ -58,13 +77,18 @@ impl ConfigConcrete {
     pub fn drop_one_front(&mut self) {
         match  self.tape[self.dir].last_mut() {
             None => todo!(),
-            Some(RepBlock { rep: 0, .. }) => { self.tape[self.dir].pop(); },
-            Some(RepBlock { rep, .. }) => { *rep -= 1; },
+            Some(RepBlock { rep: Rep::Infinite, .. }) => {},
+            Some(RepBlock { rep: Rep::Int(1), .. }) => {
+                self.tape[self.dir].pop();
+            },
+            Some(RepBlock { rep: Rep::Int(rep), .. }) => {
+                *rep -= 1;
+            },
         }
     }
 
-    pub fn push_rep_back(&mut self, x : RepBlock<Const>) {
-        if let Some(mut top) = self.tape[self.dir.opp()].last_mut() {
+    pub fn push_rep_back(&mut self, x : RepBlock<Rep>) {
+        if let Some(top) = self.tape[self.dir.opp()].last_mut() {
             if top.block == x.block {
                 // Merge equal blocks
                 top.rep += x.rep;
@@ -75,7 +99,7 @@ impl ConfigConcrete {
     }
 }
 
-impl fmt::Display for RepBlock<Const> {
+impl fmt::Display for RepBlock<Rep> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let block_str = self.block.iter().map(|x| x.to_string()).collect::<String>();
         write!(f, "{}^{}", block_str, self.rep)
