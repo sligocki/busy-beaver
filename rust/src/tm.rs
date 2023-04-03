@@ -1,4 +1,5 @@
 use std::fmt;
+use std::slice::Iter;
 
 use enum_map::Enum;
 
@@ -39,6 +40,11 @@ impl fmt::Display for State {
 }
 
 impl Dir {
+    pub fn iter() -> Iter<'static, Dir> {
+        static DIRS: [Dir; 2] = [Dir::Left, Dir::Right];
+        DIRS.iter()
+    }
+
     pub fn opp(self) -> Dir {
         match self {
             Dir::Left => Dir::Right,
