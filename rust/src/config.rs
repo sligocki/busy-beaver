@@ -2,7 +2,6 @@ use enum_map::EnumMap;
 
 use crate::tm::{Dir, State, Symbol};
 
-
 pub type Count = i64;
 
 #[derive(Debug)]
