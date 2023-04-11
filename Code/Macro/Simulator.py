@@ -240,6 +240,8 @@ class Simulator(object):
       print("Rules proven:", self.prover.num_rules)
       if self.prover.recursive:
         print("Meta Diff rules proven:", self.prover.num_meta_diff_rules)
+        if self.prover.allow_linear_rules:
+          print("Linear rules proven:", self.prover.num_linear_rules)
         print("General rules proven:", self.prover.num_gen_rules)
       print("Failed proofs:", self.prover.num_failed_proofs)
       print(f"Prover num past configs: {len(self.prover.past_configs):_}")

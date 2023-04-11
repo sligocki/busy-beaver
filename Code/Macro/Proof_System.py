@@ -30,7 +30,7 @@ def add_option_group(parser):
 
   group.add_option("--verbose-prover", action="store_true")
   group.add_option("-r", "--recursive", action="store_true", default=False,
-                   help="Turn ON recursive proof system.")
+                   help="Allow meta/recursive rules. Rules that use other rules in their proofs.")
   group.add_option("--limited-rules", action="store_true", default=False,
                    help="Rules are saved and applied based on the maximum they "
                    "effect the tape to the left and right. [Experimental]")
@@ -99,6 +99,11 @@ class Linear_Rule(Rule):
     self.name = str(rule_num)
     self.states_last_seen = states_last_seen
 
+    # TODO: Remove this once we add logic for applying Linear_Rules repeatedly.
+    self.gen_rule = General_Rule(
+      var_list, min_list, result_tape,
+      num_steps, num_loops, rule_num, states_last_seen)
+
     self.num_uses = 0
 
     # Figure out which (if any) exponents are decreasing.
@@ -156,7 +161,11 @@ class Linear_Rule(Rule):
       else:
         return f"{self.block_list[i]}^{self.min_list[i]}"
     def end_block(i):
-      return f"{self.block_list[i]}^({self.slope_list[i]} {self.var_list[i]} + {self.const_list[i]})"
+      if self.var_list[i]:
+        expr = self.slope_list[i] * VariableToExpression(self.var_list[i]) + self.const_list[i]
+        return f"{self.block_list[i]}^{expr}"
+      else:
+        return f"{self.block_list[i]}^{self.min_list[i]}"
 
     left_start_str = " ".join(start_block(i) for i in range(self.left_size))
     right_start_str = " ".join(reversed([
@@ -167,7 +176,7 @@ class Linear_Rule(Rule):
       end_block(i) for i in range(self.left_size, len(self.block_list))]))
 
     # TODO: Replace `<>` with state/dir, like `<A`
-    return f"""General Rule {self.name}
+    return f"""Linear Rule {self.name}
 Start Tape: {left_start_str} <> {right_start_str}
 End Tape: {left_end_str} <> {right_end_str}
 Steps {self.num_steps} Loops {self.num_loops}"""
@@ -332,7 +341,6 @@ class Proof_System(object):
 
     self.machine = machine
     self.options = options
-    # Should we try to prove recursive rules? (Rules which use previous rules as steps.)
     self.recursive = options.recursive
     self.allow_linear_rules = options.linear_rules
     self.compute_steps = options.compute_steps
@@ -733,19 +741,23 @@ class Proof_System(object):
         if rule:
           self.num_linear_rules += 1
 
+        if self.verbose:
+          print()
+          self.print_this("** New linear rule proven **")
+          self.print_this(str(rule).replace("\n", "\n " + self.verbose_prefix))
+          print()
+
       if not rule:
         rule = General_Rule(var_list, min_list, result_tape, num_steps,
                             gen_sim.num_loops, self.num_rules,
                             states_last_seen=states_last_seen)
         self.num_gen_rules += 1
 
-
-
-      if self.verbose:
-        print()
-        self.print_this("** New recursive rule proven **")
-        self.print_this(str(rule).replace("\n", "\n " + self.verbose_prefix))
-        print()
+        if self.verbose:
+          print()
+          self.print_this("** New general rule proven **")
+          self.print_this(str(rule).replace("\n", "\n " + self.verbose_prefix))
+          print()
 
       return rule
 
@@ -829,6 +841,8 @@ class Proof_System(object):
 
     if isinstance(rule, Diff_Rule):
       return self.apply_diff_rule(rule, start_config)
+    elif isinstance(rule, Linear_Rule):
+      return self.apply_linear_rule(rule, start_config)
     elif isinstance(rule, General_Rule):
       return self.apply_general_rule(rule, start_config)
     elif isinstance(rule, Limited_Diff_Rule):
@@ -861,7 +875,7 @@ class Proof_System(object):
       return success, other
 
     else:
-      assert False, (type(rule), repr(rule))
+      raise NotImplementedError(f"Cannot apply rule of type {type(rule)}")
 
   def apply_diff_rule(self, rule, start_config):
     ## Unpack input
@@ -1013,9 +1027,14 @@ class Proof_System(object):
                                states_last_seen=states_last_seen),
                   large_delta)
 
+  # Linear rules can be applied an arbitrary number of times in a single
+  # evaluation (like Diff rules), but the expression is slightly more complicated.
+  def apply_linear_rule(self, rule, start_config):
+    # TODO: Add math for applying Linear_Rules arbitrary numbers of times in a single step.
+    return self.apply_general_rule(rule.gen_rule, start_config)
+
   # Diff rules can be applied any number of times in a single evaluation.
   # But we can only apply a general rule once at a time.
-  # TODO: Get function to apply repeatedly in tight loop.
   def apply_general_rule(self, rule, start_config):
     # Unpack input
     start_state, start_tape, start_step_num, start_loop_num = start_config
@@ -1025,7 +1044,7 @@ class Proof_System(object):
     # rather than creating new tapes.
     current_list = [block.num for block in start_tape.tape[0] + start_tape.tape[1]]
 
-    # If this recursive rule is infinite.
+    # If this general rule is infinite.
     if rule.infinite and config_fits_min(rule.var_list, rule.min_list, current_list):
       if self.verbose:
         self.print_this("++ Rule applies infinitely ++")
@@ -1083,7 +1102,7 @@ class Proof_System(object):
       for dir in range(2):
         tape.tape[dir] = [x for x in tape.tape[dir] if x.num != 0]
       if self.verbose:
-        self.print_this("++ Recursive rule applied ++")
+        self.print_this("++ General rule applied ++")
         self.print_this("Times applied", num_reps)
         self.print_this("Resulting tape:", tape)
         print()
