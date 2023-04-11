@@ -243,6 +243,7 @@ class Simulator(object):
         if self.prover.allow_linear_rules:
           print("Linear rules proven:", self.prover.num_linear_rules)
         print("General rules proven:", self.prover.num_gen_rules)
+      print("Collatz rules:", self.prover.num_collatz_rules)
       print("Failed proofs:", self.prover.num_failed_proofs)
       print(f"Prover num past configs: {len(self.prover.past_configs):_}")
     print("Tape copies:", Tape.Chain_Tape.num_copies)

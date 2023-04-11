@@ -72,6 +72,14 @@ class Diff_Rule(Rule):
 
     self.num_uses = 0  # Number of times this rule has been applied.
 
+    # Figure out if any exponents decrease by > 1. If so, these can lead to
+    # branching (Collatz) behavior, so it's good to know about!
+    self.has_collatz_decrease = False
+    for htape in self.diff_tape.tape:
+      for block in htape:
+        if block.num < -1:
+          self.has_collatz_decrease = True
+
   def __repr__(self):
     if self.is_meta_rule:
       type = "Meta Diff Rule"
@@ -108,11 +116,16 @@ class Linear_Rule(Rule):
 
     # Figure out which (if any) exponents are decreasing.
     self.is_decreasing = [False] * len(var_list)
+    # Figure out if any exponents decrease by > 1. If so, these can lead to
+    # branching (Collatz) behavior, so it's good to know about!
+    self.has_collatz_decrease = False
     for i, (var, m, b) in enumerate(zip(self.var_list, self.slope_list, self.const_list)):
       if var:
         if b < 0:
           if m == 1:
             self.is_decreasing[i] = True
+            if b != -1:
+              self.has_collatz_decrease = True
           else:
             assert m > 1, m
             # Update min_value to ensure that this exponent does not decrease.
@@ -255,6 +268,14 @@ class Limited_Diff_Rule(Rule):
 
     self.num_uses = 0  # Number of times this rule has been applied.
 
+    # Figure out if any exponents decrease by > 1. If so, these can lead to
+    # branching (Collatz) behavior, so it's good to know about!
+    self.has_collatz_decrease = False
+    for htape in self.diff_tape.tape:
+      for block in htape:
+        if block.num < -1:
+          self.has_collatz_decrease = True
+
   def __repr__(self):
     return ("Limited Diff Rule %s\nInitial Config: %s (%d,%d)\nDiff Config:    %s\nSteps: %s, Loops: %s"
             % (self.name, self.initial_tape.print_with_state(self.initial_state),self.left_dist,self.right_dist,self.diff_tape.print_with_state(self.initial_state), self.num_steps,
@@ -360,6 +381,9 @@ class Proof_System(object):
     self.num_meta_diff_rules = 0
     self.num_linear_rules = 0
     self.num_gen_rules = 0
+    # Number of rules with an exponent that decreases by > 1 and thus
+    # could lead to collatz-like behavior.
+    self.num_collatz_rules = 0
     self.num_failed_proofs = 0
     self.num_loops = 0
     # TODO: Record how many steps are taken by recursive rules in simulator.
@@ -740,6 +764,8 @@ class Proof_System(object):
           gen_sim.num_loops, self.num_rules, states_last_seen)
         if rule:
           self.num_linear_rules += 1
+          if rule.has_collatz_decrease:
+            self.num_collatz_rules += 1
 
         if self.verbose:
           print()
@@ -818,6 +844,9 @@ class Proof_System(object):
         rule = Diff_Rule(initial_tape, diff_tape, new_state, num_steps,
                          gen_sim.num_loops, self.num_rules, is_meta_rule,
                          states_last_seen=states_last_seen)
+
+      if rule.has_collatz_decrease:
+        self.num_collatz_rules += 1
 
       if self.verbose:
         print()
