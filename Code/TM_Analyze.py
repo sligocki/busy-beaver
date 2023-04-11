@@ -189,48 +189,15 @@ class TMStats:
       print(f"  - {io_pb2.InfReason.Name(reason):20s} : "
             f"{count:15_}  ({count / self.num_inf:7.2%})")
     print()
-    print(f"Quasihalt: {self.num_qhalt:_} ({self.num_qhalt / self.count:.3%})")
-    print(f"  - Steps: Max {bigint_to_str(self.qhalt_steps.max_value)}")
-    print()
+
+    if self.num_qhalt:
+      print(f"Quasihalt: {self.num_qhalt:_} ({self.num_qhalt / self.count:.3%})")
+      print(f"  - Steps: Max {bigint_to_str(self.qhalt_steps.max_value)}")
+      print()
 
     print("Filters Run:")
     for (filter, num_run) in sorted(self.filters_run.items(), key=lambda x: x[1], reverse=True):
       print(f"  - {filter:20s} : {num_run:15_d}  ({num_run / self.count:7.2%})")
-    print()
-
-    print("Lin Recur:")
-    print(f"  - start_step  : Mean {self.lr_start_step.mean():_.0f}  "
-          f"Max {self.lr_start_step.max_value:_}  "
-          f"(Set in {self.lr_start_step.count / self.count:4.0%})")
-    print(f"  - period      : Mean {self.lr_period.mean():_.0f}  "
-          f"Max {self.lr_period.max_value:_}  "
-          f"(Set in {self.lr_period.count / self.count:4.0%})")
-    print(f"  - abs(offset) : Mean {self.lr_abs_offset.mean():_.0f}  "
-          f"Max {self.lr_abs_offset.max_value:_}  "
-          f"(Set in {self.lr_abs_offset.count / self.count:4.0%})")
-    print()
-
-    print("Backtrack:")
-    print(f"  - max_steps  : Mean {self.bt_max_steps.mean():_.2f}  "
-          f"Max {self.bt_max_steps.max_value:_}  "
-          f"(Set in {self.bt_max_steps.count / self.count:4.0%})")
-    print(f"  - max_width  : Mean {self.bt_max_width.mean():_.2f}  "
-          f"Max {self.bt_max_width.max_value:_}  "
-          f"(Set in {self.bt_max_width.count / self.count:4.0%})")
-    print()
-
-    print("Closed Graph:")
-    print(f"  - block_size   : Mean {self.cg_block_size.mean():_.2f}  "
-          f"Max {self.cg_block_size.max_value:_}")
-    print(f"  - num_steps    : Mean {self.cg_num_steps.mean():_.0f}  "
-          f"Max {self.cg_num_steps.max_value:_}")
-    print(f"  - num_configs  : Mean {self.cg_num_configs.mean():_.2f}  "
-          f"Max {self.cg_num_configs.max_value:_}")
-    print(f"  - num_edges    : Mean {self.cg_num_edges.mean():_.2f}  "
-          f"Max {self.cg_num_edges.max_value:_}")
-    print(f"  - num_iters    : Mean {self.cg_num_iters.mean():_.2f}  "
-          f"Max {self.cg_num_iters.max_value:_}")
-    print(f"  - found_inf_loop : {self.cg_found_inf_loop.count:_d} ({self.cg_found_inf_loop.count / self.count:8.4%})")
     print()
 
     print("Simulator:")
@@ -246,12 +213,50 @@ class TMStats:
     print(f"  - num_rule_moves    : Mean {self.sim_num_rule_moves.mean():9_.0f}  Max {self.sim_num_rule_moves.max_value:9_d}  (Set in {self.sim_num_rule_moves.count / self.count:7.2%})")
     print()
 
+    if self.lr_period.count:
+      print("Lin Recur:")
+      print(f"  - start_step  : Mean {self.lr_start_step.mean():_.0f}  "
+            f"Max {self.lr_start_step.max_value:_}  "
+            f"(Set in {self.lr_start_step.count / self.count:4.0%})")
+      print(f"  - period      : Mean {self.lr_period.mean():_.0f}  "
+            f"Max {self.lr_period.max_value:_}  "
+            f"(Set in {self.lr_period.count / self.count:4.0%})")
+      print(f"  - abs(offset) : Mean {self.lr_abs_offset.mean():_.0f}  "
+            f"Max {self.lr_abs_offset.max_value:_}  "
+            f"(Set in {self.lr_abs_offset.count / self.count:4.0%})")
+      print()
+
+    if self.bt_max_steps.count:
+      print("Backtrack:")
+      print(f"  - max_steps  : Mean {self.bt_max_steps.mean():_.2f}  "
+            f"Max {self.bt_max_steps.max_value:_}  "
+            f"(Set in {self.bt_max_steps.count / self.count:4.0%})")
+      print(f"  - max_width  : Mean {self.bt_max_width.mean():_.2f}  "
+            f"Max {self.bt_max_width.max_value:_}  "
+            f"(Set in {self.bt_max_width.count / self.count:4.0%})")
+      print()
+
+    if self.cg_num_configs.count:
+      print("Closed Graph:")
+      print(f"  - block_size   : Mean {self.cg_block_size.mean():_.2f}  "
+            f"Max {self.cg_block_size.max_value:_}")
+      print(f"  - num_steps    : Mean {self.cg_num_steps.mean():_.0f}  "
+            f"Max {self.cg_num_steps.max_value:_}")
+      print(f"  - num_configs  : Mean {self.cg_num_configs.mean():_.2f}  "
+            f"Max {self.cg_num_configs.max_value:_}")
+      print(f"  - num_edges    : Mean {self.cg_num_edges.mean():_.2f}  "
+            f"Max {self.cg_num_edges.max_value:_}")
+      print(f"  - num_iters    : Mean {self.cg_num_iters.mean():_.2f}  "
+            f"Max {self.cg_num_iters.max_value:_}")
+      print(f"  - found_inf_loop : {self.cg_found_inf_loop.count:_d} ({self.cg_found_inf_loop.count / self.count:8.4%})")
+      print()
+
     print("Timings:")
-    # Note: These are the mean timings for each filter over all TMs
-    # (even ones that never ran).
+    # Note: These are the mean timings for each filter over all TMs.
     mean_timings_s = sorted(
       [(timing.total / self.count, filter)
-       for (filter, timing) in self.timings_s.items()],
+       for (filter, timing) in self.timings_s.items()
+       if timing.count > 0],
       reverse=True)
     for (mean_time_s, filter) in mean_timings_s:
       print(f"  - {filter:16s} : Mean(all) {mean_time_s:7_.3f} s  "
@@ -264,7 +269,8 @@ class TMStats:
     # Note: These are the mean space for each message over all TMs
     # (even ones without this message set).
     mean_sizes = sorted([(size.total / self.count, message)
-                         for (message, size) in self.sizes.items()],
+                         for (message, size) in self.sizes.items()
+                         if size.count > 0],
                         reverse=True)
     for (mean_size_bytes, message) in mean_sizes:
       # TODO: Add Percentages
