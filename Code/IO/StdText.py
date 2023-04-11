@@ -9,6 +9,7 @@ Format looks like:
 1RB2LA1RA1RA_1LB1LA3RB1RZ
 """
 
+import Halting_Lib
 import IO
 from IO import TM_Record
 from Macro import Turing_Machine
@@ -32,9 +33,9 @@ class Writer:
 
   def write_record(self, tm_record : TM_Record) -> None:
     self.outfile.write(tm_record.tm().ttable_str())
-    cps = tm_record.proto.filter.closed_graph.result
-    if cps.success:
-      self.outfile.write(f" Inf CPS {cps.block_size} {cps.window_size} {cps.num_steps} {cps.num_configs} {cps.num_edges} {cps.num_iters} {cps.found_inf_loop}")
+    halt_status = tm_record.proto.status.halt_status
+    if halt_status.is_halting:
+      self.outfile.write(f" Halt {Halting_Lib.get_big_int(halt_status.halt_steps)} {Halting_Lib.get_big_int(halt_status.halt_score)}")
     self.outfile.write("\n")
 
   def flush(self):

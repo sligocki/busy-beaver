@@ -52,7 +52,7 @@ class Rule(object):
   """Base type for Proof_System rules."""
 
 class Diff_Rule(Rule):
-  """A rule that specifies constant deltas for each tape block's exponent."""
+  """A rule where all exponents change like `x -> x + c` for some constant `c`."""
   def __init__(self, initial_tape, diff_tape, initial_state, num_steps, num_loops, rule_num, is_meta_rule : bool, states_last_seen):
     # TODO: Use basic lists instead of tapes, we never use the symbols.
     # TODO: Have a variable list and a min list instead of packing both
@@ -93,6 +93,8 @@ class General_Rule(Rule):
     # TODO: result_list and force output tape to be the same stripped config as input tape.
     self.result_tape = result_tape
     self.result_list = [block.num for block in result_tape.tape[0] + result_tape.tape[1]]
+    self.block_list = [block.symbol for block in result_tape.tape[0] + result_tape.tape[1]]
+    self.left_size = len(result_tape.tape[0])
     self.num_steps = num_steps
     self.num_loops = num_loops
     self.name = str(rule_num)
@@ -110,10 +112,27 @@ class General_Rule(Rule):
           break
 
   def __repr__(self):
-    return ("General Rule %s\nVar List: %s\nMin List: %s\nResult List: %s\n"
-            "Steps %s Loops %s"
-            % (self.name, self.var_list, self.min_list, self.result_list,
-               self.num_steps, self.num_loops))
+    def start_block(i):
+      if self.var_list[i]:
+        return f"{self.block_list[i]}^({self.var_list[i]}|{self.min_list[i]})"
+      else:
+        return f"{self.block_list[i]}^{self.min_list[i]}"
+    def end_block(i):
+      return f"{self.block_list[i]}^{self.result_list[i]}"
+
+    left_start_str = " ".join(start_block(i) for i in range(self.left_size))
+    right_start_str = " ".join(reversed([
+      start_block(i) for i in range(self.left_size, len(self.block_list))]))
+
+    left_end_str = " ".join(end_block(i) for i in range(self.left_size))
+    right_end_str = " ".join(reversed([
+      end_block(i) for i in range(self.left_size, len(self.block_list))]))
+
+    # TODO: Replace `<>` with state/dir, like `<A`
+    return f"""General Rule {self.name}
+Start Tape: {left_start_str} <> {right_start_str}
+End Tape: {left_end_str} <> {right_end_str}
+Steps {self.num_steps} Loops {self.num_loops}"""
 
 class Collatz_Rule(Rule):
   """General rule that only applies if exponents have certain parity."""
