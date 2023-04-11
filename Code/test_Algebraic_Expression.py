@@ -56,6 +56,23 @@ class SystemTest(unittest.TestCase):
     self.assertEqual(sum_n.substitute({n_var : 10}), 55)
     self.assertEqual(sum_n.substitute({n_var : 13}), 91)
 
+  def test_as_strictly_linear(self):
+    n = expr("n")
+    n_var = n.variable()
+
+    # Positive cases
+    self.assertEqual(n.as_strictly_linear(), (n_var, 1, 0))
+    self.assertEqual((n + 8).as_strictly_linear(), (n_var, 1, 8))
+    self.assertEqual((n - 13).as_strictly_linear(), (n_var, 1, -13))
+    self.assertEqual((2 * n - 1).as_strictly_linear(), (n_var, 2, -1))
+    self.assertEqual((3 - n).as_strictly_linear(), (n_var, -1, 3))
+
+    # Negative cases
+    # Constants don't count as "strictly" linear.
+    self.assertEqual(expr("813").as_strictly_linear(), None)
+    self.assertEqual((n*n).as_strictly_linear(), None)
+    self.assertEqual((n*expr("m")).as_strictly_linear(), None)
+
 
 if __name__ == '__main__':
   unittest.main()

@@ -152,7 +152,6 @@ def simulate_machine(machine : Turing_Machine.Turing_Machine,
     sim_info.parameters.use_prover = options.prover
     sim_info.parameters.use_limited_rules = options.limited_rules
     sim_info.parameters.use_recursive_rules = options.recursive
-    sim_info.parameters.use_collatz_rules = options.allow_collatz
 
     sim = Simulator.Simulator(machine, options)
 
@@ -176,6 +175,7 @@ def simulate_machine(machine : Turing_Machine.Turing_Machine,
 
       sim_info.result.num_rules_proven = sim.prover.num_rules
       sim_info.result.num_meta_diff_rules_proven = sim.prover.num_meta_diff_rules
+      sim_info.result.num_linear_rules_proven = sim.prover.num_linear_rules
       sim_info.result.num_gen_rules_proven = sim.prover.num_gen_rules
       sim_info.result.num_proofs_failed = sim.prover.num_failed_proofs
 

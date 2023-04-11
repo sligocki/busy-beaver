@@ -307,10 +307,11 @@ class Expression:
     return (len(self.terms) == 1 and self.terms[0].coef == 1 and
             len(self.terms[0].vars) == 1 and self.terms[0].vars[0].pow == 1)
 
-  def is_linear(self):
-    """Is this expression linear, say 3x + 5 (coef * variable + const)."""
-    return (len(self.terms) == 1 and len(self.terms[0].vars) == 1 and
-            self.terms[0].vars[0].pow == 1)
+  def as_strictly_linear(self):
+    """Returns (var, slope, const) if this is a linear (non-constant) expression."""
+    if (len(self.terms) == 1 and len(self.terms[0].vars) == 1 and
+            self.terms[0].vars[0].pow == 1):
+      return (self.terms[0].vars[0].var, self.terms[0].coef, self.const)
 
   def variable_restricted(self):
     """Returns the single variable in this expression of form x + 12."""
@@ -325,14 +326,6 @@ class Expression:
       return self.terms[0].vars[0].var
     else:
       raise BadOperation("Expression %s is not of correct form" % self)
-
-  def get_coef(self):
-    """If expression is linear, say m*x + k, returns coefficient m.
-    Otherwise returns None."""
-    if self.is_linear():
-      return self.terms[0].coef
-    else:
-      return None
 
 Algebraic_Expression = Expression
 

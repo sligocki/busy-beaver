@@ -86,10 +86,6 @@ class Simulator(object):
     else:
       self.prover = None  # We will run the simulation without a proof system.
 
-    # Set of variables to replace (needed for Simulator in Proof_System when
-    # Collatz-style rules are allowed).
-    self.replace_vars = {}
-
     # Operation state (e.g. running, halted, proven-infinite, ...)
     self.op_state = Turing_Machine.RUNNING
     self.op_details = ()
@@ -160,21 +156,6 @@ class Simulator(object):
         if self.is_base_simulator and prover_result.states_last_seen:
           assert not isinstance(list(prover_result.states_last_seen.values())[0], Algebraic_Expression), prover_result.states_last_seen
 
-        # TODO(shawn): This seems out of place here and is the only place in
-        # the Simulator where we distinguish Algebraic_Expressions.
-        # We should clean it up in some way.
-        if prover_result.replace_vars:
-          assert self.options.allow_collatz
-          # We don't want the update below to overwrite things.
-          assert not frozenset(list(self.replace_vars.keys())).intersection(
-                     frozenset(list(prover_result.replace_vars.keys())))
-          self.replace_vars.update(prover_result.replace_vars)
-          # Update all instances of old variable (should just be in steps).
-          assert isinstance(self.step_num, Algebraic_Expression)
-          self.step_num = self.step_num.substitute(prover_result.replace_vars)
-          assert isinstance(self.old_step_num, Algebraic_Expression)
-          self.old_step_num = self.old_step_num.substitute(prover_result.replace_vars)
-          assert not isinstance(self.num_loops, Algebraic_Expression)
         self.tape = prover_result.new_tape
         self.num_rule_moves += 1
         if self.compute_steps:
@@ -260,8 +241,6 @@ class Simulator(object):
       if self.prover.recursive:
         print("Meta Diff rules proven:", self.prover.num_meta_diff_rules)
         print("General rules proven:", self.prover.num_gen_rules)
-        if self.prover.allow_collatz:
-          print("Collatz rules proven:", self.prover.num_collatz_rules)
       print("Failed proofs:", self.prover.num_failed_proofs)
       print(f"Prover num past configs: {len(self.prover.past_configs):_}")
     print("Tape copies:", Tape.Chain_Tape.num_copies)

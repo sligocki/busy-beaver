@@ -112,7 +112,6 @@ message SimulatorParams {
   bool only_log_configs_at_edge = 5;
   bool use_limited_rules = 6;
   bool use_recursive_rules = 7;
-  bool use_collatz_rules = 8;
 }
 
 message HaltInfo {
@@ -208,10 +207,11 @@ message SimulatorResult {
 
   uint64 num_rules_proven = 8;
   uint64 num_meta_diff_rules_proven = 12;
+  uint64 num_linear_rules_proven = 14;
   uint64 num_gen_rules_proven = 13;
   uint64 num_proofs_failed = 9;
 
-  // next id: 14
+  // next id: 15
 }
 
 message SimulatorInfo {

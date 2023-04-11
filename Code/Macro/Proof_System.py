@@ -31,11 +31,11 @@ def add_option_group(parser):
   group.add_option("--verbose-prover", action="store_true")
   group.add_option("-r", "--recursive", action="store_true", default=False,
                    help="Turn ON recursive proof system.")
-  group.add_option("--allow-collatz", action="store_true", default=False,
-                   help="Allow Collatz-style recursive proofs. [Experimental]")
   group.add_option("--limited-rules", action="store_true", default=False,
                    help="Rules are saved and applied based on the maximum they "
                    "effect the tape to the left and right. [Experimental]")
+  group.add_option("--linear-rules", action="store_true", default=False,
+                   help="Allow Linear_Rules [Experimental]")
 
   # A quick experiment shows that 100k past_configs -> 100MB, 1M -> 1GB RAM.
   group.add_option("--max-prover-configs", type=int, default=100_000,
@@ -82,6 +82,95 @@ class Diff_Rule(Rule):
             % (type, self.name, self.initial_tape.print_with_state(self.initial_state),
                self.diff_tape.print_with_state(self.initial_state),
                self.num_steps, self.num_loops, self.states_last_seen))
+
+class Linear_Rule(Rule):
+  """A rule where all exponents change like `x -> m x + b` for constants `m, b`."""
+  def __init__(self, var_list, min_list, slope_list, const_list,
+               result_tape, num_steps, num_loops, rule_num, states_last_seen):
+    assert len(var_list) == len(min_list) == len(slope_list) == len(const_list)
+    self.var_list = var_list
+    self.min_list = min_list
+    self.slope_list = slope_list
+    self.const_list = const_list
+    self.block_list = [block.symbol for block in result_tape.tape[0] + result_tape.tape[1]]
+    self.left_size = len(result_tape.tape[0])
+    self.num_steps = num_steps
+    self.num_loops = num_loops
+    self.name = str(rule_num)
+    self.states_last_seen = states_last_seen
+
+    self.num_uses = 0
+
+    # Figure out which (if any) exponents are decreasing.
+    self.is_decreasing = [False] * len(var_list)
+    for i, (var, m, b) in enumerate(zip(self.var_list, self.slope_list, self.const_list)):
+      if var:
+        if b < 0:
+          if m == 1:
+            self.is_decreasing[i] = True
+          else:
+            assert m > 1, m
+            # Update min_value to ensure that this exponent does not decrease.
+            # m x - b >= x -> x >= b / (m-1)
+            min_incr = int(math.ceil(-b / (m-1)))
+            self.min_list[i] = max(min_list[i], min_incr)
+            self.is_decreasing[i] = False
+
+    # Rule is infinite if no exponent decreases.
+    self.infinite = not any(self.is_decreasing)
+
+  @staticmethod
+  def try_gen(var_list, min_list, result_tape,
+              num_steps, num_loops, rule_num, states_last_seen):
+    slope_list = []
+    const_list = []
+    for i, result_block in enumerate(result_tape.tape[0]+result_tape.tape[1]):
+      if var_list[i]:
+        if not isinstance(result_block.num, Algebraic_Expression):
+          # x -> 7 doesn't count as linear!
+          # TODO: Keep track of this failure mode for analysis.
+          return False
+        res = result_block.num.as_strictly_linear()
+        if not res:
+          # This result expression is not strictly linear, we're done.
+          return False
+        (var, slope, const) = res
+        if var != var_list[i]:
+          # x -> 3y+2 doesn't count as linear!
+          # TODO: Keep track of this failure mode for analysis.
+          return False
+        slope_list.append(slope)
+        const_list.append(const)
+      else:
+        # non-variable
+        slope_list.append(None)
+        const_list.append(None)
+    # Success, this is a Linear_Rule.
+    return Linear_Rule(var_list, min_list, slope_list, const_list,
+                       result_tape, num_steps, num_loops, rule_num, states_last_seen)
+
+  def __repr__(self):
+    def start_block(i):
+      if self.var_list[i]:
+        return f"{self.block_list[i]}^({self.var_list[i]}|{self.min_list[i]})"
+      else:
+        return f"{self.block_list[i]}^{self.min_list[i]}"
+    def end_block(i):
+      return f"{self.block_list[i]}^({self.slope_list[i]} {self.var_list[i]} + {self.const_list[i]})"
+
+    left_start_str = " ".join(start_block(i) for i in range(self.left_size))
+    right_start_str = " ".join(reversed([
+      start_block(i) for i in range(self.left_size, len(self.block_list))]))
+
+    left_end_str = " ".join(end_block(i) for i in range(self.left_size))
+    right_end_str = " ".join(reversed([
+      end_block(i) for i in range(self.left_size, len(self.block_list))]))
+
+    # TODO: Replace `<>` with state/dir, like `<A`
+    return f"""General Rule {self.name}
+Start Tape: {left_start_str} <> {right_start_str}
+End Tape: {left_end_str} <> {right_end_str}
+Steps {self.num_steps} Loops {self.num_loops}"""
 
 class General_Rule(Rule):
   """A general rule that specifies any general end configuration."""
@@ -133,101 +222,6 @@ class General_Rule(Rule):
 Start Tape: {left_start_str} <> {right_start_str}
 End Tape: {left_end_str} <> {right_end_str}
 Steps {self.num_steps} Loops {self.num_loops}"""
-
-class Collatz_Rule(Rule):
-  """General rule that only applies if exponents have certain parity."""
-  def __init__(self, var_list, coef_list, parity_list, min_list,
-               result_list, num_steps, num_loops, states_last_seen):
-    # *_lists are parallel lists for each exponent in the configuration.
-    # If one exponent goes from 2k+1 -> 3k+5 for all 2k+1 >= 5, then
-    # var = k, coef = 2, parity = 1, min = 5 and result = 3k+5
-    assert len(var_list) == len(coef_list) == len(parity_list) == len(min_list)
-    self.var_list = var_list
-    self.coef_list = coef_list
-    self.parity_list = parity_list
-    self.min_list = min_list
-
-    self.result_list = result_list
-    self.num_steps = num_steps
-    self.num_loops = num_loops
-    self.name = ""  # Name will be set in Collatz_Rule_Group.
-    self.states_last_seen = states_last_seen
-
-    self.num_uses = 0
-
-    # Is this rule increasing? If all Collatz rules in a group are increasing
-    # then the group is infinite.
-    self.increasing = True
-    for var, coef, parity, result in zip(self.var_list, self.coef_list,
-                                         self.parity_list, self.result_list):
-      if var:  # If this exponent changes in this rule (has a variable)
-        start_expr = coef * VariableToExpression(var) + parity
-        if is_scalar(result) or not result.always_greater_than(start_expr):
-          # If any exponents can decrease, this isn't an increasing rule.
-          self.infinite = False
-          break
-
-  def __repr__(self):
-    return ("Collatz Rule %s\n"
-            "Var List: %s\n"
-            "Coef List: %s\n"
-            "Parity List: %s\n"
-            "Min List: %s\n"
-            "Result List: %s\n"
-            "Steps %s Loops %s"
-            % (self.name, self.var_list, self.coef_list, self.parity_list,
-               self.min_list, self.result_list, self.num_steps, self.num_loops))
-
-class Collatz_Rule_Group(Rule):
-  """
-  A set of Collatz_Rules which all come from the same stripped config,
-  but have different initial parities.
-  """
-  def __init__(self, subrule, rule_num):
-    self.coef_list = subrule.coef_list
-    self.total_subrules = 1  # = product(self.coef_list)
-    for coef in self.coef_list:
-      if coef:
-        self.total_subrules *= coef
-
-    self.rules = { tuple(subrule.parity_list): subrule }
-    self.infinite = False
-    # TODO(shawn): Check if this partial rule is infinite, say: 1^2k -> 1^2k+2
-
-    self.name = str(rule_num)
-    subrule.name = "%s.%d" % (self.name, len(self.rules))
-
-    # TODO: Implement
-    raise Exception("Collatz_Rule_Group.states_last_seen is not defined")
-    self.states_last_seen = None  # TODO
-
-    self.num_uses = 0
-
-  def add_rule(self, rule):
-    """Add a Collatz_Rule to this group."""
-    if rule.coef_list != self.coef_list:
-      # Note: This happens, for example for Machines/3x3-Collatz-Breaker,
-      # where one path proves the rule for 2k + 0 and another for 4k + 3.
-      # TODO(sligocki): Deal with these situations.
-      #Log.error (rule, self.rules)
-      return
-    assert tuple(rule.parity_list) not in self.rules, (rule, self.rules)
-    self.rules[tuple(rule.parity_list)] = rule
-    rule.name = "%s.%d" % (self.name, len(self.rules))
-    # We only say a Collatz Group is infinite if we have all the subrules.
-    # TODO(shawn): Check if partial rule groups are infinite.
-    if len(self.rules) == self.total_subrules:
-      non_increasing_rules = [rule for rule in list(self.rules.values())
-                              if not rule.increasing]
-      if len(non_increasing_rules) == 0:
-        self.infinite = True
-
-  def __repr__(self):
-    s = "Collatz Rule Group %s\n" % self.name
-    for rule in list(self.rules.values()):
-      s += str(rule).replace("\n", "\n  ")
-      s += "\n\n"
-    return s
 
 class Limited_Diff_Rule(Rule):
   """A Diff_Rule that only refers to a sub-section of the tape."""
@@ -322,13 +316,11 @@ APPLY_RULE = "Apply_Rule"        # Rule applies, but only finitely many times.
 INF_REPEAT = "Inf_Repeat"        # Rule applies infinitely.
 
 class ProverResult(object):
-  def __init__(self, condition,
-               new_tape = None, num_base_steps = None, replace_vars = None,
-               states_last_seen = None):
+  def __init__(self, condition, *,
+               new_tape = None, num_base_steps = None, states_last_seen = None):
     self.condition = condition
     self.new_tape = new_tape
     self.num_base_steps = num_base_steps
-    self.replace_vars = replace_vars if replace_vars else {}
     self.states_last_seen = states_last_seen
 
 class Proof_System(object):
@@ -342,11 +334,7 @@ class Proof_System(object):
     self.options = options
     # Should we try to prove recursive rules? (Rules which use previous rules as steps.)
     self.recursive = options.recursive
-    # Allow Collatz-style recursive rules. These are rules which depend upon
-    # the parity (or remainder mod n) of exponents.
-    # E.g. 1^(2k+1) 0 2 B>  -->  1^(3k+3) 0 2 B>
-    # Note: Very experimental, may well break your simulation.
-    self.allow_collatz = options.allow_collatz
+    self.allow_linear_rules = options.linear_rules
     self.compute_steps = options.compute_steps
     self.verbose = options.verbose_prover  # Step-by-step state printing
     self.verbose_prefix = verbose_prefix
@@ -357,17 +345,13 @@ class Proof_System(object):
     # Colection of proven rules indexed by stripped configurations.
     self.rules = {}
 
-    # After proving a part of a Collatz rule, do not try to log any other
-    # rules until we have a chance to prove the rest of the Collatz rule.
-    self.pause_until_loop = None
-
     self.max_num_reps = options.max_num_reps
 
     # Stats
     self.num_rules = 0
     self.num_meta_diff_rules = 0
+    self.num_linear_rules = 0
     self.num_gen_rules = 0
-    self.num_collatz_rules = 0
     self.num_failed_proofs = 0
     self.num_loops = 0
     # TODO: Record how many steps are taken by recursive rules in simulator.
@@ -441,30 +425,27 @@ class Proof_System(object):
 
     # Otherwise log it into past_configs and see if we should try and prove
     # a new rule.
-    if (self.pause_until_loop == None or
-        loop_num >= self.pause_until_loop or
-        stripped_config in self.past_configs):
-      past_config = self.past_configs[stripped_config]
-      if past_config.log_config(step_num, loop_num):
-        # We see enough of a pattern to try and prove a rule.
-        rule = self.prove_rule(stripped_config, full_config,
-                               loop_num - past_config.last_loop_num)
-        if not rule:
-          self.num_failed_proofs += 1
-        else:
-          self.add_rule(rule, stripped_config)
+    past_config = self.past_configs[stripped_config]
+    if past_config.log_config(step_num, loop_num):
+      # We see enough of a pattern to try and prove a rule.
+      rule = self.prove_rule(stripped_config, full_config,
+                             loop_num - past_config.last_loop_num)
+      if not rule:
+        self.num_failed_proofs += 1
+      else:
+        self.add_rule(rule, stripped_config)
 
-          # Try to apply transition
-          is_good, res = self.apply_rule(rule, full_config)
-          if is_good:
-            result, large_delta = res
-            rule.num_uses += 1
-            assert isinstance(result, ProverResult), result
-            if self.options.compute_steps and not result.states_last_seen:
-              print("UNIMPLEMENTED: Prover missing states_last_seen for rule:", rule, result, file=sys.stderr)
-            return result
-      elif len(self.past_configs) > self.options.max_prover_configs:
-        self.past_configs.clear()
+        # Try to apply transition
+        is_good, res = self.apply_rule(rule, full_config)
+        if is_good:
+          result, large_delta = res
+          rule.num_uses += 1
+          assert isinstance(result, ProverResult), result
+          if self.options.compute_steps and not result.states_last_seen:
+            print("UNIMPLEMENTED: Prover missing states_last_seen for rule:", rule, result, file=sys.stderr)
+          return result
+    elif len(self.past_configs) > self.options.max_prover_configs:
+      self.past_configs.clear()
 
     return ProverResult(NOTHING_TO_DO)
 
@@ -479,9 +460,7 @@ class Proof_System(object):
           result, large_delta = res
           # Optimization: If we apply a rule and we are not trying to perform
           # recursive proofs, clear past configuration memory.
-          # Likewise, if we apply a rule with a negative diff < -1 and we
-          # don't allow collatz rules, clear past configs.
-          if not self.recursive or (large_delta and not self.allow_collatz):
+          if not self.recursive or large_delta:
             if self.past_configs is not None:
               self.past_configs.clear()
           rule.num_uses += 1
@@ -516,9 +495,7 @@ class Proof_System(object):
         # Likewise, even normal recursive proofs cannot use every subrule
         # as a step. Specifically, if there are any negative deltas other
         # than -1, we cannot apply the rule in a proof because
-        # e.g. (x + 3 // 2) is unresolvable. However, Collatz proofs can
-        # include such large negative deltas.
-        if not self.recursive or (large_delta and not self.allow_collatz):
+        if not self.recursive or large_delta:
           if self.past_configs is not None:
             self.past_configs.clear()
         rule.num_uses += 1
@@ -529,22 +506,6 @@ class Proof_System(object):
 
   def add_rule(self, rule, stripped_config):
     """Add a proven rule"""
-    # Collatz_Rules need to be stored inside Collatz_Rule_Groups.
-    if isinstance(rule, Collatz_Rule):
-      self.pause_until_loop = loop_num + 100 * rule.num_loops
-      if stripped_config in self.rules:
-        group = self.rules[stripped_config]
-        if not group.add_rule(rule):
-          if self.verbose:
-            self.print_this("++ Collatz Rule doesn't match Group ++")
-            self.print_this("Rule:", str(rule).replace(
-                "\n", "\n" + self.verbose_prefix + "       "))
-            self.print_this("Group:", str(group).replace(
-                "\n", "\n" + self.verbose_prefix + "        "))
-      else:
-        group = Collatz_Rule_Group(rule, self.num_rules)
-      rule = group
-
     # Remember rule.
     if isinstance(rule, Limited_Diff_Rule):
       (state, dir, stripped_tape_left, stripped_tape_right) = stripped_config
@@ -675,19 +636,6 @@ class Proof_System(object):
                                            wrote_offset)
       self.num_loops += 1
 
-      if gen_sim.replace_vars:
-        assert self.allow_collatz
-        # Replace the variables in various places.
-        for init_block in initial_tape.tape[0]+initial_tape.tape[1]:
-          if isinstance(init_block.num, Algebraic_Expression):
-            init_block.num = init_block.num.substitute(gen_sim.replace_vars)
-        for old_var, new_expr in list(gen_sim.replace_vars.items()):
-          new_var = new_expr.variable()
-          min_val[new_var] = min_val[old_var]
-          del min_val[old_var]
-        # TODO(shawn): We might not want to clear this ...
-        gen_sim.replace_vars.clear()
-
       if gen_sim.op_state is not Turing_Machine.RUNNING:
         if self.verbose:
           print()
@@ -727,9 +675,8 @@ class Proof_System(object):
       return False
 
     # If machine has run delta_steps without error, it is a general rule.
-    # Compute the diff_tape and find out if this is a recursive rule.
-    # TODO: There should be a better way to find out if this is recursive.
-    rule_type = Diff_Rule
+    # Compute the diff_tape and figure out if it's a Diff_Rule.
+    is_diff_rule = True
     #diff_tape = new_tape.copy()
     diff_tape = gen_sim.tape.copy()
     for dir in range(2):
@@ -738,20 +685,12 @@ class Proof_System(object):
         if diff_block.num != math.inf:
           diff_block.num -= initial_block.num
           if isinstance(diff_block.num, Algebraic_Expression):
-            coef = initial_block.num.get_coef()
-            if coef != None and coef != 1:
-              # TODO(shawn): We should record this during simulation time.
-              rule_type = Collatz_Rule
-              # TODO(shawn): If the diff is constant (say 2x+1 -> 2x+3),
-              # perhaps we could prove a diff-rule?
+            if diff_block.num.is_const():
+              diff_block.num = diff_block.num.const
             else:
-              if diff_block.num.is_const():
-                diff_block.num = diff_block.num.const
-              else:
-                assert coef != None, (initial_block, initial_tape)
-                rule_type = General_Rule
+              is_diff_rule = False
 
-    if rule_type == General_Rule:
+    if not is_diff_rule:
       # TODO: Don't do all the work above if we're not going to use it
       # Get everything in the right form for a General_Rule.
       var_list = []
@@ -785,10 +724,22 @@ class Proof_System(object):
         num_steps = 0
         states_last_seen = None
 
-      self.num_gen_rules += 1
-      rule = General_Rule(var_list, min_list, result_tape, num_steps,
-                          gen_sim.num_loops, self.num_rules,
-                          states_last_seen=states_last_seen)
+      # Figure out if this is a Linear_Rule
+      rule = None
+      if self.allow_linear_rules:
+        rule = Linear_Rule.try_gen(
+          var_list, min_list, result_tape, num_steps,
+          gen_sim.num_loops, self.num_rules, states_last_seen)
+        if rule:
+          self.num_linear_rules += 1
+
+      if not rule:
+        rule = General_Rule(var_list, min_list, result_tape, num_steps,
+                            gen_sim.num_loops, self.num_rules,
+                            states_last_seen=states_last_seen)
+        self.num_gen_rules += 1
+
+
 
       if self.verbose:
         print()
@@ -797,68 +748,9 @@ class Proof_System(object):
         print()
 
       return rule
-    elif rule_type == Collatz_Rule:
-      # Get everything in the right form for a Collatz_Rule.
-      var_list = []
-      coef_list = []
-      parity_list = []
-      min_list = []
-      assignment = {}
-
-      for init_block in initial_tape.tape[0]+initial_tape.tape[1]:
-        if isinstance(init_block.num, Algebraic_Expression):
-          var = init_block.num.variable()
-          coef = init_block.num.get_coef()
-          const = init_block.num.const
-          parity = const % coef
-
-          var_list.append(var)
-          assert coef != None
-          coef_list.append(coef)
-          parity_list.append(parity)
-          min_list.append(const)
-
-          # Update var so that: ceof * var + const -> coef * var + parity
-          assignment[var] = VariableToExpression(var) - (const // coef)
-          assert (init_block.num.substitute(assignment) ==
-                  coef * VariableToExpression(var) + parity)
-        else:
-          var_list.append(None)
-          coef_list.append(None)
-          parity_list.append(None)
-          min_list.append(init_block.num)
-
-      result_list = []
-      result_tape = gen_sim.tape
-      for result_block in result_tape.tape[0]+result_tape.tape[1]:
-        if isinstance(result_block.num, Algebraic_Expression):
-          result_list.append(result_block.num.substitute(assignment))
-        else:
-          result_list.append(result_block.num)
-
-      # Fix num_steps.
-      if self.compute_steps:
-        num_steps = gen_sim.step_num.substitute(assignment)
-        states_last_seen = {state: last_seen.substitute(assignment)
-                            for state, last_seen in gen_sim.states_last_seen.items()}
-      else:
-        num_steps = 0
-        states_last_seen = None
-
-      self.num_collatz_rules += 1
-      rule = Collatz_Rule(var_list, coef_list, parity_list, min_list,
-                          result_list, num_steps, gen_sim.num_loops,
-                          states_last_seen=states_last_seen)
-
-      if self.verbose:
-        print()
-        self.print_this("** New Collatz rule proven **")
-        self.print_this(str(rule).replace("\n", "\n " + self.verbose_prefix))
-        print()
-
-      return rule
 
     else:  # Diff Rule
+      assert is_diff_rule
       is_meta_rule = (gen_sim.num_rule_moves > 0)
       if not is_meta_rule:
         # Tighten up rule to be as general as possible
@@ -939,8 +831,6 @@ class Proof_System(object):
       return self.apply_diff_rule(rule, start_config)
     elif isinstance(rule, General_Rule):
       return self.apply_general_rule(rule, start_config)
-    elif isinstance(rule, Collatz_Rule_Group):
-      return self.apply_collatz_rule(rule, start_config)
     elif isinstance(rule, Limited_Diff_Rule):
       start_state, start_tape, start_step_num, start_loop_num = start_config
 
@@ -957,7 +847,6 @@ class Proof_System(object):
       success, other = self.apply_diff_rule(rule, limited_start_config)
 
       if success:
-        # (machine_state, final_tape, diff_steps, replace_vars)
         prover_result, large_delta = other
 
         if prover_result.condition == APPLY_RULE:
@@ -985,10 +874,9 @@ class Proof_System(object):
     delta_value = {}
     # large_delta == True  iff there is a negative delta != -1
     # We keep track because even recursive proofs cannot contain rules
-    # with large_deltas, unless we allow Collatz proofs.
+    # with large_deltas.
     large_delta = False
     has_variable = False
-    replace_vars = {}  # Dict of variable substitutions made by Collatz applier.
     for dir in range(2):
       for init_block, diff_block, new_block in zip(
           rule.initial_tape.tape[dir], rule.diff_tape.tape[dir], new_tape.tape[dir]):
@@ -1017,47 +905,12 @@ class Proof_System(object):
             if num_reps is None:
               if (isinstance(init_value[x], Algebraic_Expression) and
                   delta_value[x] != -1):
-                if self.allow_collatz:
-                  if not init_value[x].is_var_plus_const():
-                    if self.verbose:
-                      self.print_this("++ Unsupported big-delta on Collatz expression ++")
-                      self.print_this("%r // %r"
-                                      % (init_value[x], -delta_value[x]))
-                      self.print_this("")
-                    return False, None
-                  else:
-                    # TODO(shawn): Deal with Collatz expressions here.
-                    # We should have something like (x + 12)
-                    old_var = init_value[x].variable_restricted()  # x
-                    old_const = init_value[x].const    # 12
-                    new_var = NewVariableExpression()  # k
-                    # 1) Record that we are replacing x with 3k.
-                    replace_vars[old_var] = new_var * -delta_value[x]
-                    # Update all the tape cells right away.
-                    for dir in range(2):
-                      for block in new_tape.tape[dir]:
-                        if isinstance(block.num, Algebraic_Expression):
-                          block.num = block.num.substitute(replace_vars)
-                    # Update all initial values as well.
-                    for y in list(init_value.keys()):
-                      if isinstance(init_value[y], Algebraic_Expression):
-                        init_value[y] = init_value[y].substitute(replace_vars)
-                    # 2) num_reps = (3k + 12) // 3 + 1 = k + (12//3) + 1
-                    num_reps = new_var + (old_const // -delta_value[x])  + 1
-                    if self.verbose:
-                      self.print_this("++ Experimental Collatz diff ++")
-                      self.print_this("Substituting:", old_var, "=",
-                                      replace_vars[old_var])
-                      self.print_this("From: num_reps = (%r // %r)  + 1"
-                                      % (init_value[x], -delta_value[x]))
-                      self.print_this("")
-                else:
-                  if self.verbose:
-                    self.print_this("++ Collatz diff ++")
-                    self.print_this("From: num_reps = (%r // %r)  + 1"
-                                    % (init_value[x], -delta_value[x]))
-                    self.print_this("")
-                  return False, None
+                if self.verbose:
+                  self.print_this("++ Collatz diff ++")
+                  self.print_this("From: num_reps = (%r // %r)  + 1"
+                                  % (init_value[x], -delta_value[x]))
+                  self.print_this("")
+                return False, None
               else:
                 # First one is safe.
                 # For example, if we have a rule:
@@ -1100,7 +953,7 @@ class Proof_System(object):
       states_last_seen = None
       if rule.states_last_seen:
         states_last_seen = {state: math.inf for state in rule.states_last_seen}
-      return True, (ProverResult(INF_REPEAT,  states_last_seen = states_last_seen),
+      return True, (ProverResult(INF_REPEAT, states_last_seen = states_last_seen),
                     large_delta)
 
     # If we cannot even apply this transition once, we're done.
@@ -1155,7 +1008,8 @@ class Proof_System(object):
       self.print_this("Resulting tape:",
                       return_tape.print_with_state(new_state))
       print()
-    return True, (ProverResult(APPLY_RULE, return_tape, diff_steps, replace_vars,
+    return True, (ProverResult(APPLY_RULE, new_tape=return_tape,
+                               num_base_steps=diff_steps,
                                states_last_seen=states_last_seen),
                   large_delta)
 
@@ -1244,7 +1098,8 @@ class Proof_System(object):
         # TODO: Test this ...
       else:
         states_last_seen = None
-      return True, (ProverResult(APPLY_RULE, tape, diff_steps, {},
+      return True, (ProverResult(APPLY_RULE, new_tape=tape,
+                                 num_base_steps=diff_steps,
                                  states_last_seen=states_last_seen),
                     large_delta)
     else:
@@ -1254,112 +1109,6 @@ class Proof_System(object):
         self.print_this("Rule min vals:", rule.min_list)
         print()
       return False, None
-
-  def apply_collatz_rule(self, group, start_config):
-    # Unpack input
-    start_state, start_tape, start_step_num, start_loop_num = start_config
-
-    large_delta = True  # Not edited in this function.
-    # Current list of all block exponents. We will update it in place repeatedly
-    # rather than creating new tapes.
-    current_list = [block.num for block in start_tape.tape[0] + start_tape.tape[1]]
-
-    # If this recursive rule is infinite.
-    if group.infinite:
-      # TODO(shawn): Check that we are above min! This is broken.
-      #if config_fits_min(rule.var_list, rule.min_list, current_list):
-      if self.verbose:
-        self.print_this("++ Rule applies infinitely ++")
-        print()
-      return True, (ProverResult(INF_REPEAT, states_last_seen={
-        state: math.inf for state in rule.states_last_seen}),
-                    large_delta)
-
-    # We cannot apply Collatz rules with general expressions.
-    for val in current_list:
-      if isinstance(val, Algebraic_Expression):
-        if self.verbose:
-          self.print_this("++ Cannot apply Collatz rule to expressions ++")
-          self.print_this("Config tape:", start_tape)
-          print()
-        return False, "Cannot apply Collatz rule to general expression"
-
-    # Keep applying rule until we can't anymore.
-    success = False  # If we fail before doing anything, return false.
-    num_reps = 0
-    diff_steps = 0
-    # Get variable assignments for this case and check minimums.
-    assignment = {}
-    while True:
-      # Print current state.
-      if self.verbose:
-        self.print_this(num_reps, current_list)
-
-      # Find out which collatz sub-rule applies here (figure out parities).
-      # Note that we already checked above that we current_list is scalar.
-      parity_list = tuple(val % coef if coef else None
-                          for val, coef in zip(current_list, group.coef_list))
-      if parity_list not in group.rules:
-        if self.verbose:
-          # TODO(shawn): Just try to prove a rule for this parity right now.
-          self.print_this("++ Reached unproven Collatz parity ++")
-          self.print_this("Config tape:", start_tape)
-          self.print_this("Parities:", parity_list)
-          print()
-        reason = UNPROVEN_PARITY
-        break
-      rule = group.rules[parity_list]
-
-      # Check that we are above the minimums and set assignments.
-      above_min = True
-      for current_val, var, coef, min_val in \
-            zip(current_list, rule.var_list, rule.coef_list, rule.min_list):
-        if var:
-          # TODO(shawn): Allow rules with all parities.
-          if current_val < min_val:
-            above_min = False
-            break
-          assignment[var] = current_val // coef
-
-      # TODO(shawn): This looks kludgey.
-      if not above_min:
-        reason = "Bellow min"
-        break
-
-      # Apply variable assignment to update number of steps and tape config.
-      if self.compute_steps:
-        diff_steps += rule.num_steps.substitute(assignment)
-      # TODO: Stop using substitute and make this a tuple-to-tuple function?
-      current_list = [val.substitute(assignment)
-                      if isinstance(val, Algebraic_Expression) else val
-                      for val in rule.result_list]
-      num_reps += 1
-      success = True
-      assignment = {}
-
-    # We cannot apply rule any more.
-    # Make sure there are no zero's in tape exponents.
-    if success:
-      tape = start_tape.copy()
-      for block, current_val in zip(tape.tape[0] + tape.tape[1], current_list):
-        block.num = current_val
-      # TODO: Perhaps do this in one step?
-      for dir in range(2):
-        tape.tape[dir] = [x for x in tape.tape[dir] if x.num != 0]
-      if self.verbose:
-        self.print_this("++ Collatz rule applied ++")
-        self.print_this("Times applied", num_reps)
-        self.print_this("Resulting tape:", tape)
-        print()
-      return True, (ProverResult(APPLY_RULE, tape, diff_steps, {}),
-                    large_delta)
-    else:
-      if self.verbose and reason != UNPROVEN_PARITY:
-        self.print_this("++ Current config is below rule minimum ++")
-        self.print_this("Config tape:", start_tape)
-        self.print_this("Rule min vals:", rule.min_list)
-        print()
-      return False, reason
 
 def config_fits_min(var_list, min_list, current_list, assignment=None):
   """Does `current_list` attain the minimum values (in `min_list`)?
