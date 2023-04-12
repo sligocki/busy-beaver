@@ -63,8 +63,6 @@ class Chain_Tape(object):
     self.tape = [[], []]
     self.tape[0].append(Repeated_Symbol(init_symbol, INF))
     self.tape[1].append(Repeated_Symbol(init_symbol, INF))
-    # Measures head displacement from initial position
-    self.displace = 0
     self.options = options
 
   def compressed_size(self):
@@ -74,8 +72,7 @@ class Chain_Tape(object):
   def __eq__(self, other):
     return (isinstance(other, self.__class__) and
             other.dir      == self.dir        and
-            other.tape     == self.tape       and
-            other.displace == self.displace)
+            other.tape     == self.tape)
 
   def __repr__(self):
     return self.print_with_state(None)
@@ -108,7 +105,6 @@ class Chain_Tape(object):
     Chain_Tape.num_copies += 1
     new = Chain_Tape()
     new.dir = self.dir
-    new.displace = self.displace
     s0 = [x.copy() for x in self.tape[0]]
     s1 = [x.copy() for x in self.tape[1]]
     new.tape = [s0, s1]
@@ -154,11 +150,6 @@ class Chain_Tape(object):
       half_tape.append(Repeated_Symbol(new_symbol, 1))
     # Update direction
     self.dir = new_dir
-    # Update head displacement
-    if new_dir:
-      self.displace += 1
-    else:
-      self.displace -= 1
 
   def apply_chain_move(self, new_symbol):
     """Apply a chain step which replaces an entire string of symbols.
@@ -177,9 +168,4 @@ class Chain_Tape(object):
         top.num += num
     else:
       half_tape.append(Repeated_Symbol(new_symbol, num))
-    # Update head displacement
-    if self.dir:
-      self.displace += num
-    else:
-      self.displace -= num
     return num

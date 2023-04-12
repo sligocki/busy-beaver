@@ -1,6 +1,3 @@
-#
-# Proof_System.py
-#
 """
 Proof System which observes and attempts to prove patterns in computation.
 """
@@ -15,7 +12,7 @@ from optparse import OptionParser, OptionGroup
 import sys
 
 from Algebraic_Expression import Algebraic_Expression, Variable, NewVariableExpression, VariableToExpression, ConstantToExpression, is_scalar, BadOperation, Term, always_ge
-
+from Exp_Int import ExpInt, exp_int
 from Macro import Simulator
 from Macro import Tape
 from Macro import Turing_Machine
@@ -34,8 +31,8 @@ def add_option_group(parser):
   group.add_option("--limited-rules", action="store_true", default=False,
                    help="Rules are saved and applied based on the maximum they "
                    "effect the tape to the left and right. [Experimental]")
-  group.add_option("--linear-rules", action="store_true", default=False,
-                   help="Allow Linear_Rules [Experimental]")
+  group.add_option("--exp-linear-rules", action="store_true", default=False,
+                   help="Allow accelerating Linear_Rules [Experimental]")
 
   # A quick experiment shows that 100k past_configs -> 100MB, 1M -> 1GB RAM.
   group.add_option("--max-prover-configs", type=int, default=100_000,
@@ -363,7 +360,7 @@ class Proof_System(object):
     self.machine = machine
     self.options = options
     self.recursive = options.recursive
-    self.allow_linear_rules = options.linear_rules
+    self.exp_linear_rules = options.exp_linear_rules
     self.compute_steps = options.compute_steps
     self.verbose = options.verbose_prover  # Step-by-step state printing
     self.verbose_prefix = verbose_prefix
@@ -621,6 +618,14 @@ class Proof_System(object):
         # this to detect which blocks were touched.
         block.id = offset
         offset -= 1
+        # TODO: Support ExpInt in rules.
+        if isinstance(block.num, ExpInt):
+          if self.verbose:
+            print()
+            self.print_this("** Failed: TODO: Cannot prove rule for exponent ExpInt **")
+            self.print_this(gen_sim.tape.print_with_state(gen_sim.state))
+            print()
+          return False
         # Generalize, eg. (abc)^5 -> (abc)^(n+5)
         # Blocks with one rep are not generalized, eg. (abc)^1 -> (abc)^1
         if block.num not in (math.inf, 1):
@@ -757,15 +762,13 @@ class Proof_System(object):
         states_last_seen = None
 
       # Figure out if this is a Linear_Rule
-      rule = None
-      if self.allow_linear_rules:
-        rule = Linear_Rule.try_gen(
-          var_list, min_list, result_tape, num_steps,
-          gen_sim.num_loops, self.num_rules, states_last_seen)
-        if rule:
-          self.num_linear_rules += 1
-          if rule.has_collatz_decrease:
-            self.num_collatz_rules += 1
+      rule = Linear_Rule.try_gen(
+        var_list, min_list, result_tape, num_steps,
+        gen_sim.num_loops, self.num_rules, states_last_seen)
+      if rule:
+        self.num_linear_rules += 1
+        if rule.has_collatz_decrease:
+          self.num_collatz_rules += 1
 
         if self.verbose:
           print()
@@ -773,7 +776,7 @@ class Proof_System(object):
           self.print_this(str(rule).replace("\n", "\n " + self.verbose_prefix))
           print()
 
-      if not rule:
+      else:
         rule = General_Rule(var_list, min_list, result_tape, num_steps,
                             gen_sim.num_loops, self.num_rules,
                             states_last_seen=states_last_seen)
@@ -1003,7 +1006,7 @@ class Proof_System(object):
     if (not isinstance(num_reps, Algebraic_Expression) and
         num_reps <= 0):
       if self.verbose:
-        self.print_this("++ Cannot even apply transition once ++")
+        self.print_this("++ Rule cannot apply: Below min")
         print()
       return False, None
 
@@ -1056,11 +1059,74 @@ class Proof_System(object):
                                states_last_seen=states_last_seen),
                   large_delta)
 
+
   # Linear rules can be applied an arbitrary number of times in a single
   # evaluation (like Diff rules), but the expression is slightly more complicated.
   def apply_linear_rule(self, rule, start_config):
-    # TODO: Add math for applying Linear_Rules arbitrary numbers of times in a single step.
-    return self.apply_general_rule(rule.gen_rule, start_config)
+    # Fallback if --exp-linear-rules flag is not set.
+    if not self.exp_linear_rules:
+      return self.apply_general_rule(rule.gen_rule, start_config)
+
+    # Unpack input
+    start_state, start_tape, start_step_num, start_loop_num = start_config
+    current_list = [block.num for block in start_tape.tape[0] + start_tape.tape[1]]
+    assert len(current_list) == len(rule.var_list)
+    large_delta = True  # Not editted in this function.
+
+    if not config_fits_min(rule.var_list, rule.min_list, current_list):
+      if self.verbose:
+        self.print_this("++ Rule cannot apply: Below min")
+        print()
+      return False, None
+
+    # This rule applies at least once. Find the number of times it applies.
+    num_reps = math.inf
+    for i, cur in enumerate(current_list):
+      if rule.is_decreasing[i]:
+        assert rule.slope_list[i] == 1 and rule.const_list[i] < 0
+        this_reps = (cur - rule.min_list[i]) // -rule.const_list[i] + 1
+        num_reps = min(num_reps, this_reps)
+
+    # This rule applies infinitely, we have proven this machine non-halting!
+    if num_reps == math.inf:
+      if self.verbose:
+        self.print_this("++ Rule applies infinitely ++")
+        print()
+      if rule.states_last_seen:
+        states_last_seen = {state: math.inf for state in rule.states_last_seen}
+      else:
+        states_last_seen = None
+      return True, (ProverResult(INF_REPEAT, states_last_seen=states_last_seen),
+                    large_delta)
+
+    assert num_reps > 0, num_reps
+    # Apply rule a finite number of times.
+    new_tape = start_tape.copy()
+    for i, new_block in enumerate(new_tape.tape[0] + new_tape.tape[1]):
+      if rule.var_list[i]:
+        slope = rule.slope_list[i]
+        const = rule.const_list[i]
+        if slope == 1:
+          # a --(1)--> a + c  => a --(n)--> a + nc
+          new_block.num += num_reps * const
+        else:
+          assert slope > 1, slope
+          # a --(1)--> m a + c  =>  a --(n)--> (a + C) m^n - C  w/ C = c/(m-1)
+          C = Fraction(const, slope - 1)
+          # We use a custom integer class for this since `num_reps` can
+          # be very large!
+          new_block.num = exp_int(base = slope, exponent = num_reps,
+                                  coef = new_block.num + C,
+                                  const = -C)
+
+    if self.verbose:
+      self.print_this("++ Linear rule applied ++")
+      self.print_this("Times applied", num_reps)
+      self.print_this("Resulting tape:", new_tape)
+
+    # Note: We do not calculate `num_base_steps` and `states_last_seen` (yet).
+    return True, (ProverResult(APPLY_RULE, new_tape=new_tape), large_delta)
+
 
   # Diff rules can be applied any number of times in a single evaluation.
   # But we can only apply a general rule once at a time.

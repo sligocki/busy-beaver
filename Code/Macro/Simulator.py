@@ -231,17 +231,14 @@ class Simulator(object):
     print()
     print("         Steps:                     Times Applied:")
     print(template("Total:", self.step_num, self.num_loops))
-    #print "Single Steps:", with_power(self.mtt.num_single_steps)
     print(template("Macro:", self.steps_from_macro, self.num_macro_moves))
-    #print "Macro transitions defined:", len(self.mtt.macro_TTable)
     print(template("Chain:", self.steps_from_chain, self.num_chain_moves))
     if self.prover:
       print(template("Rule:", self.steps_from_rule, self.num_rule_moves))
       print("Rules proven:", self.prover.num_rules)
       if self.prover.recursive:
         print("Meta Diff rules proven:", self.prover.num_meta_diff_rules)
-        if self.prover.allow_linear_rules:
-          print("Linear rules proven:", self.prover.num_linear_rules)
+        print("Linear rules proven:", self.prover.num_linear_rules)
         print("General rules proven:", self.prover.num_gen_rules)
       print("Collatz rules:", self.prover.num_collatz_rules)
       print("Failed proofs:", self.prover.num_failed_proofs)
@@ -268,16 +265,17 @@ def with_power(value):
   """Pretty print log(value) and value (if it's not too big)"""
   output = format_power(value) + "  "
 
-  if value < 10**40:
-    output += str(value)
-  else:
-    output += "..."
+  if isinstance(value, int):
+    if value < 10**40:
+      output += str(value)
+    else:
+      output += "..."
 
   return output
 
 def format_power(value):
   """Pretty print 'value' in exponential notation."""
-  try:
+  if isinstance(value, int) and value > 0:
     return "10^%.1f" % math.log10(value)
-  except:
-    return ""
+  else:
+    return str(value)

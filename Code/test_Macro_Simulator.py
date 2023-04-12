@@ -63,7 +63,7 @@ class MacroSimulatorTest(unittest.TestCase):
     tm = Turing_Machine.Block_Macro_Machine(tm, 2)
     tm = Turing_Machine.Backsymbol_Macro_Machine(tm)
     self.options.recursive = True
-    self.options.linear_rules = True
+    self.options.exp_linear_rules = True
     sim = Simulator.Simulator(tm, self.options)
     # The failure happened at loop 919 on 7 Apr 2022.
     sim.loop_run(10_000)
@@ -79,7 +79,7 @@ class MacroSimulatorTest(unittest.TestCase):
     tm = Turing_Machine.Block_Macro_Machine(tm, 2)
     tm = Turing_Machine.Backsymbol_Macro_Machine(tm)
     self.options.recursive = True
-    self.options.linear_rules = True
+    self.options.exp_linear_rules = True
     sim = Simulator.Simulator(tm, self.options)
     # The failure happened at loop 123 on 7 Apr 2022 (before fix).
     # TM is proven infinite at loop 333 (after fix).
@@ -91,7 +91,7 @@ class MacroSimulatorTest(unittest.TestCase):
     tm = IO.parse_tm("1RB1LA_1RC0LE_1RD1LC_1LA0RF_1RD0LA_1RZ0RE")
     tm = Turing_Machine.Backsymbol_Macro_Machine(tm)
     self.options.recursive = True
-    self.options.linear_rules = True
+    self.options.exp_linear_rules = True
     sim = Simulator.Simulator(tm, self.options)
     # TM was declared Halting (incorrect) at loop 96 on 26 Apr 2022 (before fix).
     # Then, same issue at loop 164 after partial fix.
@@ -155,7 +155,8 @@ class MacroSimulatorTest(unittest.TestCase):
 
   def test_large_halting(self):
     self.options.recursive = True
-    self.options.linear_rules = True
+    # TODO: Get exp_linear_rules to work here.
+    # self.options.exp_linear_rules = True
     self.options.compute_steps = False
     self.options.max_loops = 1_000_000
     self.options.max_block_size = 100
@@ -183,7 +184,7 @@ class MacroSimulatorTest(unittest.TestCase):
 
   def test_non_halting(self):
     self.options.recursive = True
-    self.options.linear_rules = True
+    self.options.exp_linear_rules = True
     tm = IO.parse_tm("1RB---2LA_2LB2RA0LB")
     tm_enum = TM_Enum.TM_Enum(tm, allow_no_halt = False)
     tm_record = TM_Record.TM_Record(tm_enum = tm_enum)
