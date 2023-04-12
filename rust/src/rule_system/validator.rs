@@ -137,8 +137,10 @@ fn try_apply(config: &RepConfig<Expr>, rule: &Rule) -> Result<RepConfig<Expr>, S
     if !rule.final_config.tape[Dir::Left].is_complete
         || rule.final_config.tape[Dir::Right].is_complete
     {
+        // Limited rule
         todo!("Handle limited configs correctly");
     } else {
+        // Complete rule
         Ok(RepConfig {
             tape: update_tape_rep(&rule.final_config.tape, &subs),
             state: rule.final_config.state,
