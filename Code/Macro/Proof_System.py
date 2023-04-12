@@ -11,7 +11,7 @@ import optparse
 from optparse import OptionParser, OptionGroup
 import sys
 
-from Algebraic_Expression import Algebraic_Expression, Variable, NewVariableExpression, VariableToExpression, ConstantToExpression, is_scalar, BadOperation, Term, always_ge
+from Algebraic_Expression import Algebraic_Expression, Variable, NewVariableExpression, VariableToExpression, ConstantToExpression, VarPlusConstExpression, is_scalar, BadOperation, Term, always_ge
 from Exp_Int import ExpInt, exp_int
 from Macro import Simulator
 from Macro import Tape
@@ -618,20 +618,16 @@ class Proof_System(object):
         # this to detect which blocks were touched.
         block.id = offset
         offset -= 1
-        # TODO: Support ExpInt in rules.
-        if isinstance(block.num, ExpInt):
-          if self.verbose:
-            print()
-            self.print_this("** Failed: TODO: Cannot prove rule for exponent ExpInt **")
-            self.print_this(gen_sim.tape.print_with_state(gen_sim.state))
-            print()
-          return False
         # Generalize, eg. (abc)^5 -> (abc)^(n+5)
         # Blocks with one rep are not generalized, eg. (abc)^1 -> (abc)^1
         if block.num not in (math.inf, 1):
           x = Variable()
-          x_expr = VariableToExpression(x)
-          block.num += x_expr
+          init_count = block.num
+          # Avoid proving rules with rediculously huge initial values (like ExpInt).
+          if init_count > 2**1024:
+            init_count = 2**1024
+          x_init = VarPlusConstExpression(x, init_count)
+          block.num = x_init
           min_val[x] = block.num.const
     initial_tape = gen_sim.tape.copy()
     gen_sim.dir = gen_sim.tape.dir
@@ -1111,13 +1107,14 @@ class Proof_System(object):
           new_block.num += num_reps * const
         else:
           assert slope > 1, slope
+          assert isinstance(slope, int), type(slope)
           # a --(1)--> m a + c  =>  a --(n)--> (a + C) m^n - C  w/ C = c/(m-1)
+          a = new_block.num
           C = Fraction(const, slope - 1)
           # We use a custom integer class for this since `num_reps` can
           # be very large!
-          new_block.num = exp_int(base = slope, exponent = num_reps,
-                                  coef = new_block.num + C,
-                                  const = -C)
+          m_n = exp_int(base = slope, exponent = num_reps)
+          new_block.num = (a + C) * m_n - C
 
     if self.verbose:
       self.print_this("++ Linear rule applied ++")

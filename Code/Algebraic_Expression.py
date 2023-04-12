@@ -455,3 +455,10 @@ def VariableToExpression(var):
 def ConstantToExpression(const):
   """Produce an Algebraic Expression from a lone constant."""
   return Expression([], const)
+
+def VarPlusConstExpression(var, const):
+  assert is_scalar(const), const
+  vp = Var_Power(var, 1)
+  term = Term([vp], 1)
+  expr = Expression([term], const)
+  return expr
