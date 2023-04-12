@@ -17,7 +17,7 @@ import io_pb2
 MAX_INT_STR = 10**4000
 def int2str(x):
   """Avoid python's obnoxious ValueError for giant ints."""
-  if x > MAX_INT_STR:
+  if isinstance(x, int) and x > MAX_INT_STR:
     return hex(x)
   else:
     return str(x)

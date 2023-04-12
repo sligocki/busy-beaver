@@ -624,8 +624,8 @@ class Proof_System(object):
           x = Variable()
           init_count = block.num
           # Avoid proving rules with rediculously huge initial values (like ExpInt).
-          if init_count > 2**1024:
-            init_count = 2**1024
+          if init_count > 2**20:
+            init_count = 2**20
           x_init = VarPlusConstExpression(x, init_count)
           block.num = x_init
           min_val[x] = block.num.const

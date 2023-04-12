@@ -10,7 +10,6 @@ syntax = "proto3";
 
 package busy_beaver;
 
-
 // A "potentially" big positive integer.
 message BigInt {
   oneof big_int {
@@ -18,6 +17,9 @@ message BigInt {
     uint64 int = 1;
     // If it is too big (>= 2^64), serialize it as a text string.
     string hex_str = 3;
+    // A formula for really big integers only representable as ExpInt.
+    // TODO: Get a more structured way to represent this.
+    string exp_int_str = 4;
     // DEPRECTATED base 10 version: string str = 2;
   }
 }

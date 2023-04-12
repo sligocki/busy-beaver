@@ -2,19 +2,26 @@
 
 from typing import Optional
 
+from Exp_Int import ExpInt
 import io_pb2
 
 
 _BIG_INT_MAX = 2**64 - 1
-def set_big_int(field : io_pb2.BigInt, value : int):
-  if value <= _BIG_INT_MAX:
-    # For "small" (non-negative) integers, store them directly.
-    # Setting with negative value will cause a ValueError here.
-    field.int = value
+def set_big_int(field : io_pb2.BigInt, value):
+  if isinstance(value, ExpInt):
+    # For really large integers, we store the ExpInt formula.
+    field.exp_int_str = str(value)
+  elif isinstance(value, int):
+    if value <= _BIG_INT_MAX:
+      # For "small" (non-negative) integers, store them directly.
+      # Setting with negative value will cause a ValueError here.
+      field.int = value
+    else:
+      # For "big" integers, store them as serialized text.
+      # Store as hex to avoid https://docs.python.org/3/library/stdtypes.html#integer-string-conversion-length-limitation
+      field.hex_str = hex(value)
   else:
-    # For "big" integers, store them as serialized text.
-    # Store as hex to avoid https://docs.python.org/3/library/stdtypes.html#integer-string-conversion-length-limitation
-    field.hex_str = hex(value)
+    raise TypeError(f"Unexpected type {type(value)}")
 
 def get_big_int(field : io_pb2.BigInt) -> Optional[int]:
   type = field.WhichOneof("big_int")
@@ -23,7 +30,7 @@ def get_big_int(field : io_pb2.BigInt) -> Optional[int]:
   elif type == "hex_str":
     return int(field.hex_str, base=16)
   else:
-    return None
+    raise NotImplementedError(type)
 
 
 def set_halting(tm_status  : io_pb2.BBStatus,
