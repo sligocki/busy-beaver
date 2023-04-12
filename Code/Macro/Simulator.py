@@ -265,13 +265,15 @@ def template(title, steps, loops):
 
 def with_power(value):
   """Pretty print log(value) and value (if it's not too big)"""
-  output = format_power(value) + "  "
+  output = format_power(value)
 
   if isinstance(value, int):
     if value < 10**40:
-      output += str(value)
+      output += " " + str(value)
     else:
-      output += "..."
+      output += " ..."
+  else:
+    output += " " + repr(value)
 
   return output
 

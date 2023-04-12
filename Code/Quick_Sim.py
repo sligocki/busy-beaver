@@ -14,13 +14,6 @@ import IO
 
 import io_pb2
 
-MAX_INT_STR = 10**4000
-def int2str(x):
-  """Avoid python's obnoxious ValueError for giant ints."""
-  if isinstance(x, int) and x > MAX_INT_STR:
-    return hex(x)
-  else:
-    return str(x)
 
 def run(machine, block_size, back, prover, recursive, options):
   # Construct Machine (Backsymbol-k-Block-Macro-Machine)
@@ -79,8 +72,8 @@ def run(machine, block_size, back, prover, recursive, options):
     print("Turing Machine Halted")
     print()
     if options.compute_steps:
-      print("Steps:   ", int2str(sim.step_num))
-    print("Nonzeros:", int2str(sim.get_nonzeros()))
+      print("Steps:   ", Simulator.with_power(sim.step_num))
+    print("Nonzeros:", Simulator.with_power(sim.get_nonzeros()))
   elif sim.op_state == Turing_Machine.INF_REPEAT:
     bb_status = io_pb2.BBStatus()
     Halting_Lib.set_inf_recur(bb_status,
@@ -98,8 +91,8 @@ def run(machine, block_size, back, prover, recursive, options):
     print("Symbol:", sim.op_details[0][0])
     print()
     if options.compute_steps:
-      print("Steps:   ", int2str(sim.step_num))
-    print("Nonzeros:", int2str(sim.get_nonzeros()))
+      print("Steps:   ", Simulator.with_power(sim.step_num))
+    print("Nonzeros:", Simulator.with_power(sim.get_nonzeros()))
   elif sim.op_state == Turing_Machine.GAVE_UP:
     print()
     print("Gave up while simulating Turing Machine")

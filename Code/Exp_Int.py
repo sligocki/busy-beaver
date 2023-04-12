@@ -12,6 +12,34 @@ def exp_int(*, base, exponent):
   else:
     return ExpInt(base, exponent)
 
+def sci_approx(val):
+  """Approx this number in "hyper-scientific notation", i.e. 10^^x"""
+  tower_height = 0
+  while isinstance(val, ExpInt) and isinstance(val.exponent, ExpInt):
+    # Here: k > 3^1M, so log10(b^k) ≈ k
+    # Technically, it should be * log10(b), but in the next tower that will
+    # become + log10(log10(b)) and next tower it will be irrelevent.
+    val = val.exponent
+    tower_height += 1
+  if isinstance(val, ExpInt):
+    assert isinstance(val.exponent, int), val
+    val = prec_mult(val.exponent, math.log10(val.base))
+    tower_height += 1
+  while val >= 1:
+    val = math.log10(val)
+    tower_height += 1
+  assert 0 <= val < 1, val
+  x = tower_height - 1 + val
+  return x
+
+def prec_mult(n : int, x : float, prec : int = 10):
+  try:
+    return n * x
+  except OverflowError:
+    # If n is too big to cast to float, we need to be a little more clever:
+    x = int(x * 2**prec)
+    return (n * x) >> prec
+
 
 def is_simple(value):
   """Is `value` a "simple" numeric type (integer or Fraction)."""
@@ -79,9 +107,10 @@ class ExpInt:
     self.coef = Fraction(coef)
     self.const = Fraction(const)
 
+  def __repr__(self):
+    return f"({self.const} + {self.coef} * {self.base}^{repr(self.exponent)})"
   def __str__(self):
-    return f"({self.const} + {self.coef} * {self.base}^{self.exponent})"
-  __repr__ = __str__
+    return f"~10^^{sci_approx(self)}"
 
   def eval(self):
     """Return int value if size is "somewhat" reasonable."""
