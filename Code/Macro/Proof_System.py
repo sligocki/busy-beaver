@@ -1113,8 +1113,8 @@ class Proof_System(object):
           C = Fraction(const, slope - 1)
           # We use a custom integer class for this since `num_reps` can
           # be very large!
-          m_n = exp_int(base = slope, exponent = num_reps)
-          new_block.num = (a + C) * m_n - C
+          m_n = exp_int(base = slope, exponent = num_reps, coef = 1, const = 0)
+          new_block.num = (a+C) * m_n - C
 
     if self.verbose:
       self.print_this("++ Linear rule applied ++")

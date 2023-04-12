@@ -1,16 +1,32 @@
 """Library for representing very large integers of the form: a b^n + c"""
 
+# TODO: Add tests!
+
 from fractions import Fraction
 import functools
 import math
 
 
-def exp_int(*, base, exponent):
+# Standard way to create an ExpInt
+def exp_int(*, base, exponent, coef, const):
   """Returns either int or ExpInt based on size of exponent."""
+  assert isinstance(base, int)
+  assert is_simple(coef) and is_simple(const)
+  assert is_simple(exponent) or isinstance(exponent, ExpInt)
+
   if is_simple(exponent) and exponent < 1_000:
-    return base**exponent
+    return coef * base**exponent + const
+
   else:
-    return ExpInt(base, exponent)
+    coef = Fraction(coef)
+    const = Fraction(const)
+    # Normalize representation:
+    #   TODO: if base == n^k:  base <- n  exponent *= k
+    while coef.numerator % base == 0:
+      coef /= base
+      exponent += 1
+
+    return ExpInt(base, exponent, coef, const)
 
 def sci_approx(val):
   """Approx this number in "hyper-scientific notation", i.e. 10^^x"""
@@ -98,19 +114,20 @@ def exp_mod(b, k, m):
 
 
 class ExpInt:
-  def __init__(self, base, exponent, coef=1, const=0):
+  def __init__(self, base, exponent, coef, const):
     assert isinstance(base, int)
-    assert is_simple(coef) and is_simple(const)
+    assert isinstance(coef, Fraction) and isinstance(const, Fraction)
     assert is_simple(exponent) or isinstance(exponent, ExpInt)
     self.base = base
     self.exponent = exponent
-    self.coef = Fraction(coef)
-    self.const = Fraction(const)
+    self.coef = coef
+    self.const = const
+    self.tower_approx = sci_approx(self)
 
   def __repr__(self):
     return f"({self.const} + {self.coef} * {self.base}^{repr(self.exponent)})"
   def __str__(self):
-    return f"~10^^{sci_approx(self)}"
+    return f"~10^^{self.tower_approx}"
 
   def eval(self):
     """Return int value if size is "somewhat" reasonable."""
@@ -145,15 +162,15 @@ class ExpInt:
   # Basic arithmetic with simple numbers.
   def __add__(self, other):
     if is_simple(other):
-      return ExpInt(self.base, self.exponent, self.coef,
-                    self.const + other)
+      return exp_int(base = self.base, exponent = self.exponent,
+                     coef = self.coef, const = self.const + other)
     elif isinstance(other, ExpInt) and self.base == other.base and _struct_eq(self.exponent, other.exponent):
       if self.coef + other.coef == 0:
         return self.const + other.const
       else:
-        return ExpInt(self.base, self.exponent,
-                      self.coef + other.coef,
-                      self.const + other.const)
+        return exp_int(base = self.base, exponent = self.exponent,
+                       coef = self.coef + other.coef,
+                       const = self.const + other.const)
     else:
       raise NotImplementedError(f"Cannot eval {self} + {other}")
 
@@ -161,37 +178,26 @@ class ExpInt:
     if other == 0:
       return 0
     elif is_simple(other):
-      return ExpInt(self.base, self.exponent,
-                    self.coef * other,
-                    self.const * other)
-    elif self.base == other.base and self.const == 0 == other.const:
-      return ExpInt(self.base,
-                    self.exponent + other.exponent,
-                    self.coef * other.coef,
-                    const = 0)
+      return exp_int(base = self.base, exponent = self.exponent,
+                     coef = self.coef * other,
+                     const = self.const * other)
+    elif isinstance(other, ExpInt) and self.base == other.base and self.const == 0 == other.const:
+      return exp_int(base = self.base,
+                     exponent = self.exponent + other.exponent,
+                     coef = self.coef * other.coef,
+                     const = 0)
     elif (self_int := self.eval()) is not None:
       return self_int * other
     else:
       raise NotImplementedError(f"Cannot eval {self} * {other}")
 
   def __gt__(self, other):
-    if isinstance(other, int):
-      # Quick check, most comparisons should pass here.
-      if self.base**100 > other:
-        return True
-      x = (other - self.const) / self.coef
-      log2_x = int(x).bit_length()
-      if self.exponent > int(log2_x // math.log2(self.base)):
-        return True
-      else:
-        self_int = self.eval()
-        if self_int:
-          return self_int > other
-    elif other == math.inf:
+    if other == math.inf:
       return False
     elif other == -math.inf:
       return True
-    raise NotImplementedError(f"Cannot eval {self} > {other}")
+
+    return sci_approx(self) > sci_approx(other)
 
   # This is technically not true, but close enough ... at least until we compare ExpInts.
   __ge__ = __gt__

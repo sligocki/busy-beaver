@@ -10,7 +10,7 @@ _BIG_INT_MAX = 2**64 - 1
 def set_big_int(field : io_pb2.BigInt, value):
   if isinstance(value, ExpInt):
     # For really large integers, we store the ExpInt formula.
-    field.exp_int_str = str(value)
+    field.exp_int_str = f"{str(value)} = {repr(value)}"
   elif isinstance(value, int):
     if value <= _BIG_INT_MAX:
       # For "small" (non-negative) integers, store them directly.
