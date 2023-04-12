@@ -158,6 +158,8 @@ class Simulator(object):
 
         self.tape = prover_result.new_tape
         self.num_rule_moves += 1
+        if prover_result.num_base_steps is None:
+          self.compute_steps = False
         if self.compute_steps:
           if self.states_last_seen is not None and prover_result.states_last_seen:
             for state, prover_last_seen in prover_result.states_last_seen.items():

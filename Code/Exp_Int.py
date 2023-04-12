@@ -7,7 +7,7 @@ import math
 
 def exp_int(*, base, exponent):
   """Returns either int or ExpInt based on size of exponent."""
-  if is_simple(exponent) and exponent < 1000:
+  if is_simple(exponent) and exponent < 1_000:
     return base**exponent
   else:
     return ExpInt(base, exponent)
@@ -83,6 +83,10 @@ class ExpInt:
     return f"({self.const} + {self.coef} * {self.base}^{self.exponent})"
   __repr__ = __str__
 
+  def eval(self):
+    """Return int value if size is "somewhat" reasonable."""
+    if is_simple(self.exponent) and self.exponent < 1_000:
+      return self.coef * self.base**self.exponent + self.const
 
   def __mod__(self, other):
     if other == 1:
@@ -114,7 +118,7 @@ class ExpInt:
     if is_simple(other):
       return ExpInt(self.base, self.exponent, self.coef,
                     self.const + other)
-    elif self.base == other.base and _struct_eq(self.exponent, other.exponent):
+    elif isinstance(other, ExpInt) and self.base == other.base and _struct_eq(self.exponent, other.exponent):
       if self.coef + other.coef == 0:
         return self.const + other.const
       else:
@@ -136,15 +140,24 @@ class ExpInt:
                     self.exponent + other.exponent,
                     self.coef * other.coef,
                     const = 0)
+    elif (self_int := self.eval()) is not None:
+      return self_int * other
     else:
       raise NotImplementedError(f"Cannot eval {self} * {other}")
 
   def __gt__(self, other):
     if isinstance(other, int):
-      # Expectation is that ExpInt > int, so just do a quick sanity check.
-      log2_other = other.bit_length()
-      if self.base >= 2 and self.coef >= 1 and self.exponent > log2_other:
+      # Quick check, most comparisons should pass here.
+      if self.base**100 > other:
         return True
+      x = (other - self.const) / self.coef
+      log2_x = int(x).bit_length()
+      if self.exponent > int(log2_x // math.log2(self.base)):
+        return True
+      else:
+        self_int = self.eval()
+        if self_int:
+          return self_int > other
     elif other == math.inf:
       return False
     elif other == -math.inf:

@@ -180,10 +180,11 @@ class Enumerator(object):
                                   self.options.time)
       else:
         Macro_Simulator.run_options(tm_record, self.options)
-    except:
+    except Exception as e:
       print("ERROR: Exception raised while simulating TM:",
             tm_record.ttable_str(), file=sys.stderr)
-      raise
+      print(e)
+      # TODO: Add note to tm_record about exception?
     return tm_record
 
   def expand_undefined_transition(self, old_tm_record : TM_Record) -> None:
