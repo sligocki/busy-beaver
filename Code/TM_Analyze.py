@@ -6,6 +6,7 @@ import collections
 import math
 from pathlib import Path
 
+from Exp_Int import ExpInt
 import Halting_Lib
 import IO
 
@@ -18,16 +19,16 @@ class Stat:
     self.total = 0
     self.max_value = 0
 
-    # Histogram of the order of magnitudes.
-    # self.log_hist[n] == # values in range [10^n, 10^(n+1))
-    self.log_hist = collections.Counter()
+    # # Histogram of the order of magnitudes.
+    # # self.log_hist[n] == # values in range [10^n, 10^(n+1))
+    # self.log_hist = collections.Counter()
 
   def add(self, value):
     if value:
       self.count += 1
       self.total += value
       self.max_value = max(self.max_value, value)
-      self.log_hist[int(math.log10(value))] += 1
+      # self.log_hist[int(math.log10(value))] += 1
 
   def mean(self):
     if self.count:
@@ -35,11 +36,29 @@ class Stat:
     else:
       return 0.0
 
-def bigint_to_str(big):
-  if big < 1_000_000_000_000:
-    return f"{big:_}"
-  else:
-    return f"10^{math.log10(big):_.2f}"
+class BigIntStat:
+  def __init__(self):
+    self.count = 0
+    self.max_value = 0
+
+  def add(self, value):
+    if value:
+      self.count += 1
+      self.max_value = max(self.max_value, value)
+
+  def max_str(self):
+    if isinstance(self.max_value, int):
+      full_str = ""
+      if self.max_value < 10**100:
+        full_str = f"{self.max_value:_d}"
+      exp_str = ""
+      if self.max_value > 0:
+        exp_str = f"10^{math.log10(self.max_value):_.2f}"
+      return f"{exp_str}  {full_str}"
+    elif isinstance(self.max_value, ExpInt):
+      return f"{self.max_value.tower_approx_text()}  =  {self.max_value.formula_text()}"
+    raise NotImplementedError(type(self.max_value))
+
 
 class TMStats:
   def __init__(self):
@@ -50,11 +69,11 @@ class TMStats:
     self.num_inf = 0
     self.num_qhalt = 0
 
-    self.halt_steps = Stat()
-    self.halt_score = Stat()
+    self.halt_steps = BigIntStat()
+    self.halt_score = BigIntStat()
     self.unknown_reason = collections.Counter()
     self.inf_reason = collections.Counter()
-    self.qhalt_steps = Stat()
+    self.qhalt_steps = BigIntStat()
 
     self.filters_run = collections.Counter()
 
@@ -181,8 +200,8 @@ class TMStats:
             f"{count:15_}  ({count / self.num_unknown:7.2%})")
     print()
     print(f"Halt: {self.num_halt:_} ({self.num_halt / self.count:.3%})")
-    print(f"  - Steps: Max {bigint_to_str(self.halt_steps.max_value)}")
-    print(f"  - Score: Max {bigint_to_str(self.halt_score.max_value)}")
+    print(f"  - Steps: Max {self.halt_steps.max_str()}")
+    print(f"  - Score: Max {self.halt_score.max_str()}")
     print()
     print(f"Infinite: {self.num_inf:_} ({self.num_inf / self.count:.3%})")
     for (reason, count) in sorted(self.inf_reason.items(), key=lambda x: x[1], reverse=True):
@@ -192,7 +211,7 @@ class TMStats:
 
     if self.num_qhalt:
       print(f"Quasihalt: {self.num_qhalt:_} ({self.num_qhalt / self.count:.3%})")
-      print(f"  - Steps: Max {bigint_to_str(self.qhalt_steps.max_value)}")
+      print(f"  - Steps: Max {self.qhalt_steps.max_str()}")
       print()
 
     print("Filters Run:")

@@ -1,9 +1,11 @@
 # Library for setting various halting conditions (especially into the protobufs).
 
+from fractions import Fraction
 from typing import Optional
 
 from Exp_Int import ExpInt
 import io_pb2
+import Math
 
 
 _BIG_INT_MAX = 2**64 - 1
@@ -18,24 +20,34 @@ def set_big_int(field : io_pb2.BigInt, value):
       # Store as hex to avoid https://docs.python.org/3/library/stdtypes.html#integer-string-conversion-length-limitation
       field.hex_str = hex(value)
   elif isinstance(value, ExpInt):
-    # For giant integers, we store the ExpInt formula.
-    field.exp_int.tower_height = value.tower_approx()
-    field.exp_int.formula_text = value.formula_text()
-    # Serialize constants.
-    value.to_protobuf(field.exp_int.data)
+    serialize_exp_int(value, field.exp_int)
   else:
     raise TypeError(f"Unexpected type {type(value)}")
 
-def get_big_int(field : io_pb2.BigInt) -> Optional[int]:
+def get_big_int(field : io_pb2.BigInt):
   type = field.WhichOneof("big_int")
   if type == "int":
     return field.int
   elif type == "hex_str":
     return int(field.hex_str, base=16)
   elif type == "exp_int":
-    return ExpInt.from_protobuf(field.exp_int.data)
+    return parse_exp_int(field.exp_int)
   else:
     raise NotImplementedError(type)
+
+
+# Protobuf serialization and parsing
+def serialize_exp_int(value : ExpInt, field : io_pb2.ExpInt):
+  field.base = value.base
+  field.denom = Math.lcm(value.coef.denominator, value.const.denominator)
+  field.coef = int(value.coef * field.denom)
+  field.const = int(value.const * field.denom)
+  set_big_int(field.exponent, value.exponent)
+
+def parse_exp_int(field : io_pb2.ExpInt) -> ExpInt:
+  exp = get_big_int(field.exponent)
+  return ExpInt(field.base, exp, Fraction(field.coef, field.denom),
+                Fraction(field.const, field.denom))
 
 
 def set_halting(tm_status  : io_pb2.BBStatus,

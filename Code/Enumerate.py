@@ -185,6 +185,7 @@ class Enumerator(object):
             tm_record.ttable_str(), file=sys.stderr)
       print(e)
       # TODO: Add note to tm_record about exception?
+      raise
     return tm_record
 
   def expand_undefined_transition(self, old_tm_record : TM_Record) -> None:

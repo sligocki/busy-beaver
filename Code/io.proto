@@ -12,28 +12,14 @@ package busy_beaver;
 
 
 // Formula representing number (coef * base^exponent + const) / denom
-message ExpIntData {
+// protobuf version of type Exp_Int.ExpInt
+message ExpInt {
   uint64 base = 1;
   sint64 coef = 2;
   sint64 const = 3;
   uint64 denom = 4;
-  // Exponent may be plain integer or another ExpIntData
-  oneof exponent {
-    uint64 exp_as_int = 5;
-    ExpIntData exp_as_formula = 6;
-  }
-}
-
-// Representation for giant integers that can only be expressed as
-// protobuf version of type Exp_Int.ExpInt
-message ExpInt {
-  // Actual serialized constants.
-  ExpIntData data = 1;
-  // This ExpInt ~= 10^^tower_height (using extended up-arrow notation)
-  //    See: https://www.sligocki.com/2022/06/25/ext-up-notation.html
-  double tower_height = 2;
-  // Text math formula for this ExpInt
-  string formula_text = 3;
+  // Exponent may be plain integer or another ExpInt
+  BigInt exponent = 5;
 }
 
 // A "potentially" big positive integer.
@@ -46,9 +32,10 @@ message BigInt {
     string hex_str = 3;
 
     // Giant int: ~10^^15. Represented using a formula.
-    ExpInt exp_int = 4;
+    ExpInt exp_int = 5;
 
-    // DEPRECTATED base 10 version: string str = 2;
+    // DEPRECATED base 10 version: string str = 2;
+    string exp_int_str = 4;  // DEPRECATED
   }
 }
 

@@ -7,6 +7,7 @@ import functools
 import math
 
 import io_pb2
+from Math import gcd, lcm, int_pow
 
 
 # Standard way to create an ExpInt
@@ -81,26 +82,6 @@ def _struct_eq(self, other):
     return False
 
 
-def gcd(a : int, b : int) -> int:
-  if b > a:
-    a, b = b, a
-  while b > 0:
-    _, r = divmod(a, b)
-    a, b = b, r
-  return a
-
-def lcm(a : int, b : int) -> int:
-  return a * b // gcd(a, b)
-
-def int_pow(n : int) -> (int, int):
-  """Find smallest integer m such that n == m^k and return (m, k)"""
-  for m in range(2, int(math.sqrt(n)) + 1):
-    k = int(round(math.log(n, m)))
-    if m**k == n:
-      return (m, k)
-  return (n, 1)
-
-
 @functools.cache
 def cycle(b, m):
   """Smallest i >= 0, p > 0 such that b^i+p ≡ b^i (mod m)."""
@@ -159,28 +140,6 @@ class ExpInt:
     if is_simple(self.exponent) and self.exponent < 1_000:
       return self.coef * self.base**self.exponent + self.const
 
-  # Protobuf serialization and parsing
-  def to_protobuf(self, field : io_pb2.ExpIntData):
-    field.base = self.base
-    field.denom = lcm(self.coef.denominator, self.const.denominator)
-    field.coef = int(self.coef * field.denom)
-    field.const = int(self.const * field.denom)
-    if isinstance(self.exponent, ExpInt):
-      self.exponent.to_protobuf(field.exp_as_formula)
-    else:
-      field.exp_as_int = self.exponent
-
-  @staticmethod
-  def from_protobuf(field : io_pb2.ExpIntData):
-    type = field.WhichOneof("exponent")
-    if type == "exp_as_int":
-      exp = field.exp_as_int
-    else:
-      assert type == "exp_as_formula", type
-      exp = ExpInt.from_protobuf(field.exp_as_formula)
-    return ExpInt(field.base, exp, Fraction(field.coef, field.denom),
-                  Fraction(field.const, field.denom))
-
 
   # The ability to implement mod on this data structure efficiently is the
   # reason that this class works!
@@ -222,8 +181,8 @@ class ExpInt:
           return exp_int(base = self.base, exponent = self.exponent,
                          coef = self.coef + other.coef,
                          const = self.const + other.const)
-    else:
-      raise NotImplementedError(f"Cannot eval {self} + {other}")
+
+    raise NotImplementedError(f"Cannot eval {self} + {other}")
 
   def __mul__(self, other):
     if other == 0:
