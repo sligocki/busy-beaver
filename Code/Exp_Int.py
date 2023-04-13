@@ -15,14 +15,16 @@ def exp_int(*, base, exponent, coef, const):
   """Returns either int or ExpInt based on size of exponent."""
   assert isinstance(base, int)
   assert is_simple(coef) and is_simple(const)
-  assert is_simple(exponent) or isinstance(exponent, ExpInt)
+  assert isinstance(exponent, (int, ExpInt))
 
   if coef == 0:
-    return const
+    return int(const)
 
   elif is_simple(exponent) and exponent < 1_000:
-    return coef * base**exponent + const
+    return int(coef * base**exponent + const)
 
+  elif isinstance(exponent, ExpInt) and exponent.depth > 100:
+    raise OverflowError("Too many layers of ExpInt")
   else:
     coef = Fraction(coef)
     const = Fraction(const)
@@ -115,11 +117,16 @@ class ExpInt:
   def __init__(self, base, exponent, coef, const):
     assert isinstance(base, int)
     assert isinstance(coef, Fraction) and isinstance(const, Fraction)
-    assert is_simple(exponent) or isinstance(exponent, ExpInt)
+    assert isinstance(exponent, (int, ExpInt))
     self.base = base
     self.exponent = exponent
     self.coef = coef
     self.const = const
+    if isinstance(exponent, int):
+      self.depth = 1
+    else:
+      assert isinstance(exponent, ExpInt)
+      self.depth = exponent.depth + 1
 
   def formula_text(self):
     return f"({self.const} + {self.coef} * {self.base}^{repr(self.exponent)})"
@@ -138,7 +145,7 @@ class ExpInt:
   def eval(self):
     """Return int value if size is "somewhat" reasonable."""
     if is_simple(self.exponent) and self.exponent < 1_000:
-      return self.coef * self.base**self.exponent + self.const
+      return int(self.coef * self.base**self.exponent + self.const)
 
 
   # The ability to implement mod on this data structure efficiently is the
@@ -146,6 +153,11 @@ class ExpInt:
   def __mod__(self, other):
     if other == 1:
       return 0
+
+    if isinstance(other, Fraction):
+      assert other.denominator == 1, other
+      other = int(other)
+
     if isinstance(other, int):
       # (a b^k + c) / d = n other + r
       # a b^k = n (d other) + rd - c
@@ -159,8 +171,9 @@ class ExpInt:
       r, rdr = divmod(rd, d)
       assert rdr == 0, (rd, d, r, rdr)
       return r % other
+
     else:
-      raise NotImplementedError(f"Cannot eval {self} % {other}")
+      raise NotImplementedError(f"Cannot eval %: {self} % {repr(other)}")
 
   # Integer division
   def __floordiv__(self, other):
@@ -176,13 +189,13 @@ class ExpInt:
     if isinstance(other, ExpInt):
       if self.base == other.base and _struct_eq(self.exponent, other.exponent):
         if self.coef + other.coef == 0:
-          return self.const + other.const
+          return int(self.const + other.const)
         else:
           return exp_int(base = self.base, exponent = self.exponent,
                          coef = self.coef + other.coef,
                          const = self.const + other.const)
 
-    raise NotImplementedError(f"Cannot eval {self} + {other}")
+    raise NotImplementedError(f"Cannot eval +: {self} + {repr(other)}")
 
   def __mul__(self, other):
     if other == 0:
@@ -199,7 +212,7 @@ class ExpInt:
     # elif (self_int := self.eval()) is not None:
     #   return self_int * other
     else:
-      raise NotImplementedError(f"Cannot eval {self} * {other}")
+      raise NotImplementedError(f"Cannot eval *: {self} * {repr(other)}")
 
   # Basic comparision using tower notation.
   # TODO: This is not 100% accurate b/c sci_approx is ... an approximation
