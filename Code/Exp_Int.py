@@ -21,7 +21,10 @@ def exp_int(*, base, exponent, coef, const):
     coef = Fraction(coef)
     const = Fraction(const)
     # Normalize representation:
-    #   TODO: if base == n^k:  base <- n  exponent *= k
+    (n, k) = int_pow(base)
+    if k > 1:
+      base = n
+      exponent *= k
     while coef.numerator % base == 0:
       coef /= base
       exponent += 1
@@ -73,7 +76,7 @@ def _struct_eq(self, other):
     return False
 
 
-def gcd(a, b):
+def gcd(a : int, b : int) -> int:
   if b > a:
     a, b = b, a
   while b > 0:
@@ -81,8 +84,17 @@ def gcd(a, b):
     a, b = b, r
   return a
 
-def lcm(a, b):
+def lcm(a : int, b : int) -> int:
   return a * b // gcd(a, b)
+
+def int_pow(n : int) -> (int, int):
+  """Find smallest integer m such that n == m^k and return (m, k)"""
+  for m in range(2, int(math.sqrt(n)) + 1):
+    k = int(round(math.log(n, m)))
+    if m**k == n:
+      return (m, k)
+  return (n, 1)
+
 
 @functools.cache
 def cycle(b, m):
