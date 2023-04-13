@@ -159,12 +159,12 @@ class MacroSimulatorTest(unittest.TestCase):
     self.options.compute_steps = False
     self.options.max_loops = 1_000_000
     self.options.max_block_size = 100
-    data = [("Machines/6x2-e21132-Pavel", "(25/2 + 43046721/2 * 27^7377)"),
-            ("Machines/6x2-e36534-Pavel", "(23/9 + 1759218604441600/9 * 4096^5053)"),
-            ("Machines/6x2-e78913", "(1 + 1572864 * 16^32763)"),
-            ("Machines/6x2-e197282-Pavel", "(-4 + 80 * 2^327673)"),
+    data = [("Machines/6x2-e21132-Pavel",  2.604, "(25/2 + 1/2 * 3^22147)"),
+            ("Machines/6x2-e36534-Pavel",  2.629, "(23/9 + 25/9 * 2^60682)"),
+            ("Machines/6x2-e78913",        2.662, "(1 + 3 * 2^131071)"),
+            ("Machines/6x2-e197282-Pavel", 2.698, "(-4 + 5 * 2^327677)"),
             ]
-    for name, expected_score in data:
+    for name, expected_tower, expected_formula in data:
       filename = os.path.join(self.root_dir, name)
       tm_record = self.load_tm_record_filename(filename)
       try:
@@ -177,10 +177,9 @@ class MacroSimulatorTest(unittest.TestCase):
       self.assertTrue(tm_record.is_halting())
       self.assertEqual(Halting_Lib.get_big_int(tm_record.proto.status.halt_status.halt_steps),
                        0)
-      expected_score_proto = io_pb2.BigInt()
-      expected_score_proto.exp_int_str = expected_score
-      self.assertEqual(tm_record.proto.status.halt_status.halt_score,
-                       expected_score_proto)
+      score = Halting_Lib.get_big_int(tm_record.proto.status.halt_status.halt_score)
+      self.assertAlmostEqual(score.tower_approx(), expected_tower, 2)
+      self.assertEqual(score.formula_text(), expected_formula)
 
   def test_giant_halting(self):
     self.options.recursive = True
@@ -188,12 +187,12 @@ class MacroSimulatorTest(unittest.TestCase):
     self.options.compute_steps = False
     self.options.max_loops = 1_000_000
     self.options.max_block_size = 100
-    data = [("Machines/6x2-t5",
-             "(49/9 + 159383552/9 * 64^(-112/27 + 1879048192/27 * 64^(-136/27 + 469762048/27 * 64^(-127/27 + 318767104/27 * 64^11525))))"),
-            ("Machines/6x2-t15-Pavel",
-             "(-11/2 + 243/2 * 27^(-9/8 + 729/8 * 27^(-11/8 + 81/8 * 27^(-11/8 + 243/8 * 27^(-9/8 + 81/8 * 27^(-11/8 + 27/8 * 27^(-3/8 + 81/8 * 27^(-11/8 + 729/8 * 27^(-11/8 + 81/8 * 27^(-11/8 + 4782969/8 * 27^(-33/8 + 81/8 * 27^(-11/8 + 729/8 * 27^(-11/8 + 59049/8 * 27^(-27/8 + 4782969/8 * 27^7377))))))))))))))"),
+    data = [("Machines/6x2-t5", 5.635,
+             "(49/9 + 19/9 * 2^(-17/9 + 7/9 * 2^(-11/9 + 7/9 * 2^(-11/9 + 19/9 * 2^69175))))"),
+            ("Machines/6x2-t15-Pavel", 15.604,
+             "(-11/2 + 1/2 * 3^(13/8 + 1/8 * 3^(23/8 + 1/8 * 3^(7/8 + 1/8 * 3^(21/8 + 1/8 * 3^(7/8 + 1/8 * 3^(23/8 + 1/8 * 3^(7/8 + 1/8 * 3^(23/8 + 1/8 * 3^(7/8 + 1/8 * 3^(21/8 + 1/8 * 3^(7/8 + 1/8 * 3^(23/8 + 1/8 * 3^(7/8 + 1/8 * 3^22146))))))))))))))"),
             ]
-    for name, expected_score in data:
+    for name, expected_tower, expected_formula in data:
       filename = os.path.join(self.root_dir, name)
       tm_record = self.load_tm_record_filename(filename)
       try:
@@ -206,10 +205,9 @@ class MacroSimulatorTest(unittest.TestCase):
       self.assertTrue(tm_record.is_halting())
       self.assertEqual(Halting_Lib.get_big_int(tm_record.proto.status.halt_status.halt_steps),
                        0)
-      expected_score_proto = io_pb2.BigInt()
-      expected_score_proto.exp_int_str = expected_score
-      self.assertEqual(tm_record.proto.status.halt_status.halt_score,
-                       expected_score_proto)
+      score = Halting_Lib.get_big_int(tm_record.proto.status.halt_status.halt_score)
+      self.assertAlmostEqual(score.tower_approx(), expected_tower, 2)
+      self.assertEqual(score.formula_text(), expected_formula)
 
   def test_non_halting(self):
     self.options.recursive = True

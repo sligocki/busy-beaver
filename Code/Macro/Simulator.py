@@ -13,11 +13,10 @@ import sys
 import time
 
 from Algebraic_Expression import Algebraic_Expression
-
+from Exp_Int import ExpInt
 from Macro import Proof_System
 from Macro import Tape
 from Macro import Turing_Machine
-
 import io_pb2
 
 
@@ -281,5 +280,7 @@ def format_power(value):
   """Pretty print 'value' in exponential notation."""
   if isinstance(value, int) and value > 0:
     return "10^%.1f" % math.log10(value)
+  elif isinstance(value, ExpInt):
+    return value.tower_approx_text()
   else:
     return str(value)

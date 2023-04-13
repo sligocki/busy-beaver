@@ -6,6 +6,8 @@ from fractions import Fraction
 import functools
 import math
 
+import io_pb2
+
 
 # Standard way to create an ExpInt
 def exp_int(*, base, exponent, coef, const):
@@ -14,7 +16,10 @@ def exp_int(*, base, exponent, coef, const):
   assert is_simple(coef) and is_simple(const)
   assert is_simple(exponent) or isinstance(exponent, ExpInt)
 
-  if is_simple(exponent) and exponent < 1_000:
+  if coef == 0:
+    return const
+
+  elif is_simple(exponent) and exponent < 1_000:
     return coef * base**exponent + const
 
   else:
@@ -134,18 +139,51 @@ class ExpInt:
     self.exponent = exponent
     self.coef = coef
     self.const = const
-    self.tower_approx = sci_approx(self)
 
-  def __repr__(self):
+  def formula_text(self):
     return f"({self.const} + {self.coef} * {self.base}^{repr(self.exponent)})"
-  def __str__(self):
-    return f"~10^^{self.tower_approx}"
+  def tower_approx_text(self):
+    if self.coef > 0:
+      pre = ""
+    else:
+      pre = "-"
+    return f"{pre}10^^{self.tower_approx()}"
+  def tower_approx(self):
+    return sci_approx(self)
+
+  __repr__ = formula_text
+  __str__ = formula_text
 
   def eval(self):
     """Return int value if size is "somewhat" reasonable."""
     if is_simple(self.exponent) and self.exponent < 1_000:
       return self.coef * self.base**self.exponent + self.const
 
+  # Protobuf serialization and parsing
+  def to_protobuf(self, field : io_pb2.ExpIntData):
+    field.base = self.base
+    field.denom = lcm(self.coef.denominator, self.const.denominator)
+    field.coef = int(self.coef * field.denom)
+    field.const = int(self.const * field.denom)
+    if isinstance(self.exponent, ExpInt):
+      self.exponent.to_protobuf(field.exp_as_formula)
+    else:
+      field.exp_as_int = self.exponent
+
+  @staticmethod
+  def from_protobuf(field : io_pb2.ExpIntData):
+    type = field.WhichOneof("exponent")
+    if type == "exp_as_int":
+      exp = field.exp_as_int
+    else:
+      assert type == "exp_as_formula", type
+      exp = ExpInt.from_protobuf(field.exp_as_formula)
+    return ExpInt(field.base, exp, Fraction(field.coef, field.denom),
+                  Fraction(field.const, field.denom))
+
+
+  # The ability to implement mod on this data structure efficiently is the
+  # reason that this class works!
   def __mod__(self, other):
     if other == 1:
       return 0
@@ -176,13 +214,14 @@ class ExpInt:
     if is_simple(other):
       return exp_int(base = self.base, exponent = self.exponent,
                      coef = self.coef, const = self.const + other)
-    elif isinstance(other, ExpInt) and self.base == other.base and _struct_eq(self.exponent, other.exponent):
-      if self.coef + other.coef == 0:
-        return self.const + other.const
-      else:
-        return exp_int(base = self.base, exponent = self.exponent,
-                       coef = self.coef + other.coef,
-                       const = self.const + other.const)
+    if isinstance(other, ExpInt):
+      if self.base == other.base and _struct_eq(self.exponent, other.exponent):
+        if self.coef + other.coef == 0:
+          return self.const + other.const
+        else:
+          return exp_int(base = self.base, exponent = self.exponent,
+                         coef = self.coef + other.coef,
+                         const = self.const + other.const)
     else:
       raise NotImplementedError(f"Cannot eval {self} + {other}")
 
@@ -193,16 +232,19 @@ class ExpInt:
       return exp_int(base = self.base, exponent = self.exponent,
                      coef = self.coef * other,
                      const = self.const * other)
-    elif isinstance(other, ExpInt) and self.base == other.base and self.const == 0 == other.const:
-      return exp_int(base = self.base,
-                     exponent = self.exponent + other.exponent,
-                     coef = self.coef * other.coef,
-                     const = 0)
-    elif (self_int := self.eval()) is not None:
-      return self_int * other
+    # elif isinstance(other, ExpInt) and self.base == other.base and self.const == 0 == other.const:
+    #   return exp_int(base = self.base,
+    #                  exponent = self.exponent + other.exponent,
+    #                  coef = self.coef * other.coef,
+    #                  const = 0)
+    # elif (self_int := self.eval()) is not None:
+    #   return self_int * other
     else:
       raise NotImplementedError(f"Cannot eval {self} * {other}")
 
+  # Basic comparision using tower notation.
+  # TODO: This is not 100% accurate b/c sci_approx is ... an approximation
+  # but it should be (mostly) good enough.
   def __gt__(self, other):
     if other == math.inf:
       return False
@@ -211,8 +253,13 @@ class ExpInt:
 
     return sci_approx(self) > sci_approx(other)
 
-  # This is technically not true, but close enough ... at least until we compare ExpInts.
-  __ge__ = __gt__
+  def __ge__(self, other):
+    if other == math.inf:
+      return False
+    elif other == -math.inf:
+      return True
+
+    return sci_approx(self) >= sci_approx(other)
 
   # Boilerplate
   def __neg__(self):

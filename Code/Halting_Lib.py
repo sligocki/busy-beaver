@@ -8,10 +8,7 @@ import io_pb2
 
 _BIG_INT_MAX = 2**64 - 1
 def set_big_int(field : io_pb2.BigInt, value):
-  if isinstance(value, ExpInt):
-    # For really large integers, we store the ExpInt formula.
-    field.exp_int_str = f"{str(value)} = {repr(value)}"
-  elif isinstance(value, int):
+  if isinstance(value, int):
     if value <= _BIG_INT_MAX:
       # For "small" (non-negative) integers, store them directly.
       # Setting with negative value will cause a ValueError here.
@@ -20,6 +17,12 @@ def set_big_int(field : io_pb2.BigInt, value):
       # For "big" integers, store them as serialized text.
       # Store as hex to avoid https://docs.python.org/3/library/stdtypes.html#integer-string-conversion-length-limitation
       field.hex_str = hex(value)
+  elif isinstance(value, ExpInt):
+    # For giant integers, we store the ExpInt formula.
+    field.exp_int.tower_height = value.tower_approx()
+    field.exp_int.formula_text = value.formula_text()
+    # Serialize constants.
+    value.to_protobuf(field.exp_int.data)
   else:
     raise TypeError(f"Unexpected type {type(value)}")
 
@@ -29,6 +32,8 @@ def get_big_int(field : io_pb2.BigInt) -> Optional[int]:
     return field.int
   elif type == "hex_str":
     return int(field.hex_str, base=16)
+  elif type == "exp_int":
+    return ExpInt.from_protobuf(field.exp_int.data)
   else:
     raise NotImplementedError(type)
 
