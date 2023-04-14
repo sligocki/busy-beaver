@@ -1114,9 +1114,11 @@ class Proof_System(object):
           # We use a custom integer class for this since `num_reps` can
           # be very large!
           m_n = exp_int(base = slope, exponent = num_reps)
-          new_block.num = ((a*m + const) * m_n - const) / m
-          if isinstance(new_block.num, float):
-            new_block.num = int(new_block.num)
+          numer = ((a*m + const) * m_n - const)
+          if isinstance(numer, int):
+            new_block.num = numer // m
+          else:
+            new_block.num = numer / m
 
     if self.verbose:
       self.print_this("++ Linear rule applied ++")
