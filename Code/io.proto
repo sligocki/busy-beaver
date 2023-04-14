@@ -11,15 +11,18 @@ syntax = "proto3";
 package busy_beaver;
 
 
-// Formula representing number (coef * base^exponent + const) / denom
-// protobuf version of type Exp_Int.ExpInt
-message ExpInt {
+message ExpTerm {
   uint64 base = 1;
   sint64 coef = 2;
-  sint64 const = 3;
-  uint64 denom = 4;
   // Exponent may be plain integer or another ExpInt
-  BigInt exponent = 5;
+  BigInt exponent = 3;
+}
+
+// protobuf version of type Exp_Int.ExpInt
+message ExpInt {
+  repeated ExpTerm terms = 1;
+  sint64 const = 2;
+  uint64 denom = 3;
 }
 
 // A "potentially" big positive integer.
@@ -32,10 +35,11 @@ message BigInt {
     string hex_str = 3;
 
     // Giant int: ~10^^15. Represented using a formula.
-    ExpInt exp_int = 5;
+    ExpInt exp_int = 6;
 
     // DEPRECATED base 10 version: string str = 2;
     string exp_int_str = 4;  // DEPRECATED
+    // DEPRECATED old format: ExpInt exp_int = 5;
   }
 }
 

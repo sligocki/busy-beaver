@@ -159,10 +159,10 @@ class MacroSimulatorTest(unittest.TestCase):
     self.options.compute_steps = False
     self.options.max_loops = 1_000_000
     self.options.max_block_size = 100
-    data = [("Machines/6x2-e21132-Pavel",  2.604, "(25/2 + 1/2 * 3^22147)"),
-            ("Machines/6x2-e36534-Pavel",  2.629, "(23/9 + 25/9 * 2^60682)"),
-            ("Machines/6x2-e78913",        2.662, "(1 + 3 * 2^131071)"),
-            ("Machines/6x2-e197282-Pavel", 2.698, "(-4 + 5 * 2^327677)"),
+    data = [("Machines/6x2-e21132-Pavel",  2.604, "(1 * 3^22147 + 25)/2"),
+            ("Machines/6x2-e36534-Pavel",  2.629, "(25 * 2^60682 + 23)/9"),
+            ("Machines/6x2-e78913",        2.662, "(3 * 2^131071 + 1)/1"),
+            ("Machines/6x2-e197282-Pavel", 2.698, "(5 * 2^327677 + -4)/1"),
             ]
     for name, expected_tower, expected_formula in data:
       filename = os.path.join(self.root_dir, name)
@@ -178,8 +178,8 @@ class MacroSimulatorTest(unittest.TestCase):
       self.assertEqual(Halting_Lib.get_big_int(tm_record.proto.status.halt_status.halt_steps),
                        0)
       score = Halting_Lib.get_big_int(tm_record.proto.status.halt_status.halt_score)
-      self.assertAlmostEqual(score.tower_approx(), expected_tower, 2)
-      self.assertEqual(score.formula_text(), expected_formula)
+      self.assertAlmostEqual(score.tower_approx, expected_tower, 2)
+      self.assertEqual(score.formula_str(), expected_formula)
 
   def test_giant_halting(self):
     self.options.recursive = True
@@ -188,9 +188,9 @@ class MacroSimulatorTest(unittest.TestCase):
     self.options.max_loops = 1_000_000
     self.options.max_block_size = 100
     data = [("Machines/6x2-t5", 5.635,
-             "(49/9 + 19/9 * 2^(-17/9 + 7/9 * 2^(-11/9 + 7/9 * 2^(-11/9 + 19/9 * 2^69175))))"),
+             "(19 * 2^(7 * 2^(7 * 2^(19 * 2^69175 + -11)/9 + -11)/9 + -17)/9 + 49)/9"),
             ("Machines/6x2-t15-Pavel", 15.604,
-             "(-11/2 + 1/2 * 3^(13/8 + 1/8 * 3^(23/8 + 1/8 * 3^(7/8 + 1/8 * 3^(21/8 + 1/8 * 3^(7/8 + 1/8 * 3^(23/8 + 1/8 * 3^(7/8 + 1/8 * 3^(23/8 + 1/8 * 3^(7/8 + 1/8 * 3^(21/8 + 1/8 * 3^(7/8 + 1/8 * 3^(23/8 + 1/8 * 3^(7/8 + 1/8 * 3^22146))))))))))))))"),
+             "(1 * 3^(1 * 3^(1 * 3^(1 * 3^(1 * 3^(1 * 3^(1 * 3^(1 * 3^(1 * 3^(1 * 3^(1 * 3^(1 * 3^(1 * 3^(1 * 3^22146 + 7)/8 + 23)/8 + 7)/8 + 21)/8 + 7)/8 + 23)/8 + 7)/8 + 23)/8 + 7)/8 + 21)/8 + 7)/8 + 23)/8 + 13)/8 + -11)/2"),
             ]
     for name, expected_tower, expected_formula in data:
       filename = os.path.join(self.root_dir, name)
@@ -206,8 +206,8 @@ class MacroSimulatorTest(unittest.TestCase):
       self.assertEqual(Halting_Lib.get_big_int(tm_record.proto.status.halt_status.halt_steps),
                        0)
       score = Halting_Lib.get_big_int(tm_record.proto.status.halt_status.halt_score)
-      self.assertAlmostEqual(score.tower_approx(), expected_tower, 2)
-      self.assertEqual(score.formula_text(), expected_formula)
+      self.assertAlmostEqual(score.tower_approx, expected_tower, 2)
+      self.assertEqual(score.formula_str(), expected_formula)
 
   def test_non_halting(self):
     self.options.recursive = True

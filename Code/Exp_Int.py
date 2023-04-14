@@ -7,81 +7,75 @@ import functools
 import math
 
 import io_pb2
-from Math import gcd, lcm, int_pow
+from Math import gcd, lcm, int_pow, prec_mult
+
+
+# If x < 10^^MAX_INT_TOWER, store as int
+# If x > 10^^MAX_INT_TOWER, store as ExpInt
+MAX_INT_TOWER = 2.5
 
 
 # Standard way to create an ExpInt
-def exp_int(*, base, exponent, coef, const):
+def exp_int(base, exponent):
   """Returns either int or ExpInt based on size of exponent."""
   assert isinstance(base, int)
-  assert is_simple(coef) and is_simple(const)
   assert isinstance(exponent, (int, ExpInt))
 
-  if coef == 0:
-    return int(const)
-
-  elif is_simple(exponent) and exponent < 1_000:
-    return int(coef * base**exponent + const)
-
-  elif isinstance(exponent, ExpInt) and exponent.depth > 100:
-    raise OverflowError("Too many layers of ExpInt")
-  else:
-    coef = Fraction(coef)
-    const = Fraction(const)
-    # Normalize representation:
-    (n, k) = int_pow(base)
-    if k > 1:
-      base = n
-      exponent *= k
-    while coef.numerator % base == 0:
-      coef /= base
-      exponent += 1
-
-    return ExpInt(base, exponent, coef, const)
-
-def sci_approx(val):
-  """Approx this number in "hyper-scientific notation", i.e. 10^^x"""
-  tower_height = 0
-  while isinstance(val, ExpInt) and isinstance(val.exponent, ExpInt):
-    # Here: k > 3^1M, so log10(b^k) ≈ k
-    # Technically, it should be * log10(b), but in the next tower that will
-    # become + log10(log10(b)) and next tower it will be irrelevent.
-    val = val.exponent
-    tower_height += 1
-  if isinstance(val, ExpInt):
-    assert isinstance(val.exponent, int), val
-    val = prec_mult(val.exponent, math.log10(val.base))
-    tower_height += 1
-  while val >= 1:
-    val = math.log10(val)
-    tower_height += 1
-  assert 0 <= val < 1, val
-  x = tower_height - 1 + val
-  return x
-
-def prec_mult(n : int, x : float, prec : int = 10):
-  try:
-    return n * x
-  except OverflowError:
-    # If n is too big to cast to float, we need to be a little more clever:
-    x = int(x * 2**prec)
-    return (n * x) >> prec
+  exponent = try_simplify(exponent)
+  return try_simplify(
+    ExpInt([ExpTerm(base = base, coef = 1, exponent = exponent)],
+           const = 0, denom = 1))
 
 
 def is_simple(value):
   """Is `value` a "simple" numeric type (integer or Fraction)."""
   return isinstance(value, (int, Fraction))
 
-def _struct_eq(self, other):
+def struct_eq(a, b):
   """Test for structural equality (not math equality)."""
-  if is_simple(self) and is_simple(other):
-    return self == other
-  elif isinstance(self, ExpInt) and isinstance(other, ExpInt):
-    return (self.base == other.base and self.coef == other.coef and
-            self.const == other.const and self.exponent == other.exponent)
+  if is_simple(a) and is_simple(b):
+    return a == b
+  elif isinstance(a, ExpTerm) and isinstance(b, ExpTerm):
+    return (a.base == b.base and a.coef == b.coef and a.exponent == b.exponent)
+  elif isinstance(a, ExpInt) and isinstance(b, ExpInt):
+    return (a.const == b.const and a.denom == b.denom and len(a.terms) == len(b.terms)
+            and all(struct_eq(ta, tb) for (ta, tb) in zip(a.terms, b.terms)))
   else:
     # Cannot compare
     return False
+
+def signed_tower_approx(x):
+  if x < 0:
+    return -tower_approx(-x)
+  else:
+    return tower_approx(x)
+
+
+def tower_approx(x):
+  """
+  Return y such that x ≈ 10^^y. Uses definition for fractional tetration
+  as described in https://www.sligocki.com/2022/06/25/ext-up-notation.html
+  """
+  if isinstance(x, ExpInt):
+    return x.tower_approx
+  n = 0
+  f = x
+  # Invariant: x ≈ 10^^n[^f]
+  while f >= 1:
+    f = math.log10(f)
+    n += 1
+  assert 0 <= f < 1, f
+  return n - 1 + f
+
+def try_simplify(x):
+  """Try to simplify x (turn it into an integer if it's small enough)"""
+  if isinstance(x, ExpInt):
+    try:
+      return x.eval()
+    except OverflowError:
+      return x
+  else:
+    return x
 
 
 @functools.cache
@@ -113,39 +107,147 @@ def exp_mod(b, k, m):
     return (b**(i+kr)) % m
 
 
-class ExpInt:
-  def __init__(self, base, exponent, coef, const):
-    assert isinstance(base, int)
-    assert isinstance(coef, Fraction) and isinstance(const, Fraction)
-    assert isinstance(exponent, (int, ExpInt))
+class ExpTerm:
+  """An integer represented by a formula: `a b^n`"""
+  def __init__(self, base : int, coef : int, exponent):
+    assert isinstance(base, int), base
+    assert isinstance(coef, int), coef
+    assert isinstance(exponent, (int, ExpInt)), exponent
+    assert coef != 0
+
     self.base = base
-    self.exponent = exponent
     self.coef = coef
-    self.const = const
-    if isinstance(exponent, int):
+    self.exponent = exponent
+    self.normalize()
+
+    if isinstance(self.exponent, ExpInt):
+      self.depth = self.exponent.depth + 1
+      # For large enough exponent, the coeficient and even base don't have much effect.
+      self.tower_approx = abs(self.exponent.tower_approx) + 1
+
+    else:
+      assert isinstance(self.exponent, int)
       self.depth = 1
+      rest = prec_mult(self.exponent, math.log10(self.base))
+      rest += int(math.log10(abs(self.coef)))
+      # self ≈ 10^rest
+      self.tower_approx = tower_approx(rest) + 1
+
+  def normalize(self):
+    """Normalize representation"""
+    (n, k) = int_pow(self.base)
+    if k > 1:
+      self.base = n
+      self.exponent *= k
+    while self.coef % self.base == 0:
+      self.coef //= self.base
+      self.exponent += 1
+
+  def formula_str(self):
+    return f"{self.coef} * {self.base}^{repr(self.exponent)}"
+
+  def eval(self) -> int:
+    if self.tower_approx < MAX_INT_TOWER:
+      return self.coef * self.base**self.exponent
     else:
-      assert isinstance(exponent, ExpInt)
-      self.depth = exponent.depth + 1
+      raise OverflowError((self.formula_str(), self.tower_approx))
 
-  def formula_text(self):
-    return f"({self.const} + {self.coef} * {self.base}^{repr(self.exponent)})"
-  def tower_approx_text(self):
-    if self.coef > 0:
-      pre = ""
+  def mod(self, m : int) -> int:
+    return (exp_mod(self.base, self.exponent, m) * self.coef) % m
+
+  def mul_int(self, n : int):
+    assert isinstance(n, int), n
+    assert n != 0
+    return ExpTerm(self.base, self.coef * n, self.exponent)
+
+  def div_int(self, n : int):
+    assert isinstance(n, int), n
+    assert n != 0
+    (new_coef, r) = divmod(self.coef, n)
+    assert r == 0, (self.coef, n, r)
+    return ExpTerm(self.base, new_coef, self.exponent)
+
+  def mul_term(self, other):
+    assert isinstance(other, ExpTerm), other
+    assert self.base == other.base
+    return ExpTerm(self.base, self.coef * other.coef,
+                   self.exponent + other.exponent)
+
+def normalize_terms(terms):
+  """Simplify sum of ExpTerms by combining ones that we can."""
+  new_terms = []
+  prev_exponent = None
+  prev_coef = None
+  prev_base = None
+  for term in sorted(terms, key=lambda t: tower_approx(t.exponent), reverse=True):
+    if struct_eq(term.exponent, prev_exponent):
+      assert term.base == prev_base
+      prev_coef += term.coef
     else:
-      pre = "-"
-    return f"{pre}10^^{self.tower_approx()}"
-  def tower_approx(self):
-    return sci_approx(self)
+      if prev_coef:
+        # Don't add term if coef == 0 (or None)
+        new_terms.append(ExpTerm(prev_base, prev_coef, prev_exponent))
+      prev_base = term.base
+      prev_coef = term.coef
+      prev_exponent = term.exponent
+  if prev_coef:
+    new_terms.append(ExpTerm(prev_base, prev_coef, prev_exponent))
+  return new_terms
 
-  __repr__ = formula_text
-  __str__ = formula_text
 
-  def eval(self):
-    """Return int value if size is "somewhat" reasonable."""
-    if is_simple(self.exponent) and self.exponent < 1_000:
-      return int(self.coef * self.base**self.exponent + self.const)
+# TODO: Update ExpInt to allow it to be the sum of multiple exponential formula.
+#   Supports ex: 1RB0LD_1RC1RF_1LA1RD_0LE1RC_1LC0RA_---0RB
+class ExpInt:
+  """An integer represented by a formula: `(a1 b^n1 + a2 b^n2 + ... + c) / d` """
+  def __init__(self, terms, const : int, denom : int):
+    assert terms
+    assert isinstance(const, int), const
+    assert isinstance(denom, int), denom
+
+    self.terms = terms
+    self.const = const
+    self.denom = denom
+    self.normalize()
+
+    self.depth = max(term.depth for term in terms)
+
+    bases = frozenset(term.base for term in terms)
+    assert len(bases) == 1, bases
+    self.base = list(bases)[0]
+
+    # Compute approximate tower height.
+    try:
+      self.tower_approx = signed_tower_approx(self.eval())
+    except OverflowError:
+      max_pos_tower = max((term.tower_approx for term in self.terms
+                           if term.coef > 0), default = 0)
+      max_neg_tower = max((term.tower_approx for term in self.terms
+                           if term.coef < 0), default = 0)
+      assert abs(max_pos_tower - max_neg_tower) > 1, (max_pos_tower, max_neg_tower)
+      self.tower_approx = max(max_pos_tower, max_neg_tower)
+
+  def normalize(self):
+    common = gcd(self.const, self.denom)
+    if common > 1:
+      for term in self.terms:
+        common = gcd(common, term.coef)
+    if common > 1:
+      self.const //= common
+      self.denom //= common
+      self.terms = [term.div_int(common) for term in self.terms]
+
+  def formula_str(self):
+    terms_str = " + ".join(term.formula_str() for term in self.terms)
+    return f"({terms_str} + {self.const})/{self.denom}"
+
+  __repr__ = formula_str
+  __str__ = formula_str
+
+  def eval(self) -> int:
+    return (sum(term.eval() for term in self.terms) + self.const) // self.denom
+
+  def tower_approx_str(self):
+    return f"10^^{self.tower_approx}"
 
 
   # The ability to implement mod on this data structure efficiently is the
@@ -154,94 +256,114 @@ class ExpInt:
     if other == 1:
       return 0
 
-    if isinstance(other, Fraction):
-      assert other.denominator == 1, other
-      other = int(other)
-
     if isinstance(other, int):
-      # (a b^k + c) / d = n other + r
-      # a b^k = n (d other) + rd - c
-      d = lcm(self.coef.denominator, self.const.denominator)
-      a = int(self.coef * d)
-      c = int(self.const * d)
-      m = d * other
-      bkr = exp_mod(self.base, self.exponent, m)
-      rdc = (a * bkr) % m  # rd - c
-      rd = rdc + c
-      r, rdr = divmod(rd, d)
-      assert rdr == 0, (rd, d, r, rdr)
+      # (sum(a_i b^k_i) + c) / d = n other + r
+      # sum(a_i b^k_i) + c = n (d other) + rd
+      # rd = (sum(a_i b^k_i) + c) % (d other)
+      m = self.denom * other
+      terms_rem = sum(term.mod(m) for term in self.terms) % m
+      rd = (terms_rem + self.const) % m
+      r, rdr = divmod(rd, self.denom)
+      assert rdr == 0, f"ExpInt is not an integer: {self}"
       return r % other
 
-    else:
-      raise NotImplementedError(f"Cannot eval %: {self} % {repr(other)}")
+    raise NotImplementedError(f"Cannot eval %: {self} % {repr(other)}")
 
-  # Integer division
-  def __floordiv__(self, other):
+  def __divmod__(self, other):
+    # if other == 1:
+    #   return (self, 0)
+
     r = self % other
-    return (self - r) / other
+    div = (self - r) / other
+    return (div, r)
+
+  def __floordiv__(self, other):
+    (div, _) = divmod(self, other)
+    return div
 
 
-  # Basic arithmetic with simple numbers.
   def __add__(self, other):
     if is_simple(other):
-      return exp_int(base = self.base, exponent = self.exponent,
-                     coef = self.coef, const = self.const + other)
-    if isinstance(other, ExpInt):
-      if self.base == other.base and _struct_eq(self.exponent, other.exponent):
-        if self.coef + other.coef == 0:
-          return int(self.const + other.const)
-        else:
-          return exp_int(base = self.base, exponent = self.exponent,
-                         coef = self.coef + other.coef,
-                         const = self.const + other.const)
+      return ExpInt(terms = self.terms,
+                    const = self.const + other*self.denom,
+                    denom = self.denom)
 
-    raise NotImplementedError(f"Cannot eval +: {self} + {repr(other)}")
+    if isinstance(other, ExpInt):
+      new_denom = lcm(self.denom, other.denom)
+      ns = new_denom // self.denom
+      no = new_denom // other.denom
+      terms_s = [term.mul_int(ns) for term in self.terms]
+      terms_o = [term.mul_int(no) for term in other.terms]
+      terms = normalize_terms(terms_s + terms_o)
+      if terms:
+        return ExpInt(terms = terms,
+                      const = ns * self.const + no * other.const,
+                      denom = new_denom)
+      else:
+        # If all ExpTerms cancelled out, return int
+        return (ns * self.const + no * other.const) // new_denom
+
+    raise NotImplementedError(f"ExpInt add: unsupported type {type(other)}")
 
   def __mul__(self, other):
     if other == 0:
       return 0
-    elif is_simple(other):
-      return exp_int(base = self.base, exponent = self.exponent,
-                     coef = self.coef * other,
-                     const = self.const * other)
-    # elif isinstance(other, ExpInt) and self.base == other.base and self.const == 0 == other.const:
-    #   return exp_int(base = self.base,
-    #                  exponent = self.exponent + other.exponent,
-    #                  coef = self.coef * other.coef,
-    #                  const = 0)
-    # elif (self_int := self.eval()) is not None:
-    #   return self_int * other
-    else:
-      raise NotImplementedError(f"Cannot eval *: {self} * {repr(other)}")
+
+    if is_simple(other):
+      return ExpInt(terms = [term.mul_int(other) for term in self.terms],
+                    const = self.const * other,
+                    denom = self.denom)
+
+    if isinstance(other, ExpInt):
+      if self.base == other.base:
+        new_terms = []
+        for term_s in self.terms:
+          if other.const:
+            new_terms.append(term_s.mul_int(other.const))
+          for term_o in other.terms:
+            new_terms.append(term_s.mul_term(term_o))
+        if self.const:
+          for term_o in other.terms:
+            new_terms.append(term_o.mul_int(self.const))
+        new_terms = normalize_terms(new_terms)
+        if new_terms:
+          return ExpInt(new_terms, self.const * other.const, self.denom * other.denom)
+        else:
+          return (self.const * other.const) // (self.denom * other.denom)
+      else:
+        raise NotImplementedError("ExpInt mul: base mismatch")
+
+    raise NotImplementedError(f"ExpInt mul: unsupported type {type(other)}")
+
+  def __truediv__(self, other):
+    if is_simple(other):
+      return ExpInt(self.terms, self.const, self.denom * other)
+    raise NotImplementedError(f"ExpInt truediv: unsupported type {type(other)}")
 
   # Basic comparision using tower notation.
-  # TODO: This is not 100% accurate b/c sci_approx is ... an approximation
+  # TODO: This is not 100% accurate b/c tower_approx is ... an approximation
   # but it should be (mostly) good enough.
   def __gt__(self, other):
     if other == math.inf:
       return False
-    elif other == -math.inf:
+    if other == -math.inf:
       return True
 
-    return sci_approx(self) > sci_approx(other)
+    return self.tower_approx > signed_tower_approx(other)
 
   def __ge__(self, other):
     if other == math.inf:
       return False
-    elif other == -math.inf:
+    if other == -math.inf:
       return True
 
-    return sci_approx(self) >= sci_approx(other)
+    return self.tower_approx >= signed_tower_approx(other)
 
   # Boilerplate
   def __neg__(self):
     return self * -1
   def __sub__(self, other):
     return self + (-other)
-  def __rsub__(self, other):
-    return (-self) + other
-  def __truediv__(self, other):
-    return self * Fraction(1, other)
   def __lt__(self, other):
     return not (self >= other)
   def __le__(self, other):

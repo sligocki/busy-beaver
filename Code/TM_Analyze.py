@@ -56,7 +56,7 @@ class BigIntStat:
         exp_str = f"10^{math.log10(self.max_value):_.2f}"
       return f"{exp_str}  {full_str}"
     elif isinstance(self.max_value, ExpInt):
-      return f"{self.max_value.tower_approx_text()}  =  {self.max_value.formula_text()}"
+      return f"{self.max_value.tower_approx_str()}  =  {self.max_value.formula_str()}"
     raise NotImplementedError(type(self.max_value))
 
 

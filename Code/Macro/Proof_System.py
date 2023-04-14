@@ -1108,13 +1108,15 @@ class Proof_System(object):
         else:
           assert slope > 1, slope
           assert isinstance(slope, int), type(slope)
-          # a --(1)--> m a + c  =>  a --(n)--> (a + C) m^n - C  w/ C = c/(m-1)
+          # a --(1)--> (m+1) a + c  =>  a --(n)--> ((am + c) m^n - c) / m
+          m = slope - 1
           a = new_block.num
-          C = Fraction(const, slope - 1)
           # We use a custom integer class for this since `num_reps` can
           # be very large!
-          m_n = exp_int(base = slope, exponent = num_reps, coef = 1, const = 0)
-          new_block.num = (a+C) * m_n - C
+          m_n = exp_int(base = slope, exponent = num_reps)
+          new_block.num = ((a*m + const) * m_n - const) / m
+          if isinstance(new_block.num, float):
+            new_block.num = int(new_block.num)
 
     if self.verbose:
       self.print_this("++ Linear rule applied ++")

@@ -3,7 +3,7 @@
 from fractions import Fraction
 from typing import Optional
 
-from Exp_Int import ExpInt
+from Exp_Int import ExpInt, ExpTerm
 import io_pb2
 import Math
 
@@ -37,17 +37,24 @@ def get_big_int(field : io_pb2.BigInt):
 
 
 # Protobuf serialization and parsing
-def serialize_exp_int(value : ExpInt, field : io_pb2.ExpInt):
-  field.base = value.base
-  field.denom = Math.lcm(value.coef.denominator, value.const.denominator)
-  field.coef = int(value.coef * field.denom)
-  field.const = int(value.const * field.denom)
-  set_big_int(field.exponent, value.exponent)
+def serialize_exp_int(exp_int : ExpInt, field : io_pb2.ExpInt):
+  field.const = exp_int.const
+  field.denom = exp_int.denom
+  for term in exp_int.terms:
+    serialize_exp_term(term, field.terms.add())
+
+def serialize_exp_term(term : ExpTerm, field : io_pb2.ExpTerm):
+  field.base = term.base
+  field.coef = term.coef
+  set_big_int(field.exponent, term.exponent)
 
 def parse_exp_int(field : io_pb2.ExpInt) -> ExpInt:
+  terms = [parse_exp_term(term) for term in field.terms]
+  return ExpInt(terms, field.const, field.denom)
+
+def parse_exp_term(field : io_pb2.ExpTerm) -> ExpTerm:
   exp = get_big_int(field.exponent)
-  return ExpInt(field.base, exp, Fraction(field.coef, field.denom),
-                Fraction(field.const, field.denom))
+  return ExpTerm(field.base, field.coef, exp)
 
 
 def set_halting(tm_status  : io_pb2.BBStatus,

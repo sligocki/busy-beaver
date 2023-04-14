@@ -281,6 +281,6 @@ def format_power(value):
   if isinstance(value, int) and value > 0:
     return "10^%.1f" % math.log10(value)
   elif isinstance(value, ExpInt):
-    return value.tower_approx_text()
+    return value.tower_approx_str()
   else:
     return str(value)
