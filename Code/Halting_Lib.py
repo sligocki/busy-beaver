@@ -15,11 +15,16 @@ def big_int_approx_str(value):
 
   value = try_simplify(value)
   if isinstance(value, ExpInt):
-    return f"~10^^{value.tower_approx:_}"
+    if 2 < value.tower_approx < 3:
+      # If it's small enough, write it out in standard exponential notation.
+      exp = 10**(10**(value.tower_approx - 2))
+      return f"~10^{exp:_.1f}"
+    else:
+      return f"~10^^{value.tower_approx:_}"
   elif value <= 0 or value == math.inf:
     return f"{value:_}"
   else:
-    return f"~10^{math.log10(value):_}"
+    return f"~10^{math.log10(value):_.1f}"
 
 def big_int_approx_and_full_str(value):
   if value is None:
