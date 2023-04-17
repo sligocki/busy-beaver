@@ -773,6 +773,10 @@ class Proof_System(object):
           print()
 
       else:
+        # TODO: Deal with "Swap rules" like:
+        #    Start Tape: 000000^inf 111111^1 101101^(j|2) <C (011101) 111111^(k|1) 111100^1 000000^inf
+        #   End Tape: 000000^inf 111111^1 101101^(k + 4) <C (011101) 111111^(j + 2) 111100^1 000000^inf
+        # We can fix these easily by simply running 2x as long in the prover.
         rule = General_Rule(var_list, min_list, result_tape, num_steps,
                             gen_sim.num_loops, self.num_rules,
                             states_last_seen=states_last_seen)

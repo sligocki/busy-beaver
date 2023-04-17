@@ -4,6 +4,7 @@ from fractions import Fraction
 import math
 from typing import Optional
 
+from Algebraic_Expression import Expression
 from Exp_Int import ExpInt, ExpTerm, try_simplify
 import io_pb2
 import Math
@@ -43,6 +44,8 @@ def big_int_approx_or_full_str(value):
     return "N/A"
 
   if isinstance(value, ExpInt):
+    return str(value)
+  elif isinstance(value, Expression):
     return str(value)
   elif value < 10**9:
     return f"{value:_}"
