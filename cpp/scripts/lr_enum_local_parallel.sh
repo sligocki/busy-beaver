@@ -10,9 +10,10 @@ fi
 
 NUM_STATES=$1
 NUM_SYMBOLS=$2
-INIT_STEPS=$3
-MAX_STEPS=$4
-NUM_PROCESSES=$5
+ALLOW_NO_HALT=$3
+INIT_STEPS=$4
+MAX_STEPS=$5
+NUM_PROCESSES=$6
 
 DATA_DIR="./data/lin_recur/${NUM_STATES}x${NUM_SYMBOLS}/${MAX_STEPS}/${NUM_PROCESSES}/"
 
@@ -27,7 +28,7 @@ echo "(1) Enumerating a small number of steps to get a bunch of machines."
   ${DATA_DIR}/halt_init.txt \
   ${DATA_DIR}/inf_init.txt \
   ${DATA_DIR}/unknown_init.txt \
-  ${allow_no_halt}
+  ${ALLOW_NO_HALT}
 
 echo
 date
@@ -44,7 +45,7 @@ for chunk_num in $(seq 0 $((NUM_PROCESSES - 1))); do
     ${DATA_DIR}/halt_part_${chunk_num}_of_${NUM_PROCESSES} \
     ${DATA_DIR}/inf_part_${chunk_num}_of_${NUM_PROCESSES} \
     ${DATA_DIR}/unknown_part_${chunk_num}_of_${NUM_PROCESSES} \
-    ${chunk_num} ${allow_no_halt} &
+    ${chunk_num} ${ALLOW_NO_HALT} &
 done
 echo "Waiting for all the enumerations to complete."
 wait
