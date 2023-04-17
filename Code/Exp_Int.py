@@ -223,8 +223,10 @@ class ExpInt:
                            if term.coef > 0), default = 0)
       max_neg_tower = max((term.tower_approx for term in self.terms
                            if term.coef < 0), default = 0)
-      assert abs(max_pos_tower - max_neg_tower) > 1, (max_pos_tower, max_neg_tower)
+      assert max_pos_tower != max_neg_tower, (self, max_pos_tower, max_neg_tower)
       self.tower_approx = max(max_pos_tower, max_neg_tower)
+      if max_neg_tower > max_pos_tower:
+        self.tower_approx = -self.tower_approx
 
   def normalize(self):
     common = gcd(self.const, self.denom)
@@ -247,7 +249,9 @@ class ExpInt:
     return (sum(term.eval() for term in self.terms) + self.const) // self.denom
 
   def tower_approx_str(self):
-    return f"10^^{self.tower_approx}"
+    n = abs(self.tower_approx)
+    sgn = "" if self.tower_approx > 0 else "-"
+    return f"{sgn}10^^{n:_}"
 
 
   # The ability to implement mod on this data structure efficiently is the

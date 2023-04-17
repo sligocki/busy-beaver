@@ -1,11 +1,40 @@
 # Library for setting various halting conditions (especially into the protobufs).
 
 from fractions import Fraction
+import math
 from typing import Optional
 
 from Exp_Int import ExpInt, ExpTerm
 import io_pb2
 import Math
+
+
+def big_int_approx_str(value):
+  if isinstance(value, ExpInt):
+    return f"10^^{value.tower_approx:_}"
+  elif value <= 0 or value == math.inf:
+    return f"{value:_}"
+  else:
+    return f"10^{math.log10(value):_}"
+
+def big_int_approx_and_full_str(value):
+  approx_str = big_int_approx_str(value)
+  if isinstance(value, ExpInt):
+    return f"{approx_str}  =  {value}"
+  elif 0 < value < 10**50:
+    return f"{approx_str}  =  {value:_}"
+  else:
+    return approx_str
+
+def big_int_approx_or_full_str(value):
+  if isinstance(value, ExpInt):
+    return str(value)
+  elif value < 10**9:
+    return f"{value:_}"
+  elif value == math.inf:
+    return str(value)
+  else:
+    return big_int_approx_str(value)
 
 
 _BIG_INT_MAX = 2**64 - 1

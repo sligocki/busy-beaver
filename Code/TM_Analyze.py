@@ -47,17 +47,7 @@ class BigIntStat:
       self.max_value = max(self.max_value, value)
 
   def max_str(self):
-    if isinstance(self.max_value, int):
-      full_str = ""
-      if self.max_value < 10**100:
-        full_str = f"{self.max_value:_d}"
-      exp_str = ""
-      if self.max_value > 0:
-        exp_str = f"10^{math.log10(self.max_value):_.2f}"
-      return f"{exp_str}  {full_str}"
-    elif isinstance(self.max_value, ExpInt):
-      return f"{self.max_value.tower_approx_str()}  =  {self.max_value.formula_str()}"
-    raise NotImplementedError(type(self.max_value))
+    return Halting_Lib.big_int_approx_and_full_str(self.max_value)
 
 
 class TMStats:

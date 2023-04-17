@@ -14,6 +14,7 @@ import time
 
 from Algebraic_Expression import Algebraic_Expression
 from Exp_Int import ExpInt
+from Halting_Lib import big_int_approx_str, big_int_approx_and_full_str
 from Macro import Proof_System
 from Macro import Tape
 from Macro import Turing_Machine
@@ -226,7 +227,7 @@ class Simulator(object):
     self.print_steps()
     print("Elapsed time:", time.time() - self.start_time)
     print(self.tape.print_with_state(self.state))
-    print("Num Nonzeros:", with_power(self.get_nonzeros()))
+    print("Num Nonzeros:", big_int_approx_and_full_str(self.get_nonzeros()))
 
   def print_steps(self):
     print()
@@ -260,27 +261,8 @@ class Simulator(object):
 
 def template(title, steps, loops):
   """Pretty print row of the steps table."""
-  return "%-8s %-20s %20d" % (title, format_power(steps), loops)
-
-def with_power(value):
-  """Pretty print log(value) and value (if it's not too big)"""
-  output = format_power(value)
-
-  if isinstance(value, int):
-    if value < 10**40:
-      output += " " + str(value)
-    else:
-      output += " ..."
+  if steps is not None:
+    steps_str = big_int_approx_str(steps)
   else:
-    output += " " + repr(value)
-
-  return output
-
-def format_power(value):
-  """Pretty print 'value' in exponential notation."""
-  if isinstance(value, int) and value > 0:
-    return "10^%.1f" % math.log10(value)
-  elif isinstance(value, ExpInt):
-    return value.tower_approx_str()
-  else:
-    return str(value)
+    steps_str = "N/A"
+  return "%-8s %-20s %20d" % (title, steps_str, loops)

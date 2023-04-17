@@ -1,6 +1,3 @@
-#
-# Tape.py
-#
 """
 Turing Machine tape which compresses repeating symbols.
 
@@ -9,6 +6,10 @@ Combined with an automated prover, this can prove Xmas Trees.
 """
 
 import math
+import sys
+
+sys.path.append("..")
+from Halting_Lib import big_int_approx_or_full_str
 
 # Serves as numerical infinity
 INF = math.inf
@@ -35,18 +36,13 @@ class Repeated_Symbol(object):
   def __hash__(self):
     return self.symbol + self.num
 
-  def num_str(self, full_reps):
-    """Rep count as string. Approx if count is too large."""
-    if full_reps or type(self.num) not in (int, int) or self.num < 100_000_000:
-      return str(self.num)
-    else:
-      return "(~10^%.1f)" % math.log10(self.num)
-
   def to_string(self, html_format, full_reps):
     if html_format:
-      return "%s<sup>%s</sup>" % (str(self.symbol), self.num_str(full_reps))
+      return "%s<sup>%s</sup>" % (str(self.symbol),
+                                  big_int_approx_or_full_str(self.num))
     else:
-      return "%s^%s" % (str(self.symbol), self.num_str(full_reps))
+      return "%s^%s" % (str(self.symbol),
+                        big_int_approx_or_full_str(self.num))
 
   def __repr__(self):
     return self.to_string(html_format=False, full_reps=False)

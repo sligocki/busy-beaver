@@ -10,6 +10,7 @@ import sys
 
 from Macro import Turing_Machine, Simulator, Block_Finder
 import Halting_Lib
+from Halting_Lib import big_int_approx_and_full_str
 import IO
 
 import io_pb2
@@ -72,8 +73,8 @@ def run(machine, block_size, back, prover, recursive, options):
     print("Turing Machine Halted")
     print()
     if options.compute_steps:
-      print("Steps:   ", Simulator.with_power(sim.step_num))
-    print("Nonzeros:", Simulator.with_power(sim.get_nonzeros()))
+      print("Steps:   ", big_int_approx_and_full_str(sim.step_num))
+    print("Nonzeros:", big_int_approx_and_full_str(sim.get_nonzeros()))
   elif sim.op_state == Turing_Machine.INF_REPEAT:
     bb_status = io_pb2.BBStatus()
     Halting_Lib.set_inf_recur(bb_status,
@@ -91,8 +92,8 @@ def run(machine, block_size, back, prover, recursive, options):
     print("Symbol:", sim.op_details[0][0])
     print()
     if options.compute_steps:
-      print("Steps:   ", Simulator.with_power(sim.step_num))
-    print("Nonzeros:", Simulator.with_power(sim.get_nonzeros()))
+      print("Steps:   ", big_int_approx_and_full_str(sim.step_num))
+    print("Nonzeros:", big_int_approx_and_full_str(sim.get_nonzeros()))
   elif sim.op_state == Turing_Machine.GAVE_UP:
     print()
     print("Gave up while simulating Turing Machine")

@@ -35,7 +35,11 @@ class Writer:
     self.outfile.write(tm_record.tm().ttable_str())
     halt_status = tm_record.proto.status.halt_status
     if halt_status.is_halting:
-      self.outfile.write(f" Halt {Halting_Lib.get_big_int(halt_status.halt_steps)} {Halting_Lib.get_big_int(halt_status.halt_score)}")
+      steps_str = Halting_Lib.approx_big_int_str(
+        Halting_Lib.get_big_int(halt_status.halt_steps))
+      score_str = Halting_Lib.approx_big_int_str(
+        Halting_Lib.get_big_int(halt_status.halt_score))
+      self.outfile.write(f" Halt {steps_str} {score_str}")
     self.outfile.write("\n")
 
   def flush(self):
