@@ -14,6 +14,7 @@ import Macro_Simulator
 
 def re_sim(tm_record):
   sim_params = tm_record.proto.filter.simulator.parameters
+  sim_result = tm_record.proto.filter.simulator.result
 
   tm = tm_record.tm()
   if sim_params.block_size > 1:
@@ -25,12 +26,15 @@ def re_sim(tm_record):
   options = Simulator.create_default_options()
   options.max_loops = sim_params.max_loops
   options.tape_limit = sim_params.max_tape_blocks
-  # TODO: Stop hard-coding this ...
-  options.recursive = True
-  options.exp_linear_rules = True
   # Time is non-deterministic ... also this is not actually used by simulate_machine
   options.time = 0.0
-  # TODO: W
+  options.recursive = True
+  options.compute_steps = True
+  # Only use experimental Linear Rule code if we actually proved a Linear Rule :)
+  if sim_result.num_linear_rules_proven > 0:
+    options.recursive = True
+    options.exp_linear_rules = True
+    options.compute_steps = False
   Macro_Simulator.simulate_machine(tm, options,
                                    tm_record.proto.filter.simulator,
                                    tm_record.proto.status)

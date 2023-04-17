@@ -1,7 +1,4 @@
 #! /usr/bin/env python3
-#
-# Enumerate.py
-#
 """
 This is a Busy Beaver Turing machine enumerator.
 

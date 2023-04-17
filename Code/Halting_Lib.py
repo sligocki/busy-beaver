@@ -4,20 +4,27 @@ from fractions import Fraction
 import math
 from typing import Optional
 
-from Exp_Int import ExpInt, ExpTerm
+from Exp_Int import ExpInt, ExpTerm, try_simplify
 import io_pb2
 import Math
 
 
 def big_int_approx_str(value):
+  if value is None:
+    return "N/A"
+
+  value = try_simplify(value)
   if isinstance(value, ExpInt):
-    return f"10^^{value.tower_approx:_}"
+    return f"~10^^{value.tower_approx:_}"
   elif value <= 0 or value == math.inf:
     return f"{value:_}"
   else:
-    return f"10^{math.log10(value):_}"
+    return f"~10^{math.log10(value):_}"
 
 def big_int_approx_and_full_str(value):
+  if value is None:
+    return "N/A"
+
   approx_str = big_int_approx_str(value)
   if isinstance(value, ExpInt):
     return f"{approx_str}  =  {value}"
@@ -27,6 +34,9 @@ def big_int_approx_and_full_str(value):
     return approx_str
 
 def big_int_approx_or_full_str(value):
+  if value is None:
+    return "N/A"
+
   if isinstance(value, ExpInt):
     return str(value)
   elif value < 10**9:
@@ -61,13 +71,17 @@ def get_big_int(field : io_pb2.BigInt):
     return int(field.hex_str, base=16)
   elif type == "exp_int":
     return parse_exp_int(field.exp_int)
+  elif type is None:
+    return None
   else:
+    return None
     raise NotImplementedError(type)
 
 
 # Protobuf serialization and parsing
 def serialize_exp_int(exp_int : ExpInt, field : io_pb2.ExpInt):
   field.const = exp_int.const
+  # TODO: set_big_int(field.const, exp_int.const)
   field.denom = exp_int.denom
   for term in exp_int.terms:
     serialize_exp_term(term, field.terms.add())
@@ -75,6 +89,7 @@ def serialize_exp_int(exp_int : ExpInt, field : io_pb2.ExpInt):
 def serialize_exp_term(term : ExpTerm, field : io_pb2.ExpTerm):
   field.base = term.base
   field.coef = term.coef
+  # TODO: set_big_int(field.coef, term.coef)
   set_big_int(field.exponent, term.exponent)
 
 def parse_exp_int(field : io_pb2.ExpInt) -> ExpInt:
