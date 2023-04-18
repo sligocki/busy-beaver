@@ -223,7 +223,8 @@ class ExpInt:
                            if term.coef > 0), default = 0)
       max_neg_tower = max((term.tower_approx for term in self.terms
                            if term.coef < 0), default = 0)
-      assert max_pos_tower != max_neg_tower, (self, max_pos_tower, max_neg_tower)
+      if max_pos_tower == max_neg_tower:
+        raise Exception(f"Cannot evalulate sign of ExpInt: {self}    ({max_pos_tower} == {max_neg_tower})")
       self.tower_approx = max(max_pos_tower, max_neg_tower)
       if max_neg_tower > max_pos_tower:
         self.tower_approx = -self.tower_approx

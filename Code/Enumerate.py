@@ -48,7 +48,6 @@ def long_to_eng_str(number, left, right):
     return "0.%se+00" % ("0" * right)
 
 class Enumerator(object):
-  """Holds enumeration state information for checkpointing."""
   def __init__(self, options, stack, writer, pout):
     self.options = options
 
@@ -57,8 +56,6 @@ class Enumerator(object):
     self.writer = writer
     self.pout = pout
     self.save_freq = options.save_freq
-    self.checkpoint_filename = options.checkpoint
-    self.backup_checkpoint_filename = self.checkpoint_filename + ".bak"
 
     # Stack of TM descriptions to simulate
     assert isinstance(stack, Work_Queue.Work_Queue)
@@ -79,24 +76,6 @@ class Enumerator(object):
     self.num_unknown = 0
     self.max_sim_time_s = 0.0
     self.start_time = time.time()
-
-  def __getstate__(self):
-    """Gets state of TM for checkpoint file."""
-    d = self.__dict__.copy()
-    del d["pout"]
-    del d["writer"]
-    if self.randomize:
-      del d["random"]
-      d["random_state"] = self.random.getstate()
-    return d
-
-  def __setstate__(self, d):
-    """Resets state of TM from checkpoint file."""
-    if d["randomize"]:
-      d["random"] = random.Random()
-      d["random"].setstate(d["random_state"])
-      del d["random_state"]
-    self.__dict__ = d
 
   def continue_enum(self):
     """
@@ -139,7 +118,7 @@ class Enumerator(object):
         tm_record = self.stack.pop_job()
 
   def save(self):
-    """Save a checkpoint file so that computation can be restarted if it fails."""
+    """Write stats."""
     # Actually write to disk.
     self.writer.flush()
 
@@ -152,18 +131,6 @@ class Enumerator(object):
                       f"max {self.max_sim_time_s * 1000:_.0f}ms / "
                       f"total {time.time() - self.start_time:_.2f}s\n")
       self.pout.flush()
-
-      # Note: We are overloading self.pout = None to mean don't write any output
-      # files.
-      if not self.options.no_checkpoint:
-        # Backup old checkpoint file (in case the new checkpoint is interrupted
-        # in mid-write)
-        if os.path.exists(self.checkpoint_filename):
-          shutil.move(self.checkpoint_filename, self.backup_checkpoint_filename)
-        # Save checkpoint file
-        f = open(self.checkpoint_filename, "wb")
-        pickle.dump(self, f)
-        f.close()
 
     # Restart timer and time stats.
     self.start_time = time.time()
@@ -286,12 +253,8 @@ def main(args):
 
   out_parser.add_option("--force", action="store_true", default=False,
                         help="Force overwriting outfile (don't ask).")
-  out_parser.add_option("--no-checkpoint", action="store_true", default=False,
-                        help="Don't save a checkpoint file.")
-  out_parser.add_option("--checkpoint", metavar="FILE",
-                        help="Checkpoint file name [Default: OUTFILE.check]")
-  out_parser.add_option("--save-freq", type=int, default=100000, metavar="FREQ",
-                        help="Freq to save checkpoints [Default: %default]")
+  out_parser.add_option("--save-freq", type=int, default=100_000, metavar="FREQ",
+                        help="Freq to save output and write stats [Default: %default]")
   parser.add_option_group(out_parser)
 
   (options, args) = parser.parse_args(args)
@@ -302,9 +265,6 @@ def main(args):
 
   if not options.outfilename:
     parser.error("--outfile is required")
-
-  if not options.checkpoint:
-    options.checkpoint = options.outfilename + ".check"
 
   pout = None
   if not options.no_output:
@@ -335,10 +295,6 @@ def main(args):
 
     # Done
     enumerator.save()
-
-  if not options.no_checkpoint:
-    os.remove(enumerator.checkpoint_filename)
-    os.remove(enumerator.backup_checkpoint_filename)
 
 if __name__ == "__main__":
   main(sys.argv[1:])
