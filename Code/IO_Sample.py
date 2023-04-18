@@ -37,7 +37,7 @@ def sample(in_filenames, out_filename, sample_size):
           num_records += 1
     except IO.Proto.IO_Error:
       print(f"ERROR: {in_filename} has unexpected EOF. Moving on.")
-    print(f"Finished reading {in_filename}: {num_records:_} total records / {num_read:_} ({num_read / num_records:.1%} records read)")
+  print(f"Scanned {num_records:_} total records / {num_read:_} records read")
 
   random.shuffle(sample)
   with IO.Proto.Writer(out_filename) as writer:

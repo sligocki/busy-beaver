@@ -60,9 +60,9 @@ class Reader:
 
   def read_record(self):
     line = self.infile.readline()
-    line = line.strip().split()[0]
+    line = line.strip()
     if line:
-      tm = parse_tm(line)
+      tm = parse_tm(line.split()[0])
       tm_enum = TM_Enum.TM_Enum(tm, allow_no_halt = False)
       tm_record = TM_Record.TM_Record(tm_enum = tm_enum)
       return tm_record
