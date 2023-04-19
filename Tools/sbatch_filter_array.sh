@@ -3,6 +3,8 @@
 #SBATCH -N 1
 #SBATCH -n 1
 #SBATCH -c 1
+#SBATCH -t 12:00:00
+#SBATCH --nice 1000000
 #SBATCH -o bb-%A_%a.txt
 
 set -e
