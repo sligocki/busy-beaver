@@ -12,6 +12,8 @@ def main():
   parser = argparse.ArgumentParser()
   parser.add_argument("tm_file", type=Path, nargs="+")
   parser.add_argument("--print-freq", type=int, default=1_000_000)
+  parser.add_argument("--summary", "-s", action="store_true",
+                      help="Only show total across all input files. Not individual files sizes.")
   args = parser.parse_args()
 
   count = 0
@@ -26,7 +28,8 @@ def main():
             print(f" ... {file_count:_} ({time.time() - start_time:_.2f}s)")
     except IO.Proto.IO_Error:
       print(f"ERROR: {filename} has unexpected EOF. Moving on.")
-    print(f"# TMs {filename}: {file_count:_} ({time.time() - start_time:_.2f}s)")
+    if not args.summary:
+      print(f"# TMs {filename}: {file_count:_} ({time.time() - start_time:_.2f}s)")
     count += file_count
 
   print(f"Total # TMs: {count:_} ({time.time() - start_time:_.2f}s)")
