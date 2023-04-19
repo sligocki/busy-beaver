@@ -1,11 +1,10 @@
 # Library for setting various halting conditions (especially into the protobufs).
 
-from fractions import Fraction
 import math
 from typing import Optional
 
 from Algebraic_Expression import Expression
-from Exp_Int import ExpInt, ExpTerm, try_simplify
+from Exp_Int import ExpInt, ExpTerm, tower_value
 import io_pb2
 import Math
 
@@ -13,19 +12,23 @@ import Math
 def big_int_approx_str(value):
   if value is None:
     return "N/A"
+  if value in (math.inf, -math.inf):
+    return str(value)
 
-  value = try_simplify(value)
-  if isinstance(value, ExpInt):
-    if 2 < value.tower_approx < 3:
-      # If it's small enough, write it out in standard exponential notation.
-      exp = 10**(10**(value.tower_approx - 2))
-      return f"~10^{exp:_.1f}"
+  (height, top) = tower_value(value)
+
+  if height == 0:
+    # value = top is small enough to be an integer
+    if top <= 0:
+      return str(top)
     else:
-      return f"~10^^{value.tower_approx:_}"
-  elif value <= 0 or value == math.inf:
-    return f"{value:_}"
+      return f"~10^{math.log10(top):_.1f}"
+  elif height == 1:
+    # value = 10^top
+    return f"~10^{top:_.1f}"
   else:
-    return f"~10^{math.log10(value):_.1f}"
+    assert height > 1, height
+    return f"~10^^{fractional_height(value):_.1f}"
 
 def big_int_approx_and_full_str(value):
   if value is None:

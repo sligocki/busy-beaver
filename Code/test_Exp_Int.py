@@ -1,17 +1,17 @@
 #! /usr/bin/env python3
 
 import Exp_Int
-from Exp_Int import exp_int, ExpTerm, ExpInt
+from Exp_Int import exp_int, ExpTerm, ExpInt, try_eval
 
 import unittest
 
 
 class ExpIntTest(unittest.TestCase):
   def test_eval(self):
-    self.assertEqual(exp_int(2, 13), 2**13)
-    self.assertEqual(((47 * exp_int(3, 21) + 20 * exp_int(3, 11) - 5) / 2),
+    self.assertEqual(try_eval(exp_int(2, 13)), 2**13)
+    self.assertEqual(try_eval((47 * exp_int(3, 21) + 20 * exp_int(3, 11) - 5) / 2),
                      (47 * 3**21 + 20 * 3**11 - 5) / 2)
-    self.assertEqual(exp_int(2, exp_int(2, exp_int(2, 2))),
+    self.assertEqual(try_eval(exp_int(2, exp_int(2, exp_int(2, 2)))),
                      2**(2**(2**2)))
 
   def test_add(self):
@@ -25,6 +25,12 @@ class ExpIntTest(unittest.TestCase):
     self.assertEqual(y - (y - 4), 4)
     self.assertTrue(Exp_Int.struct_eq(y + y, 2 * y))
     # self.assertTrue(Exp_Int.struct_eq((x+y)*(x+y), x*x + 2*x*y + y*y))
+
+  def text_compare(self):
+    x = (11 * exp_int(3, 13875) - 3) / 2
+    y = (4 * exp_int(3, x) + 6) / 4
+    self.assertGreater(y, x)
+    self.assertLess(-y, -x)
 
   def test_mod_6x2_t15(self):
     # From https://www.sligocki.com/2022/06/21/bb-6-2-t15.html

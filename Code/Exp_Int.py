@@ -10,9 +10,9 @@ import io_pb2
 from Math import gcd, lcm, int_pow, prec_mult
 
 
-# If x < 10^^MAX_INT_TOWER, store as int
-# If x > 10^^MAX_INT_TOWER, store as ExpInt
-MAX_INT_TOWER = 2.5
+# If x < 10^EXP_THRESHOLD, evaluate it as an int
+# if x > 10^EXP_THRESHOLD, only consider as formula
+EXP_THRESHOLD = 1000
 
 
 # Standard way to create an ExpInt
@@ -21,15 +21,25 @@ def exp_int(base, exponent):
   assert isinstance(base, int)
   assert isinstance(exponent, (int, ExpInt))
 
-  exponent = try_simplify(exponent)
-  return try_simplify(
-    ExpInt([ExpTerm(base = base, coef = 1, exponent = exponent)],
-           const = 0, denom = 1))
+  return ExpInt([ExpTerm(base = base, coef = 1, exponent = exponent)],
+                const = 0, denom = 1)
 
 
 def is_simple(value):
   """Is `value` a "simple" numeric type (integer or Fraction)."""
   return isinstance(value, (int, Fraction))
+
+def try_eval(x):
+  """Return integer value (if it's small enough) or None (if too big)."""
+  if isinstance(x, (ExpInt, ExpTerm)):
+    (height, top) = x.tower_value
+    if height == 0:
+      return top
+    else:
+      # Too big to represent as `int`
+      return None
+  else:
+    return x
 
 def struct_eq(a, b):
   """Test for structural equality (not math equality)."""
@@ -44,38 +54,32 @@ def struct_eq(a, b):
     # Cannot compare
     return False
 
-def signed_tower_approx(x):
-  if x < 0:
-    return -tower_approx(-x)
-  else:
-    return tower_approx(x)
+def fractional_height(x):
+  (height, top) = tower_value(x)
+  assert top > 0, x
+  # Invariant: x ≈ 10^^height[^top]
+  while top >= 1:
+    top = math.log10(top)
+    height += 1
+  assert 0 <= top < 1, top
+  #  10^^2.5 = 10^^2[^10^0.5] = 10^^3[^0.5]
+  return height - 1 + top
 
-
-def tower_approx(x):
+def tower_value(x):
   """
   Return y such that x ≈ 10^^y. Uses definition for fractional tetration
   as described in https://www.sligocki.com/2022/06/25/ext-up-notation.html
   """
   if isinstance(x, ExpInt):
-    return x.tower_approx
-  n = 0
-  f = x
-  # Invariant: x ≈ 10^^n[^f]
-  while f >= 1:
-    f = math.log10(f)
-    n += 1
-  assert 0 <= f < 1, f
-  return n - 1 + f
-
-def try_simplify(x):
-  """Try to simplify x (turn it into an integer if it's small enough)"""
-  if isinstance(x, ExpInt):
-    try:
-      return x.eval()
-    except OverflowError:
-      return x
+    return x.tower_value
   else:
-    return x
+    return (0, abs(x))
+
+def sign(x):
+  if isinstance(x, ExpInt):
+    return x.sign
+  else:
+    return math.copysign(1, x)
 
 
 @functools.cache
@@ -119,19 +123,13 @@ class ExpTerm:
     self.coef = coef
     self.exponent = exponent
     self.normalize()
+    self.sign = sign(self.coef)
+    self.eval()
 
     if isinstance(self.exponent, ExpInt):
       self.depth = self.exponent.depth + 1
-      # For large enough exponent, the coeficient and even base don't have much effect.
-      self.tower_approx = abs(self.exponent.tower_approx) + 1
-
     else:
-      assert isinstance(self.exponent, int)
       self.depth = 1
-      rest = prec_mult(self.exponent, math.log10(self.base))
-      rest += int(math.log10(abs(self.coef)))
-      # self ≈ 10^rest
-      self.tower_approx = tower_approx(rest) + 1
 
   def normalize(self):
     """Normalize representation"""
@@ -143,14 +141,30 @@ class ExpTerm:
       self.coef //= self.base
       self.exponent += 1
 
-  def formula_str(self):
-    return f"{self.coef} * {self.base}^{repr(self.exponent)}"
+  def eval(self):
+    exp_int = try_eval(self.exponent)
 
-  def eval(self) -> int:
-    if self.tower_approx < MAX_INT_TOWER:
-      return self.coef * self.base**self.exponent
+    if not exp_int:
+      # For large enough exponent, the coeficient and even base don't have much effect.
+      (height, top) = self.exponent.tower_value
+      # self = b^(10^^height[^top]) ~= 10^^(height+1)[^top]
+      self.tower_value = (height + 1, top)
+
     else:
-      raise OverflowError((self.formula_str(), self.tower_approx))
+      assert isinstance(exp_int, int)
+      if exp_int < EXP_THRESHOLD:
+        # self = value = 10^^0[^value]
+        self.tower_value = (0, self.coef * self.base**exp_int)
+
+      else:
+        top = prec_mult(exp_int, math.log10(self.base))
+        top += int(math.log10(abs(self.coef)))
+        # self = 10^top = 10^^1[^top]
+        self.tower_value = (1, top)
+
+
+  def formula_str(self):
+    return f"{self.coef} * {self.base}^{self.exponent}"
 
   def mod(self, m : int) -> int:
     return (exp_mod(self.base, self.exponent, m) * self.coef) % m
@@ -179,7 +193,7 @@ def normalize_terms(terms):
   prev_exponent = None
   prev_coef = None
   prev_base = None
-  for term in sorted(terms, key=lambda t: tower_approx(t.exponent), reverse=True):
+  for term in sorted(terms, key=lambda t: tower_value(t.exponent), reverse=True):
     if struct_eq(term.exponent, prev_exponent):
       assert term.base == prev_base
       prev_coef += term.coef
@@ -207,37 +221,53 @@ class ExpInt:
     self.terms = terms
     self.const = const
     self.denom = denom
-    self.normalize()
 
+    self.normalize()
     self.depth = max(term.depth for term in terms)
+    self.eval()
 
     bases = frozenset(term.base for term in terms)
     assert len(bases) == 1, bases
     self.base = list(bases)[0]
 
-    # Compute approximate tower height.
-    try:
-      self.tower_approx = signed_tower_approx(self.eval())
-    except OverflowError:
-      max_pos_tower = max((term.tower_approx for term in self.terms
-                           if term.coef > 0), default = 0)
-      max_neg_tower = max((term.tower_approx for term in self.terms
-                           if term.coef < 0), default = 0)
-      if max_pos_tower == max_neg_tower:
-        raise Exception(f"Cannot evalulate sign of ExpInt: {self}    ({max_pos_tower} == {max_neg_tower})")
-      self.tower_approx = max(max_pos_tower, max_neg_tower)
-      if max_neg_tower > max_pos_tower:
-        self.tower_approx = -self.tower_approx
-
   def normalize(self):
     common = gcd(self.const, self.denom)
-    if common > 1:
+    # Force denominator to be postitive
+    common = int(math.copysign(common, self.denom))
+    assert isinstance(common, int), (common, repr(self.denom))
+    if common != 1:
       for term in self.terms:
         common = gcd(common, term.coef)
-    if common > 1:
+        assert isinstance(common, int), (common, repr(term.coef))
+    if common != 1:
       self.const //= common
       self.denom //= common
       self.terms = [term.div_int(common) for term in self.terms]
+    assert self.denom > 0, self
+
+  def eval(self):
+    term_values = [try_eval(term) for term in self.terms]
+    if all(term_values):
+      # All terms are small enough to fit in `int`s. We can represent the sum
+      # percisely here.
+      value = (sum(term_values) + self.const) // self.denom
+      self.tower_value = tower_value(value)
+      self.sign = sign(value)
+
+    else:
+      # At least one term is too large to fit in an `int`.
+      max_pos_tower = max((term.tower_value for term in self.terms
+                           if term.sign > 0), default = tower_value(0))
+      max_neg_tower = max((term.tower_value for term in self.terms
+                           if term.sign < 0), default = tower_value(0))
+      if max_pos_tower == max_neg_tower:
+        raise Exception(f"Cannot evalulate sign of ExpInt: {self}    ({max_pos_tower} == {max_neg_tower})")
+      self.tower_value = max(max_pos_tower, max_neg_tower)
+      if max_neg_tower > max_pos_tower:
+        self.sign = -1
+      else:
+        self.sign = 1
+
 
   def formula_str(self):
     terms_str = " + ".join(term.formula_str() for term in self.terms)
@@ -246,33 +276,28 @@ class ExpInt:
   __repr__ = formula_str
   __str__ = formula_str
 
-  def eval(self) -> int:
-    return (sum(term.eval() for term in self.terms) + self.const) // self.denom
-
-  def tower_approx_str(self):
-    n = abs(self.tower_approx)
-    sgn = "" if self.tower_approx > 0 else "-"
-    return f"{sgn}10^^{n:_}"
-
 
   # The ability to implement mod on this data structure efficiently is the
   # reason that this class works!
   def __mod__(self, other):
-    if other == 1:
+    other_int = try_eval(other)
+    if not other_int:
+      raise NotImplementedError(f"Cannot eval %: {self} % {repr(other)}")
+
+    if other_int == 1:
       return 0
 
-    if isinstance(other, int):
-      # (sum(a_i b^k_i) + c) / d = n other + r
-      # sum(a_i b^k_i) + c = n (d other) + rd
-      # rd = (sum(a_i b^k_i) + c) % (d other)
-      m = self.denom * other
-      terms_rem = sum(term.mod(m) for term in self.terms) % m
-      rd = (terms_rem + self.const) % m
-      r, rdr = divmod(rd, self.denom)
-      assert rdr == 0, f"ExpInt is not an integer: {self}"
-      return r % other
+    assert isinstance(other_int, int), repr(other_int)
+    # (sum(a_i b^k_i) + c) / d = n other + r
+    # sum(a_i b^k_i) + c = n (d other) + rd
+    # rd = (sum(a_i b^k_i) + c) % (d other)
+    m = self.denom * other_int
+    terms_rem = sum(term.mod(m) for term in self.terms) % m
+    rd = (terms_rem + self.const) % m
+    r, rdr = divmod(rd, self.denom)
+    assert rdr == 0, f"ExpInt is not an integer: {self}"
+    return r % other_int
 
-    raise NotImplementedError(f"Cannot eval %: {self} % {repr(other)}")
 
   def __divmod__(self, other):
     # if other == 1:
@@ -341,20 +366,27 @@ class ExpInt:
     raise NotImplementedError(f"ExpInt mul: unsupported type {type(other)}")
 
   def __truediv__(self, other):
-    if is_simple(other):
-      return ExpInt(self.terms, self.const, self.denom * other)
-    raise NotImplementedError(f"ExpInt truediv: unsupported type {type(other)}")
+    other_int = try_eval(other)
+    if not other_int:
+      raise NotImplementedError(f"ExpInt truediv: unsupported type {type(other)}")
+
+    return ExpInt(self.terms, self.const, self.denom * other_int)
+
 
   # Basic comparision using tower notation.
-  # TODO: This is not 100% accurate b/c tower_approx is ... an approximation
-  # but it should be (mostly) good enough.
   def __gt__(self, other):
     if other == math.inf:
       return False
     if other == -math.inf:
       return True
 
-    return self.tower_approx > signed_tower_approx(other)
+    if self.sign < 0:
+      return not (-self >= -other)
+    if sign(other) < 0:
+      # self > 0 > other
+      return True
+
+    return self.tower_value > tower_value(other)
 
   def __ge__(self, other):
     if other == math.inf:
@@ -362,7 +394,13 @@ class ExpInt:
     if other == -math.inf:
       return True
 
-    return self.tower_approx >= signed_tower_approx(other)
+    if self.sign < 0:
+      return not (-self > -other)
+    if sign(other) < 0:
+      # self > 0 > other
+      return True
+
+    return self.tower_value >= tower_value(other)
 
   # Boilerplate
   def __neg__(self):

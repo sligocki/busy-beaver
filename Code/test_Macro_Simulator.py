@@ -11,6 +11,7 @@ import sys
 import unittest
 
 from Common import Exit_Condition
+import Exp_Int
 import Halting_Lib
 import IO
 from IO import TM_Record
@@ -162,7 +163,8 @@ class MacroSimulatorTest(unittest.TestCase):
     data = [("Machines/6x2-e21132-Pavel",  2.604, "(1 * 3^22147 + 25)/2"),
             ("Machines/6x2-e36534-Pavel",  2.629, "(25 * 2^60682 + 23)/9"),
             ("Machines/6x2-e78913",        2.662, "(3 * 2^131071 + 1)/1"),
-            ("Machines/6x2-e197282-Pavel", 2.698, "(5 * 2^327677 + -4)/1"),
+            ("Machines/6x2-e197282-Pavel", 2.698,
+             "(5 * 2^(5 * 2^17 + -6)/2 + -4)/1"),
             ]
     for name, expected_tower, expected_formula in data:
       filename = os.path.join(self.root_dir, name)
@@ -178,7 +180,7 @@ class MacroSimulatorTest(unittest.TestCase):
       self.assertEqual(Halting_Lib.get_big_int(tm_record.proto.status.halt_status.halt_steps),
                        0)
       score = Halting_Lib.get_big_int(tm_record.proto.status.halt_status.halt_score)
-      self.assertAlmostEqual(score.tower_approx, expected_tower, 2)
+      self.assertAlmostEqual(Exp_Int.fractional_height(score), expected_tower, 2)
       self.assertEqual(score.formula_str(), expected_formula)
 
   def test_giant_halting(self):
@@ -206,7 +208,7 @@ class MacroSimulatorTest(unittest.TestCase):
       self.assertEqual(Halting_Lib.get_big_int(tm_record.proto.status.halt_status.halt_steps),
                        0)
       score = Halting_Lib.get_big_int(tm_record.proto.status.halt_status.halt_score)
-      self.assertAlmostEqual(score.tower_approx, expected_tower, 2)
+      self.assertAlmostEqual(Exp_Int.fractional_height(score), expected_tower, 2)
       self.assertEqual(score.formula_str(), expected_formula)
 
   def test_non_halting(self):
