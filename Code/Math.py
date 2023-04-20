@@ -24,11 +24,12 @@ def int_pow(n : int) -> (int, int):
       return (m, k)
   return (n, 1)
 
-def prec_mult(n : int, x : float, prec : int = 10):
+def prec_mult(n : int, x : float):
   """Approximate n * x even if result is too large to fit in float."""
-  try:
+  if n.bit_length() < 50:
+    # float provides more precision up to about 2**52.
     return n * x
-  except OverflowError:
-    # If n is too big to cast to float, we need to be a little more clever:
-    x = int(x * 2**prec)
-    return (n * x) >> prec
+  else:
+    # int provides more precision above 2**52
+    x = int(math.ldexp(x, 64))
+    return (n * x) >> 64

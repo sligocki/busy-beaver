@@ -180,8 +180,8 @@ class MacroSimulatorTest(unittest.TestCase):
       self.assertEqual(Halting_Lib.get_big_int(tm_record.proto.status.halt_status.halt_steps),
                        0)
       score = Halting_Lib.get_big_int(tm_record.proto.status.halt_status.halt_score)
+      self.assertEqual(score.formula_str, expected_formula)
       self.assertAlmostEqual(Exp_Int.fractional_height(score), expected_tower, 2)
-      self.assertEqual(score.formula_str(), expected_formula)
 
   def test_giant_halting(self):
     self.options.recursive = True
@@ -208,8 +208,8 @@ class MacroSimulatorTest(unittest.TestCase):
       self.assertEqual(Halting_Lib.get_big_int(tm_record.proto.status.halt_status.halt_steps),
                        0)
       score = Halting_Lib.get_big_int(tm_record.proto.status.halt_status.halt_score)
+      self.assertEqual(score.formula_str, expected_formula)
       self.assertAlmostEqual(Exp_Int.fractional_height(score), expected_tower, 2)
-      self.assertEqual(score.formula_str(), expected_formula)
 
   def test_non_halting(self):
     self.options.recursive = True

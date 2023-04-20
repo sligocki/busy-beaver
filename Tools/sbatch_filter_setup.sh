@@ -3,6 +3,7 @@
 #SBATCH -N 1
 #SBATCH -n 1
 #SBATCH -c 1
+#SBATCH -t 2:00:00
 #SBATCH -o bb_setup-%J.txt
 #
 # Simple, serial, startup job to prepare data for sbatch_filter_array.sh to run

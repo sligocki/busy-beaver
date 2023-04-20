@@ -1,7 +1,5 @@
 """Library for representing very large integers of the form: a b^n + c"""
 
-# TODO: Add tests!
-
 from fractions import Fraction
 import functools
 import math
@@ -25,6 +23,10 @@ def exp_int(base, exponent):
 
   return ExpInt([ExpTerm(base = base, coef = 1, exponent = exponent)],
                 const = 0, denom = 1)
+
+
+class ExpIntException(Exception):
+  pass
 
 
 def is_simple(value):
@@ -81,7 +83,7 @@ def sign(x):
   if isinstance(x, ExpInt):
     return x.sign
   else:
-    return math.copysign(1, x)
+    return (x > 0) - (x < 0)
 
 
 @functools.cache
@@ -208,8 +210,6 @@ def normalize_terms(terms):
   return new_terms
 
 
-# TODO: Update ExpInt to allow it to be the sum of multiple exponential formula.
-#   Supports ex: 1RB0LD_1RC1RF_1LA1RD_0LE1RC_1LC0RA_---0RB
 class ExpInt:
   """An integer represented by a formula: `(a1 b^n1 + a2 b^n2 + ... + c) / d` """
   def __init__(self, terms, const : int, denom : int):
@@ -224,11 +224,11 @@ class ExpInt:
     self.normalize()
     self.depth = max(term.depth for term in terms)
     if self.depth > MAX_DEPTH:
-      raise OverflowError(f"Too many layers of ExpInt: {self.depth}")
-    self.eval()
+      raise ExpIntException(f"Too many layers of ExpInt: {self.depth}")
 
     terms_str = " + ".join(term.formula_str for term in self.terms)
     self.formula_str = f"({terms_str} + {self.const})/{self.denom}"
+    self.eval()
 
     bases = frozenset(term.base for term in terms)
     assert len(bases) == 1, bases
@@ -237,7 +237,7 @@ class ExpInt:
   def normalize(self):
     common = gcd(self.const, self.denom)
     # Force denominator to be postitive
-    common = int(math.copysign(common, self.denom))
+    common = abs(common) * sign(self.denom)
     assert isinstance(common, int), (common, repr(self.denom))
     if common != 1:
       for term in self.terms:
@@ -265,7 +265,7 @@ class ExpInt:
       max_neg_tower = max((term.tower_value for term in self.terms
                            if term.sign < 0), default = tower_value(0))
       if max_pos_tower == max_neg_tower:
-        raise Exception(f"Cannot evalulate sign of ExpInt: {self}    ({max_pos_tower} == {max_neg_tower})")
+        raise ExpIntException(f"Cannot evalulate sign of ExpInt: {self}    ({max_pos_tower} == {max_neg_tower})")
       self.tower_value = max(max_pos_tower, max_neg_tower)
       if max_neg_tower > max_pos_tower:
         self.sign = -1
@@ -283,7 +283,7 @@ class ExpInt:
   def __mod__(self, other):
     other_int = try_eval(other)
     if not other_int:
-      raise NotImplementedError(f"Cannot eval %: {self} % {repr(other)}")
+      raise ExpIntException(f"Cannot eval %: {self} % {repr(other)}")
 
     if other_int == 1:
       return 0
@@ -334,7 +334,7 @@ class ExpInt:
         # If all ExpTerms cancelled out, return int
         return (ns * self.const + no * other.const) // new_denom
 
-    raise NotImplementedError(f"ExpInt add: unsupported type {type(other)}")
+    raise ExpIntException(f"ExpInt add: unsupported type {type(other)}")
 
   def __mul__(self, other):
     if other == 0:
@@ -362,14 +362,14 @@ class ExpInt:
         else:
           return (self.const * other.const) // (self.denom * other.denom)
       else:
-        raise NotImplementedError("ExpInt mul: base mismatch")
+        raise ExpIntException("ExpInt mul: base mismatch")
 
-    raise NotImplementedError(f"ExpInt mul: unsupported type {type(other)}")
+    raise ExpIntException(f"ExpInt mul: unsupported type {type(other)}")
 
   def __truediv__(self, other):
     other_int = try_eval(other)
     if not other_int:
-      raise NotImplementedError(f"ExpInt truediv: unsupported type {type(other)}")
+      raise ExpIntException(f"ExpInt truediv: unsupported type {type(other)}")
 
     return ExpInt(self.terms, self.const, self.denom * other_int)
 

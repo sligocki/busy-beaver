@@ -1,18 +1,44 @@
 #! /usr/bin/env python3
 
 import Exp_Int
-from Exp_Int import exp_int, ExpTerm, ExpInt, try_eval
+from Exp_Int import *
 
 import unittest
 
 
 class ExpIntTest(unittest.TestCase):
+
+  def test_sign(self):
+    self.assertEqual(sign(138), 1)
+    self.assertEqual(sign(-127), -1)
+    self.assertEqual(sign(0), 0)
+    a = exp_int(7, exp_int(7, 7))
+    b = exp_int(7, exp_int(7, 8))
+    self.assertLess(a, b)
+    self.assertEqual(sign(a - b), -1)
+    self.assertEqual(sign(b - a), 1)
+    self.assertEqual(sign(a - a), 0)
+
   def test_eval(self):
     self.assertEqual(try_eval(exp_int(2, 13)), 2**13)
     self.assertEqual(try_eval((47 * exp_int(3, 21) + 20 * exp_int(3, 11) - 5) / 2),
                      (47 * 3**21 + 20 * 3**11 - 5) / 2)
     self.assertEqual(try_eval(exp_int(2, exp_int(2, exp_int(2, 2)))),
                      2**(2**(2**2)))
+
+  def test_formula_str(self):
+    self.assertEqual(exp_int(2, exp_int(2, exp_int(2, 2))).formula_str,
+                     "(1 * 2^(1 * 2^(1 * 2^2 + 0)/1 + 0)/1 + 0)/1")
+
+  # TODO: Fix this!
+  def todo_test_compare_close(self):
+    x = exp_int(7, 7)
+    a = (7**10 + 1) * exp_int(7, x)
+    b = exp_int(7, x+10)
+    self.assertGreater(a, b)
+    self.assertLess(-a, -b)
+    self.assertEqual(sign(a - b), 1)
+    self.assertEqual(sign(b - a), 1)
 
   def test_add(self):
     x = (11 * exp_int(3, 13875) - 3) / 2
@@ -24,6 +50,7 @@ class ExpIntTest(unittest.TestCase):
     # Make sure we can simplify this expression
     self.assertEqual(y - (y - 4), 4)
     self.assertTrue(Exp_Int.struct_eq(y + y, 2 * y))
+    # TODO: Fix this
     # self.assertTrue(Exp_Int.struct_eq((x+y)*(x+y), x*x + 2*x*y + y*y))
 
   def text_compare(self):
@@ -31,6 +58,8 @@ class ExpIntTest(unittest.TestCase):
     y = (4 * exp_int(3, x) + 6) / 4
     self.assertGreater(y, x)
     self.assertLess(-y, -x)
+    self.assertLess(x, y)
+    self.assertGreater(-x, -y)
 
   def test_mod_6x2_t15(self):
     # From https://www.sligocki.com/2022/06/21/bb-6-2-t15.html
