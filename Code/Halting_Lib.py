@@ -4,7 +4,7 @@ import math
 from typing import Optional
 
 from Algebraic_Expression import Expression
-from Exp_Int import ExpInt, ExpTerm, tower_value
+from Exp_Int import ExpInt, ExpTerm, tower_value, fractional_height
 import io_pb2
 import Math
 

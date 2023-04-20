@@ -13,6 +13,8 @@ from Math import gcd, lcm, int_pow, prec_mult
 # If x < 10^EXP_THRESHOLD, evaluate it as an int
 # if x > 10^EXP_THRESHOLD, only consider as formula
 EXP_THRESHOLD = 1000
+# Fail if we have too many layers of ExpInt
+MAX_DEPTH = 2_000
 
 
 # Standard way to create an ExpInt
@@ -125,6 +127,7 @@ class ExpTerm:
     self.normalize()
     self.sign = sign(self.coef)
     self.eval()
+    self.formula_str = f"{self.coef} * {self.base}^{self.exponent}"
 
     if isinstance(self.exponent, ExpInt):
       self.depth = self.exponent.depth + 1
@@ -161,10 +164,6 @@ class ExpTerm:
         top += int(math.log10(abs(self.coef)))
         # self = 10^top = 10^^1[^top]
         self.tower_value = (1, top)
-
-
-  def formula_str(self):
-    return f"{self.coef} * {self.base}^{self.exponent}"
 
   def mod(self, m : int) -> int:
     return (exp_mod(self.base, self.exponent, m) * self.coef) % m
@@ -224,7 +223,12 @@ class ExpInt:
 
     self.normalize()
     self.depth = max(term.depth for term in terms)
+    if self.depth > MAX_DEPTH:
+      raise OverflowError(f"Too many layers of ExpInt: {self.depth}")
     self.eval()
+
+    terms_str = " + ".join(term.formula_str for term in self.terms)
+    self.formula_str = f"({terms_str} + {self.const})/{self.denom}"
 
     bases = frozenset(term.base for term in terms)
     assert len(bases) == 1, bases
@@ -268,13 +272,10 @@ class ExpInt:
       else:
         self.sign = 1
 
-
-  def formula_str(self):
-    terms_str = " + ".join(term.formula_str() for term in self.terms)
-    return f"({terms_str} + {self.const})/{self.denom}"
-
-  __repr__ = formula_str
-  __str__ = formula_str
+  def __repr__(self):
+    return self.formula_str
+  def __str__(self):
+    return self.formula_str
 
 
   # The ability to implement mod on this data structure efficiently is the
