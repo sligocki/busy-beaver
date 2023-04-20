@@ -1,6 +1,6 @@
 #! /usr/bin/env python3
-# Randomly sample TMs from input files.
-# Uses a streaming algorithm that does not need to know the number of TMs total.
+# Randomly sample TMs from input files using "Reservoir Sampling Algorithm R"
+#   See: https://en.wikipedia.org/wiki/Reservoir_sampling
 
 
 import argparse
