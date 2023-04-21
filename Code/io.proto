@@ -206,6 +206,7 @@ message UnknownInfo {
     OverTapeInfo over_tape = 2;
     OverTimeInfo over_time = 3;
     OverStepsInMacroInfo over_steps_in_macro = 4;
+    bool threw_exception = 5;
   }
 }
 

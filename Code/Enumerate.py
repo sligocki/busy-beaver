@@ -148,7 +148,7 @@ class Enumerator(object):
       print("ERROR: Exception raised while simulating TM:",
             tm_record.ttable_str(), file=sys.stderr)
       print(e)
-      # TODO: Add note to tm_record about exception?
+      tm_record.proto.filter.simulator.result.unknown_info.threw_exception = True
       # raise
     return tm_record
 
