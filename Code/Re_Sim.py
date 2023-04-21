@@ -35,6 +35,8 @@ def re_sim(tm_record):
     options.recursive = True
     options.exp_linear_rules = True
     options.compute_steps = False
+  sim_result.Clear()
+  tm_record.proto.status.Clear()
   Macro_Simulator.simulate_machine(tm, options,
                                    tm_record.proto.filter.simulator,
                                    tm_record.proto.status)

@@ -31,7 +31,7 @@ def big_int_approx_str(value):
     return f"~10^{top:_.1f}"
   else:
     assert height > 1, height
-    return f"~10^^{fractional_height(value):_.1f}"
+    return f"~10↑↑{fractional_height(value):_.2f}"
 
 def big_int_approx_and_full_str(value):
   if value is None:
@@ -63,6 +63,7 @@ def big_int_approx_or_full_str(value):
 
 _BIG_INT_MAX = 2**63 - 1
 def set_big_int(field : io_pb2.BigInt, value):
+  field.Clear()
   if isinstance(value, int):
     if abs(value) <= _BIG_INT_MAX:
       # For "small" (non-negative) integers, store them directly.
