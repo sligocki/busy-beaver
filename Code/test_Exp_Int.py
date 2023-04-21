@@ -5,6 +5,8 @@ from Exp_Int import *
 
 import unittest
 
+from Halting_Lib import set_big_int, get_big_int
+
 
 class ExpIntTest(unittest.TestCase):
 
@@ -79,6 +81,15 @@ class ExpIntTest(unittest.TestCase):
     A6 = (exp_int(3, k5+3) + 1) / 2
     (k6, r6) = divmod(A6, 4)
     self.assertEqual(r6, 2)
+
+  def test_protobuf(self):
+    x = 138
+    for n in range(50):
+      x = 13 * exp_int(5, x) - 1
+
+    x_proto = io_pb2.BigInt()
+    set_big_int(x_proto, x)
+    self.assertTrue(Exp_Int.struct_eq(get_big_int(x_proto), x))
 
 
 if __name__ == '__main__':

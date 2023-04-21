@@ -13,25 +13,31 @@ package busy_beaver;
 
 message ExpTerm {
   uint64 base = 1;
-  sint64 coef = 2;
+  // coef may be larger than 2^63-1
+  BigInt coef = 4;
   // Exponent may be plain integer or another ExpInt
   BigInt exponent = 3;
+
+  sint64 coef_old = 2;  // Deprecated
 }
 
 // protobuf version of type Exp_Int.ExpInt
 message ExpInt {
   repeated ExpTerm terms = 1;
-  sint64 const = 2;
+  // const may be larger than 2^63-1
+  BigInt const = 4;
   uint64 denom = 3;
+
+  sint64 const_old = 2;  // Deprecated
 }
 
 // A "potentially" big positive integer.
 message BigInt {
   oneof big_int {
-    // Small int: 0 to 2^64 - 1. Store directly.
-    uint64 int = 1;
+    // Small int: 0 to 2^63 - 1. Store directly.
+    sint64 int = 8;
 
-    // Medium int: 2^64 to ~2^1000 or so. Serialize in hex.
+    // Medium int: 2^63 to ~2^1000 or so. Serialize in hex.
     string hex_str = 3;
 
     // Giant int: ~10^^15. Represented using a formula.
@@ -40,6 +46,7 @@ message BigInt {
     // DEPRECATED base 10 version: string str = 2;
     string exp_int_str = 4;  // DEPRECATED
     // DEPRECATED old format: ExpInt exp_int = 5;
+    uint64 uint_old = 1;  // Deprecated
   }
 }
 

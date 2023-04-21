@@ -37,6 +37,11 @@ def run_visual(TTable, print_width, start_state, tape_length=100_000):
 
   state = start_state
 
+  # # One-off test:
+  # state = 1 # B
+  # RIGHT = [1] * 2 + [3, 3]
+  # tape[position+1:position+1+len(RIGHT)] = RIGHT
+
   half_width = (print_width - 18) // 2
   if half_width < 1:
     half_width = 1

@@ -50,7 +50,7 @@ def struct_eq(a, b):
   if is_simple(a) and is_simple(b):
     return a == b
   elif isinstance(a, ExpTerm) and isinstance(b, ExpTerm):
-    return (a.base == b.base and a.coef == b.coef and a.exponent == b.exponent)
+    return (a.base == b.base and a.coef == b.coef and struct_eq(a.exponent, b.exponent))
   elif isinstance(a, ExpInt) and isinstance(b, ExpInt):
     return (a.const == b.const and a.denom == b.denom and len(a.terms) == len(b.terms)
             and all(struct_eq(ta, tb) for (ta, tb) in zip(a.terms, b.terms)))

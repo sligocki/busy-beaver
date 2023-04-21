@@ -16,6 +16,9 @@ def big_int_approx_str(value):
     return str(value)
 
   (height, top) = tower_value(value)
+  while top > 10**10:
+    height += 1
+    top = math.log10(top)
 
   if height == 0:
     # value = top is small enough to be an integer
@@ -58,10 +61,10 @@ def big_int_approx_or_full_str(value):
     return big_int_approx_str(value)
 
 
-_BIG_INT_MAX = 2**64 - 1
+_BIG_INT_MAX = 2**63 - 1
 def set_big_int(field : io_pb2.BigInt, value):
   if isinstance(value, int):
-    if value <= _BIG_INT_MAX:
+    if abs(value) <= _BIG_INT_MAX:
       # For "small" (non-negative) integers, store them directly.
       # Setting with negative value will cause a ValueError here.
       field.int = value
@@ -78,6 +81,8 @@ def get_big_int(field : io_pb2.BigInt):
   type = field.WhichOneof("big_int")
   if type == "int":
     return field.int
+  elif type == "uint_old":
+    return field.uint_old
   elif type == "hex_str":
     return int(field.hex_str, base=16)
   elif type == "exp_int":
@@ -91,25 +96,33 @@ def get_big_int(field : io_pb2.BigInt):
 
 # Protobuf serialization and parsing
 def serialize_exp_int(exp_int : ExpInt, field : io_pb2.ExpInt):
-  field.const = exp_int.const
-  # TODO: set_big_int(field.const, exp_int.const)
+  set_big_int(field.const, exp_int.const)
   field.denom = exp_int.denom
   for term in exp_int.terms:
     serialize_exp_term(term, field.terms.add())
 
 def serialize_exp_term(term : ExpTerm, field : io_pb2.ExpTerm):
   field.base = term.base
-  field.coef = term.coef
-  # TODO: set_big_int(field.coef, term.coef)
+  set_big_int(field.coef, term.coef)
   set_big_int(field.exponent, term.exponent)
 
 def parse_exp_int(field : io_pb2.ExpInt) -> ExpInt:
+  if field.HasField("const"):
+    const = get_big_int(field.const)
+  else:
+    const = field.const_old
+
   terms = [parse_exp_term(term) for term in field.terms]
-  return ExpInt(terms, field.const, field.denom)
+  return ExpInt(terms, const, field.denom)
 
 def parse_exp_term(field : io_pb2.ExpTerm) -> ExpTerm:
+  if field.HasField("coef"):
+    coef = get_big_int(field.coef)
+  else:
+    coef = field.coef_old
+
   exp = get_big_int(field.exponent)
-  return ExpTerm(field.base, field.coef, exp)
+  return ExpTerm(field.base, coef, exp)
 
 
 def set_halting(tm_status  : io_pb2.BBStatus,
