@@ -21,6 +21,9 @@ def exp_int(base, exponent):
   assert isinstance(base, int)
   assert isinstance(exponent, (int, ExpInt))
 
+  if exponent == 0:
+    return 1
+
   return ExpInt([ExpTerm(base = base, coef = 1, exponent = exponent)],
                 const = 0, denom = 1)
 
@@ -129,7 +132,9 @@ class ExpTerm:
     self.normalize()
     self.sign = sign(self.coef)
     self.eval()
-    self.formula_str = f"{self.coef} * {self.base}^{self.exponent}"
+    self.formula_str = f"{self.base}^{self.exponent}"
+    if self.coef != 1:
+      self.formula_str = f"{self.coef} * {self.formula_str}"
 
     if isinstance(self.exponent, ExpInt):
       self.depth = self.exponent.depth + 1
@@ -226,8 +231,13 @@ class ExpInt:
     if self.depth > MAX_DEPTH:
       raise ExpIntException(f"Too many layers of ExpInt: {self.depth}")
 
-    terms_str = " + ".join(term.formula_str for term in self.terms)
-    self.formula_str = f"({terms_str} + {self.const})/{self.denom}"
+    self.formula_str = " + ".join(term.formula_str for term in self.terms)
+    if self.const != 0:
+      self.formula_str = f"({self.const} + {self.formula_str})"
+    elif len(self.terms) > 1:
+      self.formula_str = f"({self.formula_str})"
+    if self.denom != 1:
+      self.formula_str = f"{self.formula_str}/{self.denom}"
     self.eval()
 
     bases = frozenset(term.base for term in terms)
@@ -271,6 +281,14 @@ class ExpInt:
         self.sign = -1
       else:
         self.sign = 1
+
+      # Tweak tower value for denom
+      if self.denom != 1:
+        (height, top) = self.tower_value
+        assert height >= 1, self
+        if height == 1:
+          top -= math.log10(self.denom)
+          self.tower_value = (height, top)
 
   def __repr__(self):
     return self.formula_str

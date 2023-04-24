@@ -42,6 +42,7 @@ message BigInt {
 
     // Giant int: ~10^^15. Represented using a formula.
     ExpInt exp_int = 6;
+    bytes exp_int_pickle = 7;
 
     // DEPRECATED base 10 version: string str = 2;
     string exp_int_str = 4;  // DEPRECATED

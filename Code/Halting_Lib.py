@@ -1,6 +1,7 @@
 # Library for setting various halting conditions (especially into the protobufs).
 
 import math
+import pickle
 from typing import Optional
 
 from Algebraic_Expression import Expression
@@ -74,7 +75,7 @@ def set_big_int(field : io_pb2.BigInt, value):
       # Store as hex to avoid https://docs.python.org/3/library/stdtypes.html#integer-string-conversion-length-limitation
       field.hex_str = hex(value)
   elif isinstance(value, ExpInt):
-    serialize_exp_int(value, field.exp_int)
+    field.exp_int_pickle = pickle.dumps(value)
   else:
     raise TypeError(f"Unexpected type {type(value)}")
 
@@ -86,6 +87,8 @@ def get_big_int(field : io_pb2.BigInt):
     return field.uint_old
   elif type == "hex_str":
     return int(field.hex_str, base=16)
+  elif type == "exp_int_pickle":
+    return pickle.loads(field.exp_int_pickle)
   elif type == "exp_int":
     return parse_exp_int(field.exp_int)
   elif type is None:

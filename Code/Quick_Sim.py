@@ -218,7 +218,7 @@ if __name__ == "__main__":
 
   # Override start state
   start_state = ord(options.start_state) - ord("A")
-  assert 0 <= start_state < machine.num_states, args.start_state
+  assert 0 <= start_state < machine.num_states, start_state
   machine.init_state = Turing_Machine.Simple_Machine_State(start_state)
 
   if not options.quiet:
