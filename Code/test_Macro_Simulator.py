@@ -160,11 +160,10 @@ class MacroSimulatorTest(unittest.TestCase):
     self.options.compute_steps = False
     self.options.max_loops = 1_000_000
     self.options.max_block_size = 100
-    data = [("Machines/6x2-e21132-Pavel",  2.604, "(1 * 3^22147 + 25)/2"),
-            ("Machines/6x2-e36534-Pavel",  2.629, "(25 * 2^60682 + 23)/9"),
-            ("Machines/6x2-e78913",        2.662, "(3 * 2^131071 + 1)/1"),
-            ("Machines/6x2-e197282-Pavel", 2.698,
-             "(5 * 2^(5 * 2^17 + -6)/2 + -4)/1"),
+    data = [("Machines/6x2-e21132-Pavel",  2.604, "(25 + 3^22147)/2"),
+            ("Machines/6x2-e36534-Pavel",  2.629, "(23 + 25 * 2^60682)/9"),
+            ("Machines/6x2-e78913",        2.662, "(1 + 3 * 2^131071)"),
+            ("Machines/6x2-e197282-Pavel", 2.698, "(-4 + 5 * 2^(-6 + 5 * 2^17)/2)"),
             ]
     for name, expected_tower, expected_formula in data:
       filename = os.path.join(self.root_dir, name)
@@ -190,9 +189,9 @@ class MacroSimulatorTest(unittest.TestCase):
     self.options.max_loops = 1_000_000
     self.options.max_block_size = 100
     data = [("Machines/6x2-t5", 5.635,
-             "(19 * 2^(7 * 2^(7 * 2^(19 * 2^69175 + -11)/9 + -11)/9 + -17)/9 + 49)/9"),
+             "(49 + 19 * 2^(-17 + 7 * 2^(-11 + 7 * 2^(-11 + 19 * 2^69175)/9)/9)/9)/9"),
             ("Machines/6x2-t15-Pavel", 15.604,
-             "(1 * 3^(1 * 3^(1 * 3^(1 * 3^(1 * 3^(1 * 3^(1 * 3^(1 * 3^(1 * 3^(1 * 3^(1 * 3^(1 * 3^(1 * 3^(1 * 3^22146 + 7)/8 + 23)/8 + 7)/8 + 21)/8 + 7)/8 + 23)/8 + 7)/8 + 23)/8 + 7)/8 + 21)/8 + 7)/8 + 23)/8 + 13)/8 + -11)/2"),
+             "(-11 + 3^(13 + 3^(23 + 3^(7 + 3^(21 + 3^(7 + 3^(23 + 3^(7 + 3^(23 + 3^(7 + 3^(21 + 3^(7 + 3^(23 + 3^(7 + 3^22146)/8)/8)/8)/8)/8)/8)/8)/8)/8)/8)/8)/8)/8)/2"),
             ]
     for name, expected_tower, expected_formula in data:
       filename = os.path.join(self.root_dir, name)

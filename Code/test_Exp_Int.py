@@ -30,17 +30,35 @@ class ExpIntTest(unittest.TestCase):
 
   def test_formula_str(self):
     self.assertEqual(exp_int(2, exp_int(2, exp_int(2, 2))).formula_str,
-                     "(1 * 2^(1 * 2^(1 * 2^2 + 0)/1 + 0)/1 + 0)/1")
+                     "2^2^2^2")
 
-  # TODO: Fix this!
-  def todo_test_compare_close(self):
+  def test_compare_close_ratios(self):
+    mid = exp_int(7, exp_int(7, 7))
+    low = 4 * mid / 5
+    high = 6 * mid / 5
+    self.assertGreater(mid, low)
+    self.assertLess(low, mid)
+    self.assertEqual(sign(mid - low), 1)
+    self.assertEqual(sign(low - mid), -1)
+
+    self.assertLess(mid, high)
+    self.assertGreater(high, mid)
+    self.assertEqual(sign(high - mid), 1)
+    self.assertEqual(sign(mid - high), -1)
+
+    self.assertLess(low, high)
+    self.assertGreater(high, low)
+    self.assertEqual(sign(high - low), 1)
+    self.assertEqual(sign(low - high), -1)
+
+  def test_compare_close_powers(self):
     x = exp_int(7, 7)
     a = (7**10 + 1) * exp_int(7, x)
     b = exp_int(7, x+10)
     self.assertGreater(a, b)
     self.assertLess(-a, -b)
     self.assertEqual(sign(a - b), 1)
-    self.assertEqual(sign(b - a), 1)
+    self.assertEqual(sign(b - a), -1)
 
   def test_add(self):
     x = (11 * exp_int(3, 13875) - 3) / 2

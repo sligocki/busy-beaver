@@ -5,7 +5,7 @@ import functools
 import math
 
 import io_pb2
-from Math import gcd, lcm, int_pow, prec_mult
+from Math import gcd, lcm, int_pow, prec_mult, prec_add
 
 
 # If x < 10^EXP_THRESHOLD, evaluate it as an int
@@ -95,14 +95,12 @@ def cycle(b, m):
   vals = {}
   n = 1
   k = 0
-  # print(f"   DEBUG: cycle({b}, {m})")
   while n not in vals:
     vals[n] = k
     n = (n * b) % m
     k += 1
   i = vals[n]
   p = k - i
-  # print(f"   DEBUG: cycle({b}, {m}) = ({i}, {p})")
   return (i, p)
 
 # Modular arithmetic on ExpInt is actually reasonable once you know the trick.
@@ -168,7 +166,7 @@ class ExpTerm:
 
       else:
         top = prec_mult(exp_int, math.log10(self.base))
-        top += int(math.log10(abs(self.coef)))
+        top = prec_add(top, math.log10(abs(self.coef)))
         # self = 10^top = 10^^1[^top]
         self.tower_value = (1, top)
 
@@ -287,7 +285,7 @@ class ExpInt:
         (height, top) = self.tower_value
         assert height >= 1, self
         if height == 1:
-          top -= math.log10(self.denom)
+          top = prec_add(top, -math.log10(self.denom))
           self.tower_value = (height, top)
 
   def __repr__(self):

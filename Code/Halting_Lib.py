@@ -5,7 +5,7 @@ import pickle
 from typing import Optional
 
 from Algebraic_Expression import Expression
-from Exp_Int import ExpInt, ExpTerm, tower_value, fractional_height
+from Exp_Int import ExpInt, ExpTerm, tower_value, fractional_height, try_eval
 import io_pb2
 import Math
 
@@ -15,6 +15,9 @@ def big_int_approx_str(value):
     return "N/A"
   if value in (math.inf, -math.inf):
     return str(value)
+
+  if value < 10**10:
+    return f"{try_eval(value):_}"
 
   (height, top) = tower_value(value)
   while top > 10**10:

@@ -33,3 +33,12 @@ def prec_mult(n : int, x : float):
     # int provides more precision above 2**52
     x = int(math.ldexp(x, 64))
     return (n * x) >> 64
+
+def prec_add(n : int, x : float):
+  """Approximate n + x even if result is too large to fit in float."""
+  if not isinstance(n, int) or n.bit_length() < 50:
+    # float provides more precision up to about 2**52.
+    return n + x
+  else:
+    # int provides more precision above 2**52
+    return n + int(x)
