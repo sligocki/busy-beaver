@@ -11,7 +11,6 @@ import sys
 import time
 
 import Alarm
-from Common import Exit_Condition, GenContainer
 import CTL_Filter
 import Halting_Lib
 import IO

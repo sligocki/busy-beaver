@@ -9,7 +9,7 @@ import copy
 from pathlib import Path
 import sys
 
-from Common import Exit_Condition, HALT_STATE
+from Common import HALT_STATE
 import Halting_Lib
 import IO
 

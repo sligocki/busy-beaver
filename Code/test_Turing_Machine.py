@@ -9,7 +9,6 @@ import os
 import sys
 import unittest
 
-from Common import Exit_Condition
 from Macro.Tape import INF
 import IO
 

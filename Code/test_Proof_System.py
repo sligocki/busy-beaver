@@ -12,7 +12,6 @@ import sys
 import unittest
 
 import Algebraic_Expression
-from Common import Exit_Condition
 import IO
 
 from Macro import Tape
