@@ -241,6 +241,7 @@ class Simulator(object):
       if self.prover.recursive:
         print("Meta Diff rules proven:", self.prover.num_meta_diff_rules)
         print("Linear rules proven:", self.prover.num_linear_rules)
+        print("Exponential rules proven:", self.prover.num_exponential_rules)
         print("General rules proven:", self.prover.num_gen_rules)
       print("Collatz rules:", self.prover.num_collatz_rules)
       print("Failed proofs:", self.prover.num_failed_proofs)

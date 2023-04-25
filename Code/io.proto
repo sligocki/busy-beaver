@@ -238,13 +238,14 @@ message SimulatorResult {
   uint64 num_rules_proven = 8;
   uint64 num_meta_diff_rules_proven = 12;
   uint64 num_linear_rules_proven = 14;
+  uint64 num_exponential_rules_proven = 16;
   uint64 num_gen_rules_proven = 13;
   // Note: These are rules from above that have the property that one of the
   // exponents decreases by more than 1.
   uint64 num_collatz_rules = 15;
   uint64 num_proofs_failed = 9;
 
-  // next id: 16
+  // next id: 17
 }
 
 message SimulatorInfo {

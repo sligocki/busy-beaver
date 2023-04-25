@@ -11,13 +11,16 @@ import optparse
 from optparse import OptionParser, OptionGroup
 import sys
 
-from Algebraic_Expression import Algebraic_Expression, Variable, NewVariableExpression, VariableToExpression, ConstantToExpression, VarPlusConstExpression, Term, always_ge, is_const, variables, substitute
+from Algebraic_Expression import Expression, Variable, NewVariableExpression, VariableToExpression, ConstantToExpression, VarPlusConstExpression, Term, always_ge, is_const, variables, substitute
 from Exp_Int import ExpInt, exp_int
+from Macro import Rule_Func
 from Macro import Simulator
 from Macro import Tape
 from Macro import Turing_Machine
 from Macro.Turing_Machine import LEFT, RIGHT
 
+# TODO: Remove this old naming.
+Algebraic_Expression = Expression
 
 def add_option_group(parser):
   """Add Proof_System options group to an OptParser parser object."""
@@ -91,7 +94,7 @@ class Diff_Rule(Rule):
                self.num_steps, self.num_loops, self.states_last_seen))
 
 class Linear_Rule(Rule):
-  """A rule where all exponents change like `x -> m x + b` for constants `m, b`."""
+  """A rule where all run counts change like `x -> m x + b` for constants `m, b`."""
   def __init__(self, var_list, min_list, slope_list, const_list,
                result_tape, num_steps, num_loops, rule_num, states_last_seen):
     assert len(var_list) == len(min_list) == len(slope_list) == len(const_list)
@@ -189,6 +192,115 @@ class Linear_Rule(Rule):
 
     # TODO: Replace `<>` with state/dir, like `<A`
     return f"""Linear Rule {self.name}
+Start Tape: {left_start_str} <> {right_start_str}
+End Tape: {left_end_str} <> {right_end_str}
+Steps {self.num_steps} Loops {self.num_loops}"""
+
+class Exponential_Rule(Rule):
+  """A rule where all run counts change like `x -> (a b^{u x + v} + c)/d`."""
+  def __init__(self, func_list, result_tape,
+               num_steps, num_loops, rule_num, states_last_seen):
+    self.func_list = func_list
+    self.block_list = [block.symbol for block in result_tape.tape[0] + result_tape.tape[1]]
+    self.left_size = len(result_tape.tape[0])
+    self.num_steps = num_steps
+    self.num_loops = num_loops
+    self.name = str(rule_num)
+    self.states_last_seen = states_last_seen
+
+    self.gen_rule = General_Rule(
+      var_list = [func.var if func else None
+                  for func in self.func_list],
+      min_list = [func.min if func else None
+                  for func in self.func_list],
+      result_tape = result_tape, num_steps = num_steps, num_loops = num_loops,
+      rule_num = rule_num, states_last_seen = states_last_seen)
+
+    self.num_uses = 0
+
+    # Figure out which (if any) exponents are decreasing.
+    self.is_decreasing = [False] * len(self.func_list)
+    # Figure out if any exponents decrease by > 1. If so, these can lead to
+    # branching (Collatz) behavior, so it's good to know about!
+    self.has_collatz_decrease = False
+    for i, func in enumerate(self.func_list):
+      if func and func.is_decreasing:
+        self.is_decreasing[i] = True
+        if func.has_collatz_decrease:
+          self.has_collatz_decrease = True
+
+    # Rule is infinite if no exponent decreases.
+    self.infinite = not any(self.is_decreasing)
+
+  @staticmethod
+  def try_gen(var_list, min_list, result_tape,
+              num_steps, num_loops, rule_num, states_last_seen):
+    func_list = []
+    for i, result_block in enumerate(result_tape.tape[0]+result_tape.tape[1]):
+      if var_list[i]:
+        if variables(result_block.num) != {var_list[i]}:
+          # Don't allow rules like: x -> 7 or x -> 3y+2
+          return False
+
+        if isinstance(result_block.num, ExpInt):
+          if len(result_block.num.terms) != 1:
+            # Don't allow rules like: x -> 2^{2x+1} + 2^x
+            return False
+          exp_term = result_block.num.terms[0]
+          if not isinstance(exp_term.exponent, Expression):
+            # Don't allow rules like: x -> 2^2^x
+            return False
+          res_exp = exp_term.exponent.as_strictly_linear()
+          if not res_exp:
+            # Don't allow rules like: x -> 2^x^2
+            return False
+
+          (var, coef_exp, const_exp) = res_exp
+          assert var == var_list[i]
+          func_list.append(Rule_Func.Pow_Func(
+            var, min_list[i],
+            base = exp_term.base, coef_base = exp_term.coef,
+            const_base = result_block.num.const, denom = result_block.num.denom,
+            coef_exp = coef_exp, const_exp = const_exp))
+
+        else:
+          assert isinstance(result_block.num, Expression), result_block.num
+          res = result_block.num.as_strictly_linear()
+          if not res:
+            # Don't allow rules like: x -> x^2
+            return False
+          (var, coef, const) = res
+          assert var == var_list[i]
+          func_list.append(Rule_Func.Mult_Func(var, min_list[i], coef, const))
+      else:
+        # Constant exponents (1 or inf)
+        func_list.append(None)
+    # Success, this is a Linear_Rule.
+    return Exponential_Rule(
+      func_list, result_tape, num_steps, num_loops, rule_num, states_last_seen)
+
+  def __repr__(self):
+    def start_block(i):
+      if self.var_list[i]:
+        return f"{self.block_list[i]}^({self.var_list[i]}|{self.min_list[i]})"
+      else:
+        return f"{self.block_list[i]}^{self.min_list[i]}"
+    def end_block(i):
+      if self.var_list[i]:
+        return f"{self.block_list[i]}^({self.func_list[i]})"
+      else:
+        return f"{self.block_list[i]}^{self.min_list[i]}"
+
+    left_start_str = " ".join(start_block(i) for i in range(self.left_size))
+    right_start_str = " ".join(reversed([
+      start_block(i) for i in range(self.left_size, len(self.block_list))]))
+
+    left_end_str = " ".join(end_block(i) for i in range(self.left_size))
+    right_end_str = " ".join(reversed([
+      end_block(i) for i in range(self.left_size, len(self.block_list))]))
+
+    # TODO: Replace `<>` with state/dir, like `<A`
+    return f"""Exponential Rule {self.name}
 Start Tape: {left_start_str} <> {right_start_str}
 End Tape: {left_end_str} <> {right_end_str}
 Steps {self.num_steps} Loops {self.num_loops}"""
@@ -385,6 +497,7 @@ class Proof_System(object):
     self.num_rules = 0
     self.num_meta_diff_rules = 0
     self.num_linear_rules = 0
+    self.num_exponential_rules = 0
     self.num_gen_rules = 0
     # Number of rules with an exponent that decreases by > 1 and thus
     # could lead to collatz-like behavior.
@@ -779,7 +892,25 @@ class Proof_System(object):
           self.print_this(str(rule).replace("\n", "\n " + self.verbose_prefix))
           print()
 
-      else:
+      if not rule:
+        # Figure out if this is an Exponential_Rule
+        rule = Exponential_Rule.try_gen(
+          var_list, min_list, result_tape, num_steps,
+          gen_sim.num_loops, self.num_rules, states_last_seen)
+        if rule:
+          self.num_exponential_rules += 1
+          if rule.has_collatz_decrease:
+            self.num_collatz_rules += 1
+
+          if self.verbose:
+            print()
+            self.print_this("** New exponential rule proven **")
+            self.print_this(str(rule).replace("\n", "\n " + self.verbose_prefix))
+            print()
+
+      if not rule:
+        # If not a Diff_Rule, Linear_Rule or Exponential_Rule ... it's a General_Rule
+
         # TODO: Deal with "Swap rules" like:
         #    Start Tape: 000000^inf 111111^1 101101^(j|2) <C (011101) 111111^(k|1) 111100^1 000000^inf
         #   End Tape: 000000^inf 111111^1 101101^(k + 4) <C (011101) 111111^(j + 2) 111100^1 000000^inf
@@ -1246,9 +1377,7 @@ def config_fits_min(var_list, min_list, current_list, assignment=None):
   """Does `current_list` attain the minimum values (in `min_list`)?
   sets `assignment` along the way."""
   for var, min_val, current_val in zip(var_list, min_list, current_list):
-    if current_val == math.inf:
-      assert min_val == math.inf, min_val
-    else:
+    if var:
       if not always_ge(current_val, min_val):
         return False
       if assignment != None:
