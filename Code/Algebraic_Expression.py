@@ -30,21 +30,30 @@ def div(a, b):
   val = Fraction(a, b)
   return simp_frac(val)
 
-def always_greater_than(a, b):
-  if not is_expr(a) and not is_expr(b):
-    return a > b
-  else:
-    if not is_expr(a):
-      a = ConstantToExpression(a)
-    return a.always_greater_than(b)
-
 def always_ge(a, b):
-  if not is_expr(a) and not is_expr(b):
-    return a >= b
+  return always_ge_zero(a - b)
+
+def always_gt(a, b):
+  return always_gt_zero(a - b)
+
+def try_const(x):
+  if is_const(x):
+    if is_expr(x):
+      return x.const
+    else:
+      return x
+
+def always_ge_zero(x):
+  if (y := try_const(x)) is not None:
+    return y >= 0
   else:
-    if not is_expr(a):
-      a = ConstantToExpression(a)
-    return a.always_ge(b)
+    return x.always_ge_zero()
+
+def always_gt_zero(x):
+  if (y := try_const(x)) is not None:
+    return y > 0
+  else:
+    return x.always_gt_zero()
 
 class Variable:
   """A distinct variable in an algebraic expression"""
@@ -159,8 +168,6 @@ class Expression:
     r = " + ".join([repr(t) for t in self.terms])
     if self.const == 0:
       return "("+r+")"
-    elif self.const < 0:
-      return "("+r+" - "+repr(-self.const)+")"
     else:
       return "("+r+" + "+repr(self.const)+")"
 
@@ -222,23 +229,21 @@ class Expression:
     return simp_frac(val)
 
 
-  def always_greater_than(self, other):
-    """True if self > other for any non-negative variable assignment."""
-    diff = self - other
-    if diff.const <= 0:
+  def always_ge_zero(self):
+    """True if self >= 0 for any non-negative variable assignment."""
+    if not always_ge_zero(self.const):
       return False
-    for term in diff.terms:
-      if term.coef < 0:
+    for term in self.terms:
+      if not always_ge_zero(term.coef):
         return False
     return True
 
-  def always_ge(self, other):
-    """True if self >= other for any non-negative variable assignment."""
-    diff = self - other
-    if diff.const < 0:
+  def always_gt_zero(self):
+    """True if self > 0 for any non-negative variable assignment."""
+    if not always_gt_zero(self.const):
       return False
-    for term in diff.terms:
-      if term.coef < 0:
+    for term in self.terms:
+      if not always_ge_zero(term.coef):
         return False
     return True
 
@@ -282,6 +287,10 @@ class Expression:
       return self.terms[0].vars[0].var
     else:
       raise BadOperation("Expression %s is not of correct form" % self)
+
+  def scalars(self):
+    """Returns a list of all scalars (coeficients and constant)."""
+    return [term.coef for term in self.terms] + [self.const]
 
 Algebraic_Expression = Expression
 

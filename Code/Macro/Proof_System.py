@@ -1243,10 +1243,13 @@ def config_fits_min(var_list, min_list, current_list, assignment=None):
   """Does `current_list` attain the minimum values (in `min_list`)?
   sets `assignment` along the way."""
   for var, min_val, current_val in zip(var_list, min_list, current_list):
-    if not always_ge(current_val, min_val):
-      return False
-    if assignment != None:
-      assignment[var] = current_val
+    if current_val == math.inf:
+      assert min_val == math.inf, min_val
+    else:
+      if not always_ge(current_val, min_val):
+        return False
+      if assignment != None:
+        assignment[var] = current_val
   return True
 
 def factor_var(term : Term, k : Variable):
