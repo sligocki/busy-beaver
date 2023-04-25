@@ -268,6 +268,11 @@ class Expression:
     return self.__cmp__(other) > 0
 
   def __cmp__(self, other):
+    if other == math.inf:
+      return -1
+    if other == -math.inf:
+      return +1
+
     # See if we are guaranteed (for all var values > 0) how self compares to other.
     # Ex:  x + 10 == x + 10
     #      x + 10 < 2x + 10

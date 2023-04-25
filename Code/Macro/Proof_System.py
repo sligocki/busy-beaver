@@ -33,6 +33,8 @@ def add_option_group(parser):
                    "effect the tape to the left and right. [Experimental]")
   group.add_option("--exp-linear-rules", action="store_true", default=False,
                    help="Allow accelerating Linear_Rules [Experimental]")
+  group.add_option("--exp-meta-linear-rules", action="store_true", default=False,
+                   help="Allow using Linear_Rules in Meta Rules [Experimental]")
 
   # A quick experiment shows that 100k past_configs -> 100MB, 1M -> 1GB RAM.
   group.add_option("--max-prover-configs", type=int, default=100_000,
@@ -361,6 +363,7 @@ class Proof_System(object):
     self.options = options
     self.recursive = options.recursive
     self.exp_linear_rules = options.exp_linear_rules
+    self.exp_meta_linear_rules = options.exp_meta_linear_rules
     self.compute_steps = options.compute_steps
     self.verbose = options.verbose_prover  # Step-by-step state printing
     self.verbose_prefix = verbose_prefix
@@ -1071,7 +1074,12 @@ class Proof_System(object):
     start_state, start_tape, start_step_num, start_loop_num = start_config
     current_list = [block.num for block in start_tape.tape[0] + start_tape.tape[1]]
     assert len(current_list) == len(rule.var_list)
-    large_delta = True  # Not editted in this function.
+
+    if self.exp_meta_linear_rules:
+      # Don't try to use collatz rules inside meta rules ... we won't know the parity.
+      disallow_in_meta_rule = rule.has_collatz_decrease
+    else:
+      disallow_in_meta_rule = True
 
     if not config_fits_min(rule.var_list, rule.min_list, current_list):
       if self.verbose:
@@ -1097,7 +1105,7 @@ class Proof_System(object):
       else:
         states_last_seen = None
       return True, (ProverResult(INF_REPEAT, states_last_seen=states_last_seen),
-                    large_delta)
+                    disallow_in_meta_rule)
 
     assert num_reps > 0, num_reps
     # Apply rule a finite number of times.
@@ -1130,7 +1138,7 @@ class Proof_System(object):
       self.print_this("Resulting tape:", new_tape)
 
     # Note: We do not calculate `num_base_steps` and `states_last_seen` (yet).
-    return True, (ProverResult(APPLY_RULE, new_tape=new_tape), large_delta)
+    return True, (ProverResult(APPLY_RULE, new_tape=new_tape), disallow_in_meta_rule)
 
 
   # Diff rules can be applied any number of times in a single evaluation.

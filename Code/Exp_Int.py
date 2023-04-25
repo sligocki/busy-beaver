@@ -45,8 +45,10 @@ def try_eval(x):
     else:
       # Too big to represent as `int`
       return None
-  else:
+  elif isinstance(x, int):
     return x
+  else:
+    return None
 
 def struct_eq(a, b):
   """Test for structural equality (not math equality)."""
@@ -153,6 +155,7 @@ class ExpTerm:
     exp_int = try_eval(self.exponent)
 
     if not exp_int:
+      assert isinstance(self.exponent, ExpInt)
       # For large enough exponent, the coeficient and even base don't have much effect.
       (height, top) = self.exponent.tower_value
       # self = b^(10^^height[^top]) ~= 10^^(height+1)[^top]
