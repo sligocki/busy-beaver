@@ -11,7 +11,7 @@ import optparse
 from optparse import OptionParser, OptionGroup
 import sys
 
-from Algebraic_Expression import Algebraic_Expression, Variable, NewVariableExpression, VariableToExpression, ConstantToExpression, VarPlusConstExpression, is_scalar, BadOperation, Term, always_ge
+from Algebraic_Expression import Algebraic_Expression, Variable, NewVariableExpression, VariableToExpression, ConstantToExpression, VarPlusConstExpression, Term, always_ge
 from Exp_Int import ExpInt, exp_int
 from Macro import Simulator
 from Macro import Tape
@@ -721,7 +721,7 @@ class Proof_System(object):
         if diff_block.num != math.inf:
           diff_block.num -= initial_block.num
           if isinstance(diff_block.num, Algebraic_Expression):
-            if diff_block.num.is_const():
+            if diff_block.num.is_const:
               diff_block.num = diff_block.num.const
             else:
               is_diff_rule = False
@@ -1044,8 +1044,8 @@ class Proof_System(object):
                                           return_tape.tape[dir]):
         if return_block.num is not math.inf:
           return_block.num += num_reps * diff_block.num
-          if isinstance(return_block.num, Algebraic_Expression) and \
-                return_block.num.is_const():
+          if (isinstance(return_block.num, Algebraic_Expression) and
+              return_block.num.is_const):
             return_block.num = return_block.num.const
       return_tape.tape[dir] = [x for x in return_tape.tape[dir] if x.num != 0]
 
@@ -1243,16 +1243,8 @@ def config_fits_min(var_list, min_list, current_list, assignment=None):
   """Does `current_list` attain the minimum values (in `min_list`)?
   sets `assignment` along the way."""
   for var, min_val, current_val in zip(var_list, min_list, current_list):
-    assert is_scalar(min_val) or min_val == math.inf, min_val
-    if is_scalar(current_val) or current_val == math.inf:
-      if current_val < min_val:
-        return False
-    else:
-      assert isinstance(current_val, Algebraic_Expression), current_val
-      # If `current_val` is an expression, we only say that it meets the `min_val`
-      # if it is >= `min_val` for all variable assignments (>= 0).
-      if not current_val.always_ge(min_val):
-        return False
+    if not always_ge(current_val, min_val):
+      return False
     if assignment != None:
       assignment[var] = current_val
   return True

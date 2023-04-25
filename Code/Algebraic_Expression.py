@@ -9,11 +9,14 @@ import math
 import operator
 import string
 
-from Common import is_scalar
+from Common import is_const
 
 
 class BadOperation(Exception):
   """This operation cannot be performed on this Expression."""
+
+def is_expr(value):
+  return isinstance(value, Expression)
 
 def simp_frac(val):
   """Simplify Fraction -> int if it is integral."""
@@ -28,18 +31,18 @@ def div(a, b):
   return simp_frac(val)
 
 def always_greater_than(a, b):
-  if is_scalar(a) and is_scalar(b):
+  if not is_expr(a) and not is_expr(b):
     return a > b
   else:
-    if not isinstance(a, Algebraic_Expression):
+    if not is_expr(a):
       a = ConstantToExpression(a)
     return a.always_greater_than(b)
 
 def always_ge(a, b):
-  if is_scalar(a) and is_scalar(b):
+  if not is_expr(a) and not is_expr(b):
     return a >= b
   else:
-    if not isinstance(a, Algebraic_Expression):
+    if not is_expr(a):
       a = ConstantToExpression(a)
     return a.always_ge(b)
 
@@ -148,6 +151,7 @@ class Expression:
   def __init__(self, terms, constant):
     self.terms = terms
     self.const = constant
+    self.is_const = (len(self.terms) == 0)
 
   def __repr__(self):
     if len(self.terms) == 0:
@@ -161,23 +165,20 @@ class Expression:
       return "("+r+" + "+repr(self.const)+")"
 
   def __add__(self, other):
-    if is_scalar(other):
-      return Expression(self.terms, self.const + other)
-    else:
-      assert isinstance(other, Expression), other
+    if is_expr(other):
       return Expression(term_sum(self.terms, other.terms), self.const + other.const)
+    else:
+      return Expression(self.terms, self.const + other)
 
 
   def __mul__(self, other):
-    if is_scalar(other):
-      if other == 0:
-        return Expression([], 0)
-      else:
-        new_terms = tuple([Term(t.vars, t.coef*other) for t in self.terms])
-        return Expression(new_terms, self.const*other)
-    else:
-      assert isinstance(other, Expression), other
+    if is_expr(other):
       return expr_prod(self, other)
+    elif other == 0:
+      return Expression([], 0)
+    else:
+      new_terms = tuple([Term(t.vars, t.coef*other) for t in self.terms])
+      return Expression(new_terms, self.const*other)
 
   def __pow__(self, power):
     """x^n == x * x^(n-1)"""
@@ -256,10 +257,6 @@ class Expression:
 
   def __ne__(self, other):
     return not self == other
-
-  def is_const(self):
-    """Returns true if this expression has not variables."""
-    return (len(self.terms) == 0)
 
   def is_var_plus_const(self):
     """Is this expression of the form x + 5 (var + const)."""
@@ -414,7 +411,7 @@ def ConstantToExpression(const):
   return Expression([], const)
 
 def VarPlusConstExpression(var, const):
-  assert is_scalar(const), const
+  assert not is_expr(const), const
   vp = Var_Power(var, 1)
   term = Term([vp], 1)
   expr = Expression([term], const)

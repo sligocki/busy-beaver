@@ -4,6 +4,8 @@ from fractions import Fraction
 import functools
 import math
 
+import Algebraic_Expression
+from Common import is_const
 import io_pb2
 from Math import gcd, lcm, int_pow, prec_mult, prec_add
 
@@ -140,6 +142,8 @@ class ExpTerm:
       self.depth = self.exponent.depth + 1
     else:
       self.depth = 1
+    # Is this a constant? Or an expression?
+    self.is_const = is_const(self.exponent)
 
   def normalize(self):
     """Normalize representation"""
@@ -231,6 +235,7 @@ class ExpInt:
     self.depth = max(term.depth for term in terms)
     if self.depth > MAX_DEPTH:
       raise ExpIntException(f"Too many layers of ExpInt: {self.depth}")
+    self.is_const = all(term.is_const for term in terms)
 
     self.formula_str = " + ".join(term.formula_str for term in self.terms)
     if self.const != 0:
