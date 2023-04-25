@@ -3,8 +3,10 @@
 import Exp_Int
 from Exp_Int import *
 
+import sys
 import unittest
 
+import Algebraic_Expression
 from Halting_Lib import set_big_int, get_big_int
 
 
@@ -102,12 +104,24 @@ class ExpIntTest(unittest.TestCase):
 
   def test_protobuf(self):
     x = 138
-    for n in range(50):
+    sys.setrecursionlimit(10_000)
+    for n in range(1000):
       x = 13 * exp_int(5, x) - 1
 
     x_proto = io_pb2.BigInt()
     set_big_int(x_proto, x)
-    self.assertTrue(Exp_Int.struct_eq(get_big_int(x_proto), x))
+    x_pb_bytes = x_proto.SerializeToString()
+    x_pb_reparsed = io_pb2.BigInt()
+    x_pb_reparsed.ParseFromString(x_pb_bytes)
+    self.assertTrue(Exp_Int.struct_eq(get_big_int(x_pb_reparsed), x))
+
+
+  # TODO: Get this working
+  def todo_test_expr_cmp(self):
+    # Test that we can make some comparisons for variable ExpInts.
+    n = Algebraic_Expression.Expression_from_string("n")
+    # 7^n >= n
+    self.assertTrue(Algebraic_Expression.always_ge(exp_int(7, n), n))
 
 
 if __name__ == '__main__':
