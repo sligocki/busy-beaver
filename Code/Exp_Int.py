@@ -4,7 +4,7 @@ from fractions import Fraction
 import functools
 import math
 
-import Algebraic_Expression
+from Algebraic_Expression import Expression, min_val, variables
 from Common import is_const
 import io_pb2
 from Math import gcd, lcm, int_pow, prec_mult, prec_add
@@ -21,7 +21,7 @@ MAX_DEPTH = 2_000
 def exp_int(base, exponent):
   """Returns either int or ExpInt based on size of exponent."""
   assert isinstance(base, int)
-  assert isinstance(exponent, (int, ExpInt))
+  assert isinstance(exponent, (int, ExpInt, Expression))
 
   if exponent == 0:
     return 1
@@ -92,6 +92,14 @@ def sign(x):
   else:
     return (x > 0) - (x < 0)
 
+def exp_int_depth(x):
+  if isinstance(x, ExpInt):
+    return x.depth
+  elif isinstance(x, Expression):
+    return max((exp_int_depth(y) for y in x.scalars()), default=0)
+  else:
+    return 0
+
 
 @functools.cache
 def cycle(b, m):
@@ -125,7 +133,7 @@ class ExpTerm:
   def __init__(self, base : int, coef : int, exponent):
     assert isinstance(base, int), base
     assert isinstance(coef, int), coef
-    assert isinstance(exponent, (int, ExpInt)), exponent
+    assert isinstance(exponent, (int, ExpInt, Expression)), exponent
     assert coef != 0
 
     self.base = base
@@ -138,12 +146,7 @@ class ExpTerm:
     if self.coef != 1:
       self.formula_str = f"{self.coef} * {self.formula_str}"
 
-    if isinstance(self.exponent, ExpInt):
-      self.depth = self.exponent.depth + 1
-    else:
-      self.depth = 1
-    # Is this a constant? Or an expression?
-    self.is_const = is_const(self.exponent)
+    self.depth = exp_int_depth(self.exponent) + 1
 
   def normalize(self):
     """Normalize representation"""
@@ -156,26 +159,44 @@ class ExpTerm:
       self.exponent += 1
 
   def eval(self):
-    exp_int = try_eval(self.exponent)
+    # Is this a constant? Or an expression?
+    self.is_const = is_const(self.exponent)
+    if self.is_const:
+      exp_as_int = try_eval(self.exponent)
 
-    if not exp_int:
-      assert isinstance(self.exponent, ExpInt)
-      # For large enough exponent, the coeficient and even base don't have much effect.
-      (height, top) = self.exponent.tower_value
-      # self = b^(10^^height[^top]) ~= 10^^(height+1)[^top]
-      self.tower_value = (height + 1, top)
-
-    else:
-      assert isinstance(exp_int, int)
-      if exp_int < EXP_THRESHOLD:
-        # self = value = 10^^0[^value]
-        self.tower_value = (0, self.coef * self.base**exp_int)
+      if not exp_as_int:
+        assert isinstance(self.exponent, ExpInt), self.exponent
+        # For large enough exponent, the coeficient and even base don't have much effect.
+        (height, top) = self.exponent.tower_value
+        # self = b^(10^^height[^top]) ~= 10^^(height+1)[^top]
+        self.tower_value = (height + 1, top)
 
       else:
-        top = prec_mult(exp_int, math.log10(self.base))
-        top = prec_add(top, math.log10(abs(self.coef)))
-        # self = 10^top = 10^^1[^top]
-        self.tower_value = (1, top)
+        assert isinstance(exp_as_int, int)
+        if exp_as_int < EXP_THRESHOLD:
+          # self = value = 10^^0[^value]
+          self.tower_value = (0, self.coef * self.base**exp_as_int)
+
+        else:
+          top = prec_mult(exp_as_int, math.log10(self.base))
+          top = prec_add(top, math.log10(abs(self.coef)))
+          # self = 10^top = 10^^1[^top]
+          self.tower_value = (1, top)
+
+    else:  # not self.is_const
+      min_coef = min_val(self.coef)
+      if min_coef < 0:
+        # Not guaranteed ... but not sure it's worth tracking max_val ...
+        self.min_value = -math.inf
+      else:
+        self.min_value = min_coef * exp_int(self.base, min_val(self.exponent))
+      assert is_const(self.min_value), self
+      self.vars = variables(self.coef) | variables(self.exponent)
+
+  def min_val(self):
+    return self.min_value
+  def variables(self):
+    return self.vars
 
   def mod(self, m : int) -> int:
     return (exp_mod(self.base, self.exponent, m) * self.coef) % m
@@ -235,7 +256,6 @@ class ExpInt:
     self.depth = max(term.depth for term in terms)
     if self.depth > MAX_DEPTH:
       raise ExpIntException(f"Too many layers of ExpInt: {self.depth}")
-    self.is_const = all(term.is_const for term in terms)
 
     self.formula_str = " + ".join(term.formula_str for term in self.terms)
     if self.const != 0:
@@ -266,35 +286,52 @@ class ExpInt:
     assert self.denom > 0, self
 
   def eval(self):
-    term_values = [try_eval(term) for term in self.terms]
-    if all(term_values):
-      # All terms are small enough to fit in `int`s. We can represent the sum
-      # percisely here.
-      value = (sum(term_values) + self.const) // self.denom
-      self.tower_value = tower_value(value)
-      self.sign = sign(value)
+    self.is_const = all(term.is_const for term in self.terms)
+    if self.is_const:
+      term_values = [try_eval(term) for term in self.terms]
+      if all(term_values):
+        # All terms are small enough to fit in `int`s. We can represent the sum
+        # percisely here.
+        value = (sum(term_values) + self.const) // self.denom
+        self.tower_value = tower_value(value)
+        self.sign = sign(value)
 
-    else:
-      # At least one term is too large to fit in an `int`.
-      max_pos_tower = max((term.tower_value for term in self.terms
-                           if term.sign > 0), default = tower_value(0))
-      max_neg_tower = max((term.tower_value for term in self.terms
-                           if term.sign < 0), default = tower_value(0))
-      if max_pos_tower == max_neg_tower:
-        raise ExpIntException(f"Cannot evalulate sign of ExpInt: {self}    ({max_pos_tower} == {max_neg_tower})")
-      self.tower_value = max(max_pos_tower, max_neg_tower)
-      if max_neg_tower > max_pos_tower:
-        self.sign = -1
       else:
-        self.sign = 1
+        # At least one term is too large to fit in an `int`.
+        max_pos_tower = max((term.tower_value for term in self.terms
+                             if term.sign > 0), default = tower_value(0))
+        max_neg_tower = max((term.tower_value for term in self.terms
+                             if term.sign < 0), default = tower_value(0))
+        if max_pos_tower == max_neg_tower:
+          raise ExpIntException(f"Cannot evalulate sign of ExpInt: {self}    ({max_pos_tower} == {max_neg_tower})")
+        self.tower_value = max(max_pos_tower, max_neg_tower)
+        if max_neg_tower > max_pos_tower:
+          self.sign = -1
+        else:
+          self.sign = 1
 
-      # Tweak tower value for denom
-      if self.denom != 1:
-        (height, top) = self.tower_value
-        assert height >= 1, self
-        if height == 1:
-          top = prec_add(top, -math.log10(self.denom))
-          self.tower_value = (height, top)
+        # Tweak tower value for denom
+        if self.denom != 1:
+          (height, top) = self.tower_value
+          assert height >= 1, self
+          if height == 1:
+            top = prec_add(top, -math.log10(self.denom))
+            self.tower_value = (height, top)
+
+    else:  # not self.is_const
+      assert is_const(self.denom), self
+      min_terms = sum(term.min_value for term in self.terms)
+      self.min_value = (min_terms + min_val(self.const)) // self.denom
+      assert is_const(self.min_value), self
+      self.vars = set(variables(self.const) | variables(self.denom))
+      for term in self.terms:
+        self.vars.update(term.vars)
+      self.vars = frozenset(self.vars)
+
+  def min_val(self):
+    return self.min_value
+  def variables(self):
+    return self.vars
 
   def __repr__(self):
     return self.formula_str
@@ -358,6 +395,9 @@ class ExpInt:
         # If all ExpTerms cancelled out, return int
         return (ns * self.const + no * other.const) // new_denom
 
+    if isinstance(other, Expression):
+      return other + self
+
     raise ExpIntException(f"ExpInt add: unsupported type {type(other)}")
 
   def __mul__(self, other):
@@ -388,6 +428,9 @@ class ExpInt:
       else:
         raise ExpIntException("ExpInt mul: base mismatch")
 
+    if isinstance(other, Expression):
+      return other * self
+
     raise ExpIntException(f"ExpInt mul: unsupported type {type(other)}")
 
   def __truediv__(self, other):
@@ -400,6 +443,7 @@ class ExpInt:
 
   # Basic comparision using tower notation.
   def __gt__(self, other):
+    assert self.is_const, self
     if other == math.inf:
       return False
     if other == -math.inf:
@@ -414,6 +458,7 @@ class ExpInt:
     return self.tower_value > tower_value(other)
 
   def __ge__(self, other):
+    assert self.is_const, self
     if other == math.inf:
       return False
     if other == -math.inf:
