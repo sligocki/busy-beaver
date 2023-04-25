@@ -49,6 +49,12 @@ def always_ge(a, b):
 def always_gt(a, b):
   return min_val(a - b) > 0
 
+def variables(x):
+  if is_const(x):
+    return frozenset()
+  else:
+    return x.variables()
+
 class Variable:
   """A distinct variable in an algebraic expression"""
   num_vars = 0
@@ -263,6 +269,15 @@ class Expression:
       return self.terms[0].vars[0].var
     else:
       raise BadOperation("Expression %s is not of correct form" % self)
+
+  def variables(self):
+    vars = set()
+    for term in self.terms:
+      vars.update(vp.var for vp in term.vars)
+      vars.update(variables(term.coef))
+    vars.update(variables(self.const))
+    assert all(isinstance(v, Variable) for v in vars)
+    return frozenset(vars)
 
   def variable(self):
     """Returns the single variable in this expression if it exists."""

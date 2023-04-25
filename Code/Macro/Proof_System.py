@@ -11,7 +11,7 @@ import optparse
 from optparse import OptionParser, OptionGroup
 import sys
 
-from Algebraic_Expression import Algebraic_Expression, Variable, NewVariableExpression, VariableToExpression, ConstantToExpression, VarPlusConstExpression, Term, always_ge
+from Algebraic_Expression import Algebraic_Expression, Variable, NewVariableExpression, VariableToExpression, ConstantToExpression, VarPlusConstExpression, Term, always_ge, variables
 from Exp_Int import ExpInt, exp_int
 from Macro import Simulator
 from Macro import Tape
@@ -209,6 +209,11 @@ class General_Rule(Rule):
     self.num_loops = num_loops
     self.name = str(rule_num)
     self.states_last_seen = states_last_seen
+
+    valid_vars = frozenset(self.var_list) - {None}
+    result_vars = frozenset().union(*[variables(x) for x in self.result_list])
+    invalid_vars = result_vars - valid_vars
+    assert not invalid_vars, (invalid_vars, result_vars, valid_vars, self)
 
     self.num_uses = 0
 
