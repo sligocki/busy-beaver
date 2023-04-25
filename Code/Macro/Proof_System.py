@@ -96,19 +96,23 @@ class Diff_Rule(Rule):
 
 class Linear_Rule(Rule):
   """A rule where all run counts change like `x -> m x + b` for constants `m, b`."""
-  def __init__(self, var_list, min_list, slope_list, const_list,
+  def __init__(self, var_list, min_list, func_list,
                result_tape, num_steps, num_loops, rule_num, states_last_seen):
-    assert len(var_list) == len(min_list) == len(slope_list) == len(const_list)
+    assert len(var_list) == len(min_list) == len(func_list)
     self.var_list = var_list
-    self.min_list = min_list
-    self.slope_list = slope_list
-    self.const_list = const_list
+    self.func_list = func_list
     self.block_list = [block.symbol for block in result_tape.tape[0] + result_tape.tape[1]]
     self.left_size = len(result_tape.tape[0])
     self.num_steps = num_steps
     self.num_loops = num_loops
     self.name = str(rule_num)
     self.states_last_seen = states_last_seen
+
+    # Update minimums
+    for i, func in enumerate(func_list):
+      if func:
+        min_list[i] = func.min
+    self.min_list = min_list
 
     # TODO: Remove this once we add logic for applying Linear_Rules repeatedly.
     self.gen_rule = General_Rule(
@@ -118,24 +122,15 @@ class Linear_Rule(Rule):
     self.num_uses = 0
 
     # Figure out which (if any) exponents are decreasing.
-    self.is_decreasing = [False] * len(var_list)
+    self.is_decreasing = [False] * len(self.func_list)
     # Figure out if any exponents decrease by > 1. If so, these can lead to
     # branching (Collatz) behavior, so it's good to know about!
     self.has_collatz_decrease = False
-    for i, (var, m, b) in enumerate(zip(self.var_list, self.slope_list, self.const_list)):
-      if var:
-        if b < 0:
-          if m == 1:
-            self.is_decreasing[i] = True
-            if b != -1:
-              self.has_collatz_decrease = True
-          else:
-            assert m > 1, m
-            # Update min_value to ensure that this exponent does not decrease.
-            # m x - b >= x -> x >= b / (m-1)
-            min_incr = int(math.ceil(-b / (m-1)))
-            self.min_list[i] = max(min_list[i], min_incr)
-            self.is_decreasing[i] = False
+    for i, func in enumerate(self.func_list):
+      if func and func.is_decreasing:
+        self.is_decreasing[i] = True
+        if func.has_collatz_decrease:
+          self.has_collatz_decrease = True
 
     # Rule is infinite if no exponent decreases.
     self.infinite = not any(self.is_decreasing)
@@ -143,31 +138,35 @@ class Linear_Rule(Rule):
   @staticmethod
   def try_gen(var_list, min_list, result_tape,
               num_steps, num_loops, rule_num, states_last_seen):
-    slope_list = []
-    const_list = []
+    func_list = []
     for i, result_block in enumerate(result_tape.tape[0]+result_tape.tape[1]):
-      if var_list[i]:
-        if not isinstance(result_block.num, Algebraic_Expression):
-          # x -> 7 doesn't count as linear!
-          # TODO: Keep track of this failure mode for analysis.
+      if not var_list[i]:
+        # Constant run_length (1 or inf)
+        func_list.append(None)
+
+      else:
+        # Variable run_length
+        if variables(result_block.num) != {var_list[i]}:
+          # Don't allow rules like: x -> 7 or x -> 3y+2
           return False
+        if not isinstance(result_block.num, Expression):
+          # Don't allow rules like: x -> 2^x
+          return False
+
         res = result_block.num.as_strictly_linear()
         if not res:
-          # This result expression is not strictly linear, we're done.
+          # Don't allow rules like: x -> x^2
           return False
-        (var, slope, const) = res
-        if var != var_list[i]:
-          # x -> 3y+2 doesn't count as linear!
-          # TODO: Keep track of this failure mode for analysis.
-          return False
-        slope_list.append(slope)
-        const_list.append(const)
-      else:
-        # non-variable
-        slope_list.append(None)
-        const_list.append(None)
-    # Success, this is a Linear_Rule.
-    return Linear_Rule(var_list, min_list, slope_list, const_list,
+        (var, coef, const) = res
+        assert var == var_list[i]
+        if coef == 1:
+          if const < 0:
+            func_list.append(Rule_Func.Subtract_Func(var, min_list[i], -const))
+          else:
+            func_list.append(Rule_Func.Add_Func(var, min_list[i], const))
+        else:
+          func_list.append(Rule_Func.Mult_Func(var, min_list[i], coef, const))
+    return Linear_Rule(var_list, min_list, func_list,
                        result_tape, num_steps, num_loops, rule_num, states_last_seen)
 
   def __repr__(self):
@@ -178,8 +177,7 @@ class Linear_Rule(Rule):
         return f"{self.block_list[i]}^{self.min_list[i]}"
     def end_block(i):
       if self.var_list[i]:
-        expr = self.slope_list[i] * VariableToExpression(self.var_list[i]) + self.const_list[i]
-        return f"{self.block_list[i]}^{expr}"
+        return f"{self.block_list[i]}^({self.func_list[i]})"
       else:
         return f"{self.block_list[i]}^{self.min_list[i]}"
 
@@ -282,7 +280,6 @@ class Exponential_Rule(Rule):
           (var, coef, const) = res
           assert var == var_list[i]
           func_list.append(Rule_Func.Mult_Func(var, min_list[i], coef, const))
-    # Success, this is a Linear_Rule.
     return Exponential_Rule(func_list, const_list, result_tape,
                             num_steps, num_loops, rule_num, states_last_seen)
 
@@ -1245,10 +1242,9 @@ class Proof_System(object):
 
     # This rule applies at least once. Find the number of times it applies.
     num_reps_all = []
-    for i, cur in enumerate(current_list):
-      if rule.is_decreasing[i]:
-        assert rule.slope_list[i] == 1 and rule.const_list[i] < 0
-        this_reps = (cur - rule.min_list[i]) // -rule.const_list[i] + 1
+    for i, (cur, func) in enumerate(zip(current_list, rule.func_list)):
+      if func and func.is_decreasing:
+        this_reps = func.max_reps(cur)
         num_reps_all.append(this_reps)
     assert num_reps_all, rule
     num_reps = min(num_reps_all)
@@ -1257,26 +1253,8 @@ class Proof_System(object):
     # Apply rule a finite number of times.
     new_tape = start_tape.copy()
     for i, new_block in enumerate(new_tape.tape[0] + new_tape.tape[1]):
-      if rule.var_list[i]:
-        slope = rule.slope_list[i]
-        const = rule.const_list[i]
-        if slope == 1:
-          # a --(1)--> a + c  => a --(n)--> a + nc
-          new_block.num += num_reps * const
-        else:
-          assert slope > 1, slope
-          assert isinstance(slope, int), type(slope)
-          # a --(1)--> (m+1) a + c  =>  a --(n)--> ((am + c) m^n - c) / m
-          m = slope - 1
-          a = new_block.num
-          # We use a custom integer class for this since `num_reps` can
-          # be very large!
-          m_n = exp_int(base = slope, exponent = num_reps)
-          numer = ((a*m + const) * m_n - const)
-          if isinstance(numer, int):
-            new_block.num = numer // m
-          else:
-            new_block.num = numer / m
+      if rule.func_list[i]:
+        new_block.num = rule.func_list[i].apply_rep(new_block.num, num_reps)
 
     if self.verbose:
       self.print_this("++ Linear rule applied ++")
@@ -1317,6 +1295,9 @@ class Proof_System(object):
   # Diff rules can be applied any number of times in a single evaluation.
   # But we can only apply a general rule once at a time.
   def apply_general_rule(self, rule, start_config):
+    if self.max_num_reps == 0:
+      raise Exception("Not simulating General_Rule")
+
     # Unpack input
     start_state, start_tape, start_step_num, start_loop_num = start_config
 
