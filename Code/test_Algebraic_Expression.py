@@ -26,27 +26,35 @@ class SystemTest(unittest.TestCase):
     self.assertEqual(str(expr("2 x^2 y z^13 - 3")), "(2 x^2 y z^13 - 3)")
     self.assertEqual(str(expr("x + -1 y + 3")), "(x + -y + 3)")
 
+  def test_equal(self):
+    self.assertEqual(expr("x + 1"), expr("1 x + 1"))
+
   def test_always_cmp(self):
     # Always: 2x >= x
-    self.assertTrue(Algebraic_Expression.always_ge(expr("2 x"), expr("x")))
+    self.assertTrue(Algebraic_Expression.always_ge(
+      expr("2 x"), expr("x")))
     # Not always 2x > x  (could be == if x = 0)
-    self.assertFalse(Algebraic_Expression.always_greater_than(expr("2 x"), expr("x")))
+    self.assertFalse(Algebraic_Expression.always_greater_than(
+      expr("2 x"), expr("x")))
 
-  def test_expression_cmp(self):
-    self.assertEqual(expr("x + 1"), expr("1 x + 1"))
-    self.assertLess(expr("x + 1"), expr("x + 2"))
-    self.assertLess(expr("x + 1"), expr("2 x + 1"))
-    self.assertLess(expr("x + 2 y + 1"), expr("2 x + 2 y + 1"))
-    self.assertGreater(expr("x + 1"), expr("1"))
-    self.assertGreater(expr("x + 1"), expr("x + 0"))
-    self.assertGreater(expr("x + 1"), expr("0 x + 1"))
-    self.assertGreater(expr("x + 2 y + 1"), expr("x + y + 1"))
-
-    with self.assertRaises(Algebraic_Expression.BadOperation):
-      expr("x + 1") < expr("2 x + 0")
-
-    with self.assertRaises(Algebraic_Expression.BadOperation):
-      expr("x + 2 y") < expr("2 x + y")
+    self.assertTrue(Algebraic_Expression.always_ge(
+      expr("x + 1"), expr("1")))
+    self.assertTrue(Algebraic_Expression.always_ge(
+      expr("x + 1"), expr("0 x + 1")))
+    self.assertTrue(Algebraic_Expression.always_ge(
+      expr("2 x + 1"), expr("x + 1")))
+    self.assertTrue(Algebraic_Expression.always_greater_than(
+      expr("x + 2"), expr("x + 1")))
+    self.assertTrue(Algebraic_Expression.always_greater_than(
+      expr("x + 2"), expr("1")))
+    self.assertTrue(Algebraic_Expression.always_greater_than(
+      expr("x + 1"), expr("x + 0")))
+    self.assertTrue(Algebraic_Expression.always_ge(
+      expr("x + 2 y + 1"), expr("x + y + 1")))
+    self.assertTrue(Algebraic_Expression.always_ge(
+      expr("2 x + 2 y + 1"), expr("x + 2 y + 1")))
+    self.assertTrue(Algebraic_Expression.always_greater_than(
+      expr("3 x + 2 y + 2"), expr("x + y + 1")))
 
   def test_divide(self):
     n = expr("n")

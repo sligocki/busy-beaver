@@ -1088,12 +1088,13 @@ class Proof_System(object):
       return False, None
 
     # This rule applies at least once. Find the number of times it applies.
-    num_reps = math.inf
+    num_reps_all = []
     for i, cur in enumerate(current_list):
       if rule.is_decreasing[i]:
         assert rule.slope_list[i] == 1 and rule.const_list[i] < 0
         this_reps = (cur - rule.min_list[i]) // -rule.const_list[i] + 1
-        num_reps = min(num_reps, this_reps)
+        num_reps_all.append(this_reps)
+    num_reps = min(num_reps_all)
 
     # This rule applies infinitely, we have proven this machine non-halting!
     if num_reps == math.inf:
@@ -1107,7 +1108,7 @@ class Proof_System(object):
       return True, (ProverResult(INF_REPEAT, states_last_seen=states_last_seen),
                     disallow_in_meta_rule)
 
-    assert num_reps > 0, num_reps
+    assert always_ge(num_reps, 0), num_reps
     # Apply rule a finite number of times.
     new_tape = start_tape.copy()
     for i, new_block in enumerate(new_tape.tape[0] + new_tape.tape[1]):

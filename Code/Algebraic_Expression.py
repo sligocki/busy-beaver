@@ -260,51 +260,6 @@ class Expression:
   def __ne__(self, other):
     return not self == other
 
-  # TODO: Remove these hopefull overloads ...
-  def __lt__(self, other):
-    return self.__cmp__(other) < 0
-
-  def __gt__(self, other):
-    return self.__cmp__(other) > 0
-
-  def __cmp__(self, other):
-    if other == math.inf:
-      return -1
-    if other == -math.inf:
-      return +1
-
-    # See if we are guaranteed (for all var values > 0) how self compares to other.
-    # Ex:  x + 10 == x + 10
-    #      x + 10 < 2x + 10
-    #      x + 10 > 10
-    #      x + 10 ? 2x + 9  (These are incomparable)
-    diff = self - other
-    has_pos = has_neg = False
-    for term in diff.terms:
-      if term.coef > 0:
-        has_pos = True
-      elif term.coef < 0:
-        has_neg = True
-    if diff.const > 0:
-      has_pos = True
-    elif diff.const < 0:
-      has_neg = True
-
-    if has_pos:
-      if has_neg:
-        # The two expressions are not comparable.
-        raise BadOperation
-      else:
-        # There are some positive coefs and no negative ones -> self > other.
-        return +1
-    else:  # has_pos == False
-      if has_neg:
-        # There are some negative coefs and no positive ones -> self < other.
-        return -1
-      else:
-        # There are no positive nor negative components -> self = other.
-        return 0
-
   def is_const(self):
     """Returns true if this expression has not variables."""
     return (len(self.terms) == 0)
