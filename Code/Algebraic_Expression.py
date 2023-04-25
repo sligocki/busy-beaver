@@ -30,30 +30,24 @@ def div(a, b):
   val = Fraction(a, b)
   return simp_frac(val)
 
+def as_const(x):
+  assert is_const(x)
+  if is_expr(x):
+    return x.const
+  else:
+    return x
+
+def min_val(x):
+  if is_const(x):
+    return as_const(x)
+  else:
+    return x.min_val()
+
 def always_ge(a, b):
-  return always_ge_zero(a - b)
+  return min_val(a - b) >= 0
 
 def always_gt(a, b):
-  return always_gt_zero(a - b)
-
-def try_const(x):
-  if is_const(x):
-    if is_expr(x):
-      return x.const
-    else:
-      return x
-
-def always_ge_zero(x):
-  if (y := try_const(x)) is not None:
-    return y >= 0
-  else:
-    return x.always_ge_zero()
-
-def always_gt_zero(x):
-  if (y := try_const(x)) is not None:
-    return y > 0
-  else:
-    return x.always_gt_zero()
+  return min_val(a - b) > 0
 
 class Variable:
   """A distinct variable in an algebraic expression"""
@@ -229,23 +223,12 @@ class Expression:
     return simp_frac(val)
 
 
-  def always_ge_zero(self):
-    """True if self >= 0 for any non-negative variable assignment."""
-    if not always_ge_zero(self.const):
-      return False
+  def min_val(self):
+    """Minimum value over all non-negative variable assignment."""
     for term in self.terms:
-      if not always_ge_zero(term.coef):
-        return False
-    return True
-
-  def always_gt_zero(self):
-    """True if self > 0 for any non-negative variable assignment."""
-    if not always_gt_zero(self.const):
-      return False
-    for term in self.terms:
-      if not always_ge_zero(term.coef):
-        return False
-    return True
+      if min_val(term.coef) < 0:
+        return -math.inf
+    return min_val(self.const)
 
   def __eq__(self, other):
     if other == math.inf:
