@@ -42,8 +42,9 @@ def try_eval(x):
   """Return integer value (if it's small enough) or None (if too big)."""
   if isinstance(x, (ExpInt, ExpTerm)):
     (height, top) = x.tower_value
+    assert top >= 0, (top, x.formula_str)
     if height == 0:
-      return top
+      return x.sign * top
     else:
       # Too big to represent as `int`
       return None
@@ -176,6 +177,7 @@ class ExpTerm:
         assert isinstance(self.exponent, ExpInt), self.exponent
         # For large enough exponent, the coeficient and even base don't have much effect.
         (height, top) = self.exponent.tower_value
+        assert top >= 0, top
         # self = b^(10^^height[^top]) ~= 10^^(height+1)[^top]
         self.tower_value = (height + 1, top)
 
@@ -183,13 +185,13 @@ class ExpTerm:
         assert isinstance(exp_as_int, int)
         if exp_as_int < EXP_THRESHOLD:
           # self = value = 10^^0[^value]
-          self.tower_value = (0, self.coef * self.base**exp_as_int)
+          self.tower_value = tower_value(self.coef * self.base**exp_as_int)
 
         else:
           top = prec_mult(exp_as_int, math.log10(self.base))
           top = prec_add(top, math.log10(abs(self.coef)))
           # self = 10^top = 10^^1[^top]
-          self.tower_value = (1, top)
+          self.tower_value = (1, abs(top))
 
     else:  # not self.is_const
       min_coef = min_val(self.coef)
@@ -429,6 +431,8 @@ class ExpInt:
     raise ExpIntException(f"ExpInt add: unsupported type {type(other)}")
 
   def __mul__(self, other):
+    other = try_simplify(other)
+
     if other == 0:
       return 0
 

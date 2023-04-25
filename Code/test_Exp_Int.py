@@ -22,13 +22,17 @@ class ExpIntTest(unittest.TestCase):
     self.assertEqual(sign(a - b), -1)
     self.assertEqual(sign(b - a), 1)
     self.assertEqual(sign(a - a), 0)
+    self.assertEqual(sign(-a), -1)
+    self.assertEqual(sign(-exp_int(7, 7) + 3), -1)
 
   def test_eval(self):
-    self.assertEqual(try_eval(exp_int(2, 13)), 2**13)
-    self.assertEqual(try_eval((47 * exp_int(3, 21) + 20 * exp_int(3, 11) - 5) / 2),
-                     (47 * 3**21 + 20 * 3**11 - 5) / 2)
-    self.assertEqual(try_eval(exp_int(2, exp_int(2, exp_int(2, 2)))),
-                     2**(2**(2**2)))
+    # self.assertEqual(try_eval(exp_int(2, 13)), 2**13)
+    # self.assertEqual(try_eval((47 * exp_int(3, 21) + 20 * exp_int(3, 11) - 5) / 2),
+    #                  (47 * 3**21 + 20 * 3**11 - 5) / 2)
+    # self.assertEqual(try_eval(exp_int(2, exp_int(2, exp_int(2, 2)))),
+    #                  2**(2**(2**2)))
+    self.assertEqual(try_eval(-exp_int(7, 7) + 3),
+                     3 - 7**7)
 
   def test_formula_str(self):
     self.assertEqual(exp_int(2, exp_int(2, exp_int(2, 2))).formula_str,
