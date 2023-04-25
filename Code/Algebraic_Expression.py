@@ -172,7 +172,7 @@ class Expression:
   def __init__(self, terms, constant):
     self.terms = terms
     self.const = constant
-    self.is_const = (len(self.terms) == 0)
+    self.is_const = (len(self.terms) == 0) and is_const(self.const)
 
   def __repr__(self):
     if len(self.terms) == 0:

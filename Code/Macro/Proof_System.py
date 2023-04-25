@@ -773,7 +773,7 @@ class Proof_System(object):
     gen_sim.verbose_print()
     while gen_sim.num_loops < delta_loop:
       block = gen_sim.tape.get_top_block()
-      if isinstance(block.num, Algebraic_Expression) and block.num.const <= 0:
+      if ae.min_val(block.num) <= 0:
         # This corresponds to a block which looks like 2^n+0 .
         # In this situation, we can no longer generalize over all n >= 0.
         # Instead the simulator will act differently if n == 0 or n > 0.
