@@ -279,7 +279,13 @@ class Exponential_Rule(Rule):
             return False
           (var, coef, const) = res
           assert var == var_list[i]
-          func_list.append(Rule_Func.Mult_Func(var, min_list[i], coef, const))
+          if coef == 1:
+            if const < 0:
+              func_list.append(Rule_Func.Subtract_Func(var, min_list[i], -const))
+            else:
+              func_list.append(Rule_Func.Add_Func(var, min_list[i], const))
+          else:
+            func_list.append(Rule_Func.Mult_Func(var, min_list[i], coef, const))
     return Exponential_Rule(func_list, const_list, result_tape,
                             num_steps, num_loops, rule_num, states_last_seen)
 
