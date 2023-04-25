@@ -187,14 +187,18 @@ class MacroSimulatorTest(unittest.TestCase):
     self.options.compute_steps = False
     self.options.max_loops = 1_000_000
     self.options.max_block_size = 100
-    data = [("Machines/6x2-t5", 5.635,
+    data = [("Machines/6x2-t5", None, 5.635,
              "(49 + 19 * 2^(-17 + 7 * 2^(-11 + 7 * 2^(-11 + 19 * 2^69175)/9)/9)/9)/9"),
-            ("Machines/6x2-t15-Pavel", 15.604,
+            ("Machines/6x2-t15-Pavel", None, 15.604,
              "(-11 + 3^(13 + 3^(23 + 3^(7 + 3^(21 + 3^(7 + 3^(23 + 3^(7 + 3^(23 + 3^(7 + 3^(21 + 3^(7 + 3^(23 + 3^(7 + 3^22146)/8)/8)/8)/8)/8)/8)/8)/8)/8)/8)/8)/8)/8)/2"),
+            ("Machines/2x6-t70", 2, 70.275,
+             "(14 + 2^(-1 + 2^(2 + 2^(1 + 2^(-1 + 2^(4 + 2^2^(-1 + 2^2^(2 + 2^2^(2 + 2^2^(-1 + 2^2^(-1 + 2^2^(3 + 2^2^(3 + 2^2^(2 + 2^2^(-1 + 2^2^(-1 + 2^2^(2 + 2^2^(4 + 2^2^(-1 + 2^2^(2 + 2^2^(2 + 2^2^(-1 + 2^2^(3 + 2^2^(-1 + 2^(4 + 2^2^(-1 + 2^2^(-1 + 2^2^(-1 + 2^2^(4 + 2^2^(-1 + 2^2^(-1 + 2^2^(1 + 2^(1 + 2^(-1 + 2^(4 + 2^2^(-1 + 2^2^(2 + 2^2^(2 + 2^2^(-1 + 2^2^258)))))))))))))))))))))))))))))))))))))))"),
             ]
-    for name, expected_tower, expected_formula in data:
+    for name, force_block_size, expected_tower, expected_formula in data:
       filename = os.path.join(self.root_dir, name)
       tm_record = self.load_tm_record_filename(filename)
+      if force_block_size:
+        self.options.block_size = force_block_size
       try:
         Macro_Simulator.run_options(tm_record, self.options)
       except:
