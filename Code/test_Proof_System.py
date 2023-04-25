@@ -16,6 +16,7 @@ import IO
 
 from Macro import Tape
 from Macro import Turing_Machine
+from Macro.Turing_Machine import Block_Symbol
 
 
 def factor_expr(expr, var):
@@ -25,11 +26,6 @@ def factor_expr(expr, var):
   return Proof_System.factor_var(expr.terms[0], var)
 
 class ProofSystemTest(unittest.TestCase):
-  # Test the "apply_rule" method of "Proof_System" for the "Limited_Diff_Rule".
-  #
-  # This is a VERY limited test but I (TJL) needed it at figured it was a
-  # start.
-
   def setUp(self):
     # Get busy-beaver root directory.
     test_dir = os.path.dirname(sys.argv[0])
@@ -333,6 +329,155 @@ class ProofSystemTest(unittest.TestCase):
     self.assertEqual(result.num_base_steps,
                      N * (N-1) * (2*N-1) * 8 / 3 +
                      136 * N * (N-1) + 1052 * N)
+
+
+  def test_meta_linear_rule(self):
+    """
+    Test evaluation for a meta linear rule where substitution must happen within an ExpInt.
+    """
+    # TM I found this bug in.
+    tm = IO.parse_tm("1RB1RA_0LC1RF_1LE1LD_0LB1LC_0RA---_0RD0LF")
+    tm = Turing_Machine.Block_Macro_Machine(tm, 2)
+    self.options.recursive = True
+    self.options.exp_linear_rules = True
+    self.options.exp_meta_linear_rules = True
+    self.options.compute_steps = False
+    # Only allow General_Rules to be applied once so that we can see the result directly.
+    self.options.max_num_reps = 1
+    prover = Proof_System.Proof_System(tm, self.options, "")
+
+
+    # Diff Rule 1:
+    #   $ <E 11^a 10 00^b 10 $ -> $ <E 11^a+2 10 00^b-1 10 $
+    tape = Tape.Chain_Tape()
+    tape.init(0, 0, self.options)
+    tape.dir = Turing_Machine.LEFT
+    tape.tape[0] = [Tape.Repeated_Symbol(Block_Symbol((0, 0)), math.inf),
+                   ]
+    tape.tape[1] = [Tape.Repeated_Symbol(Block_Symbol((0, 0)), math.inf),
+                    Tape.Repeated_Symbol(Block_Symbol((1, 0)), 1),
+                    Tape.Repeated_Symbol(Block_Symbol((0, 0)), 30),
+                    Tape.Repeated_Symbol(Block_Symbol((1, 0)), 1),
+                    Tape.Repeated_Symbol(Block_Symbol((1, 1)), 20),
+                   ]
+
+    state_E = Turing_Machine.Simple_Machine_State(4)
+    full_config = (state_E, tape, None, None)
+    stripped_config = Proof_System.strip_config(
+      state_E, Turing_Machine.LEFT, tape.tape)
+    rule_d1 = prover.prove_rule(stripped_config, full_config, delta_loop = 10)
+    self.assertIsNotNone(rule_d1)
+    prover.add_rule(rule_d1, stripped_config)
+    self.assertEqual(len(prover.rules), 1)
+    # Test rule on an example
+    #   $ <E 11^20 10 00^32 10 $ -> $ <E 11^20+2*30 10 00^2 10 $
+    success, rest = prover.apply_rule(rule_d1, full_config)
+    self.assertTrue(success)
+    result, _ = rest
+    self.assertEqual(result.condition, Proof_System.APPLY_RULE)
+    self.assertEqual(str(result.new_tape), "00^inf <- 11^78 10^1 00^1 10^1 00^inf")
+
+    # Diff Rule 2:
+    #   $ <E 11^a 10 00^b 11^c 10 $ -> $ <E 11^a+2 10 00^b-1 11^c 10 $
+    tape = Tape.Chain_Tape()
+    tape.init(0, 0, self.options)
+    tape.dir = Turing_Machine.LEFT
+    tape.tape[0] = [Tape.Repeated_Symbol(Block_Symbol((0, 0)), math.inf),
+                   ]
+    tape.tape[1] = [Tape.Repeated_Symbol(Block_Symbol((0, 0)), math.inf),
+                    Tape.Repeated_Symbol(Block_Symbol((1, 0)), 1),
+                    Tape.Repeated_Symbol(Block_Symbol((1, 1)), 40),
+                    Tape.Repeated_Symbol(Block_Symbol((0, 0)), 30),
+                    Tape.Repeated_Symbol(Block_Symbol((1, 0)), 1),
+                    Tape.Repeated_Symbol(Block_Symbol((1, 1)), 20),
+                   ]
+
+    full_config = (state_E, tape, None, None)
+    stripped_config = Proof_System.strip_config(
+      state_E, Turing_Machine.LEFT, tape.tape)
+    rule_d2 = prover.prove_rule(stripped_config, full_config, delta_loop = 10)
+    self.assertIsNotNone(rule_d2)
+    prover.add_rule(rule_d2, stripped_config)
+    self.assertEqual(len(prover.rules), 2)
+    # Test rule on an example
+    #   $ <E 11^20 10 00^32 11^40 10 $ -> $ <E 11^20+2*30 10 00^2 11^40 10 $
+    success, rest = prover.apply_rule(rule_d2, full_config)
+    self.assertTrue(success)
+    result, _ = rest
+    self.assertEqual(result.condition, Proof_System.APPLY_RULE)
+    self.assertEqual(str(result.new_tape), "00^inf <- 11^78 10^1 00^1 11^40 10^1 00^inf")
+
+
+    # Linear Rule:
+    #   $ <E 11^g 10 00 11^f 10 $ -> $ <E 11^2g+6 10 00 11^f-1 10 $
+    tape = Tape.Chain_Tape()
+    tape.init(0, 0, self.options)
+    tape.dir = Turing_Machine.LEFT
+    tape.tape[0] = [Tape.Repeated_Symbol(Block_Symbol((0, 0)), math.inf),
+                   ]
+    tape.tape[1] = [Tape.Repeated_Symbol(Block_Symbol((0, 0)), math.inf),
+                    Tape.Repeated_Symbol(Block_Symbol((1, 0)), 1),
+                    Tape.Repeated_Symbol(Block_Symbol((1, 1)), 5),
+                    Tape.Repeated_Symbol(Block_Symbol((0, 0)), 1),
+                    Tape.Repeated_Symbol(Block_Symbol((1, 0)), 1),
+                    Tape.Repeated_Symbol(Block_Symbol((1, 1)), 20),
+                   ]
+
+    full_config = (state_E, tape, None, None)
+    stripped_config = Proof_System.strip_config(
+      state_E, Turing_Machine.LEFT, tape.tape)
+    rule_linear = prover.prove_rule(stripped_config, full_config, delta_loop = 28)
+    self.assertIsNotNone(rule_linear)
+    self.assertTrue(isinstance(rule_linear, Proof_System.Linear_Rule))
+    prover.add_rule(rule_linear, stripped_config)
+    self.assertEqual(len(prover.rules), 3)
+    # Test rule on an example:
+    #   $ <E 11^20 10 00 11^5 10 $ -> $ <E 11^{26 2^4 - 6} 10 00 11^1 10 $
+    success, rest = prover.apply_rule(rule_linear, full_config)
+    self.assertTrue(success)
+    result, _ = rest
+    self.assertEqual(result.condition, Proof_System.APPLY_RULE)
+    self.assertEqual(str(result.new_tape), f"00^inf <- 11^(-6 + 13 * 2^5) 10^1 00^1 11^1 10^1 00^inf")
+
+
+    # Meta Rule:
+    #   $ <E 11^h 10 00 11 10 $ -> $ <E 11^(-6 + 5 * 2^(2 h + 8)) 10 00 11 10 $
+    tape = Tape.Chain_Tape()
+    tape.init(0, 0, self.options)
+    tape.dir = Turing_Machine.LEFT
+    tape.tape[0] = [Tape.Repeated_Symbol(Block_Symbol((0, 0)), math.inf),
+                   ]
+    tape.tape[1] = [Tape.Repeated_Symbol(Block_Symbol((0, 0)), math.inf),
+                    Tape.Repeated_Symbol(Block_Symbol((1, 0)), 1),
+                    Tape.Repeated_Symbol(Block_Symbol((1, 1)), 1),
+                    Tape.Repeated_Symbol(Block_Symbol((0, 0)), 1),
+                    Tape.Repeated_Symbol(Block_Symbol((1, 0)), 1),
+                    Tape.Repeated_Symbol(Block_Symbol((1, 1)), 10),
+                   ]
+
+    full_config = (state_E, tape, None, None)
+    stripped_config = Proof_System.strip_config(
+      state_E, Turing_Machine.LEFT, tape.tape)
+    rule_meta = prover.prove_rule(stripped_config, full_config, delta_loop = 68)
+    # Check that rule was proven successfully
+    self.assertIsNotNone(rule_meta)
+    self.assertTrue(isinstance(rule_meta, Proof_System.General_Rule))
+    # TODO: This should be infinite ...
+    # self.assertTrue(rule_meta.infinite)
+
+
+    # Test that rule_meta has used substitution correctly!
+    # Note: This is an infinite rule, so we must monkey with things a bit to
+    # allow us to apply it only once.
+    rule_meta.infinite = False
+    # Test rule on an example:
+    #   $ <E 11^10 10 00 11 10 $ -> $ <E 11^(-6 + 5 * 2^(20 + 8)) 10 00 11 10 $
+    success, rest = prover.apply_rule(rule_meta, full_config)
+    self.assertTrue(success)
+    result, _ = rest
+    self.assertEqual(result.condition, Proof_System.APPLY_RULE)
+    # TODO: Get this substitution working!
+    # self.assertEqual(str(result.new_tape), f"00^inf <- 11^(-6 + 5 * 2^28) 10^1 00^1 11^1 10^1 00^inf")
 
 
 if __name__ == '__main__':
