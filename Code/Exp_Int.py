@@ -227,6 +227,10 @@ class ExpTerm:
 
 def normalize_terms(terms):
   """Simplify sum of ExpTerms by combining ones that we can."""
+  if not all(term.is_const for term in terms):
+    # For expressions, don't attempt to normalize.
+    return terms
+
   new_terms = []
   prev_exponent = None
   prev_coef = None
@@ -326,9 +330,13 @@ class ExpInt:
 
     else:  # not self.is_const
       assert is_const(self.denom), self
-      min_terms = sum(term.min_value for term in self.terms)
-      self.min_value = (min_terms + min_val(self.const)) // self.denom
-      assert is_const(self.min_value), self
+      min_terms = [term.min_value for term in self.terms]
+      if -math.inf in min_terms:
+        self.min_value = -math.inf
+      else:
+        min_terms = sum(min_terms)
+        self.min_value = (min_terms + min_val(self.const)) / self.denom
+        assert isinstance(self.min_value, (ExpInt, int)), self
       self.vars = set(variables(self.const) | variables(self.denom))
       for term in self.terms:
         self.vars.update(term.vars)

@@ -27,8 +27,10 @@ def simp_frac(val):
 
 def div(a, b):
   """Return a / b as either int or Fraction."""
-  val = Fraction(a, b)
-  return simp_frac(val)
+  if isinstance(a, int) and isinstance(b, int):
+    return simp_frac(Fraction(a, b))
+  else:
+    return a / b
 
 def as_const(x):
   assert is_const(x)

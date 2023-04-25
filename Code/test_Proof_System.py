@@ -462,8 +462,7 @@ class ProofSystemTest(unittest.TestCase):
     # Check that rule was proven successfully
     self.assertIsNotNone(rule_meta)
     self.assertTrue(isinstance(rule_meta, Proof_System.Exponential_Rule))
-    # TODO: This should be infinite ...
-    # self.assertTrue(rule_meta.infinite)
+    self.assertTrue(rule_meta.infinite)
 
 
     # Test that rule_meta has used substitution correctly!
@@ -472,7 +471,7 @@ class ProofSystemTest(unittest.TestCase):
     rule_meta.infinite = False
     # Test rule on an example:
     #   $ <E 11^10 10 00 11 10 $ -> $ <E 11^(-6 + 5 * 2^(20 + 8)) 10 00 11 10 $
-    success, rest = prover.apply_rule(rule_meta.gen_rule, full_config)
+    success, rest = prover.apply_rule(rule_meta, full_config)
     self.assertTrue(success)
     result, _ = rest
     self.assertEqual(result.condition, Proof_System.APPLY_RULE)

@@ -105,4 +105,5 @@ class Pow_Func(Func):
         if min > x_bound:
           return min
         else:
+          # TODO: Add tests that actually use this logic.
           min = math.ceil(x_bound)

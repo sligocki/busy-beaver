@@ -12,6 +12,7 @@ from optparse import OptionParser, OptionGroup
 import sys
 
 from Algebraic_Expression import Expression, Variable, NewVariableExpression, VariableToExpression, ConstantToExpression, VarPlusConstExpression, Term, always_ge, is_const, variables, substitute
+import Algebraic_Expression as ae
 from Exp_Int import ExpInt, exp_int
 from Macro import Rule_Func
 from Macro import Simulator
@@ -198,9 +199,10 @@ Steps {self.num_steps} Loops {self.num_loops}"""
 
 class Exponential_Rule(Rule):
   """A rule where all run counts change like `x -> (a b^{u x + v} + c)/d`."""
-  def __init__(self, func_list, result_tape,
+  def __init__(self, func_list, const_list, result_tape,
                num_steps, num_loops, rule_num, states_last_seen):
     self.func_list = func_list
+    self.const_list = const_list
     self.block_list = [block.symbol for block in result_tape.tape[0] + result_tape.tape[1]]
     self.left_size = len(result_tape.tape[0])
     self.num_steps = num_steps
@@ -208,13 +210,13 @@ class Exponential_Rule(Rule):
     self.name = str(rule_num)
     self.states_last_seen = states_last_seen
 
-    self.gen_rule = General_Rule(
-      var_list = [func.var if func else None
-                  for func in self.func_list],
-      min_list = [func.min if func else None
-                  for func in self.func_list],
-      result_tape = result_tape, num_steps = num_steps, num_loops = num_loops,
-      rule_num = rule_num, states_last_seen = states_last_seen)
+    self.var_list = [(func.var if func else None)
+                     for func in self.func_list]
+    self.min_list = [(func.min if func else None)
+                     for func in self.func_list]
+    assert len(func_list) == len(self.var_list) == len(self.min_list)
+    self.gen_rule = General_Rule(self.var_list, self.min_list, result_tape,
+                                 num_steps, num_loops, rule_num, states_last_seen)
 
     self.num_uses = 0
 
@@ -236,8 +238,16 @@ class Exponential_Rule(Rule):
   def try_gen(var_list, min_list, result_tape,
               num_steps, num_loops, rule_num, states_last_seen):
     func_list = []
+    const_list = []
     for i, result_block in enumerate(result_tape.tape[0]+result_tape.tape[1]):
-      if var_list[i]:
+      if not var_list[i]:
+        # Constant run_length (1 or inf)
+        func_list.append(None)
+        const_list.append(min_list[i])
+
+      else:
+        # Variable run_length
+        const_list.append(None)
         if variables(result_block.num) != {var_list[i]}:
           # Don't allow rules like: x -> 7 or x -> 3y+2
           return False
@@ -272,24 +282,23 @@ class Exponential_Rule(Rule):
           (var, coef, const) = res
           assert var == var_list[i]
           func_list.append(Rule_Func.Mult_Func(var, min_list[i], coef, const))
-      else:
-        # Constant exponents (1 or inf)
-        func_list.append(None)
     # Success, this is a Linear_Rule.
-    return Exponential_Rule(
-      func_list, result_tape, num_steps, num_loops, rule_num, states_last_seen)
+    return Exponential_Rule(func_list, const_list, result_tape,
+                            num_steps, num_loops, rule_num, states_last_seen)
 
   def __repr__(self):
     def start_block(i):
-      if self.var_list[i]:
-        return f"{self.block_list[i]}^({self.var_list[i]}|{self.min_list[i]})"
+      if self.const_list[i] is not None:
+        return f"{self.block_list[i]}^{self.const_list[i]}"
       else:
-        return f"{self.block_list[i]}^{self.min_list[i]}"
+        assert self.func_list[i]
+        return f"{self.block_list[i]}^({self.func_list[i].var}|{self.func_list[i].min})"
     def end_block(i):
-      if self.var_list[i]:
-        return f"{self.block_list[i]}^({self.func_list[i]})"
+      if self.const_list[i] is not None:
+        return f"{self.block_list[i]}^{self.const_list[i]}"
       else:
-        return f"{self.block_list[i]}^{self.min_list[i]}"
+        assert self.func_list[i]
+        return f"{self.block_list[i]}^({self.func_list[i]})"
 
     left_start_str = " ".join(start_block(i) for i in range(self.left_size))
     right_start_str = " ".join(reversed([
@@ -801,19 +810,17 @@ class Proof_System(object):
       # TODO: Better yet, build these checks into the data type!
       for dir in range(2):
         for block in gen_sim.tape.tape[dir]:
-          if isinstance(block.num, Algebraic_Expression):
-            if len(block.num.terms) == 1:
-              x = block.num.variable()
-              min_val[x] = min(min_val[x], block.num.const)
-            # If more than one variable is clumped into a single term,
-            # it will fail.
-            elif len(block.num.terms) > 1:
-              if self.verbose:
-                print()
-                self.print_this("** Failed: Multiple vars in one term **")
-                self.print_this(gen_sim.tape)
-                print()
-              return False
+          vars = variables(block.num)
+          if len(vars) > 1:
+            if self.verbose:
+              print()
+              self.print_this("** Failed: Multiple vars in one term **")
+              self.print_this(gen_sim.tape)
+              print()
+            return False
+          elif len(vars) == 1:
+            x = list(vars)[0]
+            min_val[x] = min(min_val[x], ae.min_val(block.num))
 
     # Make sure finishing tape has the same stripped config as original.
     gen_stripped_config = strip_config(gen_sim.state, gen_sim.tape.dir,
@@ -1014,6 +1021,8 @@ class Proof_System(object):
       return self.apply_diff_rule(rule, start_config)
     elif isinstance(rule, Linear_Rule):
       return self.apply_linear_rule(rule, start_config)
+    elif isinstance(rule, Exponential_Rule):
+      return self.apply_exponential_rule(rule, start_config)
     elif isinstance(rule, General_Rule):
       return self.apply_general_rule(rule, start_config)
     elif isinstance(rule, Limited_Diff_Rule):
@@ -1142,8 +1151,7 @@ class Proof_System(object):
                     large_delta)
 
     # If we cannot even apply this transition once, we're done.
-    if (not isinstance(num_reps, Algebraic_Expression) and
-        num_reps <= 0):
+    if is_const(num_reps) and num_reps <= 0:
       if self.verbose:
         self.print_this("++ Rule cannot apply: Below min")
         print()
@@ -1277,6 +1285,33 @@ class Proof_System(object):
 
     # Note: We do not calculate `num_base_steps` and `states_last_seen` (yet).
     return True, (ProverResult(APPLY_RULE, new_tape=new_tape), disallow_in_meta_rule)
+
+
+  def apply_exponential_rule(self, rule, start_config):
+    # Unpack input
+    start_state, start_tape, start_step_num, start_loop_num = start_config
+    current_list = [block.num for block in start_tape.tape[0] + start_tape.tape[1]]
+    assert len(current_list) == len(rule.var_list)
+
+    if not config_fits_min(rule.var_list, rule.min_list, current_list):
+      if self.verbose:
+        self.print_this("++ Rule cannot apply: Below min")
+        print()
+      return False, None
+
+    # This rule applies infinitely, we have proven this machine non-halting!
+    if rule.infinite:
+      if self.verbose:
+        self.print_this("++ Rule applies infinitely ++")
+        print()
+      if rule.states_last_seen:
+        states_last_seen = {state: math.inf for state in rule.states_last_seen}
+      else:
+        states_last_seen = None
+      return True, (ProverResult(INF_REPEAT, states_last_seen=states_last_seen), True)
+
+    # TODO?: Implement repeated application of Exponetial_Rule?
+    return self.apply_general_rule(rule.gen_rule, start_config)
 
 
   # Diff rules can be applied any number of times in a single evaluation.
