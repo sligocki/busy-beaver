@@ -225,7 +225,7 @@ class Expression:
 
   def __truediv__(self, other):
     """Divide the expression by a scalar."""
-    assert isinstance(other, int), (self, other)
+    assert isinstance(other, int), (self, other, type(other))
     if other == 1:
       return self
     return Expression(

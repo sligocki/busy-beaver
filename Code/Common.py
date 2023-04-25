@@ -2,6 +2,19 @@
 Shared constants and constructs.
 """
 
+import sys
+
+# Increase some annoying limits
+sys.set_int_max_str_digits(20_000)
+sys.setrecursionlimit(10_000)
+
+def is_const(value):
+  try:
+    return value.is_const
+  except AttributeError:
+    # Any type not implementing is_const is assumed to be constant (int, Fraction, ...)
+    return True
+
 
 class GenContainer(object):
   """Generic container class"""
@@ -57,11 +70,3 @@ class Exit_Condition(object):
 
 HALT_TRANS = (1, 1, -1)
 HALT_STATE = -1
-
-
-def is_const(value):
-  try:
-    return value.is_const
-  except AttributeError:
-    # Any type not implementing is_const is assumed to be constant (int, Fraction, ...)
-    return True

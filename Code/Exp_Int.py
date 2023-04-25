@@ -52,6 +52,14 @@ def try_eval(x):
   else:
     return None
 
+def try_simplify(x):
+  """Return integer value (if it's small enough) or ExpInt (if too big)."""
+  y = try_eval(x)
+  if y is not None:
+    return y
+  else:
+    return x
+
 def struct_eq(a, b):
   """Test for structural equality (not math equality)."""
   if is_simple(a) and is_simple(b):

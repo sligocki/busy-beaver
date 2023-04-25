@@ -11,8 +11,9 @@ import optparse
 from optparse import OptionParser, OptionGroup
 import sys
 
-from Algebraic_Expression import Expression, Variable, NewVariableExpression, VariableToExpression, ConstantToExpression, VarPlusConstExpression, Term, always_ge, is_const, variables, substitute
 import Algebraic_Expression as ae
+from Algebraic_Expression import Expression, Variable, NewVariableExpression, VariableToExpression, ConstantToExpression, VarPlusConstExpression, Term, always_ge, is_const, variables, substitute
+import Exp_Int
 from Exp_Int import ExpInt, exp_int
 from Macro import Rule_Func
 from Macro import Simulator
@@ -755,10 +756,12 @@ class Proof_System(object):
         # Blocks with one rep are not generalized, eg. (abc)^1 -> (abc)^1
         if block.num not in (math.inf, 1):
           x = Variable()
-          init_count = block.num
+          init_count = Exp_Int.try_eval(block.num)
           # Avoid proving rules with rediculously huge initial values (like ExpInt).
-          if init_count > 2**20:
+          if not init_count or init_count > 2**20:
             init_count = 2**20
+            assert block.num > init_count, block.num
+          assert isinstance(init_count, int)
           x_init = VarPlusConstExpression(x, init_count)
           block.num = x_init
           min_val[x] = block.num.const
@@ -1091,8 +1094,8 @@ class Proof_System(object):
               self.print_this("Rule initial block:", init_block)
               self.print_this("")
             return False, None
-          delta_value[x] = diff_block.num
-          assert isinstance(delta_value[x], (int, Fraction)), repr(delta_value[x])
+          delta_value[x] = Exp_Int.try_simplify(diff_block.num)
+          assert isinstance(delta_value[x], int), repr(delta_value[x])
           # If this block's repetitions will be depleted during this transition,
           #   count the number of repetitions that it can allow while staying
           #   above the minimum requirement.
