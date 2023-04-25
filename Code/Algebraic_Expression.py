@@ -55,6 +55,13 @@ def variables(x):
   else:
     return x.variables()
 
+def substitute(x, assignment):
+  if is_const(x):
+    return as_const(x)
+  else:
+    return x.substitute(assignment)
+
+
 class Variable:
   """A distinct variable in an algebraic expression"""
   num_vars = 0
@@ -102,7 +109,10 @@ class Var_Power:
   def substitute(self, subs):
     """Substitute values from dict 'subs' to get an int."""
     if self.var in subs:
-      return subs[self.var]**self.pow
+      if self.pow == 1:
+        return subs[self.var]
+      else:
+        return subs[self.var]**self.pow
     else:
       return VariableToExpression(self.var)**self.pow
 

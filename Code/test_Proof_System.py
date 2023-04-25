@@ -476,8 +476,7 @@ class ProofSystemTest(unittest.TestCase):
     self.assertTrue(success)
     result, _ = rest
     self.assertEqual(result.condition, Proof_System.APPLY_RULE)
-    # TODO: Get this substitution working!
-    # self.assertEqual(str(result.new_tape), f"00^inf <- 11^(-6 + 5 * 2^28) 10^1 00^1 11^1 10^1 00^inf")
+    self.assertEqual(str(result.new_tape), f"00^inf <- 11^(-6 + 5 * 2^28) 10^1 00^1 11^1 10^1 00^inf")
 
 
 if __name__ == '__main__':

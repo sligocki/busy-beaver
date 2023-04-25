@@ -11,7 +11,7 @@ import optparse
 from optparse import OptionParser, OptionGroup
 import sys
 
-from Algebraic_Expression import Algebraic_Expression, Variable, NewVariableExpression, VariableToExpression, ConstantToExpression, VarPlusConstExpression, Term, always_ge, variables
+from Algebraic_Expression import Algebraic_Expression, Variable, NewVariableExpression, VariableToExpression, ConstantToExpression, VarPlusConstExpression, Term, always_ge, is_const, variables, substitute
 from Exp_Int import ExpInt, exp_int
 from Macro import Simulator
 from Macro import Tape
@@ -753,13 +753,12 @@ class Proof_System(object):
       result_tape = gen_sim.tape
       # Fix up result_tape to by applying variable substitution.
       for result_block in result_tape.tape[0]+result_tape.tape[1]:
-        if isinstance(result_block.num, Algebraic_Expression):
-          result_block.num = result_block.num.substitute(assignment)
+        result_block.num = substitute(result_block.num, assignment)
 
       # Fix num_steps.
       if self.compute_steps:
-        num_steps = gen_sim.step_num.substitute(assignment)
-        states_last_seen = {state: last_seen.substitute(assignment)
+        num_steps = substitute(gen_sim.step_num, assignment)
+        states_last_seen = {state: substitute(last_seen, assignment)
                             for state, last_seen in gen_sim.states_last_seen.items()}
       else:
         num_steps = 0
@@ -813,15 +812,16 @@ class Proof_System(object):
               new_value = VariableToExpression(x) - min_val[x] + 1
               init_block.num = init_block.num.substitute({x: new_value})
               replaces[x] = new_value
+            else:
+              assert is_const(init_block.num), init_block
         # Fix diff_tape.  # TODO: rm, only happens for recursive_rules
         for dir in range(2):
           for diff_block in diff_tape.tape[dir]:
-            if isinstance(diff_block.num, Algebraic_Expression):
-              diff_block.num = diff_block.num.substitute(replaces)
+            diff_block.num = substitute(diff_block.num, replaces)
         # Fix num_steps.
         if self.compute_steps:
-          num_steps = gen_sim.step_num.substitute(replaces)
-          states_last_seen = {state: last_seen.substitute(replaces)
+          num_steps = substitute(gen_sim.step_num, replaces)
+          states_last_seen = {state: substitute(last_seen, replaces)
                               for state, last_seen in gen_sim.states_last_seen.items()}
         else:
           num_steps = 0
@@ -1024,7 +1024,7 @@ class Proof_System(object):
       # number of steps to apply rule once (after rule has already been applied
       # k times).
       k = NewVariableExpression()
-      this_num_steps = rule.num_steps.substitute({
+      this_num_steps = substitute(rule.num_steps, {
         x : init_value[x] + delta_value[x] * k
         for x in init_value})
       diff_steps = series_sum(this_num_steps, k.variable(), num_reps)
@@ -1036,7 +1036,7 @@ class Proof_System(object):
         # After the rule is applied, how many steps before that did we last see
         # `state`.
         last_seen_ago = rule.num_steps - last_seen
-        states_last_seen[state] = diff_steps - last_seen_ago.substitute(last_value)
+        states_last_seen[state] = substitute(diff_steps - last_seen_ago, last_value)
 
     else:
       diff_steps = 0 # TODO: Make it None instead of a lie
@@ -1186,12 +1186,10 @@ class Proof_System(object):
 
       # Apply variable assignment to update number of steps and tape config.
       if self.compute_steps:
-        diff_steps += rule.num_steps.substitute(assignment)
+        diff_steps += substitute(rule.num_steps, assignment)
 
       # TODO: Stop using substitute and make this a tuple-to-tuple function?
-      next_list = [val.substitute(assignment)
-                   if isinstance(val, Algebraic_Expression) else val
-                   for val in rule.result_list]
+      next_list = [substitute(val, assignment) for val in rule.result_list]
 
       if next_list == current_list:
         states_last_seen = None
@@ -1228,7 +1226,7 @@ class Proof_System(object):
           # After the rule is applied, how many steps before that did we last see
           # `state`.
           last_seen_ago = rule.num_steps - last_seen
-          states_last_seen[state] = diff_steps - last_seen_ago.substitute(last_assignment)
+          states_last_seen[state] = substitute(diff_steps - last_seen_ago, last_assignment)
         # TODO: Test this ...
       else:
         states_last_seen = None

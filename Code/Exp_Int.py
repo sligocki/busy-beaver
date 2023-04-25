@@ -4,7 +4,7 @@ from fractions import Fraction
 import functools
 import math
 
-from Algebraic_Expression import Expression, min_val, variables
+from Algebraic_Expression import Expression, min_val, variables, substitute
 from Common import is_const
 import io_pb2
 from Math import gcd, lcm, int_pow, prec_mult, prec_add
@@ -197,6 +197,12 @@ class ExpTerm:
     return self.min_value
   def variables(self):
     return self.vars
+  def substitute(self, assignment):
+    if self.is_const:
+      return self
+    new_coef = substitute(self.coef, assignment)
+    new_exp = substitute(self.exponent, assignment)
+    return new_coef * exp_int(self.base, new_exp)
 
   def mod(self, m : int) -> int:
     return (exp_mod(self.base, self.exponent, m) * self.coef) % m
@@ -332,6 +338,12 @@ class ExpInt:
     return self.min_value
   def variables(self):
     return self.vars
+  def substitute(self, assignment):
+    if self.is_const:
+      return self
+    numer = sum(term.substitute(assignment) for term in self.terms)
+    numer += substitute(self.const, assignment)
+    return numer / substitute(self.denom, assignment)
 
   def __repr__(self):
     return self.formula_str
