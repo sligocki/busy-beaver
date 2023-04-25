@@ -1,9 +1,11 @@
-#
-# Common.py
-#
 """
 Shared constants and constructs.
 """
+
+from fractions import Fraction
+
+from Exp_Int import ExpInt
+
 
 class GenContainer(object):
   """Generic container class"""
@@ -59,3 +61,8 @@ class Exit_Condition(object):
 
 HALT_TRANS = (1, 1, -1)
 HALT_STATE = -1
+
+# Numeric helpers
+def is_scalar(value):
+  """Is this a "scalar" value? An integer or fraction in various formats."""
+  return isinstance(value, (int, Fraction, ExpInt))

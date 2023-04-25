@@ -9,14 +9,11 @@ import math
 import operator
 import string
 
-from Exp_Int import ExpInt
+from Common import is_scalar
 
 
 class BadOperation(Exception):
   """This operation cannot be performed on this Expression."""
-
-def is_scalar(value):
-  return isinstance(value, (int, Fraction, ExpInt))
 
 def simp_frac(val):
   """Simplify Fraction -> int if it is integral."""
