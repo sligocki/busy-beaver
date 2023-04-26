@@ -237,6 +237,7 @@ class ExpTerm:
 
 def normalize_terms(terms):
   """Simplify sum of ExpTerms by combining ones that we can."""
+  assert len({term.base for term in terms}) == 1, terms
   if not all(term.is_const for term in terms):
     # For expressions, don't attempt to normalize.
     return terms
@@ -279,11 +280,10 @@ class ExpInt:
 
     self.formula_str = " + ".join(term.formula_str for term in self.terms)
     if self.const != 0:
-      self.formula_str = f"({self.const} + {self.formula_str})"
-    elif len(self.terms) > 1:
-      self.formula_str = f"({self.formula_str})"
+      self.formula_str = f"{self.const} + {self.formula_str}"
     if self.denom != 1:
-      self.formula_str = f"{self.formula_str}/{self.denom}"
+      self.formula_str = f"({self.formula_str})/{self.denom}"
+    self.formula_str = f"({self.formula_str})"
     self.eval()
 
     bases = frozenset(term.base for term in terms)

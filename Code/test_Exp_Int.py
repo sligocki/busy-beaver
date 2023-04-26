@@ -26,17 +26,13 @@ class ExpIntTest(unittest.TestCase):
     self.assertEqual(sign(-exp_int(7, 7) + 3), -1)
 
   def test_eval(self):
-    # self.assertEqual(try_eval(exp_int(2, 13)), 2**13)
-    # self.assertEqual(try_eval((47 * exp_int(3, 21) + 20 * exp_int(3, 11) - 5) / 2),
-    #                  (47 * 3**21 + 20 * 3**11 - 5) / 2)
-    # self.assertEqual(try_eval(exp_int(2, exp_int(2, exp_int(2, 2)))),
-    #                  2**(2**(2**2)))
+    self.assertEqual(try_eval(exp_int(2, 13)), 2**13)
+    self.assertEqual(try_eval((47 * exp_int(3, 21) + 20 * exp_int(3, 11) - 5) / 2),
+                     (47 * 3**21 + 20 * 3**11 - 5) / 2)
+    self.assertEqual(try_eval(exp_int(2, exp_int(2, exp_int(2, 2)))),
+                     2**(2**(2**2)))
     self.assertEqual(try_eval(-exp_int(7, 7) + 3),
                      3 - 7**7)
-
-  def test_formula_str(self):
-    self.assertEqual(exp_int(2, exp_int(2, exp_int(2, 2))).formula_str,
-                     "2^2^2^2")
 
   def test_compare_close_ratios(self):
     mid = exp_int(7, exp_int(7, 7))
@@ -57,8 +53,17 @@ class ExpIntTest(unittest.TestCase):
     self.assertEqual(sign(high - low), 1)
     self.assertEqual(sign(low - high), -1)
 
-  def test_compare_close_powers(self):
+  def test_compare_close(self):
     x = exp_int(7, 7)
+    a = (7**10 + 1) * exp_int(7, x)
+    b = exp_int(7, x+10)
+    self.assertGreater(a, b)
+    self.assertLess(-a, -b)
+    self.assertEqual(sign(a - b), 1)
+    self.assertEqual(sign(b - a), -1)
+
+  def todo_test_compare_closer(self):
+    x = exp_int(7, exp_int(7, 7))
     a = (7**10 + 1) * exp_int(7, x)
     b = exp_int(7, x+10)
     self.assertGreater(a, b)
@@ -120,12 +125,17 @@ class ExpIntTest(unittest.TestCase):
     self.assertTrue(Exp_Int.struct_eq(get_big_int(x_pb_reparsed), x))
 
 
-  # TODO: Get this working
-  def todo_test_expr_cmp(self):
-    # Test that we can make some comparisons for variable ExpInts.
-    n = Algebraic_Expression.Expression_from_string("n")
-    # 7^n >= n
-    self.assertTrue(Algebraic_Expression.always_ge(exp_int(7, n), n))
+  def todo_test_bug_normalize(self):
+    # Simplified version of issue
+    x = (exp_int(7,     exp_int(7, exp_int(7, 7))) +
+         exp_int(7, 1 + exp_int(7, exp_int(7, 7))))
+    self.assertEqual(sign(x - x), 0)
+
+    # Came up while simulating 1RB1LC_1LC1LB_0LE0LD_0LC1LB_1RF0RA_0RE---
+    a =  5 * exp_int(2,  81 + 25 * exp_int(2, 5 * exp_int(2, 95)))
+    b =      exp_int(2, -12 + 25 * exp_int(2, 5 * exp_int(2, 95)))
+    x = a + b
+    self.assertEqual(sign(x + (-x)), 0)
 
 
 if __name__ == '__main__':

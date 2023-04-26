@@ -36,6 +36,7 @@ class MacroSimulatorTest(unittest.TestCase):
     self.options, args = parser.parse_args([])
     # Don't use time limits during test.
     self.options.time = 0
+    self.maxDiff = None
 
   def load_tm_record_filename(self, filename):
     tm = IO.load_tm(filename, 0)
@@ -159,10 +160,10 @@ class MacroSimulatorTest(unittest.TestCase):
     self.options.compute_steps = False
     self.options.max_loops = 1_000_000
     self.options.max_block_size = 100
-    data = [("Machines/6x2-e21132-Pavel",  2.604, "(25 + 3^22147)/2"),
-            ("Machines/6x2-e36534-Pavel",  2.629, "(23 + 25 * 2^60682)/9"),
+    data = [("Machines/6x2-e21132-Pavel",  2.604, "((25 + 3^22147)/2)"),
+            ("Machines/6x2-e36534-Pavel",  2.629, "((23 + 25 * 2^60682)/9)"),
             ("Machines/6x2-e78913",        2.662, "(1 + 3 * 2^131071)"),
-            ("Machines/6x2-e197282-Pavel", 2.698, "(-4 + 5 * 2^(-6 + 5 * 2^17)/2)"),
+            ("Machines/6x2-e197282-Pavel", 2.698, "(-4 + 5 * 2^((-6 + 5 * 2^17)/2))"),
             ]
     for name, expected_tower, expected_formula in data:
       filename = os.path.join(self.root_dir, name)
@@ -188,12 +189,12 @@ class MacroSimulatorTest(unittest.TestCase):
     self.options.max_loops = 1_000_000
     self.options.max_block_size = 100
     data = [("Machines/6x2-t5", None, 5.635,
-             "(49 + 19 * 2^(-17 + 7 * 2^(-11 + 7 * 2^(-11 + 19 * 2^69175)/9)/9)/9)/9"),
+             "((49 + 19 * 2^((-17 + 7 * 2^((-11 + 7 * 2^((-11 + 19 * 2^69175)/9))/9))/9))/9)"),
             ("Machines/6x2-t15-Pavel", None, 15.604,
-             "(-11 + 3^(13 + 3^(23 + 3^(7 + 3^(21 + 3^(7 + 3^(23 + 3^(7 + 3^(23 + 3^(7 + 3^(21 + 3^(7 + 3^(23 + 3^(7 + 3^22146)/8)/8)/8)/8)/8)/8)/8)/8)/8)/8)/8)/8)/8)/2"),
+             "((-11 + 3^((13 + 3^((23 + 3^((7 + 3^((21 + 3^((7 + 3^((23 + 3^((7 + 3^((23 + 3^((7 + 3^((21 + 3^((7 + 3^((23 + 3^((7 + 3^22146)/8))/8))/8))/8))/8))/8))/8))/8))/8))/8))/8))/8))/8))/2)"),
             # TODO: Improve block_finder so that it finds optimal block size 2 here.
             ("Machines/2x6-t70", 2, 70.275,
-             "(14 + 2^(-1 + 2^(2 + 2^(1 + 2^(-1 + 2^(4 + 2^2^(-1 + 2^2^(2 + 2^2^(2 + 2^2^(-1 + 2^2^(-1 + 2^2^(3 + 2^2^(3 + 2^2^(2 + 2^2^(-1 + 2^2^(-1 + 2^2^(2 + 2^2^(4 + 2^2^(-1 + 2^2^(2 + 2^2^(2 + 2^2^(-1 + 2^2^(3 + 2^2^(-1 + 2^(4 + 2^2^(-1 + 2^2^(-1 + 2^2^(-1 + 2^2^(4 + 2^2^(-1 + 2^2^(-1 + 2^2^(1 + 2^(1 + 2^(-1 + 2^(4 + 2^2^(-1 + 2^2^(2 + 2^2^(2 + 2^2^(-1 + 2^2^258)))))))))))))))))))))))))))))))))))))))"),
+             "(14 + 2^(-1 + 2^(2 + 2^(1 + 2^(-1 + 2^(4 + 2^(2^(-1 + 2^(2^(2 + 2^(2^(2 + 2^(2^(-1 + 2^(2^(-1 + 2^(2^(3 + 2^(2^(3 + 2^(2^(2 + 2^(2^(-1 + 2^(2^(-1 + 2^(2^(2 + 2^(2^(4 + 2^(2^(-1 + 2^(2^(2 + 2^(2^(2 + 2^(2^(-1 + 2^(2^(3 + 2^(2^(-1 + 2^(4 + 2^(2^(-1 + 2^(2^(-1 + 2^(2^(-1 + 2^(2^(4 + 2^(2^(-1 + 2^(2^(-1 + 2^(2^(1 + 2^(1 + 2^(-1 + 2^(4 + 2^(2^(-1 + 2^(2^(2 + 2^(2^(2 + 2^(2^(-1 + 2^(2^258)))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))"),
             ]
     for name, force_block_size, expected_tower, expected_formula in data:
       filename = os.path.join(self.root_dir, name)
