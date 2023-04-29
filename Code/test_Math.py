@@ -1,6 +1,6 @@
 #! /usr/bin/env python3
 
-from Math import gcd, lcm, int_pow, prec_mult
+from Math import *
 
 import unittest
 
@@ -33,6 +33,25 @@ class MathTest(unittest.TestCase):
     self.assertEqual(int_pow(9**2), (3, 4))
     self.assertEqual(int_pow(13), (13, 1))
     self.assertEqual(int_pow(138), (138, 1))
+
+  def test_prime_factor(self):
+    self.assertEqual(prime_factor(1), [])
+    self.assertEqual(prime_factor(11), [(11, 1)])
+    self.assertEqual(prime_factor(77), [(7, 1), (11, 1)])
+    self.assertEqual(prime_factor(49), [(7, 2)])
+    self.assertEqual(prime_factor(12), [(2, 2), (3, 1)])
+
+    self.assertEqual(prime_factor(3**10), [(3, 10)])
+    self.assertEqual(prime_factor(2**5 * 3**4 * 13**3), [(2, 5), (3, 4), (13, 3)])
+
+  def test_exp_mod(self):
+    for b in range(2, 11):
+      for m in range(2, 101):
+        for k in range(20):
+          self.assertEqual(exp_mod(b, b**k, m), pow(b, b**k, m))
+
+    for k in range(3, 20):
+      self.assertEqual(exp_mod(3, 2**(k-2) + 1, 2**k), 3)
 
   def test_prec_mult(self):
     self.assertEqual(prec_mult(10**10_000, 1.5), 15 * 10**9_999)

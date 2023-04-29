@@ -7,7 +7,7 @@ import math
 from Algebraic_Expression import Expression, min_val, variables, substitute
 from Common import is_const
 import io_pb2
-from Math import gcd, lcm, int_pow, prec_mult, prec_add
+from Math import gcd, lcm, int_pow, exp_mod, prec_mult, prec_add
 
 
 # If x < 10^EXP_THRESHOLD, evaluate it as an int
@@ -108,33 +108,6 @@ def exp_int_depth(x):
     return max((exp_int_depth(y) for y in x.scalars()), default=0)
   else:
     return 0
-
-
-@functools.cache
-def cycle(b, m):
-  """Smallest i >= 0, p > 0 such that b^i+p ≡ b^i (mod m)."""
-  vals = {}
-  n = 1
-  k = 0
-  while n not in vals:
-    vals[n] = k
-    n = (n * b) % m
-    k += 1
-  i = vals[n]
-  p = k - i
-  return (i, p)
-
-# Modular arithmetic on ExpInt is actually reasonable once you know the trick.
-#   See: https://www.sligocki.com/2022/06/21/bb-6-2-t15.html
-#    and https://www.sligocki.com/2022/06/23/period-3.html
-def exp_mod(b, k, m):
-  """Evaluate b^k % m efficiently."""
-  (i, p) = cycle(b, m)
-  if k < i:
-    return b**k % m
-  else:
-    kr = (k - i) % p
-    return (b**(i+kr)) % m
 
 
 class ExpTerm:

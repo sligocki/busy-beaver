@@ -14,7 +14,7 @@ import sys
 import Algebraic_Expression as ae
 from Algebraic_Expression import Expression, Variable, NewVariableExpression, VariableToExpression, ConstantToExpression, VarPlusConstExpression, Term, always_ge, is_const, variables, substitute
 import Exp_Int
-from Exp_Int import ExpInt, exp_int
+from Exp_Int import ExpInt
 from Macro import Rule_Func
 from Macro import Simulator
 from Macro import Tape
