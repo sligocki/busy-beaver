@@ -482,6 +482,8 @@ class ExpInt:
     return self * -1
   def __sub__(self, other):
     return self + (-other)
+  def __rsub__(self, other):
+    return (-self) + other
   def __lt__(self, other):
     return not (self >= other)
   def __le__(self, other):
