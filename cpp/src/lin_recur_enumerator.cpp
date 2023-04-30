@@ -27,6 +27,8 @@ LinRecurEnum::LinRecurEnum(const bool allow_no_halt,
 }
 
 LinRecurEnum::~LinRecurEnum() {
+  out_halt_stream_.close();
+  out_inf_stream_.close();
   out_unknown_stream_.close();
 }
 
