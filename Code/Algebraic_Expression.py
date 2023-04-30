@@ -233,7 +233,13 @@ class Expression:
                          coefficient = div(term.coef, other))
                     for term in self.terms),
       constant = div(self.const, other))
+  # Needed various places where we do a // b knowing that b | a ...
   __floordiv__ = __truediv__
+
+  def __divmod__(self, other):
+    if other == 1:
+      return (self, 0)
+    raise NotImplementedError("Cannot mod Expression by non-1 value")
 
   def substitute(self, subs):
     """Substitute values from dict 'subs' to get an int."""

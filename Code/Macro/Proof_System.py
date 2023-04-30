@@ -1070,6 +1070,10 @@ class Proof_System(object):
 
     ## Calculate number of repetitions allowable and other tape-based info.
     num_reps = None
+    limit_dir = None
+    limit_index = None
+    limit_final = None
+
     init_value = {}
     delta_value = {}
     # large_delta == True  iff there is a negative delta != -1
@@ -1078,8 +1082,8 @@ class Proof_System(object):
     large_delta = False
     has_variable = False
     for dir in range(2):
-      for init_block, diff_block, new_block in zip(
-          rule.initial_tape.tape[dir], rule.diff_tape.tape[dir], new_tape.tape[dir]):
+      for i, (init_block, diff_block, new_block) in enumerate(zip(
+          rule.initial_tape.tape[dir], rule.diff_tape.tape[dir], new_tape.tape[dir])):
         # The constant term in init_block.num represents the minimum
         # required value.
         if isinstance(init_block.num, Algebraic_Expression):
@@ -1120,12 +1124,24 @@ class Proof_System(object):
                 #   0^Inf 2^3  (0)B> 2^(s + 11) 0^Inf
                 # goes to:
                 #   0^Inf 2^(s + 12)  (0)B> 2^2 0^Inf
-                num_reps = (init_value[x] // -delta_value[x])  + 1
+                this_reps, this_final = Rule_Func.Subtract_Func(
+                  var = x, min = init_block.num.const, const = -delta_value[x]
+                  ).max_reps(new_block.num)
+                num_reps = this_reps
+                limit_dir = dir
+                limit_index = i
+                limit_final = this_final
             else:
               if (not isinstance(init_value[x], Algebraic_Expression) and
                   not isinstance(num_reps, Algebraic_Expression)):
-                # As long as init_value[x] >= 0 we can apply proof
-                num_reps = min(num_reps, (init_value[x] // -delta_value[x])  + 1)
+                this_reps, this_final = Rule_Func.Subtract_Func(
+                  var = x, min = init_block.num.const, const = -delta_value[x]
+                  ).max_reps(new_block.num)
+                if this_reps < num_reps:
+                  num_reps = this_reps
+                  limit_dir = dir
+                  limit_index = i
+                  limit_final = this_final
               else:
                 # Example Rule:
                 #   Initial: 0^Inf 2^a+1 0^1 1^b+3 B> 0^1 1^c+1 0^Inf
@@ -1190,10 +1206,13 @@ class Proof_System(object):
     ## Alter the tape to account for applying rule.
     return_tape = new_tape.copy()
     for dir in range(2):
-      for diff_block, return_block in zip(rule.diff_tape.tape[dir],
-                                          return_tape.tape[dir]):
+      for i, (diff_block, return_block) in enumerate(zip(
+        rule.diff_tape.tape[dir], return_tape.tape[dir])):
         if return_block.num is not math.inf:
-          return_block.num += num_reps * diff_block.num
+          if dir == limit_dir and i == limit_index:
+            return_block.num = limit_final
+          else:
+            return_block.num += num_reps * diff_block.num
           if (isinstance(return_block.num, Algebraic_Expression) and
               return_block.num.is_const):
             return_block.num = return_block.num.const
@@ -1250,19 +1269,26 @@ class Proof_System(object):
                     disallow_in_meta_rule)
 
     # This rule applies at least once. Find the number of times it applies.
-    num_reps_all = []
+    num_reps = None
+    limit_index = None
+    limit_final = None
     for i, (cur, func) in enumerate(zip(current_list, rule.func_list)):
       if func and func.is_decreasing:
-        this_reps = func.max_reps(cur)
-        num_reps_all.append(this_reps)
-    assert num_reps_all, rule
-    num_reps = min(num_reps_all)
+        this_reps, this_final = func.max_reps(cur)
+        if not num_reps or this_reps < num_reps:
+          num_reps = this_reps
+          limit_index = i
+          limit_final = this_final
 
     assert always_ge(num_reps, 0), num_reps
     # Apply rule a finite number of times.
     new_tape = start_tape.copy()
     for i, new_block in enumerate(new_tape.tape[0] + new_tape.tape[1]):
-      if rule.func_list[i]:
+      if i == limit_index:
+        # Directly set the decreasing exponent that reached minimum to avoid
+        # subtracting two giant ExpInts.
+        new_block.num = limit_final
+      elif rule.func_list[i]:
         new_block.num = rule.func_list[i].apply_rep(new_block.num, num_reps)
 
     if self.verbose:

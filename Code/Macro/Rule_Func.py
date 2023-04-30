@@ -33,7 +33,10 @@ class Subtract_Func(Func):
 
   def max_reps(self, start):
     # If start == self.min we can still apply_rep one more time.
-    return ((start - self.min) // self.const) + 1
+    min_after = self.min - self.const
+    num_reps, r = divmod(start - min_after, self.const)
+    final_count = r + min_after
+    return (num_reps, final_count)
 
   def apply_rep(self, start, num_reps):
     return start - num_reps * self.const
