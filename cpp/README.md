@@ -78,3 +78,4 @@ However, since number of TMs escalates quickly, these computations also grow qui
 * 5x2 takes ~10 min serially or ~3 min with 10x parallelism (181M TMs x 500 steps).
 * 6x2 took __4.5 days__ running in parallel on a __48 core machine__.
 * 2x6 took about __7 days__ running in parallel on a __48 core machine__.
+
