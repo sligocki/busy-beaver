@@ -6,6 +6,10 @@
 #include <memory>
 #include <string>
 
+#ifdef BOOST_FOUND
+#include <boost/iostreams/filtering_streambuf.hpp>
+#endif
+
 #include "enumerator.h"
 #include "turing_machine.h"
 #include "util.h"
@@ -20,7 +24,8 @@ class LinRecurEnum : public BaseEnumerator {
                const std::string& out_halt_filename,
                const std::string& out_inf_filename,
                const std::string& out_nonhalt_filename,
-               const std::string& proc_id);
+               const std::string& proc_id,
+               const bool compress_output = false);
 
   virtual ~LinRecurEnum();
 
@@ -31,10 +36,27 @@ class LinRecurEnum : public BaseEnumerator {
 
   const long max_steps_;
 
+#ifdef BOOST_FOUND
+  // Output streams
+  std::ostream out_halt_stream_;
+  std::ostream out_inf_stream_;
+  std::ostream out_unknown_stream_;
+
+  // Extra output streams for internal use with the "buf_"s below
+  std::ofstream out_halt_stream_2_;
+  std::ofstream out_inf_stream_2_;
+  std::ofstream out_unknown_stream_2_;
+
+  // Buffers used to compress output
+  boost::iostreams::filtering_streambuf<boost::iostreams::output> out_halt_buf_;
+  boost::iostreams::filtering_streambuf<boost::iostreams::output> out_inf_buf_;
+  boost::iostreams::filtering_streambuf<boost::iostreams::output> out_unknown_buf_;
+#else
   // Output streams
   std::ofstream out_halt_stream_;
   std::ofstream out_inf_stream_;
   std::ofstream out_unknown_stream_;
+#endif
 
   // Stats
   const std::string proc_id_;

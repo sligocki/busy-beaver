@@ -16,14 +16,15 @@ void LinRecurEnumerate(
     const bool allow_no_halt, const bool first_1rb,
     const std::string& out_halt_filename,
     const std::string& out_inf_filename,
-    const std::string& out_unknown_filename) {
+    const std::string& out_unknown_filename,
+    const bool compress_output) {
   std::cout << "Start: " << num_states << "x" << num_symbols << std::endl;
-
   // Depth-first search of all TMs in TNF.
   LinRecurEnum enumerator(allow_no_halt, max_steps,
                           out_halt_filename, out_inf_filename,
                           out_unknown_filename,
-                          /* proc_id = */ "");
+                          /* proc_id = */ "",
+                          compress_output);
   std::unique_ptr<TuringMachine> init_tm(
     new TuringMachine(num_states, num_symbols));
   if (first_1rb) {
@@ -40,8 +41,8 @@ void LinRecurEnumerate(
 
 
 int main(int argc, char* argv[]) {
-  if (argc != 8) {
-    std::cerr << "Usage: lr_enum num_states num_symbols max_steps out_halt_filename out_inf_file out_unknown_file allow_no_halt" << std::endl;
+  if (argc < 8 || argc > 9) {
+    std::cerr << "Usage: lr_enum num_states num_symbols max_steps out_halt_filename out_inf_file out_unknown_file allow_no_halt [compress_output]" << std::endl;
     return 1;
   } else {
     const int num_states = std::stoi(argv[1]);
@@ -51,6 +52,11 @@ int main(int argc, char* argv[]) {
     const std::string out_inf_filename(argv[5]);
     const std::string out_unknown_filename(argv[6]);
     const std::string allow_no_halt_str(argv[7]);
+    std::string compress_output_str("false");
+
+    if (argc == 9) {
+      compress_output_str = argv[8];
+    }
 
     bool allow_no_halt;
     if (allow_no_halt_str == "true") {
@@ -63,10 +69,22 @@ int main(int argc, char* argv[]) {
       return 1;
     }
 
+    bool compress_output;
+    if (compress_output_str == "true") {
+      compress_output = true;
+    } else if (compress_output_str == "false") {
+      compress_output = false;
+    } else {
+      std::cerr << "compress_output must be true/false not ["
+                << compress_output_str << "]" << std::endl;
+      return 1;
+    }
+
     // TODO: Allow configuring allow_no_halt and first_1rb.
     busy_beaver::LinRecurEnumerate(
       num_states, num_symbols, max_steps,
       allow_no_halt, /* first_1rb = */ true,
-      out_halt_filename, out_inf_filename, out_unknown_filename);
+      out_halt_filename, out_inf_filename, out_unknown_filename,
+      compress_output);
   }
 }

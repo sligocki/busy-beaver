@@ -17,12 +17,13 @@ void ContinueLinRecurEnumerate(
     const std::string& out_halt_filename,
     const std::string& out_inf_filename,
     const std::string& out_unknown_filename,
-    const std::string& proc_id) {
+    const std::string& proc_id,
+    const bool compress_output) {
   std::cout << "Start " << proc_id << std::endl;
 
   LinRecurEnum enumerator(allow_no_halt, max_steps,
                           out_halt_filename, out_inf_filename,
-                          out_unknown_filename, proc_id);
+                          out_unknown_filename, proc_id, compress_output);
 
   // Go through all TMs in infile enumerating each (and all children).
   std::ifstream in_tms_stream(in_tms_filename, std::ios::in | std::ios::binary);
@@ -43,8 +44,8 @@ void ContinueLinRecurEnumerate(
 
 
 int main(int argc, char* argv[]) {
-  if (argc != 8) {
-    std::cerr << "Usage: lr_enum_continue in_tm_file max_steps out_halt_file out_inf_file out_unknown_file proc_id allow_no_halt" << std::endl;
+  if (argc < 8 || argc > 9) {
+    std::cerr << "Usage: lr_enum_continue in_tm_file max_steps out_halt_file out_inf_file out_unknown_file proc_id allow_no_halt [compress_output]" << std::endl;
     return 1;
   } else {
     const std::string in_tms_filename(argv[1]);
@@ -54,6 +55,11 @@ int main(int argc, char* argv[]) {
     const std::string out_unknown_filename(argv[5]);
     const std::string proc_id(argv[6]);
     const std::string allow_no_halt_str(argv[7]);
+    std::string compress_output_str("false");
+
+    if (argc == 9) {
+      compress_output_str = argv[8];
+    }
 
     bool allow_no_halt;
     if (allow_no_halt_str == "true") {
@@ -66,11 +72,23 @@ int main(int argc, char* argv[]) {
       return 1;
     }
 
+    bool compress_output;
+    if (compress_output_str == "true") {
+      compress_output = true;
+    } else if (compress_output_str == "false") {
+      compress_output = false;
+    } else {
+      std::cerr << "compress_output must be true/false not ["
+                << compress_output_str << "]" << std::endl;
+      return 1;
+    }
+
     // TODO: Allow configuring allow_no_halt and first_1rb.
     busy_beaver::ContinueLinRecurEnumerate(
       in_tms_filename, max_steps,
       allow_no_halt, /* first_1rb = */ true,
       out_halt_filename, out_inf_filename, out_unknown_filename,
-      proc_id);
+      proc_id,
+      compress_output);
   }
 }

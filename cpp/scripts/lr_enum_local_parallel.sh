@@ -3,8 +3,8 @@
 set -u
 set -e
 
-if [ $# -ne 6 ]; then
-  echo "Usage: $0 states symbols allow_no_halt init_steps max_steps num_procs" 1>&2
+if [ $# -ne 6 ] && [ $# -ne 7 ]; then
+  echo "Usage: $0 states symbols allow_no_halt init_steps max_steps num_procs [compress_output]" 1>&2
   exit 1
 fi
 
@@ -14,6 +14,12 @@ ALLOW_NO_HALT=$3
 INIT_STEPS=$4
 MAX_STEPS=$5
 NUM_PROCESSES=$6
+
+if [ $# -eq 7 ]; then
+  COMPRESS_OUTPUT=$7
+else
+  COMPRESS_OUTPUT="false"
+fi
 
 DATA_DIR="./data/lin_recur/${NUM_STATES}x${NUM_SYMBOLS}/${MAX_STEPS}/${NUM_PROCESSES}/"
 
@@ -28,7 +34,8 @@ echo "(1) Enumerating a small number of steps to get a bunch of machines."
   ${DATA_DIR}/halt_init.txt \
   ${DATA_DIR}/inf_init.txt \
   ${DATA_DIR}/unknown_init.txt \
-  ${ALLOW_NO_HALT}
+  ${ALLOW_NO_HALT} \
+  false
 
 echo
 date
@@ -45,18 +52,31 @@ for chunk_num in $(seq 0 $((NUM_PROCESSES - 1))); do
     ${DATA_DIR}/halt_part_${chunk_num}_of_${NUM_PROCESSES} \
     ${DATA_DIR}/inf_part_${chunk_num}_of_${NUM_PROCESSES} \
     ${DATA_DIR}/unknown_part_${chunk_num}_of_${NUM_PROCESSES} \
-    ${chunk_num} ${ALLOW_NO_HALT} &
+    ${chunk_num} \
+    ${ALLOW_NO_HALT} \
+    ${COMPRESS_OUTPUT} &
 done
 echo "Waiting for all the enumerations to complete."
 wait
 
+if [ "${COMPRESS_OUTPUT}" = "true" ]; then
+  gzip ${DATA_DIR}/*_init*txt*
+fi
+
 echo
 date
 echo "(4) Merging the results"
-cat ${DATA_DIR}/halt_init.txt ${DATA_DIR}/halt_part_*_of_${NUM_PROCESSES} > ${DATA_DIR}/halt_final.txt
-cat ${DATA_DIR}/inf_init.txt ${DATA_DIR}/inf_part_*_of_${NUM_PROCESSES} > ${DATA_DIR}/inf_final.txt
-# Note: We don't include ${DATA_DIR}/unknown_init.txt which is redundant.
-cat ${DATA_DIR}/unknown_part_*_of_${NUM_PROCESSES} > ${DATA_DIR}/unknown_final.txt
+if [ "${COMPRESS_OUTPUT}" = "false" ]; then
+  cat ${DATA_DIR}/halt_init.txt* ${DATA_DIR}/halt_part_*_of_${NUM_PROCESSES}* > ${DATA_DIR}/halt_final.txt
+  cat ${DATA_DIR}/inf_init.txt* ${DATA_DIR}/inf_part_*_of_${NUM_PROCESSES}* > ${DATA_DIR}/inf_final.txt
+  # Note: We don't include ${DATA_DIR}/unknown_init.txt which is redundant.
+  cat ${DATA_DIR}/unknown_part_*_of_${NUM_PROCESSES}* > ${DATA_DIR}/unknown_final.txt
+else
+  cat ${DATA_DIR}/halt_init.txt* ${DATA_DIR}/halt_part_*_of_${NUM_PROCESSES}* > ${DATA_DIR}/halt_final.txt.gz
+  cat ${DATA_DIR}/inf_init.txt* ${DATA_DIR}/inf_part_*_of_${NUM_PROCESSES}* > ${DATA_DIR}/inf_final.txt.gz
+  # Note: We don't include ${DATA_DIR}/unknown_init.txt which is redundant.
+  cat ${DATA_DIR}/unknown_part_*_of_${NUM_PROCESSES}* > ${DATA_DIR}/unknown_final.txt.gz
+fi
 
 echo
 date

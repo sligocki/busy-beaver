@@ -2,13 +2,19 @@
 
 #include <fstream>
 #include <iostream>
+#include <ostream>
 #include <string>
+
+#ifdef BOOST_FOUND
+#include <boost/iostreams/filtering_streambuf.hpp>
+#include <boost/iostreams/copy.hpp>
+#include <boost/iostreams/filter/gzip.hpp>
+#endif
 
 #include "enumerator.h"
 #include "lin_recur.h"
 #include "turing_machine.h"
 #include "util.h"
-
 
 namespace busy_beaver {
 
@@ -17,19 +23,61 @@ LinRecurEnum::LinRecurEnum(const bool allow_no_halt,
                            const std::string& out_halt_filename,
                            const std::string& out_inf_filename,
                            const std::string& out_unknown_filename,
-                           const std::string& proc_id)
+                           const std::string& proc_id,
+                           const bool compress_output)
   : BaseEnumerator(allow_no_halt),
+    out_halt_stream_   (&out_halt_buf_),
+    out_inf_stream_    (&out_inf_buf_),
+    out_unknown_stream_(&out_unknown_buf_),
     max_steps_(max_steps),
-    out_halt_stream_(out_halt_filename, std::ios::out | std::ios::binary),
-    out_inf_stream_(out_inf_filename, std::ios::out | std::ios::binary),
-    out_unknown_stream_(out_unknown_filename, std::ios::out | std::ios::binary),
-    proc_id_(proc_id) {
+    proc_id_(proc_id)
+{
+#ifdef BOOST_FOUND
+  std::string file_suffix = "";
+
+  if (compress_output) {
+    file_suffix = ".gz";
+  }
+
+  out_halt_stream_2_   .open(out_halt_filename    + file_suffix, std::ios::out | std::ios::binary);
+  out_inf_stream_2_    .open(out_inf_filename     + file_suffix, std::ios::out | std::ios::binary);
+  out_unknown_stream_2_.open(out_unknown_filename + file_suffix, std::ios::out | std::ios::binary);
+
+  if (compress_output) {
+    out_halt_buf_   .push(boost::iostreams::gzip_compressor());
+    out_inf_buf_    .push(boost::iostreams::gzip_compressor());
+    out_unknown_buf_.push(boost::iostreams::gzip_compressor());
+  }
+
+  out_halt_buf_   .push(out_halt_stream_2_);
+  out_inf_buf_    .push(out_inf_stream_2_);
+  out_unknown_buf_.push(out_unknown_stream_2_);
+#else
+  if (compress_output) {
+    std::cerr << "Compressing TM output without compiling with Boost isn't supported\n";
+    std::exit(1);
+  }
+
+  out_halt_stream_.open(out_halt_filename, std::ios::out | std::ios::binary);
+  out_inf_stream_.open(out_inf_filename, std::ios::out | std::ios::binary);
+  out_unknown_stream_.open(out_unknown_filename, std::ios::out | std::ios::binary);
+#endif
 }
 
 LinRecurEnum::~LinRecurEnum() {
-  out_halt_stream_.close();
-  out_inf_stream_.close();
+#if BOOST_FOUND
+  boost::iostreams::close(out_halt_buf_   );
+  boost::iostreams::close(out_inf_buf_    );
+  boost::iostreams::close(out_unknown_buf_);
+
+  out_halt_stream_2_   .close();
+  out_inf_stream_2_    .close();
+  out_unknown_stream_2_.close();
+#else
+  out_halt_stream_   .close();
+  out_inf_stream_    .close();
   out_unknown_stream_.close();
+#endif
 }
 
 void LinRecurEnum::print_stats(const std::string& prefix) const {
@@ -57,15 +105,15 @@ EnumExpandParams LinRecurEnum::filter_tm(const TuringMachine& tm) {
     num_tms_halt_ += 1;
     // TODO: If writing Halting TMs. Add the halt state.
     WriteTuringMachine(tm, &out_halt_stream_);
-    // out_halt_stream_ << " | Halt " << result.steps_run << std::endl;
-    out_halt_stream_ << " | Halt " << result.steps_run << "\n";
+    out_halt_stream_ << " | Halt " << result.steps_run << std::endl;
+    // out_halt_stream_ << " | Halt " << result.steps_run << "\n";
   } else if (result.is_lin_recurrent) {
     num_tms_inf_ += 1;
     // Write TM that entered Lin Recurence along with it's period, etc.
     WriteTuringMachine(tm, &out_inf_stream_);
     out_inf_stream_ << " | Lin_Recur " << result.lr_period << " "
-    //                 << result.lr_offset << " <" << result.lr_start_step << std::endl;
-                    << result.lr_offset << " <" << result.lr_start_step << "\n";
+                    << result.lr_offset << " <" << result.lr_start_step << std::endl;
+    //                 << result.lr_offset << " <" << result.lr_start_step << "\n";
     if (result.lr_period > max_period_) {
       max_period_ = result.lr_period;
       max_period_tm_.reset(new TuringMachine(tm));
@@ -73,8 +121,8 @@ EnumExpandParams LinRecurEnum::filter_tm(const TuringMachine& tm) {
   } else {
     num_tms_unknown_ += 1;
     WriteTuringMachine(tm, &out_unknown_stream_);
-    // out_unknown_stream_ << std::endl;
-    out_unknown_stream_ << "\n";
+    out_unknown_stream_ << std::endl;
+    // out_unknown_stream_ << "\n";
   }
 
   // Data needed for enumeration expansion.
