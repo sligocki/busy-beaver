@@ -10,6 +10,9 @@ set -e
 set -x
 
 ROOT_DIR=$1
+
+echo "Tools/filter.sh $@" >> ${ROOT_DIR}/filter_log.txt
+
 shift
 SUBDIR=$1
 shift
