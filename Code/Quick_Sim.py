@@ -9,6 +9,7 @@ import string
 import sys
 
 from Macro import Turing_Machine, Simulator, Block_Finder
+import Exp_Int
 import Halting_Lib
 from Halting_Lib import big_int_approx_and_full_str
 import IO
@@ -68,13 +69,21 @@ def run(machine, block_size, back, prover, recursive, options):
   finally:
     sim.print_self()
 
-  if sim.op_state == Turing_Machine.HALT:
-    print()
-    print("Turing Machine Halted")
+  print()
+  if sim.op_state in (Turing_Machine.HALT, Turing_Machine.UNDEFINED):
+    if sim.op_state == Turing_Machine.HALT:
+      print("Turing Machine Halted")
+    else:
+      print("Turing Machine reached Undefined transition")
+      print("State: ", sim.op_details[0][1])
+      print("Symbol:", sim.op_details[0][0])
     print()
     if options.compute_steps:
       print("Steps:   ", big_int_approx_and_full_str(sim.step_num))
     print("Nonzeros:", big_int_approx_and_full_str(sim.get_nonzeros()))
+    if options.latex:
+      print()
+      print(Exp_Int.tex_formula(sim.get_nonzeros()))
   elif sim.op_state == Turing_Machine.INF_REPEAT:
     bb_status = io_pb2.BBStatus()
     Halting_Lib.set_inf_recur(bb_status,
@@ -85,15 +94,6 @@ def run(machine, block_size, back, prover, recursive, options):
     print("Reason:", io_pb2.InfReason.Name(sim.inf_reason))
     print("Quasihalt:")
     print(bb_status.quasihalt_status)
-  elif sim.op_state == Turing_Machine.UNDEFINED:
-    print()
-    print("Turing Machine reached Undefined transition")
-    print("State: ", sim.op_details[0][1])
-    print("Symbol:", sim.op_details[0][0])
-    print()
-    if options.compute_steps:
-      print("Steps:   ", big_int_approx_and_full_str(sim.step_num))
-    print("Nonzeros:", big_int_approx_and_full_str(sim.get_nonzeros()))
   elif sim.op_state == Turing_Machine.GAVE_UP:
     print()
     print("Gave up while simulating Turing Machine")
@@ -180,6 +180,8 @@ if __name__ == "__main__":
   parser.add_option("--print-loops", type=int, default=10_000, metavar="LOOPS",
                     help="Print every LOOPS loops [Default %default].")
   parser.add_option("--print-macro-ttable", action="store_true")
+  parser.add_option("--latex", action="store_true",
+                    help="Print score in Latex math format")
 
   parser.add_option("--manual", action="store_true",
                     help="Don't run any simulation, just set up simulator "
