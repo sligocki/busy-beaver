@@ -14,7 +14,7 @@ from Math import gcd, lcm, int_pow, exp_mod, prec_mult, prec_add
 # if x > 10^EXP_THRESHOLD, only consider as formula
 EXP_THRESHOLD = 1000
 # Fail if we have too many layers of ExpInt
-MAX_DEPTH = 2_000
+MAX_DEPTH = 10_000
 
 
 # Standard way to create an ExpInt
@@ -32,6 +32,22 @@ def exp_int(base, exponent):
 
 class ExpIntException(Exception):
   pass
+
+def tex_formula(x):
+  if isinstance(x, ExpInt):
+    s = " + ".join(tex_formula(term) for term in x.terms)
+    if x.const != 0:
+      s = rf"{x.const} + {s}"
+    if x.denom != 1:
+      s = rf"\frac{{ {s} }}{{ {x.denom} }}"
+    return s
+  elif isinstance(x, ExpTerm):
+    s = rf"{x.base}^{{ {tex_formula(x.exponent)} }}"
+    if x.coef != 1:
+      s = rf"{x.coef} \cdot {s}"
+    return s
+  else:
+    return str(x)
 
 
 def is_simple(value):
