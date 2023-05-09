@@ -9,6 +9,8 @@ Format looks like:
 1RB2LA1RA1RA_1LB1LA3RB1RZ
 """
 
+import gzip
+
 import Halting_Lib
 import IO
 from IO import TM_Record
@@ -25,7 +27,10 @@ class Writer:
     self.outfile = None
 
   def __enter__(self):
-    self.outfile = open(self.outfilename, "w")
+    if ".gz" in self.outfilename.suffixes:
+      self.outfile = gzip.open(self.outfilename, "w")
+    else:
+      self.outfile = open(self.outfilename, "w")
     return self
 
   def __exit__(self, *args):
@@ -52,7 +57,10 @@ class Reader:
     self.infile = None
 
   def __enter__(self):
-    self.infile = open(self.infilename, "r")
+    if ".gz" in self.infilename.suffixes:
+      self.infile = gzip.open(self.infilename, "r")
+    else:
+      self.infile = open(self.infilename, "r")
     return self
 
   def __exit__(self, *args):

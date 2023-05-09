@@ -28,7 +28,10 @@ class Writer:
     self.outfile = None
 
   def __enter__(self):
-    self.outfile = open(self.outfilename, "wb")
+    if ".gz" in self.outfilename.suffixes:
+      self.outfile = gzip.open(self.outfilename, "wb")
+    else:
+      self.outfile = open(self.outfilename, "wb")
     return self
 
   def __exit__(self, *args):
