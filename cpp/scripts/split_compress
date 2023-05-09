@@ -1,0 +1,3 @@
+#!/bin/tcsh
+zcat ${1}.gz \
+| split -a 4 -d -b 100G --filter='gzip > $FILE.gz' - ${1}.
