@@ -1,0 +1,5 @@
+#!/bin/tcsh
+set bytes_per_line=`zcat ${1}.gz | head -n 1 | wc -c`
+set lines_per_piece=`expr \( 100 \* 1024 \* 1024 \* 1024 \/ ${bytes_per_line} \) + 1`
+zcat ${1}.gz \
+| split -a 4 -d -l ${lines_per_piece} --filter='gzip > $FILE.gz' - ${1}.
