@@ -25,7 +25,8 @@ class LinRecurEnum : public BaseEnumerator {
                const std::string& out_inf_filename,
                const std::string& out_nonhalt_filename,
                const std::string& proc_id,
-               const bool compress_output = false);
+               const bool compress_output = false,
+               const bool only_unknown_in = false);
 
   virtual ~LinRecurEnum();
 
@@ -35,6 +36,8 @@ class LinRecurEnum : public BaseEnumerator {
   virtual EnumExpandParams filter_tm(const TuringMachine& tm);
 
   const long max_steps_;
+
+  bool only_unknown;
 
 #ifdef BOOST_FOUND
   // Output streams

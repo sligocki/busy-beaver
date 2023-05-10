@@ -24,7 +24,8 @@ LinRecurEnum::LinRecurEnum(const bool allow_no_halt,
                            const std::string& out_inf_filename,
                            const std::string& out_unknown_filename,
                            const std::string& proc_id,
-                           const bool compress_output)
+                           const bool compress_output,
+                           const bool only_unknown_in)
   : BaseEnumerator(allow_no_halt),
     out_halt_stream_   (&out_halt_buf_),
     out_inf_stream_    (&out_inf_buf_),
@@ -38,6 +39,8 @@ LinRecurEnum::LinRecurEnum(const bool allow_no_halt,
   if (compress_output) {
     file_suffix = ".gz";
   }
+
+  only_unknown = only_unknown_in;
 
   out_halt_stream_2_   .open(out_halt_filename    + file_suffix, std::ios::out | std::ios::binary);
   out_inf_stream_2_    .open(out_inf_filename     + file_suffix, std::ios::out | std::ios::binary);
@@ -103,26 +106,30 @@ EnumExpandParams LinRecurEnum::filter_tm(const TuringMachine& tm) {
   num_tms_total_ += 1;
   if (result.is_halted) {
     num_tms_halt_ += 1;
-    // TODO: If writing Halting TMs. Add the halt state.
-    WriteTuringMachine(tm, &out_halt_stream_);
-    out_halt_stream_ << " | Halt " << result.steps_run << std::endl;
-    // out_halt_stream_ << " | Halt " << result.steps_run << "\n";
+    
+    if (!only_unknown) {
+      // TODO: If writing Halting TMs. Add the halt state.
+      WriteTuringMachine(tm, &out_halt_stream_);
+      out_halt_stream_ << " | Halt " << result.steps_run << "\n";
+    }
   } else if (result.is_lin_recurrent) {
     num_tms_inf_ += 1;
-    // Write TM that entered Lin Recurence along with it's period, etc.
-    WriteTuringMachine(tm, &out_inf_stream_);
-    out_inf_stream_ << " | Lin_Recur " << result.lr_period << " "
-                    << result.lr_offset << " <" << result.lr_start_step << std::endl;
-    //                 << result.lr_offset << " <" << result.lr_start_step << "\n";
-    if (result.lr_period > max_period_) {
-      max_period_ = result.lr_period;
-      max_period_tm_.reset(new TuringMachine(tm));
+
+    if (!only_unknown) {
+      // Write TM that entered Lin Recurence along with it's period, etc.
+      WriteTuringMachine(tm, &out_inf_stream_);
+      out_inf_stream_ << " | Lin_Recur " << result.lr_period << " "
+                       << result.lr_offset << " <" << result.lr_start_step << "\n";
+      if (result.lr_period > max_period_) {
+        max_period_ = result.lr_period;
+        max_period_tm_.reset(new TuringMachine(tm));
+      }
     }
   } else {
     num_tms_unknown_ += 1;
+
     WriteTuringMachine(tm, &out_unknown_stream_);
-    out_unknown_stream_ << std::endl;
-    // out_unknown_stream_ << "\n";
+    out_unknown_stream_ << "\n";
   }
 
   // Data needed for enumeration expansion.
