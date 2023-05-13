@@ -1,2 +1,0 @@
-#! /bin/csh -f
-echo "scale = 8; `getNumHalt $1` / `getNumTotal $1`" | bc
