@@ -18,12 +18,14 @@ void ContinueLinRecurEnumerate(
     const std::string& out_inf_filename,
     const std::string& out_unknown_filename,
     const std::string& proc_id,
-    const bool compress_output) {
+    const bool compress_output,
+    const bool only_unknown) {
   std::cout << "Start " << proc_id << std::endl;
 
   LinRecurEnum enumerator(allow_no_halt, max_steps,
                           out_halt_filename, out_inf_filename,
-                          out_unknown_filename, proc_id, compress_output);
+                          out_unknown_filename, proc_id,
+                          compress_output, only_unknown);
 
   // Go through all TMs in infile enumerating each (and all children).
   std::ifstream in_tms_stream(in_tms_filename, std::ios::in | std::ios::binary);
@@ -44,8 +46,8 @@ void ContinueLinRecurEnumerate(
 
 
 int main(int argc, char* argv[]) {
-  if (argc < 8 || argc > 9) {
-    std::cerr << "Usage: lr_enum_continue in_tm_file max_steps out_halt_file out_inf_file out_unknown_file proc_id allow_no_halt [compress_output]" << std::endl;
+  if (argc < 8 || argc > 10) {
+    std::cerr << "Usage: lr_enum_continue in_tm_file max_steps out_halt_file out_inf_file out_unknown_file proc_id allow_no_halt [compress_output [only_unknown]]" << std::endl;
     return 1;
   } else {
     const std::string in_tms_filename(argv[1]);
@@ -56,9 +58,14 @@ int main(int argc, char* argv[]) {
     const std::string proc_id(argv[6]);
     const std::string allow_no_halt_str(argv[7]);
     std::string compress_output_str("false");
+    std::string only_unknown_str("false");
 
-    if (argc == 9) {
+    if (argc >= 9) {
       compress_output_str = argv[8];
+    }
+
+    if (argc == 10) {
+      only_unknown_str = argv[9];
     }
 
     bool allow_no_halt;
@@ -83,12 +90,23 @@ int main(int argc, char* argv[]) {
       return 1;
     }
 
+    bool only_unknown;
+    if (only_unknown_str == "true") {
+      only_unknown = true;
+    } else if (only_unknown_str == "false") {
+      only_unknown = false;
+    } else {
+      std::cerr << "only_unknown must be true/false not ["
+                << only_unknown_str << "]" << std::endl;
+      return 1;
+    }
+
     // TODO: Allow configuring allow_no_halt and first_1rb.
     busy_beaver::ContinueLinRecurEnumerate(
       in_tms_filename, max_steps,
       allow_no_halt, /* first_1rb = */ true,
       out_halt_filename, out_inf_filename, out_unknown_filename,
       proc_id,
-      compress_output);
+      compress_output, only_unknown);
   }
 }

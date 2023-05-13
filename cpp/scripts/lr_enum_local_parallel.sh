@@ -3,8 +3,8 @@
 set -u
 set -e
 
-if [ $# -ne 6 ] && [ $# -ne 7 ]; then
-  echo "Usage: $0 states symbols allow_no_halt init_steps max_steps num_procs [compress_output]" 1>&2
+if [ $# -lt 6 ] || [ $# -gt 8 ]; then
+  echo "Usage: $0 states symbols allow_no_halt init_steps max_steps num_procs [compress_output [only_unknown]]" 1>&2
   exit 1
 fi
 
@@ -15,11 +15,19 @@ INIT_STEPS=$4
 MAX_STEPS=$5
 NUM_PROCESSES=$6
 
-if [ $# -eq 7 ]; then
+if [ $# -ge 7 ]; then
   COMPRESS_OUTPUT=$7
 else
   COMPRESS_OUTPUT="false"
 fi
+
+if [ $# -eq 8 ]; then
+  ONLY_UNKNOWN=$8
+else
+  ONLY_UNKNOWN="false"
+fi
+
+echo $COMPRESS_OUTPUT $ONLY_UNKNOWN
 
 DATA_DIR="./data/lin_recur/${NUM_STATES}x${NUM_SYMBOLS}/${MAX_STEPS}/${NUM_PROCESSES}/"
 
@@ -35,7 +43,8 @@ echo "(1) Enumerating a small number of steps to get a bunch of machines."
   ${DATA_DIR}/inf_init.txt \
   ${DATA_DIR}/unknown_init.txt \
   ${ALLOW_NO_HALT} \
-  false
+  false \
+  ${ONLY_UNKNOWN}
 
 echo
 date
@@ -54,7 +63,8 @@ for chunk_num in $(seq 0 $((NUM_PROCESSES - 1))); do
     ${DATA_DIR}/unknown_part_${chunk_num}_of_${NUM_PROCESSES} \
     ${chunk_num} \
     ${ALLOW_NO_HALT} \
-    ${COMPRESS_OUTPUT} &
+    ${COMPRESS_OUTPUT} \
+    ${ONLY_UNKNOWN} &
 done
 echo "Waiting for all the enumerations to complete."
 wait
