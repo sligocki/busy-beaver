@@ -27,9 +27,11 @@ LinRecurEnum::LinRecurEnum(const bool allow_no_halt,
                            const bool compress_output,
                            const bool only_unknown_in)
   : BaseEnumerator(allow_no_halt),
+#ifdef BOOST_FOUND
     out_halt_stream_   (&out_halt_buf_),
     out_inf_stream_    (&out_inf_buf_),
     out_unknown_stream_(&out_unknown_buf_),
+#endif
     max_steps_(max_steps),
     proc_id_(proc_id)
 {
