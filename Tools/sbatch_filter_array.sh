@@ -13,8 +13,13 @@ set -x
 
 WORK_DIR=$1
 shift
+# Needed b/c some SLURM systems only support up to array_id ~50k
+ARRAY_OFFSET=$1
+shift
 
-INDEX=$(printf "%08d" $SLURM_ARRAY_TASK_ID)
+ARRAY_ID=$((SLURM_ARRAY_TASK_ID + ARRAY_OFFSET))
+
+INDEX=$(printf "%08d" $ARRAY_ID)
 OUT_DIR=${WORK_DIR}/${INDEX}/
 IN_FILE=${WORK_DIR}/in/in.${INDEX}
 

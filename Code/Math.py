@@ -65,6 +65,7 @@ def exp_mod(b, k, m):
   a = gcd(b, m)
   kp, k0 = carmichael(m)
   # for all kn >= k0: b^kn = b^{kp+kn} (mod m)
+  #   See: https://en.wikipedia.org/wiki/Carmichael_function#Exponential_cycle_length
   if k < k0:
     return pow(b, k, m)
   else:

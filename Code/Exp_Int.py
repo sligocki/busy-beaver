@@ -20,8 +20,8 @@ MAX_DEPTH = 10_000
 # Standard way to create an ExpInt
 def exp_int(base, exponent):
   """Returns either int or ExpInt based on size of exponent."""
-  assert isinstance(base, int)
-  assert isinstance(exponent, (int, ExpInt, Expression))
+  assert isinstance(base, int), base
+  assert isinstance(exponent, (int, ExpInt, Expression)), exponent
 
   if exponent == 0:
     return 1
@@ -351,6 +351,9 @@ class ExpInt:
     numer = sum(term.substitute(assignment) for term in self.terms)
     numer += substitute(self.const, assignment)
     return numer / substitute(self.denom, assignment)
+
+  def tex_formula(self):
+    return tex_formula(self)
 
   def __repr__(self):
     return self.formula_str
