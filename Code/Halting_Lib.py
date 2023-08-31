@@ -29,13 +29,13 @@ def big_int_approx_str(value):
     if top <= 0:
       return str(top)
     else:
-      return f"~10^{math.log10(top):_.1f}"
+      return f"~10^{math.log10(top):_.5f}"
   elif height == 1:
     # value = 10^top
-    return f"~10^{top:_.1f}"
+    return f"~10^{top:_.5f}"
   else:
     assert height > 1, height
-    return f"~10↑↑{fractional_height(value):_.2f}"
+    return f"~10↑↑{fractional_height(value):_.5f}"
 
 def big_int_approx_and_full_str(value):
   if value is None:

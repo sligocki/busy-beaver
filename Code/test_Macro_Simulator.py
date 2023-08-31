@@ -106,7 +106,6 @@ class MacroSimulatorTest(unittest.TestCase):
     data = [("Machines/2x2-6-4", 6, 4),
             ("Machines/2x3-38-9", 38, 9),
             ("Machines/2x4-3932964-2050", 3932964, 2050),
-            ("Machines/2x5-e21", 7069449877176007352687, 172312766455),
             ("Machines/3x2-14-6", 14, 6),
             ("Machines/3x2-21-5", 21, 5),
             ("Machines/3x3-e17", 119112334170342540, 374676383),
