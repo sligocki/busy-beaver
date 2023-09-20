@@ -101,7 +101,8 @@ def run_visual(TTable, print_width, start_state, tape_length=100_000):
           sys.stdout.write("\033[%dm " % color[value])
 
       sys.stdout.write("\033[0m  %c" % states[new_state])
-      sys.stdout.write(" %2d\n" % tape[position])
+      sys.stdout.write(" \033[%dm%2d\033[0m\n" % (
+        color[tape[position]], tape[position]))
 
       sys.stdout.flush()
     else:
@@ -120,6 +121,12 @@ def run_visual(TTable, print_width, start_state, tape_length=100_000):
       print("TM Halted on step", step_num)
       break
 
+
+def ttable_with_colors(tm):
+  s = Turing_Machine.machine_ttable_to_str(tm)
+  for symb, col in zip(Turing_Machine.symbols, color):
+    s = s.replace(" " + symb, " \033[%dm%s\033[0m" % (col, symb))
+  return s
 
 if __name__ == "__main__":
   # Get terminal width, this is surprisingly hard to do :(
@@ -141,7 +148,7 @@ if __name__ == "__main__":
   args = parser.parse_args()
 
   tm = IO.load_tm(args.tm_file, args.record_num)
-  print(Turing_Machine.machine_ttable_to_str(tm))
+  print(ttable_with_colors(tm))
   print(tm.ttable_str())
   print()
   # Hacky way of getting back to ttable.
