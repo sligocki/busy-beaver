@@ -13,6 +13,7 @@ import io
 from pathlib import Path
 import struct
 
+from IO.Common import RecordLocateError
 from IO.TM_Record import TM_Record
 
 import io_pb2
@@ -131,4 +132,8 @@ def load_record(filename : str, record_num : int) -> TM_Record:
   with Reader(filename) as reader:
     for _ in range(record_num):
       reader.skip_record()
-    return reader.read_record()
+    rec = reader.read_record()
+    if rec:
+      return rec
+    else:
+      raise RecordLocateError(f"File {filename} does not contain record # {record_num}")

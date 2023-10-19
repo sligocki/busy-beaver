@@ -14,6 +14,7 @@ import gzip
 import Halting_Lib
 import IO
 from IO import TM_Record
+from IO.Common import RecordLocateError
 from Macro import Turing_Machine
 import TM_Enum
 
@@ -90,4 +91,8 @@ def load_record(filename : str, record_num : int) -> TM_Record:
   with Reader(filename) as reader:
     for _ in range(record_num):
       reader.skip_record()
-    return reader.read_record()
+    rec = reader.read_record()
+    if rec:
+      return rec
+    else:
+      raise RecordLocateError(f"File {filename} does not contain record # {record_num}")
