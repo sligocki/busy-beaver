@@ -4,6 +4,7 @@
 import argparse
 import fcntl
 import itertools
+import re
 import string
 import struct
 import sys
@@ -14,11 +15,52 @@ import IO
 from Macro import Turing_Machine
 
 
-# White, Red, Green, Blue, Magenta, Cyan, Brown/Yellow
-color = [49, 41, 42, 44, 45, 46, 43]
 # Note: Halt will be "Z"
-states = string.ascii_uppercase
-def run_visual(TTable, print_width, start_state, tape_length=100_000):
+STATES = string.ascii_uppercase
+# White, Red, Green, Blue, Magenta, Cyan, Brown/Yellow
+COLOR = [49, 41, 42, 44, 45, 46, 43]
+
+
+def parse_config(config_str):
+  left = []
+  right = []
+  in_left = True
+  dir_left = None
+  state = None
+  for block in config_str.split():
+    if (m := re.fullmatch(r"<([A-Z])", block)):
+      dir_left = True
+      state = STATES.index(m.group(1))
+      in_left = False
+
+    elif (m := re.fullmatch(r"([A-Z])>", block)):
+      dir_left = False
+      state = STATES.index(m.group(1))
+      in_left = False
+
+    else:
+      assert (m := re.fullmatch(r"(\d+)(\^(\d+))?", block)), block
+      base = [int(x) for x in m.group(1)]
+      if m.group(3):
+        exp = int(m.group(3))
+      else:
+        exp = 1
+      if in_left:
+        left += base * exp
+      else:
+        right += base * exp
+
+  if dir_left:
+    # Normalize so that current (top) symbol is always on right.
+    top = left.pop() if left else 0
+    right.insert(0, top)
+
+  return (state, left, right)
+
+
+def run_visual(TTable, print_width,
+               start_state, start_left_tape, start_right_tape,
+               *, tape_length=100_000):
   """
   Start the tape and run it until it halts with visual output.
   """
@@ -36,11 +78,8 @@ def run_visual(TTable, print_width, start_state, tape_length=100_000):
   position_right = position
 
   state = start_state
-
-  # # One-off test:
-  # state = 1 # B
-  # RIGHT = [1] * 2 + [3, 3]
-  # tape[position+1:position+1+len(RIGHT)] = RIGHT
+  tape[position - len(start_left_tape):position + len(start_right_tape)] = \
+    start_left_tape + start_right_tape
 
   half_width = (print_width - 18) // 2
   if half_width < 1:
@@ -53,11 +92,11 @@ def run_visual(TTable, print_width, start_state, tape_length=100_000):
     value = tape[start_pos+(j-half_width)]
     if position == start_pos+(j-half_width):
       # If this is the current position ...
-      sys.stdout.write("\033[1;%dm%c" % (color[value], states[state]))
+      sys.stdout.write("\033[1;%dm%c" % (COLOR[value], STATES[state]))
     else:
-      sys.stdout.write("\033[%dm " % (color[value]))
+      sys.stdout.write("\033[%dm " % (COLOR[value]))
 
-  sys.stdout.write("\033[0m  %c" % states[state])
+  sys.stdout.write("\033[0m  %c" % STATES[state])
   sys.stdout.write(" %2d\n" % tape[position])
 
   sys.stdout.flush()
@@ -96,13 +135,13 @@ def run_visual(TTable, print_width, start_state, tape_length=100_000):
         value = tape[start_pos+(j-half_width)]
         if position == start_pos+(j-half_width):
           # If this is the current possition ...
-          sys.stdout.write("\033[1;%dm%c" % (color[value], states[new_state]))
+          sys.stdout.write("\033[1;%dm%c" % (COLOR[value], STATES[new_state]))
         else:
-          sys.stdout.write("\033[%dm " % color[value])
+          sys.stdout.write("\033[%dm " % COLOR[value])
 
-      sys.stdout.write("\033[0m  %c" % states[new_state])
+      sys.stdout.write("\033[0m  %c" % STATES[new_state])
       sys.stdout.write(" \033[%dm%2d\033[0m\n" % (
-        color[tape[position]], tape[position]))
+        COLOR[tape[position]], tape[position]))
 
       sys.stdout.flush()
     else:
@@ -124,7 +163,7 @@ def run_visual(TTable, print_width, start_state, tape_length=100_000):
 
 def ttable_with_colors(tm):
   s = Turing_Machine.machine_ttable_to_str(tm)
-  for symb, col in zip(Turing_Machine.symbols, color):
+  for symb, col in zip(Turing_Machine.symbols, COLOR):
     s = s.replace(" " + symb, " \033[%dm%s\033[0m" % (col, symb))
   return s
 
@@ -144,7 +183,9 @@ if __name__ == "__main__":
   parser.add_argument("record_num", type=int, nargs="?", default=0)
   parser.add_argument("--width", type=int, default=term_width,
                       help="width to print to terminal.")
-  parser.add_argument("--start-state", type=int, default=0)
+  parser.add_argument("--start-config",
+                      help="Start at non-blank tape configuration. "
+                      "Ex: 1 23^8 21 <B 0^6 12^7 1")
   args = parser.parse_args()
 
   tm = IO.load_tm(args.tm_file, args.record_num)
@@ -153,5 +194,13 @@ if __name__ == "__main__":
   print()
   # Hacky way of getting back to ttable.
   ttable = IO.StdText.parse_ttable(tm.ttable_str())
-  run_visual(ttable, args.width, args.start_state)
+
+  if args.start_config:
+    state, left, right = parse_config(args.start_config)
+  else:
+    state = 0
+    left = []
+    right = []
+
+  run_visual(ttable, args.width, state, left, right)
   sys.stdout.flush()
