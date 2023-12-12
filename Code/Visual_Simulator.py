@@ -4,6 +4,7 @@
 import argparse
 import fcntl
 import itertools
+import math
 import re
 import string
 import struct
@@ -60,7 +61,7 @@ def parse_config(config_str):
 
 def run_visual(TTable, print_width,
                start_state, start_left_tape, start_right_tape,
-               *, tape_length=100_000):
+               *, tape_length=100_000, max_steps=math.inf):
   """
   Start the tape and run it until it halts with visual output.
   """
@@ -154,6 +155,9 @@ def run_visual(TTable, print_width,
     if position < 1 or position >= tape_length-1:
       break
 
+    if step_num >= max_steps:
+      break
+
     state = new_state
 
     if state == -1:
@@ -167,7 +171,8 @@ def ttable_with_colors(tm):
     s = s.replace(" " + symb, " \033[%dm%s\033[0m" % (col, symb))
   return s
 
-if __name__ == "__main__":
+
+def main():
   # Get terminal width, this is surprisingly hard to do :(
   # See: http://stackoverflow.com/questions/566746/how-to-get-console-window-width-in-python
   try:
@@ -186,6 +191,8 @@ if __name__ == "__main__":
   parser.add_argument("--start-config",
                       help="Start at non-blank tape configuration. "
                       "Ex: 1 23^8 21 <B 0^6 12^7 1")
+  parser.add_argument("--max-steps", type=int, default=math.inf,
+                      help="Limit number of steps run")
   args = parser.parse_args()
 
   tm = IO.load_tm(args.tm_file, args.record_num)
@@ -202,5 +209,9 @@ if __name__ == "__main__":
     left = []
     right = []
 
-  run_visual(ttable, args.width, state, left, right)
+  run_visual(ttable, args.width, state, left, right,
+             max_steps=args.max_steps)
   sys.stdout.flush()
+
+if __name__ == "__main__":
+  main()
