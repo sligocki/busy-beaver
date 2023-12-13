@@ -10,6 +10,7 @@ Format looks like:
 """
 
 import gzip
+from pathlib import Path
 
 import Halting_Lib
 import IO
@@ -22,8 +23,8 @@ import TM_Enum
 parse_tm = TM_Record.parse_tm
 
 class Writer:
-  def __init__(self, outfilename : str):
-    self.outfilename = outfilename
+  def __init__(self, outfilename : Path):
+    self.outfilename = Path(outfilename)
     self.outfile = None
 
   def __enter__(self):
@@ -52,8 +53,8 @@ class Writer:
 
 
 class Reader:
-  def __init__(self, infilename : str):
-    self.infilename = infilename
+  def __init__(self, infilename : Path):
+    self.infilename = Path(infilename)
     self.infile = None
 
   def __enter__(self):

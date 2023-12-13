@@ -3,15 +3,11 @@ TM format used on http://morphett.info/turing/turing.html and commonly used in G
 """
 
 import gzip
-import io
 from pathlib import Path
-import struct
 
-from IO.Common import RecordLocateError
-from IO.TM_Record import TM_Record
+from IO import TM_Record
 from Macro import Turing_Machine
-
-import io_pb2
+import TM_Enum
 
 
 DIRS = "lr"
@@ -72,4 +68,23 @@ class Reader:
     self.infile.close()
 
   def read_record(self) -> TM_Record:
-    pass
+    quints = []
+    for line in self.infile:
+      # Strip comments
+      line = line.split(";")[0]
+      # Ignore breakpoints
+      line = line.replace("!", "")
+      line = line.strip()
+      if line:
+        (state_in, symbol_in, symbol_out, dir_out, state_out) = line.split()
+        if state_out.lower().startswith("halt"):
+          state_out = -1
+        dir_out = DIRS.find(dir_out)
+        quints.append((state_in, symbol_in, symbol_out, dir_out, state_out))
+    tm = Turing_Machine.tm_from_quintuples(quints)
+    tm_enum = TM_Enum.TM_Enum(tm, allow_no_halt = False)
+    tm_record = TM_Record.TM_Record(tm_enum = tm_enum)
+    return tm_record
+
+  def __iter__(self):
+    yield self.read_record()

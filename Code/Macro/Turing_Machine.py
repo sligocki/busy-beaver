@@ -311,7 +311,7 @@ def tm_from_quintuples(quints) -> Simple_Machine:
       symbol_in = symbols.index(symbol_in)
       symbol_out = symbols.index(symbol_out)
 
-      if state_out < 0:
+      if state_out == -1:
         condition = HALT
         condition_details = [(symbol_in, state_in)]
       else:
