@@ -7,8 +7,7 @@ from Macro import Turing_Machine
 
 
 # Simple repeating machine.
-ttable = IO.parse_ttable("0RA 1LA")
-tm = Turing_Machine.make_machine(ttable)
+tm = IO.parse_tm("0RA1LA")
 for block_size in range(2, 21):
   macro_machine = Turing_Machine.Block_Macro_Machine(tm, block_size)
   macro_symbol = Turing_Machine.Block_Symbol((0, 1) + (0,) * (block_size - 2))

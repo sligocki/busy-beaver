@@ -27,7 +27,7 @@ def get_stats(tm):
   to_symbol = [ [] for i in range(tm.num_symbols) ]
   for state in range(tm.num_states):
     for symbol in range(tm.num_symbols):
-      trans = tm.trans_table[state][symbol]
+      trans = tm.get_trans_object(symbol, state)
       if trans.condition in [Turing_Machine.HALT, Turing_Machine.UNDEFINED]:
         halts.append((state, symbol))
       else:

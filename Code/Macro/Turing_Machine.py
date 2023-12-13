@@ -182,23 +182,11 @@ class Turing_Machine(object):
   def list_base_states(self):
     return NotImplemented
 
-def make_machine(trans_table):
-  """Generate a standard Turing Machine based on a transition table. Wraps any machine that has Stay with a macro machine."""
-  machine = Simple_Machine(trans_table)
-  # If there are any stay instructions, encapsulate this machine
-  # TODO: There is a much more efficient rapper than block-1 macro machine.
-  for row in trans_table:
-    for state, dir, symbol in row:
-      if dir == STAY:
-        return Block_Macro_Machine(machine, 1)
-  # Otherwise return the simple machine
-  return machine
-
 
 # Characters to use for states (end in "Z" so that halt is Z)
-states = string.ascii_uppercase + string.ascii_lowercase + string.digits + "!@#$%^&*" + "Z"
-symbols = string.digits + "-"
-dirs = "LRS-"
+STATES = string.ascii_uppercase + string.ascii_lowercase + string.digits + "!@#$%^&*" + "Z"
+SYMBOLS = string.digits + "-"
+DIRS = "LRS-"
 
 def machine_ttable_to_str(machine):
   """
@@ -232,15 +220,15 @@ def machine_ttable_to_str(machine):
   result += "+\n"
 
   for i in range(len(trans_table)):
-    result += "   | %c " % states[i]
+    result += "   | %c " % STATES[i]
     for j in range(len(trans_table[i])):
       result += "| "
       if trans_table[i][j].condition == UNDEFINED:
         result += "--- "
       else:
-        result += "%c"   % symbols[trans_table[i][j].symbol_out]
-        result += "%c"   % dirs   [trans_table[i][j].dir_out]
-        result += "%c "  % states [trans_table[i][j].state_out]
+        result += "%c"   % SYMBOLS[trans_table[i][j].symbol_out]
+        result += "%c"   % DIRS[trans_table[i][j].dir_out]
+        result += "%c "  % STATES[trans_table[i][j].state_out]
     result += "|\n"
 
     result += "   +---"
@@ -259,57 +247,28 @@ class Simple_Machine_State(int):
     return self.__str__()
 
   def __str__(self):
-    return states[self]
+    return STATES[self]
 
   def __repr__(self):
-    return states[self]
-
-def ttable_to_transition(TTable, state_in, symbol_in):
-  """Convert from historical TTable trans format tuple (sym, dir, state) to
-  a Transition object."""
-  # Historical ordering of transition table elements: (sym, dir, state)
-  symbol_out, dir_out, state_out = TTable[state_in][symbol_in]
-
-  # Historical signaling of undefined cell in transition table: (-1, 0, -1)
-  if symbol_out == -1:
-    # Treat an undefined cell as a halt, except note that it was undefined.
-    condition = UNDEFINED
-    condition_details = [(symbol_in, state_in)]
-    symbol_out = 1; state_out = -1; dir_out = RIGHT
-  # Historical signaling of final cell (transition to halt): (1, 1, -1)
-  elif state_out == -1:
-    condition = HALT
-    condition_details = [(symbol_in, state_in)]
-  # Otherwise, the transition is normal
-  else:
-    condition = RUNNING
-    condition_details = None
-
-  return Transition(
-    condition=condition, condition_details=condition_details,
-    symbol_out=symbol_out,
-    state_out=Simple_Machine_State(state_out),
-    dir_out=dir_out,
-    # For base TMs, single trans is always 1 step and only uses one state.
-    num_base_steps=1, states_last_seen={state_in: 0})
+    return STATES[self]
 
 class Simple_Machine(Turing_Machine):
   """The most general Turing Machine based off of a transition table"""
-  def __init__(self, TTable):
-    self.num_states = len(TTable)
-    self.num_symbols = len(TTable[0])
-    self.init_state = Simple_Machine_State(0)
-    self.init_dir = RIGHT
-    self.init_symbol = 0
+  def __init__(self, ttable, states, symbols):
+    self.trans_table = ttable
+    self.states = states
+    self.symbols = symbols
 
-    # Convert from raw (historical) TTable to a table which returns
-    # a Transition object.
-    self.trans_table = [[None for _ in range(self.num_symbols)]
-                        for _ in range(self.num_states)]
-    for state_in in range(self.num_states):
-      for symbol_in in range(self.num_symbols):
-        self.trans_table[state_in][symbol_in] = \
-          ttable_to_transition(TTable, state_in, symbol_in)
+    self.num_states = len(self.states)
+    self.num_symbols = len(self.symbols)
+
+    self.init_symbol = 0
+    self.init_dir = RIGHT
+    self.init_state = Simple_Machine_State(0)
+
+  def get_trans_object(self, symbol_in, state_in, dir_in = None):
+    # Note: Simple_Machine ignores dir_in.
+    return self.trans_table[state_in][symbol_in]
 
   def ttable_str(self) -> str:
     row_strs = []
@@ -330,9 +289,60 @@ class Simple_Machine(Turing_Machine):
   def list_base_states(self):
     return list(range(self.num_states))
 
-  def get_trans_object(self, symbol_in, state_in, dir_in = None):
-    # Note: Simple_Machine ignores dir_in.
-    return self.trans_table[state_in][symbol_in]
+def tm_from_quintuples(quints) -> Simple_Machine:
+  # print("quints:", quints)
+  # Load states and symbols in order.
+  states = []
+  symbols = []
+  for (state_in, symbol_in, _, _, _) in quints:
+    if state_in not in states:
+      states.append(state_in)
+    if symbol_in not in symbols:
+      symbols.append(symbol_in)
+  # print("states:", states)
+  # print("symbols:", symbols)
+
+  # Set all defined transitions.
+  ttable = [[None for _ in symbols] for _ in states]
+  for (state_in, symbol_in, symbol_out, dir_out, state_out) in quints:
+    if symbol_out != None:
+      # Convert all into integers
+      state_in = states.index(state_in)
+      symbol_in = symbols.index(symbol_in)
+      symbol_out = symbols.index(symbol_out)
+
+      if state_out < 0:
+        condition = HALT
+        condition_details = [(symbol_in, state_in)]
+      else:
+        condition = RUNNING
+        condition_details = None
+        state_out = states.index(state_out)
+
+      ttable[state_in][symbol_in] = Transition(
+        condition=condition, condition_details=condition_details,
+        symbol_out=symbol_out,
+        state_out=Simple_Machine_State(state_out),
+        dir_out=dir_out,
+        # For base TMs, single trans is always 1 step and only uses one state.
+        num_base_steps=1, states_last_seen={state_in: 0})
+
+  # Define "undefined" transitions (with metadata).
+  for state_in in range(len(states)):
+    for symbol_in in range(len(symbols)):
+      if not ttable[state_in][symbol_in]:
+        ttable[state_in][symbol_in] = Transition(
+          condition = UNDEFINED,
+          condition_details = [(symbol_in, state_in)],
+          # Make all undefined transitions act like the default halt trans: 1RH
+          symbol_out = 1,
+          state_out = Simple_Machine_State(-1),
+          dir_out = RIGHT,
+          # For base TMs, single trans is always 1 step and only uses one state.
+          num_base_steps=1, states_last_seen={state_in: 0})
+
+  return Simple_Machine(ttable, states, symbols)
+
 
 class Macro_Machine(Turing_Machine): pass
 

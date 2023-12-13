@@ -19,7 +19,6 @@ from Macro import Turing_Machine
 import TM_Enum
 
 
-parse_ttable = TM_Record.parse_ttable
 parse_tm = TM_Record.parse_tm
 
 class Writer:

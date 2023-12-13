@@ -94,7 +94,7 @@ class DirectSimulator:
     if not self.halted:
       state_in = self.state
       symbol_in = self.tape.read()
-      trans = self.tm.trans_table[state_in][symbol_in]
+      trans = self.tm.get_trans_object(symbol_in, state_in)
 
       self.tape.write(trans.symbol_out)
       self.tape.move(trans.dir_out)

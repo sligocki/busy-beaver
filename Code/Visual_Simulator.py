@@ -59,16 +59,14 @@ def parse_config(config_str):
   return (state, left, right)
 
 
-def run_visual(TTable, print_width,
+def run_visual(tm : Turing_Machine.Simple_Machine,
+               print_width : int,
                start_state, start_left_tape, start_right_tape,
-               *, tape_length=100_000, max_steps=math.inf):
+               *, tape_length : int = 100_000, max_steps : int = math.inf):
   """
   Start the tape and run it until it halts with visual output.
   """
-
   start_time = time.time()
-
-  num_syms = 0
 
   tape = [0] * tape_length
   start_pos = tape_length // 2  # Default to middle
@@ -104,20 +102,10 @@ def run_visual(TTable, print_width,
 
   for step_num in itertools.count(1):
     value = tape[position]
+    trans = tm.get_trans_object(value, state)
+    tape[position] = trans.symbol_out
 
-    new_value = TTable[state][value][0]
-    new_move  = TTable[state][value][1]
-    new_state = TTable[state][value][2]
-
-    if (value == 0 and new_value != 0):
-      num_syms += 1
-
-    if (value != 0 and new_value == 0):
-      num_syms -= 1
-
-    tape[position] = new_value
-
-    if new_move == 0:
+    if trans.dir_out == Turing_Machine.LEFT:
       position -= 1
       if position < position_left:
         position_left = position
@@ -136,11 +124,11 @@ def run_visual(TTable, print_width,
         value = tape[start_pos+(j-half_width)]
         if position == start_pos+(j-half_width):
           # If this is the current possition ...
-          sys.stdout.write("\033[1;%dm%c" % (COLOR[value], STATES[new_state]))
+          sys.stdout.write("\033[1;%dm%c" % (COLOR[value], STATES[trans.state_out]))
         else:
           sys.stdout.write("\033[%dm " % COLOR[value])
 
-      sys.stdout.write("\033[0m  %c" % STATES[new_state])
+      sys.stdout.write("\033[0m  %c" % STATES[trans.state_out])
       sys.stdout.write(" \033[%dm%2d\033[0m\n" % (
         COLOR[tape[position]], tape[position]))
 
@@ -158,7 +146,7 @@ def run_visual(TTable, print_width,
     if step_num >= max_steps:
       break
 
-    state = new_state
+    state = trans.state_out
 
     if state == -1:
       print("TM Halted on step", step_num)
@@ -167,7 +155,7 @@ def run_visual(TTable, print_width,
 
 def ttable_with_colors(tm):
   s = Turing_Machine.machine_ttable_to_str(tm)
-  for symb, col in zip(Turing_Machine.symbols, COLOR):
+  for symb, col in zip(Turing_Machine.SYMBOLS, COLOR):
     s = s.replace(" " + symb, " \033[%dm%s\033[0m" % (col, symb))
   return s
 
@@ -199,8 +187,6 @@ def main():
   print(ttable_with_colors(tm))
   print(tm.ttable_str())
   print()
-  # Hacky way of getting back to ttable.
-  ttable = IO.StdText.parse_ttable(tm.ttable_str())
 
   if args.start_config:
     state, left, right = parse_config(args.start_config)
@@ -209,7 +195,7 @@ def main():
     left = []
     right = []
 
-  run_visual(ttable, args.width, state, left, right,
+  run_visual(tm, args.width, state, left, right,
              max_steps=args.max_steps)
   sys.stdout.flush()
 

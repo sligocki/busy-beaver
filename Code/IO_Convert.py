@@ -41,8 +41,6 @@ def get_reader(format, filename, args):
     return IO.StdText.Reader(filename)
   elif format == "proto":
     return IO.Proto.Reader(filename)
-  elif format == "text_old":
-    return IO.Text.Reader(filename)
 
   elif format == "bbc_db":
     return IO.BBC.Reader(filename)
@@ -60,7 +58,7 @@ def get_writer(format, filename, args):
   elif format == "proto":
     return IO.Proto.Writer(filename)
   elif format == "text_old":
-    return IO.Text.Writer(filename)
+    return IO.OldText.Writer(filename)
 
   elif format == "bbc_db":
     return IO.BBC.Writer(filename)

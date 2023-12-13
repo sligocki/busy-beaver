@@ -11,35 +11,31 @@ from Macro import Turing_Machine
 SYMBOLS_DISPLAY = string.digits
 DIRS_DISPLAY = "LR"
 STATES_DISPLAY = string.ascii_uppercase
-def parse_ttable(line : str):
+def parse_tm(line : str) -> Turing_Machine.Simple_Machine:
   """Read transition table given a standard text representation."""
   assert " " not in line, f"Invalid TM format: {line}"
-  ttable = []
+  quints = []
   rows = line.strip().split("_")
   num_states = len(rows)
-  for row in rows:
-    ttable_row = []
-    for i in range(0, len(row), 3):
+  for state_in, row in enumerate(rows):
+    for symbol_in, i in enumerate(range(0, len(row), 3)):
       trans_str = row[i:i+3]
       assert len(trans_str) == 3, trans_str
       if trans_str == "---":
-        ttable_row.append((-1, 0, -1))
+        # We sometimes need to explicitly pass in undefined transitions in order
+        # to get a TM of the correct size.
+        quints.append((state_in, symbol_in, None, None, None))
       else:
-        symb_out = SYMBOLS_DISPLAY.find(trans_str[0])
+        symbol_out = SYMBOLS_DISPLAY.find(trans_str[0])
         dir_out = DIRS_DISPLAY.find(trans_str[1])
         state_out = STATES_DISPLAY.find(trans_str[2])
         if state_out >= num_states:
           state_out = -1
-        assert symb_out >= 0
+        assert symbol_out >= 0
         assert dir_out in [0, 1]
         assert state_out >= -1
-        ttable_row.append((symb_out, dir_out, state_out))
-    ttable.append(ttable_row)
-  return ttable
-
-def parse_tm(line : str) -> Turing_Machine.Simple_Machine:
-  ttable = parse_ttable(line)
-  return Turing_Machine.Simple_Machine(ttable)
+        quints.append((state_in, symbol_in, symbol_out, dir_out, state_out))
+  return Turing_Machine.tm_from_quintuples(quints)
 
 
 def pack_trans_ints(symbol : int, dir : int, state : int,
@@ -81,20 +77,26 @@ def pack_tm(tm : Turing_Machine.Simple_Machine) -> bytes:
       i += 1
   return bytes(pack)
 
-def unpack_ttable(pack : bytes):
-  ttable = []
+def unpack_tm(pack : bytes) -> Turing_Machine.Simple_Machine:
+  quints = []
+  state_in = -1
   for byte in pack:
     (symbol, dir, state, is_newrow) = unpack_trans_ints(byte)
     if is_newrow:
-      ttable.append([])
-    ttable[-1].append((symbol, dir, state))
-  return ttable
+      state_in += 1
+      symbol_in = 0
+    if symbol < 0:
+      quints.append((state_in, symbol_in, None, None, None))
+    else:
+      quints.append((state_in, symbol_in, symbol, dir, state))
+    symbol_in += 1
+  return Turing_Machine.tm_from_quintuples(quints)
 
 
 def read_tm(proto_tm : io_pb2.TuringMachine) -> Turing_Machine.Simple_Machine:
   type = proto_tm.WhichOneof("ttable")
   if type == "ttable_packed":
-    return Turing_Machine.Simple_Machine(unpack_ttable(proto_tm.ttable_packed))
+    return unpack_tm(proto_tm.ttable_packed)
   elif type == "ttable_str":
     return IO.StdText.parse_tm(proto_tm.ttable_str)
   else:

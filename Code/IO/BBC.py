@@ -36,21 +36,20 @@ def unpack_trans_ints(trans_bytes : bytes):
 
   if state == -1 and symbol == 0:
     # Undefined transition.
-    symbol = -1
+    return (None, None, None)
 
   return (symbol, dir, state)
 
 def unpack_tm(tm_bytes : bytes) -> Turing_Machine.Simple_Machine:
-  # Note: BBC TMs are hardcoded to be 5x2.
-  ttable = [[None for _ in range(2)]
-            for _ in range(5)]
+  quints = []
   start = 0
+  # Note: BBC TMs are hardcoded to be 5x2.
   for state_in in range(5):
     for symbol_in in range(2):
       (symbol_out, dir_out, state_out) = unpack_trans_ints(tm_bytes[start:start+3])
-      ttable[state_in][symbol_in] = (symbol_out, dir_out, state_out)
+      quints.append((state_in, symbol_in, symbol_out, dir_out, state_out))
       start += 3
-  return Turing_Machine.Simple_Machine(ttable)
+  return Turing_Machine.tm_from_quintuples(ttable)
 
 
 class Writer:
