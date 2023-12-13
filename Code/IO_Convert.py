@@ -9,7 +9,7 @@ from pathlib import Path
 import IO
 
 
-FORMATS = ["auto", "text", "proto", "text_old",
+FORMATS = ["auto", "text", "proto", "morphett", "text_old",
            "bbc_db", "bbc_index", "bbc_index_text"]
 
 def Detect_Format(path):
@@ -17,6 +17,10 @@ def Detect_Format(path):
   if ".pb" in path.suffixes:
     # My custom Protobuf based format.
     return "proto"
+
+  elif ".morphett" in path.suffixes:
+    # My custom Protobuf based format.
+    return "morphett"
 
   # Variety of BBC formats
   elif ".db" in path.suffixes:
@@ -41,6 +45,8 @@ def get_reader(format, filename, args):
     return IO.StdText.Reader(filename)
   elif format == "proto":
     return IO.Proto.Reader(filename)
+  elif format == "morphett":
+    return IO.Morphett.Reader(filename)
 
   elif format == "bbc_db":
     return IO.BBC.Reader(filename)
@@ -57,6 +63,8 @@ def get_writer(format, filename, args):
     return IO.StdText.Writer(filename)
   elif format == "proto":
     return IO.Proto.Writer(filename)
+  elif format == "morphett":
+    return IO.Morphett.Writer(filename)
   elif format == "text_old":
     return IO.OldText.Writer(filename)
 
