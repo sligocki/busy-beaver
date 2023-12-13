@@ -17,15 +17,13 @@ def parse_tm(line : str) -> Turing_Machine.Simple_Machine:
   quints = []
   rows = line.strip().split("_")
   num_states = len(rows)
+  max_symbol = 0
   for state_in, row in enumerate(rows):
     for symbol_in, i in enumerate(range(0, len(row), 3)):
+      max_symbol = max(max_symbol, symbol_in)
       trans_str = row[i:i+3]
       assert len(trans_str) == 3, trans_str
-      if trans_str == "---":
-        # We sometimes need to explicitly pass in undefined transitions in order
-        # to get a TM of the correct size.
-        quints.append((state_in, symbol_in, None, None, None))
-      else:
+      if trans_str != "---":
         symbol_out = SYMBOLS_DISPLAY.find(trans_str[0])
         dir_out = DIRS_DISPLAY.find(trans_str[1])
         state_out = STATES_DISPLAY.find(trans_str[2])
@@ -35,7 +33,8 @@ def parse_tm(line : str) -> Turing_Machine.Simple_Machine:
         assert dir_out in [0, 1]
         assert state_out >= -1
         quints.append((state_in, symbol_in, symbol_out, dir_out, state_out))
-  return Turing_Machine.tm_from_quintuples(quints)
+  return Turing_Machine.tm_from_quintuples(quints, states = list(range(num_states)),
+                                           symbols = list(range(max_symbol + 1)))
 
 
 def pack_trans_ints(symbol : int, dir : int, state : int,
@@ -85,12 +84,11 @@ def unpack_tm(pack : bytes) -> Turing_Machine.Simple_Machine:
     if is_newrow:
       state_in += 1
       symbol_in = 0
-    if symbol < 0:
-      quints.append((state_in, symbol_in, None, None, None))
-    else:
+    if symbol >= 0:
       quints.append((state_in, symbol_in, symbol, dir, state))
     symbol_in += 1
-  return Turing_Machine.tm_from_quintuples(quints)
+  return Turing_Machine.tm_from_quintuples(quints, states = list(range(state_in + 1)),
+                                           symbols = list(range(symbol_in)))
 
 def tm_to_list(tm : Turing_Machine.Simple_Machine, tm_list : io_pb2.TMList) -> None:
   tm_list.num_states = tm.num_states
@@ -110,11 +108,11 @@ def tm_from_list(tm_list : io_pb2.TMList) -> Turing_Machine.Simple_Machine:
   for state_in in range(tm_list.num_states):
     for symbol_in in range(tm_list.num_symbols):
       symbol_out, dir_out, state_out = tm_list.ttable_list[i:i+3]
-      if symbol_out == -1:
-        quints.append((state_in, symbol_in, None, None, None))
-      else:
+      if symbol_out != -1:
         quints.append((state_in, symbol_in, symbol_out, dir_out, state_out))
-  return Turing_Machine.tm_from_quintuples(quints)
+  return Turing_Machine.tm_from_quintuples(quints,
+                                           states = list(range(tm_list.num_states)),
+                                           symbols = list(range(tm_list.num_symbols)))
 
 def read_tm(proto_tm : io_pb2.TuringMachine) -> Turing_Machine.Simple_Machine:
   type = proto_tm.WhichOneof("ttable")

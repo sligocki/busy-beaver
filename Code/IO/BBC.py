@@ -49,7 +49,8 @@ def unpack_tm(tm_bytes : bytes) -> Turing_Machine.Simple_Machine:
       (symbol_out, dir_out, state_out) = unpack_trans_ints(tm_bytes[start:start+3])
       quints.append((state_in, symbol_in, symbol_out, dir_out, state_out))
       start += 3
-  return Turing_Machine.tm_from_quintuples(ttable)
+  return Turing_Machine.tm_from_quintuples(ttable, states = list(range(5)),
+                                           symbols = list(range(2)))
 
 
 class Writer:

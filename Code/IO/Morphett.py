@@ -69,6 +69,8 @@ class Reader:
 
   def read_record(self) -> TM_Record:
     quints = []
+    states = []
+    symbols = ["_"]
     for line in self.infile:
       # Strip comments
       line = line.split(";")[0]
@@ -81,10 +83,20 @@ class Reader:
           state_out = -1
         dir_out = DIRS.find(dir_out)
         quints.append((state_in, symbol_in, symbol_out, dir_out, state_out))
-    tm = Turing_Machine.tm_from_quintuples(quints)
+        if state_in not in states:
+          states.append(state_in)
+        if symbol_in not in symbols:
+          symbols.append(symbol_in)
+    tm = Turing_Machine.tm_from_quintuples(quints, states, symbols)
     tm_enum = TM_Enum.TM_Enum(tm, allow_no_halt = False)
     tm_record = TM_Record.TM_Record(tm_enum = tm_enum)
     return tm_record
 
   def __iter__(self):
     yield self.read_record()
+
+
+def load_record(filename : str, record_num : int) -> TM_Record:
+  assert record_num == 0
+  with Reader(filename) as reader:
+    return reader.read_record()

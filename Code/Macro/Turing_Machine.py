@@ -271,11 +271,12 @@ class Simple_Machine(Turing_Machine):
     return self.trans_table[state_in][symbol_in]
 
   def ttable_str(self) -> str:
-    row_strs = []
-    for row in self.trans_table:
-      row_strs.append("".join(trans.to_ttable_str()
-                               for trans in row))
-    return "_".join(row_strs)
+    if self.num_states < 25 and self.num_symbols < 10:
+      row_strs = []
+      for row in self.trans_table:
+        row_strs.append("".join(trans.to_ttable_str()
+                                 for trans in row))
+      return "_".join(row_strs)
 
   def eval_symbol(self, symbol):
     if symbol != self.init_symbol:
@@ -289,16 +290,7 @@ class Simple_Machine(Turing_Machine):
   def list_base_states(self):
     return list(range(self.num_states))
 
-def tm_from_quintuples(quints) -> Simple_Machine:
-  # Load states and symbols in order.
-  states = []
-  symbols = []
-  for (state_in, symbol_in, _, _, _) in quints:
-    if state_in not in states:
-      states.append(state_in)
-    if symbol_in not in symbols:
-      symbols.append(symbol_in)
-
+def tm_from_quintuples(quints, states, symbols) -> Simple_Machine:
   # Set all defined transitions.
   ttable = [[None for _ in symbols] for _ in states]
   for (state_in, symbol_in, symbol_out, dir_out, state_out) in quints:

@@ -6,14 +6,11 @@ from Macro import Turing_Machine
 def blank_tm_enum(num_states : int, num_symbols : int,
                   *, first_1rb : bool, allow_no_halt : bool):
   quints = []
-  for state in range(num_states):
-    for symbol in range(num_symbols):
-      if first_1rb and state == 0 and symbol == 0:
-        quints.append((state, symbol, 1, 1, 1))  # A1 -> 1RB
-      else:
-        quints.append((state, symbol, None, None, None))
+  if first_1rb:
+    quints.append((0, 0, 1, 1, 1))  # A1 -> 1RB
 
-  tm = Turing_Machine.tm_from_quintuples(quints)
+  tm = Turing_Machine.tm_from_quintuples(quints, states = list(range(num_states)),
+                                         symbols = list(range(num_symbols)))
   return TM_Enum(tm, allow_no_halt = allow_no_halt)
 
 class TM_Enum:
