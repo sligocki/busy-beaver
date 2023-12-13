@@ -16,8 +16,8 @@ import IO
 from Macro import Turing_Machine
 
 
-# Note: Halt will be "Z"
-STATES = string.ascii_uppercase
+# Note: Halt will be "!"
+STATES = string.ascii_uppercase + string.ascii_lowercase + "!"
 # White, Red, Green, Blue, Magenta, Cyan, Brown/Yellow
 COLOR = [49, 41, 42, 44, 45, 46, 43]
 
@@ -95,8 +95,9 @@ def run_visual(tm : Turing_Machine.Simple_Machine,
     else:
       sys.stdout.write("\033[%dm " % (COLOR[value]))
 
-  sys.stdout.write("\033[0m  %c" % STATES[state])
-  sys.stdout.write(" %2d\n" % tape[position])
+  sys.stdout.write(f"\033[0m{tm.states[state]:4}")
+  sys.stdout.write(" \033[%dm%2d\033[0m\n" % (
+    COLOR[tape[position]], tape[position]))
 
   sys.stdout.flush()
 
@@ -128,7 +129,8 @@ def run_visual(tm : Turing_Machine.Simple_Machine,
         else:
           sys.stdout.write("\033[%dm " % COLOR[value])
 
-      sys.stdout.write("\033[0m  %c" % STATES[trans.state_out])
+      state_str = tm.states[trans.state_out] if trans.state_out >= 0 else "HALT"
+      sys.stdout.write(f"\033[0m{state_str:4}")
       sys.stdout.write(" \033[%dm%2d\033[0m\n" % (
         COLOR[tape[position]], tape[position]))
 
@@ -181,12 +183,15 @@ def main():
                       "Ex: 1 23^8 21 <B 0^6 12^7 1")
   parser.add_argument("--max-steps", type=int, default=math.inf,
                       help="Limit number of steps run")
+  parser.add_argument("--no-ttable", action="store_true")
   args = parser.parse_args()
 
   tm = IO.load_tm(args.tm_file, args.record_num)
-  print(ttable_with_colors(tm))
-  print(tm.ttable_str())
-  print()
+
+  if not args.no_ttable:
+    print(ttable_with_colors(tm))
+    print(tm.ttable_str())
+    print()
 
   if args.start_config:
     state, left, right = parse_config(args.start_config)
