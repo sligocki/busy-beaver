@@ -51,6 +51,12 @@ message BigInt {
   }
 }
 
+message TMList {
+  sint32 num_states = 1;
+  sint32 num_symbols = 2;
+  repeated sint32 ttable_list = 3;
+}
+
 message TuringMachine {
   oneof ttable {
     // High density, bit-packed version of ttable.
@@ -60,8 +66,11 @@ message TuringMachine {
     //   * 1 bit for dir
     //   * 1 bit for is_newrow  [indicates where to add row breaks to matrix]
     bytes ttable_packed = 1;
-    // Lower density, std text format.
-    // Allows up to 25 states.
+    // Simple low density format. 12B / transition.
+    // Almost unbounded (up to 2^31 - 1 states and symbols).
+    TMList ttable_list = 4;
+
+    // Deprecated
     string ttable_str = 3;
   }
 

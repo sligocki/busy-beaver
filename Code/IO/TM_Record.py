@@ -92,6 +92,29 @@ def unpack_tm(pack : bytes) -> Turing_Machine.Simple_Machine:
     symbol_in += 1
   return Turing_Machine.tm_from_quintuples(quints)
 
+def tm_to_list(tm : Turing_Machine.Simple_Machine, tm_list : io_pb2.TMList) -> None:
+  tm_list.num_states = tm.num_states
+  tm_list.num_symbols = tm.num_symbols
+  for state in range(tm.num_states):
+    for symbol in range(tm.num_symbols):
+      trans = tm.get_trans_object(symbol, state)
+      if trans.condition == Turing_Machine.UNDEFINED:
+        trans.symbol_out = -1
+      tm_list.ttable_list.append(trans.symbol_out)
+      tm_list.ttable_list.append(trans.dir_out)
+      tm_list.ttable_list.append(trans.state_out)
+
+def tm_from_list(tm_list : io_pb2.TMList) -> Turing_Machine.Simple_Machine:
+  quints = []
+  i = 0
+  for state_in in range(tm_list.num_states):
+    for symbol_in in range(tm_list.num_symbols):
+      symbol_out, dir_out, state_out = tm_list.ttable_list[i:i+3]
+      if symbol_out == -1:
+        quints.append((state_in, symbol_in, None, None, None))
+      else:
+        quints.append((state_in, symbol_in, symbol_out, dir_out, state_out))
+  return Turing_Machine.tm_from_quintuples(quints)
 
 def read_tm(proto_tm : io_pb2.TuringMachine) -> Turing_Machine.Simple_Machine:
   type = proto_tm.WhichOneof("ttable")
@@ -99,16 +122,16 @@ def read_tm(proto_tm : io_pb2.TuringMachine) -> Turing_Machine.Simple_Machine:
     return unpack_tm(proto_tm.ttable_packed)
   elif type == "ttable_str":
     return IO.StdText.parse_tm(proto_tm.ttable_str)
+  elif type == "ttable_list":
+    return tm_from_list(proto_tm.ttable_list)
   else:
     raise NotImplementedError(f"Unexpected ttable type: {type}")
 
 def write_tm(tm : Turing_Machine.Simple_Machine, proto_tm : io_pb2.TuringMachine):
   if tm.num_states <= 7 and tm.num_symbols <= 8:
     proto_tm.ttable_packed = pack_tm(tm)
-  elif tm.num_states <= 25 and tm.num_symbols <= 10:
-    proto_tm.ttable_str = tm.ttable_str()
   else:
-    raise NotImplementedError("Storing large TMs in protobuf has not been implemented yet. Max states = 25, max symbols = 10.")
+    tm_to_list(tm, proto_tm.ttable_list)
 
 
 class TM_Record:

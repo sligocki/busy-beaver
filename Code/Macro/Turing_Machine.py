@@ -290,7 +290,6 @@ class Simple_Machine(Turing_Machine):
     return list(range(self.num_states))
 
 def tm_from_quintuples(quints) -> Simple_Machine:
-  # print("quints:", quints)
   # Load states and symbols in order.
   states = []
   symbols = []
@@ -299,8 +298,6 @@ def tm_from_quintuples(quints) -> Simple_Machine:
       states.append(state_in)
     if symbol_in not in symbols:
       symbols.append(symbol_in)
-  # print("states:", states)
-  # print("symbols:", symbols)
 
   # Set all defined transitions.
   ttable = [[None for _ in symbols] for _ in states]
