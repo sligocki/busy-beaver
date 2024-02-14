@@ -277,6 +277,8 @@ class Simple_Machine(Turing_Machine):
         row_strs.append("".join(trans.to_ttable_str()
                                  for trans in row))
       return "_".join(row_strs)
+    else:
+      return ""
 
   def eval_symbol(self, symbol):
     if symbol != self.init_symbol:

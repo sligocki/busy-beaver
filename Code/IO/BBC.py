@@ -5,6 +5,7 @@ See: https://bbchallenge.org/method#format
 """
 
 import struct
+from typing import Optional
 import zipfile
 
 from IO.TM_Record import TM_Record
@@ -31,7 +32,7 @@ def unpack_trans_ints(trans_bytes : bytes):
   if dir_int == 0:
     dir = Turing_Machine.RIGHT
   else:
-    assert dir_int == 1, dir
+    assert dir_int == 1, dir_int
     dir = Turing_Machine.LEFT
 
   if state == -1 and symbol == 0:
@@ -49,7 +50,7 @@ def unpack_tm(tm_bytes : bytes) -> Turing_Machine.Simple_Machine:
       (symbol_out, dir_out, state_out) = unpack_trans_ints(tm_bytes[start:start+3])
       quints.append((state_in, symbol_in, symbol_out, dir_out, state_out))
       start += 3
-  return Turing_Machine.tm_from_quintuples(ttable, states = list(range(5)),
+  return Turing_Machine.tm_from_quintuples(quints, states = list(range(5)),
                                            symbols = list(range(2)))
 
 
@@ -71,7 +72,7 @@ class Reader:
   """Class to manage reading TMRecords from a file."""
   def __init__(self, infilename : str):
     self.infilename = infilename
-    self.infile = None
+    self.infile : Optional[Any] = None
 
   def __enter__(self):
     self.zipfile = zipfile.ZipFile(self.infilename, "r")
@@ -92,7 +93,7 @@ class Reader:
     # whence = 0 means (from the start).
     self.infile.seek(_BYTES_HEADER, 0)
 
-  def read_record(self) -> TM_Record:
+  def read_record(self) -> Optional[TM_Record]:
     tm_bytes = self.infile.read(_BYTES_PER_RECORD)
     if not tm_bytes:
       return None

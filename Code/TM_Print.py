@@ -34,15 +34,15 @@ def tm_to_markdown(tm : Turing_Machine.Simple_Machine) -> str:
   # Transitions
   for state_in in range(tm.num_states):
     # Row name
-    result += "|  %c  |" % Turing_Machine.states[state_in]
+    result += "|  %c  |" % Turing_Machine.STATES[state_in]
     for symbol_in in range(tm.num_symbols):
       trans = tm.get_trans_object(state_in = state_in, symbol_in = symbol_in)
       if trans.condition == Turing_Machine.UNDEFINED:
         result += " --- |"  # Undefined transition
       else:
-        result += " %c%c%c |" % (Turing_Machine.symbols[trans.symbol_out],
-                                 Turing_Machine.dirs[trans.dir_out],
-                                 Turing_Machine.states[trans.state_out])
+        result += " %c%c%c |" % (Turing_Machine.SYMBOLS[trans.symbol_out],
+                                 Turing_Machine.DIRS[trans.dir_out],
+                                 Turing_Machine.STATES[trans.state_out])
     result += "\n"
 
   return result

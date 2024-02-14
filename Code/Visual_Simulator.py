@@ -29,12 +29,12 @@ def parse_config(config_str):
   dir_left = None
   state = None
   for block in config_str.split():
-    if (m := re.fullmatch(r"<([A-Z])", block)):
+    if (m := re.fullmatch(r"<([A-Za-z])", block)):
       dir_left = True
       state = STATES.index(m.group(1))
       in_left = False
 
-    elif (m := re.fullmatch(r"([A-Z])>", block)):
+    elif (m := re.fullmatch(r"([A-Za-z])>", block)):
       dir_left = False
       state = STATES.index(m.group(1))
       in_left = False

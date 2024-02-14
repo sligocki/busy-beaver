@@ -86,7 +86,7 @@ class Reader:
       tm_record = self.read_record()
 
 
-def load_record(filename : str, record_num : int) -> TM_Record:
+def load_record(filename : Path, record_num : int) -> TM_Record:
   """Load one record from a filename."""
   with Reader(filename) as reader:
     for _ in range(record_num):

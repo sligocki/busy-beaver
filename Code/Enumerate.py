@@ -135,7 +135,7 @@ class Enumerator(object):
     self.start_time = time.time()
     self.max_sim_time_s = 0.0
 
-  def run(self, tm_record : TM_Record) -> None:
+  def run(self, tm_record : TM_Record) -> TM_Record:
     """Simulate TM"""
     try:
       if self.options.time > 0:

@@ -16,7 +16,7 @@ def gcd(a : int, b : int) -> int:
 def lcm(a : int, b : int) -> int:
   return a * b // gcd(a, b)
 
-def int_pow(n : int) -> (int, int):
+def int_pow(n : int) -> tuple[int, int]:
   """Find smallest integer m such that n == m^k and return (m, k)"""
   for m in range(2, int(math.sqrt(n)) + 1):
     k = int(round(math.log(n, m)))

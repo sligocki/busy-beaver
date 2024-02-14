@@ -10,6 +10,7 @@ While reading savask's description, I realized that many of the details he uses
 are captured directly in the Block Macro Machine idea.
 """
 
+from typing import Optional
 import argparse
 from collections import defaultdict
 import math
@@ -100,11 +101,11 @@ class ClosedGraphSim:
     self.todo_configs = {
       Config(tm.init_state, RIGHT, blank_window, self.block_size)
     }
-    # dict of Config -> PostConfig saving evaluation on window.
-    self.transitions = {}
+    # Dict of Config -> PostConfig saving evaluation on window.
+    self.transitions : dict[Config, tuple[Turing_Machine.Transition, Optional[Config]]] = {}
     # continuations[dir][block] = set of blocks that can appear directly after
     # |block| on that half-tape.
-    self.continuations = {}
+    self.continuations : dict[int, dict[tuple, set[tuple]]] = {}
     # Initially, the only continuations are blank block -> blank block
     for dir in DIRS:
       self.continuations[dir] = defaultdict(set)
