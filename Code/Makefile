@@ -1,7 +1,7 @@
 CFLAGS = -ansi
 
 protobuf:
-	protoc -I=. --python_out=. ./io.proto
+	protoc -I=. --python_out=. --mypy_out=. ./io.proto
 
 test: test-small test-large
 
