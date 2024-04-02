@@ -30,15 +30,6 @@ pub struct TM {
     transitions: Vec<Vec<Option<Transition>>>,
 }
 
-impl fmt::Display for State {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            State::Halt => write!(f, "H"),
-            State::Run(state) => write!(f, "{}", (b'A' + state) as char),
-        }
-    }
-}
-
 impl Dir {
     pub fn iter() -> Iter<'static, Dir> {
         static DIRS: [Dir; 2] = [Dir::Left, Dir::Right];
@@ -61,6 +52,15 @@ impl Dir {
 }
 
 impl TM {
+    #[inline]
+    pub fn num_states(&self) -> usize {
+        self.transitions.len()
+    }
+    #[inline]
+    pub fn num_symbols(&self) -> usize {
+        self.transitions[0].len()
+    }
+
     #[inline]
     pub fn trans(&self, state_in: RunState, symb_in: Symbol) -> Option<Transition> {
         self.transitions[state_in as usize][symb_in as usize]
@@ -97,6 +97,72 @@ impl TM {
 
         TM {
             transitions: tm_str.trim().split('_').map(parse_row).collect(),
+        }
+    }
+}
+
+
+// Implement the Display trait for TM types.
+impl fmt::Display for Dir {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Dir::Left => write!(f, "L"),
+            Dir::Right => write!(f, "R"),
+        }
+    }
+}
+
+impl fmt::Display for State {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            State::Halt => write!(f, "Z"),
+            State::Run(state) => write!(f, "{}", (b'A' + state) as char),
+        }
+    }
+}
+
+impl fmt::Display for Transition {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}{}{}", self.symbol, self.dir, self.state)
+    }
+}
+
+impl fmt::Display for TM {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let rows: Vec<String> = self.transitions.iter().map(|row| {
+            row.iter().map(|trans| {
+                match *trans {
+                    None => "---".to_string(),
+                    Some(trans) => trans.to_string(),
+                }
+            }).collect::<Vec<String>>().join("")
+        }).collect();
+
+        write!(f, "{}", rows.join("_"))
+    }
+}
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_state_display() {
+        assert_eq!(format!("{}", State::Halt), "Z");
+        assert_eq!(format!("{}", State::Run(1)), "B");
+    }
+
+    #[test]
+    fn test_parse_tm() {
+        for tm_str in &[
+            "1RB1LB_1LA1RZ",                        // BB(2) champion
+            "1RB1LC_1RC1RB_1RD0LE_1LA1LD_1RZ0LA",   // BB(5) champion
+            "1RB2RA1LC_2LC1RB2RB_---2LA1LA",        // "Bigfoot": https://www.sligocki.com/2023/10/16/bb-3-3-is-hard.html
+            "---------_---------"
+        ] {
+            let tm = TM::parse(tm_str);
+            assert_eq!(tm.to_string(), String::from(*tm_str));
         }
     }
 }
