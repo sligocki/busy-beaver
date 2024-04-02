@@ -3,35 +3,32 @@
 use enum_map::EnumMap;
 
 use crate::tm::{Dir, State, Symbol};
-
-pub type CountType = i64;
+use crate::count_expr::CountExpr;
 
 // A block of TM symbols with a repetition count. Ex:
 //      110^13  or  10^{x+4}
 #[derive(Debug, PartialEq, Clone)]
-pub struct RepBlock<RepT> {
+pub struct RepBlock {
     pub block: Vec<Symbol>,
-    pub rep: RepT,
+    pub rep: CountExpr,
 }
 
 #[derive(Debug, PartialEq, Clone)]
-pub struct HalfTape<RepT> {
-    pub data: Vec<RepBlock<RepT>>,
+pub struct HalfTape {
+    pub data: Vec<RepBlock>,
     // Is this HalfTape complete (implicitly extended by 0^inf) or only a
     // limited finite portion of the tape?
     pub is_complete: bool,
 }
-pub type Tape<RepT> = EnumMap<Dir, HalfTape<RepT>>;
+pub type Tape = EnumMap<Dir, HalfTape>;
 
 #[derive(Debug, PartialEq, Clone)]
-pub struct RepConfig<RepT> {
-    pub tape: Tape<RepT>,
+pub struct RepConfig {
+    pub tape: Tape,
     pub state: State,
     pub dir: Dir,
 }
 
-
-pub type RepConfigConcrete = RepConfig<CountType>;
 
 // impl RepConfigConcrete {
 //     // Read 1 symbol in front of the TM head.

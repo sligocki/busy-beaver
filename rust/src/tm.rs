@@ -138,7 +138,7 @@ impl FromStr for State {
             Ok(State::Halt)
         } else {
             let state = c as u8 - b'A';
-            if 0 <= state && state < 26 {
+            if state < 26 {  // Note: Since state is a u8, it cannot be < 0.
                 Ok(State::Run(state))
             } else {
                 Err("State must be in the range A-Z".to_string())

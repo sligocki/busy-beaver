@@ -45,13 +45,18 @@ impl ConfigExpr {
 
 
 #[derive(Debug)]
-enum ProofStep {
+enum BaseProofStep {
     // Apply an integer count of base TM steps.
-    BaseSteps(CountType),
+    TMSteps(CountType),
     // Apply a rule with the given ID and variable assignments.
-    Rule { rule_id: RuleIdType, var_assignment: VarSubst },
+    RuleStep { rule_id: RuleIdType, var_assignment: VarSubst },
+}
+
+#[derive(Debug)]
+enum InductiveProofStep {
+    BaseStep(BaseProofStep),
     // Apply this rule via induction.
-    Induction(VarSubst),
+    InductiveStep(VarSubst),
 }
 
 #[derive(Debug)]
@@ -59,7 +64,8 @@ struct Rule {
     num_vars: VarIdType,
     init_config: ConfigExpr,
     final_config: ConfigExpr,
-    proof: Vec<ProofStep>,
+    proof_base: Vec<BaseProofStep>,
+    proof_inductive: Vec<InductiveProofStep>,
 }
 
 #[derive(Debug)]
@@ -81,27 +87,45 @@ fn try_apply_rule(config: &ConfigExpr, rule: &Rule, var_assignment: &VarSubst) -
     rule.final_config.subst(var_assignment)
 }
 
-fn try_apply_step(config: &ConfigExpr, step: &ProofStep, this_rule: &Rule, prev_rules: &[Rule]) -> Result<ConfigExpr, String> {
+fn try_apply_step_base(config: &ConfigExpr, step: &BaseProofStep, prev_rules: &[Rule]) -> Result<ConfigExpr, String> {
     match step {
-        ProofStep::BaseSteps(n) => {
+        BaseProofStep::TMSteps(n) => {
             // Apply n base TM steps.
             unimplemented!()
         }
-        ProofStep::Rule { rule_id, var_assignment } => {
+        BaseProofStep::RuleStep { rule_id, var_assignment } => {
+            if *rule_id >= prev_rules.len() {
+                return Err("Rule ID out of bounds".to_string());
+            }
             try_apply_rule(config, &prev_rules[*rule_id], var_assignment)
         }
-        ProofStep::Induction(var_assignment) => {
+    }
+}
+
+fn try_apply_step_inductive(config: &ConfigExpr, step: &InductiveProofStep, this_rule: &Rule, prev_rules: &[Rule]) -> Result<ConfigExpr, String> {
+    match step {
+        InductiveProofStep::BaseStep(base_step) => {
+            try_apply_step_base(config, base_step, prev_rules)
+        }
+        InductiveProofStep::InductiveStep(var_assignment) => {
+            // Ensure that the induction variable is decreasing.
+            // Note: The induction variable must be the first variable.
+            if var_assignment[0] != (Expr::Linear { var: 0, m: 1, b: -1 }) {
+                // We only support simple induction: n -> n-1.
+                return Err("Induction variable must be decrementing".to_string());
+            }
             try_apply_rule(config, this_rule, var_assignment)
         }
     }
 }
 
 fn validate_rule(tm: &TM, rule: &Rule, prev_rules: &[Rule]) -> Result<(), String> {
+    // TODO: Validate the rule.proof_base case.
     let mut config = &rule.init_config;
     // For memory management, we own the config only after the first step.
     let mut config_holder : ConfigExpr;
-    for step in &rule.proof {
-        config_holder = try_apply_step(&config, step, rule, prev_rules)?;
+    for step in &rule.proof_inductive {
+        config_holder = try_apply_step_inductive(&config, step, rule, prev_rules)?;
         config = &config_holder;
     }
     if *config == rule.final_config {
