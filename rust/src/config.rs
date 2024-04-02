@@ -1,18 +1,20 @@
+// TM Tape and configuration.
+
 use enum_map::EnumMap;
 
 use crate::tm::{Dir, State, Symbol};
 
-pub type Count = i64;
+pub type CountType = i64;
 
 // A block of TM symbols with a repetition count. Ex:
 //      110^13  or  10^{x+4}
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct RepBlock<RepT> {
     pub block: Vec<Symbol>,
     pub rep: RepT,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct HalfTape<RepT> {
     pub data: Vec<RepBlock<RepT>>,
     // Is this HalfTape complete (implicitly extended by 0^inf) or only a
@@ -21,14 +23,15 @@ pub struct HalfTape<RepT> {
 }
 pub type Tape<RepT> = EnumMap<Dir, HalfTape<RepT>>;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct RepConfig<RepT> {
     pub tape: Tape<RepT>,
     pub state: State,
     pub dir: Dir,
 }
 
-pub type RepConfigConcrete = RepConfig<Count>;
+
+pub type RepConfigConcrete = RepConfig<CountType>;
 
 // impl RepConfigConcrete {
 //     // Read 1 symbol in front of the TM head.

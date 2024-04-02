@@ -5,146 +5,118 @@ use std::result::Result;
 
 use enum_map::enum_map;
 
-use crate::config::{Count, HalfTape, RepBlock, RepConfig, Tape};
-use crate::rule_system::algebra::{Expr, VarId, VarSubst};
-use crate::tm::Dir;
+use crate::config::{CountType, HalfTape, RepBlock, RepConfig, Tape};
+use crate::rule_system::algebra::{Expr, VarIdType, VarSubst};
+use crate::tm::{Dir, TM};
 
-type RuleId = u32;
+type RuleIdType = usize;
+type ConfigExpr = RepConfig<Expr>;
 
-#[derive(Debug)]
-enum SimStep {
-    Base(Count),
-    Rule(RuleId),
+
+fn subst_block(block: &RepBlock<Expr>, subs: &VarSubst) -> Result<RepBlock<Expr>, String> {
+    Ok(RepBlock {
+        block: block.block.clone(),
+        rep: block.rep.subst(subs)?,
+    })
 }
 
-// Repetition counts for a rule's initial configuration can either be constant values
-// or general integer values (with specified minimum).
-// TODO: Maybe also support Collatz-style remainder restriction?
+impl HalfTape<Expr> {
+    fn subst(&self, subs: &VarSubst) -> Result<HalfTape<Expr>, String> {
+        let new_data : Result<Vec<RepBlock<Expr>>, String> = self.data
+            .iter()
+            .map(|block| subst_block(block, subs))
+            .collect();
+        Ok(HalfTape { data: new_data?, is_complete: self.is_complete })
+    }
+}
+
+impl ConfigExpr {
+    fn subst(&self, subs: &VarSubst) -> Result<ConfigExpr, String> {
+        Ok(RepConfig {
+            tape: enum_map! {
+                Dir::Left => self.tape[Dir::Left].subst(subs)?,
+                Dir::Right => self.tape[Dir::Right].subst(subs)?,
+            },
+            state: self.state,
+            dir: self.dir,
+        })
+    }
+}
+
+
 #[derive(Debug)]
-enum RuleInitRep {
-    Const(Count),
-    Var { var: VarId, min: Count },
+enum ProofStep {
+    // Apply an integer count of base TM steps.
+    BaseSteps(CountType),
+    // Apply a rule with the given ID and variable assignments.
+    Rule { rule_id: RuleIdType, var_assignment: VarSubst },
+    // Apply this rule via induction.
+    Induction(VarSubst),
 }
 
 #[derive(Debug)]
 struct Rule {
-    init_config: RepConfig<RuleInitRep>,
-    final_config: RepConfig<Expr>,
-    algorithm: Vec<SimStep>,
+    num_vars: VarIdType,
+    init_config: ConfigExpr,
+    final_config: ConfigExpr,
+    proof: Vec<ProofStep>,
 }
 
-// Try to match rule to this config and save variable assignments if it does match.
-// Currently we require the configs to have the exact same compression.
-fn try_match(config: &RepConfig<Expr>, rule: &Rule) -> Result<VarSubst, String> {
-    if config.state != rule.init_config.state || config.dir != rule.init_config.dir {
-        return Err("State or direction do not match rule".to_string());
+#[derive(Debug)]
+struct RuleSet {
+    tm: TM,
+    // Mapping from rule ID to Rule.
+    // Rule n may only use rules with id < n (or induction).
+    rules: Vec<Rule>,
+}
+
+
+fn try_apply_rule(config: &ConfigExpr, rule: &Rule, var_assignment: &VarSubst) -> Result<ConfigExpr, String> {
+    // TODO: Check that var_assignment are all guaranteed to be positive.
+    // Currently, we only allow equality between rules if Tapes are specified identically.
+    // TODO: Support equality even if compression is different.
+    if config != &rule.init_config.subst(var_assignment)? {
+        return Err("Initial config does not match rule".to_string());
     }
-    let mut assignment = VarSubst::new();
-    for &dir in Dir::iter() {
-        let rule_htape = &rule.init_config.tape[dir];
-        let config_htape = &config.tape[dir];
-        if rule_htape.is_complete {
-            // Complete rule
-            if !config_htape.is_complete {
-                return Err("Cannot apply complete rule to limited config".to_string());
-            }
-            if config_htape.data.len() != rule_htape.data.len() {
-                return Err("Complete config is not same length as complete rule".to_string());
-            }
-        } else {
-            // Limited rule
-            if config_htape.data.len() < rule_htape.data.len() {
-                return Err("Complete config is smaller than limited rule".to_string());
-            }
+    rule.final_config.subst(var_assignment)
+}
+
+fn try_apply_step(config: &ConfigExpr, step: &ProofStep, this_rule: &Rule, prev_rules: &[Rule]) -> Result<ConfigExpr, String> {
+    match step {
+        ProofStep::BaseSteps(n) => {
+            // Apply n base TM steps.
+            unimplemented!()
         }
-        // This zip is guaranteed to iterate over entire rule_htape b/c of the two
-        // htape.data.len() checks above.
-        for (
-            RepBlock {
-                block: c_block,
-                rep: c_rep,
-            },
-            RepBlock {
-                block: r_block,
-                rep: r_rep,
-            },
-        ) in zip(&config_htape.data, &rule_htape.data)
-        {
-            if c_block != r_block {
-                return Err("Block mismatch".to_string());
-            }
-            match r_rep {
-                RuleInitRep::Const(r_n) => {
-                    if let Expr::Const(c_n) = c_rep {
-                        if c_n != r_n {
-                            return Err("Constant rep-count mismatch".to_string());
-                        }
-                    } else {
-                        return Err(
-                            "Constant rule rep-count cannot apply to variable config rep-count"
-                                .to_string(),
-                        );
-                    }
-                }
-                RuleInitRep::Var { var, min: r_min } => {
-                    match c_rep {
-                        Expr::Const(c_n) => {
-                            // Only apply rule if tape rep is >= min
-                            if c_n < r_min {
-                                return Err("Config rep-count below rule minimum".to_string());
-                            }
-                            assignment.insert(*var, Expr::Const(*c_n));
-                        }
-                        _expr => {
-                            todo!("Make sure expr cannot be below r_min!");
-                            // assignment.insert(var, expr);
-                        }
-                    }
-                }
-            }
+        ProofStep::Rule { rule_id, var_assignment } => {
+            try_apply_rule(config, &prev_rules[*rule_id], var_assignment)
+        }
+        ProofStep::Induction(var_assignment) => {
+            try_apply_rule(config, this_rule, var_assignment)
         }
     }
-    Ok(assignment)
 }
 
-fn update_rep_block(rep_block: &RepBlock<Expr>, subs: &VarSubst) -> RepBlock<Expr> {
-    RepBlock {
-        block: rep_block.block.clone(),
-        rep: rep_block.rep.subst(subs).unwrap(),
+fn validate_rule(tm: &TM, rule: &Rule, prev_rules: &[Rule]) -> Result<(), String> {
+    let mut config = &rule.init_config;
+    // For memory management, we own the config only after the first step.
+    let mut config_holder : ConfigExpr;
+    for step in &rule.proof {
+        config_holder = try_apply_step(&config, step, rule, prev_rules)?;
+        config = &config_holder;
     }
-}
-
-fn update_half_tape_rep(half_tape: &HalfTape<Expr>, subs: &VarSubst) -> HalfTape<Expr> {
-    HalfTape {
-        data: half_tape
-            .data
-            .iter()
-            .map(|x| update_rep_block(x, subs))
-            .collect(),
-        is_complete: half_tape.is_complete,
-    }
-}
-
-fn update_tape_rep(tape: &Tape<Expr>, subs: &VarSubst) -> Tape<Expr> {
-    enum_map! {
-        Dir::Left => update_half_tape_rep(&tape[Dir::Left], subs),
-        Dir::Right => update_half_tape_rep(&tape[Dir::Right], subs),
-    }
-}
-
-fn try_apply(config: &RepConfig<Expr>, rule: &Rule) -> Result<RepConfig<Expr>, String> {
-    let subs = try_match(config, rule)?;
-    if !rule.final_config.tape[Dir::Left].is_complete
-        || rule.final_config.tape[Dir::Right].is_complete
-    {
-        // Limited rule
-        todo!("Handle limited configs correctly");
+    if *config == rule.final_config {
+        // Success. Every step of every rule was valid and the final config matches.
+        // This is a valid rule.
+        return Ok(());
     } else {
-        // Complete rule
-        Ok(RepConfig {
-            tape: update_tape_rep(&rule.final_config.tape, &subs),
-            state: rule.final_config.state,
-            dir: rule.final_config.dir,
-        })
+        return Err("Final config does not match rule".to_string());
     }
 }
+
+// Validate a rule set.
+fn validate_rule_set(rule_set: &RuleSet) -> Result<(), String> {
+    rule_set.rules.iter().enumerate().map(|(rule_id, rule)|
+        // This rule may only use previous rules: rule_set.rules[..rule_id]
+        validate_rule(&rule_set.tm, rule, &rule_set.rules[..rule_id])).collect()
+}
+
