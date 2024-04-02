@@ -1,5 +1,6 @@
 use std::fmt;
 use std::slice::Iter;
+use std::str::FromStr;
 
 use enum_map::Enum;
 
@@ -19,15 +20,18 @@ pub enum Dir {
 }
 
 #[derive(Debug, Clone, Copy)]
-pub struct Transition {
-    pub symbol: Symbol,
-    pub dir: Dir,
-    pub state: State,
+pub enum Transition {
+    UndefinedTrans,
+    Transition {
+        symbol: Symbol,
+        dir: Dir,
+        state: State,
+    },
 }
 
 #[derive(Debug)]
 pub struct TM {
-    transitions: Vec<Vec<Option<Transition>>>,
+    transitions: Vec<Vec<Transition>>,
 }
 
 impl Dir {
@@ -62,42 +66,8 @@ impl TM {
     }
 
     #[inline]
-    pub fn trans(&self, state_in: RunState, symb_in: Symbol) -> Option<Transition> {
+    pub fn trans(&self, state_in: RunState, symb_in: Symbol) -> Transition {
         self.transitions[state_in as usize][symb_in as usize]
-    }
-
-    pub fn parse(tm_str: &str) -> TM {
-        fn parse_trans(trans_str: &[u8]) -> Option<Transition> {
-            if trans_str == b"---" {
-                return None;
-            }
-            let (symb_char, dir_char, state_char) =
-                if let [symb_char, dir_char, state_char] = trans_str {
-                    (symb_char, dir_char, state_char)
-                } else {
-                    unreachable!()
-                };
-            Some(Transition {
-                symbol: (symb_char - b'0') as Symbol,
-                dir: match dir_char {
-                    b'L' => Dir::Left,
-                    b'R' => Dir::Right,
-                    _ => panic!(),
-                },
-                state: match state_char {
-                    b'Z' | b'H' => State::Halt,
-                    x => State::Run(x - b'A'),
-                },
-            })
-        }
-
-        fn parse_row(row_str: &str) -> Vec<Option<Transition>> {
-            row_str.as_bytes().chunks(3).map(parse_trans).collect()
-        }
-
-        TM {
-            transitions: tm_str.trim().split('_').map(parse_row).collect(),
-        }
     }
 }
 
@@ -123,22 +93,93 @@ impl fmt::Display for State {
 
 impl fmt::Display for Transition {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}{}{}", self.symbol, self.dir, self.state)
+        match self {
+            Transition::UndefinedTrans => write!(f, "---"),
+            Transition::Transition { symbol, dir, state } =>
+                write!(f, "{}{}{}", symbol, dir, state)
+        }
     }
 }
 
 impl fmt::Display for TM {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let rows: Vec<String> = self.transitions.iter().map(|row| {
-            row.iter().map(|trans| {
-                match *trans {
-                    None => "---".to_string(),
-                    Some(trans) => trans.to_string(),
-                }
-            }).collect::<Vec<String>>().join("")
+        let rows : Vec<String> = self.transitions.iter().map(|row| {
+            let cells : Vec<String> = row.iter().map(|trans| trans.to_string()).collect();
+            cells.join("")
         }).collect();
 
         write!(f, "{}", rows.join("_"))
+    }
+}
+
+
+// Implement parsing for TM types.
+impl FromStr for Dir {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "L" => Ok(Dir::Left),
+            "R" => Ok(Dir::Right),
+            _ => Err("Direction must be 'L' or 'R'".to_string()),
+        }
+    }
+}
+
+impl FromStr for State {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        if s.len() != 1 {
+            return Err("State must be a single character".to_string());
+        }
+        let c = s.chars().nth(0).unwrap();
+        if c == 'Z' {
+            Ok(State::Halt)
+        } else {
+            let state = c as u8 - b'A';
+            if 0 <= state && state < 26 {
+                Ok(State::Run(state))
+            } else {
+                Err("State must be in the range A-Z".to_string())
+            }
+        }
+    }
+}
+
+impl FromStr for Transition {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        if s.len() != 3 {
+            return Err("Transition must be exactly 3 characters".to_string());
+        }
+        if s == "---" {
+            Ok(Transition::UndefinedTrans)
+        } else {
+            Ok(Transition::Transition {
+                symbol : s[0..=0].parse().unwrap(),  // TODO: Figure out how to propagate errors of different type.
+                dir : s[1..=1].parse()?,
+                state : s[2..=2].parse()?,
+            })
+        }
+    }
+}
+
+impl FromStr for TM {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        fn parse_row(row_str: &str) -> Result<Vec<Transition>, String> {
+            let chars: Vec<char> = row_str.chars().collect();
+            chars.chunks(3).map(|chunk| {
+                let trans_str: String = chunk.iter().collect();
+                trans_str.parse()
+            }).collect::<Result<Vec<Transition>, String>>()
+        }
+        Ok(TM { transitions : s.split('_').map(parse_row)
+            .collect::<Result<Vec<Vec<Transition>>, String>>()?
+        })
     }
 }
 
@@ -161,7 +202,7 @@ mod tests {
             "1RB2RA1LC_2LC1RB2RB_---2LA1LA",        // "Bigfoot": https://www.sligocki.com/2023/10/16/bb-3-3-is-hard.html
             "---------_---------"
         ] {
-            let tm = TM::parse(tm_str);
+            let tm : TM = TM::from_str(tm_str).unwrap();
             assert_eq!(tm.to_string(), String::from(*tm_str));
         }
     }
