@@ -7,19 +7,19 @@ use crate::tm::{Dir, State, Symbol};
 
 // A block of TM symbols with a repetition count. Ex:
 //      110^13  or  10^{x+4}
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct RepBlock {
     // Block is ordered so that the last element is closest to the TM head.
     pub symbols: Vec<Symbol>,
     pub rep: CountExpr,
 }
 
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Debug, Clone)]
 pub struct HalfTape(Vec<RepBlock>);
 
 pub type Tape = EnumMap<Dir, HalfTape>;
 
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Debug, Clone)]
 pub struct RepConfig {
     pub tape: Tape,
     pub state: State,
@@ -78,6 +78,36 @@ impl HalfTape {
                 Some(symbol)
             }
         }
+    }
+
+    // Compare two half tapes for represent the same symbols.
+    // Two tapes may be equivalent even if they are not "structurally" equal.
+    // May fail for complex tapes.
+    pub fn eqivalent_to(&self, other: &HalfTape) -> Option<bool> {
+        let mut left = self.clone();
+        let mut right = other.clone();
+        while !left.0.is_empty() && !right.0.is_empty() {
+            // Skip over identical blocks.
+            if left.0.last().unwrap() == right.0.last().unwrap() {
+                left.0.pop();
+                right.0.pop();
+                continue;
+            }
+            match (left.pop_symbol(), right.pop_symbol()) {
+                (Some(l), Some(r)) => {
+                    if l != r {
+                        // Tapes differ.
+                        return Some(false);
+                    }
+                }
+                _ => {
+                    // If either pop_symbol() failed, we cannot tell if the tapes are equivalent.
+                    return None;
+                }
+            }
+        }
+        // If we reach here, one tape is empty they are only equivalent if both are empty.
+        return Some(left.0.is_empty() && right.0.is_empty());
     }
 }
 
@@ -140,5 +170,34 @@ mod tests {
         assert_eq!(tape.pop_symbol(), Some(8));
         assert_eq!(tape.pop_symbol(), Some(13));
         assert_eq!(tape.pop_symbol(), None);
+    }
+
+    #[test]
+    fn test_equivalent_to() {
+        let x: VarIdType = 13;
+        let tape1 = HalfTape(vec![RepBlock {
+            symbols: vec![1],
+            rep: CountExpr::Const(2),
+        }]);
+
+        let tape2 = HalfTape(vec![RepBlock {
+            symbols: vec![1, 1],
+            rep: CountExpr::Const(1),
+        }]);
+
+        let tape3 = HalfTape(vec![
+            RepBlock {
+                symbols: vec![1],
+                rep: CountExpr::Const(1),
+            },
+            RepBlock {
+                symbols: vec![1],
+                rep: CountExpr::Const(1),
+            },
+        ]);
+
+        assert_eq!(tape1.eqivalent_to(&tape2), Some(true));
+        assert_eq!(tape1.eqivalent_to(&tape3), Some(true));
+        assert_eq!(tape2.eqivalent_to(&tape3), Some(true));
     }
 }
