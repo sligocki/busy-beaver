@@ -9,7 +9,7 @@ pub type RunState = u8;
 
 pub const BLANK_SYMBOL: Symbol = 0;
 
-#[derive(Debug, PartialEq, Copy, Clone)]
+#[derive(Debug, PartialEq, Eq, Copy, Clone)]
 pub enum State {
     Halt,
     Run(RunState),
@@ -73,7 +73,6 @@ impl TM {
     }
 }
 
-
 // Implement the Display trait for TM types.
 impl fmt::Display for Dir {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -97,23 +96,27 @@ impl fmt::Display for Transition {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Transition::UndefinedTrans => write!(f, "---"),
-            Transition::Transition { symbol, dir, state } =>
+            Transition::Transition { symbol, dir, state } => {
                 write!(f, "{}{}{}", symbol, dir, state)
+            }
         }
     }
 }
 
 impl fmt::Display for TM {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let rows : Vec<String> = self.transitions.iter().map(|row| {
-            let cells : Vec<String> = row.iter().map(|trans| trans.to_string()).collect();
-            cells.join("")
-        }).collect();
+        let rows: Vec<String> = self
+            .transitions
+            .iter()
+            .map(|row| {
+                let cells: Vec<String> = row.iter().map(|trans| trans.to_string()).collect();
+                cells.join("")
+            })
+            .collect();
 
         write!(f, "{}", rows.join("_"))
     }
 }
-
 
 // Implement parsing for TM types.
 impl FromStr for Dir {
@@ -140,7 +143,8 @@ impl FromStr for State {
             Ok(State::Halt)
         } else {
             let state = c as u8 - b'A';
-            if state < 26 {  // Note: Since state is a u8, it cannot be < 0.
+            // Note: Since state is a u8, it cannot be < 0.
+            if state < 26 {
                 Ok(State::Run(state))
             } else {
                 Err("State must be in the range A-Z".to_string())
@@ -160,9 +164,9 @@ impl FromStr for Transition {
             Ok(Transition::UndefinedTrans)
         } else {
             Ok(Transition::Transition {
-                symbol : s[0..=0].parse().unwrap(),  // TODO: Figure out how to propagate errors of different type.
-                dir : s[1..=1].parse()?,
-                state : s[2..=2].parse()?,
+                symbol: s[0..=0].parse().unwrap(), // TODO: Figure out how to propagate errors of different type.
+                dir: s[1..=1].parse()?,
+                state: s[2..=2].parse()?,
             })
         }
     }
@@ -174,17 +178,22 @@ impl FromStr for TM {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         fn parse_row(row_str: &str) -> Result<Vec<Transition>, String> {
             let chars: Vec<char> = row_str.chars().collect();
-            chars.chunks(3).map(|chunk| {
-                let trans_str: String = chunk.iter().collect();
-                trans_str.parse()
-            }).collect::<Result<Vec<Transition>, String>>()
+            chars
+                .chunks(3)
+                .map(|chunk| {
+                    let trans_str: String = chunk.iter().collect();
+                    trans_str.parse()
+                })
+                .collect::<Result<Vec<Transition>, String>>()
         }
-        Ok(TM { transitions : s.split('_').map(parse_row)
-            .collect::<Result<Vec<Vec<Transition>>, String>>()?
+        Ok(TM {
+            transitions: s
+                .split('_')
+                .map(parse_row)
+                .collect::<Result<Vec<Vec<Transition>>, String>>()?,
         })
     }
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -199,12 +208,12 @@ mod tests {
     #[test]
     fn test_parse_tm() {
         for tm_str in &[
-            "1RB1LB_1LA1RZ",                        // BB(2) champion
-            "1RB1LC_1RC1RB_1RD0LE_1LA1LD_1RZ0LA",   // BB(5) champion
-            "1RB2RA1LC_2LC1RB2RB_---2LA1LA",        // "Bigfoot": https://www.sligocki.com/2023/10/16/bb-3-3-is-hard.html
-            "---------_---------"
+            "1RB1LB_1LA1RZ",                      // BB(2) champion
+            "1RB1LC_1RC1RB_1RD0LE_1LA1LD_1RZ0LA", // BB(5) champion
+            "1RB2RA1LC_2LC1RB2RB_---2LA1LA", // "Bigfoot": https://www.sligocki.com/2023/10/16/bb-3-3-is-hard.html
+            "---------_---------",
         ] {
-            let tm : TM = TM::from_str(tm_str).unwrap();
+            let tm: TM = TM::from_str(tm_str).unwrap();
             assert_eq!(tm.to_string(), String::from(*tm_str));
         }
     }
