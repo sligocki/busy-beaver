@@ -223,17 +223,7 @@ mod tests {
 
     #[test]
     fn test_pop_constant() {
-        // Tape: 01^2 011
-        let mut tape = HalfTape(vec![
-            RepBlock {
-                symbols: vec![1, 1, 0],
-                rep: CountExpr::Const(1),
-            },
-            RepBlock {
-                symbols: vec![1, 0],
-                rep: CountExpr::Const(2),
-            },
-        ]);
+        let mut tape = HalfTape::from_str("01^2 011^1", Dir::Right).unwrap();
 
         // 01^2
         assert_eq!(tape.pop_symbol(), Some(0));
@@ -278,29 +268,14 @@ mod tests {
 
     #[test]
     fn test_equivalent_to() {
-        let tape1 = HalfTape(vec![RepBlock {
-            symbols: vec![1],
-            rep: CountExpr::Const(2),
-        }]);
-
-        let tape2 = HalfTape(vec![RepBlock {
-            symbols: vec![1, 1],
-            rep: CountExpr::Const(1),
-        }]);
-
-        let tape3 = HalfTape(vec![
-            RepBlock {
-                symbols: vec![1],
-                rep: CountExpr::Const(1),
-            },
-            RepBlock {
-                symbols: vec![1],
-                rep: CountExpr::Const(1),
-            },
-        ]);
+        let tape1 = HalfTape::from_str("1^2", Dir::Right).unwrap();
+        let tape2 = HalfTape::from_str("11^1", Dir::Right).unwrap();
+        let tape3 = HalfTape::from_str("1^1 1^1", Dir::Right).unwrap();
 
         assert_eq!(tape1.eqivalent_to(&tape2), Some(true));
         assert_eq!(tape1.eqivalent_to(&tape3), Some(true));
         assert_eq!(tape2.eqivalent_to(&tape3), Some(true));
+
+        // TODO: Add some more tests.
     }
 }
