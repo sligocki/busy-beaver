@@ -1,3 +1,5 @@
+use std::fmt;
+
 // Type to use for all integer counts in the system.
 pub type CountType = u64;
 
@@ -123,6 +125,17 @@ impl CountExpr {
             CountExpr::Const(n) => Some(CountExpr::Const(n - 1)),
             CountExpr::Infinity => Some(CountExpr::Infinity),
             CountExpr::Formula(formula) => Some(CountExpr::Formula(formula.decrement()?)),
+        }
+    }
+}
+
+impl fmt::Display for CountExpr {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            CountExpr::Const(n) => write!(f, "{}", n),
+            CountExpr::Infinity => write!(f, "inf"),
+            // TODO: Implement Display for Formula
+            CountExpr::Formula(formula) => write!(f, "<Formula>"),
         }
     }
 }

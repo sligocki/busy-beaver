@@ -1,6 +1,7 @@
 // TM Tape and configuration.
 
-use enum_map::EnumMap;
+use enum_map::{enum_map, EnumMap};
+use std::fmt;
 
 use crate::count_expr::CountExpr;
 use crate::tm::{Dir, State, Symbol};
@@ -20,10 +21,20 @@ pub struct HalfTape(Vec<RepBlock>);
 pub type Tape = EnumMap<Dir, HalfTape>;
 
 #[derive(Debug, Clone)]
-pub struct RepConfig {
+pub struct Config {
     pub tape: Tape,
     pub state: State,
     pub dir: Dir,
+}
+
+impl RepBlock {
+    pub fn to_string(&self, dir: Dir) -> String {
+        let mut symbols_strs: Vec<String> = self.symbols.iter().map(|s| s.to_string()).collect();
+        if dir == Dir::Right {
+            symbols_strs.reverse();
+        }
+        format!("{}^{}", symbols_strs.concat(), self.rep)
+    }
 }
 
 impl HalfTape {
@@ -109,6 +120,27 @@ impl HalfTape {
         // If we reach here, one tape is empty they are only equivalent if both are empty.
         return Some(left.0.is_empty() && right.0.is_empty());
     }
+
+    // Display the tape in a human-readable format.
+    pub fn to_string(&self, dir: Dir) -> String {
+        let mut block_strs: Vec<String> = self.0.iter().map(|block| block.to_string(dir)).collect();
+        if dir == Dir::Right {
+            block_strs.reverse();
+        }
+        block_strs.join(" ")
+    }
+}
+
+impl fmt::Display for Config {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.tape[Dir::Left].to_string(Dir::Left))?;
+        if self.dir == Dir::Left {
+            write!(f, " <{} ", self.state)?;
+        } else {
+            write!(f, " {}> ", self.state)?;
+        }
+        write!(f, "{}", self.tape[Dir::Right].to_string(Dir::Right))
+    }
 }
 
 #[cfg(test)]
@@ -116,6 +148,42 @@ mod tests {
     use crate::count_expr::VarIdType;
 
     use super::*;
+
+    #[test]
+    fn test_config_display() {
+        let config = Config {
+            tape: enum_map! {
+                Dir::Left => HalfTape(vec![
+                    RepBlock {
+                        symbols: vec![0],
+                        rep: CountExpr::Infinity,
+                    },
+                    RepBlock {
+                        symbols: vec![1, 0],
+                        rep: CountExpr::Const(13),
+                    },
+                    RepBlock {
+                        symbols: vec![0, 1],
+                        rep: CountExpr::Const(1),
+                    },
+                ]),
+                Dir::Right => HalfTape(vec![
+                    RepBlock {
+                        symbols: vec![1, 2],
+                        rep: CountExpr::Const(1),
+                    },
+                    RepBlock {
+                        symbols: vec![3, 4],
+                        rep: CountExpr::Const(8),
+                    },
+                ]),
+            },
+            state: State::Run(0),
+            dir: Dir::Left,
+        };
+
+        assert_eq!(format!("{}", config), "0^inf 10^13 01^1 <A 43^8 21^1");
+    }
 
     #[test]
     fn test_pop_constant() {
@@ -174,7 +242,6 @@ mod tests {
 
     #[test]
     fn test_equivalent_to() {
-        let x: VarIdType = 13;
         let tape1 = HalfTape(vec![RepBlock {
             symbols: vec![1],
             rep: CountExpr::Const(2),
