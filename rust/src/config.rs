@@ -1,7 +1,9 @@
 // TM Tape and configuration.
 
 use enum_map::{enum_map, EnumMap};
-use std::fmt;
+use regex::Regex;
+use std::fmt::{self, format};
+use std::str::FromStr;
 
 use crate::count_expr::CountExpr;
 use crate::tm::{Dir, State, Symbol};
@@ -34,6 +36,22 @@ impl RepBlock {
             symbols_strs.reverse();
         }
         format!("{}^{}", symbols_strs.concat(), self.rep)
+    }
+
+    fn from_str(s: &str, dir: Dir) -> Result<Self, String> {
+        let re = Regex::new(r"^(?P<symbols>[0-9]+)\^(?P<rep>.+)$").unwrap();
+        let caps = re
+            .captures(s)
+            .ok_or(format!("Invalid rep block string {}", s))?;
+        let mut symbols: Vec<Symbol> = caps["symbols"]
+            .chars()
+            .map(|c| c.to_digit(10).unwrap() as Symbol)
+            .collect();
+        if dir == Dir::Right {
+            symbols.reverse();
+        }
+        let rep = CountExpr::from_str(&caps["rep"])?;
+        Ok(RepBlock { symbols, rep })
     }
 }
 
@@ -129,6 +147,18 @@ impl HalfTape {
         }
         block_strs.join(" ")
     }
+
+    fn from_str(s: &str, dir: Dir) -> Result<Self, String> {
+        let mut blocks: Vec<&str> = s.split(' ').filter(|x| !x.is_empty()).collect();
+        if dir == Dir::Right {
+            blocks.reverse();
+        }
+        let mut tape = Vec::with_capacity(blocks.len());
+        for block in blocks {
+            tape.push(RepBlock::from_str(block, dir)?);
+        }
+        Ok(HalfTape(tape))
+    }
 }
 
 impl fmt::Display for Config {
@@ -143,6 +173,36 @@ impl fmt::Display for Config {
     }
 }
 
+impl FromStr for Config {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let re = Regex::new(r"^((?P<tape_left>.*) +)?(<(?P<head_left>.)|(?P<head_right>.)>)( +(?P<tape_right>.*))?$").unwrap();
+        let caps = re.captures(s).ok_or("Invalid config string")?;
+        let dir: Dir;
+        let state: State;
+        if caps.name("head_left").is_some() {
+            dir = Dir::Left;
+            state = State::from_str(&caps["head_left"])?;
+        } else {
+            dir = Dir::Right;
+            state = State::from_str(&caps["head_right"])?;
+        }
+        fn get_default(caps: &regex::Captures, name: &str) -> String {
+            caps.name(name)
+                .map_or("".to_string(), |m| m.as_str().to_string())
+        }
+        Ok(Config {
+            tape: enum_map! {
+                Dir::Left => HalfTape::from_str(&get_default(&caps, "tape_left"), Dir::Left)?,
+                Dir::Right => HalfTape::from_str(&get_default(&caps, "tape_right"), Dir::Right)?,
+            },
+            state,
+            dir,
+        })
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use crate::count_expr::VarIdType;
@@ -150,39 +210,15 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_config_display() {
-        let config = Config {
-            tape: enum_map! {
-                Dir::Left => HalfTape(vec![
-                    RepBlock {
-                        symbols: vec![0],
-                        rep: CountExpr::Infinity,
-                    },
-                    RepBlock {
-                        symbols: vec![1, 0],
-                        rep: CountExpr::Const(13),
-                    },
-                    RepBlock {
-                        symbols: vec![0, 1],
-                        rep: CountExpr::Const(1),
-                    },
-                ]),
-                Dir::Right => HalfTape(vec![
-                    RepBlock {
-                        symbols: vec![1, 2],
-                        rep: CountExpr::Const(1),
-                    },
-                    RepBlock {
-                        symbols: vec![3, 4],
-                        rep: CountExpr::Const(8),
-                    },
-                ]),
-            },
-            state: State::Run(0),
-            dir: Dir::Left,
-        };
-
-        assert_eq!(format!("{}", config), "0^inf 10^13 01^1 <A 43^8 21^1");
+    fn test_parse_display() {
+        for s in [
+            "0^inf 10^13 01^1 <A 43^8 21^1 0^inf",
+            "10^8 F> 0^inf",
+            "1^138 Z> 0^2",
+            " A> ",
+        ] {
+            assert_eq!(Config::from_str(s).unwrap().to_string(), s.to_string());
+        }
     }
 
     #[test]

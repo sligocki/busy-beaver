@@ -1,4 +1,5 @@
 use std::fmt;
+use std::str::FromStr;
 
 // Type to use for all integer counts in the system.
 pub type CountType = u64;
@@ -140,14 +141,36 @@ impl fmt::Display for CountExpr {
     }
 }
 
+impl FromStr for CountExpr {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "inf" => Ok(CountExpr::Infinity),
+            _ => match s.parse::<CountType>() {
+                Ok(n) => Ok(CountExpr::Const(n)),
+                Err(_) => Err(format!("Could not parse CountExpr from string: {}", s)),
+            },
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
+    fn test_parse_display() {
+        for s in &["0", "13", "inf"] {
+            assert_eq!(CountExpr::from_str(s).unwrap().to_string(), s.to_string());
+        }
+    }
+
+    #[test]
     fn test_decrement() {
         assert_eq!(CountExpr::Const(0).decrement(), None);
         assert_eq!(CountExpr::Const(1).decrement(), Some(CountExpr::Const(0)));
+        assert_eq!(CountExpr::Const(13).decrement(), Some(CountExpr::Const(12)));
         assert_eq!(CountExpr::Infinity.decrement(), Some(CountExpr::Infinity));
 
         // TODO: Test Function examples!
