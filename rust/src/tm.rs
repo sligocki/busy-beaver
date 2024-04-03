@@ -7,6 +7,8 @@ use enum_map::Enum;
 pub type Symbol = u8;
 pub type RunState = u8;
 
+pub const BLANK_SYMBOL: Symbol = 0;
+
 #[derive(Debug, PartialEq, Copy, Clone)]
 pub enum State {
     Halt,

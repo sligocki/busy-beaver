@@ -95,6 +95,18 @@ impl Formula {
 
 
 impl CountExpr {
+    pub fn var_plus_const(var: VarIdType, add: CountType) -> CountExpr {
+        let plus_const = Function::PlusConst { func: Box::new(Function::Identity), add: add };
+        CountExpr::Formula(Formula::Func(plus_const, Box::new(Formula::Var(var))))
+    }
+
+    pub fn is_zero(&self) -> bool {
+        match self {
+            CountExpr::Const(0) => true,
+            _ => false,
+        }
+    }
+
     pub fn decrement(&self) -> Option<CountExpr> {
         match self {
             CountExpr::Const(0) => None,  // Can't decrement 0
@@ -116,6 +128,8 @@ mod tests {
         assert_eq!(CountExpr::Const(0).decrement(), None);
         assert_eq!(CountExpr::Const(1).decrement(), Some(CountExpr::Const(0)));
         assert_eq!(CountExpr::Infinity.decrement(), Some(CountExpr::Infinity));
+
+        // TODO: Test Function examples!
         // assert_eq!(CountExpr::Formula(Function::PlusConst { func: Function::Identity, add: 13 }).decrement(),
         //            Ok(CountExpr::Formula(Function::PlusConst { func: Function::Identity, add: 12 })));
     }

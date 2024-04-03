@@ -9,17 +9,14 @@ use crate::count_expr::CountExpr;
 //      110^13  or  10^{x+4}
 #[derive(Debug, PartialEq, Clone)]
 pub struct RepBlock {
-    pub block: Vec<Symbol>,
+    // Block is ordered so that the last element is closest to the TM head.
+    pub symbols: Vec<Symbol>,
     pub rep: CountExpr,
 }
 
 #[derive(Debug, PartialEq, Clone)]
-pub struct HalfTape {
-    pub data: Vec<RepBlock>,
-    // Is this HalfTape complete (implicitly extended by 0^inf) or only a
-    // limited finite portion of the tape?
-    pub is_complete: bool,
-}
+pub struct HalfTape(Vec<RepBlock>);
+
 pub type Tape = EnumMap<Dir, HalfTape>;
 
 #[derive(Debug, PartialEq, Clone)]
@@ -30,40 +27,86 @@ pub struct RepConfig {
 }
 
 
-// impl RepConfigConcrete {
-//     // Read 1 symbol in front of the TM head.
-//     pub fn pop_one_front(&mut self) -> Symbol {
-//         let front = &self.tape[self.dir];
-//         match front.last_mut() {
-//             None => {
-//                 if (front.is_complete) {
-//
-//                 }
-//             }
-//             Some(RepBlock {
-//                 rep: Rep::Infinite, ..
-//             }) => {}
-//             Some(RepBlock {
-//                 rep: Rep::Finite(1), ..
-//             }) => {
-//                 self.tape[self.dir].pop();
-//             }
-//             Some(RepBlock {
-//                 rep: Rep::Finite(rep), ..
-//             }) => {
-//                 *rep -= 1;
-//             }
-//         }
-//     }
-//     // Write 1 symbol behind the TM head.
-//     pub fn push_one_back(&mut self, write: Symbol) {
-//
-//     }
-//
-//     pub fn front_block(&self) -> Vec<Symbol> {
-//         match self.tape[self.dir].last() {
-//             None => todo!(),
-//             Some(x) => x.block.clone(), // TODO: Make this more efficient.
-//         }
-//     }
-// }
+impl HalfTape {
+    // Pop the top symbol from this half-tape if possible.
+    // Returns None if the tape is empty or if the top symbol is ambiguous (based on variable assignments).
+    pub fn pop_symbol(&mut self) -> Option<Symbol> {
+        match &mut self.0[..] {
+            [] => None,  // Cannot pop from empty tape.
+            [.., RepBlock { rep, symbols }] => {
+                // Split off one repetition of the block and pop the first symbol.
+                // Ex: 110^13 -> 10 110^12 and we return the removed "1".
+
+                // Try to remove one repetition (decrement the rep count).
+                // If decrement fails, this is because rep is not guaranteed to be >= 0.
+                // And so we have an ambiguous situation where top symbol could be
+                // different things depending on the value of variables.
+                // So, fail pop_symbol().
+                let decr_rep = rep.decrement()?;
+
+                // New RepBlock
+                let mut new_symbols = symbols.clone();
+                // We assume the order here is always that last 
+                let symbol = new_symbols.pop().unwrap();
+
+                // Update the tape with decr_rep.
+                if decr_rep.is_zero() {
+                    self.0.pop();
+                } else {
+                    *rep = decr_rep;
+                }
+                
+                // If there are any symbols left after popping the top one,
+                // we add a new RepBlock for them.
+                if !new_symbols.is_empty() {
+                    self.0.push(RepBlock { symbols: new_symbols, rep: CountExpr::Const(1) });
+                }
+
+                Some(symbol)
+            }
+        }
+    }
+}
+
+
+#[cfg(test)]
+mod tests {
+    use crate::count_expr::VarIdType;
+
+    use super::*;
+
+    #[test]
+    fn test_pop_constant() {
+        // Tape: 01^2 011
+        let mut tape = HalfTape(vec![
+            RepBlock { symbols: vec![1, 1, 0], rep: CountExpr::Const(1) },
+            RepBlock { symbols: vec![1, 0], rep: CountExpr::Const(2) },
+        ]);
+
+        // 01^2
+        assert_eq!(tape.pop_symbol(), Some(0));
+        assert_eq!(tape.pop_symbol(), Some(1));
+        assert_eq!(tape.pop_symbol(), Some(0));
+        assert_eq!(tape.pop_symbol(), Some(1));
+
+        // 011
+        assert_eq!(tape.pop_symbol(), Some(0));
+        assert_eq!(tape.pop_symbol(), Some(1));
+        assert_eq!(tape.pop_symbol(), Some(1));
+
+        assert_eq!(tape.pop_symbol(), None);
+    }
+
+    #[test]
+    fn test_pop_ambiguous() {
+        // Tape: 01^{x+1}
+        let x : VarIdType = 13;
+        let mut tape = HalfTape(vec![
+            RepBlock { symbols: vec![1, 0], rep : CountExpr::var_plus_const(x, 1) },
+        ]);
+
+        assert_eq!(tape.pop_symbol(), Some(0));  // 0 ... 1 01^x
+        assert_eq!(tape.pop_symbol(), Some(1));  // 1 ... 01^x
+        assert_eq!(tape.pop_symbol(), None);     // 01^x is ambiguous
+    }
+}
