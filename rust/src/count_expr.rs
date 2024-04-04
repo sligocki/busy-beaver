@@ -136,7 +136,7 @@ impl fmt::Display for CountExpr {
             CountExpr::Const(n) => write!(f, "{}", n),
             CountExpr::Infinity => write!(f, "inf"),
             // TODO: Implement Display for Formula
-            CountExpr::Formula(formula) => write!(f, "<Formula>"),
+            CountExpr::Formula(_) => write!(f, "<Formula>"),
         }
     }
 }

@@ -2,7 +2,7 @@
 
 use enum_map::{enum_map, EnumMap};
 use regex::Regex;
-use std::fmt::{self, format};
+use std::fmt;
 use std::str::FromStr;
 
 use crate::count_expr::{CountExpr, CountType};
