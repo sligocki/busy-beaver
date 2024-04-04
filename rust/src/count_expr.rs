@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::fmt;
 use std::str::FromStr;
 
@@ -18,6 +19,8 @@ pub enum CountExpr {
     // Formula applied to either a constant or variable.
     Formula(Formula),
 }
+
+pub type VarSubst = HashMap<VarIdType, CountExpr>;
 
 // General mathematical function (from N->N) built up using 3 primatives. Like the Grzegorczyk hierarchy.
 //  https://en.wikipedia.org/wiki/Grzegorczyk_hierarchy
