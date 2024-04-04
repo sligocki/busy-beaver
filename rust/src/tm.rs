@@ -9,6 +9,7 @@ pub type Symbol = u8;
 pub type RunState = u8;
 
 pub const BLANK_SYMBOL: Symbol = 0;
+pub const START_STATE: RunState = 0;
 
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
 pub enum State {

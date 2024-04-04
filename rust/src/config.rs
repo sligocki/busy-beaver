@@ -6,7 +6,7 @@ use std::fmt;
 use std::str::FromStr;
 
 use crate::count_expr::{CountExpr, CountType};
-use crate::tm::{Dir, State, Symbol, Transition, TM};
+use crate::tm::{Dir, State, Symbol, Transition, TM, START_STATE, BLANK_SYMBOL};
 
 // A block of TM symbols with a repetition count. Ex:
 //      110^13  or  10^{x+4}
@@ -162,6 +162,27 @@ impl HalfTape {
 }
 
 impl Config {
+    pub fn new() -> Self {
+        Config {
+            // Initialize with infinite blank tape.
+            tape: enum_map! {
+                Dir::Left => HalfTape(vec![
+                    RepBlock {
+                        symbols: vec![BLANK_SYMBOL],
+                        rep: CountExpr::Infinity,
+                    }
+                ]),
+                Dir::Right => HalfTape(vec![
+                    RepBlock {
+                        symbols: vec![BLANK_SYMBOL],
+                        rep: CountExpr::Infinity,
+                    }
+                ]),
+            },
+            state: State::Run(START_STATE),
+            dir: Dir::Right,
+        }
+    }
     pub fn step(&mut self, tm: &TM) -> Result<(), String> {
         let read_symbol = self
             .front_tape()
@@ -337,7 +358,7 @@ mod tests {
     fn test_run_bb2() {
         // BB(2) champion
         let tm = TM::from_str("1RB1LB_1LA1RZ").unwrap();
-        let mut config = Config::from_str("0^inf A> 0^inf").unwrap();
+        let mut config = Config::new();
         // BB2 runs for 6 steps.
         assert_eq!(config.run(&tm, 10), Ok(6));
         assert_eq!(
@@ -349,7 +370,7 @@ mod tests {
     #[test]
     fn test_run_bb4() {
         let tm = TM::from_str("1RB1LB_1LA0LC_1RZ1LD_1RD0RA").unwrap();
-        let mut config = Config::from_str("0^inf A> 0^inf").unwrap();
+        let mut config = Config::new();
         // BB4 runs for 107 steps.
         assert_eq!(config.run(&tm, 1000), Ok(107));
         assert_eq!(
