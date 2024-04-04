@@ -123,15 +123,30 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_validate_rule_simple() {
-        // Validate a very simple rule that just performs a few steps on a tape with no variables.
-        let tm = TM::from_str("AAB_BBA_BBB").unwrap();
+    fn test_validate_rule_trivial() {
+        // Validate a very trivial rule which does nothing.
+        let tm = TM::from_str("1RB1LB_1LA1RZ").unwrap();
         let rule = Rule {
-            num_vars: 1,
-            init_config: Config::from_str("A").unwrap(),
-            final_config: Config::from_str("B").unwrap(),
+            init_config: Config::from_str("0^inf 1^138 B> 0^1 1^2 0^inf").unwrap(),
+            final_config: Config::from_str("0^inf 1^138 B> 0^1 1^2 0^inf").unwrap(),
             proof_base: vec![],
             proof_inductive: vec![],
+        };
+        let prev_rules = vec![];
+        assert_eq!(validate_rule(&tm, &rule, &prev_rules), Ok(()));
+    }
+
+    #[test]
+    fn test_validate_rule_simple() {
+        // Validate a very simple rule that just performs a few steps on a tape with no variables.
+        // BB(2) champion
+        let tm = TM::from_str("1RB1LB_1LA1RZ").unwrap();
+        // BB2 runs for 6 steps.
+        let rule = Rule {
+            init_config: Config::new(),
+            final_config: Config::from_str("0^inf 1^2 Z> 1^2 0^inf").unwrap(),
+            proof_base: vec![BaseProofStep::TMSteps(6)],
+            proof_inductive: vec![BaseProofStep::TMSteps(6)],
         };
         let prev_rules = vec![];
         assert_eq!(validate_rule(&tm, &rule, &prev_rules), Ok(()));

@@ -3,7 +3,7 @@
 
 use std::ops;
 
-use crate::config::CountType;
+use crate::base::*;
 
 pub type VarIdType = usize;
 pub type VarSubst = Vec<Expr>;

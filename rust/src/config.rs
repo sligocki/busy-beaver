@@ -5,8 +5,9 @@ use regex::Regex;
 use std::fmt;
 use std::str::FromStr;
 
-use crate::count_expr::{CountExpr, CountType};
-use crate::tm::{Dir, State, Symbol, Transition, TM, START_STATE, BLANK_SYMBOL};
+use crate::base::*;
+use crate::count_expr::CountExpr;
+use crate::tm::{Dir, State, Symbol, Transition, BLANK_SYMBOL, START_STATE, TM};
 
 // A block of TM symbols with a repetition count. Ex:
 //      110^13  or  10^{x+4}
