@@ -52,11 +52,13 @@ fn try_apply_rule(config: &Config, rule: &Rule, var_assignment: &VarSubst) -> Re
     rule.final_config.subst(var_assignment)
 }
 
-fn try_apply_step_base(config: &Config, step: &BaseProofStep, prev_rules: &[Rule]) -> Result<Config, String> {
+fn try_apply_step_base(tm: &TM, config: &Config, step: &BaseProofStep, prev_rules: &[Rule]) -> Result<Config, String> {
     match step {
         BaseProofStep::TMSteps(n) => {
             // Apply n base TM steps.
-            unimplemented!()
+            let mut new_config = config.clone();
+            new_config.run(tm, *n)?;
+            Ok(new_config)
         }
         BaseProofStep::RuleStep { rule_id, var_assignment } => {
             if *rule_id >= prev_rules.len() {
@@ -67,10 +69,10 @@ fn try_apply_step_base(config: &Config, step: &BaseProofStep, prev_rules: &[Rule
     }
 }
 
-fn try_apply_step_inductive(config: &Config, step: &InductiveProofStep, this_rule: &Rule, prev_rules: &[Rule]) -> Result<Config, String> {
+fn try_apply_step_inductive(tm: &TM, config: &Config, step: &InductiveProofStep, this_rule: &Rule, prev_rules: &[Rule]) -> Result<Config, String> {
     match step {
         InductiveProofStep::BaseStep(base_step) => {
-            try_apply_step_base(config, base_step, prev_rules)
+            try_apply_step_base(tm, config, base_step, prev_rules)
         }
         InductiveProofStep::InductiveStep(var_assignment) => {
             // Ensure that the induction variable is decreasing.
@@ -90,15 +92,21 @@ fn validate_rule(tm: &TM, rule: &Rule, prev_rules: &[Rule]) -> Result<(), String
     // For memory management, we own the config only after the first step.
     let mut config_holder : Config;
     for step in &rule.proof_inductive {
-        config_holder = try_apply_step_inductive(&config, step, rule, prev_rules)?;
+        config_holder = try_apply_step_inductive(tm, &config, step, rule, prev_rules)?;
         config = &config_holder;
     }
-    if *config == rule.final_config {
-        // Success. Every step of every rule was valid and the final config matches.
-        // This is a valid rule.
-        return Ok(());
-    } else {
-        return Err("Final config does not match rule".to_string());
+    match config.equivalent_to(&rule.final_config) {
+        Some(true) => {
+            // Success. Every step of every rule was valid and the final config matches.
+            // This is a valid rule.
+            return Ok(());
+        }
+        Some(false) => {
+            return Err("Final config does not match rule".to_string());
+        }
+        None => {
+            return Err("Unable to compare final config".to_string());
+        }
     }
 }
 
@@ -109,3 +117,23 @@ fn validate_rule_set(rule_set: &RuleSet) -> Result<(), String> {
         validate_rule(&rule_set.tm, rule, &rule_set.rules[..rule_id])).collect()
 }
 
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_validate_rule_simple() {
+        // Validate a very simple rule that just performs a few steps on a tape with no variables.
+        let tm = TM::from_str("AAB_BBA_BBB").unwrap();
+        let rule = Rule {
+            num_vars: 1,
+            init_config: Config::from_str("A").unwrap(),
+            final_config: Config::from_str("B").unwrap(),
+            proof_base: vec![],
+            proof_inductive: vec![],
+        };
+        let prev_rules = vec![];
+        assert_eq!(validate_rule(&tm, &rule, &prev_rules), Ok(()));
+    }
+}
