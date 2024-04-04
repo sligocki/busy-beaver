@@ -1,4 +1,5 @@
 use std::fmt;
+use std::ops::Not;
 use std::slice::Iter;
 use std::str::FromStr;
 
@@ -42,17 +43,21 @@ impl Dir {
         DIRS.iter()
     }
 
-    pub fn opp(self) -> Dir {
-        match self {
-            Dir::Left => Dir::Right,
-            Dir::Right => Dir::Left,
-        }
-    }
-
     pub fn delta(self) -> i64 {
         match self {
             Dir::Left => -1,
             Dir::Right => 1,
+        }
+    }
+}
+
+impl Not for Dir {
+    type Output = Dir;
+
+    fn not(self) -> Dir {
+        match self {
+            Dir::Left => Dir::Right,
+            Dir::Right => Dir::Left,
         }
     }
 }

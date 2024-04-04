@@ -5,8 +5,8 @@ use regex::Regex;
 use std::fmt::{self, format};
 use std::str::FromStr;
 
-use crate::count_expr::CountExpr;
-use crate::tm::{Dir, State, Symbol};
+use crate::count_expr::{CountExpr, CountType};
+use crate::tm::{Dir, State, Symbol, Transition, TM};
 
 // A block of TM symbols with a repetition count. Ex:
 //      110^13  or  10^{x+4}
@@ -161,6 +161,60 @@ impl HalfTape {
     }
 }
 
+impl Config {
+    pub fn step(&mut self, tm: &TM) -> Result<(), String> {
+        let read_symbol = self
+            .front_tape()
+            .pop_symbol()
+            .ok_or("Cannot read from tape".to_string())?;
+        if let State::Run(state_in) = self.state {
+            if let Transition::Transition { symbol, dir, state } = tm.trans(state_in, read_symbol) {
+                self.dir = dir;
+                self.state = state;
+                // We write the symbol before moving (so it goes behind us).
+                self.back_tape().push_symbol(symbol);
+                Ok(())
+            } else {
+                Err("Undefined transition".to_string())
+            }
+        } else {
+            Err("Cannot step from halt state".to_string())
+        }
+    }
+
+    pub fn run(&mut self, tm: &TM, max_steps: u64) -> Result<CountType, String> {
+        for n in 0..max_steps {
+            self.step(tm)?;
+            if self.state == State::Halt {
+                return Ok(n + 1);
+            }
+        }
+        Err("Max steps exceeded".to_string())
+    }
+
+    pub fn equivalent_to(&self, other: &Config) -> Option<bool> {
+        if self.state != other.state || self.dir != other.dir {
+            return Some(false);
+        }
+        match (
+            self.tape[Dir::Left].eqivalent_to(&other.tape[Dir::Left]),
+            self.tape[Dir::Right].eqivalent_to(&other.tape[Dir::Right]),
+        ) {
+            (Some(a), Some(b)) => Some(a && b),
+            _ => None,
+        }
+    }
+
+    #[inline]
+    fn front_tape(&mut self) -> &mut HalfTape {
+        &mut self.tape[self.dir]
+    }
+    #[inline]
+    fn back_tape(&mut self) -> &mut HalfTape {
+        &mut self.tape[!self.dir]
+    }
+}
+
 impl fmt::Display for Config {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.tape[Dir::Left].to_string(Dir::Left))?;
@@ -277,5 +331,30 @@ mod tests {
         assert_eq!(tape2.eqivalent_to(&tape3), Some(true));
 
         // TODO: Add some more tests.
+    }
+
+    #[test]
+    fn test_run_bb2() {
+        // BB(2) champion
+        let tm = TM::from_str("1RB1LB_1LA1RZ").unwrap();
+        let mut config = Config::from_str("0^inf A> 0^inf").unwrap();
+        // BB2 runs for 6 steps.
+        assert_eq!(config.run(&tm, 10), Ok(6));
+        assert_eq!(
+            config.equivalent_to(&Config::from_str("0^inf 1^2 Z> 1^2 0^inf").unwrap()),
+            Some(true)
+        );
+    }
+
+    #[test]
+    fn test_run_bb4() {
+        let tm = TM::from_str("1RB1LB_1LA0LC_1RZ1LD_1RD0RA").unwrap();
+        let mut config = Config::from_str("0^inf A> 0^inf").unwrap();
+        // BB4 runs for 107 steps.
+        assert_eq!(config.run(&tm, 1000), Ok(107));
+        assert_eq!(
+            config.equivalent_to(&Config::from_str("0^inf 1^1 Z> 0^1 1^12 0^inf").unwrap()),
+            Some(true)
+        );
     }
 }
