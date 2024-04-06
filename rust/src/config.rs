@@ -148,7 +148,11 @@ impl HalfTape {
         // Success, we have removed `old` from the front of `curr`. Now replace it with `new`.
         // Note: The order here is that `new` is closest to the TM head which is stored at the end of the Vec.
         Ok(HalfTape(
-            curr.0.iter().cloned().chain(new.0.iter().cloned()).collect(),
+            curr.0
+                .iter()
+                .cloned()
+                .chain(new.0.iter().cloned())
+                .collect(),
         ))
     }
 
@@ -393,7 +397,8 @@ mod tests {
 
         let updated = config.try_update_tapes(&old, &new).unwrap();
         println!("{}", updated);
-        assert!(updated.equivalent_to(&Config::from_str("0^inf 2^8 2^10 1^2 B> 2^4 0^1 0^42 0^inf").unwrap()));
+        assert!(updated
+            .equivalent_to(&Config::from_str("0^inf 2^8 2^10 1^2 B> 2^4 0^1 0^42 0^inf").unwrap()));
     }
 
     #[test]

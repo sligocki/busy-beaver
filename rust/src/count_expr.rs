@@ -1,11 +1,12 @@
+use std::collections::HashMap;
 use std::fmt;
 use std::str::FromStr;
 
 use crate::base::*;
 
-pub type VarIdType = usize;
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
-pub struct Variable(VarIdType);
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
+pub struct Variable(usize);
+pub type VarSubst = HashMap<Variable, CountExpr>;
 
 // Representation for a broad concept of count ranging from
 // Concrete binary integers to formulas that may or may not contain variables.
@@ -110,6 +111,12 @@ pub enum CountOrInf {
 //     }
 // }
 
+impl Variable {
+    pub fn new(id: usize) -> Variable {
+        Variable(id)
+    }
+}
+
 impl CountExpr {
     pub fn is_zero(&self) -> bool {
         match self {
@@ -151,9 +158,9 @@ impl From<CountType> for CountExpr {
     }
 }
 
-impl From<CountExpr> for CountOrInf {
-    fn from(expr: CountExpr) -> Self {
-        CountOrInf::Finite(expr)
+impl From<Variable> for CountExpr {
+    fn from(var: Variable) -> Self {
+        CountExpr::VarPlus(var, 0)
     }
 }
 

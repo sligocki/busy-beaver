@@ -2,19 +2,23 @@
 
 use std::result::Result;
 
+use crate::base::CountType;
 use crate::config::Config;
-use crate::count_expr::{VarIdType, CountType, CountExpr, VarSubst};
+use crate::count_expr::{CountExpr, VarSubst, Variable};
 use crate::tm::TM;
 
-pub type RuleIdType = usize;
-
+type RuleIdType = usize;
+const INDUCTION_VAR: Variable = Variable::new(0);
 
 #[derive(Debug)]
 enum BaseProofStep {
     // Apply an integer count of base TM steps.
     TMSteps(CountType),
     // Apply a rule with the given ID and variable assignments.
-    RuleStep { rule_id: RuleIdType, var_assignment: VarSubst },
+    RuleStep {
+        rule_id: RuleIdType,
+        var_assignment: VarSubst,
+    },
 }
 
 #[derive(Debug)]
@@ -26,7 +30,6 @@ enum InductiveProofStep {
 
 #[derive(Debug)]
 struct Rule {
-    num_vars: VarIdType,
     init_config: Config,
     final_config: Config,
     proof_base: Vec<BaseProofStep>,
@@ -41,8 +44,11 @@ struct RuleSet {
     rules: Vec<Rule>,
 }
 
-
-fn try_apply_rule(config: &Config, rule: &Rule, var_assignment: &VarSubst) -> Result<Config, String> {
+fn try_apply_rule(
+    config: &Config,
+    rule: &Rule,
+    var_assignment: &VarSubst,
+) -> Result<Config, String> {
     // TODO: Check that var_assignment are all guaranteed to be positive.
     // Currently, we only allow equality between rules if Tapes are specified identically.
     // TODO: Support equality even if compression is different.
@@ -52,7 +58,12 @@ fn try_apply_rule(config: &Config, rule: &Rule, var_assignment: &VarSubst) -> Re
     rule.final_config.subst(var_assignment)
 }
 
-fn try_apply_step_base(tm: &TM, config: &Config, step: &BaseProofStep, prev_rules: &[Rule]) -> Result<Config, String> {
+fn try_apply_step_base(
+    tm: &TM,
+    config: &Config,
+    step: &BaseProofStep,
+    prev_rules: &[Rule],
+) -> Result<Config, String> {
     match step {
         BaseProofStep::TMSteps(n) => {
             // Apply n base TM steps.
@@ -60,7 +71,10 @@ fn try_apply_step_base(tm: &TM, config: &Config, step: &BaseProofStep, prev_rule
             new_config.run(tm, *n)?;
             Ok(new_config)
         }
-        BaseProofStep::RuleStep { rule_id, var_assignment } => {
+        BaseProofStep::RuleStep {
+            rule_id,
+            var_assignment,
+        } => {
             if *rule_id >= prev_rules.len() {
                 return Err("Rule ID out of bounds".to_string());
             }
@@ -69,16 +83,22 @@ fn try_apply_step_base(tm: &TM, config: &Config, step: &BaseProofStep, prev_rule
     }
 }
 
-fn try_apply_step_inductive(tm: &TM, config: &Config, step: &InductiveProofStep, this_rule: &Rule, prev_rules: &[Rule]) -> Result<Config, String> {
+fn try_apply_step_inductive(
+    tm: &TM,
+    config: &Config,
+    step: &InductiveProofStep,
+    this_rule: &Rule,
+    prev_rules: &[Rule],
+) -> Result<Config, String> {
     match step {
         InductiveProofStep::BaseStep(base_step) => {
             try_apply_step_base(tm, config, base_step, prev_rules)
         }
         InductiveProofStep::InductiveStep(var_assignment) => {
             // Ensure that the induction variable is decreasing.
-            // Note: The induction variable must be the first variable.
-            if var_assignment[0] != CountExpr::var_plus_const(0, -1) {
-                // We only support simple induction: n -> n-1.
+            // Note: When doing an inductive proof, we start by replacing n <- n+1 and
+            // then only allow any uses of the rule itself with n <- n.
+            if var_assignment[&INDUCTION_VAR] != INDUCTION_VAR.into() {
                 return Err("Induction variable must be decrementing".to_string());
             }
             try_apply_rule(config, this_rule, var_assignment)
@@ -90,36 +110,38 @@ fn validate_rule(tm: &TM, rule: &Rule, prev_rules: &[Rule]) -> Result<(), String
     // TODO: Validate the rule.proof_base case.
     let mut config = &rule.init_config;
     // For memory management, we own the config only after the first step.
-    let mut config_holder : Config;
+    let mut config_holder: Config;
     for step in &rule.proof_inductive {
         config_holder = try_apply_step_inductive(tm, &config, step, rule, prev_rules)?;
         config = &config_holder;
     }
-    match config.equivalent_to(&rule.final_config) {
-        Some(true) => {
-            // Success. Every step of every rule was valid and the final config matches.
-            // This is a valid rule.
-            return Ok(());
-        }
-        Some(false) => {
-            return Err("Final config does not match rule".to_string());
-        }
-        None => {
-            return Err("Unable to compare final config".to_string());
-        }
+    if config.equivalent_to(&rule.final_config) {
+        // Success. Every step of every rule was valid and the final config matches.
+        // This is a valid rule.
+        Ok(())
+    } else {
+        Err(format!(
+            "Unable to prove equivalence between with final config: {} != {}",
+            config, rule.final_config
+        ))
     }
 }
 
 // Validate a rule set.
 fn validate_rule_set(rule_set: &RuleSet) -> Result<(), String> {
-    rule_set.rules.iter().enumerate().map(|(rule_id, rule)|
+    rule_set
+        .rules
+        .iter()
+        .enumerate()
         // This rule may only use previous rules: rule_set.rules[..rule_id]
-        validate_rule(&rule_set.tm, rule, &rule_set.rules[..rule_id])).collect()
+        .map(|(rule_id, rule)| validate_rule(&rule_set.tm, rule, &rule_set.rules[..rule_id]))
+        .collect()
 }
-
 
 #[cfg(test)]
 mod tests {
+    use std::str::FromStr;
+
     use super::*;
 
     #[test]
@@ -146,7 +168,7 @@ mod tests {
             init_config: Config::new(),
             final_config: Config::from_str("0^inf 1^2 Z> 1^2 0^inf").unwrap(),
             proof_base: vec![BaseProofStep::TMSteps(6)],
-            proof_inductive: vec![BaseProofStep::TMSteps(6)],
+            proof_inductive: vec![InductiveProofStep::BaseStep(BaseProofStep::TMSteps(6))],
         };
         let prev_rules = vec![];
         assert_eq!(validate_rule(&tm, &rule, &prev_rules), Ok(()));
