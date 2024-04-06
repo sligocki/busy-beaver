@@ -110,34 +110,45 @@ impl HalfTape {
         }
     }
 
-    // Compare two half tapes for represent the same symbols.
-    // Two tapes may be equivalent even if they are not "structurally" equal.
-    // May fail for complex tapes.
-    pub fn eqivalent_to(&self, other: &HalfTape) -> Option<bool> {
-        let mut left = self.clone();
-        let mut right = other.clone();
-        while !left.0.is_empty() && !right.0.is_empty() {
+    // Try to update this tape with a new tape.
+    pub fn try_update(&self, old: &HalfTape, new: &HalfTape) -> Result<HalfTape, String> {
+        let mut curr = self.clone();
+        let mut sub = old.clone();
+        while !sub.0.is_empty() {
+            if curr.0.is_empty() {
+                return Err(format!("Replacement subtape is longer than current tape: {} vs. {}", self.to_string(Dir::Right), old.to_string(Dir::Right)));
+            }
             // Skip over identical blocks.
-            if left.0.last().unwrap() == right.0.last().unwrap() {
-                left.0.pop();
-                right.0.pop();
+            if curr.0.last().unwrap() == sub.0.last().unwrap() {
+                curr.0.pop().unwrap();
+                sub.0.pop();
                 continue;
             }
-            match (left.pop_symbol(), right.pop_symbol()) {
+            match (curr.pop_symbol(), sub.pop_symbol()) {
                 (Some(l), Some(r)) => {
                     if l != r {
-                        // Tapes differ.
-                        return Some(false);
+                        return Err(format!("Tapes differ: {} != {}", l, r));
                     }
                 }
                 _ => {
-                    // If either pop_symbol() failed, we cannot tell if the tapes are equivalent.
-                    return None;
+                    // If either pop_symbol() failed, we cannot update the tapes.
+                    return Err(format!("Tapes differ: {} vs. {}", curr.to_string(Dir::Right), sub.to_string(Dir::Right)));
                 }
             }
         }
-        // If we reach here, one tape is empty they are only equivalent if both are empty.
-        return Some(left.0.is_empty() && right.0.is_empty());
+        // sub.0.is_empty()
+        // Success, we have removed `old` from the front of `curr`. Now replace it with `new`.
+        Ok(HalfTape(new.0.iter().cloned().chain(curr.0.into_iter()).collect()))
+    }
+
+    pub fn equivalent_to(&self, other: &HalfTape) -> bool {
+        let empty = HalfTape(vec![]);
+        if let Ok(replaced_config) = self.try_update(other, &empty) {
+            // self == other iff self - other == empty.
+            replaced_config.0.is_empty()
+        } else {
+            false
+        }
     }
 
     // Display the tape in a human-readable format.
@@ -214,17 +225,26 @@ impl Config {
         Err("Max steps exceeded".to_string())
     }
 
-    pub fn equivalent_to(&self, other: &Config) -> Option<bool> {
-        if self.state != other.state || self.dir != other.dir {
-            return Some(false);
+    // Check if this config contains `old` (as a complete or subconfig).
+    // If so, replace `old` with `new`.
+    pub fn try_update_tapes(&self, old: &Config, new: &Config) -> Result<Config, String> {
+        if !(self.state == old.state && self.dir == old.dir) {
+            return Err(format!("State does not match: {} vs. {}", self, old));
         }
-        match (
-            self.tape[Dir::Left].eqivalent_to(&other.tape[Dir::Left]),
-            self.tape[Dir::Right].eqivalent_to(&other.tape[Dir::Right]),
-        ) {
-            (Some(a), Some(b)) => Some(a && b),
-            _ => None,
-        }
+        Ok(Config {
+            tape: enum_map! {
+                Dir::Left => self.tape[Dir::Left].try_update(&old.tape[Dir::Left], &new.tape[Dir::Left])?,
+                Dir::Right => self.tape[Dir::Right].try_update(&old.tape[Dir::Right], &new.tape[Dir::Right])?,
+            },
+            state: new.state,
+            dir: new.dir,
+        })
+    }
+
+    pub fn equivalent_to(&self, other: &Config) -> bool {
+        self.state == other.state && self.dir == other.dir
+            && self.tape[Dir::Left].equivalent_to(&other.tape[Dir::Left])
+            && self.tape[Dir::Right].equivalent_to(&other.tape[Dir::Right])
     }
 
     #[inline]
@@ -341,14 +361,14 @@ mod tests {
     }
 
     #[test]
-    fn test_equivalent_to() {
+    fn test_update() {
         let tape1 = HalfTape::from_str("1^2", Dir::Right).unwrap();
         let tape2 = HalfTape::from_str("11^1", Dir::Right).unwrap();
         let tape3 = HalfTape::from_str("1^1 1^1", Dir::Right).unwrap();
 
-        assert_eq!(tape1.eqivalent_to(&tape2), Some(true));
-        assert_eq!(tape1.eqivalent_to(&tape3), Some(true));
-        assert_eq!(tape2.eqivalent_to(&tape3), Some(true));
+        assert_eq!(tape1.equivalent_to(&tape2), true);
+        assert_eq!(tape1.equivalent_to(&tape3), true);
+        assert_eq!(tape2.equivalent_to(&tape3), true);
 
         // TODO: Add some more tests.
     }
@@ -362,7 +382,7 @@ mod tests {
         assert_eq!(config.run(&tm, 10), Ok(6));
         assert_eq!(
             config.equivalent_to(&Config::from_str("0^inf 1^2 Z> 1^2 0^inf").unwrap()),
-            Some(true)
+            true
         );
     }
 
@@ -374,7 +394,7 @@ mod tests {
         assert_eq!(config.run(&tm, 1000), Ok(107));
         assert_eq!(
             config.equivalent_to(&Config::from_str("0^inf 1^1 Z> 0^1 1^12 0^inf").unwrap()),
-            Some(true)
+            true
         );
     }
 }
