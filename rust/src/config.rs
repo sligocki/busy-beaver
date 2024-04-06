@@ -6,7 +6,7 @@ use std::fmt;
 use std::str::FromStr;
 
 use crate::base::*;
-use crate::count_expr::CountExpr;
+use crate::count_expr::CountOrInf;
 use crate::tm::{Dir, State, Symbol, Transition, BLANK_SYMBOL, START_STATE, TM};
 
 // A block of TM symbols with a repetition count. Ex:
@@ -15,7 +15,7 @@ use crate::tm::{Dir, State, Symbol, Transition, BLANK_SYMBOL, START_STATE, TM};
 pub struct RepBlock {
     // Block is ordered so that the last element is closest to the TM head.
     pub symbols: Vec<Symbol>,
-    pub rep: CountExpr,
+    pub rep: CountOrInf,
 }
 
 #[derive(Debug, Clone)]
@@ -51,7 +51,7 @@ impl RepBlock {
         if dir == Dir::Right {
             symbols.reverse();
         }
-        let rep = CountExpr::from_str(&caps["rep"])?;
+        let rep = CountOrInf::from_str(&caps["rep"])?;
         Ok(RepBlock { symbols, rep })
     }
 }
@@ -64,7 +64,7 @@ impl HalfTape {
         // But since the use case is for validation, we want to keep the code as simple as possible.
         self.0.push(RepBlock {
             symbols: vec![symbol],
-            rep: CountExpr::Const(1),
+            rep: 1.into(),
         });
     }
 
@@ -101,7 +101,7 @@ impl HalfTape {
                 if !new_symbols.is_empty() {
                     self.0.push(RepBlock {
                         symbols: new_symbols,
-                        rep: CountExpr::Const(1),
+                        rep: 1.into(),
                     });
                 }
 
@@ -170,13 +170,13 @@ impl Config {
                 Dir::Left => HalfTape(vec![
                     RepBlock {
                         symbols: vec![BLANK_SYMBOL],
-                        rep: CountExpr::Infinity,
+                        rep: CountOrInf::Infinity,
                     }
                 ]),
                 Dir::Right => HalfTape(vec![
                     RepBlock {
                         symbols: vec![BLANK_SYMBOL],
-                        rep: CountExpr::Infinity,
+                        rep: CountOrInf::Infinity,
                     }
                 ]),
             },
@@ -281,8 +281,6 @@ impl FromStr for Config {
 
 #[cfg(test)]
 mod tests {
-    use crate::count_expr::VarIdType;
-
     use super::*;
 
     #[test]
@@ -318,10 +316,10 @@ mod tests {
     #[test]
     fn test_pop_ambiguous() {
         // Tape: 01^{x+1}
-        let x: VarIdType = 13;
+        let x1 = CountOrInf::from_str("x+1").unwrap();
         let mut tape = HalfTape(vec![RepBlock {
             symbols: vec![1, 0],
-            rep: CountExpr::var_plus_const(x, 1),
+            rep: x1,
         }]);
 
         assert_eq!(tape.pop_symbol(), Some(0)); // 0 ... 1 01^x

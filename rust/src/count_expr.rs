@@ -145,6 +145,24 @@ impl CountOrInf {
     }
 }
 
+impl From<CountType> for CountExpr {
+    fn from(n: CountType) -> Self {
+        CountExpr::Const(n)
+    }
+}
+
+impl From<CountExpr> for CountOrInf {
+    fn from(expr: CountExpr) -> Self {
+        CountOrInf::Finite(expr)
+    }
+}
+
+impl From<CountType> for CountOrInf {
+    fn from(n: CountType) -> Self {
+        CountOrInf::Finite(n.into())
+    }
+}
+
 // Canonical names for variables. Start with n (for induction variable) and then use the rest of the alphabet.
 const VAR_NAMES: &str = "nabcdefghijklmopqrstuvwxyz";
 impl fmt::Display for Variable {
