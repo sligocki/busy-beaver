@@ -214,11 +214,15 @@ impl FromStr for CountExpr {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let parts = s.split('+').collect::<Vec<&str>>();
         if parts.len() == 1 {
-            let n = parts[0].parse::<CountType>().map_err(|s| format!("Error parsing CountExpr: {}", s))?;
+            let n = parts[0]
+                .parse::<CountType>()
+                .map_err(|s| format!("Error parsing CountExpr: {}", s))?;
             return Ok(CountExpr::Const(n));
         } else if parts.len() == 2 {
             let var = parts[0].parse::<Variable>()?;
-            let n = parts[1].parse::<CountType>().map_err(|s| format!("Error parsing CountExpr: {}", s))?;
+            let n = parts[1]
+                .parse::<CountType>()
+                .map_err(|s| format!("Error parsing CountExpr: {}", s))?;
             return Ok(CountExpr::VarPlus(var, n));
         } else {
             return Err(format!("Could not parse CountExpr from string: {}", s));
@@ -261,7 +265,13 @@ mod tests {
         assert_eq!(CountExpr::Const(13).decrement(), Some(CountExpr::Const(12)));
 
         assert_eq!(CountExpr::VarPlus(x, 0).decrement(), None);
-        assert_eq!(CountExpr::VarPlus(x, 1).decrement(), Some(CountExpr::VarPlus(x, 0)));
-        assert_eq!(CountExpr::VarPlus(x, 138).decrement(), Some(CountExpr::VarPlus(x, 137)));
+        assert_eq!(
+            CountExpr::VarPlus(x, 1).decrement(),
+            Some(CountExpr::VarPlus(x, 0))
+        );
+        assert_eq!(
+            CountExpr::VarPlus(x, 138).decrement(),
+            Some(CountExpr::VarPlus(x, 137))
+        );
     }
 }

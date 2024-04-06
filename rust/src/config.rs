@@ -116,7 +116,11 @@ impl HalfTape {
         let mut sub = old.clone();
         while !sub.0.is_empty() {
             if curr.0.is_empty() {
-                return Err(format!("Replacement subtape is longer than current tape: {} vs. {}", self.to_string(Dir::Right), old.to_string(Dir::Right)));
+                return Err(format!(
+                    "Replacement subtape is longer than current tape: {} vs. {}",
+                    self.to_string(Dir::Right),
+                    old.to_string(Dir::Right)
+                ));
             }
             // Skip over identical blocks.
             if curr.0.last().unwrap() == sub.0.last().unwrap() {
@@ -132,13 +136,19 @@ impl HalfTape {
                 }
                 _ => {
                     // If either pop_symbol() failed, we cannot update the tapes.
-                    return Err(format!("Tapes differ: {} vs. {}", curr.to_string(Dir::Right), sub.to_string(Dir::Right)));
+                    return Err(format!(
+                        "Tapes differ: {} vs. {}",
+                        curr.to_string(Dir::Right),
+                        sub.to_string(Dir::Right)
+                    ));
                 }
             }
         }
         // sub.0.is_empty()
         // Success, we have removed `old` from the front of `curr`. Now replace it with `new`.
-        Ok(HalfTape(new.0.iter().cloned().chain(curr.0.into_iter()).collect()))
+        Ok(HalfTape(
+            new.0.iter().cloned().chain(curr.0.into_iter()).collect(),
+        ))
     }
 
     pub fn equivalent_to(&self, other: &HalfTape) -> bool {
@@ -242,7 +252,8 @@ impl Config {
     }
 
     pub fn equivalent_to(&self, other: &Config) -> bool {
-        self.state == other.state && self.dir == other.dir
+        self.state == other.state
+            && self.dir == other.dir
             && self.tape[Dir::Left].equivalent_to(&other.tape[Dir::Left])
             && self.tape[Dir::Right].equivalent_to(&other.tape[Dir::Right])
     }
@@ -366,9 +377,9 @@ mod tests {
         let tape2 = HalfTape::from_str("11^1", Dir::Right).unwrap();
         let tape3 = HalfTape::from_str("1^1 1^1", Dir::Right).unwrap();
 
-        assert_eq!(tape1.equivalent_to(&tape2), true);
-        assert_eq!(tape1.equivalent_to(&tape3), true);
-        assert_eq!(tape2.equivalent_to(&tape3), true);
+        assert!(tape1.equivalent_to(&tape2));
+        assert!(tape1.equivalent_to(&tape3));
+        assert!(tape2.equivalent_to(&tape3));
 
         // TODO: Add some more tests.
     }
@@ -380,10 +391,7 @@ mod tests {
         let mut config = Config::new();
         // BB2 runs for 6 steps.
         assert_eq!(config.run(&tm, 10), Ok(6));
-        assert_eq!(
-            config.equivalent_to(&Config::from_str("0^inf 1^2 Z> 1^2 0^inf").unwrap()),
-            true
-        );
+        assert!(config.equivalent_to(&Config::from_str("0^inf 1^2 Z> 1^2 0^inf").unwrap()));
     }
 
     #[test]
@@ -392,9 +400,6 @@ mod tests {
         let mut config = Config::new();
         // BB4 runs for 107 steps.
         assert_eq!(config.run(&tm, 1000), Ok(107));
-        assert_eq!(
-            config.equivalent_to(&Config::from_str("0^inf 1^1 Z> 0^1 1^12 0^inf").unwrap()),
-            true
-        );
+        assert!(config.equivalent_to(&Config::from_str("0^inf 1^1 Z> 0^1 1^12 0^inf").unwrap()));
     }
 }
