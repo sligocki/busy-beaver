@@ -44,18 +44,13 @@ struct RuleSet {
     rules: Vec<Rule>,
 }
 
-fn try_apply_rule(
-    config: &Config,
-    rule: &Rule,
-    var_assignment: &VarSubst,
-) -> Result<Config, String> {
-    // TODO: Check that var_assignment are all guaranteed to be positive.
+fn try_apply_rule(config: &Config, rule: &Rule, var_subst: &VarSubst) -> Result<Config, String> {
+    // TODO: Check that var_subst are all guaranteed to be positive.
     // Currently, we only allow equality between rules if Tapes are specified identically.
     // TODO: Support equality even if compression is different.
-    if config != &rule.init_config.subst(var_assignment)? {
-        return Err("Initial config does not match rule".to_string());
-    }
-    rule.final_config.subst(var_assignment)
+    let init_config = rule.init_config.subst(var_subst);
+    let final_config = rule.final_config.subst(var_subst);
+    config.try_update_tapes(&init_config, &final_config)
 }
 
 fn try_apply_step_base(

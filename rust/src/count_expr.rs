@@ -112,7 +112,7 @@ pub enum CountOrInf {
 // }
 
 impl Variable {
-    pub fn new(id: usize) -> Variable {
+    pub const fn new(id: usize) -> Variable {
         Variable(id)
     }
 }
@@ -134,6 +134,22 @@ impl CountExpr {
             CountExpr::VarPlus(var, n) => Some(CountExpr::VarPlus(*var, n - 1)),
         }
     }
+
+    pub fn subst(&self, var_subst: &VarSubst) -> CountExpr {
+        match self {
+            CountExpr::Const(_) => self.clone(),
+            CountExpr::VarPlus(x, a) => {
+                match var_subst.get(x) {
+                    // No change if the variable is not in the substitution.
+                    None => self.clone(),
+                    // x <- b  ==>  x+a <- a+b
+                    Some(CountExpr::Const(b)) => CountExpr::Const(a + b),
+                    // x <- y+b  ==>  x+a <- y+a+b
+                    Some(CountExpr::VarPlus(y, b)) => CountExpr::VarPlus(*y, a + b),
+                }
+            }
+        }
+    }
 }
 
 impl CountOrInf {
@@ -148,6 +164,13 @@ impl CountOrInf {
         match self {
             CountOrInf::Finite(expr) => expr.decrement().map(CountOrInf::Finite),
             CountOrInf::Infinity => Some(CountOrInf::Infinity),
+        }
+    }
+
+    pub fn subst(&self, var_subst: &VarSubst) -> CountOrInf {
+        match self {
+            CountOrInf::Finite(expr) => CountOrInf::Finite(expr.subst(var_subst)),
+            CountOrInf::Infinity => CountOrInf::Infinity,
         }
     }
 }

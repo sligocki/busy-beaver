@@ -6,7 +6,7 @@ use std::fmt;
 use std::str::FromStr;
 
 use crate::base::*;
-use crate::count_expr::CountOrInf;
+use crate::count_expr::{CountOrInf, VarSubst};
 use crate::tm::{Dir, State, Symbol, Transition, BLANK_SYMBOL, START_STATE, TM};
 
 // A block of TM symbols with a repetition count. Ex:
@@ -108,6 +108,18 @@ impl HalfTape {
                 Some(symbol)
             }
         }
+    }
+
+    pub fn subst(&self, var_subst: &VarSubst) -> HalfTape {
+        HalfTape(
+            self.0
+                .iter()
+                .map(|block| RepBlock {
+                    symbols: block.symbols.clone(),
+                    rep: block.rep.subst(var_subst),
+                })
+                .collect(),
+        )
     }
 
     // Try to update this tape with a new tape.
@@ -238,6 +250,17 @@ impl Config {
             }
         }
         Err("Max steps exceeded".to_string())
+    }
+
+    pub fn subst(&self, var_subst: &VarSubst) -> Config {
+        Config {
+            tape: enum_map! {
+                Dir::Left => self.tape[Dir::Left].subst(var_subst),
+                Dir::Right => self.tape[Dir::Right].subst(var_subst),
+            },
+            state: self.state,
+            dir: self.dir,
+        }
     }
 
     // Check if this config contains `old` (as a complete or subconfig).
