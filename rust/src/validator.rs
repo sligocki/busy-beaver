@@ -10,6 +10,7 @@ use crate::tm::TM;
 type RuleIdType = usize;
 const INDUCTION_VAR: Variable = Variable::new(0);
 
+#[allow(dead_code)]
 #[derive(Debug)]
 enum BaseProofStep {
     // Apply an integer count of base TM steps.
@@ -21,6 +22,7 @@ enum BaseProofStep {
     },
 }
 
+#[allow(dead_code)]
 #[derive(Debug)]
 enum InductiveProofStep {
     BaseStep(BaseProofStep),
@@ -101,28 +103,54 @@ fn try_apply_step_inductive(
     }
 }
 
-fn validate_rule(tm: &TM, rule: &Rule, prev_rules: &[Rule]) -> Result<(), String> {
-    // TODO: Validate the rule.proof_base case.
-    let mut config = &rule.init_config;
-    // For memory management, we own the config only after the first step.
-    let mut config_holder: Config;
-    for step in &rule.proof_inductive {
-        config_holder = try_apply_step_inductive(tm, &config, step, rule, prev_rules)?;
-        config = &config_holder;
+fn validate_rule_base(tm: &TM, rule: &Rule, prev_rules: &[Rule]) -> Result<(), String> {
+    // In base case, we consider the case n <- 0.
+    let base_subst = VarSubst::from([(INDUCTION_VAR, 0.into())]);
+    let mut config = rule.init_config.subst(&base_subst);
+    for step in &rule.proof_base {
+        config = try_apply_step_base(tm, &config, step, prev_rules)?;
     }
-    if config.equivalent_to(&rule.final_config) {
+    let expected_final = rule.final_config.subst(&base_subst);
+    if config.equivalent_to(&expected_final) {
         // Success. Every step of every rule was valid and the final config matches.
         // This is a valid rule.
         Ok(())
     } else {
         Err(format!(
             "Unable to prove equivalence between with final config: {} != {}",
-            config, rule.final_config
+            config, expected_final
         ))
     }
 }
 
+fn validate_rule_inductive(tm: &TM, rule: &Rule, prev_rules: &[Rule]) -> Result<(), String> {
+    // In inductive case, we consider the case n <- m+1 (and only allow use of this rule where n <- m).
+    let ind_subst = VarSubst::from([(INDUCTION_VAR, CountExpr::VarPlus(INDUCTION_VAR, 1))]);
+    let mut config = rule.init_config.subst(&ind_subst);
+    for step in &rule.proof_inductive {
+        config = try_apply_step_inductive(tm, &config, step, rule, prev_rules)?;
+    }
+    let expected_final = rule.final_config.subst(&ind_subst);
+    if config.equivalent_to(&expected_final) {
+        // Success. Every step of every rule was valid and the final config matches.
+        // This is a valid rule.
+        Ok(())
+    } else {
+        Err(format!(
+            "Unable to prove equivalence between with final config: {} != {}",
+            config, expected_final
+        ))
+    }
+}
+
+fn validate_rule(tm: &TM, rule: &Rule, prev_rules: &[Rule]) -> Result<(), String> {
+    // Validate base case (n <- 0) and inductive case (n <- m+1) seperately.
+    validate_rule_base(tm, rule, prev_rules)?;
+    validate_rule_inductive(tm, rule, prev_rules)
+}
+
 // Validate a rule set.
+#[allow(dead_code)]
 fn validate_rule_set(rule_set: &RuleSet) -> Result<(), String> {
     rule_set
         .rules
