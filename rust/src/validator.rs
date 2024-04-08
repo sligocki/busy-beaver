@@ -196,4 +196,29 @@ mod tests {
         let prev_rules = vec![];
         assert_eq!(validate_rule(&tm, &rule, &prev_rules), Ok(()));
     }
+
+    #[test]
+    fn test_validate_rule_chain() {
+        // Validate a chain rule.
+        //      https://www.sligocki.com/2021/07/17/bb-collatz.html#chain-step
+        let tm = TM::from_str("1RB1LD_1RC1RB_1LC1LA_0RC0RD").unwrap();
+        // 0^n <C  ->  <C 1^n
+        let rule = Rule {
+            init_config: Config::from_str("0^n+0 <C").unwrap(),
+            final_config: Config::from_str("<C 1^n+0").unwrap(),
+            // Base case is trivial:  0^0 <C  ==  <C 1^0
+            proof_base: vec![],
+            proof_inductive: vec![
+                // 0^n+1 <C  ->  0^n <C 1
+                InductiveProofStep::BaseStep(BaseProofStep::TMSteps(1)),
+                // 0^n <C 1  ->  <C 1^n 1  ==  <C 1^n+1
+                InductiveProofStep::InductiveStep(VarSubst::from([(
+                    INDUCTION_VAR,
+                    INDUCTION_VAR.into(),
+                )])),
+            ],
+        };
+        let prev_rules = vec![];
+        assert_eq!(validate_rule(&tm, &rule, &prev_rules), Ok(()));
+    }
 }
