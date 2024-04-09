@@ -65,7 +65,7 @@ fn try_apply_step_base(
         BaseProofStep::TMSteps(n) => {
             // Apply n base TM steps.
             let mut new_config = config.clone();
-            new_config.run(tm, *n)?;
+            new_config.step_n(tm, *n)?;
             Ok(new_config)
         }
         BaseProofStep::RuleStep {

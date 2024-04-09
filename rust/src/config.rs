@@ -122,10 +122,16 @@ impl HalfTape {
         )
     }
 
+    fn remove_empty_blocks(&mut self) {
+        self.0.retain(|block| !block.rep.is_zero());
+    }
+
     // Try to replace a subset of this tape.
     pub fn replace(&self, old: &HalfTape, new: &HalfTape) -> Result<HalfTape, String> {
         let mut curr = self.clone();
         let mut sub = old.clone();
+        curr.remove_empty_blocks();
+        sub.remove_empty_blocks();
         while !sub.0.is_empty() {
             if curr.0.is_empty() {
                 return Err(format!(
@@ -222,6 +228,9 @@ impl Config {
             dir: Dir::Right,
         }
     }
+
+    // Advance the TM by one step.
+    // Returns an error if the TM is in a halt/undefined state or if it fell off the tape.
     pub fn step(&mut self, tm: &TM) -> Result<(), String> {
         let read_symbol = self
             .front_tape()
@@ -242,14 +251,13 @@ impl Config {
         }
     }
 
-    pub fn run(&mut self, tm: &TM, max_steps: u64) -> Result<CountType, String> {
-        for n in 0..max_steps {
+    // Run the TM for `num_steps` steps.
+    // Returns an error if attempting to step from a halt/undefined state or if it falls off the tape.
+    pub fn step_n(&mut self, tm: &TM, num_steps: CountType) -> Result<(), String> {
+        for _ in 0..num_steps {
             self.step(tm)?;
-            if self.state == State::Halt {
-                return Ok(n + 1);
-            }
         }
-        Err("Max steps exceeded".to_string())
+        Ok(())
     }
 
     pub fn subst(&self, var_subst: &VarSubst) -> Config {
@@ -429,7 +437,7 @@ mod tests {
         let tm = TM::from_str("1RB1LB_1LA1RZ").unwrap();
         let mut config = Config::new();
         // BB2 runs for 6 steps.
-        assert_eq!(config.run(&tm, 10), Ok(6));
+        assert_eq!(config.step_n(&tm, 6), Ok(()));
         assert!(config.equivalent_to(&Config::from_str("0^inf 1^2 Z> 1^2 0^inf").unwrap()));
     }
 
@@ -438,7 +446,7 @@ mod tests {
         let tm = TM::from_str("1RB1LB_1LA0LC_1RZ1LD_1RD0RA").unwrap();
         let mut config = Config::new();
         // BB4 runs for 107 steps.
-        assert_eq!(config.run(&tm, 1000), Ok(107));
+        assert_eq!(config.step_n(&tm, 107), Ok(()));
         assert!(config.equivalent_to(&Config::from_str("0^inf 1^1 Z> 0^1 1^12 0^inf").unwrap()));
     }
 }
