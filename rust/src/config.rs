@@ -122,16 +122,23 @@ impl HalfTape {
         )
     }
 
-    fn remove_empty_blocks(&mut self) {
-        self.0.retain(|block| !block.rep.is_zero());
+    // Return a normalized version of this tape (removing any empty blocks).
+    fn normalize(&self) -> Self {
+        // TODO: Also merge adjacent blocks with the same symbol?
+        HalfTape(
+            self.0
+                .iter()
+                // Remove empty blocks (either no symbols or zero repetitions).
+                .filter(|block| !block.symbols.is_empty() && !block.rep.is_zero())
+                .cloned()
+                .collect(),
+        )
     }
 
     // Try to replace a subset of this tape.
     pub fn replace(&self, old: &HalfTape, new: &HalfTape) -> Result<HalfTape, String> {
-        let mut curr = self.clone();
-        let mut sub = old.clone();
-        curr.remove_empty_blocks();
-        sub.remove_empty_blocks();
+        let mut curr = self.normalize();
+        let mut sub = old.normalize();
         while !sub.0.is_empty() {
             if curr.0.is_empty() {
                 return Err(format!(
