@@ -52,7 +52,7 @@ fn try_apply_rule(config: &Config, rule: &Rule, var_subst: &VarSubst) -> Result<
     // TODO: Support equality even if compression is different.
     let init_config = rule.init_config.subst(var_subst);
     let final_config = rule.final_config.subst(var_subst);
-    config.try_update_tapes(&init_config, &final_config)
+    config.replace(&init_config, &final_config)
 }
 
 fn try_apply_step_base(

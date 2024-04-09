@@ -122,8 +122,8 @@ impl HalfTape {
         )
     }
 
-    // Try to update this tape with a new tape.
-    pub fn try_update(&self, old: &HalfTape, new: &HalfTape) -> Result<HalfTape, String> {
+    // Try to replace a subset of this tape.
+    pub fn replace(&self, old: &HalfTape, new: &HalfTape) -> Result<HalfTape, String> {
         let mut curr = self.clone();
         let mut sub = old.clone();
         while !sub.0.is_empty() {
@@ -147,7 +147,7 @@ impl HalfTape {
                     }
                 }
                 _ => {
-                    // If either pop_symbol() failed, we cannot update the tapes.
+                    // If either pop_symbol() failed, we cannot compare the tapes.
                     return Err(format!(
                         "Tapes differ: {} vs. {}",
                         curr.to_string(Dir::Right),
@@ -170,7 +170,7 @@ impl HalfTape {
 
     pub fn equivalent_to(&self, other: &HalfTape) -> bool {
         let empty = HalfTape(vec![]);
-        if let Ok(replaced_config) = self.try_update(other, &empty) {
+        if let Ok(replaced_config) = self.replace(other, &empty) {
             // self == other iff self - other == empty.
             replaced_config.0.is_empty()
         } else {
@@ -265,14 +265,14 @@ impl Config {
 
     // Check if this config contains `old` (as a complete or subconfig).
     // If so, replace `old` with `new`.
-    pub fn try_update_tapes(&self, old: &Config, new: &Config) -> Result<Config, String> {
+    pub fn replace(&self, old: &Config, new: &Config) -> Result<Config, String> {
         if !(self.state == old.state && self.dir == old.dir) {
             return Err(format!("State does not match: {} vs. {}", self, old));
         }
         Ok(Config {
             tape: enum_map! {
-                Dir::Left => self.tape[Dir::Left].try_update(&old.tape[Dir::Left], &new.tape[Dir::Left])?,
-                Dir::Right => self.tape[Dir::Right].try_update(&old.tape[Dir::Right], &new.tape[Dir::Right])?,
+                Dir::Left => self.tape[Dir::Left].replace(&old.tape[Dir::Left], &new.tape[Dir::Left])?,
+                Dir::Right => self.tape[Dir::Right].replace(&old.tape[Dir::Right], &new.tape[Dir::Right])?,
             },
             state: new.state,
             dir: new.dir,
@@ -413,15 +413,14 @@ mod tests {
     }
 
     #[test]
-    fn test_update_tapes() {
+    fn test_replace() {
         let config = Config::from_str("0^inf 2^8 1^13 <A 0^1 1^1 0^42 0^inf").unwrap();
         let old = Config::from_str("1^13 <A 0^1 1^1").unwrap();
         let new = Config::from_str("2^10 1^2 B> 2^4 0^1").unwrap();
 
-        let updated = config.try_update_tapes(&old, &new).unwrap();
-        println!("{}", updated);
-        assert!(updated
-            .equivalent_to(&Config::from_str("0^inf 2^8 2^10 1^2 B> 2^4 0^1 0^42 0^inf").unwrap()));
+        let updated = config.replace(&old, &new).unwrap();
+        let expected = Config::from_str("0^inf 2^8 2^10 1^2 B> 2^4 0^1 0^42 0^inf").unwrap();
+        assert!(updated.equivalent_to(&expected));
     }
 
     #[test]
