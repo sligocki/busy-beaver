@@ -297,7 +297,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "broken: 0^n prefix of 0^n+1"]
     fn test_validate_rule_counter() {
         // Validate a binary counter rule which uses the inductive hypothesis twice!
         //      See: https://www.sligocki.com/2022/06/14/counter-induction.html
@@ -313,8 +312,6 @@ mod tests {
                     proof_base: vec![],
                     proof_inductive: vec![
                         // 0^n+1 1 00 B> 0  ->  0 1^n+1 00 B> 0
-                        // TODO: Currently failing because we cannot detect that
-                        //       ... 0^n 1 00 is a prefix of ... 0^n+1 1 00.
                         InductiveProofStep::InductiveStep(VarSubst::from([(
                             Variable::from_str("n").unwrap(),
                             CountExpr::from_str("n").unwrap(),

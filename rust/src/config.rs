@@ -154,28 +154,45 @@ impl HalfTape {
                     old.to_string(Dir::Right)
                 ));
             }
-            // Skip over identical blocks.
-            if curr.0.last().unwrap() == sub.0.last().unwrap() {
-                curr.0.pop();
-                sub.0.pop();
-                continue;
+
+            // If the top blocks have the same symbols, try subtracting the reps.
+            let curr_top = curr.0.last_mut().unwrap();
+            let sub_top = sub.0.last().unwrap();
+            if curr_top.symbols == sub_top.symbols {
+                if let Some(diff) = curr_top.rep.checked_sub(&sub_top.rep) {
+                    sub.0.pop();
+                    // Replace curr_top with symbols^diff
+                    if diff.is_zero() {
+                        curr.0.pop();
+                    } else {
+                        curr_top.rep = diff;
+                    }
+                    continue;
+                } else {
+                    return Err(format!(
+                        "Tapes differ: {} vs. {}",
+                        curr_top.to_string(Dir::Right),
+                        sub_top.to_string(Dir::Right)
+                    ));
+                }
             }
+
             match (curr.pop_symbol(), sub.pop_symbol()) {
                 (Some(l), Some(r)) => {
                     if l != r {
                         return Err(format!("Tapes differ: {} != {}", l, r));
                     }
                 }
-                (curr_top, sub_top) => {
+                (curr_top_1, sub_top_1) => {
                     // If either pop_symbol() failed, we cannot compare the tapes.
                     // Unfortunately, we cannot even print the tapes at this point since it's possible
                     // that one has had a symbol popped and the other not. When testing you can uncomment
                     // the println!() above to see the tapes before the pops.
                     return Err(format!(
                         "Tapes differ: {:?} {} vs. {:?} {}",
-                        curr_top,
+                        curr_top_1,
                         curr.to_string(Dir::Right),
-                        sub_top,
+                        sub_top_1,
                         sub.to_string(Dir::Right)
                     ));
                 }
@@ -459,7 +476,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "broken"]
     fn test_replace_complex() {
         let tape = HalfTape::from_str("3^n+1", Dir::Right).unwrap();
         let old = HalfTape::from_str("3^n", Dir::Right).unwrap();

@@ -68,15 +68,15 @@ impl CountExpr {
 
     // Attempt subtraction (self - other).
     // Return None if the result is not guaranteed >= 0.
-    pub fn checked_sub(&self, other: CountExpr) -> Option<CountExpr> {
+    pub fn checked_sub(&self, other: &CountExpr) -> Option<CountExpr> {
         let CountExpr::VarSum(xs1, n1) = self;
         let CountExpr::VarSum(xs2, n2) = other;
-        let n = n1.checked_sub(n2)?;
+        let n = n1.checked_sub(*n2)?;
         // Remove xs2 from xs1.
         let mut xs = xs1.clone();
         for x in xs2 {
             // TODO: Make this more efficient!
-            let i = xs.iter().position(|&y| y == x)?;
+            let i = xs.iter().position(|&y| y == *x)?;
             xs.remove(i);
         }
         Some(CountExpr::VarSum(xs, n))
@@ -109,7 +109,7 @@ impl CountOrInf {
     // Attempt subtraction (self - other).
     // Return None if the result is not guaranteed >= 0.
     // Note: We consider n - n = 0 for all n (including inf - inf = 0).
-    pub fn checked_sub(&self, other: CountOrInf) -> Option<CountOrInf> {
+    pub fn checked_sub(&self, other: &CountOrInf) -> Option<CountOrInf> {
         match self {
             CountOrInf::Finite(expr) => match other {
                 CountOrInf::Finite(other_expr) => {
@@ -347,63 +347,69 @@ mod tests {
     #[test]
     fn test_checked_sub() {
         assert_eq!(
-            CountOrInf::from(138).checked_sub(CountOrInf::from(0)),
+            CountOrInf::from(138).checked_sub(&CountOrInf::from(0)),
             Some(CountOrInf::from(138))
         );
         assert_eq!(
-            CountOrInf::from(13).checked_sub(CountOrInf::from(13)),
+            CountOrInf::from(13).checked_sub(&CountOrInf::from(13)),
             Some(CountOrInf::from(0))
         );
-        assert_eq!(CountOrInf::from(13).checked_sub(CountOrInf::from(14)), None);
-        assert_eq!(CountOrInf::from(13).checked_sub(CountOrInf::Infinity), None);
         assert_eq!(
-            CountOrInf::Infinity.checked_sub(CountOrInf::from(13)),
+            CountOrInf::from(13).checked_sub(&CountOrInf::from(14)),
+            None
+        );
+        assert_eq!(
+            CountOrInf::from(13).checked_sub(&CountOrInf::Infinity),
+            None
+        );
+        assert_eq!(
+            CountOrInf::Infinity.checked_sub(&CountOrInf::from(13)),
             Some(CountOrInf::Infinity)
         );
         assert_eq!(
-            CountOrInf::Infinity.checked_sub(CountOrInf::Infinity),
+            CountOrInf::Infinity.checked_sub(&CountOrInf::Infinity),
             Some(CountOrInf::from(0))
         );
         assert_eq!(
             CountOrInf::from_str("x+13")
                 .unwrap()
-                .checked_sub(CountOrInf::from(13)),
+                .checked_sub(&CountOrInf::from(13)),
             Some(CountOrInf::from_str("x").unwrap())
         );
         assert_eq!(
             CountOrInf::from_str("x+13")
                 .unwrap()
-                .checked_sub(CountOrInf::from(14)),
+                .checked_sub(&CountOrInf::from(14)),
             None
         );
         assert_eq!(
             CountOrInf::from_str("x+13")
                 .unwrap()
-                .checked_sub(CountOrInf::from_str("x+11").unwrap()),
+                .checked_sub(&CountOrInf::from_str("x+11").unwrap()),
             Some(CountOrInf::from(2))
         );
         assert_eq!(
             CountOrInf::from_str("x+x+13")
                 .unwrap()
-                .checked_sub(CountOrInf::from_str("x").unwrap()),
+                .checked_sub(&CountOrInf::from_str("x").unwrap()),
             Some(CountOrInf::from_str("x+13").unwrap())
         );
         assert_eq!(
             CountOrInf::from_str("x+x+13")
                 .unwrap()
-                .checked_sub(CountOrInf::from_str("x+x").unwrap()),
+                .checked_sub(&CountOrInf::from_str("x+x").unwrap()),
             Some(CountOrInf::from(13))
         );
         assert_eq!(
             CountOrInf::from_str("a+d+n")
                 .unwrap()
-                .checked_sub(CountOrInf::from_str("a+n").unwrap()),
+                .checked_sub(&CountOrInf::from_str("a+n").unwrap()),
             Some(CountOrInf::from_str("d").unwrap())
         );
         assert_eq!(
             CountOrInf::from_str("a+d+n")
                 .unwrap()
-                .checked_sub(CountOrInf::from_str("a+f").unwrap()),
+                .checked_sub(&CountOrInf::from_str("a+f").unwrap()),
             None
         );
     }
@@ -421,7 +427,7 @@ mod tests {
             for b in &exprs {
                 // a + b - b == a
                 assert_eq!(
-                    (a.clone() + b.clone()).checked_sub(b.clone()),
+                    (a.clone() + b.clone()).checked_sub(&b),
                     Some(a.clone()),
                     "a: {}, b: {}",
                     a,
@@ -437,11 +443,11 @@ mod tests {
         // Ex: x + inf - inf == 0 !
         let x = CountOrInf::from_str("x").unwrap();
         assert_eq!(
-            (x + CountOrInf::Infinity).checked_sub(CountOrInf::Infinity),
+            (x + CountOrInf::Infinity).checked_sub(&CountOrInf::Infinity),
             Some(CountOrInf::from(0))
         );
         assert_eq!(
-            (CountOrInf::from(813) + CountOrInf::Infinity).checked_sub(CountOrInf::Infinity),
+            (CountOrInf::from(813) + CountOrInf::Infinity).checked_sub(&CountOrInf::Infinity),
             Some(CountOrInf::from(0))
         );
     }
