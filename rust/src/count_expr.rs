@@ -72,13 +72,11 @@ impl CountExpr {
         } = self;
         let mut new_expr = CountExpr::from(*constant);
         for (x, count) in var_counts {
-            // TODO: Implement scalar mult to avoid repeated addition.
-            for _ in 0..*count {
-                new_expr += match var_subst.get(x) {
-                    Some(expr) => expr.clone(),
-                    None => CountExpr::from(*x),
-                };
-            }
+            let x_repl = match var_subst.get(x) {
+                Some(expr) => expr.clone(),
+                None => CountExpr::from(*x),
+            };
+            new_expr += x_repl * *count;
         }
         new_expr
     }
@@ -181,6 +179,21 @@ impl std::ops::Add for CountExpr {
         let mut new_expr = self.clone();
         new_expr += other;
         new_expr
+    }
+}
+
+impl std::ops::Mul<CountType> for CountExpr {
+    type Output = CountExpr;
+
+    fn mul(self, n: CountType) -> CountExpr {
+        let CountExpr::VarSum {
+            var_counts,
+            constant,
+        } = self;
+        CountExpr::VarSum {
+            var_counts: var_counts.into_iter().map(|(x, c)| (x, c * n)).collect(),
+            constant: constant * n,
+        }
     }
 }
 
@@ -321,7 +334,7 @@ mod tests {
 
     #[test]
     fn test_parse_display() {
-        for s in ["0", "13", "inf", "n+0", "x+13", "k+138", "a+b+7"] {
+        for s in ["0", "13", "inf", "n+0", "x+13", "k+138", "a+b+7", "x+x+5"] {
             assert_eq!(CountOrInf::from_str(s).unwrap().to_string(), s.to_string());
         }
     }
