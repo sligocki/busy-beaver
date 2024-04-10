@@ -345,6 +345,22 @@ mod tests {
                         )])),
                     ],
                 },
+                // Infinite Rule: 0^inf 1 00 B> 0  ->  0^inf 1^n+1 00 B> 0
+                Rule {
+                    init_config: Config::from_str("0^inf 1^1 00^1 B> 0^1").unwrap(),
+                    final_config: Config::from_str("0^inf 1^n+1 00^1 B> 0^1").unwrap(),
+                    proof_base: vec![],
+                    proof_inductive: vec![
+                        // 0^inf 1 00 B> 0  ->  0^inf 1^n+2 00 B> 0
+                        InductiveProofStep::BaseStep(BaseProofStep::RuleStep {
+                            rule_id: 2,
+                            var_assignment: VarSubst::from([(
+                                Variable::from_str("n").unwrap(),
+                                CountExpr::from_str("n+1").unwrap(),
+                            )]),
+                        }),
+                    ],
+                },
             ],
         };
         assert_eq!(validate_rule_set(&rule_set), Ok(()));

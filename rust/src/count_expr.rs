@@ -110,27 +110,17 @@ impl CountOrInf {
     // Return None if the result is not guaranteed >= 0.
     // Note: We consider n - n = 0 for all n (including inf - inf = 0).
     pub fn checked_sub(&self, other: &CountOrInf) -> Option<CountOrInf> {
-        match self {
-            CountOrInf::Finite(expr) => match other {
-                CountOrInf::Finite(other_expr) => {
-                    expr.checked_sub(other_expr).map(CountOrInf::Finite)
-                }
-                // finite - inf  fails
-                CountOrInf::Infinity => None,
-            },
-            CountOrInf::Infinity => match other {
-                CountOrInf::Finite(expr) => {
-                    if expr.is_const() {
-                        // inf - const == inf
-                        Some(CountOrInf::Infinity)
-                    } else {
-                        // inf - n  fails
-                        None
-                    }
-                }
-                // inf - inf == 0
-                CountOrInf::Infinity => Some(0.into()),
-            },
+        match (self, other) {
+            (CountOrInf::Finite(expr), CountOrInf::Finite(other_expr)) => {
+                expr.checked_sub(other_expr).map(CountOrInf::Finite)
+            }
+            // inf - finite == inf
+            // This is even true for variables: inf - x == inf since these variables are always finite.
+            (CountOrInf::Infinity, CountOrInf::Finite(_)) => Some(CountOrInf::Infinity),
+            // inf - inf == 0
+            (CountOrInf::Infinity, CountOrInf::Infinity) => Some(0.into()),
+            // finite - inf  fails
+            (CountOrInf::Finite(_), CountOrInf::Infinity) => None,
         }
     }
 }
@@ -364,6 +354,10 @@ mod tests {
         );
         assert_eq!(
             CountOrInf::Infinity.checked_sub(&CountOrInf::from(13)),
+            Some(CountOrInf::Infinity)
+        );
+        assert_eq!(
+            CountOrInf::Infinity.checked_sub(&CountOrInf::from_str("n").unwrap()),
             Some(CountOrInf::Infinity)
         );
         assert_eq!(
