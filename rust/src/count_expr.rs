@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 use std::str::FromStr;
 
 use crate::base::*;
@@ -11,8 +11,14 @@ pub type VarSubst = HashMap<Variable, CountExpr>;
 // Concrete binary integers to formulas that may or may not contain variables.
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub enum CountExpr {
+    // Sum of variables and a constant.
+    // VarSum({x: 2, y: 1}, 3) == 2x + y + 3
+    VarSum {
+        // Use an ordered map to ensure deterministic order of variables.
+        var_counts: BTreeMap<Variable, CountType>,
+        constant: CountType,
+    },
     // TODO: Allow more complex formulas.
-    VarSum(Vec<Variable>, CountType),
 }
 
 // Count that can also be infinite (for TM block repetition counts).
@@ -31,55 +37,77 @@ impl Variable {
 impl CountExpr {
     #[inline]
     pub fn is_zero(&self) -> bool {
-        match self {
-            CountExpr::VarSum(xs, 0) => xs.is_empty(),
-            _ => false,
-        }
+        let CountExpr::VarSum {
+            var_counts: _,
+            constant,
+        } = self;
+        *constant == 0 && self.is_const()
     }
 
     #[inline]
     pub fn is_const(&self) -> bool {
-        match self {
-            CountExpr::VarSum(xs, _) => xs.is_empty(),
-        }
+        let CountExpr::VarSum {
+            var_counts,
+            constant: _,
+        } = self;
+        var_counts.is_empty()
     }
 
     pub fn decrement(&self) -> Option<CountExpr> {
-        match self {
-            CountExpr::VarSum(_vars, 0) => None, // Can't decrement, this could be <= 0.
-            CountExpr::VarSum(vars, n) => Some(CountExpr::VarSum(vars.clone(), n - 1)),
-        }
+        let CountExpr::VarSum {
+            var_counts,
+            constant,
+        } = self;
+        let new_constant = constant.checked_sub(1)?;
+        Some(CountExpr::VarSum {
+            var_counts: var_counts.clone(),
+            constant: new_constant,
+        })
     }
 
     pub fn subst(&self, var_subst: &VarSubst) -> CountExpr {
-        match self {
-            CountExpr::VarSum(xs, n) => {
-                let mut new_expr = CountExpr::from(*n);
-                for x in xs {
-                    new_expr += match var_subst.get(x) {
-                        Some(expr) => expr.clone(),
-                        None => CountExpr::from(*x),
-                    };
-                }
-                new_expr
+        let CountExpr::VarSum {
+            var_counts,
+            constant,
+        } = self;
+        let mut new_expr = CountExpr::from(*constant);
+        for (x, count) in var_counts {
+            // TODO: Implement scalar mult to avoid repeated addition.
+            for _ in 0..*count {
+                new_expr += match var_subst.get(x) {
+                    Some(expr) => expr.clone(),
+                    None => CountExpr::from(*x),
+                };
             }
         }
+        new_expr
     }
 
     // Attempt subtraction (self - other).
     // Return None if the result is not guaranteed >= 0.
     pub fn checked_sub(&self, other: &CountExpr) -> Option<CountExpr> {
-        let CountExpr::VarSum(xs1, n1) = self;
-        let CountExpr::VarSum(xs2, n2) = other;
+        let CountExpr::VarSum {
+            var_counts: xs1,
+            constant: n1,
+        } = self;
+        let CountExpr::VarSum {
+            var_counts: xs2,
+            constant: n2,
+        } = other;
         let n = n1.checked_sub(*n2)?;
         // Remove xs2 from xs1.
         let mut xs = xs1.clone();
-        for x in xs2 {
-            // TODO: Make this more efficient!
-            let i = xs.iter().position(|&y| y == *x)?;
-            xs.remove(i);
+        for (x, count2) in xs2 {
+            let count1 = xs.remove(x)?;
+            let diff = count1.checked_sub(*count2)?;
+            if diff > 0 {
+                xs.insert(*x, diff);
+            }
         }
-        Some(CountExpr::VarSum(xs, n))
+        Some(CountExpr::VarSum {
+            var_counts: xs,
+            constant: n,
+        })
     }
 }
 
@@ -127,14 +155,21 @@ impl CountOrInf {
 
 impl std::ops::AddAssign for CountExpr {
     fn add_assign(&mut self, other: CountExpr) {
-        match self {
-            CountExpr::VarSum(vars, n) => match other {
-                CountExpr::VarSum(other_vars, other_n) => {
-                    vars.extend(other_vars);
-                    vars.sort();
-                    *n += other_n;
-                }
-            },
+        let CountExpr::VarSum {
+            var_counts,
+            constant,
+        } = self;
+        let CountExpr::VarSum {
+            var_counts: other_var_counts,
+            constant: other_constant,
+        } = other;
+
+        *constant += other_constant;
+        for (x, count) in other_var_counts {
+            var_counts
+                .entry(x)
+                .and_modify(|c| *c += count)
+                .or_insert(count);
         }
     }
 }
@@ -170,13 +205,19 @@ impl std::ops::AddAssign for CountOrInf {
 
 impl From<CountType> for CountExpr {
     fn from(n: CountType) -> Self {
-        CountExpr::VarSum(vec![], n)
+        CountExpr::VarSum {
+            var_counts: BTreeMap::new(),
+            constant: n,
+        }
     }
 }
 
 impl From<Variable> for CountExpr {
     fn from(var: Variable) -> Self {
-        CountExpr::VarSum(vec![var], 0)
+        CountExpr::VarSum {
+            var_counts: [(var, 1)].iter().cloned().collect(),
+            constant: 0,
+        }
     }
 }
 
@@ -200,14 +241,17 @@ impl std::fmt::Display for Variable {
 
 impl std::fmt::Display for CountExpr {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            CountExpr::VarSum(vars, n) => {
-                for var in vars {
-                    write!(f, "{}+", var)?;
-                }
-                write!(f, "{}", n)
+        let CountExpr::VarSum {
+            var_counts,
+            constant,
+        } = self;
+        for (var, count) in var_counts {
+            // TODO: Replace with scalar multiplication.
+            for _ in 0..*count {
+                write!(f, "{}+", var)?;
             }
         }
+        write!(f, "{}", constant)
     }
 }
 
