@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use std::fmt;
 use std::str::FromStr;
 
 use crate::base::*;
@@ -146,7 +145,7 @@ impl From<CountType> for CountOrInf {
 
 // Canonical names for variables. Start with n (for induction variable) and then use the rest of the alphabet.
 const VAR_NAMES: &str = "nabcdefghijklmopqrstuvwxyz";
-impl fmt::Display for Variable {
+impl std::fmt::Display for Variable {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if let Some(c) = VAR_NAMES.chars().nth(self.0) {
             write!(f, "{}", c)
@@ -156,7 +155,7 @@ impl fmt::Display for Variable {
     }
 }
 
-impl fmt::Display for CountExpr {
+impl std::fmt::Display for CountExpr {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             CountExpr::VarSum(vars, n) => {
@@ -169,7 +168,7 @@ impl fmt::Display for CountExpr {
     }
 }
 
-impl fmt::Display for CountOrInf {
+impl std::fmt::Display for CountOrInf {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             CountOrInf::Finite(expr) => write!(f, "{}", expr),
@@ -235,9 +234,42 @@ mod tests {
 
     #[test]
     fn test_parse_display() {
-        for s in &["0", "13", "inf", "n+0", "x+13", "k+138"] {
+        for s in &["0", "13", "inf", "n+0", "x+13", "k+138", "a+b+7"] {
             assert_eq!(CountOrInf::from_str(s).unwrap().to_string(), s.to_string());
         }
+    }
+
+    #[test]
+    fn test_equal() {
+        assert_eq!(CountOrInf::Infinity, CountOrInf::Infinity);
+        assert_eq!(CountOrInf::from(13), CountOrInf::from(13));
+        assert_eq!(
+            CountOrInf::from_str("x").unwrap(),
+            CountOrInf::from_str("x").unwrap()
+        );
+        assert_eq!(
+            (CountOrInf::from_str("x").unwrap() + CountOrInf::from(13)),
+            CountOrInf::from_str("x+13").unwrap()
+        );
+        assert_eq!(
+            CountOrInf::from_str("s+n+l+8").unwrap(),
+            CountOrInf::from_str("4+l+s+n+4").unwrap()
+        );
+
+        assert_ne!(CountOrInf::Infinity, CountOrInf::from(13));
+        assert_ne!(CountOrInf::from(13), CountOrInf::from(14));
+        assert_ne!(
+            CountOrInf::from_str("x").unwrap(),
+            CountOrInf::from_str("y").unwrap()
+        );
+        assert_ne!(
+            CountOrInf::from_str("x+x").unwrap(),
+            CountOrInf::from_str("x").unwrap()
+        );
+        assert_ne!(
+            CountOrInf::from_str("x+13").unwrap(),
+            CountOrInf::from_str("x+14").unwrap()
+        );
     }
 
     #[test]
