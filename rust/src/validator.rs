@@ -295,4 +295,61 @@ mod tests {
         };
         assert_eq!(validate_rule_set(&rule_set), Ok(()));
     }
+
+    #[test]
+    #[ignore = "broken: 0^n prefix of 0^n+1"]
+    fn test_validate_rule_counter() {
+        // Validate a binary counter rule which uses the inductive hypothesis twice!
+        //      See: https://www.sligocki.com/2022/06/14/counter-induction.html
+        let rule_set = RuleSet {
+            tm: TM::from_str("1RB1LA_0LC0RB_0LD0LB_1RE---_1LE1LA").unwrap(),
+            rules: vec![
+                simple_chain_rule("1^n <A", "<A 1^n", 1),
+                simple_chain_rule("B> 1^n", "0^n B>", 1),
+                // Rule P(n): 0^n 1 00 B> 0  ->  1^n+1 00 B> 0
+                Rule {
+                    init_config: Config::from_str("0^n 1^1 00^1 B> 0^1").unwrap(),
+                    final_config: Config::from_str("1^n+1 00^1 B> 0^1").unwrap(),
+                    proof_base: vec![],
+                    proof_inductive: vec![
+                        // 0^n+1 1 00 B> 0  ->  0 1^n+1 00 B> 0
+                        // TODO: Currently failing because we cannot detect that
+                        //       ... 0^n 1 00 is a prefix of ... 0^n+1 1 00.
+                        InductiveProofStep::InductiveStep(VarSubst::from([(
+                            Variable::from_str("n").unwrap(),
+                            CountExpr::from_str("n").unwrap(),
+                        )])),
+                        // 0 1^n+1 00 B> 0  --(5)-->  0 1^n+1 <A 110
+                        InductiveProofStep::BaseStep(BaseProofStep::TMSteps(5)),
+                        // 0 1^n+1 <A 110  -->  0 <A 1^n+3 0
+                        InductiveProofStep::BaseStep(BaseProofStep::RuleStep {
+                            rule_id: 0,
+                            var_assignment: VarSubst::from([(
+                                Variable::from_str("n").unwrap(),
+                                CountExpr::from_str("n+1").unwrap(),
+                            )]),
+                        }),
+                        // 0 <A 1^n+3 0  --(1)-->  1 B> 1^n+3 0
+                        InductiveProofStep::BaseStep(BaseProofStep::TMSteps(1)),
+                        // 1 B> 1^n+3 0  --(5)-->  0^n+3 B> 0
+                        InductiveProofStep::BaseStep(BaseProofStep::RuleStep {
+                            rule_id: 1,
+                            var_assignment: VarSubst::from([(
+                                Variable::from_str("n").unwrap(),
+                                CountExpr::from_str("n+3").unwrap(),
+                            )]),
+                        }),
+                        // 0^n+3 B> 0  --(8)-->  1 0^n 1 00 B> 0
+                        InductiveProofStep::BaseStep(BaseProofStep::TMSteps(8)),
+                        // 1 0^n 1 00 B> 0  -->  1^n+2 00 B> 0
+                        InductiveProofStep::InductiveStep(VarSubst::from([(
+                            Variable::from_str("n").unwrap(),
+                            CountExpr::from_str("n").unwrap(),
+                        )])),
+                    ],
+                },
+            ],
+        };
+        assert_eq!(validate_rule_set(&rule_set), Ok(()));
+    }
 }

@@ -156,7 +156,7 @@ impl HalfTape {
             }
             // Skip over identical blocks.
             if curr.0.last().unwrap() == sub.0.last().unwrap() {
-                curr.0.pop().unwrap();
+                curr.0.pop();
                 sub.0.pop();
                 continue;
             }
@@ -166,11 +166,16 @@ impl HalfTape {
                         return Err(format!("Tapes differ: {} != {}", l, r));
                     }
                 }
-                _ => {
+                (curr_top, sub_top) => {
                     // If either pop_symbol() failed, we cannot compare the tapes.
+                    // Unfortunately, we cannot even print the tapes at this point since it's possible
+                    // that one has had a symbol popped and the other not. When testing you can uncomment
+                    // the println!() above to see the tapes before the pops.
                     return Err(format!(
-                        "Tapes differ: {} vs. {}",
+                        "Tapes differ: {:?} {} vs. {:?} {}",
+                        curr_top,
                         curr.to_string(Dir::Right),
+                        sub_top,
                         sub.to_string(Dir::Right)
                     ));
                 }
@@ -443,13 +448,25 @@ mod tests {
     }
 
     #[test]
-    fn test_replace() {
+    fn test_replace_simple() {
         let config = Config::from_str("0^inf 2^8 1^13 <A 0^1 1^1 0^42 0^inf").unwrap();
         let old = Config::from_str("1^13 <A 0^1 1^1").unwrap();
         let new = Config::from_str("2^10 1^2 B> 2^4 0^1").unwrap();
 
         let updated = config.replace(&old, &new).unwrap();
         let expected = Config::from_str("0^inf 2^8 2^10 1^2 B> 2^4 0^1 0^42 0^inf").unwrap();
+        assert!(updated.equivalent_to(&expected));
+    }
+
+    #[test]
+    #[ignore = "broken"]
+    fn test_replace_complex() {
+        let tape = HalfTape::from_str("3^n+1", Dir::Right).unwrap();
+        let old = HalfTape::from_str("3^n", Dir::Right).unwrap();
+        let new = HalfTape(vec![]);
+
+        let updated = tape.replace(&old, &new).unwrap();
+        let expected = HalfTape::from_str("3^1", Dir::Right).unwrap();
         assert!(updated.equivalent_to(&expected));
     }
 
@@ -470,5 +487,17 @@ mod tests {
         // BB4 runs for 107 steps.
         assert_eq!(config.step_n(&tm, 107), Ok(()));
         assert!(config.equivalent_to(&Config::from_str("0^inf 1^1 Z> 0^1 1^12 0^inf").unwrap()));
+    }
+
+    #[test]
+    fn test_block_equal() {
+        assert_eq!(
+            RepBlock::from_str("0^n", Dir::Right).unwrap(),
+            RepBlock::from_str("0^n", Dir::Right).unwrap()
+        );
+        assert_ne!(
+            RepBlock::from_str("0^n", Dir::Right).unwrap(),
+            RepBlock::from_str("0^n+1", Dir::Right).unwrap()
+        );
     }
 }
