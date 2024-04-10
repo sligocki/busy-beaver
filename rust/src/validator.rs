@@ -207,8 +207,8 @@ mod tests {
         let tm = TM::from_str("1RB1LD_1RC1RB_1LC1LA_0RC0RD").unwrap();
         // 0^n <C  ->  <C 1^n
         let rule = Rule {
-            init_config: Config::from_str("0^n+0 <C").unwrap(),
-            final_config: Config::from_str("<C 1^n+0").unwrap(),
+            init_config: Config::from_str("0^n <C").unwrap(),
+            final_config: Config::from_str("<C 1^n").unwrap(),
             // Base case is trivial:  0^0 <C  ==  <C 1^0
             proof_base: vec![],
             proof_inductive: vec![
@@ -223,5 +223,76 @@ mod tests {
         };
         let prev_rules = vec![];
         assert_eq!(validate_rule(&tm, &rule, &prev_rules), Ok(()));
+    }
+
+    // Helper function to create a simple chain rule for which:
+    //    A) The base case is trivial.
+    //    B) The inductive case is `steps` TM steps followed by the inductive step.
+    fn simple_chain_rule(start: &str, end: &str, steps: CountType) -> Rule {
+        Rule {
+            init_config: Config::from_str(start).unwrap(),
+            final_config: Config::from_str(end).unwrap(),
+            proof_base: vec![],
+            proof_inductive: vec![
+                InductiveProofStep::BaseStep(BaseProofStep::TMSteps(steps)),
+                InductiveProofStep::InductiveStep(VarSubst::from([(
+                    INDUCTION_VAR,
+                    INDUCTION_VAR.into(),
+                )])),
+            ],
+        }
+    }
+
+    #[test]
+    fn test_validate_rule_level1() {
+        // Validate a "level 1" rule (rule built only on chain rules). This is Rule 1x from:
+        //      https://www.sligocki.com/2022/02/27/bb-recurrence-relations.html
+        let rule_set = RuleSet {
+            tm: TM::from_str("1RB0LB1LA_2LC2LB2LB_2RC2RA0LC").unwrap(),
+            rules: vec![
+                simple_chain_rule("C> 0^n", "2^n C>", 1),
+                simple_chain_rule("2^n <C", "<C 0^n", 1),
+                // Rule 1x: 0^inf <C 0^a 2^n  ->  0^inf <C 0^a+2n
+                Rule {
+                    init_config: Config::from_str("0^inf <C 0^a 2^n").unwrap(),
+                    final_config: Config::from_str("0^inf <C 0^a+n+n").unwrap(),
+                    proof_base: vec![],
+                    proof_inductive: vec![
+                        // 0^inf <C 0^a 2^n+1  ->  0^inf 2 C> 0^a 2^n+1
+                        InductiveProofStep::BaseStep(BaseProofStep::TMSteps(1)),
+                        // 0^inf 2 C> 0^a 2^n+1  ->  0^inf 2^a+1 C> 2^n+1
+                        InductiveProofStep::BaseStep(BaseProofStep::RuleStep {
+                            rule_id: 0,
+                            var_assignment: VarSubst::from([(
+                                Variable::from_str("n").unwrap(),
+                                CountExpr::from_str("a").unwrap(),
+                            )]),
+                        }),
+                        // 0^inf 2^a+1 C> 2^n+1  ->  0^inf 2^a+1 <C 0 2^n
+                        InductiveProofStep::BaseStep(BaseProofStep::TMSteps(1)),
+                        // 0^inf 2^a+1 <C 0 2^n  ->  0^inf <C 0^a+2 2^n
+                        InductiveProofStep::BaseStep(BaseProofStep::RuleStep {
+                            rule_id: 1,
+                            var_assignment: VarSubst::from([(
+                                Variable::from_str("n").unwrap(),
+                                CountExpr::from_str("a+1").unwrap(),
+                            )]),
+                        }),
+                        // Induction: 0^inf <C 0^a+2 2^n  ->  0^inf <C 0^a+2n+2
+                        InductiveProofStep::InductiveStep(VarSubst::from([
+                            (
+                                Variable::from_str("n").unwrap(),
+                                CountExpr::from_str("n").unwrap(),
+                            ),
+                            (
+                                Variable::from_str("a").unwrap(),
+                                CountExpr::from_str("a+2").unwrap(),
+                            ),
+                        ])),
+                    ],
+                },
+            ],
+        };
+        assert_eq!(validate_rule_set(&rule_set), Ok(()));
     }
 }
