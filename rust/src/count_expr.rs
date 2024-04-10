@@ -186,13 +186,19 @@ impl std::ops::Mul<CountType> for CountExpr {
     type Output = CountExpr;
 
     fn mul(self, n: CountType) -> CountExpr {
-        let CountExpr::VarSum {
-            var_counts,
-            constant,
-        } = self;
-        CountExpr::VarSum {
-            var_counts: var_counts.into_iter().map(|(x, c)| (x, c * n)).collect(),
-            constant: constant * n,
+        match n {
+            0 => CountExpr::from(0),
+            1 => self,
+            _ => {
+                let CountExpr::VarSum {
+                    var_counts,
+                    constant,
+                } = self;
+                CountExpr::VarSum {
+                    var_counts: var_counts.into_iter().map(|(x, c)| (x, c * n)).collect(),
+                    constant: constant * n,
+                }
+            }
         }
     }
 }
@@ -389,6 +395,22 @@ mod tests {
             CountExpr::from_str("x+138").unwrap().decrement(),
             Some(CountExpr::from_str("x+137").unwrap())
         );
+    }
+
+    #[test]
+    fn test_subst_mult() {
+        let x = Variable::from_str("x").unwrap();
+        let y = Variable::from_str("y").unwrap();
+        let xe: CountExpr = x.into();
+        let ye: CountExpr = y.into();
+
+        // x -> 2y + 8
+        let subst: VarSubst = [(x, ye.clone() * 2 + 8.into())].iter().cloned().collect();
+
+        // 3x + 13 -> 6y + (8*3 + 13)
+        let start = xe * 3 + 13.into();
+        let expected = ye * 6 + (8 * 3 + 13).into();
+        assert_eq!(start.subst(&subst), expected);
     }
 
     #[test]
