@@ -122,17 +122,24 @@ impl HalfTape {
         )
     }
 
-    // Return a normalized version of this tape (removing any empty blocks).
+    // Return a normalized version of this tape.
+    // Removes empty blocks and merges adjacent blocks with the same symbols.
     fn normalize(&self) -> Self {
-        // TODO: Also merge adjacent blocks with the same symbol?
-        HalfTape(
-            self.0
-                .iter()
-                // Remove empty blocks (either no symbols or zero repetitions).
-                .filter(|block| !block.symbols.is_empty() && !block.rep.is_zero())
-                .cloned()
-                .collect(),
-        )
+        let mut new_blocks: Vec<RepBlock> = vec![];
+        for block in &self.0 {
+            // Strip out empty blocks.
+            if !block.symbols.is_empty() && !block.rep.is_zero() {
+                if let Some(last_block) = new_blocks.last_mut() {
+                    if last_block.symbols == block.symbols {
+                        // Combine adjacent blocks with the same symbols.
+                        last_block.rep += block.rep.clone();
+                        continue;
+                    }
+                }
+                new_blocks.push(block.clone());
+            }
+        }
+        HalfTape(new_blocks)
     }
 
     // Try to replace a subset of this tape.
@@ -367,6 +374,14 @@ mod tests {
         ] {
             assert_eq!(Config::from_str(s).unwrap().to_string(), s.to_string());
         }
+    }
+
+    #[test]
+    fn test_normalize() {
+        let tape =
+            HalfTape::from_str("1^13 0^0 1^0 1^2 0^3 0^x 1^1 0^8 0^inf", Dir::Right).unwrap();
+        let expected = HalfTape::from_str("1^15 0^x+3 1^1 0^inf", Dir::Right).unwrap();
+        assert!(tape.normalize().equivalent_to(&expected));
     }
 
     #[test]

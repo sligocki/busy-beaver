@@ -4,7 +4,7 @@ use std::str::FromStr;
 
 use crate::base::*;
 
-#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct Variable(usize);
 pub type VarSubst = HashMap<Variable, CountExpr>;
 
@@ -12,11 +12,8 @@ pub type VarSubst = HashMap<Variable, CountExpr>;
 // Concrete binary integers to formulas that may or may not contain variables.
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub enum CountExpr {
-    // Concrete integer count
-    Const(CountType),
-
     // TODO: Allow more complex formulas.
-    VarPlus(Variable, CountType),
+    VarSum(Vec<Variable>, CountType),
 }
 
 // Count that can also be infinite (for TM block repetition counts).
@@ -25,91 +22,6 @@ pub enum CountOrInf {
     Finite(CountExpr),
     Infinity,
 }
-
-// // General mathematical function (from N->N) built up using 3 primatives. Like the Grzegorczyk hierarchy.
-// //  https://en.wikipedia.org/wiki/Grzegorczyk_hierarchy
-// #[derive(Debug, Clone, Eq, PartialEq)]
-// pub enum Function {
-//     // Identity function: Maps values to themselves.
-//     Identity,
-//     // Take an existing function `func` and add a constant to the result.
-//     PlusConst { func: Box<Function>, add: CountType },
-//     // Take an existing function `func` and apply it repeatedly `rep` times.
-//     IterateConst { func: Box<Function>, rep: CountType },
-//     // TODO: Maybe allow non-const iteration to allow getting to Ackermann growth.
-// }
-
-// // A mathematical formula built up from constants, variables, and functions.
-// #[derive(Debug, Clone, Eq, PartialEq)]
-// pub enum Formula {
-//     // A formula that is a constant.
-//     Const(CountType),
-//     // A formula that is a single variable.
-//     Var(Variable),
-//     // A formula that is a function applied to another formula.
-//     Func(Function, Box<Formula>),
-// }
-
-// impl Function {
-//     // f.compose(g) : x -> f(g(x))
-//     pub fn compose(&self, other: Function) -> Function {
-//         match self {
-//             Function::Identity => other,
-//             Function::PlusConst { func, add } => Function::PlusConst {
-//                 func: Box::new(func.compose(other)),
-//                 add: *add,
-//             },
-//             Function::IterateConst { func, rep } => Function::IterateConst {
-//                 func: Box::new(func.compose(other)),
-//                 rep: *rep,
-//             },
-//         }
-//     }
-// }
-
-// impl Formula {
-//     // Decrement the count by 1 returning the result.
-//     // Fails if it cannot guarantee that result will be >= 0.
-//     pub fn decrement(&self) -> Option<Formula> {
-//         match self {
-//             Formula::Const(0) => None,
-//             Formula::Const(n) => Some(Formula::Const(n - 1)),
-//             Formula::Var(_) => None, // We cannot decrement a raw variable because it could be 0.
-//             Formula::Func(func, val) => {
-//                 match func {
-//                     Function::Identity => val.decrement(),
-
-//                     Function::PlusConst { func, add: 0 } =>
-//                     // If the constant is 0, we can just decrement the subformula.
-//                     {
-//                         Formula::Func(*func.clone(), val.clone()).decrement()
-//                     }
-//                     Function::PlusConst { func, add } => Some(Formula::Func(
-//                         Function::PlusConst {
-//                             func: func.clone(),
-//                             add: add - 1,
-//                         },
-//                         val.clone(),
-//                     )),
-
-//                     // If we're applying 0 iterations, that's the identity function, decrement the value.
-//                     Function::IterateConst {
-//                         func: _func,
-//                         rep: 0,
-//                     } => val.decrement(),
-//                     Function::IterateConst { func, rep } => {
-//                         // Unfold the outermost layer of iteration.
-//                         let sub_iter = Function::IterateConst {
-//                             func: func.clone(),
-//                             rep: rep - 1,
-//                         };
-//                         Formula::Func(func.compose(sub_iter), val.clone()).decrement()
-//                     }
-//                 }
-//             }
-//         }
-//     }
-// }
 
 impl Variable {
     pub const fn new(id: usize) -> Variable {
@@ -120,33 +32,29 @@ impl Variable {
 impl CountExpr {
     pub fn is_zero(&self) -> bool {
         match self {
-            CountExpr::Const(0) => true,
+            CountExpr::VarSum(xs, 0) => xs.is_empty(),
             _ => false,
         }
     }
 
     pub fn decrement(&self) -> Option<CountExpr> {
         match self {
-            CountExpr::Const(0) => None, // Can't decrement 0
-            CountExpr::Const(n) => Some(CountExpr::Const(n - 1)),
-
-            CountExpr::VarPlus(_var, 0) => None, // Can't decrement, this could be <= 0.
-            CountExpr::VarPlus(var, n) => Some(CountExpr::VarPlus(*var, n - 1)),
+            CountExpr::VarSum(_vars, 0) => None, // Can't decrement, this could be <= 0.
+            CountExpr::VarSum(vars, n) => Some(CountExpr::VarSum(vars.clone(), n - 1)),
         }
     }
 
     pub fn subst(&self, var_subst: &VarSubst) -> CountExpr {
         match self {
-            CountExpr::Const(_) => self.clone(),
-            CountExpr::VarPlus(x, a) => {
-                match var_subst.get(x) {
-                    // No change if the variable is not in the substitution.
-                    None => self.clone(),
-                    // x <- b  ==>  x+a <- a+b
-                    Some(CountExpr::Const(b)) => CountExpr::Const(a + b),
-                    // x <- y+b  ==>  x+a <- y+a+b
-                    Some(CountExpr::VarPlus(y, b)) => CountExpr::VarPlus(*y, a + b),
+            CountExpr::VarSum(xs, n) => {
+                let mut new_expr = CountExpr::from(*n);
+                for x in xs {
+                    new_expr += match var_subst.get(x) {
+                        Some(expr) => expr.clone(),
+                        None => CountExpr::from(*x),
+                    };
                 }
+                new_expr
             }
         }
     }
@@ -175,15 +83,58 @@ impl CountOrInf {
     }
 }
 
+impl std::ops::AddAssign for CountExpr {
+    fn add_assign(&mut self, other: CountExpr) {
+        match self {
+            CountExpr::VarSum(vars, n) => match other {
+                CountExpr::VarSum(other_vars, other_n) => {
+                    vars.extend(other_vars);
+                    vars.sort();
+                    *n += other_n;
+                }
+            },
+        }
+    }
+}
+
+impl std::ops::Add for CountExpr {
+    type Output = CountExpr;
+
+    fn add(self, other: CountExpr) -> CountExpr {
+        let mut new_expr = self.clone();
+        new_expr += other;
+        new_expr
+    }
+}
+
+impl std::ops::Add for CountOrInf {
+    type Output = CountOrInf;
+
+    fn add(self, other: CountOrInf) -> CountOrInf {
+        match (self, other) {
+            (CountOrInf::Finite(expr), CountOrInf::Finite(other_expr)) => {
+                CountOrInf::Finite(expr + other_expr)
+            }
+            _ => CountOrInf::Infinity,
+        }
+    }
+}
+
+impl std::ops::AddAssign for CountOrInf {
+    fn add_assign(&mut self, other: CountOrInf) {
+        *self = self.clone() + other;
+    }
+}
+
 impl From<CountType> for CountExpr {
     fn from(n: CountType) -> Self {
-        CountExpr::Const(n)
+        CountExpr::VarSum(vec![], n)
     }
 }
 
 impl From<Variable> for CountExpr {
     fn from(var: Variable) -> Self {
-        CountExpr::VarPlus(var, 0)
+        CountExpr::VarSum(vec![var], 0)
     }
 }
 
@@ -208,8 +159,12 @@ impl fmt::Display for Variable {
 impl fmt::Display for CountExpr {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            CountExpr::Const(n) => write!(f, "{}", n),
-            CountExpr::VarPlus(var, n) => write!(f, "{}+{}", var, n),
+            CountExpr::VarSum(vars, n) => {
+                for var in vars {
+                    write!(f, "{}+", var)?;
+                }
+                write!(f, "{}", n)
+            }
         }
     }
 }
@@ -242,21 +197,21 @@ impl FromStr for CountExpr {
     type Err = String;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let mut expr = CountExpr::from(0);
         let parts = s.split('+').collect::<Vec<&str>>();
-        if parts.len() == 1 {
-            let n = parts[0]
-                .parse::<CountType>()
-                .map_err(|s| format!("Error parsing CountExpr: {}", s))?;
-            return Ok(CountExpr::Const(n));
-        } else if parts.len() == 2 {
-            let var = parts[0].parse::<Variable>()?;
-            let n = parts[1]
-                .parse::<CountType>()
-                .map_err(|s| format!("Error parsing CountExpr: {}", s))?;
-            return Ok(CountExpr::VarPlus(var, n));
-        } else {
-            return Err(format!("Could not parse CountExpr from string: {}", s));
+        for part in parts {
+            if let Ok(n) = part.parse::<CountType>() {
+                expr += CountExpr::from(n);
+            } else if let Ok(var) = part.parse::<Variable>() {
+                expr += CountExpr::from(var);
+            } else {
+                return Err(format!(
+                    "Could not parse Variable or integer from string: {}",
+                    part
+                ));
+            }
         }
+        Ok(expr)
     }
 }
 
@@ -287,21 +242,20 @@ mod tests {
 
     #[test]
     fn test_decrement() {
-        let x = Variable(13);
         assert_eq!(CountOrInf::Infinity.decrement(), Some(CountOrInf::Infinity));
 
-        assert_eq!(CountExpr::Const(0).decrement(), None);
-        assert_eq!(CountExpr::Const(1).decrement(), Some(CountExpr::Const(0)));
-        assert_eq!(CountExpr::Const(13).decrement(), Some(CountExpr::Const(12)));
+        assert_eq!(CountExpr::from(0).decrement(), None);
+        assert_eq!(CountExpr::from(1).decrement(), Some(CountExpr::from(0)));
+        assert_eq!(CountExpr::from(13).decrement(), Some(CountExpr::from(12)));
 
-        assert_eq!(CountExpr::VarPlus(x, 0).decrement(), None);
+        assert_eq!(CountExpr::from_str("x").unwrap().decrement(), None);
         assert_eq!(
-            CountExpr::VarPlus(x, 1).decrement(),
-            Some(CountExpr::VarPlus(x, 0))
+            CountExpr::from_str("x+1").unwrap().decrement(),
+            Some(CountExpr::from_str("x").unwrap())
         );
         assert_eq!(
-            CountExpr::VarPlus(x, 138).decrement(),
-            Some(CountExpr::VarPlus(x, 137))
+            CountExpr::from_str("x+138").unwrap().decrement(),
+            Some(CountExpr::from_str("x+137").unwrap())
         );
     }
 }

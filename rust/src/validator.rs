@@ -125,7 +125,10 @@ fn validate_rule_base(tm: &TM, rule: &Rule, prev_rules: &[Rule]) -> Result<(), S
 
 fn validate_rule_inductive(tm: &TM, rule: &Rule, prev_rules: &[Rule]) -> Result<(), String> {
     // In inductive case, we consider the case n <- m+1 (and only allow use of this rule where n <- m).
-    let ind_subst = VarSubst::from([(INDUCTION_VAR, CountExpr::VarPlus(INDUCTION_VAR, 1))]);
+    let ind_subst = VarSubst::from([(
+        INDUCTION_VAR,
+        CountExpr::from(INDUCTION_VAR) + CountExpr::from(1),
+    )]);
     let mut config = rule.init_config.subst(&ind_subst);
     for step in &rule.proof_inductive {
         config = try_apply_step_inductive(tm, &config, step, rule, prev_rules)?;
