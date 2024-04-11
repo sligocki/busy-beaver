@@ -64,7 +64,6 @@ enum StepValidationError {
 enum RuleValidationError {
     StepError {
         step_num: usize,
-        step: InductiveProofStep,
         error: StepValidationError,
     },
     // Configuration does not match the final configuration for this rule.
@@ -97,12 +96,12 @@ impl std::fmt::Display for StepValidationError {
                 write!(f, "Rule {} is not yet defined", rule_id)
             }
             StepValidationError::InductionVarNotDecreasing => {
-                write!(f, "Induction variable must decrease")
+                write!(f, "Induction variable must decrease correctly")
             }
             StepValidationError::RuleConfigMismatch(config, expected, error) => {
                 write!(
                     f,
-                    "Configuration {} does not match expected configuration {}: {}",
+                    "Configuration does not match rule initial config {} vs. {}: {}",
                     config, expected, error
                 )
             }
@@ -113,16 +112,8 @@ impl std::fmt::Display for StepValidationError {
 impl std::fmt::Display for RuleValidationError {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            RuleValidationError::StepError {
-                step_num,
-                step,
-                error,
-            } => {
-                write!(
-                    f,
-                    "Step {} ({:?}) failed validation: {}",
-                    step_num, step, error
-                )
+            RuleValidationError::StepError { step_num, error } => {
+                write!(f, "Step {}: {}", step_num, error)
             }
             RuleValidationError::FinalConfigMismatch {
                 actual_config,
@@ -130,7 +121,7 @@ impl std::fmt::Display for RuleValidationError {
             } => {
                 write!(
                     f,
-                    "Final configuration {} does not match expected configuration {}",
+                    "Final configuration doesn't match expected {} != {}",
                     actual_config, expected_config
                 )
             }
@@ -140,7 +131,7 @@ impl std::fmt::Display for RuleValidationError {
 
 impl std::fmt::Display for ValidationError {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "Rule {} failed validation: {}", self.rule_id, self.error)
+        write!(f, "Validation error: Rule {}: {}", self.rule_id, self.error)
     }
 }
 
@@ -218,13 +209,8 @@ fn validate_rule_base(
     let base_subst = VarSubst::from([(INDUCTION_VAR, 0.into())]);
     let mut config = rule.init_config.subst(&base_subst);
     for (step_num, step) in rule.proof_base.iter().enumerate() {
-        config = try_apply_step_base(tm, &config, step, prev_rules).map_err(|error| {
-            RuleValidationError::StepError {
-                step_num,
-                step: InductiveProofStep::BaseStep(step.clone()),
-                error,
-            }
-        })?;
+        config = try_apply_step_base(tm, &config, step, prev_rules)
+            .map_err(|error| RuleValidationError::StepError { step_num, error })?;
     }
     let expected_final = rule.final_config.subst(&base_subst);
     if config.equivalent_to(&expected_final) {
@@ -251,14 +237,8 @@ fn validate_rule_inductive(
     )]);
     let mut config = rule.init_config.subst(&ind_subst);
     for (step_num, step) in rule.proof_inductive.iter().enumerate() {
-        config =
-            try_apply_step_inductive(tm, &config, step, rule, prev_rules).map_err(|error| {
-                RuleValidationError::StepError {
-                    step_num,
-                    step: step.clone(),
-                    error,
-                }
-            })?;
+        config = try_apply_step_inductive(tm, &config, step, rule, prev_rules)
+            .map_err(|error| RuleValidationError::StepError { step_num, error })?;
     }
     let expected_final = rule.final_config.subst(&ind_subst);
     if config.equivalent_to(&expected_final) {
@@ -475,5 +455,72 @@ mod tests {
             ],
         };
         validate_rule_set(&rule_set).unwrap();
+    }
+
+    #[test]
+    fn test_34_uni() {
+        // Analysis of Pavel's 3x4 TM shared 31 May 2023:
+        //      https://discord.com/channels/960643023006490684/1095740122139480195/1113545691994783804
+        // Common configs:
+        //      C(a, b, c, d, e) = $ 1 2^a 1 3^b 1 01^c 1 2^d <A 2^e $
+        //      B(a, b) = $ 1 2^a <A 2^b $
+        // Rules:
+        //    1)    C(a, b, c,  d+2, 2e+1)  ->  C(a, b, c, d, 2 (e+2) + 1)
+        //          C(a, b, c, 2k+r, 2e+1)  ->  C(a, b, c, r, 2 (e+2k) + 1)
+        //    2)    C(a, b, c+1, 1, 2e+1)  ->  C(a, b, c, 2e+5, 3)
+        //                                 ->  C(a, b, c, 1, 2 (2e+3) + 1)
+        //          C(a, b, c, 1, 2e+1)  ->  C(a, b, 0, 1, 2 f(c, e) + 1)
+        //              where f(c, e) = rep(\x -> 2x+3, c)(e)  ~= 2^c
+        //    3)    C(a, b+1, 0, 1, 2e+1)  ->  C(a, b, e+2, 1, 3)
+        //                                 ->  C(a, b, 0, 1, 2 f(e+2, 1) + 1)
+        //          C(a, b, 0, 1, 2e+1)  ->  C(a, 0, 0, 1, 2 g(b, e) + 1)
+        //              where g(b, e) = rep(\x -> f(x+2, 1), b)(e)  ~= 2^^b
+        //    4)    C(a+2, 0, 0, 1, 2e+1)  ->  C(a, 2e+7, 0, 1, 3)
+        //                                 ->  C(a, 0, 0, 1, 2 g(2e+7, 1) + 1)
+        //          C(2a+r, 0, 0, 1, 2e+1)  ->  C(r, 0, 0, 1, 2 h(a, e) + 1)
+        //              where h(a, e) = rep(\x -> g(2x+7, 1), a)(e)  ~= 2^^^a
+        //    5)    C(0, 0, 0, 1, 2e+1)  ->  B(2e+7, 3)
+        //                               ->  B(1, 2 (2e+4) + 1)
+        //                               ->  B(4e+12, 3)
+        //                               ->  B(0, 2 (4e+13) + 1)
+        //                               ->  C(2 (4e+13), 1, 0, 1, 3)
+        //                               ->  C(0, 0, 0, 1, 2 h(8e+26, 1) + 1)
+        let rule_set = RuleSet {
+            tm: TM::from_str("1RB2LA1RC3RA_1LA2RA2RB0RC_1RZ3LC1RA1RB").unwrap(),
+            rules: vec![
+                chain_rule("A> 2^n+n", "1^n+n A>", 2),
+                chain_rule("C> 2^n+n", "1^n+n C>", 2),
+                chain_rule("1^n <A", "<A 2^n", 1),
+                // Level 1: C(a, b, c, 2k+r, 2e+1)  ->  C(a, b, c, r, 2 (e+2k) + 1)
+                Rule {
+                    init_config: Config::from_str("2^n+n <A 2^e+e+1 0^inf").unwrap(),
+                    final_config: Config::from_str("<A 2^e+e+n+n+n+n+1 0^inf").unwrap(),
+                    proof_base: vec![],
+                    proof_inductive: vec![
+                        // 22^n+1 <A 2 22^e  --(2)-->  22^n 211 A> 22^e
+                        base_step(2),
+                        // 22^n 211 A> 22^e  -->  22^n 211 11^e A>
+                        chain_step(0, "e"),
+                        // 22^n 211 11^e A> 00  --(3)-->  22^n 211 11^e <A 21
+                        base_step(3),
+                        // 22^n 211 11^e <A 21  -->  22^n 2 <A 22^e+1 21
+                        chain_step(2, "e+e+2"),
+                        // 22^n 2 <A 22^e+1 21  --(1)-->  22^n 1 C> 22^e+1 21
+                        base_step(1),
+                        // 22^n 1 C> 22^e+1 21  -->  22^n 1 11^e+1 C> 21
+                        chain_step(1, "e+1"),
+                        // 22^n 1 11^e+1 C> 21  --(3)-->  22^n 1 11^e+1 <A 22
+                        base_step(3),
+                        // 22^n 1 11^e+1 <A 22  -->  22^n <A 2^2e+5
+                        chain_step(2, "e+e+3"),
+                        // 22^n <A 2^2e+5  -->  <A 2 22^e+2(n+1)
+                        induction_step(&[("e", "e+2")]),
+                    ],
+                },
+            ],
+        };
+        if let Err(err) = validate_rule_set(&rule_set) {
+            panic!("{}", err);
+        }
     }
 }
