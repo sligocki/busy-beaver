@@ -11,7 +11,7 @@ type RuleIdType = usize;
 const INDUCTION_VAR: Variable = Variable::new(0);
 
 #[allow(dead_code)]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 enum BaseProofStep {
     // Apply an integer count of base TM steps.
     TMSteps(CountType),
@@ -23,7 +23,7 @@ enum BaseProofStep {
 }
 
 #[allow(dead_code)]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 enum InductiveProofStep {
     BaseStep(BaseProofStep),
     // Apply this rule via induction.
@@ -46,8 +46,9 @@ struct RuleSet {
     rules: Vec<Rule>,
 }
 
+// Errors while validating one step in a rule.
 #[derive(Debug)]
-enum RuleValidationError {
+enum StepValidationError {
     // Error occurred while applying a TM step.
     TMStepError(Config, CountType, String),
     // Attempting to use a rule that is not yet defined.
@@ -56,8 +57,21 @@ enum RuleValidationError {
     InductionVarNotDecreasing,
     // Configuration does not match rule step's initial configuration.
     RuleConfigMismatch(Config, Config, String),
+}
+
+// Errors while evaluating a rule.
+#[derive(Debug)]
+enum RuleValidationError {
+    StepError {
+        step_num: usize,
+        step: InductiveProofStep,
+        error: StepValidationError,
+    },
     // Configuration does not match the final configuration for this rule.
-    FinalConfigMismatch(Config, Config),
+    FinalConfigMismatch {
+        actual_config: Config,
+        expected_config: Config,
+    },
 }
 
 #[allow(dead_code)]
@@ -69,30 +83,57 @@ struct ValidationError {
     error: RuleValidationError,
 }
 
+impl std::fmt::Display for StepValidationError {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            StepValidationError::TMStepError(config, n, error) => {
+                write!(
+                    f,
+                    "Error applying {} TM steps to config {}: {}",
+                    n, config, error
+                )
+            }
+            StepValidationError::RuleNotYetDefined(rule_id) => {
+                write!(f, "Rule {} is not yet defined", rule_id)
+            }
+            StepValidationError::InductionVarNotDecreasing => {
+                write!(f, "Induction variable must decrease")
+            }
+            StepValidationError::RuleConfigMismatch(config, expected, error) => {
+                write!(
+                    f,
+                    "Configuration {} does not match expected configuration {}: {}",
+                    config, expected, error
+                )
+            }
+        }
+    }
+}
+
 impl std::fmt::Display for RuleValidationError {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            RuleValidationError::TMStepError(config, n, err) => write!(
-                f,
-                "Error applying {} TM steps to config {}: {}",
-                n, config, err
-            ),
-            RuleValidationError::RuleNotYetDefined(rule_id) => {
-                write!(f, "Rule {} not yet defined", rule_id)
+            RuleValidationError::StepError {
+                step_num,
+                step,
+                error,
+            } => {
+                write!(
+                    f,
+                    "Step {} ({:?}) failed validation: {}",
+                    step_num, step, error
+                )
             }
-            RuleValidationError::InductionVarNotDecreasing => {
-                write!(f, "Induction variable must decrease")
+            RuleValidationError::FinalConfigMismatch {
+                actual_config,
+                expected_config,
+            } => {
+                write!(
+                    f,
+                    "Final configuration {} does not match expected configuration {}",
+                    actual_config, expected_config
+                )
             }
-            RuleValidationError::RuleConfigMismatch(config, init_config, err) => write!(
-                f,
-                "Configuration {} does not match rule step's initial configuration {}: {}",
-                config, init_config, err
-            ),
-            RuleValidationError::FinalConfigMismatch(config, final_config) => write!(
-                f,
-                "Configuration {} does not match the final configuration for this rule {}",
-                config, final_config
-            ),
         }
     }
 }
@@ -107,7 +148,7 @@ fn try_apply_rule(
     config: &Config,
     rule: &Rule,
     var_subst: &VarSubst,
-) -> Result<Config, RuleValidationError> {
+) -> Result<Config, StepValidationError> {
     // TODO: Check that var_subst are all guaranteed to be positive.
     // Currently, we only allow equality between rules if Tapes are specified identically.
     // TODO: Support equality even if compression is different.
@@ -115,7 +156,7 @@ fn try_apply_rule(
     let final_config = rule.final_config.subst(var_subst);
     config
         .replace(&init_config, &final_config)
-        .map_err(|err| RuleValidationError::RuleConfigMismatch(config.clone(), init_config, err))
+        .map_err(|err| StepValidationError::RuleConfigMismatch(config.clone(), init_config, err))
 }
 
 fn try_apply_step_base(
@@ -123,14 +164,14 @@ fn try_apply_step_base(
     config: &Config,
     step: &BaseProofStep,
     prev_rules: &[Rule],
-) -> Result<Config, RuleValidationError> {
+) -> Result<Config, StepValidationError> {
     match step {
         BaseProofStep::TMSteps(n) => {
             // Apply n base TM steps.
             let mut new_config = config.clone();
             new_config
                 .step_n(tm, *n)
-                .map_err(|err| RuleValidationError::TMStepError(config.clone(), *n, err))?;
+                .map_err(|err| StepValidationError::TMStepError(config.clone(), *n, err))?;
             Ok(new_config)
         }
         BaseProofStep::RuleStep {
@@ -138,7 +179,7 @@ fn try_apply_step_base(
             var_assignment,
         } => {
             if *rule_id >= prev_rules.len() {
-                return Err(RuleValidationError::RuleNotYetDefined(*rule_id));
+                return Err(StepValidationError::RuleNotYetDefined(*rule_id));
             }
             try_apply_rule(config, &prev_rules[*rule_id], var_assignment)
         }
@@ -151,7 +192,7 @@ fn try_apply_step_inductive(
     step: &InductiveProofStep,
     this_rule: &Rule,
     prev_rules: &[Rule],
-) -> Result<Config, RuleValidationError> {
+) -> Result<Config, StepValidationError> {
     match step {
         InductiveProofStep::BaseStep(base_step) => {
             try_apply_step_base(tm, config, base_step, prev_rules)
@@ -161,7 +202,7 @@ fn try_apply_step_inductive(
             // Note: When doing an inductive proof, we start by replacing n <- n+1 and
             // then only allow any uses of the rule itself with n <- n.
             if var_assignment[&INDUCTION_VAR] != INDUCTION_VAR.into() {
-                return Err(RuleValidationError::InductionVarNotDecreasing);
+                return Err(StepValidationError::InductionVarNotDecreasing);
             }
             try_apply_rule(config, this_rule, var_assignment)
         }
@@ -176,8 +217,14 @@ fn validate_rule_base(
     // In base case, we consider the case n <- 0.
     let base_subst = VarSubst::from([(INDUCTION_VAR, 0.into())]);
     let mut config = rule.init_config.subst(&base_subst);
-    for step in &rule.proof_base {
-        config = try_apply_step_base(tm, &config, step, prev_rules)?;
+    for (step_num, step) in rule.proof_base.iter().enumerate() {
+        config = try_apply_step_base(tm, &config, step, prev_rules).map_err(|error| {
+            RuleValidationError::StepError {
+                step_num,
+                step: InductiveProofStep::BaseStep(step.clone()),
+                error,
+            }
+        })?;
     }
     let expected_final = rule.final_config.subst(&base_subst);
     if config.equivalent_to(&expected_final) {
@@ -185,10 +232,10 @@ fn validate_rule_base(
         // This is a valid rule.
         Ok(())
     } else {
-        Err(RuleValidationError::FinalConfigMismatch(
-            config,
-            expected_final,
-        ))
+        Err(RuleValidationError::FinalConfigMismatch {
+            actual_config: config,
+            expected_config: expected_final,
+        })
     }
 }
 
@@ -203,8 +250,15 @@ fn validate_rule_inductive(
         CountExpr::from(INDUCTION_VAR) + CountExpr::from(1),
     )]);
     let mut config = rule.init_config.subst(&ind_subst);
-    for step in &rule.proof_inductive {
-        config = try_apply_step_inductive(tm, &config, step, rule, prev_rules)?;
+    for (step_num, step) in rule.proof_inductive.iter().enumerate() {
+        config =
+            try_apply_step_inductive(tm, &config, step, rule, prev_rules).map_err(|error| {
+                RuleValidationError::StepError {
+                    step_num,
+                    step: step.clone(),
+                    error,
+                }
+            })?;
     }
     let expected_final = rule.final_config.subst(&ind_subst);
     if config.equivalent_to(&expected_final) {
@@ -212,10 +266,10 @@ fn validate_rule_inductive(
         // This is a valid rule.
         Ok(())
     } else {
-        Err(RuleValidationError::FinalConfigMismatch(
-            config,
-            expected_final,
-        ))
+        Err(RuleValidationError::FinalConfigMismatch {
+            actual_config: config,
+            expected_config: expected_final,
+        })
     }
 }
 
