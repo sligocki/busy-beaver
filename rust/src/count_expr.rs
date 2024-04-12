@@ -1,6 +1,8 @@
 use std::collections::{BTreeMap, HashMap};
 use std::str::FromStr;
 
+use regex::Regex;
+
 use crate::base::*;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
@@ -264,13 +266,24 @@ impl std::fmt::Display for CountExpr {
             var_counts,
             constant,
         } = self;
-        for (var, count) in var_counts {
-            // TODO: Replace with scalar multiplication.
-            for _ in 0..*count {
-                write!(f, "{}+", var)?;
-            }
+        let mut terms : Vec<String> = var_counts
+            .iter()
+            .map(|(var, count)| {
+                if *count != 1 {
+                    format!("{}{}", count, var)
+                } else {
+                    format!("{}", var)
+                }
+            })
+            .collect();
+        if *constant != 0 {
+            terms.push(constant.to_string());
         }
-        write!(f, "{}", constant)
+        if terms.is_empty() {
+            write!(f, "0")
+        } else {
+            write!(f, "{}", terms.join("+"))
+        }
     }
 }
 
@@ -305,15 +318,20 @@ impl FromStr for CountExpr {
         let mut expr = CountExpr::from(0);
         let parts = s.split('+').collect::<Vec<&str>>();
         for part in parts {
-            if let Ok(n) = part.parse::<CountType>() {
-                expr += CountExpr::from(n);
-            } else if let Ok(var) = part.parse::<Variable>() {
-                expr += CountExpr::from(var);
+            // Parse things like "12", "x", "2n", "4a" using regular expressions:
+            let re = Regex::new(r"^(?P<coef>\d+)?(?P<var>[a-z])|(?P<const>\d+)$").unwrap();
+            let caps = re
+                .captures(part)
+                .ok_or(format!("Failed CountExpr Regex from string: {}", part))?;
+
+            if let Some(var) = caps.name("var") {
+                let var_expr = CountExpr::from(Variable::from_str(var.as_str())?);
+                // coefficient defaults to 1 if not present.
+                let coef: CountType = caps.name("coef").map_or(1, |f| f.as_str().parse().unwrap());
+                expr += var_expr * coef;
             } else {
-                return Err(format!(
-                    "Could not parse Variable or integer from string: {}",
-                    part
-                ));
+                let constant : CountType = caps.name("const").unwrap().as_str().parse().unwrap();
+                expr += CountExpr::from(constant);
             }
         }
         Ok(expr)
@@ -326,10 +344,7 @@ impl FromStr for CountOrInf {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
             "inf" => Ok(CountOrInf::Infinity),
-            _ => match s.parse::<CountExpr>() {
-                Ok(expr) => Ok(CountOrInf::Finite(expr)),
-                Err(_) => Err(format!("Could not parse CountOrInf from string: {}", s)),
-            },
+            _ => CountExpr::from_str(s).map(CountOrInf::Finite),
         }
     }
 }
@@ -340,7 +355,7 @@ mod tests {
 
     #[test]
     fn test_parse_display() {
-        for s in ["0", "13", "inf", "n+0", "x+13", "k+138", "a+b+7", "x+x+5"] {
+        for s in ["0", "13", "inf", "n", "x+13", "k+138", "a+b+7", "2x+5", "13j"] {
             assert_eq!(CountOrInf::from_str(s).unwrap().to_string(), s.to_string());
         }
     }
@@ -358,8 +373,25 @@ mod tests {
             CountOrInf::from_str("x+13").unwrap()
         );
         assert_eq!(
+            CountOrInf::from_str("x+13").unwrap(),
+            CountOrInf::from_str("13+x").unwrap()
+        );
+        assert_eq!(
             CountOrInf::from_str("s+n+l+8").unwrap(),
             CountOrInf::from_str("4+l+s+n+4").unwrap()
+        );
+
+        assert_eq!(
+            CountOrInf::from_str("3x").unwrap(),
+            CountOrInf::from_str("x+x+x").unwrap()
+        );
+        assert_eq!(
+            CountOrInf::from_str("0x").unwrap(),
+            CountOrInf::from(0)
+        );
+        assert_eq!(
+            CountOrInf::from_str("1x").unwrap(),
+            CountOrInf::from_str("x").unwrap()
         );
 
         assert_ne!(CountOrInf::Infinity, CountOrInf::from(13));
@@ -462,13 +494,13 @@ mod tests {
             Some(CountOrInf::from(2))
         );
         assert_eq!(
-            CountOrInf::from_str("x+x+13")
+            CountOrInf::from_str("2x+13")
                 .unwrap()
                 .checked_sub(&CountOrInf::from_str("x").unwrap()),
             Some(CountOrInf::from_str("x+13").unwrap())
         );
         assert_eq!(
-            CountOrInf::from_str("x+x+13")
+            CountOrInf::from_str("2x+13")
                 .unwrap()
                 .checked_sub(&CountOrInf::from_str("x+x").unwrap()),
             Some(CountOrInf::from(13))
@@ -490,7 +522,7 @@ mod tests {
     #[test]
     fn test_add_sub() {
         let expr_strs = [
-            "0", "13", "x", "x+13", "x+138", "a+b+7", "n", "n+1", "a+n+1", "x+n", "b+x",
+            "0", "13", "x", "x+13", "5x+138", "a+b+7", "n", "n+1", "a+n+1", "x+n", "2b+x",
         ];
         let exprs: Vec<CountExpr> = expr_strs
             .iter()

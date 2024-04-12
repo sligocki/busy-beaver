@@ -391,7 +391,7 @@ mod tests {
                 // Rule 1x: 0^inf <C 0^a 2^n  ->  0^inf <C 0^a+2n
                 Rule {
                     init_config: Config::from_str("0^inf <C 0^a 2^n").unwrap(),
-                    final_config: Config::from_str("0^inf <C 0^a+n+n").unwrap(),
+                    final_config: Config::from_str("0^inf <C 0^a+2n").unwrap(),
                     proof_base: vec![],
                     proof_inductive: vec![
                         // 0^inf <C 0^a 2^n+1  ->  0^inf 2 C> 0^a 2^n+1
@@ -468,9 +468,9 @@ mod tests {
         //    1)    C(a, b, c,  d+2, 2e+1)  ->  C(a, b, c, d, 2 (e+2) + 1)
         //          C(a, b, c, 2k+r, 2e+1)  ->  C(a, b, c, r, 2 (e+2k) + 1)
         //    2)    C(a, b, c+1, 1, 2e+1)  ->  C(a, b, c, 2e+5, 3)
-        //                                 ->  C(a, b, c, 1, 2 (2e+3) + 1)
+        //                                 ->  C(a, b, c, 1, 2 (2e+5) + 1)
         //          C(a, b, c, 1, 2e+1)  ->  C(a, b, 0, 1, 2 f(c, e) + 1)
-        //              where f(c, e) = rep(\x -> 2x+3, c)(e)  ~= 2^c
+        //              where f(c, e) = rep(\x -> 2x+5, c)(e)  ~= 2^c
         //    3)    C(a, b+1, 0, 1, 2e+1)  ->  C(a, b, e+2, 1, 3)
         //                                 ->  C(a, b, 0, 1, 2 f(e+2, 1) + 1)
         //          C(a, b, 0, 1, 2e+1)  ->  C(a, 0, 0, 1, 2 g(b, e) + 1)
