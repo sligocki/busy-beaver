@@ -38,6 +38,14 @@ pub struct TM {
     transitions: Vec<Vec<Transition>>,
 }
 
+#[derive(Debug)]
+pub enum ParseError {
+    DirectionInvalid(String),
+    StateInvalidSize(String),
+    StateInvalidChar(char),
+    TransInvalidSize(String),
+}
+
 impl Dir {
     pub fn iter() -> Iter<'static, Dir> {
         static DIRS: [Dir; 2] = [Dir::Left, Dir::Right];
@@ -126,23 +134,23 @@ impl fmt::Display for TM {
 
 // Implement parsing for TM types.
 impl FromStr for Dir {
-    type Err = String;
+    type Err = ParseError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
             "L" => Ok(Dir::Left),
             "R" => Ok(Dir::Right),
-            _ => Err("Direction must be 'L' or 'R'".to_string()),
+            _ => Err(ParseError::DirectionInvalid(s.to_string())),
         }
     }
 }
 
 impl FromStr for State {
-    type Err = String;
+    type Err = ParseError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         if s.len() != 1 {
-            return Err("State must be a single character".to_string());
+            return Err(ParseError::StateInvalidSize(s.to_string()));
         }
         let c = s.chars().nth(0).unwrap();
         if c == 'Z' {
@@ -153,18 +161,18 @@ impl FromStr for State {
             if state < 26 {
                 Ok(State::Run(state))
             } else {
-                Err("State must be in the range A-Z".to_string())
+                return Err(ParseError::StateInvalidChar(c));
             }
         }
     }
 }
 
 impl FromStr for Transition {
-    type Err = String;
+    type Err = ParseError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         if s.len() != 3 {
-            return Err("Transition must be exactly 3 characters".to_string());
+            return Err(ParseError::TransInvalidSize(s.to_string()));
         }
         if s == "---" {
             Ok(Transition::UndefinedTrans)
@@ -179,10 +187,10 @@ impl FromStr for Transition {
 }
 
 impl FromStr for TM {
-    type Err = String;
+    type Err = ParseError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        fn parse_row(row_str: &str) -> Result<Vec<Transition>, String> {
+        fn parse_row(row_str: &str) -> Result<Vec<Transition>, ParseError> {
             let chars: Vec<char> = row_str.chars().collect();
             chars
                 .chunks(3)
@@ -190,13 +198,13 @@ impl FromStr for TM {
                     let trans_str: String = chunk.iter().collect();
                     trans_str.parse()
                 })
-                .collect::<Result<Vec<Transition>, String>>()
+                .collect::<Result<Vec<Transition>, ParseError>>()
         }
         Ok(TM {
             transitions: s
                 .split('_')
                 .map(parse_row)
-                .collect::<Result<Vec<Vec<Transition>>, String>>()?,
+                .collect::<Result<Vec<Vec<Transition>>, ParseError>>()?,
         })
     }
 }

@@ -3,7 +3,7 @@ use std::str::FromStr;
 
 use regex::Regex;
 
-use crate::base::*;
+use crate::base::CountType;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct Variable(usize);
@@ -20,14 +20,34 @@ pub enum CountExpr {
         var_counts: BTreeMap<Variable, CountType>,
         constant: CountType,
     },
-    // TODO: Allow more complex formulas.
+    // // Function applied to a value.
+    // // Func(f, x) == f(x)
+    // Function(Box<Function>, Box<CountExpr>),
+    // // Formula representing repeated application of a function.
+    // // RepeatFunc(f, n, x) == f^n(x)
+    // RepeatFunc {
+    //     func: Box<Function>,
+    //     num_reps: Box<CountExpr>,
+    //     base: Box<CountExpr>,
+    // },
 }
+
+// A function represented by a bound variable mapped to an algebraic expression.
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub struct Function(Variable, CountExpr);
 
 // Count that can also be infinite (for TM block repetition counts).
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub enum CountOrInf {
     Finite(CountExpr),
     Infinity,
+}
+
+#[derive(Debug)]
+pub enum ParseError {
+    VariableInvalidSize(String),
+    VariableInvalidChar(char),
+    CountRegexFailed(String),
 }
 
 impl Variable {
@@ -266,7 +286,7 @@ impl std::fmt::Display for CountExpr {
             var_counts,
             constant,
         } = self;
-        let mut terms : Vec<String> = var_counts
+        let mut terms: Vec<String> = var_counts
             .iter()
             .map(|(var, count)| {
                 if *count != 1 {
@@ -297,22 +317,23 @@ impl std::fmt::Display for CountOrInf {
 }
 
 impl FromStr for Variable {
-    type Err = String;
+    type Err = ParseError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         if s.len() != 1 {
-            return Err(format!("Variable must be a single character: {}", s));
+            return Err(ParseError::VariableInvalidSize(s.to_string()));
         }
-        match VAR_NAMES.find(s) {
+        let c = s.chars().nth(0).unwrap();
+        match VAR_NAMES.find(c) {
             Some(id) => Ok(Variable(id)),
             // TODO: Support <x138> style variables for more than 26 variables.
-            None => Err(format!("Could not parse Variable from string: {}", s)),
+            None => Err(ParseError::VariableInvalidChar(c)),
         }
     }
 }
 
 impl FromStr for CountExpr {
-    type Err = String;
+    type Err = ParseError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let mut expr = CountExpr::from(0);
@@ -322,7 +343,7 @@ impl FromStr for CountExpr {
             let re = Regex::new(r"^(?P<coef>\d+)?(?P<var>[a-z])|(?P<const>\d+)$").unwrap();
             let caps = re
                 .captures(part)
-                .ok_or(format!("Failed CountExpr Regex from string: {}", part))?;
+                .ok_or(ParseError::CountRegexFailed(part.to_string()))?;
 
             if let Some(var) = caps.name("var") {
                 let var_expr = CountExpr::from(Variable::from_str(var.as_str())?);
@@ -330,7 +351,7 @@ impl FromStr for CountExpr {
                 let coef: CountType = caps.name("coef").map_or(1, |f| f.as_str().parse().unwrap());
                 expr += var_expr * coef;
             } else {
-                let constant : CountType = caps.name("const").unwrap().as_str().parse().unwrap();
+                let constant: CountType = caps.name("const").unwrap().as_str().parse().unwrap();
                 expr += CountExpr::from(constant);
             }
         }
@@ -339,7 +360,7 @@ impl FromStr for CountExpr {
 }
 
 impl FromStr for CountOrInf {
-    type Err = String;
+    type Err = ParseError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
@@ -355,7 +376,9 @@ mod tests {
 
     #[test]
     fn test_parse_display() {
-        for s in ["0", "13", "inf", "n", "x+13", "k+138", "a+b+7", "2x+5", "13j"] {
+        for s in [
+            "0", "13", "inf", "n", "x+13", "k+138", "a+b+7", "2x+5", "13j",
+        ] {
             assert_eq!(CountOrInf::from_str(s).unwrap().to_string(), s.to_string());
         }
     }
@@ -385,10 +408,7 @@ mod tests {
             CountOrInf::from_str("3x").unwrap(),
             CountOrInf::from_str("x+x+x").unwrap()
         );
-        assert_eq!(
-            CountOrInf::from_str("0x").unwrap(),
-            CountOrInf::from(0)
-        );
+        assert_eq!(CountOrInf::from_str("0x").unwrap(), CountOrInf::from(0));
         assert_eq!(
             CountOrInf::from_str("1x").unwrap(),
             CountOrInf::from_str("x").unwrap()

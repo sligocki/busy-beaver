@@ -5,9 +5,9 @@ use regex::Regex;
 use std::fmt;
 use std::str::FromStr;
 
-use crate::base::*;
-use crate::count_expr::{CountOrInf, VarSubst};
-use crate::tm::{Dir, State, Symbol, Transition, BLANK_SYMBOL, START_STATE, TM};
+use crate::base::CountType;
+use crate::count_expr::{self, CountOrInf, VarSubst};
+use crate::tm::{self, Dir, State, Symbol, Transition, BLANK_SYMBOL, START_STATE, TM};
 
 // A block of TM symbols with a repetition count. Ex:
 //      110^13  or  10^{x+4}
@@ -30,6 +30,14 @@ pub struct Config {
     pub dir: Dir,
 }
 
+#[derive(Debug)]
+pub enum ParseError {
+    RepBlockRegexFailed(String),
+    RepBlockCountInvalid(count_expr::ParseError),
+    ConfigRegexFailed(String),
+    StateInvalid(tm::ParseError),
+}
+
 impl RepBlock {
     pub fn to_string(&self, dir: Dir) -> String {
         let mut symbols_strs: Vec<String> = self.symbols.iter().map(|s| s.to_string()).collect();
@@ -39,11 +47,11 @@ impl RepBlock {
         format!("{}^{}", symbols_strs.concat(), self.rep)
     }
 
-    fn from_str(s: &str, dir: Dir) -> Result<Self, String> {
+    fn from_str(s: &str, dir: Dir) -> Result<Self, ParseError> {
         let re = Regex::new(r"^(?P<symbols>[0-9]+)\^(?P<rep>.+)$").unwrap();
         let caps = re
             .captures(s)
-            .ok_or(format!("Invalid rep block string {}", s))?;
+            .ok_or(ParseError::RepBlockRegexFailed(s.to_string()))?;
         let mut symbols: Vec<Symbol> = caps["symbols"]
             .chars()
             .map(|c| c.to_digit(10).unwrap() as Symbol)
@@ -51,7 +59,7 @@ impl RepBlock {
         if dir == Dir::Right {
             symbols.reverse();
         }
-        let rep = CountOrInf::from_str(&caps["rep"])?;
+        let rep = CountOrInf::from_str(&caps["rep"]).map_err(ParseError::RepBlockCountInvalid)?;
         Ok(RepBlock { symbols, rep })
     }
 }
@@ -229,7 +237,7 @@ impl HalfTape {
         block_strs.join(" ")
     }
 
-    fn from_str(s: &str, dir: Dir) -> Result<Self, String> {
+    fn from_str(s: &str, dir: Dir) -> Result<Self, ParseError> {
         let mut blocks: Vec<&str> = s.split(' ').filter(|x| !x.is_empty()).collect();
         if dir == Dir::Right {
             blocks.reverse();
@@ -353,28 +361,29 @@ impl fmt::Display for Config {
 }
 
 impl FromStr for Config {
-    type Err = String;
+    type Err = ParseError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let re = Regex::new(r"^((?P<tape_left>.*) +)?(<(?P<head_left>.)|(?P<head_right>.)>)( +(?P<tape_right>.*))?$").unwrap();
-        let caps = re.captures(s).ok_or("Invalid config string")?;
+        let caps = re
+            .captures(s)
+            .ok_or(ParseError::ConfigRegexFailed(s.to_string()))?;
         let dir: Dir;
         let state: State;
-        if caps.name("head_left").is_some() {
+        if let Some(head_left) = caps.name("head_left") {
             dir = Dir::Left;
-            state = State::from_str(&caps["head_left"])?;
+            state = State::from_str(head_left.as_str()).map_err(ParseError::StateInvalid)?;
         } else {
+            let head_right = caps.name("head_right").unwrap();
             dir = Dir::Right;
-            state = State::from_str(&caps["head_right"])?;
+            state = State::from_str(head_right.as_str()).map_err(ParseError::StateInvalid)?;
         }
-        fn get_default(caps: &regex::Captures, name: &str) -> String {
-            caps.name(name)
-                .map_or("".to_string(), |m| m.as_str().to_string())
-        }
+        let left_str = caps.name("tape_left").map_or("", |m| m.as_str());
+        let right_str = caps.name("tape_right").map_or("", |m| m.as_str());
         Ok(Config {
             tape: enum_map! {
-                Dir::Left => HalfTape::from_str(&get_default(&caps, "tape_left"), Dir::Left)?,
-                Dir::Right => HalfTape::from_str(&get_default(&caps, "tape_right"), Dir::Right)?,
+                Dir::Left => HalfTape::from_str(left_str, Dir::Left)?,
+                Dir::Right => HalfTape::from_str(right_str, Dir::Right)?,
             },
             state,
             dir,
