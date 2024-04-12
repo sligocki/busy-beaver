@@ -485,38 +485,91 @@ mod tests {
         //                               ->  B(0, 2 (4e+13) + 1)
         //                               ->  C(2 (4e+13), 1, 0, 1, 3)
         //                               ->  C(0, 0, 0, 1, 2 h(8e+26, 1) + 1)
+
+        // // f1(n) = 2n+5
+        // let f1 = Function::Affine { m: 2, b: 5 };
+        // // f2(n) = f1^n(1)  ~= 2^n
+        // let _f2 = Function::Repeat {
+        //     func: Box::new(f1),
+        //     base: 1,
+        // };
+        // // f3(n) = rep(\x -> f2(x+2), n)(1) ~= 2^^n
+        // let _f3 = Function::Repeat { func: Box::new(f2), base: 1 };
+        // // f4(n) = rep(\x -> f3(2x+7), n)(1) ~= 2^^^n
+        // let f4 = Function::Repeat { func: Box::new(f3), base: 1 };
+
         let rule_set = RuleSet {
             tm: TM::from_str("1RB2LA1RC3RA_1LA2RA2RB0RC_1RZ3LC1RA1RB").unwrap(),
             rules: vec![
-                chain_rule("A> 2^n+n", "1^n+n A>", 2),
-                chain_rule("C> 2^n+n", "1^n+n C>", 2),
+                // Level 0: Basic chain rules
+                chain_rule("A> 2^2n", "1^2n A>", 2),
+                chain_rule("C> 2^2n", "1^2n C>", 2),
                 chain_rule("1^n <A", "<A 2^n", 1),
+                chain_rule("B> 2^n", "2^n B>", 1),
                 // Level 1: C(a, b, c, 2k+r, 2e+1)  ->  C(a, b, c, r, 2 (e+2k) + 1)
                 Rule {
-                    init_config: Config::from_str("2^n+n <A 2^e+e+1 0^inf").unwrap(),
-                    final_config: Config::from_str("<A 2^e+e+n+n+n+n+1 0^inf").unwrap(),
+                    init_config: Config::from_str("2^2n <A 2^2e+1 0^inf").unwrap(),
+                    final_config: Config::from_str("<A 2^4n+2e+1 0^inf").unwrap(),
                     proof_base: vec![],
                     proof_inductive: vec![
-                        // 22^n+1 <A 2 22^e  --(2)-->  22^n 211 A> 22^e
-                        base_step(2),
-                        // 22^n 211 A> 22^e  -->  22^n 211 11^e A>
-                        chain_step(0, "e"),
-                        // 22^n 211 11^e A> 00  --(3)-->  22^n 211 11^e <A 21
-                        base_step(3),
-                        // 22^n 211 11^e <A 21  -->  22^n 2 <A 22^e+1 21
-                        chain_step(2, "e+e+2"),
-                        // 22^n 2 <A 22^e+1 21  --(1)-->  22^n 1 C> 22^e+1 21
+                        // 22^n+1 <A 2^2e+1  --(1)-->  22^n 21 C> 2^2e+1
                         base_step(1),
-                        // 22^n 1 C> 22^e+1 21  -->  22^n 1 11^e+1 C> 21
+                        // 22^n 21 C> 2^2e+1  -->  22^n 21 11^e C> 2
+                        chain_step(1, "e"),
+                        // 22^n 21 11^e C> 200  --(3)-->  22^n 21 11^e 11 <A 1
+                        base_step(3),
+                        // 22^n 2 1^2e+3 <A 1  -->  22^n 2 <A 2^2e+3 1
+                        chain_step(2, "2e+3"),
+                        // 22^n 2 <A 2^2e+3 1  --(1)-->  22^n 1 C> 2^2e+3 1
+                        base_step(1),
+                        // 22^n 1 C> 2^2e+3 1  -->  22^n 1 11^e+1 C> 21
                         chain_step(1, "e+1"),
                         // 22^n 1 11^e+1 C> 21  --(3)-->  22^n 1 11^e+1 <A 22
                         base_step(3),
                         // 22^n 1 11^e+1 <A 22  -->  22^n <A 2^2e+5
-                        chain_step(2, "e+e+3"),
-                        // 22^n <A 2^2e+5  -->  <A 2 22^e+2(n+1)
+                        chain_step(2, "2e+3"),
+                        // 22^n <A 2^2(e+2)+1  -->  <A 2^2(e+2(n+1))+1
                         induction_step(&[("e", "e+2")]),
                     ],
                 },
+                // Level 2: C(a, b, c, 1, 2e+1)  ->  C(a, b, 0, 1, 2 f2(c, e) + 1)
+                //   where f2(c, e) = rep(\x -> 2x+5, c)(e)  ~= 2^c
+                // Rule {
+                //     init_config: Config::from_str("01^n 12^1 <A 2^2e+1 0^inf").unwrap(),
+                //     final_config: Config::from_str("12^1 <A 2^x+x+1 0^inf").unwrap(),
+                //     // TODO: Implement once we get CountExpr::Function working.
+                //     //.subst(
+                //     //     &VarSubst::from([
+                //     //         (Variable::from_str("x").unwrap(), CountExpr::Function(f2, "n")),
+                //     //     ]),
+                //     // ),
+                //     proof_base: vec![],
+                //     proof_inductive: vec![
+                //         // TODO: Maybe apply induction first? That way we only need to equate:
+                //         //      f1(f2(n, e)) == f2(n+1, e)
+                //         // instead of
+                //         //      f2(n, f1(e)) == f2(n+1, e)
+                //         // // Induction: 01^n+1 12 <A 2^2(2e+5)+1  -->  01 12 <A 2^2x+1  for x = f2(n, e)
+                //         // induction_step(&[("e", "e")]),
+
+                //         // 01^n+1 12 <A 2^2e+1 00  -->  01^n+1 1 <A 2^2e+3 1
+                //         base_step(1),
+                //         chain_step(1, "e"),
+                //         base_step(3),
+                //         chain_step(2, "2e+3"),
+                //         // 01^n+1 1 <A 2^2e+3 1  --(3)-->  01^n 1 B> 22 2^2e+3 1
+                //         base_step(3),
+                //         chain_step(3, "2e+5"),
+                //         // 01^n 1 2^2e+5 B> 100  --(9)-->  01^n 1 2^2e+5 <A 222
+                //         base_step(9),
+                //         // Level 1: 01^n 1 2^2(e+2)+1 <A 2^3  -->  01^n 12 <A 2^2(2e+5)+1
+                //         rule_step(4, &[("n", "e+2"), ("e", "1")]),
+                //         // Induction: 01^n 12 <A 2^2(2e+5)+1  -->  12 <A 2^2x+1  for x = f2(n, 2e+5) = f2(n+1, e)
+                //         induction_step(&[("e", "2e+5")]),
+                //         // TODO: Function needs to be able to equate:
+                //         //   f2(n, f1(e)) == f2(n+1, e)
+                //     ],
+                // },
             ],
         };
         if let Err(err) = validate_rule_set(&rule_set) {
