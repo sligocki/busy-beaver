@@ -18,8 +18,8 @@ from Macro import Turing_Machine
 
 # Note: Halt will be "!"
 STATES = string.ascii_uppercase + string.ascii_lowercase + "!"
-# White, Red, Green, Blue, Magenta, Cyan, Brown/Yellow
-COLOR = [49, 41, 42, 44, 45, 46, 43]
+# White, Red, Green, Blue, Cyan, Brown/Yellow, Magenta
+COLOR = [49, 41, 42, 44, 46, 43, 45]
 
 
 def parse_config(config_str):
