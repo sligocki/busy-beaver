@@ -7,7 +7,11 @@ use crate::base::CountType;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct Variable(usize);
-pub type VarSubst = HashMap<Variable, CountExpr>;
+pub type VarSubst = VarSubstGen<CountExpr>;
+type VarSumSubst = VarSubstGen<VarSum>;
+
+#[derive(Debug, Clone)]
+pub struct VarSubstGen<T>(HashMap<Variable, T>);
 
 // Simple algebraic expression which is just a sum of variables and constants.
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -43,8 +47,8 @@ pub enum CountExpr {
     // Simple sum of variables and constants.
     // We support addition and subtraction on these.
     VarSum(VarSum),
-    // Opaque expression. We do not support addition or subtraction on these, ex.
-    Opaque(RecursiveExpr),
+    // RecursiveExpr expression. We do not support addition or subtraction on these, ex.
+    RecursiveExpr(RecursiveExpr),
 }
 
 // Count that can also be infinite (for TM block repetition counts).
@@ -59,6 +63,40 @@ pub enum ParseError {
     VariableInvalidSize(String),
     VariableInvalidChar(char),
     CountRegexFailed(String),
+}
+
+impl<T> VarSubstGen<T> {
+    #[inline]
+    pub fn get(&self, x: &Variable) -> Option<&T> {
+        self.0.get(x)
+    }
+
+    #[inline]
+    pub fn insert(&mut self, x: Variable, expr: T) {
+        self.0.insert(x, expr);
+    }
+}
+
+impl<T> Default for VarSubstGen<T> {
+    fn default() -> Self {
+        VarSubstGen(HashMap::new())
+    }
+}
+
+impl TryFrom<&VarSubst> for VarSumSubst {
+    type Error = ();
+
+    fn try_from(var_subst: &VarSubst) -> Result<Self, Self::Error> {
+        let mut new_subst = VarSumSubst::default();
+        for (x, expr) in var_subst.0.iter() {
+            if let CountExpr::VarSum(var_sum) = expr {
+                new_subst.0.insert(*x, var_sum.clone());
+            } else {
+                return Err(());
+            }
+        }
+        Ok(new_subst)
+    }
 }
 
 impl Variable {
@@ -86,13 +124,11 @@ impl VarSum {
         })
     }
 
-    pub fn subst(&self, var_subst: &VarSubst) -> VarSum {
+    pub fn subst(&self, var_subst: &VarSumSubst) -> VarSum {
         let mut new_expr = VarSum::from(self.constant);
         for (x, count) in self.var_counts.iter() {
-            let x_repl = match var_subst.get(&x) {
-                Some(CountExpr::VarSum(expr)) => expr.clone(),
-                // TODO: Implement this.
-                Some(CountExpr::Opaque(_)) => unimplemented!("Substitution of opaque expressions"),
+            let x_repl = match var_subst.0.get(&x) {
+                Some(expr) => expr.clone(),
                 None => VarSum::from(*x),
             };
             new_expr += x_repl * *count;
@@ -139,25 +175,32 @@ impl CountExpr {
     pub fn is_zero(&self) -> bool {
         match self {
             CountExpr::VarSum(expr) => expr.is_zero(),
-            CountExpr::Opaque(_) => false,
+            CountExpr::RecursiveExpr(_) => false,
         }
     }
 
     pub fn decrement(&self) -> Option<CountExpr> {
         match self {
             CountExpr::VarSum(expr) => expr.decrement().map(CountExpr::VarSum),
-            CountExpr::Opaque(_) => None,
+            CountExpr::RecursiveExpr(_) => None,
         }
     }
 
     pub fn subst(&self, var_subst: &VarSubst) -> CountExpr {
         match self {
-            CountExpr::VarSum(expr) => CountExpr::VarSum(expr.subst(var_subst)),
-            CountExpr::Opaque(expr) => CountExpr::Opaque(expr.subst(var_subst)),
+            CountExpr::VarSum(expr) => {
+                if let Ok(var_sum_subst) = VarSumSubst::try_from(var_subst) {
+                    CountExpr::VarSum(expr.subst(&var_sum_subst))
+                } else {
+                    // TODO: Convert expr to RecursiveExpr and substitute.
+                    unimplemented!("Substitution of recursive expressions")
+                }
+            }
+            CountExpr::RecursiveExpr(expr) => CountExpr::RecursiveExpr(expr.subst(var_subst)),
         }
     }
 
-    // Attempt to add (self + other). Fails if either is an opaque expression.
+    // Attempt to add (self + other). Fails if either is an opaque RecursiveExpr.
     pub fn checked_add(&self, other: &CountExpr) -> Option<CountExpr> {
         match (self, other) {
             (CountExpr::VarSum(expr), CountExpr::VarSum(other_expr)) => {
@@ -168,9 +211,9 @@ impl CountExpr {
     }
 
     // Attempt subtraction (self - other).
-    // Return None if the result is not guaranteed >= 0 (or if working with opaque expressions).
+    // Return None if the result is not guaranteed >= 0 (or if working with opaque RecursiveExpr).
     pub fn checked_sub(&self, other: &CountExpr) -> Option<CountExpr> {
-        // n - n = 0 for all n (even opaque expressions).
+        // n - n = 0 for all n (even opaque RecursiveExpr).
         if self == other {
             return Some(CountExpr::from(0));
         }
@@ -265,12 +308,14 @@ impl std::ops::Mul<CountType> for VarSum {
         match n {
             0 => VarSum::from(0),
             1 => self,
-            _ => {
-                VarSum {
-                    var_counts: self.var_counts.into_iter().map(|(x, c)| (x, c * n)).collect(),
-                    constant: self.constant * n,
-                }
-            }
+            _ => VarSum {
+                var_counts: self
+                    .var_counts
+                    .into_iter()
+                    .map(|(x, c)| (x, c * n))
+                    .collect(),
+                constant: self.constant * n,
+            },
         }
     }
 }
@@ -337,7 +382,8 @@ impl std::fmt::Display for Variable {
 
 impl std::fmt::Display for VarSum {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut terms: Vec<String> = self.var_counts
+        let mut terms: Vec<String> = self
+            .var_counts
             .iter()
             .map(|(var, count)| {
                 if *count != 1 {
@@ -369,7 +415,7 @@ impl std::fmt::Display for CountExpr {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             CountExpr::VarSum(expr) => write!(f, "{}", expr),
-            CountExpr::Opaque(expr) => write!(f, "{}", expr),
+            CountExpr::RecursiveExpr(expr) => write!(f, "{}", expr),
         }
     }
 }
@@ -533,8 +579,8 @@ mod tests {
         let ye: VarSum = y.into();
 
         // x -> 2y + 8
-        let val = CountExpr::VarSum(ye.clone() * 2 + 8.into());
-        let subst: VarSubst = [(x, val)].iter().cloned().collect();
+        let mut subst = VarSumSubst::default();
+        subst.insert(x, ye.clone() * 2 + 8.into());
 
         // 3x + 13 -> 6y + (8*3 + 13)
         let start = xe * 3 + 13.into();
@@ -645,19 +691,30 @@ mod tests {
         // Ex: x + inf - inf == 0 !
         let x = CountOrInf::from_str("x").unwrap();
         assert_eq!(
-            x.checked_add(&CountOrInf::Infinity).unwrap().checked_sub(&CountOrInf::Infinity),
+            x.checked_add(&CountOrInf::Infinity)
+                .unwrap()
+                .checked_sub(&CountOrInf::Infinity),
             Some(CountOrInf::from(0))
         );
         assert_eq!(
-            CountOrInf::from(813).checked_add(&CountOrInf::Infinity).unwrap().checked_sub(&CountOrInf::Infinity),
+            CountOrInf::from(813)
+                .checked_add(&CountOrInf::Infinity)
+                .unwrap()
+                .checked_sub(&CountOrInf::Infinity),
             Some(CountOrInf::from(0))
         );
         assert_eq!(
-            CountOrInf::Infinity.checked_add(&x).unwrap().checked_sub(&CountOrInf::Infinity),
+            CountOrInf::Infinity
+                .checked_add(&x)
+                .unwrap()
+                .checked_sub(&CountOrInf::Infinity),
             Some(CountOrInf::from(0))
         );
         assert_eq!(
-            CountOrInf::Infinity.checked_add(&CountOrInf::from(813)).unwrap().checked_sub(&CountOrInf::Infinity),
+            CountOrInf::Infinity
+                .checked_add(&CountOrInf::from(813))
+                .unwrap()
+                .checked_sub(&CountOrInf::Infinity),
             Some(CountOrInf::from(0))
         );
     }

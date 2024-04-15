@@ -192,7 +192,7 @@ fn try_apply_step_inductive(
             // Ensure that the induction variable is decreasing.
             // Note: When doing an inductive proof, we start by replacing n <- n+1 and
             // then only allow any uses of the rule itself with n <- n.
-            if var_assignment[&INDUCTION_VAR] != INDUCTION_VAR.into() {
+            if var_assignment.get(&INDUCTION_VAR) != Some(&CountExpr::var_plus(INDUCTION_VAR, 0)) {
                 return Err(StepValidationError::InductionVarNotDecreasing);
             }
             try_apply_rule(config, this_rule, var_assignment)
@@ -206,7 +206,9 @@ fn validate_rule_base(
     prev_rules: &[Rule],
 ) -> Result<(), RuleValidationError> {
     // In base case, we consider the case n <- 0.
-    let base_subst = VarSubst::from([(INDUCTION_VAR, 0.into())]);
+    let mut base_subst = VarSubst::default();
+    base_subst.insert(INDUCTION_VAR, 0.into());
+
     let mut config = rule.init_config.subst(&base_subst);
     for (step_num, step) in rule.proof_base.iter().enumerate() {
         config = try_apply_step_base(tm, &config, step, prev_rules)
@@ -231,10 +233,9 @@ fn validate_rule_inductive(
     prev_rules: &[Rule],
 ) -> Result<(), RuleValidationError> {
     // In inductive case, we consider the case n <- m+1 (and only allow use of this rule where n <- m).
-    let ind_subst = VarSubst::from([(
-        INDUCTION_VAR,
-        CountExpr::var_plus(INDUCTION_VAR, 1),
-    )]);
+    let mut ind_subst = VarSubst::default();
+    ind_subst.insert(INDUCTION_VAR, CountExpr::var_plus(INDUCTION_VAR, 1));
+
     let mut config = rule.init_config.subst(&ind_subst);
     for (step_num, step) in rule.proof_inductive.iter().enumerate() {
         config = try_apply_step_inductive(tm, &config, step, rule, prev_rules)
@@ -288,15 +289,14 @@ mod tests {
     }
 
     fn load_vars(var_assign: &[(&str, &str)]) -> VarSubst {
-        var_assign
-            .iter()
-            .map(|(var, count)| {
-                (
-                    Variable::from_str(var).unwrap(),
-                    CountExpr::from_str(count).unwrap(),
-                )
-            })
-            .collect()
+        let mut var_subst = VarSubst::default();
+        for (var, count) in var_assign {
+            var_subst.insert(
+                Variable::from_str(var).unwrap(),
+                CountExpr::from_str(count).unwrap(),
+            );
+        }
+        var_subst
     }
 
     fn rule_step(rule_num: RuleIdType, var_assign: &[(&str, &str)]) -> InductiveProofStep {
@@ -496,7 +496,7 @@ mod tests {
         // f2(x) = f1^x(1)  ~= 2^x
         let _f2 = Function {
             bound_var: "x".parse().unwrap(),
-            expr: CountExpr::Opaque(RecursiveExpr {
+            expr: CountExpr::RecursiveExpr(RecursiveExpr {
                 func: Box::new(f1),
                 num_repeats: "x".parse().unwrap(),
                 base: 1,
@@ -598,14 +598,12 @@ mod tests {
                 chain_rule("4^n <A", "<A 1^n", 1),
                 chain_rule("B> 1^n", "3^n B>", 1),
                 chain_rule("3^n <A", "<A 4^n", 1),
-
                 // 0^inf 34 A(2n)  ->  0^inf 1344 A(3n+2)
                 Rule {
                     init_config: Config::from_str("0^inf 34^1 4^4n B> 211412^1 0^inf").unwrap(),
-                    final_config: Config::from_str("0^inf 1344^1 4^6n+4 B> 211412^1 0^inf").unwrap(),
-                    proof_base: vec![
-                        BaseProofStep::TMSteps(80),
-                    ],
+                    final_config: Config::from_str("0^inf 1344^1 4^6n+4 B> 211412^1 0^inf")
+                        .unwrap(),
+                    proof_base: vec![BaseProofStep::TMSteps(80)],
                     proof_inductive: vec![
                         base_step(3),
                         chain_step(0, "4n+4"),
