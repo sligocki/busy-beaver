@@ -4,9 +4,10 @@ use enum_map::{enum_map, EnumMap};
 use regex::Regex;
 use std::fmt;
 use std::str::FromStr;
+use thiserror::Error;
 
 use crate::base::CountType;
-use crate::count_expr::{self, CountOrInf, VarSubst};
+use crate::count_expr::{self, CountOrInf, VarSubst, VarSubstError};
 use crate::tm::{self, Dir, State, Symbol, Transition, BLANK_SYMBOL, START_STATE, TM};
 
 // A block of TM symbols with a repetition count. Ex:
@@ -30,15 +31,26 @@ pub struct Config {
     pub dir: Dir,
 }
 
-#[derive(Debug)]
+#[derive(Error, Debug)]
 pub enum ParseError {
+    #[error("Failed to parse RepBlock: {0}")]
     RepBlockRegexFailed(String),
-    RepBlockCountInvalid(count_expr::ParseError),
+    #[error("Invalid RepBlock count: {0}")]
+    RepBlockCountInvalid(#[from] count_expr::ParseError),
+    #[error("Failed to parse Config: {0}")]
     ConfigRegexFailed(String),
-    StateInvalid(tm::ParseError),
+    #[error("Invalid State: {0}")]
+    StateInvalid(#[from] tm::ParseError),
 }
 
 impl RepBlock {
+    pub fn subst(&self, var_subst: &VarSubst) -> Result<RepBlock, VarSubstError> {
+        Ok(RepBlock {
+            symbols: self.symbols.clone(),
+            rep: self.rep.subst(var_subst)?,
+        })
+    }
+
     pub fn to_string(&self, dir: Dir) -> String {
         let mut symbols_strs: Vec<String> = self.symbols.iter().map(|s| s.to_string()).collect();
         if dir == Dir::Right {
@@ -119,16 +131,13 @@ impl HalfTape {
         }
     }
 
-    pub fn subst(&self, var_subst: &VarSubst) -> HalfTape {
-        HalfTape(
+    pub fn subst(&self, var_subst: &VarSubst) -> Result<HalfTape, VarSubstError> {
+        Ok(HalfTape(
             self.0
                 .iter()
-                .map(|block| RepBlock {
-                    symbols: block.symbols.clone(),
-                    rep: block.rep.subst(var_subst),
-                })
-                .collect(),
-        )
+                .map(|block| block.subst(var_subst))
+                .collect::<Result<Vec<RepBlock>, VarSubstError>>()?,
+        ))
     }
 
     // Return a normalized version of this tape.
@@ -306,15 +315,15 @@ impl Config {
         Ok(())
     }
 
-    pub fn subst(&self, var_subst: &VarSubst) -> Config {
-        Config {
+    pub fn subst(&self, var_subst: &VarSubst) -> Result<Config, VarSubstError> {
+        Ok(Config {
             tape: enum_map! {
-                Dir::Left => self.tape[Dir::Left].subst(var_subst),
-                Dir::Right => self.tape[Dir::Right].subst(var_subst),
+                Dir::Left => self.tape[Dir::Left].subst(var_subst)?,
+                Dir::Right => self.tape[Dir::Right].subst(var_subst)?,
             },
             state: self.state,
             dir: self.dir,
-        }
+        })
     }
 
     // Check if this config contains `old` (as a complete or subconfig).

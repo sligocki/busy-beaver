@@ -2,6 +2,7 @@ use std::collections::{BTreeMap, HashMap};
 use std::str::FromStr;
 
 use regex::Regex;
+use thiserror::Error;
 
 use crate::base::CountType;
 
@@ -11,7 +12,7 @@ pub type VarSubst = VarSubstGen<CountExpr>;
 type VarSumSubst = VarSubstGen<VarSum>;
 
 #[derive(Debug, Clone)]
-pub struct VarSubstGen<T>(HashMap<Variable, T>);
+pub struct VarSubstGen<T: Clone>(HashMap<Variable, T>);
 
 // Simple algebraic expression which is just a sum of variables and constants.
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -58,14 +59,26 @@ pub enum CountOrInf {
     Infinity,
 }
 
-#[derive(Debug)]
+#[derive(Error, Debug)]
+pub enum VarSubstError {
+    // TODO: Use this.
+    #[error("Variable {0} not found in substitution")]
+    MissingVariable(Variable),
+    #[error("Unsupported substitution of recursive expression")]
+    UnsupportedRecursiveExprSubst,
+}
+
+#[derive(Error, Debug)]
 pub enum ParseError {
+    #[error("Variable name must be exactly one character: {0}")]
     VariableInvalidSize(String),
+    #[error("Invalid variable character: {0}")]
     VariableInvalidChar(char),
+    #[error("Failed to parse count expression: {0}")]
     CountRegexFailed(String),
 }
 
-impl<T> VarSubstGen<T> {
+impl<T: Clone> VarSubstGen<T> {
     #[inline]
     pub fn get(&self, x: &Variable) -> Option<&T> {
         self.0.get(x)
@@ -75,9 +88,17 @@ impl<T> VarSubstGen<T> {
     pub fn insert(&mut self, x: Variable, expr: T) {
         self.0.insert(x, expr);
     }
+
+    // Return new substitution with x removed.
+    // Useful for substituting inside a function where x is bound.
+    pub fn without(&self, x: &Variable) -> Self {
+        let mut new_subst: Self = self.clone();
+        new_subst.0.remove(x);
+        new_subst
+    }
 }
 
-impl<T> Default for VarSubstGen<T> {
+impl<T: Clone> Default for VarSubstGen<T> {
     fn default() -> Self {
         VarSubstGen(HashMap::new())
     }
@@ -157,8 +178,19 @@ impl VarSum {
 }
 
 impl RecursiveExpr {
-    pub fn subst(&self, _var_subst: &VarSubst) -> RecursiveExpr {
-        unimplemented!("Substitution of recursive expressions");
+    pub fn subst(&self, var_subst: &VarSubst) -> Result<RecursiveExpr, VarSubstError> {
+        let new_func = Function {
+            bound_var: self.func.bound_var,
+            expr: self
+                .func
+                .expr
+                .subst(&var_subst.without(&self.func.bound_var))?,
+        };
+        Ok(RecursiveExpr {
+            func: Box::new(new_func),
+            num_repeats: self.num_repeats.clone(), // TODO: .subst(var_subst.try_into()?),
+            base: self.base,
+        })
     }
 }
 
@@ -186,17 +218,17 @@ impl CountExpr {
         }
     }
 
-    pub fn subst(&self, var_subst: &VarSubst) -> CountExpr {
+    pub fn subst(&self, var_subst: &VarSubst) -> Result<CountExpr, VarSubstError> {
         match self {
             CountExpr::VarSum(expr) => {
                 if let Ok(var_sum_subst) = VarSumSubst::try_from(var_subst) {
-                    CountExpr::VarSum(expr.subst(&var_sum_subst))
+                    Ok(CountExpr::VarSum(expr.subst(&var_sum_subst)))
                 } else {
                     // TODO: Convert expr to RecursiveExpr and substitute.
-                    unimplemented!("Substitution of recursive expressions")
+                    Err(VarSubstError::UnsupportedRecursiveExprSubst)
                 }
             }
-            CountExpr::RecursiveExpr(expr) => CountExpr::RecursiveExpr(expr.subst(var_subst)),
+            CountExpr::RecursiveExpr(expr) => expr.subst(var_subst).map(CountExpr::RecursiveExpr),
         }
     }
 
@@ -243,10 +275,10 @@ impl CountOrInf {
         }
     }
 
-    pub fn subst(&self, var_subst: &VarSubst) -> CountOrInf {
+    pub fn subst(&self, var_subst: &VarSubst) -> Result<CountOrInf, VarSubstError> {
         match self {
-            CountOrInf::Finite(expr) => CountOrInf::Finite(expr.subst(var_subst)),
-            CountOrInf::Infinity => CountOrInf::Infinity,
+            CountOrInf::Finite(expr) => expr.subst(var_subst).map(CountOrInf::Finite),
+            CountOrInf::Infinity => Ok(CountOrInf::Infinity),
         }
     }
 

@@ -4,8 +4,10 @@ use std::result::Result;
 
 use crate::base::CountType;
 use crate::config::Config;
-use crate::count_expr::{CountExpr, VarSubst, Variable};
+use crate::count_expr::{CountExpr, VarSubst, VarSubstError, Variable};
 use crate::tm::TM;
+
+use thiserror::Error;
 
 type RuleIdType = usize;
 const INDUCTION_VAR: Variable = Variable::new(0);
@@ -47,26 +49,33 @@ struct RuleSet {
 }
 
 // Errors while validating one step in a rule.
-#[derive(Debug)]
+#[derive(Error, Debug)]
 enum StepValidationError {
-    // Error occurred while applying a TM step.
+    #[error("Error applying {1} TM steps to config {0}: {2}")]
     TMStepError(Config, CountType, String),
-    // Attempting to use a rule that is not yet defined.
+    #[error("Rule {0} is not yet defined")]
     RuleNotYetDefined(RuleIdType),
-    // Attempting to apply induction with incorrect induction variable assignment.
+    #[error("Induction variable must decrease correctly")]
     InductionVarNotDecreasing,
-    // Configuration does not match rule step's initial configuration.
+    #[error("Configuration does not match rule initial config {0} vs. {1}: {2}")]
     RuleConfigMismatch(Config, Config, String),
+    #[error("Variable substitution error: {0}")]
+    VarSubstError(#[from] VarSubstError),
 }
 
 // Errors while evaluating a rule.
-#[derive(Debug)]
+#[derive(Error, Debug)]
 enum RuleValidationError {
+    #[error("Step {step_num}: {error}")]
     StepError {
         step_num: usize,
         error: StepValidationError,
     },
-    // Configuration does not match the final configuration for this rule.
+    #[error("Error substituting variables in initial config: {0}")]
+    InitConfigVarSubstError(VarSubstError),
+    #[error("Error substituting variables in final config: {0}")]
+    FinalConfigVarSubstError(VarSubstError),
+    #[error("Final configuration mismatch: {actual_config} != {expected_config}")]
     FinalConfigMismatch {
         actual_config: Config,
         expected_config: Config,
@@ -74,65 +83,11 @@ enum RuleValidationError {
 }
 
 #[allow(dead_code)]
-#[derive(Debug)]
+#[derive(Error, Debug)]
+#[error("Validation error: Rule {rule_id}: {error}")]
 struct ValidationError {
-    // Rule that failed validation.
     rule_id: RuleIdType,
-    // Specific error that occurred.
     error: RuleValidationError,
-}
-
-impl std::fmt::Display for StepValidationError {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        match self {
-            StepValidationError::TMStepError(config, n, error) => {
-                write!(
-                    f,
-                    "Error applying {} TM steps to config {}: {}",
-                    n, config, error
-                )
-            }
-            StepValidationError::RuleNotYetDefined(rule_id) => {
-                write!(f, "Rule {} is not yet defined", rule_id)
-            }
-            StepValidationError::InductionVarNotDecreasing => {
-                write!(f, "Induction variable must decrease correctly")
-            }
-            StepValidationError::RuleConfigMismatch(config, expected, error) => {
-                write!(
-                    f,
-                    "Configuration does not match rule initial config {} vs. {}: {}",
-                    config, expected, error
-                )
-            }
-        }
-    }
-}
-
-impl std::fmt::Display for RuleValidationError {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        match self {
-            RuleValidationError::StepError { step_num, error } => {
-                write!(f, "Step {}: {}", step_num, error)
-            }
-            RuleValidationError::FinalConfigMismatch {
-                actual_config,
-                expected_config,
-            } => {
-                write!(
-                    f,
-                    "Final configuration doesn't match expected {} != {}",
-                    actual_config, expected_config
-                )
-            }
-        }
-    }
-}
-
-impl std::fmt::Display for ValidationError {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "Validation error: Rule {}: {}", self.rule_id, self.error)
-    }
 }
 
 fn try_apply_rule(
@@ -143,8 +98,14 @@ fn try_apply_rule(
     // TODO: Check that var_subst are all guaranteed to be positive.
     // Currently, we only allow equality between rules if Tapes are specified identically.
     // TODO: Support equality even if compression is different.
-    let init_config = rule.init_config.subst(var_subst);
-    let final_config = rule.final_config.subst(var_subst);
+    let init_config = rule
+        .init_config
+        .subst(var_subst)
+        .map_err(StepValidationError::VarSubstError)?;
+    let final_config = rule
+        .final_config
+        .subst(var_subst)
+        .map_err(StepValidationError::VarSubstError)?;
     config
         .replace(&init_config, &final_config)
         .map_err(|err| StepValidationError::RuleConfigMismatch(config.clone(), init_config, err))
@@ -209,12 +170,18 @@ fn validate_rule_base(
     let mut base_subst = VarSubst::default();
     base_subst.insert(INDUCTION_VAR, 0.into());
 
-    let mut config = rule.init_config.subst(&base_subst);
+    let mut config = rule
+        .init_config
+        .subst(&base_subst)
+        .map_err(RuleValidationError::InitConfigVarSubstError)?;
     for (step_num, step) in rule.proof_base.iter().enumerate() {
         config = try_apply_step_base(tm, &config, step, prev_rules)
             .map_err(|error| RuleValidationError::StepError { step_num, error })?;
     }
-    let expected_final = rule.final_config.subst(&base_subst);
+    let expected_final = rule
+        .final_config
+        .subst(&base_subst)
+        .map_err(RuleValidationError::FinalConfigVarSubstError)?;
     if config.equivalent_to(&expected_final) {
         // Success. Every step of every rule was valid and the final config matches.
         // This is a valid rule.
@@ -236,12 +203,18 @@ fn validate_rule_inductive(
     let mut ind_subst = VarSubst::default();
     ind_subst.insert(INDUCTION_VAR, CountExpr::var_plus(INDUCTION_VAR, 1));
 
-    let mut config = rule.init_config.subst(&ind_subst);
+    let mut config = rule
+        .init_config
+        .subst(&ind_subst)
+        .map_err(RuleValidationError::InitConfigVarSubstError)?;
     for (step_num, step) in rule.proof_inductive.iter().enumerate() {
         config = try_apply_step_inductive(tm, &config, step, rule, prev_rules)
             .map_err(|error| RuleValidationError::StepError { step_num, error })?;
     }
-    let expected_final = rule.final_config.subst(&ind_subst);
+    let expected_final = rule
+        .final_config
+        .subst(&ind_subst)
+        .map_err(RuleValidationError::FinalConfigVarSubstError)?;
     if config.equivalent_to(&expected_final) {
         // Success. Every step of every rule was valid and the final config matches.
         // This is a valid rule.

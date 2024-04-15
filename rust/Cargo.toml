@@ -8,4 +8,5 @@ edition = "2021"
 [dependencies]
 enum-map = "2.5.0"
 regex = "1.10.4"
+thiserror = "1.0.58"
 # rug = "1.19.2"

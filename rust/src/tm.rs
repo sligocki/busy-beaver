@@ -4,6 +4,7 @@ use std::slice::Iter;
 use std::str::FromStr;
 
 use enum_map::Enum;
+use thiserror::Error;
 
 pub type Symbol = u8;
 pub type RunState = u8;
@@ -38,11 +39,15 @@ pub struct TM {
     transitions: Vec<Vec<Transition>>,
 }
 
-#[derive(Debug)]
+#[derive(Error, Debug)]
 pub enum ParseError {
+    #[error("Invalid direction: {0}")]
     DirectionInvalid(String),
+    #[error("State must be one char: {0}")]
     StateInvalidSize(String),
+    #[error("Invalid state char: {0}")]
     StateInvalidChar(char),
+    #[error("Transition must be exactly 3 chars: {0}")]
     TransInvalidSize(String),
 }
 
