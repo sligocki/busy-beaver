@@ -17,9 +17,24 @@ pub struct VarSum {
     constant: CountType,
 }
 
-// TODO:
+// Function is represented by `bound_var` and `expr`.
+// Value of `f(n)` is equivalent to `expr.subst({bound_var: n})`.
+// TODO: Support function composition.
 #[derive(Debug, Clone, Eq, PartialEq)]
-pub struct RecursiveExpr;
+pub struct Function {
+    pub bound_var: Variable,
+    pub expr: CountExpr,
+}
+
+// Complex algebraic expression represented as an unexpended formula.
+// Specifically repeated application of a function.
+// Value is `func^num_repeats(base)`.
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub struct RecursiveExpr {
+    pub func: Box<Function>,
+    pub num_repeats: VarSum,
+    pub base: CountType,
+}
 
 // Representation for a broad concept of count ranging from
 // Concrete binary integers to formulas that may or may not contain variables.

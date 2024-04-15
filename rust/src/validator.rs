@@ -278,6 +278,8 @@ fn validate_rule_set(rule_set: &RuleSet) -> Result<(), ValidationError> {
 mod tests {
     use std::str::FromStr;
 
+    use crate::count_expr::{Function, RecursiveExpr};
+
     use super::*;
 
     // Helper functions to create proof steps of various kinds.
@@ -486,16 +488,23 @@ mod tests {
         //                               ->  C(2 (4e+13), 1, 0, 1, 3)
         //                               ->  C(0, 0, 0, 1, 2 h(8e+26, 1) + 1)
 
-        // // f1(n) = 2n+5
-        // let f1 = Function::Affine { m: 2, b: 5 };
-        // // f2(n) = f1^n(1)  ~= 2^n
-        // let _f2 = Function::Repeat {
-        //     func: Box::new(f1),
-        //     base: 1,
-        // };
-        // // f3(n) = rep(\x -> f2(x+2), n)(1) ~= 2^^n
+        // f1(x) = 2x+5
+        let f1 = Function {
+            bound_var: "x".parse().unwrap(),
+            expr: "2x+5".parse().unwrap(),
+        };
+        // f2(x) = f1^x(1)  ~= 2^x
+        let _f2 = Function {
+            bound_var: "x".parse().unwrap(),
+            expr: CountExpr::Opaque(RecursiveExpr {
+                func: Box::new(f1),
+                num_repeats: "x".parse().unwrap(),
+                base: 1,
+            }),
+        };
+        // // f3(x) = rep(\x -> f2(x+2), x)(1) ~= 2^^x
         // let _f3 = Function::Repeat { func: Box::new(f2), base: 1 };
-        // // f4(n) = rep(\x -> f3(2x+7), n)(1) ~= 2^^^n
+        // // f4(x) = rep(\x -> f3(2x+7), x)(1) ~= 2^^^x
         // let f4 = Function::Repeat { func: Box::new(f3), base: 1 };
 
         let rule_set = RuleSet {
@@ -570,6 +579,43 @@ mod tests {
                 //         //   f2(n, f1(e)) == f2(n+1, e)
                 //     ],
                 // },
+            ],
+        };
+        if let Err(err) = validate_rule_set(&rule_set) {
+            panic!("{}", err);
+        }
+    }
+
+    #[ignore = "not yet working"]
+    #[test]
+    fn test_25_dyuan() {
+        // @dyuan01's analysis of a 2x5 holdout.
+        //      https://discord.com/channels/960643023006490684/1084047886494470185/1229293635191832657
+        // A(n) = 44^n B> 211412 0^inf
+        let rule_set = RuleSet {
+            tm: TM::from_str("1RB2LB---4LA1LA_1LA3RB0RA4RB3LB").unwrap(),
+            rules: vec![
+                chain_rule("4^n <A", "<A 1^n", 1),
+                chain_rule("B> 1^n", "3^n B>", 1),
+                chain_rule("3^n <A", "<A 4^n", 1),
+
+                // 0^inf 34 A(2n)  ->  0^inf 1344 A(3n+2)
+                Rule {
+                    init_config: Config::from_str("0^inf 34^1 4^4n B> 211412^1 0^inf").unwrap(),
+                    final_config: Config::from_str("0^inf 1344^1 4^6n+4 B> 211412^1 0^inf").unwrap(),
+                    proof_base: vec![
+                        BaseProofStep::TMSteps(80),
+                    ],
+                    proof_inductive: vec![
+                        base_step(3),
+                        chain_step(0, "4n+4"),
+                        base_step(6),
+                        chain_step(1, "4n+6"),
+                        base_step(3),
+                        chain_step(2, "4n+6"),
+                        // TODO
+                    ],
+                },
             ],
         };
         if let Err(err) = validate_rule_set(&rule_set) {
