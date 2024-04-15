@@ -79,6 +79,7 @@ impl HalfTape {
     // Pop the top symbol from this half-tape if possible.
     // Returns None if the tape is empty or if the top symbol is ambiguous (based on variable assignments).
     pub fn pop_symbol(&mut self) -> Option<Symbol> {
+        *self = self.normalize();
         match &mut self.0[..] {
             [] => None, // Cannot pop from empty tape.
             [.., RepBlock { rep, symbols }] => {
