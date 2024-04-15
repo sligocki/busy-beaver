@@ -140,9 +140,10 @@ impl HalfTape {
             if !block.symbols.is_empty() && !block.rep.is_zero() {
                 if let Some(last_block) = new_blocks.last_mut() {
                     if last_block.symbols == block.symbols {
-                        // Combine adjacent blocks with the same symbols.
-                        last_block.rep += block.rep.clone();
-                        continue;
+                        if let Some(n) = last_block.rep.checked_add(&block.rep) {
+                            last_block.rep = n;
+                            continue;
+                        }
                     }
                 }
                 new_blocks.push(block.clone());

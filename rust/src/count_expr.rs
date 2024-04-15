@@ -112,6 +112,15 @@ impl RecursiveExpr {
 }
 
 impl CountExpr {
+    // Convenience function for: x + n
+    #[inline]
+    pub fn var_plus(x: Variable, n: CountType) -> CountExpr {
+        CountExpr::VarSum(VarSum {
+            var_counts: [(x, 1)].iter().cloned().collect(),
+            constant: n,
+        })
+    }
+
     pub fn is_zero(&self) -> bool {
         match self {
             CountExpr::VarSum(expr) => expr.is_zero(),

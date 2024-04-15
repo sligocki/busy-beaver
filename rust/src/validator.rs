@@ -233,7 +233,7 @@ fn validate_rule_inductive(
     // In inductive case, we consider the case n <- m+1 (and only allow use of this rule where n <- m).
     let ind_subst = VarSubst::from([(
         INDUCTION_VAR,
-        CountExpr::from(INDUCTION_VAR) + CountExpr::from(1),
+        CountExpr::var_plus(INDUCTION_VAR, 1),
     )]);
     let mut config = rule.init_config.subst(&ind_subst);
     for (step_num, step) in rule.proof_inductive.iter().enumerate() {
