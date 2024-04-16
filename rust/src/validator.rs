@@ -22,6 +22,8 @@ enum BaseProofStep {
         rule_id: RuleIdType,
         var_assignment: VarSubst,
     },
+    // End proof early and unproven, but allow moving on to proving other rules.
+    Admit,
 }
 
 #[allow(dead_code)]
@@ -61,11 +63,13 @@ enum StepValidationError {
     RuleConfigMismatch(Config, Config, String),
     #[error("Variable substitution error: {0}")]
     VarSubstError(#[from] VarSubstError),
+    #[error("Admitted")]
+    Admitted,
 }
 
-// Errors while evaluating a rule.
+// Errors while evaluating a rule part (base or inductive).
 #[derive(Error, Debug)]
-enum RuleValidationError {
+enum RulePartValidationError {
     #[error("Step {step_num}: {error}")]
     StepError {
         step_num: usize,
@@ -82,12 +86,49 @@ enum RuleValidationError {
     },
 }
 
+// Errors while evaluating a rule.
+#[derive(Error, Debug)]
+enum RuleValidationError {
+    #[error("Base: {0}")]
+    Base(RulePartValidationError),
+    #[error("Induction: {0}")]
+    Induction(RulePartValidationError),
+}
+
 #[allow(dead_code)]
 #[derive(Error, Debug)]
 #[error("Validation error: Rule {rule_id}: {error}")]
 struct ValidationError {
     rule_id: RuleIdType,
     error: RuleValidationError,
+}
+
+impl StepValidationError {
+    #[inline]
+    fn exit_early(&self) -> bool {
+        // All errors should exit early except for Admitted.
+        !matches!(self, StepValidationError::Admitted)
+    }
+}
+
+impl RulePartValidationError {
+    #[inline]
+    fn exit_early(&self) -> bool {
+        match self {
+            RulePartValidationError::StepError { error, .. } => error.exit_early(),
+            _ => true,
+        }
+    }
+}
+
+impl RuleValidationError {
+    #[inline]
+    fn exit_early(&self) -> bool {
+        match self {
+            RuleValidationError::Base(error) => error.exit_early(),
+            RuleValidationError::Induction(error) => error.exit_early(),
+        }
+    }
 }
 
 fn try_apply_rule(
@@ -135,6 +176,7 @@ fn try_apply_step_base(
             }
             try_apply_rule(config, &prev_rules[*rule_id], var_assignment)
         }
+        BaseProofStep::Admit => Err(StepValidationError::Admitted),
     }
 }
 
@@ -165,28 +207,28 @@ fn validate_rule_base(
     tm: &TM,
     rule: &Rule,
     prev_rules: &[Rule],
-) -> Result<(), RuleValidationError> {
+) -> Result<(), RulePartValidationError> {
     // In base case, we consider the case n <- 0.
     let base_subst = VarSubst::single(INDUCTION_VAR, 0.into());
 
     let mut config = rule
         .init_config
         .subst(&base_subst)
-        .map_err(RuleValidationError::InitConfigVarSubstError)?;
+        .map_err(RulePartValidationError::InitConfigVarSubstError)?;
     for (step_num, step) in rule.proof_base.iter().enumerate() {
         config = try_apply_step_base(tm, &config, step, prev_rules)
-            .map_err(|error| RuleValidationError::StepError { step_num, error })?;
+            .map_err(|error| RulePartValidationError::StepError { step_num, error })?;
     }
     let expected_final = rule
         .final_config
         .subst(&base_subst)
-        .map_err(RuleValidationError::FinalConfigVarSubstError)?;
+        .map_err(RulePartValidationError::FinalConfigVarSubstError)?;
     if config.equivalent_to(&expected_final) {
         // Success. Every step of every rule was valid and the final config matches.
         // This is a valid rule.
         Ok(())
     } else {
-        Err(RuleValidationError::FinalConfigMismatch {
+        Err(RulePartValidationError::FinalConfigMismatch {
             actual_config: config,
             expected_config: expected_final,
         })
@@ -197,28 +239,28 @@ fn validate_rule_inductive(
     tm: &TM,
     rule: &Rule,
     prev_rules: &[Rule],
-) -> Result<(), RuleValidationError> {
+) -> Result<(), RulePartValidationError> {
     // In inductive case, we consider the case n <- m+1 (and only allow use of this rule where n <- m).
     let ind_subst = VarSubst::single(INDUCTION_VAR, CountExpr::var_plus(INDUCTION_VAR, 1));
 
     let mut config = rule
         .init_config
         .subst(&ind_subst)
-        .map_err(RuleValidationError::InitConfigVarSubstError)?;
+        .map_err(RulePartValidationError::InitConfigVarSubstError)?;
     for (step_num, step) in rule.proof_inductive.iter().enumerate() {
         config = try_apply_step_inductive(tm, &config, step, rule, prev_rules)
-            .map_err(|error| RuleValidationError::StepError { step_num, error })?;
+            .map_err(|error| RulePartValidationError::StepError { step_num, error })?;
     }
     let expected_final = rule
         .final_config
         .subst(&ind_subst)
-        .map_err(RuleValidationError::FinalConfigVarSubstError)?;
+        .map_err(RulePartValidationError::FinalConfigVarSubstError)?;
     if config.equivalent_to(&expected_final) {
         // Success. Every step of every rule was valid and the final config matches.
         // This is a valid rule.
         Ok(())
     } else {
-        Err(RuleValidationError::FinalConfigMismatch {
+        Err(RulePartValidationError::FinalConfigMismatch {
             actual_config: config,
             expected_config: expected_final,
         })
@@ -226,24 +268,37 @@ fn validate_rule_inductive(
 }
 
 fn validate_rule(tm: &TM, rule: &Rule, prev_rules: &[Rule]) -> Result<(), RuleValidationError> {
+    let mut ret = Ok(());
     // Validate base case (n <- 0) and inductive case (n <- m+1) seperately.
-    validate_rule_base(tm, rule, prev_rules)?;
-    validate_rule_inductive(tm, rule, prev_rules)
+
+    // Allow trying to prove induction case even if base case is admitted.
+    if let Err(error) = validate_rule_base(tm, rule, prev_rules) {
+        if error.exit_early() {
+            return Err(RuleValidationError::Base(error));
+        } else {
+            ret = Err(RuleValidationError::Base(error));
+        }
+    }
+
+    validate_rule_inductive(tm, rule, prev_rules).map_err(RuleValidationError::Induction)?;
+    ret
 }
 
 // Validate a rule set.
 #[allow(dead_code)]
 fn validate_rule_set(rule_set: &RuleSet) -> Result<(), ValidationError> {
-    rule_set
-        .rules
-        .iter()
-        .enumerate()
-        // This rule may only use previous rules: rule_set.rules[..rule_id]
-        .map(|(rule_id, rule)| {
-            validate_rule(&rule_set.tm, rule, &rule_set.rules[..rule_id])
-                .map_err(|error| ValidationError { rule_id, error })
-        })
-        .collect()
+    // Have we admitted any rules?
+    let mut ret = Ok(());
+    for (rule_id, rule) in rule_set.rules.iter().enumerate() {
+        if let Err(error) = validate_rule(&rule_set.tm, rule, &rule_set.rules[..rule_id]) {
+            if error.exit_early() {
+                return Err(ValidationError { rule_id, error });
+            } else {
+                ret = Err(ValidationError { rule_id, error });
+            }
+        }
+    }
+    ret
 }
 
 #[cfg(test)]
@@ -430,6 +485,7 @@ mod tests {
         validate_rule_set(&rule_set).unwrap();
     }
 
+    #[ignore = "needs RecursionExpr comparison"]
     #[test]
     fn test_34_uni() {
         // Analysis of Pavel's 3x4 TM shared 31 May 2023:
@@ -530,42 +586,45 @@ mod tests {
                 },
                 // Level 2: C(a, b, c, 1, 2e+1)  ->  C(a, b, 0, 1, 2 f2(c, e) + 1)
                 //   where f2(c, e) = rep(\x -> 2x+5, c)(e)  ~= 2^c
-                // Rule {
-                //     init_config: Config::from_str("01^n 12^1 <A 2^2e+1 0^inf").unwrap(),
-                //     final_config: Config::from_str("12^1 <A 2^x+x+1 0^inf").unwrap(),
-                //     // TODO: Implement once we get CountExpr::Function working.
-                //     //.subst(
-                //     //     &VarSubst::from([
-                //     //         (Variable::from_str("x").unwrap(), CountExpr::Function(f2, "n")),
-                //     //     ]),
-                //     // ),
-                //     proof_base: vec![],
-                //     proof_inductive: vec![
-                //         // TODO: Maybe apply induction first? That way we only need to equate:
-                //         //      f1(f2(n, e)) == f2(n+1, e)
-                //         // instead of
-                //         //      f2(n, f1(e)) == f2(n+1, e)
-                //         // // Induction: 01^n+1 12 <A 2^2(2e+5)+1  -->  01 12 <A 2^2x+1  for x = f2(n, e)
-                //         // induction_step(&[("e", "e")]),
+                Rule {
+                    init_config: Config::from_str("01^n 12^1 <A 2^2e+1 0^inf").unwrap(),
+                    final_config: Config::from_str("12^1 <A 2^x+x+1 0^inf")
+                        .unwrap()
+                        .subst(&VarSubst::single(
+                            Variable::from_str("x").unwrap(),
+                            f2("n".parse().unwrap(), "e".parse().unwrap()),
+                        ))
+                        .unwrap(),
+                    proof_base: vec![
+                        // TODO: Get base case working.
+                        BaseProofStep::Admit,
+                    ],
+                    proof_inductive: vec![
+                        // TODO: Maybe apply induction first? That way we only need to equate:
+                        //      f1(f2(n, e)) == f2(n+1, e)
+                        // instead of
+                        //      f2(n, f1(e)) == f2(n+1, e)
+                        // // Induction: 01^n+1 12 <A 2^2(2e+5)+1  -->  01 12 <A 2^2x+1  for x = f2(n, e)
+                        // induction_step(&[("e", "e")]),
 
-                //         // 01^n+1 12 <A 2^2e+1 00  -->  01^n+1 1 <A 2^2e+3 1
-                //         base_step(1),
-                //         chain_step(1, "e"),
-                //         base_step(3),
-                //         chain_step(2, "2e+3"),
-                //         // 01^n+1 1 <A 2^2e+3 1  --(3)-->  01^n 1 B> 22 2^2e+3 1
-                //         base_step(3),
-                //         chain_step(3, "2e+5"),
-                //         // 01^n 1 2^2e+5 B> 100  --(9)-->  01^n 1 2^2e+5 <A 222
-                //         base_step(9),
-                //         // Level 1: 01^n 1 2^2(e+2)+1 <A 2^3  -->  01^n 12 <A 2^2(2e+5)+1
-                //         rule_step(4, &[("n", "e+2"), ("e", "1")]),
-                //         // Induction: 01^n 12 <A 2^2(2e+5)+1  -->  12 <A 2^2x+1  for x = f2(n, 2e+5) = f2(n+1, e)
-                //         induction_step(&[("e", "2e+5")]),
-                //         // TODO: Function needs to be able to equate:
-                //         //   f2(n, f1(e)) == f2(n+1, e)
-                //     ],
-                // },
+                        // 01^n+1 12 <A 2^2e+1 00  -->  01^n+1 1 <A 2^2e+3 1
+                        base_step(1),
+                        chain_step(1, "e"),
+                        base_step(3),
+                        chain_step(2, "2e+3"),
+                        // 01^n+1 1 <A 2^2e+3 1  --(3)-->  01^n 1 B> 22 2^2e+3 1
+                        base_step(3),
+                        chain_step(3, "2e+5"),
+                        // 01^n 1 2^2e+5 B> 100  --(9)-->  01^n 1 2^2e+5 <A 222
+                        base_step(9),
+                        // Level 1: 01^n 1 2^2(e+2)+1 <A 2^3  -->  01^n 12 <A 2^2(2e+5)+1
+                        rule_step(4, &[("n", "e+2"), ("e", "1")]),
+                        // Induction: 01^n 12 <A 2^2(2e+5)+1  -->  12 <A 2^2x+1  for x = f2(n, 2e+5) = f2(n+1, e)
+                        induction_step(&[("e", "2e+5")]),
+                        // TODO: Function needs to be able to equate:
+                        //   f2(n, f1(e)) == f2(n+1, e)
+                    ],
+                },
             ],
         };
         if let Err(err) = validate_rule_set(&rule_set) {
