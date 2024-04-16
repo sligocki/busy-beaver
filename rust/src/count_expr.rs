@@ -815,4 +815,17 @@ mod tests {
             Some(CountOrInf::from(0))
         );
     }
+
+    #[test]
+    fn test_function_compose() {
+        // f(x) = 2x + 8
+        let f = Function::affine(2, 8);
+
+        // g(x) = 3x + 13
+        let g = Function::affine(3, 13);
+
+        // f#g: x -> g(f(x)) = 6x + (8*3 + 13)
+        let fg = f.compose(&g);
+        assert_eq!(fg.apply(5.into()), (5 * 6 + (8 * 3 + 13)).into());
+    }
 }
