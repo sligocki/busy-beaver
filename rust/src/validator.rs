@@ -467,18 +467,34 @@ mod tests {
             expr: "2x+5".parse().unwrap(),
         };
         // f2(x) = f1^x(1)  ~= 2^x
-        let _f2 = Function {
+        let f2 = Function {
             bound_var: "x".parse().unwrap(),
             expr: CountExpr::RecursiveExpr(RecursiveExpr {
                 func: Box::new(f1),
-                num_repeats: "x".parse().unwrap(),
-                base: 1,
+                num_repeats: Box::new("x".parse().unwrap()),
+                base: Box::new(1.into()),
             }),
         };
-        // // f3(x) = rep(\x -> f2(x+2), x)(1) ~= 2^^x
-        // let _f3 = Function::Repeat { func: Box::new(f2), base: 1 };
-        // // f4(x) = rep(\x -> f3(2x+7), x)(1) ~= 2^^^x
-        // let f4 = Function::Repeat { func: Box::new(f3), base: 1 };
+        // f3(x) = rep(\y -> f2(y+2), x)(1) ~= 2^^x
+        let f3 = Function {
+            bound_var: "x".parse().unwrap(),
+            expr: CountExpr::RecursiveExpr(RecursiveExpr {
+                // \y -> f2(y+2)
+                func: Box::new(Function::plus(2).compose(&f2)),
+                num_repeats: Box::new("x".parse().unwrap()),
+                base: Box::new(1.into()),
+            }),
+        };
+        // f4(x) = rep(\y -> f3(2y+7), x)(1) ~= 2^^^x
+        let _f4 = Function {
+            bound_var: "x".parse().unwrap(),
+            expr: CountExpr::RecursiveExpr(RecursiveExpr {
+                // \y -> f3(2y+7)
+                func: Box::new(Function::affine(2, 7).compose(&f3)),
+                num_repeats: Box::new("x".parse().unwrap()),
+                base: Box::new(1.into()),
+            }),
+        };
 
         let rule_set = RuleSet {
             tm: TM::from_str("1RB2LA1RC3RA_1LA2RA2RB0RC_1RZ3LC1RA1RB").unwrap(),

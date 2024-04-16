@@ -37,8 +37,8 @@ pub struct Function {
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct RecursiveExpr {
     pub func: Box<Function>,
-    pub num_repeats: VarSum,
-    pub base: CountType,
+    pub num_repeats: Box<CountExpr>,
+    pub base: Box<CountExpr>,
 }
 
 // Representation for a broad concept of count ranging from
@@ -61,9 +61,8 @@ pub enum CountOrInf {
 
 #[derive(Error, Debug)]
 pub enum VarSubstError {
-    // TODO: Use this.
-    #[error("Variable {0} not found in substitution")]
-    MissingVariable(Variable),
+    #[error("RecursiveExpr.num_repeats must be a VarSum")]
+    NumRepeatsNotVarSum,
     #[error("Unsupported substitution of recursive expression")]
     UnsupportedRecursiveExprSubst,
 }
@@ -79,6 +78,13 @@ pub enum ParseError {
 }
 
 impl<T: Clone> VarSubstGen<T> {
+    #[inline]
+    pub fn single(x: Variable, expr: T) -> Self {
+        let mut subst = Self::default();
+        subst.insert(x, expr);
+        subst
+    }
+
     #[inline]
     pub fn get(&self, x: &Variable) -> Option<&T> {
         self.0.get(x)
@@ -123,6 +129,12 @@ impl TryFrom<&VarSubst> for VarSumSubst {
 impl Variable {
     pub const fn new(id: usize) -> Variable {
         Variable(id)
+    }
+}
+
+impl Default for Variable {
+    fn default() -> Variable {
+        Variable(0)
     }
 }
 
@@ -177,6 +189,54 @@ impl VarSum {
     }
 }
 
+impl Function {
+    pub fn identity() -> Function {
+        let var = Variable::default();
+        Function {
+            bound_var: var,
+            expr: CountExpr::from(var),
+        }
+    }
+
+    pub fn plus(n: CountType) -> Function {
+        let var = Variable::default();
+        Function {
+            bound_var: var,
+            expr: CountExpr::var_plus(var, n),
+        }
+    }
+
+    pub fn affine(m: CountType, b: CountType) -> Function {
+        let var = Variable::default();
+        Function {
+            bound_var: var,
+            expr: CountExpr::VarSum(VarSum {
+                var_counts: [(var, m)].iter().cloned().collect(),
+                constant: b,
+            }),
+        }
+    }
+
+    pub fn apply(&self, val: CountExpr) -> CountExpr {
+        // TODO: Deal with unwrap ...
+        self.expr
+            .subst(&VarSubst::single(self.bound_var, val))
+            .unwrap()
+    }
+
+    // Compose two functions (applying the first, first).
+    // f.compose(g): x -> g(f(x))
+    pub fn compose(&self, g: &Function) -> Function {
+        let f = self.clone();
+        Function {
+            // x
+            bound_var: f.bound_var,
+            // g(y)  with y <- f(x)
+            expr: g.apply(f.expr),
+        }
+    }
+}
+
 impl RecursiveExpr {
     pub fn subst(&self, var_subst: &VarSubst) -> Result<RecursiveExpr, VarSubstError> {
         let new_func = Function {
@@ -184,12 +244,13 @@ impl RecursiveExpr {
             expr: self
                 .func
                 .expr
+                // Ignore the bound variable in the substitution!
                 .subst(&var_subst.without(&self.func.bound_var))?,
         };
         Ok(RecursiveExpr {
             func: Box::new(new_func),
-            num_repeats: self.num_repeats.clone(), // TODO: .subst(var_subst.try_into()?),
-            base: self.base,
+            num_repeats: Box::new(self.num_repeats.subst(var_subst)?),
+            base: Box::new(self.base.subst(var_subst)?),
         })
     }
 }
@@ -224,8 +285,12 @@ impl CountExpr {
                 if let Ok(var_sum_subst) = VarSumSubst::try_from(var_subst) {
                     Ok(CountExpr::VarSum(expr.subst(&var_sum_subst)))
                 } else {
-                    // TODO: Convert expr to RecursiveExpr and substitute.
-                    Err(VarSubstError::UnsupportedRecursiveExprSubst)
+                    let expr = RecursiveExpr {
+                        func: Box::new(Function::identity()),
+                        num_repeats: Box::new(0.into()),
+                        base: Box::new(self.clone()),
+                    };
+                    expr.subst(var_subst).map(CountExpr::RecursiveExpr)
                 }
             }
             CountExpr::RecursiveExpr(expr) => expr.subst(var_subst).map(CountExpr::RecursiveExpr),
