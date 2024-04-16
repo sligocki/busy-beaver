@@ -60,12 +60,7 @@ pub enum CountOrInf {
 }
 
 #[derive(Error, Debug)]
-pub enum VarSubstError {
-    #[error("RecursiveExpr.num_repeats must be a VarSum")]
-    NumRepeatsNotVarSum,
-    #[error("Unsupported substitution of recursive expression")]
-    UnsupportedRecursiveExprSubst,
-}
+pub enum VarSubstError {}
 
 #[derive(Error, Debug)]
 pub enum ParseError {
@@ -157,16 +152,33 @@ impl VarSum {
         })
     }
 
-    pub fn subst(&self, var_subst: &VarSumSubst) -> VarSum {
-        let mut new_expr = VarSum::from(self.constant);
+    pub fn subst(&self, var_subst: &VarSubst) -> CountExpr {
+        let mut new_var_sum = VarSum::from(self.constant);
+        // Set of substitutions whose values are RecurisveExprs.
+        // We must process those seperately below.
+        let mut rec_subst: Vec<(Variable, u64, RecursiveExpr)> = Vec::new();
         for (x, count) in self.var_counts.iter() {
-            let x_repl = match var_subst.0.get(&x) {
-                Some(expr) => expr.clone(),
-                None => VarSum::from(*x),
+            match var_subst.0.get(&x) {
+                // VarSums can be substituted directly.
+                Some(CountExpr::VarSum(expr)) => {
+                    new_var_sum += expr.clone() * *count;
+                }
+                // If variable is missing, we leave it as before.
+                None => {
+                    new_var_sum += VarSum::from(*x) * *count;
+                }
+                // RecursiveExprs are saved for later.
+                Some(CountExpr::RecursiveExpr(expr)) => {
+                    rec_subst.push((*x, *count, expr.clone()));
+                }
             };
-            new_expr += x_repl * *count;
         }
-        new_expr
+        let mut expr = CountExpr::VarSum(new_var_sum);
+        for (x, count, rec_expr) in rec_subst.iter() {
+            unimplemented!("RecursiveExpr substitution not implemented yet.");
+            // assert!(!expr.unbound_vars().contains(x));
+        }
+        expr
     }
 
     // Attempt subtraction (self - other).
@@ -190,14 +202,6 @@ impl VarSum {
 }
 
 impl Function {
-    pub fn identity() -> Function {
-        let var = Variable::default();
-        Function {
-            bound_var: var,
-            expr: CountExpr::from(var),
-        }
-    }
-
     pub fn plus(n: CountType) -> Function {
         let var = Variable::default();
         Function {
@@ -281,18 +285,7 @@ impl CountExpr {
 
     pub fn subst(&self, var_subst: &VarSubst) -> Result<CountExpr, VarSubstError> {
         match self {
-            CountExpr::VarSum(expr) => {
-                if let Ok(var_sum_subst) = VarSumSubst::try_from(var_subst) {
-                    Ok(CountExpr::VarSum(expr.subst(&var_sum_subst)))
-                } else {
-                    let expr = RecursiveExpr {
-                        func: Box::new(Function::identity()),
-                        num_repeats: Box::new(0.into()),
-                        base: Box::new(self.clone()),
-                    };
-                    expr.subst(var_subst).map(CountExpr::RecursiveExpr)
-                }
-            }
+            CountExpr::VarSum(expr) => Ok(expr.subst(var_subst)),
             CountExpr::RecursiveExpr(expr) => expr.subst(var_subst).map(CountExpr::RecursiveExpr),
         }
     }
@@ -676,13 +669,13 @@ mod tests {
         let ye: VarSum = y.into();
 
         // x -> 2y + 8
-        let mut subst = VarSumSubst::default();
-        subst.insert(x, ye.clone() * 2 + 8.into());
+        let mut subst = VarSubst::default();
+        subst.insert(x, CountExpr::VarSum(ye.clone() * 2 + 8.into()));
 
         // 3x + 13 -> 6y + (8*3 + 13)
         let start = xe * 3 + 13.into();
         let expected = ye * 6 + (8 * 3 + 13).into();
-        assert_eq!(start.subst(&subst), expected);
+        assert_eq!(start.subst(&subst), CountExpr::VarSum(expected));
     }
 
     #[test]
@@ -827,5 +820,24 @@ mod tests {
         // f#g: x -> g(f(x)) = 6x + (8*3 + 13)
         let fg = f.compose(&g);
         assert_eq!(fg.apply(5.into()), (5 * 6 + (8 * 3 + 13)).into());
+    }
+
+    #[test]
+    fn test_subst_var_sum_recursive() {
+        let outer_expr: CountExpr = "2n+8".parse().unwrap();
+
+        // rep(\x -> 3x + 13, 2)(3)
+        let inner_expr = CountExpr::RecursiveExpr(RecursiveExpr {
+            func: Box::new(Function::affine(3, 13)),
+            num_repeats: Box::new(2.into()),
+            base: Box::new(3.into()),
+        });
+
+        // Substitute: n -> inner_expr
+        let subst = VarSubst::single("n".parse().unwrap(), inner_expr);
+        assert!(outer_expr.subst(&subst).is_ok());
+
+        // let combined_expr = outer_expr.subst(&subst).unwrap();
+        // TODO: assert_eq!(combined_expr, "6x+34".parse().unwrap());
     }
 }
