@@ -596,17 +596,11 @@ mod tests {
                         ))
                         .unwrap(),
                     proof_base: vec![
-                        // TODO: Get base case working.
-                        BaseProofStep::Admit,
+                        // TODO: RecursionExpr needs to be able to equate:
+                        //      2e+1
+                        //      λx.2x+1 ((λx.2x+5)^0 e)
                     ],
                     proof_inductive: vec![
-                        // TODO: Maybe apply induction first? That way we only need to equate:
-                        //      f1(f2(n, e)) == f2(n+1, e)
-                        // instead of
-                        //      f2(n, f1(e)) == f2(n+1, e)
-                        // // Induction: 01^n+1 12 <A 2^2(2e+5)+1  -->  01 12 <A 2^2x+1  for x = f2(n, e)
-                        // induction_step(&[("e", "e")]),
-
                         // 01^n+1 12 <A 2^2e+1 00  -->  01^n+1 1 <A 2^2e+3 1
                         base_step(1),
                         chain_step(1, "e"),
@@ -621,8 +615,9 @@ mod tests {
                         rule_step(4, &[("n", "e+2"), ("e", "1")]),
                         // Induction: 01^n 12 <A 2^2(2e+5)+1  -->  12 <A 2^2x+1  for x = f2(n, 2e+5) = f2(n+1, e)
                         induction_step(&[("e", "2e+5")]),
-                        // TODO: Function needs to be able to equate:
-                        //   f2(n, f1(e)) == f2(n+1, e)
+                        // TODO: RecursionExpr needs to be able to equate:
+                        //      λx.2x+1 ((λx.2x+5)^n 2e+5)
+                        //      λx.2x+1 ((λx.2x+5)^n+1 e)
                     ],
                 },
             ],

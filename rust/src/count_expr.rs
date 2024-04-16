@@ -541,10 +541,19 @@ impl std::fmt::Display for VarSum {
     }
 }
 
+impl std::fmt::Display for Function {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "λ{}.{}", self.bound_var, self.expr)
+    }
+}
+
 impl std::fmt::Display for RecursiveExpr {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        // TODO: Implement this.
-        write!(f, "???")
+        if *self.num_repeats == 1.into() {
+            write!(f, "{} {}", self.func, self.base)
+        } else {
+            write!(f, "({})^{} {}", self.func, self.num_repeats, self.base)
+        }
     }
 }
 
@@ -552,7 +561,7 @@ impl std::fmt::Display for CountExpr {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             CountExpr::VarSum(expr) => write!(f, "{}", expr),
-            CountExpr::RecursiveExpr(expr) => write!(f, "{}", expr),
+            CountExpr::RecursiveExpr(expr) => write!(f, "({})", expr),
         }
     }
 }
