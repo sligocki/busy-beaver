@@ -1,4 +1,4 @@
-use std::collections::{BTreeMap, HashMap};
+use std::collections::{BTreeMap, HashMap, HashSet};
 use std::str::FromStr;
 
 use regex::Regex;
@@ -152,6 +152,10 @@ impl VarSum {
         })
     }
 
+    pub fn unbound_vars(&self) -> HashSet<Variable> {
+        self.var_counts.keys().cloned().collect()
+    }
+
     pub fn subst(&self, var_subst: &VarSubst) -> CountExpr {
         let mut new_var_sum = VarSum::from(self.constant);
         // Set of substitutions whose values are RecurisveExprs.
@@ -173,10 +177,26 @@ impl VarSum {
                 }
             };
         }
+        // First we add bound variables for all RecursiveExpr substitutions to `new_var_sum`.
+        for (x, count, _) in rec_subst.iter() {
+            // If `x` is unbound in `expr`, we cannot do the substitution below as simply.
+            // TODO: Replace `x` with a new (unused) variable in this case.
+            assert!(!new_var_sum.unbound_vars().contains(x));
+            new_var_sum += VarSum::from(*x) * *count;
+        }
+        // Then, for each RecursiveExpr substitution, we apply the substitution via function application.
         let mut expr = CountExpr::VarSum(new_var_sum);
-        for (x, count, rec_expr) in rec_subst.iter() {
-            unimplemented!("RecursiveExpr substitution not implemented yet.");
-            // assert!(!expr.unbound_vars().contains(x));
+        for (x, _, rec_expr) in rec_subst.iter() {
+            assert!(expr.unbound_vars().contains(x));
+            // expr[x := rec_expr] = (\x -> expr) rec_expr
+            expr = CountExpr::RecursiveExpr(RecursiveExpr {
+                func: Box::new(Function {
+                    bound_var: *x,
+                    expr: expr,
+                }),
+                num_repeats: Box::new(1.into()),
+                base: Box::new(CountExpr::RecursiveExpr(rec_expr.clone())),
+            });
         }
         expr
     }
@@ -221,6 +241,12 @@ impl Function {
         }
     }
 
+    pub fn unbound_vars(&self) -> HashSet<Variable> {
+        let mut vars = self.expr.unbound_vars();
+        vars.remove(&self.bound_var);
+        vars
+    }
+
     pub fn apply(&self, val: CountExpr) -> CountExpr {
         // TODO: Deal with unwrap ...
         self.expr
@@ -242,6 +268,13 @@ impl Function {
 }
 
 impl RecursiveExpr {
+    pub fn unbound_vars(&self) -> HashSet<Variable> {
+        let mut vars = self.func.expr.unbound_vars();
+        vars.extend(self.num_repeats.unbound_vars());
+        vars.extend(self.base.unbound_vars());
+        vars
+    }
+
     pub fn subst(&self, var_subst: &VarSubst) -> Result<RecursiveExpr, VarSubstError> {
         let new_func = Function {
             bound_var: self.func.bound_var,
@@ -280,6 +313,13 @@ impl CountExpr {
         match self {
             CountExpr::VarSum(expr) => expr.decrement().map(CountExpr::VarSum),
             CountExpr::RecursiveExpr(_) => None,
+        }
+    }
+
+    pub fn unbound_vars(&self) -> HashSet<Variable> {
+        match self {
+            CountExpr::VarSum(expr) => expr.unbound_vars(),
+            CountExpr::RecursiveExpr(expr) => expr.unbound_vars(),
         }
     }
 
@@ -330,6 +370,13 @@ impl CountOrInf {
         match self {
             CountOrInf::Finite(expr) => expr.decrement().map(CountOrInf::Finite),
             CountOrInf::Infinity => Some(CountOrInf::Infinity),
+        }
+    }
+
+    pub fn unbound_vars(&self) -> HashSet<Variable> {
+        match self {
+            CountOrInf::Finite(expr) => expr.unbound_vars(),
+            CountOrInf::Infinity => HashSet::new(),
         }
     }
 
@@ -834,10 +881,15 @@ mod tests {
         });
 
         // Substitute: n -> inner_expr
-        let subst = VarSubst::single("n".parse().unwrap(), inner_expr);
-        assert!(outer_expr.subst(&subst).is_ok());
+        let subst = VarSubst::single("n".parse().unwrap(), inner_expr.clone());
 
-        // let combined_expr = outer_expr.subst(&subst).unwrap();
-        // TODO: assert_eq!(combined_expr, "6x+34".parse().unwrap());
+        let combined_expr = outer_expr.subst(&subst).unwrap();
+        // Expected: 2(inner_expr) + 8
+        let expected = CountExpr::RecursiveExpr(RecursiveExpr {
+            func: Box::new(Function::affine(2, 8)),
+            num_repeats: Box::new(1.into()),
+            base: Box::new(inner_expr),
+        });
+        assert_eq!(combined_expr, expected);
     }
 }
