@@ -167,8 +167,7 @@ fn validate_rule_base(
     prev_rules: &[Rule],
 ) -> Result<(), RuleValidationError> {
     // In base case, we consider the case n <- 0.
-    let mut base_subst = VarSubst::default();
-    base_subst.insert(INDUCTION_VAR, 0.into());
+    let base_subst = VarSubst::single(INDUCTION_VAR, 0.into());
 
     let mut config = rule
         .init_config
@@ -200,8 +199,7 @@ fn validate_rule_inductive(
     prev_rules: &[Rule],
 ) -> Result<(), RuleValidationError> {
     // In inductive case, we consider the case n <- m+1 (and only allow use of this rule where n <- m).
-    let mut ind_subst = VarSubst::default();
-    ind_subst.insert(INDUCTION_VAR, CountExpr::var_plus(INDUCTION_VAR, 1));
+    let ind_subst = VarSubst::single(INDUCTION_VAR, CountExpr::var_plus(INDUCTION_VAR, 1));
 
     let mut config = rule
         .init_config
@@ -462,39 +460,39 @@ mod tests {
         //                               ->  C(0, 0, 0, 1, 2 h(8e+26, 1) + 1)
 
         // f1(x) = 2x+5
-        let f1 = Function {
-            bound_var: "x".parse().unwrap(),
-            expr: "2x+5".parse().unwrap(),
-        };
-        // f2(x) = f1^x(1)  ~= 2^x
-        let f2 = Function {
-            bound_var: "x".parse().unwrap(),
-            expr: CountExpr::RecursiveExpr(RecursiveExpr {
-                func: Box::new(f1),
-                num_repeats: Box::new("x".parse().unwrap()),
-                base: Box::new(1.into()),
-            }),
-        };
-        // f3(x) = rep(\y -> f2(y+2), x)(1) ~= 2^^x
-        let f3 = Function {
-            bound_var: "x".parse().unwrap(),
-            expr: CountExpr::RecursiveExpr(RecursiveExpr {
-                // \y -> f2(y+2)
-                func: Box::new(Function::plus(2).compose(&f2)),
-                num_repeats: Box::new("x".parse().unwrap()),
-                base: Box::new(1.into()),
-            }),
-        };
-        // f4(x) = rep(\y -> f3(2y+7), x)(1) ~= 2^^^x
-        let _f4 = Function {
-            bound_var: "x".parse().unwrap(),
-            expr: CountExpr::RecursiveExpr(RecursiveExpr {
-                // \y -> f3(2y+7)
-                func: Box::new(Function::affine(2, 7).compose(&f3)),
-                num_repeats: Box::new("x".parse().unwrap()),
-                base: Box::new(1.into()),
-            }),
-        };
+        // f2(x, y) = f1^x(y)  ~= 2^x
+        fn f2(x: CountExpr, y: CountExpr) -> CountExpr {
+            CountExpr::RecursiveExpr(RecursiveExpr {
+                func: Box::new(Function {
+                    bound_var: "x".parse().unwrap(),
+                    expr: "2x+5".parse().unwrap(),
+                }),
+                num_repeats: Box::new(x),
+                base: Box::new(y),
+            })
+        }
+        // // f3(x, y) = rep(\z -> f2(z+2, 1), x)(y) ~= 2^^x
+        // fn f3(x: CountExpr, y: CountExpr) -> CountExpr {
+        //     CountExpr::RecursiveExpr(RecursiveExpr {
+        //         func: Box::new(Function {
+        //             bound_var: "z".parse().unwrap(),
+        //             expr: f2("z+2".parse().unwrap(), 1.into()),
+        //         }),
+        //         num_repeats: Box::new(x),
+        //         base: Box::new(y),
+        //     })
+        // }
+        // // f4(x, y) = rep(\z -> f3(2z+7), x)(y) ~= 2^^^x
+        // fn f4(x: CountExpr, y: CountExpr) -> CountExpr {
+        //     CountExpr::RecursiveExpr(RecursiveExpr {
+        //         func: Box::new(Function {
+        //             bound_var: "z".parse().unwrap(),
+        //             expr: f3("2z+7".parse().unwrap(), 1.into()),
+        //         }),
+        //         num_repeats: Box::new(x),
+        //         base: Box::new(y),
+        //     })
+        // }
 
         let rule_set = RuleSet {
             tm: TM::from_str("1RB2LA1RC3RA_1LA2RA2RB0RC_1RZ3LC1RA1RB").unwrap(),
