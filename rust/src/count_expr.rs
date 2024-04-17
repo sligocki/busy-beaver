@@ -219,6 +219,13 @@ impl VarSum {
             constant: n,
         })
     }
+
+    fn normalize(&self) -> VarSum {
+        // Remove any zero counts. Otherwise, VarSum is already fully normalized.
+        let mut new_expr = self.clone();
+        new_expr.var_counts.retain(|_, c| *c != 0);
+        new_expr
+    }
 }
 
 impl Function {
@@ -265,6 +272,13 @@ impl Function {
             expr: g.apply(f.expr),
         }
     }
+
+    fn normalize(&self) -> Function {
+        Function {
+            bound_var: self.bound_var,
+            expr: self.expr.normalize(),
+        }
+    }
 }
 
 impl RecursiveExpr {
@@ -289,6 +303,28 @@ impl RecursiveExpr {
             num_repeats: Box::new(self.num_repeats.subst(var_subst)?),
             base: Box::new(self.base.subst(var_subst)?),
         })
+    }
+
+    fn normalize(&self) -> CountExpr {
+        let base = self.base.normalize();
+        let num_reps = self.num_repeats.normalize();
+        if num_reps.is_zero() {
+            // f^0(x) = x
+            base
+        } else if num_reps == 1.into() {
+            // Beta reduction:
+            // (λx.expr)^1(y) = expr[x := y]
+            self.func
+                .expr
+                .subst(&VarSubst::single(self.func.bound_var, base))
+                .unwrap_or(CountExpr::RecursiveExpr(self.clone()))
+        } else {
+            CountExpr::RecursiveExpr(RecursiveExpr {
+                func: self.func.normalize().into(),
+                num_repeats: Box::new(num_reps),
+                base: Box::new(base),
+            })
+        }
     }
 }
 
@@ -343,16 +379,26 @@ impl CountExpr {
     // Attempt subtraction (self - other).
     // Return None if the result is not guaranteed >= 0 (or if working with opaque RecursiveExpr).
     pub fn checked_sub(&self, other: &CountExpr) -> Option<CountExpr> {
+        let a = self.normalize();
+        let b = other.normalize();
+
         // n - n = 0 for all n (even opaque RecursiveExpr).
-        if self == other {
+        if a == b {
             return Some(CountExpr::from(0));
         }
 
-        match (self, other) {
+        match (a, b) {
             (CountExpr::VarSum(expr), CountExpr::VarSum(other_expr)) => {
-                expr.checked_sub(other_expr).map(CountExpr::VarSum)
+                expr.checked_sub(&other_expr).map(CountExpr::VarSum)
             }
             _ => None,
+        }
+    }
+
+    fn normalize(&self) -> CountExpr {
+        match self {
+            CountExpr::VarSum(expr) => CountExpr::VarSum(expr.normalize()),
+            CountExpr::RecursiveExpr(expr) => expr.normalize(),
         }
     }
 }
@@ -863,6 +909,27 @@ mod tests {
                 .checked_sub(&CountOrInf::Infinity),
             Some(CountOrInf::from(0))
         );
+    }
+
+    #[test]
+    fn test_func_norm() {
+        let var_sum = CountExpr::from_str("2e+1").unwrap();
+        // f^0(x) = x
+        let rep0 = CountExpr::RecursiveExpr(RecursiveExpr {
+            // Function is arbitrary.
+            func: Box::new(Function::affine(2, 5)),
+            num_repeats: Box::new(0.into()),
+            base: Box::new(var_sum.clone()),
+        });
+        assert_eq!(var_sum, rep0.normalize());
+
+        // (λx.2x+1 e)
+        let rep1 = CountExpr::RecursiveExpr(RecursiveExpr {
+            func: Box::new(Function::affine(2, 1)),
+            num_repeats: Box::new(1.into()),
+            base: Box::new(CountExpr::from_str("e").unwrap()),
+        });
+        assert_eq!(var_sum, rep1.normalize());
     }
 
     #[test]
