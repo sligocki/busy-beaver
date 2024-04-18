@@ -279,6 +279,12 @@ impl Function {
             expr: self.expr.normalize(),
         }
     }
+
+    fn known_equal(&self, other: &Function) -> bool {
+        // TODO: Support alpha equivalence (two functions being equal up to renaming of
+        // bound variables).
+        self.expr.known_equal(&other.expr)
+    }
 }
 
 impl RecursiveExpr {
@@ -325,6 +331,37 @@ impl RecursiveExpr {
                 base: Box::new(base),
             })
         }
+    }
+
+    fn known_equal(&self, other: &RecursiveExpr) -> bool {
+        if self.func.known_equal(&other.func) {
+            if let Some(diff) = self.num_repeats.checked_sub(&other.num_repeats) {
+                // We have
+                //      self = f^(n+diff)(x) == f^n(f^diff(x))
+                //      other = f^n(y)
+                // So now, compare f^diff(x) == y
+                let new_self = RecursiveExpr {
+                    func: self.func.clone(),
+                    num_repeats: Box::new(diff),
+                    base: self.base.clone(),
+                }
+                .normalize();
+                return new_self.known_equal(&other.base);
+            } else if let Some(diff) = other.num_repeats.checked_sub(&self.num_repeats) {
+                // We have
+                //      self = f^n(x)
+                //      other = f^(n+diff)(y) == f^n(f^diff(y))
+                // So now, compare x == f^diff(y)
+                let new_other = RecursiveExpr {
+                    func: other.func.clone(),
+                    num_repeats: Box::new(diff),
+                    base: other.base.clone(),
+                }
+                .normalize();
+                return self.base.known_equal(&new_other);
+            }
+        }
+        return false;
     }
 }
 
@@ -382,8 +419,8 @@ impl CountExpr {
         let a = self.normalize();
         let b = other.normalize();
 
-        // n - n = 0 for all n (even opaque RecursiveExpr).
-        if a == b {
+        // n - n = 0 for all n (even for complex RecursiveExpr).
+        if a.known_equal(&b) {
             return Some(CountExpr::from(0));
         }
 
@@ -399,6 +436,21 @@ impl CountExpr {
         match self {
             CountExpr::VarSum(expr) => CountExpr::VarSum(expr.normalize()),
             CountExpr::RecursiveExpr(expr) => expr.normalize(),
+        }
+    }
+
+    // Return true if we know that self == other.
+    // If false, the expressions may still be equal, but we cannot prove it.
+    // Note: This depends upon self and other already being normalized!
+    fn known_equal(&self, other: &CountExpr) -> bool {
+        match (self, other) {
+            // Two VarSum expressions are equal if they are structurally equal.
+            (CountExpr::VarSum(expr), CountExpr::VarSum(other_expr)) => expr == other_expr,
+            (CountExpr::RecursiveExpr(expr), CountExpr::RecursiveExpr(other_expr)) => {
+                expr.known_equal(other_expr)
+            }
+            // We cannot prove/disprove equality between VarSum and RecursiveExpr.
+            _ => false,
         }
     }
 }

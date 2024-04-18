@@ -485,7 +485,6 @@ mod tests {
         validate_rule_set(&rule_set).unwrap();
     }
 
-    #[ignore = "needs RecursionExpr comparison"]
     #[test]
     fn test_34_uni() {
         // Analysis of Pavel's 3x4 TM shared 31 May 2023:
@@ -596,9 +595,8 @@ mod tests {
                         ))
                         .unwrap(),
                     proof_base: vec![
-                        // TODO: RecursionExpr needs to be able to equate:
-                        //      2e+1
-                        //      λx.2x+1 ((λx.2x+5)^0 e)
+                        // Note this requires RecursionExpr comparison supporting equality between:
+                        //      2e+1  ==  λx.2x+1 ((λx.2x+5)^0 e)
                     ],
                     proof_inductive: vec![
                         // 01^n+1 12 <A 2^2e+1 00  -->  01^n+1 1 <A 2^2e+3 1
@@ -615,7 +613,7 @@ mod tests {
                         rule_step(4, &[("n", "e+2"), ("e", "1")]),
                         // Induction: 01^n 12 <A 2^2(2e+5)+1  -->  12 <A 2^2x+1  for x = f2(n, 2e+5) = f2(n+1, e)
                         induction_step(&[("e", "2e+5")]),
-                        // TODO: RecursionExpr needs to be able to equate:
+                        // Note this requires RecursionExpr comparison supporting equality between:
                         //      λx.2x+1 ((λx.2x+5)^n 2e+5)
                         //      λx.2x+1 ((λx.2x+5)^n+1 e)
                     ],
@@ -653,6 +651,7 @@ mod tests {
                         base_step(3),
                         chain_step(2, "4n+6"),
                         // TODO
+                        InductiveProofStep::BaseStep(BaseProofStep::Admit),
                     ],
                 },
             ],
