@@ -24,7 +24,6 @@ pub struct VarSum {
 
 // Function is represented by `bound_var` and `expr`.
 // Value of `f(n)` is equivalent to `expr.subst({bound_var: n})`.
-// TODO: Support function composition.
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct Function {
     pub bound_var: Variable,
@@ -229,6 +228,14 @@ impl VarSum {
 }
 
 impl Function {
+    pub fn identity() -> Function {
+        let var = Variable::default();
+        Function {
+            bound_var: var,
+            expr: CountExpr::from(var),
+        }
+    }
+
     pub fn plus(n: CountType) -> Function {
         let var = Variable::default();
         Function {
@@ -281,9 +288,10 @@ impl Function {
     }
 
     fn known_equal(&self, other: &Function) -> bool {
-        // TODO: Support alpha equivalence (two functions being equal up to renaming of
-        // bound variables).
-        self.expr.known_equal(&other.expr)
+        // Support alpha equivalence (two functions being equal up to renaming of bound variables).
+        // TODO: unwrap ...
+        let other_renamed = other.expr.subst(&VarSubst::single(other.bound_var, self.bound_var.into())).unwrap();
+        self.expr.known_equal(&other_renamed)
     }
 }
 
@@ -982,6 +990,19 @@ mod tests {
             base: Box::new(CountExpr::from_str("e").unwrap()),
         });
         assert_eq!(var_sum, rep1.normalize());
+    }
+
+    #[test]
+    fn test_known_equal_alpha() {
+        let f = Function {
+            bound_var: Variable::from_str("x").unwrap(),
+            expr: CountExpr::from_str("2x+8").unwrap(),
+        };
+        let g = Function {
+            bound_var: Variable::from_str("y").unwrap(),
+            expr: CountExpr::from_str("2y+8").unwrap(),
+        };
+        assert!(f.known_equal(&g));
     }
 
     #[test]
