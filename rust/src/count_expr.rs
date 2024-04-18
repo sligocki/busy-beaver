@@ -183,6 +183,8 @@ impl VarSum {
             assert!(!new_var_sum.free_vars().contains(x));
             new_var_sum += VarSum::from(*x) * *count;
         }
+        // TODO: This is currently converting simple expressions like:
+        //      x[x := expr]  ->  λx.x expr  (instead of just expr).
         // Then, for each RecursiveExpr substitution, we apply the substitution via function application.
         let mut expr = CountExpr::VarSum(new_var_sum);
         for (x, _, rec_expr) in rec_subst.iter() {
@@ -261,6 +263,10 @@ impl Function {
         vars
     }
 
+    pub fn is_identity(&self) -> bool {
+        self.expr == CountExpr::from(self.bound_var)
+    }
+
     pub fn apply(&self, val: CountExpr) -> CountExpr {
         // TODO: Deal with unwrap ...
         self.expr
@@ -320,10 +326,14 @@ impl RecursiveExpr {
     }
 
     fn normalize(&self) -> CountExpr {
-        let base = self.base.normalize();
+        let func = self.func.normalize();
         let num_reps = self.num_repeats.normalize();
+        let base = self.base.normalize();
         if num_reps.is_zero() {
             // f^0(x) = x
+            base
+        } else if func.is_identity() {
+            // ((λx.x)^n y) = y
             base
         } else if num_reps == 1.into() {
             // Beta reduction:
@@ -334,7 +344,7 @@ impl RecursiveExpr {
                 .unwrap_or(CountExpr::RecursiveExpr(self.clone()))
         } else {
             CountExpr::RecursiveExpr(RecursiveExpr {
-                func: self.func.normalize().into(),
+                func: Box::new(func),
                 num_repeats: Box::new(num_reps),
                 base: Box::new(base),
             })
@@ -990,6 +1000,33 @@ mod tests {
             base: Box::new(CountExpr::from_str("e").unwrap()),
         });
         assert_eq!(var_sum, rep1.normalize());
+
+        assert!(Function::identity().is_identity());
+
+        // Always unwrap identity function, even if value is complex/opaque.
+        // (λx.x opaque) = opaque
+        let opaque = CountExpr::RecursiveExpr(RecursiveExpr {
+            func: Box::new(Function::affine(13, 8)),
+            num_repeats: Box::new("a".parse().unwrap()),
+            base: Box::new("b".parse().unwrap()),
+        });
+        let ident_opaque = CountExpr::RecursiveExpr(RecursiveExpr {
+            func: Box::new(Function::identity()),
+            num_repeats: Box::new(1.into()),
+            base: Box::new(opaque.clone()),
+        });
+        println!("{} vs. {}", opaque, ident_opaque.normalize());
+        assert_eq!(opaque, ident_opaque.normalize());
+
+        // Unwrap even indefinitely repeated identity functions.
+        // (λx.x)^k opaque = opaque
+        let ident_mult_opaque = CountExpr::RecursiveExpr(RecursiveExpr {
+            func: Box::new(Function::identity()),
+            num_repeats: Box::new("k".parse().unwrap()),
+            base: Box::new(opaque.clone()),
+        });
+        println!("{} vs. {}", opaque, ident_mult_opaque.normalize());
+        assert_eq!(opaque, ident_mult_opaque.normalize());
     }
 
     #[test]
