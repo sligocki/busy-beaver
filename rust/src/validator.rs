@@ -355,13 +355,17 @@ mod tests {
 
     // Helper function to create a simple chain rule for which:
     //    A) The base case is trivial.
-    //    B) The inductive case is `steps` TM steps followed by a trivial inductive step.
+    //    B) The inductive case is simple inductive step + `steps` TM steps.
+    // Note: We currently need to do induction step first in order to work
+    // around fragile tape comparison issues for blocks. Specifically, the fact that
+    //      0^1 1^1 01^n  ==  01^n+1
+    // which our current tape comparison cannot equate.
     fn chain_rule(start: &str, end: &str, steps: CountType) -> Rule {
         Rule {
             init_config: Config::from_str(start).unwrap(),
             final_config: Config::from_str(end).unwrap(),
             proof_base: vec![],
-            proof_inductive: vec![base_step(steps), induction_step(&[])],
+            proof_inductive: vec![induction_step(&[]), base_step(steps)],
         }
     }
 
@@ -495,7 +499,6 @@ mod tests {
         validate_rule_set(&rule_set).unwrap();
     }
 
-    #[ignore = "block merging"]
     #[test]
     fn test_34_uni() {
         // Analysis of Pavel's 3x4 TM shared 31 May 2023:
