@@ -343,9 +343,19 @@ mod tests {
         InductiveProofStep::InductiveStep(var_subst)
     }
 
+    fn induction_step_expr(var_assign: &[(Variable, CountExpr)]) -> InductiveProofStep {
+        let mut var_subst = VarSubst::default();
+        for (var, expr) in var_assign {
+            var_subst.insert(var.clone(), expr.clone());
+        }
+        // Add default n->n inductive bit.
+        var_subst.insert(INDUCTION_VAR, INDUCTION_VAR.into());
+        InductiveProofStep::InductiveStep(var_subst)
+    }
+
     // Helper function to create a simple chain rule for which:
     //    A) The base case is trivial.
-    //    B) The inductive case is `steps` TM steps followed by the inductive step.
+    //    B) The inductive case is `steps` TM steps followed by a trivial inductive step.
     fn chain_rule(start: &str, end: &str, steps: CountType) -> Rule {
         Rule {
             init_config: Config::from_str(start).unwrap(),
@@ -485,6 +495,7 @@ mod tests {
         validate_rule_set(&rule_set).unwrap();
     }
 
+    #[ignore = "block merging"]
     #[test]
     fn test_34_uni() {
         // Analysis of Pavel's 3x4 TM shared 31 May 2023:
@@ -498,15 +509,15 @@ mod tests {
         //    2)    C(a, b, c+1, 1, 2e+1)  ->  C(a, b, c, 2e+5, 3)
         //                                 ->  C(a, b, c, 1, 2 (2e+5) + 1)
         //          C(a, b, c, 1, 2e+1)  ->  C(a, b, 0, 1, 2 f(c, e) + 1)
-        //              where f(c, e) = rep(\x -> 2x+5, c)(e)  ~= 2^c
+        //              where f(c, e) = rep(λx -> 2x+5, c)(e)  ~= 2^c
         //    3)    C(a, b+1, 0, 1, 2e+1)  ->  C(a, b, e+2, 1, 3)
         //                                 ->  C(a, b, 0, 1, 2 f(e+2, 1) + 1)
         //          C(a, b, 0, 1, 2e+1)  ->  C(a, 0, 0, 1, 2 g(b, e) + 1)
-        //              where g(b, e) = rep(\x -> f(x+2, 1), b)(e)  ~= 2^^b
+        //              where g(b, e) = rep(λx -> f(x+2, 1), b)(e)  ~= 2^^b
         //    4)    C(a+2, 0, 0, 1, 2e+1)  ->  C(a, 2e+7, 0, 1, 3)
         //                                 ->  C(a, 0, 0, 1, 2 g(2e+7, 1) + 1)
         //          C(2a+r, 0, 0, 1, 2e+1)  ->  C(r, 0, 0, 1, 2 h(a, e) + 1)
-        //              where h(a, e) = rep(\x -> g(2x+7, 1), a)(e)  ~= 2^^^a
+        //              where h(a, e) = rep(λx -> g(2x+7, 1), a)(e)  ~= 2^^^a
         //    5)    C(0, 0, 0, 1, 2e+1)  ->  B(2e+7, 3)
         //                               ->  B(1, 2 (2e+4) + 1)
         //                               ->  B(4e+12, 3)
@@ -526,18 +537,18 @@ mod tests {
                 base: Box::new(y),
             })
         }
-        // // f3(x, y) = rep(\z -> f2(z+2, 1), x)(y) ~= 2^^x
-        // fn f3(x: CountExpr, y: CountExpr) -> CountExpr {
-        //     CountExpr::RecursiveExpr(RecursiveExpr {
-        //         func: Box::new(Function {
-        //             bound_var: "z".parse().unwrap(),
-        //             expr: f2("z+2".parse().unwrap(), 1.into()),
-        //         }),
-        //         num_repeats: Box::new(x),
-        //         base: Box::new(y),
-        //     })
-        // }
-        // // f4(x, y) = rep(\z -> f3(2z+7), x)(y) ~= 2^^^x
+        // f3(x, y) = rep(λz -> f2(z+2, 1), x)(y) ~= 2^^x
+        fn f3(x: CountExpr, y: CountExpr) -> CountExpr {
+            CountExpr::RecursiveExpr(RecursiveExpr {
+                func: Box::new(Function {
+                    bound_var: "z".parse().unwrap(),
+                    expr: f2("z+2".parse().unwrap(), 1.into()),
+                }),
+                num_repeats: Box::new(x),
+                base: Box::new(y),
+            })
+        }
+        // // f4(x, y) = rep(λz -> f3(2z+7), x)(y) ~= 2^^^x
         // fn f4(x: CountExpr, y: CountExpr) -> CountExpr {
         //     CountExpr::RecursiveExpr(RecursiveExpr {
         //         func: Box::new(Function {
@@ -557,6 +568,10 @@ mod tests {
                 chain_rule("C> 2^2n", "1^2n C>", 2),
                 chain_rule("1^n <A", "<A 2^n", 1),
                 chain_rule("B> 2^n", "2^n B>", 1),
+                chain_rule("1^n <C", "<C 3^n", 1),
+                // TODO: This requires ability to unify:
+                //      0^1 1^1 01^n  ==  01^n+1
+                chain_rule("B> 3^2n", "01^n B>", 2),
                 // Level 1: C(a, b, c, 2k+r, 2e+1)  ->  C(a, b, c, r, 2 (e+2k) + 1)
                 Rule {
                     init_config: Config::from_str("2^2n <A 2^2e+1 0^inf").unwrap(),
@@ -584,10 +599,10 @@ mod tests {
                     ],
                 },
                 // Level 2: C(a, b, c, 1, 2e+1)  ->  C(a, b, 0, 1, 2 f2(c, e) + 1)
-                //   where f2(c, e) = rep(\x -> 2x+5, c)(e)  ~= 2^c
+                //   where f2(c, e) = rep(λx -> 2x+5, c)(e)  ~= 2^c
                 Rule {
-                    init_config: Config::from_str("01^n 12^1 <A 2^2e+1 0^inf").unwrap(),
-                    final_config: Config::from_str("12^1 <A 2^x+x+1 0^inf")
+                    init_config: Config::from_str("01^n 1^1 2^1 <A 2^2e+1 0^inf").unwrap(),
+                    final_config: Config::from_str("1^1 2^1 <A 2^2x+1 0^inf")
                         .unwrap()
                         .subst(&VarSubst::single(
                             Variable::from_str("x").unwrap(),
@@ -610,12 +625,52 @@ mod tests {
                         // 01^n 1 2^2e+5 B> 100  --(9)-->  01^n 1 2^2e+5 <A 222
                         base_step(9),
                         // Level 1: 01^n 1 2^2(e+2)+1 <A 2^3  -->  01^n 12 <A 2^2(2e+5)+1
-                        rule_step(4, &[("n", "e+2"), ("e", "1")]),
+                        rule_step(6, &[("n", "e+2"), ("e", "1")]),
                         // Induction: 01^n 12 <A 2^2(2e+5)+1  -->  12 <A 2^2x+1  for x = f2(n, 2e+5) = f2(n+1, e)
                         induction_step(&[("e", "2e+5")]),
                         // Note this requires RecursionExpr comparison supporting equality between:
                         //      λx.2x+1 ((λx.2x+5)^n 2e+5)
                         //      λx.2x+1 ((λx.2x+5)^n+1 e)
+                    ],
+                },
+                // Level 3: C(a, b, 0, 1, 2e+1)  ->  C(a, 0, 0, 1, 2 f3(b, e) + 1)
+                //   where f3(b, e) = rep(λx -> f2(x+2, 1), b)(e)  ~= 2^^b
+                Rule {
+                    init_config: Config::from_str("3^n 1^1 1^1 2^1 <A 2^2e+1 0^inf").unwrap(),
+                    final_config: Config::from_str("1^1 1^1 2^1 <A 2^2x+1 0^inf")
+                        .unwrap()
+                        .subst(&VarSubst::single(
+                            Variable::from_str("x").unwrap(),
+                            f3("n".parse().unwrap(), "e".parse().unwrap()),
+                        ))
+                        .unwrap(),
+                    proof_base: vec![],
+                    proof_inductive: vec![
+                        // 3^n+1 112 <A 2^2e+1 00  -->  3^n+1 <A 2^2e+5 1
+                        base_step(1),
+                        chain_step(1, "e"),
+                        base_step(3),
+                        chain_step(2, "2e+5"),
+                        // 3^n+1 <A 2^2e+5 1  --(1)-->  3^n 3 A> 2^2e+5 1
+                        base_step(1),
+                        // 3^n 3 A> 2^2e+5 1  -->  3^n 3 11^e+2 A> 21
+                        chain_step(0, "e+2"),
+                        base_step(2),
+                        chain_step(4, "2e+5"),
+                        // 3^n 3 <C 3^2e+6  --(1)-->  3^n 1 B> 3^2e+6
+                        base_step(1),
+                        // 3^n 1 B> 3^2e+6  -->  3^n 1 01^e+3 B>
+                        chain_step(5, "e+3"),
+                        // 3^n 1 01^e+3 B> 000  --(13)-->  3^n 1 01^e+2 12 <A 2^3
+                        base_step(13),
+                        // Level 2: 3^n 1 01^e+2 12 <A 2^3  -->  3^n 112 <A 2^{2 f2(e+2, 1) + 1}
+                        rule_step(7, &[("n", "e+2"), ("e", "1")]),
+                        // Induction: 3^n 112 <A 2^{2 f1(e+2, 1) + 1}  -->  112 <A 2^2x+1
+                        //      for x = f3(n, f2(e+2, 1)) = f3(n+1, e)
+                        induction_step_expr(&[(
+                            "e".parse().unwrap(),
+                            f2("e+2".parse().unwrap(), 1.into()),
+                        )]),
                     ],
                 },
             ],

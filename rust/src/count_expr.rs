@@ -302,7 +302,10 @@ impl Function {
     fn known_equal(&self, other: &Function) -> bool {
         // Support alpha equivalence (two functions being equal up to renaming of bound variables).
         // TODO: unwrap ...
-        let other_renamed = other.expr.subst(&VarSubst::single(other.bound_var, self.bound_var.into())).unwrap();
+        let other_renamed = other
+            .expr
+            .subst(&VarSubst::single(other.bound_var, self.bound_var.into()))
+            .unwrap();
         self.expr.known_equal(&other_renamed)
     }
 }
@@ -1097,7 +1100,7 @@ mod tests {
         // Substitute: n -> inner_expr
         let subst = VarSubst::single("n".parse().unwrap(), inner_expr.clone());
         let combined_expr = outer_expr.subst(&subst).unwrap();
-        
+
         // n[n := inner_expr] = inner_expr
         // Make sure we don't complicate it, into something like `λn.n inner_expr`.
         assert_eq!(combined_expr, inner_expr);
