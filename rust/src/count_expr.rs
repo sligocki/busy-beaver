@@ -152,7 +152,7 @@ impl VarSum {
         })
     }
 
-    pub fn unbound_vars(&self) -> HashSet<Variable> {
+    pub fn free_vars(&self) -> HashSet<Variable> {
         self.var_counts.keys().cloned().collect()
     }
 
@@ -179,15 +179,15 @@ impl VarSum {
         }
         // First we add bound variables for all RecursiveExpr substitutions to `new_var_sum`.
         for (x, count, _) in rec_subst.iter() {
-            // If `x` is unbound in `expr`, we cannot do the substitution below as simply.
+            // If `x` is free in `expr`, we cannot do the substitution below as simply.
             // TODO: Replace `x` with a new (unused) variable in this case.
-            assert!(!new_var_sum.unbound_vars().contains(x));
+            assert!(!new_var_sum.free_vars().contains(x));
             new_var_sum += VarSum::from(*x) * *count;
         }
         // Then, for each RecursiveExpr substitution, we apply the substitution via function application.
         let mut expr = CountExpr::VarSum(new_var_sum);
         for (x, _, rec_expr) in rec_subst.iter() {
-            assert!(expr.unbound_vars().contains(x));
+            assert!(expr.free_vars().contains(x));
             // expr[x := rec_expr] = (\x -> expr) rec_expr
             expr = CountExpr::RecursiveExpr(RecursiveExpr {
                 func: Box::new(Function {
@@ -248,8 +248,8 @@ impl Function {
         }
     }
 
-    pub fn unbound_vars(&self) -> HashSet<Variable> {
-        let mut vars = self.expr.unbound_vars();
+    pub fn free_vars(&self) -> HashSet<Variable> {
+        let mut vars = self.expr.free_vars();
         vars.remove(&self.bound_var);
         vars
     }
@@ -282,10 +282,10 @@ impl Function {
 }
 
 impl RecursiveExpr {
-    pub fn unbound_vars(&self) -> HashSet<Variable> {
-        let mut vars = self.func.expr.unbound_vars();
-        vars.extend(self.num_repeats.unbound_vars());
-        vars.extend(self.base.unbound_vars());
+    pub fn free_vars(&self) -> HashSet<Variable> {
+        let mut vars = self.func.expr.free_vars();
+        vars.extend(self.num_repeats.free_vars());
+        vars.extend(self.base.free_vars());
         vars
     }
 
@@ -352,10 +352,10 @@ impl CountExpr {
         }
     }
 
-    pub fn unbound_vars(&self) -> HashSet<Variable> {
+    pub fn free_vars(&self) -> HashSet<Variable> {
         match self {
-            CountExpr::VarSum(expr) => expr.unbound_vars(),
-            CountExpr::RecursiveExpr(expr) => expr.unbound_vars(),
+            CountExpr::VarSum(expr) => expr.free_vars(),
+            CountExpr::RecursiveExpr(expr) => expr.free_vars(),
         }
     }
 
@@ -419,9 +419,9 @@ impl CountOrInf {
         }
     }
 
-    pub fn unbound_vars(&self) -> HashSet<Variable> {
+    pub fn free_vars(&self) -> HashSet<Variable> {
         match self {
-            CountOrInf::Finite(expr) => expr.unbound_vars(),
+            CountOrInf::Finite(expr) => expr.free_vars(),
             CountOrInf::Infinity => HashSet::new(),
         }
     }
