@@ -183,21 +183,27 @@ impl VarSum {
             assert!(!new_var_sum.free_vars().contains(x));
             new_var_sum += VarSum::from(*x) * *count;
         }
-        // TODO: This is currently converting simple expressions like:
-        //      x[x := expr]  ->  λx.x expr  (instead of just expr).
         // Then, for each RecursiveExpr substitution, we apply the substitution via function application.
         let mut expr = CountExpr::VarSum(new_var_sum);
         for (x, _, rec_expr) in rec_subst.iter() {
             assert!(expr.free_vars().contains(x));
-            // expr[x := rec_expr] = (\x -> expr) rec_expr
-            expr = CountExpr::RecursiveExpr(RecursiveExpr {
-                func: Box::new(Function {
-                    bound_var: *x,
-                    expr: expr,
-                }),
-                num_repeats: Box::new(1.into()),
-                base: Box::new(CountExpr::RecursiveExpr(rec_expr.clone())),
-            });
+            if expr == CountExpr::from(*x) {
+                // Short-circuit a common simple case:
+                //      x[x := rec_expr] = rec_expr
+                // instead of something more verbose like
+                //      λx.x rec_expr
+                return CountExpr::RecursiveExpr(rec_expr.clone());
+            } else {
+                // expr[x := rec_expr] = (λx.expr rec_expr)
+                expr = CountExpr::RecursiveExpr(RecursiveExpr {
+                    func: Box::new(Function {
+                        bound_var: *x,
+                        expr: expr,
+                    }),
+                    num_repeats: Box::new(1.into()),
+                    base: Box::new(CountExpr::RecursiveExpr(rec_expr.clone())),
+                });
+            }
         }
         expr
     }
@@ -1015,7 +1021,6 @@ mod tests {
             num_repeats: Box::new(1.into()),
             base: Box::new(opaque.clone()),
         });
-        println!("{} vs. {}", opaque, ident_opaque.normalize());
         assert_eq!(opaque, ident_opaque.normalize());
 
         // Unwrap even indefinitely repeated identity functions.
@@ -1025,7 +1030,6 @@ mod tests {
             num_repeats: Box::new("k".parse().unwrap()),
             base: Box::new(opaque.clone()),
         });
-        println!("{} vs. {}", opaque, ident_mult_opaque.normalize());
         assert_eq!(opaque, ident_mult_opaque.normalize());
     }
 
@@ -1059,7 +1063,7 @@ mod tests {
     fn test_subst_var_sum_recursive() {
         let outer_expr: CountExpr = "2n+8".parse().unwrap();
 
-        // rep(\x -> 3x + 13, 2)(3)
+        // (λx -> 3x + 13)^2 3
         let inner_expr = CountExpr::RecursiveExpr(RecursiveExpr {
             func: Box::new(Function::affine(3, 13)),
             num_repeats: Box::new(2.into()),
@@ -1077,5 +1081,25 @@ mod tests {
             base: Box::new(inner_expr),
         });
         assert_eq!(combined_expr, expected);
+    }
+
+    #[test]
+    fn test_subst_simple_recursive() {
+        let outer_expr: CountExpr = "n".parse().unwrap();
+
+        // (λx -> 3x + 13)^2 3
+        let inner_expr = CountExpr::RecursiveExpr(RecursiveExpr {
+            func: Box::new(Function::affine(3, 13)),
+            num_repeats: Box::new(2.into()),
+            base: Box::new(3.into()),
+        });
+
+        // Substitute: n -> inner_expr
+        let subst = VarSubst::single("n".parse().unwrap(), inner_expr.clone());
+        let combined_expr = outer_expr.subst(&subst).unwrap();
+        
+        // n[n := inner_expr] = inner_expr
+        // Make sure we don't complicate it, into something like `λn.n inner_expr`.
+        assert_eq!(combined_expr, inner_expr);
     }
 }
