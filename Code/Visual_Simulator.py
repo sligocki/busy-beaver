@@ -80,7 +80,7 @@ def run_visual(tm : Turing_Machine.Simple_Machine,
   tape[position - len(start_left_tape):position + len(start_right_tape)] = \
     start_left_tape + start_right_tape
 
-  half_width = (print_width - 18) // 2
+  half_width = (print_width - 19) // 2
   if half_width < 1:
     half_width = 1
 
