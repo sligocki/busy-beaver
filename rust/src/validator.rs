@@ -551,12 +551,23 @@ mod tests {
                 base: Box::new(y),
             })
         }
-        // f4(x, y) = rep(λz -> f3(2z+7), x)(y) ~= 2^^^x
+        // f4(x, y) = rep(λz -> f3(2z+7, 1), x)(y) ~= 2^^^x
         fn f4(x: CountExpr, y: CountExpr) -> CountExpr {
             CountExpr::RecursiveExpr(RecursiveExpr {
                 func: Box::new(Function {
                     bound_var: "z".parse().unwrap(),
                     expr: f3("2z+7".parse().unwrap(), 1.into()),
+                }),
+                num_repeats: Box::new(x),
+                base: Box::new(y),
+            })
+        }
+        // f5(x, y) = ((λz.f4(4z+19, f2(1, 1)))^x y) ~= 2^^^^x
+        fn f5(x: CountExpr, y: CountExpr) -> CountExpr {
+            CountExpr::RecursiveExpr(RecursiveExpr {
+                func: Box::new(Function {
+                    bound_var: "z".parse().unwrap(),
+                    expr: f4("4z+19".parse().unwrap(), f3(1.into(), 1.into())),
                 }),
                 num_repeats: Box::new(x),
                 base: Box::new(y),
@@ -677,7 +688,6 @@ mod tests {
                         )]),
                     ],
                 },
-                // C(a, b, c, d, e) = $ 1 2^a 1 3^b 1 01^c 1 2^d <A 2^e $
                 // Level 4: C(2a+r, 0, 0, 1, 2e+1)  ->  C(r, 0, 0, 1, 2 f4(a, e) + 1)
                 //   where f4(a, e) = rep(λx -> f3(2x+7), a)(e)  ~= 2^^^a
                 Rule {
@@ -714,6 +724,71 @@ mod tests {
                         induction_step_expr(&[(
                             "e".parse().unwrap(),
                             f3("2e+7".parse().unwrap(), 1.into()),
+                        )]),
+                    ],
+                },
+                // Level 5: C(0, 0, 0, 1, 2e+1)  ->  C(0, 0, 0, 1, 2 f4(4e+19, f3(1, 1)) + 1)
+                // Infinite
+                Rule {
+                    init_config: Config::from_str("0^inf 1^1 1^1 1^1 1^1 2^1 <A 2^2e+1 0^inf")
+                        .unwrap(),
+                    final_config: Config::from_str("0^inf 1^1 1^1 1^1 1^1 2^1 <A 2^2x+1 0^inf")
+                        .unwrap()
+                        .subst(&VarSubst::single(
+                            Variable::from_str("x").unwrap(),
+                            // f4("4e+19".parse().unwrap(), f3(1.into(), 1.into())),
+                            f5("n".parse().unwrap(), "e".parse().unwrap()),
+                        ))
+                        .unwrap(),
+                    proof_base: vec![],
+                    proof_inductive: vec![
+                        // 11112 <A 2^2e+1 00  -->  <A 2^2e+7 1
+                        base_step(1),
+                        chain_step(1, "e"),
+                        base_step(3),
+                        chain_step(2, "2e+7"),
+                        // 0 <A 2^2e+7 1  -->  1 2^2e+7 B> 1
+                        base_step(1),
+                        chain_step(3, "2e+7"),
+                        // 1 2^2e+7 B> 100  --(9)-->  1 2^2e+7 <A 2^3
+                        base_step(9),
+                        // Level 1: 12 2^2e+6 <A 2^3  -->  12 <A 2^2(2e+6)+3
+                        rule_step(7, &[("n", "e+3"), ("e", "1")]),
+                        // 12 <A 2^4e+15 00  -->  <A 2^4e+18 1
+                        base_step(1),
+                        chain_step(1, "2e+7"),
+                        base_step(3),
+                        chain_step(2, "4e+18"),
+                        // 0 <A 2^4e+18 1  -->  1 2^4e+18 B> 1
+                        base_step(1),
+                        chain_step(3, "4e+18"),
+                        // 1 2^4e+18 B> 100  --(9)-->  1 2^4e+18 <A 2^3
+                        base_step(9),
+                        // Level 1: 1 2^4e+18 <A 2^3  -->  1 <A 2^2(4e+18)+3
+                        rule_step(7, &[("n", "2e+9"), ("e", "1")]),
+                        // 01 <A 2^8e+39  -->  1 2^8e+40 B>
+                        base_step(2),
+                        chain_step(3, "8e+40"),
+                        // 1 2^8e+40 B> 0^6  --(30)--> 1 2^8e+38 1 3^1 112 <A 2^3
+                        base_step(30),
+                        // Level 3: 3^1 112 <A 2^3  -->  112 <A 2^{2 f3(1, 1) + 1}
+                        //      f3(1, 1) = f2(3, 1)
+                        rule_step(9, &[("n", "1"), ("e", "1")]),
+                        // Level 4: 1 2^8e+38 1112 <A 2^{2 f3(1, 1) + 1}  -->  11112 <A 2^2x+1
+                        //      for x = f4(4e+19, f3(1, 1))
+                        InductiveProofStep::BaseStep(BaseProofStep::RuleStep {
+                            rule_id: 10,
+                            var_assignment: VarSubst::from(&[
+                                (
+                                    Variable::from_str("n").unwrap(),
+                                    CountExpr::from_str("4e+19").unwrap(),
+                                ),
+                                (Variable::from_str("e").unwrap(), f3(1.into(), 1.into())),
+                            ]),
+                        }),
+                        induction_step_expr(&[(
+                            "e".parse().unwrap(),
+                            f4("4e+19".parse().unwrap(), f3(1.into(), 1.into())),
                         )]),
                     ],
                 },

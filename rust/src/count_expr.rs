@@ -8,11 +8,9 @@ use crate::base::CountType;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct Variable(usize);
-pub type VarSubst = VarSubstGen<CountExpr>;
-type VarSumSubst = VarSubstGen<VarSum>;
 
 #[derive(Debug, Clone)]
-pub struct VarSubstGen<T: Clone>(HashMap<Variable, T>);
+pub struct VarSubst(HashMap<Variable, CountExpr>);
 
 // Simple algebraic expression which is just a sum of variables and constants.
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -71,21 +69,25 @@ pub enum ParseError {
     CountRegexFailed(String),
 }
 
-impl<T: Clone> VarSubstGen<T> {
+impl VarSubst {
     #[inline]
-    pub fn single(x: Variable, expr: T) -> Self {
+    pub fn single(x: Variable, expr: CountExpr) -> Self {
         let mut subst = Self::default();
         subst.insert(x, expr);
         subst
     }
 
+    pub fn from(pairs: &[(Variable, CountExpr)]) -> VarSubst {
+        VarSubst(HashMap::from_iter(pairs.iter().cloned()))
+    }
+
     #[inline]
-    pub fn get(&self, x: &Variable) -> Option<&T> {
+    pub fn get(&self, x: &Variable) -> Option<&CountExpr> {
         self.0.get(x)
     }
 
     #[inline]
-    pub fn insert(&mut self, x: Variable, expr: T) {
+    pub fn insert(&mut self, x: Variable, expr: CountExpr) {
         self.0.insert(x, expr);
     }
 
@@ -98,25 +100,9 @@ impl<T: Clone> VarSubstGen<T> {
     }
 }
 
-impl<T: Clone> Default for VarSubstGen<T> {
+impl Default for VarSubst {
     fn default() -> Self {
-        VarSubstGen(HashMap::new())
-    }
-}
-
-impl TryFrom<&VarSubst> for VarSumSubst {
-    type Error = ();
-
-    fn try_from(var_subst: &VarSubst) -> Result<Self, Self::Error> {
-        let mut new_subst = VarSumSubst::default();
-        for (x, expr) in var_subst.0.iter() {
-            if let CountExpr::VarSum(var_sum) = expr {
-                new_subst.0.insert(*x, var_sum.clone());
-            } else {
-                return Err(());
-            }
-        }
-        Ok(new_subst)
+        VarSubst(HashMap::new())
     }
 }
 
