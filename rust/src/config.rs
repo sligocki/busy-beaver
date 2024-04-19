@@ -56,11 +56,15 @@ impl RepBlock {
         if dir == Dir::Right {
             symbols_strs.reverse();
         }
-        format!("{}^{}", symbols_strs.concat(), self.rep)
+        if self.rep == 1.into() {
+            symbols_strs.concat()
+        } else {
+            format!("{}^{}", symbols_strs.concat(), self.rep)
+        }
     }
 
     fn from_str(s: &str, dir: Dir) -> Result<Self, ParseError> {
-        let re = Regex::new(r"^(?P<symbols>[0-9]+)\^(?P<rep>.+)$").unwrap();
+        let re = Regex::new(r"^(?P<symbols>[0-9]+)(\^(?P<rep>.+))?$").unwrap();
         let caps = re
             .captures(s)
             .ok_or(ParseError::RepBlockRegexFailed(s.to_string()))?;
@@ -71,7 +75,12 @@ impl RepBlock {
         if dir == Dir::Right {
             symbols.reverse();
         }
-        let rep = CountOrInf::from_str(&caps["rep"]).map_err(ParseError::RepBlockCountInvalid)?;
+        let rep: CountOrInf = match caps.name("rep") {
+            None => CountOrInf::from(1),
+            Some(m) => {
+                CountOrInf::from_str(m.as_str()).map_err(ParseError::RepBlockCountInvalid)?
+            }
+        };
         Ok(RepBlock { symbols, rep })
     }
 }
@@ -409,7 +418,7 @@ mod tests {
     #[test]
     fn test_parse_display() {
         for s in [
-            "0^inf 10^13 01^1 <A 43^8 21^1 0^inf",
+            "0^inf 10^13 01 <A 43^8 2 1 0^inf",
             "10^8 F> 0^inf",
             "1^138 Z> 0^2",
             " A> ",
@@ -420,15 +429,14 @@ mod tests {
 
     #[test]
     fn test_normalize() {
-        let tape =
-            HalfTape::from_str("1^13 0^0 1^0 1^2 0^3 0^x 1^1 0^8 0^inf", Dir::Right).unwrap();
-        let expected = HalfTape::from_str("1^15 0^x+3 1^1 0^inf", Dir::Right).unwrap();
+        let tape = HalfTape::from_str("1^13 0^0 1^0 1^2 0^3 0^x 1 0^8 0^inf", Dir::Right).unwrap();
+        let expected = HalfTape::from_str("1^15 0^x+3 1 0^inf", Dir::Right).unwrap();
         assert!(tape.normalize().equivalent_to(&expected));
     }
 
     #[test]
     fn test_pop_constant() {
-        let mut tape = HalfTape::from_str("01^2 011^1", Dir::Right).unwrap();
+        let mut tape = HalfTape::from_str("01^2 011", Dir::Right).unwrap();
 
         // 01^2
         assert_eq!(tape.pop_symbol(), Some(0));
@@ -474,8 +482,8 @@ mod tests {
     #[test]
     fn test_equivalent_to() {
         let tape1 = HalfTape::from_str("1^2", Dir::Right).unwrap();
-        let tape2 = HalfTape::from_str("11^1", Dir::Right).unwrap();
-        let tape3 = HalfTape::from_str("1^1 1^1", Dir::Right).unwrap();
+        let tape2 = HalfTape::from_str("11", Dir::Right).unwrap();
+        let tape3 = HalfTape::from_str("1 1", Dir::Right).unwrap();
 
         assert!(tape1.equivalent_to(&tape2));
         assert!(tape1.equivalent_to(&tape3));
@@ -486,12 +494,12 @@ mod tests {
 
     #[test]
     fn test_replace_simple() {
-        let config = Config::from_str("0^inf 2^8 1^13 <A 0^1 1^1 0^42 0^inf").unwrap();
-        let old = Config::from_str("1^13 <A 0^1 1^1").unwrap();
-        let new = Config::from_str("2^10 1^2 B> 2^4 0^1").unwrap();
+        let config = Config::from_str("0^inf 2^8 1^13 <A 0 1 0^42 0^inf").unwrap();
+        let old = Config::from_str("1^13 <A 0 1").unwrap();
+        let new = Config::from_str("2^10 1^2 B> 2^4 0").unwrap();
 
         let updated = config.replace(&old, &new).unwrap();
-        let expected = Config::from_str("0^inf 2^8 2^10 1^2 B> 2^4 0^1 0^42 0^inf").unwrap();
+        let expected = Config::from_str("0^inf 2^8 2^10 1^2 B> 2^4 0 0^42 0^inf").unwrap();
         assert!(updated.equivalent_to(&expected));
     }
 
@@ -502,7 +510,7 @@ mod tests {
         let new = HalfTape(vec![]);
 
         let updated = tape.replace(&old, &new).unwrap();
-        let expected = HalfTape::from_str("3^1", Dir::Right).unwrap();
+        let expected = HalfTape::from_str("3", Dir::Right).unwrap();
         assert!(updated.equivalent_to(&expected));
     }
 
@@ -522,7 +530,7 @@ mod tests {
         let mut config = Config::new();
         // BB4 runs for 107 steps.
         assert_eq!(config.step_n(&tm, 107), Ok(()));
-        assert!(config.equivalent_to(&Config::from_str("0^inf 1^1 Z> 0^1 1^12 0^inf").unwrap()));
+        assert!(config.equivalent_to(&Config::from_str("0^inf 1 Z> 0 1^12 0^inf").unwrap()));
     }
 
     #[test]

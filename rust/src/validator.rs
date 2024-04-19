@@ -374,8 +374,8 @@ mod tests {
         // Validate a very trivial rule which does nothing.
         let tm = TM::from_str("1RB1LB_1LA1RZ").unwrap();
         let rule = Rule {
-            init_config: Config::from_str("0^inf 1^138 B> 0^1 1^2 0^inf").unwrap(),
-            final_config: Config::from_str("0^inf 1^138 B> 0^1 1^2 0^inf").unwrap(),
+            init_config: Config::from_str("0^inf 1^138 B> 0 1^2 0^inf").unwrap(),
+            final_config: Config::from_str("0^inf 1^138 B> 0 1^2 0^inf").unwrap(),
             proof_base: vec![],
             proof_inductive: vec![],
         };
@@ -464,8 +464,8 @@ mod tests {
                 chain_rule("B> 1^n", "0^n B>", 1),
                 // Rule P(n): 0^n 1 00 B> 0  ->  1^n+1 00 B> 0
                 Rule {
-                    init_config: Config::from_str("0^n 1^1 00^1 B> 0^1").unwrap(),
-                    final_config: Config::from_str("1^n+1 00^1 B> 0^1").unwrap(),
+                    init_config: Config::from_str("0^n 1 0 0 B> 0").unwrap(),
+                    final_config: Config::from_str("1^n+1 0 0 B> 0").unwrap(),
                     proof_base: vec![],
                     proof_inductive: vec![
                         // 0^n+1 1 00 B> 0  ->  0 1^n+1 00 B> 0
@@ -486,8 +486,8 @@ mod tests {
                 },
                 // Infinite Rule: 0^inf 1 00 B> 0  ->  0^inf 1^n+1 00 B> 0
                 Rule {
-                    init_config: Config::from_str("0^inf 1^1 00^1 B> 0^1").unwrap(),
-                    final_config: Config::from_str("0^inf 1^n+1 00^1 B> 0^1").unwrap(),
+                    init_config: Config::from_str("0^inf 1 0 0 B> 0").unwrap(),
+                    final_config: Config::from_str("0^inf 1^n+1 0 0 B> 0").unwrap(),
                     proof_base: vec![],
                     proof_inductive: vec![
                         // 0^inf 1 00 B> 0  ->  0^inf 1^n+2 00 B> 0
@@ -577,8 +577,6 @@ mod tests {
                 chain_rule("1^n <A", "<A 2^n", 1),
                 chain_rule("B> 2^n", "2^n B>", 1),
                 chain_rule("1^n <C", "<C 3^n", 1),
-                // TODO: This requires ability to unify:
-                //      0^1 1^1 01^n  ==  01^n+1
                 chain_rule("B> 3^2n", "01^n B>", 2),
                 chain_rule("A> 3^n", "3^n A>", 1),
                 // Level 1: C(a, b, c, 2k+r, 2e+1)  ->  C(a, b, c, r, 2 (e+2k) + 1)
@@ -610,8 +608,8 @@ mod tests {
                 // Level 2: C(a, b, c, 1, 2e+1)  ->  C(a, b, 0, 1, 2 f2(c, e) + 1)
                 //   where f2(c, e) = rep(λx -> 2x+5, c)(e)  ~= 2^c
                 Rule {
-                    init_config: Config::from_str("01^n 1^1 2^1 <A 2^2e+1 0^inf").unwrap(),
-                    final_config: Config::from_str("1^1 2^1 <A 2^2x+1 0^inf")
+                    init_config: Config::from_str("01^n 1 2 <A 2^2e+1 0^inf").unwrap(),
+                    final_config: Config::from_str("1 2 <A 2^2x+1 0^inf")
                         .unwrap()
                         .subst(&VarSubst::single(
                             Variable::from_str("x").unwrap(),
@@ -645,8 +643,8 @@ mod tests {
                 // Level 3: C(a, b, 0, 1, 2e+1)  ->  C(a, 0, 0, 1, 2 f3(b, e) + 1)
                 //   where f3(b, e) = rep(λx -> f2(x+2, 1), b)(e)  ~= 2^^b
                 Rule {
-                    init_config: Config::from_str("3^n 1^1 1^1 2^1 <A 2^2e+1 0^inf").unwrap(),
-                    final_config: Config::from_str("1^1 1^1 2^1 <A 2^2x+1 0^inf")
+                    init_config: Config::from_str("3^n 1 1 2 <A 2^2e+1 0^inf").unwrap(),
+                    final_config: Config::from_str("1 1 2 <A 2^2x+1 0^inf")
                         .unwrap()
                         .subst(&VarSubst::single(
                             Variable::from_str("x").unwrap(),
@@ -685,8 +683,8 @@ mod tests {
                 // Level 4: C(2a+r, 0, 0, 1, 2e+1)  ->  C(r, 0, 0, 1, 2 f4(a, e) + 1)
                 //   where f4(a, e) = rep(λx -> f3(2x+7), a)(e)  ~= 2^^^a
                 Rule {
-                    init_config: Config::from_str("2^2n 1^1 1^1 1^1 2^1 <A 2^2e+1 0^inf").unwrap(),
-                    final_config: Config::from_str("1^1 1^1 1^1 2^1 <A 2^2x+1 0^inf")
+                    init_config: Config::from_str("2^2n 1 1 1 2 <A 2^2e+1 0^inf").unwrap(),
+                    final_config: Config::from_str("1 1 1 2 <A 2^2x+1 0^inf")
                         .unwrap()
                         .subst(&VarSubst::single(
                             Variable::from_str("x").unwrap(),
@@ -724,13 +722,11 @@ mod tests {
                 // Level 5: C(0, 0, 0, 1, 2e+1)  ->  C(0, 0, 0, 1, 2 f4(4e+19, f3(1, 1)) + 1)
                 // Infinite
                 Rule {
-                    init_config: Config::from_str("0^inf 1^1 1^1 1^1 1^1 2^1 <A 2^2e+1 0^inf")
-                        .unwrap(),
-                    final_config: Config::from_str("0^inf 1^1 1^1 1^1 1^1 2^1 <A 2^2x+1 0^inf")
+                    init_config: Config::from_str("0^inf 1 1 1 1 2 <A 2^2e+1 0^inf").unwrap(),
+                    final_config: Config::from_str("0^inf 1 1 1 1 2 <A 2^2x+1 0^inf")
                         .unwrap()
                         .subst(&VarSubst::single(
                             Variable::from_str("x").unwrap(),
-                            // f4("4e+19".parse().unwrap(), f3(1.into(), 1.into())),
                             f5("n".parse().unwrap(), "e".parse().unwrap()),
                         ))
                         .unwrap(),
@@ -786,6 +782,50 @@ mod tests {
                         )]),
                     ],
                 },
+                // Proof that TM is infinite starting from blank tape.
+                // Rule {
+                //     init_config: Config::new(),
+                //     final_config: Config::from_str("0^inf 1 1 1 1 2 <A 2^2x+1 0^inf")
+                //         .unwrap()
+                //         .subst(&VarSubst::single(
+                //             Variable::from_str("x").unwrap(),
+                //             f5("n".parse().unwrap(), f4(7.into(), f3(1.into(), 1.into()))),
+                //         ))
+                //         .unwrap(),
+                //     proof_base: vec![
+                //         // <A --> 1 2^14 1 3 112 <A 2^3
+                //         BaseProofStep::TMSteps(210),
+                //         // Level 3: 1 2^14 1 3 112 <A 2^3  -->  1 2^14 1 112 <A 2^{2 f3(1, 1) + 1}
+                //         BaseProofStep::RuleStep {
+                //             rule_id: 9,
+                //             var_assignment: VarSubst::from(&[
+                //                 ("n".parse().unwrap(), 1.into()),
+                //                 ("e".parse().unwrap(), 1.into()),
+                //             ]),
+                //         },
+                //         // Level 4: 1 2^14 1112 <A 2^{2 f3(1, 1) + 1}  -->  1 112 <A 2^{2 f4(7, f3(1, 1)) + 1}
+                //         BaseProofStep::RuleStep {
+                //             rule_id: 10,
+                //             var_assignment: VarSubst::from(&[
+                //                 ("n".parse().unwrap(), 7.into()),
+                //                 ("e".parse().unwrap(), f3(1.into(), 1.into())),
+                //             ]),
+                //         },
+                //     ],
+                //     proof_inductive: vec![
+                //         induction_step(&[]),
+                //         InductiveProofStep::BaseStep(BaseProofStep::RuleStep {
+                //             rule_id: 11,
+                //             var_assignment: VarSubst::from(&[
+                //                 ("n".parse().unwrap(), 1.into()),
+                //                 (
+                //                     "e".parse().unwrap(),
+                //                     f5("n".parse().unwrap(), f4(7.into(), f3(1.into(), 1.into()))),
+                //                 ),
+                //             ]),
+                //         }),
+                //     ],
+                // },
             ],
         };
         if let Err(err) = validate_rule_set(&rule_set) {
@@ -807,9 +847,8 @@ mod tests {
                 chain_rule("3^n <A", "<A 4^n", 1),
                 // 0^inf 34 A(2n)  ->  0^inf 1344 A(3n+2)
                 Rule {
-                    init_config: Config::from_str("0^inf 34^1 4^4n B> 211412^1 0^inf").unwrap(),
-                    final_config: Config::from_str("0^inf 1344^1 4^6n+4 B> 211412^1 0^inf")
-                        .unwrap(),
+                    init_config: Config::from_str("0^inf 34 4^4n B> 211412 0^inf").unwrap(),
+                    final_config: Config::from_str("0^inf 1344 4^6n+4 B> 211412 0^inf").unwrap(),
                     proof_base: vec![BaseProofStep::TMSteps(80)],
                     proof_inductive: vec![
                         base_step(3),
