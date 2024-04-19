@@ -318,8 +318,9 @@ impl Config {
     // Run the TM for `num_steps` steps.
     // Returns an error if attempting to step from a halt/undefined state or if it falls off the tape.
     pub fn step_n(&mut self, tm: &TM, num_steps: CountType) -> Result<(), String> {
-        for _ in 0..num_steps {
-            self.step(tm)?;
+        for n in 0..num_steps {
+            self.step(tm)
+                .map_err(|err| format!("Step {}: {}", n, err))?;
         }
         Ok(())
     }

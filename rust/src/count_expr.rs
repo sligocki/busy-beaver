@@ -8,6 +8,8 @@ use crate::base::CountType;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct Variable(usize);
+// TODO: Remove and add rule-specific induction variables in validator instead.
+pub const VAR_N: Variable = Variable(0);
 
 #[derive(Debug, Clone)]
 pub struct VarSubst(HashMap<Variable, CountExpr>);
@@ -107,7 +109,13 @@ impl Default for VarSubst {
 }
 
 impl Variable {
-    pub const fn new(id: usize) -> Variable {
+    // Generate a new variable that is not in `used_vars`.
+    // Necessary to avoid clobbering free variables when creating functions.
+    pub fn new_unused(used_vars: &HashSet<Variable>) -> Variable {
+        let mut id = 0;
+        while used_vars.contains(&Variable(id)) {
+            id += 1;
+        }
         Variable(id)
     }
 }
@@ -376,6 +384,32 @@ impl RecursiveExpr {
         }
         return false;
     }
+
+    // Add a VarSum to a RecursiveExpr using a new lambda enclosure.
+    // self + var_sum -> (λx.var_sum+x self)
+    pub fn add_var_sum(&self, var_sum: &VarSum) -> RecursiveExpr {
+        // TODO: As an optimization, it might be nice to check if self is already of this form.
+
+        // Create a new (unused) variable to use for bound variable.
+        let used_vars: HashSet<Variable> = self
+            .free_vars()
+            .union(&var_sum.free_vars())
+            .copied()
+            .collect();
+        let x = Variable::new_unused(&used_vars);
+
+        // λx.var_sum+x
+        let var_sum_plus = Function {
+            bound_var: x,
+            expr: CountExpr::VarSum(var_sum.clone() + VarSum::from(x)),
+        };
+
+        RecursiveExpr {
+            func: Box::new(var_sum_plus),
+            num_repeats: Box::new(1.into()),
+            base: Box::new(CountExpr::RecursiveExpr(self.clone())),
+        }
+    }
 }
 
 impl CountExpr {
@@ -422,7 +456,14 @@ impl CountExpr {
             (CountExpr::VarSum(expr), CountExpr::VarSum(other_expr)) => {
                 Some(CountExpr::VarSum(expr.clone() + other_expr.clone()))
             }
-            _ => None,
+            (CountExpr::VarSum(var_sum), CountExpr::RecursiveExpr(rec_expr)) => {
+                Some(CountExpr::RecursiveExpr(rec_expr.add_var_sum(var_sum)))
+            }
+            (CountExpr::RecursiveExpr(rec_expr), CountExpr::VarSum(var_sum)) => {
+                Some(CountExpr::RecursiveExpr(rec_expr.add_var_sum(var_sum)))
+            }
+            // TODO: Support
+            (CountExpr::RecursiveExpr(_), CountExpr::RecursiveExpr(_)) => None,
         }
     }
 

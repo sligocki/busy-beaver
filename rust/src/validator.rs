@@ -4,13 +4,13 @@ use std::result::Result;
 
 use crate::base::CountType;
 use crate::config::Config;
-use crate::count_expr::{CountExpr, VarSubst, VarSubstError, Variable};
+use crate::count_expr::{CountExpr, VarSubst, VarSubstError, Variable, VAR_N};
 use crate::tm::TM;
 
 use thiserror::Error;
 
 type RuleIdType = usize;
-const INDUCTION_VAR: Variable = Variable::new(0);
+const INDUCTION_VAR: Variable = VAR_N;
 
 #[derive(Debug, Clone)]
 pub enum ProofStep {
@@ -807,17 +807,20 @@ mod tests {
         let a = Variable::from_str("a").unwrap();
         let x = Variable::from_str("x").unwrap();
 
-        // pow2n1 = ((λx.2x+1)^n 1) = 2^n - 1
-        let pow2n1 = CountExpr::RecursiveExpr(RecursiveExpr {
-            // λx.2x+1
-            func: Box::new(Function::affine(2, 1)),
-            num_repeats: Box::new(n.into()),
-            base: Box::new(0.into()),
-        });
-        // a_2n1 = a + pow2n1 = a + 2^n - 1
+        // Repeat λx.2x+1 n times starting from 0.
+        //   = 2^n - 1
+        fn rep2n1(n: CountExpr) -> CountExpr {
+            CountExpr::RecursiveExpr(RecursiveExpr {
+                func: Box::new(Function::affine(2, 1)),
+                num_repeats: Box::new(n),
+                base: Box::new(0.into()),
+            })
+        }
+
+        // a_2n1 = a + rep2n1(n) = a + 2^n - 1
         let a_2n1 = CountExpr::from_str("a+x")
             .unwrap()
-            .subst(&VarSubst::single(x, pow2n1))
+            .subst(&VarSubst::single(x, rep2n1(n.into())))
             .unwrap();
 
         let rule_set = RuleSet {
@@ -858,9 +861,7 @@ mod tests {
                             },
                             // A> 0302  -->  1104 A>
                             base_step(8),
-
                             ProofStep::Admit,
-
                             // Second Induction:  0^inf 104^{a_2n1 + 1}         1104 A> 033^n 302
                             //               -->  0^inf 104^{a_2n1 + 1 + 2n1}   1104 A> 302^n 302
                             ProofStep::InductiveStep(VarSubst::from(&[
@@ -876,6 +877,49 @@ mod tests {
                             // RecursionExprs, not just simple variables ...
                         ],
                     },
+                },
+                // Halt Proof
+                Rule {
+                    init_config: Config::new(),
+                    final_config: Config::from_str(
+                        "0^inf 104^x 1104 104^126 1 Z> 033^7 0302 302 033 3303 02^3 0^inf",
+                    )
+                    .unwrap()
+                    .subst(&VarSubst::single(x, rep2n1(127.into())))
+                    .unwrap(),
+                    proof: Proof::Simple(vec![
+                        // ---> [1104] A> [302]6 [3033] [033]2 [0302] [00] [02] [02]
+                        base_step(642),
+                        // ---> [104]63 [1104] A> [033]6 [3033] [033]2 [0302] [00] [02] [02]
+                        ProofStep::RuleStep {
+                            rule_id: 3,
+                            var_assignment: VarSubst::from(&[(a, 0.into()), (n, 6.into())]),
+                        },
+                        // ---> [104]63 <B [0302] [302]6 [0302] [302]2 [3303] [02] [02] [02]
+                        base_step(97),
+                        // ---> [104]64 [1104] A> [302]6 [0302] [302]2 [3303] [02] [02] [02]
+                        ProofStep::RuleStep {
+                            rule_id: 2,
+                            var_assignment: VarSubst::from(&[(n, rep2n1(6.into()))]),
+                        },
+                        base_step(7),
+                        ProofStep::RuleStep {
+                            rule_id: 0,
+                            var_assignment: VarSubst::from(&[(n, rep2n1(6.into()))]),
+                        },
+                        base_step(8),
+                        // ---> [104]127 [1104] A> [033]6 [0302] [302]2 [3303] [02] [02] [02]
+                        ProofStep::RuleStep {
+                            rule_id: 3,
+                            var_assignment: VarSubst::from(&[
+                                (a, rep2n1(6.into()).checked_add(&1.into()).unwrap()),
+                                (n, 6.into()),
+                            ]),
+                        },
+                        // ...
+                        // ---> [1104] A> [302]126 [3033] [033]6 [0302] [033][302] [3303] [02] [02] [02]
+                        base_step(5690),
+                    ]),
                 },
             ],
         };
