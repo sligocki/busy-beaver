@@ -23,6 +23,8 @@ pub enum ProofStep {
     },
     // Apply this rule via induction.
     InductiveStep(VarSubst),
+    // End proof early and treat it like a success. (For debugging.)
+    Admit,
 }
 
 #[derive(Debug)]
@@ -112,9 +114,6 @@ fn try_apply_rule(
     rule: &Rule,
     var_subst: &VarSubst,
 ) -> Result<Config, StepValidationError> {
-    // TODO: Check that var_subst are all guaranteed to be positive.
-    // Currently, we only allow equality between rules if Tapes are specified identically.
-    // TODO: Support equality even if compression is different.
     let init_config = rule
         .init_config
         .subst(var_subst)
@@ -130,7 +129,7 @@ fn try_apply_rule(
 
 fn apply_proof_step(
     tm: &TM,
-    config: &Config,
+    mut config: Config,
     proof_step: &ProofStep,
     prev_rules: &[Rule],
     // Only used in inductive proofs.
@@ -140,11 +139,10 @@ fn apply_proof_step(
     match proof_step {
         ProofStep::TMSteps(n) => {
             // Apply n base TM steps.
-            let mut new_config = config.clone();
-            new_config
+            config
                 .step_n(tm, *n)
                 .map_err(|err| StepValidationError::TMStepError(config.clone(), *n, err))?;
-            Ok(new_config)
+            Ok(config)
         }
         ProofStep::RuleStep {
             rule_id,
@@ -153,7 +151,7 @@ fn apply_proof_step(
             if *rule_id >= prev_rules.len() {
                 return Err(StepValidationError::RuleNotYetDefined(*rule_id));
             }
-            try_apply_rule(config, &prev_rules[*rule_id], var_assignment)
+            try_apply_rule(&config, &prev_rules[*rule_id], var_assignment)
         }
         ProofStep::InductiveStep(var_assignment) => {
             // Only allow induction rules in inductive proofs.
@@ -167,8 +165,9 @@ fn apply_proof_step(
             if var_assignment.get(&INDUCTION_VAR) != Some(&CountExpr::var_plus(INDUCTION_VAR, 0)) {
                 return Err(StepValidationError::InductionVarNotDecreasing);
             }
-            try_apply_rule(config, this_rule, var_assignment)
+            try_apply_rule(&config, this_rule, var_assignment)
         }
+        ProofStep::Admit => Ok(config),
     }
 }
 
@@ -185,7 +184,10 @@ fn validate_proof(
 ) -> Result<(), ProofValidationError> {
     let mut config = init_config;
     for (step_num, step) in proof_steps.iter().enumerate() {
-        config = apply_proof_step(tm, &config, step, prev_rules, induction_rule)
+        if matches!(step, ProofStep::Admit) {
+            return Ok(());
+        }
+        config = apply_proof_step(tm, config, step, prev_rules, induction_rule)
             .map_err(|error| ProofValidationError::StepError { step_num, error })?;
     }
     if config.equivalent_to(&final_config) {
@@ -795,37 +797,85 @@ mod tests {
         }
     }
 
-    #[ignore = "work in progress"]
+    #[ignore = "sum expression support needed"]
     #[test]
     fn test_25_dyuan() {
         // @dyuan01's halting 2x5 counter-bouncer.
         //      https://discord.com/channels/960643023006490684/1084047886494470185/1230916624626876529
+
+        let n = Variable::from_str("n").unwrap();
+        let a = Variable::from_str("a").unwrap();
+        let x = Variable::from_str("x").unwrap();
+
+        // pow2n1 = ((λx.2x+1)^n 1) = 2^n - 1
+        let pow2n1 = CountExpr::RecursiveExpr(RecursiveExpr {
+            // λx.2x+1
+            func: Box::new(Function::affine(2, 1)),
+            num_repeats: Box::new(n.into()),
+            base: Box::new(0.into()),
+        });
+        // a_2n1 = a + pow2n1 = a + 2^n - 1
+        let a_2n1 = CountExpr::from_str("a+x")
+            .unwrap()
+            .subst(&VarSubst::single(x, pow2n1))
+            .unwrap();
+
         let rule_set = RuleSet {
             tm: TM::from_str("1RB0LB---4RA0LA_2LA3LA3LB0RA2LA").unwrap(),
             rules: vec![
-                // 0^inf 1104 A> 302^n  ->  0^inf 104^{2^n - 1} 1104 A> 033^n
+                chain_rule("A> 033^n", "104^n A>", 3),
+                chain_rule("104^n <A", "<A 302^n", 5),
+                chain_rule("104^n <B", "<B 033^n", 5),
+                // 0^inf 104^a 1104 A> 302^n  -->  0^inf 104^{a + 2^n - 1} 1104 A> 033^n
+                // Note: We don't allow subtraction in our system! So instead we prove a slightly weaker rule:
+                //      a + 1  -->  a + 2^n
                 Rule {
-                    init_config: Config::from_str("0^inf 1104 A> 302^n").unwrap(),
+                    init_config: Config::from_str("0^inf 104^a 1104 A> 302^n").unwrap(),
                     final_config: Config::from_str("0^inf 104^x 1104 A> 033^n")
                         .unwrap()
-                        .subst(&VarSubst::single(
-                            Variable::from_str("x").unwrap(),
-                            CountExpr::RecursiveExpr(RecursiveExpr {
-                                func: Box::new(Function {
-                                    bound_var: "x".parse().unwrap(),
-                                    expr: "2x-1".parse().unwrap(),
-                                }),
-                                num_repeats: Box::new("n".parse().unwrap()),
-                                base: Box::new(4.into()),
-                            }),
-                        ))
+                        .subst(&VarSubst::single(x, a_2n1.clone()))
                         .unwrap(),
-                    proof: Proof::Simple(vec![
-                        // 1104 A> 302^n+1  -->  1104 <A 033 302^n
-                        base_step(5),
-                        // 1104 <A 033 302^n  -->  <B 0302 033 302^n
-                        base_step(6),
-                    ]),
+                    proof: Proof::Inductive {
+                        proof_base: vec![],
+                        proof_inductive: vec![
+                            // First Induction:  0^inf 104^a 1104 A> 302^n+1  -->  0^inf 104^a_2n1 1104 A> 033^n 302
+                            induction_step(&[("a", "a")]),
+                            // A> 033^n 302  -->  104^n A> 302  -->  104^n <A 033  -->  <A 302^n 033
+                            chain_step(0, "n"),
+                            base_step(5),
+                            chain_step(1, "n"),
+                            // 1104 <A  -->  <B 0302
+                            base_step(6),
+                            // 000 104^a_2n1 <B  -->  000 <B 033^a_2n1  --> 104 A> 033^a_2n1  -->  104 104^a_2n1 A>
+                            ProofStep::RuleStep {
+                                rule_id: 2,
+                                var_assignment: VarSubst::from(&[(n, a_2n1.clone())]),
+                            },
+                            base_step(7),
+                            ProofStep::RuleStep {
+                                rule_id: 0,
+                                var_assignment: VarSubst::from(&[(n, a_2n1.clone())]),
+                            },
+                            // A> 0302  -->  1104 A>
+                            base_step(8),
+
+                            ProofStep::Admit,
+
+                            // Second Induction:  0^inf 104^{a_2n1 + 1}         1104 A> 033^n 302
+                            //               -->  0^inf 104^{a_2n1 + 1 + 2n1}   1104 A> 302^n 302
+                            ProofStep::InductiveStep(VarSubst::from(&[
+                                (n, n.into()),
+                                // TODO: Cannot add 1 to a_2n1 (RecursionExpr).
+                                // (a, a_2n1 + 1),
+                            ])),
+                            // TODO: This in order to prove the final config, we must equate:
+                            //          λx.a+x ((λn.2n+1)^n+1 1)
+                            //          λy.(λz.z+y (λx.a+x ((λn.2n+1)^n 1))) ((λn.2n+1)^n 1)   [+1]
+                            // ie:   a + (2^n+1 - 1)  ==  a + (2^n - 1) + (2^n - 1) + 1
+                            // One idea to support this would be to expand VarSum to support arbitrary
+                            // RecursionExprs, not just simple variables ...
+                        ],
+                    },
                 },
             ],
         };
