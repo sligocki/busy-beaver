@@ -12,9 +12,8 @@ use thiserror::Error;
 type RuleIdType = usize;
 const INDUCTION_VAR: Variable = Variable::new(0);
 
-#[allow(dead_code)]
 #[derive(Debug, Clone)]
-enum BaseProofStep {
+pub enum ProofStep {
     // Apply an integer count of base TM steps.
     TMSteps(CountType),
     // Apply a rule with the given ID and variable assignments.
@@ -22,28 +21,32 @@ enum BaseProofStep {
         rule_id: RuleIdType,
         var_assignment: VarSubst,
     },
-    // End proof early and unproven, but allow moving on to proving other rules.
-    Admit,
-}
-
-#[allow(dead_code)]
-#[derive(Debug, Clone)]
-enum InductiveProofStep {
-    BaseStep(BaseProofStep),
     // Apply this rule via induction.
     InductiveStep(VarSubst),
 }
 
 #[derive(Debug)]
-struct Rule {
-    init_config: Config,
-    final_config: Config,
-    proof_base: Vec<BaseProofStep>,
-    proof_inductive: Vec<InductiveProofStep>,
+pub enum Proof {
+    // A simple non-inductive proof.
+    Simple(Vec<ProofStep>),
+    // An inductive proof (where we prove a base case, and then an induction step).
+    Inductive {
+        // TODO: Induction variable.
+        // var: Variable,
+        proof_base: Vec<ProofStep>,
+        proof_inductive: Vec<ProofStep>,
+    },
 }
 
 #[derive(Debug)]
-struct RuleSet {
+pub struct Rule {
+    init_config: Config,
+    final_config: Config,
+    proof: Proof,
+}
+
+#[derive(Debug)]
+pub struct RuleSet {
     tm: TM,
     // Mapping from rule ID to Rule.
     // Rule n may only use rules with id < n (or induction).
@@ -63,22 +66,18 @@ enum StepValidationError {
     RuleConfigMismatch(Config, Config, String),
     #[error("Variable substitution error: {0}")]
     VarSubstError(#[from] VarSubstError),
-    #[error("Admitted")]
-    Admitted,
+    #[error("Inductive step in non-inductive proof")]
+    InductiveStepInNonInductiveProof,
 }
 
 // Errors while evaluating a rule part (base or inductive).
 #[derive(Error, Debug)]
-enum RulePartValidationError {
+enum ProofValidationError {
     #[error("Step {step_num}: {error}")]
     StepError {
         step_num: usize,
         error: StepValidationError,
     },
-    #[error("Error substituting variables in initial config: {0}")]
-    InitConfigVarSubstError(VarSubstError),
-    #[error("Error substituting variables in final config: {0}")]
-    FinalConfigVarSubstError(VarSubstError),
     #[error("Final configuration mismatch: {actual_config} != {expected_config}")]
     FinalConfigMismatch {
         actual_config: Config,
@@ -89,10 +88,15 @@ enum RulePartValidationError {
 // Errors while evaluating a rule.
 #[derive(Error, Debug)]
 enum RuleValidationError {
+    // Failure in a Proof::Simple proof.
+    #[error("{0}")]
+    Simple(ProofValidationError),
+    // Failure in a Proof::Inductive proof_base.
     #[error("Base: {0}")]
-    Base(RulePartValidationError),
+    Base(ProofValidationError),
+    // Failure in a Proof::Inductive proof_inductive.
     #[error("Induction: {0}")]
-    Induction(RulePartValidationError),
+    Induction(ProofValidationError),
 }
 
 #[allow(dead_code)]
@@ -101,34 +105,6 @@ enum RuleValidationError {
 struct ValidationError {
     rule_id: RuleIdType,
     error: RuleValidationError,
-}
-
-impl StepValidationError {
-    #[inline]
-    fn exit_early(&self) -> bool {
-        // All errors should exit early except for Admitted.
-        !matches!(self, StepValidationError::Admitted)
-    }
-}
-
-impl RulePartValidationError {
-    #[inline]
-    fn exit_early(&self) -> bool {
-        match self {
-            RulePartValidationError::StepError { error, .. } => error.exit_early(),
-            _ => true,
-        }
-    }
-}
-
-impl RuleValidationError {
-    #[inline]
-    fn exit_early(&self) -> bool {
-        match self {
-            RuleValidationError::Base(error) => error.exit_early(),
-            RuleValidationError::Induction(error) => error.exit_early(),
-        }
-    }
 }
 
 fn try_apply_rule(
@@ -152,14 +128,17 @@ fn try_apply_rule(
         .map_err(|err| StepValidationError::RuleConfigMismatch(config.clone(), init_config, err))
 }
 
-fn try_apply_step_base(
+fn apply_proof_step(
     tm: &TM,
     config: &Config,
-    step: &BaseProofStep,
+    proof_step: &ProofStep,
     prev_rules: &[Rule],
+    // Only used in inductive proofs.
+    // Should be set to None for non-inductive proofs (including induction base cases).
+    induction_rule: Option<&Rule>,
 ) -> Result<Config, StepValidationError> {
-    match step {
-        BaseProofStep::TMSteps(n) => {
+    match proof_step {
+        ProofStep::TMSteps(n) => {
             // Apply n base TM steps.
             let mut new_config = config.clone();
             new_config
@@ -167,7 +146,7 @@ fn try_apply_step_base(
                 .map_err(|err| StepValidationError::TMStepError(config.clone(), *n, err))?;
             Ok(new_config)
         }
-        BaseProofStep::RuleStep {
+        ProofStep::RuleStep {
             rule_id,
             var_assignment,
         } => {
@@ -176,22 +155,12 @@ fn try_apply_step_base(
             }
             try_apply_rule(config, &prev_rules[*rule_id], var_assignment)
         }
-        BaseProofStep::Admit => Err(StepValidationError::Admitted),
-    }
-}
+        ProofStep::InductiveStep(var_assignment) => {
+            // Only allow induction rules in inductive proofs.
+            let Some(this_rule) = induction_rule else {
+                return Err(StepValidationError::InductiveStepInNonInductiveProof);
+            };
 
-fn try_apply_step_inductive(
-    tm: &TM,
-    config: &Config,
-    step: &InductiveProofStep,
-    this_rule: &Rule,
-    prev_rules: &[Rule],
-) -> Result<Config, StepValidationError> {
-    match step {
-        InductiveProofStep::BaseStep(base_step) => {
-            try_apply_step_base(tm, config, base_step, prev_rules)
-        }
-        InductiveProofStep::InductiveStep(var_assignment) => {
             // Ensure that the induction variable is decreasing.
             // Note: When doing an inductive proof, we start by replacing n <- n+1 and
             // then only allow any uses of the rule itself with n <- n.
@@ -203,102 +172,83 @@ fn try_apply_step_inductive(
     }
 }
 
-fn validate_rule_base(
+// Apply all steps in a proof and validate that the final config is correct.
+fn validate_proof(
     tm: &TM,
-    rule: &Rule,
+    init_config: Config,
+    proof_steps: &Vec<ProofStep>,
+    final_config: Config,
     prev_rules: &[Rule],
-) -> Result<(), RulePartValidationError> {
-    // In base case, we consider the case n <- 0.
-    let base_subst = VarSubst::single(INDUCTION_VAR, 0.into());
-
-    let mut config = rule
-        .init_config
-        .subst(&base_subst)
-        .map_err(RulePartValidationError::InitConfigVarSubstError)?;
-    for (step_num, step) in rule.proof_base.iter().enumerate() {
-        config = try_apply_step_base(tm, &config, step, prev_rules)
-            .map_err(|error| RulePartValidationError::StepError { step_num, error })?;
+    // Only used in inductive proofs.
+    // Should be set to None for non-inductive proofs (including induction base cases).
+    induction_rule: Option<&Rule>,
+) -> Result<(), ProofValidationError> {
+    let mut config = init_config;
+    for (step_num, step) in proof_steps.iter().enumerate() {
+        config = apply_proof_step(tm, &config, step, prev_rules, induction_rule)
+            .map_err(|error| ProofValidationError::StepError { step_num, error })?;
     }
-    let expected_final = rule
-        .final_config
-        .subst(&base_subst)
-        .map_err(RulePartValidationError::FinalConfigVarSubstError)?;
-    if config.equivalent_to(&expected_final) {
-        // Success. Every step of every rule was valid and the final config matches.
-        // This is a valid rule.
+    if config.equivalent_to(&final_config) {
         Ok(())
     } else {
-        Err(RulePartValidationError::FinalConfigMismatch {
+        Err(ProofValidationError::FinalConfigMismatch {
             actual_config: config,
-            expected_config: expected_final,
-        })
-    }
-}
-
-fn validate_rule_inductive(
-    tm: &TM,
-    rule: &Rule,
-    prev_rules: &[Rule],
-) -> Result<(), RulePartValidationError> {
-    // In inductive case, we consider the case n <- m+1 (and only allow use of this rule where n <- m).
-    let ind_subst = VarSubst::single(INDUCTION_VAR, CountExpr::var_plus(INDUCTION_VAR, 1));
-
-    let mut config = rule
-        .init_config
-        .subst(&ind_subst)
-        .map_err(RulePartValidationError::InitConfigVarSubstError)?;
-    for (step_num, step) in rule.proof_inductive.iter().enumerate() {
-        config = try_apply_step_inductive(tm, &config, step, rule, prev_rules)
-            .map_err(|error| RulePartValidationError::StepError { step_num, error })?;
-    }
-    let expected_final = rule
-        .final_config
-        .subst(&ind_subst)
-        .map_err(RulePartValidationError::FinalConfigVarSubstError)?;
-    if config.equivalent_to(&expected_final) {
-        // Success. Every step of every rule was valid and the final config matches.
-        // This is a valid rule.
-        Ok(())
-    } else {
-        Err(RulePartValidationError::FinalConfigMismatch {
-            actual_config: config,
-            expected_config: expected_final,
+            expected_config: final_config,
         })
     }
 }
 
 fn validate_rule(tm: &TM, rule: &Rule, prev_rules: &[Rule]) -> Result<(), RuleValidationError> {
-    let mut ret = Ok(());
-    // Validate base case (n <- 0) and inductive case (n <- m+1) seperately.
+    match &rule.proof {
+        Proof::Simple(proof) => validate_proof(
+            tm,
+            rule.init_config.clone(),
+            &proof,
+            rule.final_config.clone(),
+            prev_rules,
+            None,
+        )
+        .map_err(RuleValidationError::Simple),
+        Proof::Inductive {
+            proof_base,
+            proof_inductive,
+        } => {
+            // Validate the base case (n <- 0).
+            let base_subst = VarSubst::single(INDUCTION_VAR, 0.into());
+            validate_proof(
+                tm,
+                rule.init_config.subst(&base_subst).unwrap(),
+                &proof_base,
+                rule.final_config.subst(&base_subst).unwrap(),
+                prev_rules,
+                None,
+            )
+            .map_err(RuleValidationError::Base)?;
 
-    // Allow trying to prove induction case even if base case is admitted.
-    if let Err(error) = validate_rule_base(tm, rule, prev_rules) {
-        if error.exit_early() {
-            return Err(RuleValidationError::Base(error));
-        } else {
-            ret = Err(RuleValidationError::Base(error));
+            // Validate the inductive case (n <- m+1).
+            let induct_subst =
+                VarSubst::single(INDUCTION_VAR, CountExpr::var_plus(INDUCTION_VAR, 1));
+            validate_proof(
+                tm,
+                rule.init_config.subst(&induct_subst).unwrap(),
+                &proof_inductive,
+                rule.final_config.subst(&induct_subst).unwrap(),
+                prev_rules,
+                Some(rule),
+            )
+            .map_err(RuleValidationError::Induction)
         }
     }
-
-    validate_rule_inductive(tm, rule, prev_rules).map_err(RuleValidationError::Induction)?;
-    ret
 }
 
 // Validate a rule set.
 #[allow(dead_code)]
 fn validate_rule_set(rule_set: &RuleSet) -> Result<(), ValidationError> {
-    // Have we admitted any rules?
-    let mut ret = Ok(());
     for (rule_id, rule) in rule_set.rules.iter().enumerate() {
-        if let Err(error) = validate_rule(&rule_set.tm, rule, &rule_set.rules[..rule_id]) {
-            if error.exit_early() {
-                return Err(ValidationError { rule_id, error });
-            } else {
-                ret = Err(ValidationError { rule_id, error });
-            }
-        }
+        validate_rule(&rule_set.tm, rule, &rule_set.rules[..rule_id])
+            .map_err(|error| ValidationError { rule_id, error })?;
     }
-    ret
+    Ok(())
 }
 
 #[cfg(test)]
@@ -310,8 +260,8 @@ mod tests {
     use super::*;
 
     // Helper functions to create proof steps of various kinds.
-    fn base_step(num_steps: CountType) -> InductiveProofStep {
-        InductiveProofStep::BaseStep(BaseProofStep::TMSteps(num_steps))
+    fn base_step(num_steps: CountType) -> ProofStep {
+        ProofStep::TMSteps(num_steps)
     }
 
     fn load_vars(var_assign: &[(&str, &str)]) -> VarSubst {
@@ -325,32 +275,32 @@ mod tests {
         var_subst
     }
 
-    fn rule_step(rule_num: RuleIdType, var_assign: &[(&str, &str)]) -> InductiveProofStep {
-        InductiveProofStep::BaseStep(BaseProofStep::RuleStep {
+    fn rule_step(rule_num: RuleIdType, var_assign: &[(&str, &str)]) -> ProofStep {
+        ProofStep::RuleStep {
             rule_id: rule_num,
             var_assignment: load_vars(var_assign),
-        })
+        }
     }
 
-    fn chain_step(rule_num: RuleIdType, num_reps: &str) -> InductiveProofStep {
+    fn chain_step(rule_num: RuleIdType, num_reps: &str) -> ProofStep {
         rule_step(rule_num, &[("n", num_reps)])
     }
 
-    fn induction_step(var_assign: &[(&str, &str)]) -> InductiveProofStep {
+    fn induction_step(var_assign: &[(&str, &str)]) -> ProofStep {
         let mut var_subst = load_vars(var_assign);
         // Add default n->n inductive bit.
         var_subst.insert(INDUCTION_VAR, INDUCTION_VAR.into());
-        InductiveProofStep::InductiveStep(var_subst)
+        ProofStep::InductiveStep(var_subst)
     }
 
-    fn induction_step_expr(var_assign: &[(Variable, CountExpr)]) -> InductiveProofStep {
+    fn induction_step_expr(var_assign: &[(Variable, CountExpr)]) -> ProofStep {
         let mut var_subst = VarSubst::default();
         for (var, expr) in var_assign {
             var_subst.insert(var.clone(), expr.clone());
         }
         // Add default n->n inductive bit.
         var_subst.insert(INDUCTION_VAR, INDUCTION_VAR.into());
-        InductiveProofStep::InductiveStep(var_subst)
+        ProofStep::InductiveStep(var_subst)
     }
 
     // Helper function to create a simple chain rule for which:
@@ -364,8 +314,10 @@ mod tests {
         Rule {
             init_config: Config::from_str(start).unwrap(),
             final_config: Config::from_str(end).unwrap(),
-            proof_base: vec![],
-            proof_inductive: vec![induction_step(&[]), base_step(steps)],
+            proof: Proof::Inductive {
+                proof_base: vec![],
+                proof_inductive: vec![induction_step(&[]), base_step(steps)],
+            },
         }
     }
 
@@ -376,8 +328,7 @@ mod tests {
         let rule = Rule {
             init_config: Config::from_str("0^inf 1^138 B> 0 1^2 0^inf").unwrap(),
             final_config: Config::from_str("0^inf 1^138 B> 0 1^2 0^inf").unwrap(),
-            proof_base: vec![],
-            proof_inductive: vec![],
+            proof: Proof::Simple(vec![]),
         };
         let prev_rules = vec![];
         validate_rule(&tm, &rule, &prev_rules).unwrap();
@@ -392,8 +343,7 @@ mod tests {
         let rule = Rule {
             init_config: Config::new(),
             final_config: Config::from_str("0^inf 1^2 Z> 1^2 0^inf").unwrap(),
-            proof_base: vec![BaseProofStep::TMSteps(6)],
-            proof_inductive: vec![base_step(6)],
+            proof: Proof::Simple(vec![base_step(6)]),
         };
         let prev_rules = vec![];
         validate_rule(&tm, &rule, &prev_rules).unwrap();
@@ -408,14 +358,16 @@ mod tests {
         let rule = Rule {
             init_config: Config::from_str("0^n <C").unwrap(),
             final_config: Config::from_str("<C 1^n").unwrap(),
-            // Base case is trivial:  0^0 <C  ==  <C 1^0
-            proof_base: vec![],
-            proof_inductive: vec![
-                // 0^n+1 <C  ->  0^n <C 1
-                base_step(1),
-                // 0^n <C 1  ->  <C 1^n 1  ==  <C 1^n+1
-                induction_step(&[]),
-            ],
+            proof: Proof::Inductive {
+                // Base case is trivial:  0^0 <C  ==  <C 1^0
+                proof_base: vec![],
+                proof_inductive: vec![
+                    // 0^n+1 <C  ->  0^n <C 1
+                    base_step(1),
+                    // 0^n <C 1  ->  <C 1^n 1  ==  <C 1^n+1
+                    induction_step(&[]),
+                ],
+            },
         };
         let prev_rules = vec![];
         validate_rule(&tm, &rule, &prev_rules).unwrap();
@@ -434,19 +386,21 @@ mod tests {
                 Rule {
                     init_config: Config::from_str("0^inf <C 0^a 2^n").unwrap(),
                     final_config: Config::from_str("0^inf <C 0^a+2n").unwrap(),
-                    proof_base: vec![],
-                    proof_inductive: vec![
-                        // 0^inf <C 0^a 2^n+1  ->  0^inf 2 C> 0^a 2^n+1
-                        base_step(1),
-                        // 0^inf 2 C> 0^a 2^n+1  ->  0^inf 2^a+1 C> 2^n+1
-                        chain_step(0, "a"),
-                        // 0^inf 2^a+1 C> 2^n+1  ->  0^inf 2^a+1 <C 0 2^n
-                        base_step(1),
-                        // 0^inf 2^a+1 <C 0 2^n  ->  0^inf <C 0^a+2 2^n
-                        chain_step(1, "a+1"),
-                        // Induction: 0^inf <C 0^a+2 2^n  ->  0^inf <C 0^a+2n+2
-                        induction_step(&[("a", "a+2")]),
-                    ],
+                    proof: Proof::Inductive {
+                        proof_base: vec![],
+                        proof_inductive: vec![
+                            // 0^inf <C 0^a 2^n+1  ->  0^inf 2 C> 0^a 2^n+1
+                            base_step(1),
+                            // 0^inf 2 C> 0^a 2^n+1  ->  0^inf 2^a+1 C> 2^n+1
+                            chain_step(0, "a"),
+                            // 0^inf 2^a+1 C> 2^n+1  ->  0^inf 2^a+1 <C 0 2^n
+                            base_step(1),
+                            // 0^inf 2^a+1 <C 0 2^n  ->  0^inf <C 0^a+2 2^n
+                            chain_step(1, "a+1"),
+                            // Induction: 0^inf <C 0^a+2 2^n  ->  0^inf <C 0^a+2n+2
+                            induction_step(&[("a", "a+2")]),
+                        ],
+                    },
                 },
             ],
         };
@@ -466,37 +420,40 @@ mod tests {
                 Rule {
                     init_config: Config::from_str("0^n 1 0 0 B> 0").unwrap(),
                     final_config: Config::from_str("1^n+1 0 0 B> 0").unwrap(),
-                    proof_base: vec![],
-                    proof_inductive: vec![
-                        // 0^n+1 1 00 B> 0  ->  0 1^n+1 00 B> 0
-                        induction_step(&[]),
-                        // 0 1^n+1 00 B> 0  --(5)-->  0 1^n+1 <A 110
-                        base_step(5),
-                        // 0 1^n+1 <A 110  -->  0 <A 1^n+3 0
-                        chain_step(0, "n+1"),
-                        // 0 <A 1^n+3 0  --(1)-->  1 B> 1^n+3 0
-                        base_step(1),
-                        // 1 B> 1^n+3 0  --(5)-->  0^n+3 B> 0
-                        chain_step(1, "n+3"),
-                        // 0^n+3 B> 0  --(8)-->  1 0^n 1 00 B> 0
-                        base_step(8),
-                        // 1 0^n 1 00 B> 0  -->  1^n+2 00 B> 0
-                        induction_step(&[]),
-                    ],
+                    proof: Proof::Inductive {
+                        proof_base: vec![],
+                        proof_inductive: vec![
+                            // 0^n+1 1 00 B> 0  ->  0 1^n+1 00 B> 0
+                            induction_step(&[]),
+                            // 0 1^n+1 00 B> 0  --(5)-->  0 1^n+1 <A 110
+                            base_step(5),
+                            // 0 1^n+1 <A 110  -->  0 <A 1^n+3 0
+                            chain_step(0, "n+1"),
+                            // 0 <A 1^n+3 0  --(1)-->  1 B> 1^n+3 0
+                            base_step(1),
+                            // 1 B> 1^n+3 0  --(5)-->  0^n+3 B> 0
+                            chain_step(1, "n+3"),
+                            // 0^n+3 B> 0  --(8)-->  1 0^n 1 00 B> 0
+                            base_step(8),
+                            // 1 0^n 1 00 B> 0  -->  1^n+2 00 B> 0
+                            induction_step(&[]),
+                        ],
+                    },
                 },
                 // Infinite Rule: 0^inf 1 00 B> 0  ->  0^inf 1^n+1 00 B> 0
                 Rule {
                     init_config: Config::from_str("0^inf 1 0 0 B> 0").unwrap(),
                     final_config: Config::from_str("0^inf 1^n+1 0 0 B> 0").unwrap(),
-                    proof_base: vec![],
-                    proof_inductive: vec![
+                    proof: Proof::Simple(vec![
                         // 0^inf 1 00 B> 0  ->  0^inf 1^n+2 00 B> 0
-                        rule_step(2, &[("n", "n+1")]),
-                    ],
+                        rule_step(2, &[("n", "n")]),
+                    ]),
                 },
             ],
         };
-        validate_rule_set(&rule_set).unwrap();
+        if let Err(err) = validate_rule_set(&rule_set) {
+            panic!("{}", err);
+        }
     }
 
     #[test]
@@ -583,27 +540,29 @@ mod tests {
                 Rule {
                     init_config: Config::from_str("2^2n <A 2^2e+1 0^inf").unwrap(),
                     final_config: Config::from_str("<A 2^4n+2e+1 0^inf").unwrap(),
-                    proof_base: vec![],
-                    proof_inductive: vec![
-                        // 22^n+1 <A 2^2e+1  --(1)-->  22^n 21 C> 2^2e+1
-                        base_step(1),
-                        // 22^n 21 C> 2^2e+1  -->  22^n 21 11^e C> 2
-                        chain_step(1, "e"),
-                        // 22^n 21 11^e C> 200  --(3)-->  22^n 21 11^e 11 <A 1
-                        base_step(3),
-                        // 22^n 2 1^2e+3 <A 1  -->  22^n 2 <A 2^2e+3 1
-                        chain_step(2, "2e+3"),
-                        // 22^n 2 <A 2^2e+3 1  --(1)-->  22^n 1 C> 2^2e+3 1
-                        base_step(1),
-                        // 22^n 1 C> 2^2e+3 1  -->  22^n 1 11^e+1 C> 21
-                        chain_step(1, "e+1"),
-                        // 22^n 1 11^e+1 C> 21  --(3)-->  22^n 1 11^e+1 <A 22
-                        base_step(3),
-                        // 22^n 1 11^e+1 <A 22  -->  22^n <A 2^2e+5
-                        chain_step(2, "2e+3"),
-                        // 22^n <A 2^2(e+2)+1  -->  <A 2^2(e+2(n+1))+1
-                        induction_step(&[("e", "e+2")]),
-                    ],
+                    proof: Proof::Inductive {
+                        proof_base: vec![],
+                        proof_inductive: vec![
+                            // 22^n+1 <A 2^2e+1  --(1)-->  22^n 21 C> 2^2e+1
+                            base_step(1),
+                            // 22^n 21 C> 2^2e+1  -->  22^n 21 11^e C> 2
+                            chain_step(1, "e"),
+                            // 22^n 21 11^e C> 200  --(3)-->  22^n 21 11^e 11 <A 1
+                            base_step(3),
+                            // 22^n 2 1^2e+3 <A 1  -->  22^n 2 <A 2^2e+3 1
+                            chain_step(2, "2e+3"),
+                            // 22^n 2 <A 2^2e+3 1  --(1)-->  22^n 1 C> 2^2e+3 1
+                            base_step(1),
+                            // 22^n 1 C> 2^2e+3 1  -->  22^n 1 11^e+1 C> 21
+                            chain_step(1, "e+1"),
+                            // 22^n 1 11^e+1 C> 21  --(3)-->  22^n 1 11^e+1 <A 22
+                            base_step(3),
+                            // 22^n 1 11^e+1 <A 22  -->  22^n <A 2^2e+5
+                            chain_step(2, "2e+3"),
+                            // 22^n <A 2^2(e+2)+1  -->  <A 2^2(e+2(n+1))+1
+                            induction_step(&[("e", "e+2")]),
+                        ],
+                    },
                 },
                 // Level 2: C(a, b, c, 1, 2e+1)  ->  C(a, b, 0, 1, 2 f2(c, e) + 1)
                 //   where f2(c, e) = rep(λx -> 2x+5, c)(e)  ~= 2^c
@@ -616,29 +575,31 @@ mod tests {
                             f2("n".parse().unwrap(), "e".parse().unwrap()),
                         ))
                         .unwrap(),
-                    proof_base: vec![
-                        // Note this requires RecursionExpr comparison supporting equality between:
-                        //      2e+1  ==  λx.2x+1 ((λx.2x+5)^0 e)
-                    ],
-                    proof_inductive: vec![
-                        // 01^n+1 12 <A 2^2e+1 00  -->  01^n+1 1 <A 2^2e+3 1
-                        base_step(1),
-                        chain_step(1, "e"),
-                        base_step(3),
-                        chain_step(2, "2e+3"),
-                        // 01^n+1 1 <A 2^2e+3 1  --(3)-->  01^n 1 B> 22 2^2e+3 1
-                        base_step(3),
-                        chain_step(3, "2e+5"),
-                        // 01^n 1 2^2e+5 B> 100  --(9)-->  01^n 1 2^2e+5 <A 222
-                        base_step(9),
-                        // Level 1: 01^n 1 2^2(e+2)+1 <A 2^3  -->  01^n 12 <A 2^2(2e+5)+1
-                        rule_step(7, &[("n", "e+2"), ("e", "1")]),
-                        // Induction: 01^n 12 <A 2^2(2e+5)+1  -->  12 <A 2^2x+1  for x = f2(n, 2e+5) = f2(n+1, e)
-                        induction_step(&[("e", "2e+5")]),
-                        // Note this requires RecursionExpr comparison supporting equality between:
-                        //      λx.2x+1 ((λx.2x+5)^n 2e+5)
-                        //      λx.2x+1 ((λx.2x+5)^n+1 e)
-                    ],
+                    proof: Proof::Inductive {
+                        proof_base: vec![
+                            // Note this requires RecursionExpr comparison supporting equality between:
+                            //      2e+1  ==  λx.2x+1 ((λx.2x+5)^0 e)
+                        ],
+                        proof_inductive: vec![
+                            // 01^n+1 12 <A 2^2e+1 00  -->  01^n+1 1 <A 2^2e+3 1
+                            base_step(1),
+                            chain_step(1, "e"),
+                            base_step(3),
+                            chain_step(2, "2e+3"),
+                            // 01^n+1 1 <A 2^2e+3 1  --(3)-->  01^n 1 B> 22 2^2e+3 1
+                            base_step(3),
+                            chain_step(3, "2e+5"),
+                            // 01^n 1 2^2e+5 B> 100  --(9)-->  01^n 1 2^2e+5 <A 222
+                            base_step(9),
+                            // Level 1: 01^n 1 2^2(e+2)+1 <A 2^3  -->  01^n 12 <A 2^2(2e+5)+1
+                            rule_step(7, &[("n", "e+2"), ("e", "1")]),
+                            // Induction: 01^n 12 <A 2^2(2e+5)+1  -->  12 <A 2^2x+1  for x = f2(n, 2e+5) = f2(n+1, e)
+                            induction_step(&[("e", "2e+5")]),
+                            // Note this requires RecursionExpr comparison supporting equality between:
+                            //      λx.2x+1 ((λx.2x+5)^n 2e+5)
+                            //      λx.2x+1 ((λx.2x+5)^n+1 e)
+                        ],
+                    },
                 },
                 // Level 3: C(a, b, 0, 1, 2e+1)  ->  C(a, 0, 0, 1, 2 f3(b, e) + 1)
                 //   where f3(b, e) = rep(λx -> f2(x+2, 1), b)(e)  ~= 2^^b
@@ -651,34 +612,36 @@ mod tests {
                             f3("n".parse().unwrap(), "e".parse().unwrap()),
                         ))
                         .unwrap(),
-                    proof_base: vec![],
-                    proof_inductive: vec![
-                        // 3^n+1 112 <A 2^2e+1 00  -->  3^n+1 <A 2^2e+5 1
-                        base_step(1),
-                        chain_step(1, "e"),
-                        base_step(3),
-                        chain_step(2, "2e+5"),
-                        // 3^n+1 <A 2^2e+5 1  --(1)-->  3^n 3 A> 2^2e+5 1
-                        base_step(1),
-                        // 3^n 3 A> 2^2e+5 1  -->  3^n 3 11^e+2 A> 21
-                        chain_step(0, "e+2"),
-                        base_step(2),
-                        chain_step(4, "2e+5"),
-                        // 3^n 3 <C 3^2e+6  --(1)-->  3^n 1 B> 3^2e+6
-                        base_step(1),
-                        // 3^n 1 B> 3^2e+6  -->  3^n 1 01^e+3 B>
-                        chain_step(5, "e+3"),
-                        // 3^n 1 01^e+3 B> 000  --(13)-->  3^n 1 01^e+2 12 <A 2^3
-                        base_step(13),
-                        // Level 2: 3^n 1 01^e+2 12 <A 2^3  -->  3^n 112 <A 2^{2 f2(e+2, 1) + 1}
-                        rule_step(8, &[("n", "e+2"), ("e", "1")]),
-                        // Induction: 3^n 112 <A 2^{2 f1(e+2, 1) + 1}  -->  112 <A 2^2x+1
-                        //      for x = f3(n, f2(e+2, 1)) = f3(n+1, e)
-                        induction_step_expr(&[(
-                            "e".parse().unwrap(),
-                            f2("e+2".parse().unwrap(), 1.into()),
-                        )]),
-                    ],
+                    proof: Proof::Inductive {
+                        proof_base: vec![],
+                        proof_inductive: vec![
+                            // 3^n+1 112 <A 2^2e+1 00  -->  3^n+1 <A 2^2e+5 1
+                            base_step(1),
+                            chain_step(1, "e"),
+                            base_step(3),
+                            chain_step(2, "2e+5"),
+                            // 3^n+1 <A 2^2e+5 1  --(1)-->  3^n 3 A> 2^2e+5 1
+                            base_step(1),
+                            // 3^n 3 A> 2^2e+5 1  -->  3^n 3 11^e+2 A> 21
+                            chain_step(0, "e+2"),
+                            base_step(2),
+                            chain_step(4, "2e+5"),
+                            // 3^n 3 <C 3^2e+6  --(1)-->  3^n 1 B> 3^2e+6
+                            base_step(1),
+                            // 3^n 1 B> 3^2e+6  -->  3^n 1 01^e+3 B>
+                            chain_step(5, "e+3"),
+                            // 3^n 1 01^e+3 B> 000  --(13)-->  3^n 1 01^e+2 12 <A 2^3
+                            base_step(13),
+                            // Level 2: 3^n 1 01^e+2 12 <A 2^3  -->  3^n 112 <A 2^{2 f2(e+2, 1) + 1}
+                            rule_step(8, &[("n", "e+2"), ("e", "1")]),
+                            // Induction: 3^n 112 <A 2^{2 f1(e+2, 1) + 1}  -->  112 <A 2^2x+1
+                            //      for x = f3(n, f2(e+2, 1)) = f3(n+1, e)
+                            induction_step_expr(&[(
+                                "e".parse().unwrap(),
+                                f2("e+2".parse().unwrap(), 1.into()),
+                            )]),
+                        ],
+                    },
                 },
                 // Level 4: C(2a+r, 0, 0, 1, 2e+1)  ->  C(r, 0, 0, 1, 2 f4(a, e) + 1)
                 //   where f4(a, e) = rep(λx -> f3(2x+7), a)(e)  ~= 2^^^a
@@ -691,33 +654,35 @@ mod tests {
                             f4("n".parse().unwrap(), "e".parse().unwrap()),
                         ))
                         .unwrap(),
-                    proof_base: vec![],
-                    proof_inductive: vec![
-                        // 2^2n+2 1112 <A 2^2e+1 00  -->  2^2n+2 <A 2^2e+6 1
-                        base_step(1),
-                        chain_step(1, "e"),
-                        base_step(3),
-                        chain_step(2, "2e+6"),
-                        // 2^2n+2 <A 2^2e+6 1  -->  2^2n+1 1^2e+7 C> 1
-                        base_step(1),
-                        chain_step(1, "e+3"),
-                        // 2^2n+1 1^2e+7 C> 1  -->  2^2n+1 <C 3^2e+8
-                        base_step(1),
-                        chain_step(4, "2e+7"),
-                        // 2^2n+1 <C 3^2e+8  -->  2^n 1 3^2e+8 A>
-                        base_step(1),
-                        chain_step(6, "2e+8"),
-                        // 2^n 1 3^2e+8 A> 00  --(23)-->  2^n 1 3^2e+7 112 <A 2^3
-                        base_step(23),
-                        // Level 3: 2^n 1 3^2e+7 112 <A 2^3  -->  2^n 112 <A 2^{2 f3(2e+7, 1) + 1}
-                        rule_step(9, &[("n", "2e+7"), ("e", "1")]),
-                        // Induction: 2^n 112 <A 2^{2 f3(2e+7, 1) + 1}  -->  112 <A 2^2x+1
-                        //      for x = f4(n, f3(2e+7, 1)) = f4(n+1, e)
-                        induction_step_expr(&[(
-                            "e".parse().unwrap(),
-                            f3("2e+7".parse().unwrap(), 1.into()),
-                        )]),
-                    ],
+                    proof: Proof::Inductive {
+                        proof_base: vec![],
+                        proof_inductive: vec![
+                            // 2^2n+2 1112 <A 2^2e+1 00  -->  2^2n+2 <A 2^2e+6 1
+                            base_step(1),
+                            chain_step(1, "e"),
+                            base_step(3),
+                            chain_step(2, "2e+6"),
+                            // 2^2n+2 <A 2^2e+6 1  -->  2^2n+1 1^2e+7 C> 1
+                            base_step(1),
+                            chain_step(1, "e+3"),
+                            // 2^2n+1 1^2e+7 C> 1  -->  2^2n+1 <C 3^2e+8
+                            base_step(1),
+                            chain_step(4, "2e+7"),
+                            // 2^2n+1 <C 3^2e+8  -->  2^n 1 3^2e+8 A>
+                            base_step(1),
+                            chain_step(6, "2e+8"),
+                            // 2^n 1 3^2e+8 A> 00  --(23)-->  2^n 1 3^2e+7 112 <A 2^3
+                            base_step(23),
+                            // Level 3: 2^n 1 3^2e+7 112 <A 2^3  -->  2^n 112 <A 2^{2 f3(2e+7, 1) + 1}
+                            rule_step(9, &[("n", "2e+7"), ("e", "1")]),
+                            // Induction: 2^n 112 <A 2^{2 f3(2e+7, 1) + 1}  -->  112 <A 2^2x+1
+                            //      for x = f4(n, f3(2e+7, 1)) = f4(n+1, e)
+                            induction_step_expr(&[(
+                                "e".parse().unwrap(),
+                                f3("2e+7".parse().unwrap(), 1.into()),
+                            )]),
+                        ],
+                    },
                 },
                 // Level 5: C(0, 0, 0, 1, 2e+1)  ->  C(0, 0, 0, 1, 2 f4(4e+19, f3(1, 1)) + 1)
                 // Infinite
@@ -730,102 +695,99 @@ mod tests {
                             f5("n".parse().unwrap(), "e".parse().unwrap()),
                         ))
                         .unwrap(),
-                    proof_base: vec![],
-                    proof_inductive: vec![
-                        // 11112 <A 2^2e+1 00  -->  <A 2^2e+7 1
-                        base_step(1),
-                        chain_step(1, "e"),
-                        base_step(3),
-                        chain_step(2, "2e+7"),
-                        // 0 <A 2^2e+7 1  -->  1 2^2e+7 B> 1
-                        base_step(1),
-                        chain_step(3, "2e+7"),
-                        // 1 2^2e+7 B> 100  --(9)-->  1 2^2e+7 <A 2^3
-                        base_step(9),
-                        // Level 1: 12 2^2e+6 <A 2^3  -->  12 <A 2^2(2e+6)+3
-                        rule_step(7, &[("n", "e+3"), ("e", "1")]),
-                        // 12 <A 2^4e+15 00  -->  <A 2^4e+18 1
-                        base_step(1),
-                        chain_step(1, "2e+7"),
-                        base_step(3),
-                        chain_step(2, "4e+18"),
-                        // 0 <A 2^4e+18 1  -->  1 2^4e+18 B> 1
-                        base_step(1),
-                        chain_step(3, "4e+18"),
-                        // 1 2^4e+18 B> 100  --(9)-->  1 2^4e+18 <A 2^3
-                        base_step(9),
-                        // Level 1: 1 2^4e+18 <A 2^3  -->  1 <A 2^2(4e+18)+3
-                        rule_step(7, &[("n", "2e+9"), ("e", "1")]),
-                        // 01 <A 2^8e+39  -->  1 2^8e+40 B>
-                        base_step(2),
-                        chain_step(3, "8e+40"),
-                        // 1 2^8e+40 B> 0^6  --(30)--> 1 2^8e+38 1 3^1 112 <A 2^3
-                        base_step(30),
-                        // Level 3: 3^1 112 <A 2^3  -->  112 <A 2^{2 f3(1, 1) + 1}
-                        //      f3(1, 1) = f2(3, 1)
-                        rule_step(9, &[("n", "1"), ("e", "1")]),
-                        // Level 4: 1 2^8e+38 1112 <A 2^{2 f3(1, 1) + 1}  -->  11112 <A 2^2x+1
-                        //      for x = f4(4e+19, f3(1, 1))
-                        InductiveProofStep::BaseStep(BaseProofStep::RuleStep {
-                            rule_id: 10,
-                            var_assignment: VarSubst::from(&[
-                                (
-                                    Variable::from_str("n").unwrap(),
-                                    CountExpr::from_str("4e+19").unwrap(),
-                                ),
-                                (Variable::from_str("e").unwrap(), f3(1.into(), 1.into())),
-                            ]),
-                        }),
-                        induction_step_expr(&[(
-                            "e".parse().unwrap(),
-                            f4("4e+19".parse().unwrap(), f3(1.into(), 1.into())),
-                        )]),
-                    ],
+                    proof: Proof::Inductive {
+                        proof_base: vec![],
+                        proof_inductive: vec![
+                            // 11112 <A 2^2e+1 00  -->  <A 2^2e+7 1
+                            base_step(1),
+                            chain_step(1, "e"),
+                            base_step(3),
+                            chain_step(2, "2e+7"),
+                            // 0 <A 2^2e+7 1  -->  1 2^2e+7 B> 1
+                            base_step(1),
+                            chain_step(3, "2e+7"),
+                            // 1 2^2e+7 B> 100  --(9)-->  1 2^2e+7 <A 2^3
+                            base_step(9),
+                            // Level 1: 12 2^2e+6 <A 2^3  -->  12 <A 2^2(2e+6)+3
+                            rule_step(7, &[("n", "e+3"), ("e", "1")]),
+                            // 12 <A 2^4e+15 00  -->  <A 2^4e+18 1
+                            base_step(1),
+                            chain_step(1, "2e+7"),
+                            base_step(3),
+                            chain_step(2, "4e+18"),
+                            // 0 <A 2^4e+18 1  -->  1 2^4e+18 B> 1
+                            base_step(1),
+                            chain_step(3, "4e+18"),
+                            // 1 2^4e+18 B> 100  --(9)-->  1 2^4e+18 <A 2^3
+                            base_step(9),
+                            // Level 1: 1 2^4e+18 <A 2^3  -->  1 <A 2^2(4e+18)+3
+                            rule_step(7, &[("n", "2e+9"), ("e", "1")]),
+                            // 01 <A 2^8e+39  -->  1 2^8e+40 B>
+                            base_step(2),
+                            chain_step(3, "8e+40"),
+                            // 1 2^8e+40 B> 0^6  --(30)--> 1 2^8e+38 1 3^1 112 <A 2^3
+                            base_step(30),
+                            // Level 3: 3^1 112 <A 2^3  -->  112 <A 2^{2 f3(1, 1) + 1}
+                            //      f3(1, 1) = f2(3, 1)
+                            rule_step(9, &[("n", "1"), ("e", "1")]),
+                            // Level 4: 1 2^8e+38 1112 <A 2^{2 f3(1, 1) + 1}  -->  11112 <A 2^2x+1
+                            //      for x = f4(4e+19, f3(1, 1))
+                            ProofStep::RuleStep {
+                                rule_id: 10,
+                                var_assignment: VarSubst::from(&[
+                                    (
+                                        Variable::from_str("n").unwrap(),
+                                        CountExpr::from_str("4e+19").unwrap(),
+                                    ),
+                                    (Variable::from_str("e").unwrap(), f3(1.into(), 1.into())),
+                                ]),
+                            },
+                            induction_step_expr(&[(
+                                "e".parse().unwrap(),
+                                f4("4e+19".parse().unwrap(), f3(1.into(), 1.into())),
+                            )]),
+                        ],
+                    },
                 },
                 // Proof that TM is infinite starting from blank tape.
-                // Rule {
-                //     init_config: Config::new(),
-                //     final_config: Config::from_str("0^inf 1 1 1 1 2 <A 2^2x+1 0^inf")
-                //         .unwrap()
-                //         .subst(&VarSubst::single(
-                //             Variable::from_str("x").unwrap(),
-                //             f5("n".parse().unwrap(), f4(7.into(), f3(1.into(), 1.into()))),
-                //         ))
-                //         .unwrap(),
-                //     proof_base: vec![
-                //         // <A --> 1 2^14 1 3 112 <A 2^3
-                //         BaseProofStep::TMSteps(210),
-                //         // Level 3: 1 2^14 1 3 112 <A 2^3  -->  1 2^14 1 112 <A 2^{2 f3(1, 1) + 1}
-                //         BaseProofStep::RuleStep {
-                //             rule_id: 9,
-                //             var_assignment: VarSubst::from(&[
-                //                 ("n".parse().unwrap(), 1.into()),
-                //                 ("e".parse().unwrap(), 1.into()),
-                //             ]),
-                //         },
-                //         // Level 4: 1 2^14 1112 <A 2^{2 f3(1, 1) + 1}  -->  1 112 <A 2^{2 f4(7, f3(1, 1)) + 1}
-                //         BaseProofStep::RuleStep {
-                //             rule_id: 10,
-                //             var_assignment: VarSubst::from(&[
-                //                 ("n".parse().unwrap(), 7.into()),
-                //                 ("e".parse().unwrap(), f3(1.into(), 1.into())),
-                //             ]),
-                //         },
-                //     ],
-                //     proof_inductive: vec![
-                //         induction_step(&[]),
-                //         InductiveProofStep::BaseStep(BaseProofStep::RuleStep {
-                //             rule_id: 11,
-                //             var_assignment: VarSubst::from(&[
-                //                 ("n".parse().unwrap(), 1.into()),
-                //                 (
-                //                     "e".parse().unwrap(),
-                //                     f5("n".parse().unwrap(), f4(7.into(), f3(1.into(), 1.into()))),
-                //                 ),
-                //             ]),
-                //         }),
-                //     ],
-                // },
+                Rule {
+                    init_config: Config::new(),
+                    final_config: Config::from_str("0^inf 1 1 1 1 2 <A 2^2x+1 0^inf")
+                        .unwrap()
+                        .subst(&VarSubst::single(
+                            Variable::from_str("x").unwrap(),
+                            f5("n".parse().unwrap(), f4(7.into(), f3(1.into(), 1.into()))),
+                        ))
+                        .unwrap(),
+                    proof: Proof::Simple(vec![
+                        // <A --> 1 2^14 1 3 112 <A 2^3
+                        ProofStep::TMSteps(210),
+                        // Level 3: 1 2^14 1 3 112 <A 2^3  -->  1 2^14 1 112 <A 2^{2 f3(1, 1) + 1}
+                        ProofStep::RuleStep {
+                            rule_id: 9,
+                            var_assignment: VarSubst::from(&[
+                                ("n".parse().unwrap(), 1.into()),
+                                ("e".parse().unwrap(), 1.into()),
+                            ]),
+                        },
+                        // Level 4: 1 2^14 1112 <A 2^{2 f3(1, 1) + 1}  -->  1 112 <A 2^{2 f4(7, f3(1, 1)) + 1}
+                        ProofStep::RuleStep {
+                            rule_id: 10,
+                            var_assignment: VarSubst::from(&[
+                                ("n".parse().unwrap(), 7.into()),
+                                ("e".parse().unwrap(), f3(1.into(), 1.into())),
+                            ]),
+                        },
+                        // TODO: Apply Level 5
+                        ProofStep::RuleStep {
+                            rule_id: 11,
+                            var_assignment: VarSubst::from(&[
+                                ("n".parse().unwrap(), "n".parse().unwrap()),
+                                ("e".parse().unwrap(), f4(7.into(), f3(1.into(), 1.into()))),
+                            ]),
+                        },
+                    ]),
+                },
             ],
         };
         if let Err(err) = validate_rule_set(&rule_set) {
@@ -833,33 +795,37 @@ mod tests {
         }
     }
 
-    #[ignore = "not yet working"]
+    #[ignore = "work in progress"]
     #[test]
     fn test_25_dyuan() {
-        // @dyuan01's analysis of a 2x5 holdout.
-        //      https://discord.com/channels/960643023006490684/1084047886494470185/1229293635191832657
-        // A(n) = 44^n B> 211412 0^inf
+        // @dyuan01's halting 2x5 counter-bouncer.
+        //      https://discord.com/channels/960643023006490684/1084047886494470185/1230916624626876529
         let rule_set = RuleSet {
-            tm: TM::from_str("1RB2LB---4LA1LA_1LA3RB0RA4RB3LB").unwrap(),
+            tm: TM::from_str("1RB0LB---4RA0LA_2LA3LA3LB0RA2LA").unwrap(),
             rules: vec![
-                chain_rule("4^n <A", "<A 1^n", 1),
-                chain_rule("B> 1^n", "3^n B>", 1),
-                chain_rule("3^n <A", "<A 4^n", 1),
-                // 0^inf 34 A(2n)  ->  0^inf 1344 A(3n+2)
+                // 0^inf 1104 A> 302^n  ->  0^inf 104^{2^n - 1} 1104 A> 033^n
                 Rule {
-                    init_config: Config::from_str("0^inf 34 4^4n B> 211412 0^inf").unwrap(),
-                    final_config: Config::from_str("0^inf 1344 4^6n+4 B> 211412 0^inf").unwrap(),
-                    proof_base: vec![BaseProofStep::TMSteps(80)],
-                    proof_inductive: vec![
-                        base_step(3),
-                        chain_step(0, "4n+4"),
+                    init_config: Config::from_str("0^inf 1104 A> 302^n").unwrap(),
+                    final_config: Config::from_str("0^inf 104^x 1104 A> 033^n")
+                        .unwrap()
+                        .subst(&VarSubst::single(
+                            Variable::from_str("x").unwrap(),
+                            CountExpr::RecursiveExpr(RecursiveExpr {
+                                func: Box::new(Function {
+                                    bound_var: "x".parse().unwrap(),
+                                    expr: "2x-1".parse().unwrap(),
+                                }),
+                                num_repeats: Box::new("n".parse().unwrap()),
+                                base: Box::new(4.into()),
+                            }),
+                        ))
+                        .unwrap(),
+                    proof: Proof::Simple(vec![
+                        // 1104 A> 302^n+1  -->  1104 <A 033 302^n
+                        base_step(5),
+                        // 1104 <A 033 302^n  -->  <B 0302 033 302^n
                         base_step(6),
-                        chain_step(1, "4n+6"),
-                        base_step(3),
-                        chain_step(2, "4n+6"),
-                        // TODO
-                        InductiveProofStep::BaseStep(BaseProofStep::Admit),
-                    ],
+                    ]),
                 },
             ],
         };
