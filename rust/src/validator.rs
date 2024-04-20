@@ -305,6 +305,14 @@ mod tests {
         ProofStep::InductiveStep(var_subst)
     }
 
+    fn simple_rule(start: &str, end: &str, steps: CountType) -> Rule {
+        Rule {
+            init_config: Config::from_str(start).unwrap(),
+            final_config: Config::from_str(end).unwrap(),
+            proof: Proof::Simple(vec![base_step(steps)]),
+        }
+    }
+
     // Helper function to create a simple chain rule for which:
     //    A) The base case is trivial.
     //    B) The inductive case is simple inductive step + `steps` TM steps.
@@ -809,10 +817,10 @@ mod tests {
 
         // Repeat λx.2x+1 n times starting from 0.
         //   = 2^n - 1
-        fn rep2n1(n: CountExpr) -> CountExpr {
+        fn rep2n1(n: &CountExpr) -> CountExpr {
             CountExpr::RecursiveExpr(RecursiveExpr {
                 func: Box::new(Function::affine(2, 1)),
-                num_repeats: Box::new(n),
+                num_repeats: Box::new(n.clone()),
                 base: Box::new(0.into()),
             })
         }
@@ -820,8 +828,22 @@ mod tests {
         // a_2n1 = a + rep2n1(n) = a + 2^n - 1
         let a_2n1 = CountExpr::from_str("a+x")
             .unwrap()
-            .subst(&VarSubst::single(x, rep2n1(n.into())))
+            .subst(&VarSubst::single(x, rep2n1(&n.into())))
             .unwrap();
+
+        // e6 = 2^6 - 1 = 63
+        let e6 = rep2n1(&6.into());
+        // e7 = 2^7 - 1 = 127
+        // Note: e7 = rep2n1(7) ... but our system cannot detect that equivalence.
+        let e7 = CountExpr::from_str("a+x")
+            .unwrap()
+            .subst(&VarSubst::from(&[
+                (a, e6.checked_add(&1.into()).unwrap()),
+                (x, e6.clone()),
+            ]))
+            .unwrap();
+        // ee7 = 2^e7 - 1 = 2^127 - 1
+        let ee7 = rep2n1(&e7);
 
         let rule_set = RuleSet {
             tm: TM::from_str("1RB0LB---4RA0LA_2LA3LA3LB0RA2LA").unwrap(),
@@ -829,9 +851,8 @@ mod tests {
                 chain_rule("A> 033^n", "104^n A>", 3),
                 chain_rule("104^n <A", "<A 302^n", 5),
                 chain_rule("104^n <B", "<B 033^n", 5),
+                simple_rule("000 <B", "104 A>", 7),
                 // 0^inf 104^a 1104 A> 302^n  -->  0^inf 104^{a + 2^n - 1} 1104 A> 033^n
-                // Note: We don't allow subtraction in our system! So instead we prove a slightly weaker rule:
-                //      a + 1  -->  a + 2^n
                 Rule {
                     init_config: Config::from_str("0^inf 104^a 1104 A> 302^n").unwrap(),
                     final_config: Config::from_str("0^inf 104^x 1104 A> 033^n")
@@ -854,7 +875,7 @@ mod tests {
                                 rule_id: 2,
                                 var_assignment: VarSubst::from(&[(n, a_2n1.clone())]),
                             },
-                            base_step(7),
+                            rule_step(3, &[]),
                             ProofStep::RuleStep {
                                 rule_id: 0,
                                 var_assignment: VarSubst::from(&[(n, a_2n1.clone())]),
@@ -878,6 +899,23 @@ mod tests {
                         ],
                     },
                 },
+                Rule {
+                    init_config: Config::from_str("0^inf 104 104^a 1104 A> 302^n").unwrap(),
+                    final_config: Config::from_str("0^inf 104 104^x 1104 A> 033^n")
+                        .unwrap()
+                        .subst(&VarSubst::single(x, a_2n1.clone()))
+                        .unwrap(),
+                    proof: Proof::Simple(vec![
+                        ProofStep::RuleStep {
+                            rule_id: 4,
+                            var_assignment: VarSubst::from(&[
+                                (a, CountExpr::var_plus(a, 1)),
+                                (n, n.into()),
+                            ]),
+                        },
+                        ProofStep::Admit,
+                    ]),
+                },
                 // Halt Proof
                 Rule {
                     init_config: Config::new(),
@@ -885,40 +923,48 @@ mod tests {
                         "0^inf 104^x 1104 104^126 1 Z> 033^7 0302 302 033 3303 02^3 0^inf",
                     )
                     .unwrap()
-                    .subst(&VarSubst::single(x, rep2n1(127.into())))
+                    .subst(&VarSubst::single(x, ee7.clone()))
                     .unwrap(),
                     proof: Proof::Simple(vec![
-                        // ---> [1104] A> [302]6 [3033] [033]2 [0302] [00] [02] [02]
                         base_step(642),
-                        // ---> [104]63 [1104] A> [033]6 [3033] [033]2 [0302] [00] [02] [02]
+                        // [1104] A> [302]6 [3033] [033]2 [0302] [00] [02] [02]
                         ProofStep::RuleStep {
-                            rule_id: 3,
+                            rule_id: 4,
                             var_assignment: VarSubst::from(&[(a, 0.into()), (n, 6.into())]),
                         },
-                        // ---> [104]63 <B [0302] [302]6 [0302] [302]2 [3303] [02] [02] [02]
+                        // [104]63 [1104] A> [033]6 [3033] [033]2 [0302] [00] [02] [02]
                         base_step(97),
-                        // ---> [104]64 [1104] A> [302]6 [0302] [302]2 [3303] [02] [02] [02]
+                        // [104]63 <B [0302] [302]6 [0302] [302]2 [3303] [02] [02] [02]
                         ProofStep::RuleStep {
                             rule_id: 2,
-                            var_assignment: VarSubst::from(&[(n, rep2n1(6.into()))]),
+                            var_assignment: VarSubst::from(&[(n, e6.clone())]),
                         },
-                        base_step(7),
+                        rule_step(3, &[]),
                         ProofStep::RuleStep {
                             rule_id: 0,
-                            var_assignment: VarSubst::from(&[(n, rep2n1(6.into()))]),
+                            var_assignment: VarSubst::from(&[(n, e6.clone())]),
                         },
                         base_step(8),
-                        // ---> [104]127 [1104] A> [033]6 [0302] [302]2 [3303] [02] [02] [02]
+                        // [104]64 [1104] A> [302]6 [0302] [302]2 [3303] [02] [02] [02]
                         ProofStep::RuleStep {
-                            rule_id: 3,
-                            var_assignment: VarSubst::from(&[
-                                (a, rep2n1(6.into()).checked_add(&1.into()).unwrap()),
-                                (n, 6.into()),
-                            ]),
+                            rule_id: 5,
+                            var_assignment: VarSubst::from(&[(a, e6.clone()), (n, 6.into())]),
+                        },
+                        // [104]127 [1104] A> [033]6 [0302] [302]2 [3303] [02] [02] [02]
+                        base_step(73),
+                        // [104]127 <A [3033] [033]6 [0302] [033][302] [3303] [02] [02] [02]
+                        ProofStep::RuleStep {
+                            rule_id: 1,
+                            var_assignment: VarSubst::from(&[(n, e7.clone())]),
+                        },
+                        rule_step(3, &[]),
+                        ProofStep::RuleStep {
+                            rule_id: 0,
+                            var_assignment: VarSubst::from(&[(n, e7.clone())]),
                         },
                         // ...
-                        // ---> [1104] A> [302]126 [3033] [033]6 [0302] [033][302] [3303] [02] [02] [02]
-                        base_step(5690),
+                        // [1104] A> [302]126 [3033] [033]6 [0302] [033][302] [3303] [02] [02] [02]
+                        // ...
                     ]),
                 },
             ],
