@@ -113,7 +113,7 @@ class SystemTest(unittest.TestCase):
     self.assertEqual(bb_status.quasihalt_status.quasihalt_state, 3)  # D
 
   def test_halt(self):
-    # Test a non-trivial halting machine.
+    # Test a non-trivial halting machine: BB4 champion.
     tm = IO.parse_tm("1RB1LB_1LA0LC_1RZ1LD_1RD0RA")
 
     lr_info = io_pb2.LinRecurFilterInfo()

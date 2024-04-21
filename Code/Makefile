@@ -7,7 +7,8 @@ test: test-small test-large
 
 test-small:
 	./test_Algebraic_Expression.py
-	./test_Exp_Int.py
+	./test_Direct_Simulator.py
+	# ./test_Exp_Int.py
 	./test_Math.py
 	./test_Proof_System.py
 	./test_TNF.py

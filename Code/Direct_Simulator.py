@@ -11,6 +11,8 @@ import IO
 from Macro import Turing_Machine
 
 
+Symbol = int
+
 class DirectTape:
   def __init__(self, init_symbol):
     self.init_symbol = init_symbol
@@ -19,40 +21,50 @@ class DirectTape:
     self.tape = collections.deque([self.init_symbol])
     self.index = 0
 
-    # Exposed position relative to start position.
+    # We do not expose index (which is an implementation detail).
+    # Instead we expose position which is relative to the start position.
     # - is Left, + is Right.
     self.position = 0
 
-  def pos2index(self, pos):
-    return pos - self.position + self.index
+  # Tape is grown lazily, so the leftmost/rightmost positions are at the
+  # extreme ends of the deque.
+  def pos_leftmost(self):
+    """Furthest left position visited on the tape."""
+    return self._index2pos(0)
+  def pos_rightmost(self):
+    """Furthest right position visited on the tape."""
+    return self._index2pos(len(self.tape) - 1)
 
-  def read(self, pos=None):
-    if pos == None:
-      index = self.index
-    else:
-      index = self.pos2index(pos)
-    if 0 <= index < len(self.tape):
-      return self.tape[index]
-    else:
-      return self.init_symbol
+  def read(self) -> Symbol:
+    return self.tape[self.index]
 
-  def write(self, symbol):
+  def write(self, symbol : Symbol) -> None:
     self.tape[self.index] = symbol
 
   def move(self, dir):
     if dir:  # Right
       self.position += 1
       self.index += 1
-      # Expand tape if necessary
-      if self.index >= len(self.tape):
-        self.tape.append(self.init_symbol)
     else:  # Left
       self.position -= 1
       self.index -= 1
-      # Expand tape if necessary
-      if self.index < 0:
-        self.tape.appendleft(self.init_symbol)
-        self.index += 1
+    self._expand_tape()
+
+  def read_pos(self, pos):
+    index = self._pos2index(pos)
+    if 0 <= index < len(self.tape):
+      return self.tape[index]
+    else:
+      return self.init_symbol
+  
+  def write_pos(self, symbol, pos):
+    self._expand_tape(pos)
+    self.tape[self._pos2index(pos)] = symbol
+
+  def update_tape(self, start_pos : int, new_section : list[int]) -> None:
+    """Update a section of the tape with new content."""
+    for i, symb in enumerate(new_section):
+      self.write_pos(symb, i + start_pos)
 
   def copy(self):
     new_tape = DirectTape(self.init_symbol)
@@ -61,8 +73,27 @@ class DirectTape:
     new_tape.position = self.position
     return new_tape
 
-  def in_range(self, pos):
-    return (0 <= self.pos2index(pos) < len(self.tape))
+  def _pos2index(self, pos):
+    return pos - self.position + self.index
+  def _index2pos(self, index):
+    return index - self.index + self.position
+  def _index_default(self, pos = None):
+    if pos == None:
+      return self.index
+    else:
+      return self._pos2index(pos)
+
+  def _expand_tape(self, new_pos = None):
+    """Expand the deque to include the given position (defaults to current pos)."""
+    new_index = self._index_default(new_pos)
+    if new_index < 0:
+      self.tape.extendleft([self.init_symbol] * -new_index)
+      # Position does not change, but we must update index since extendleft changes the indexing.
+      self.index += -new_index
+    elif new_index >= len(self.tape):
+      self.tape.extend([self.init_symbol] * (new_index - len(self.tape) + 1))
+    # Note: We must recompute index since the deque may have been extended to the left.
+    assert 0 <= self._index_default(new_pos) < len(self.tape)
 
   def count_nonzero(self):
     return sum(1 for symb in self.tape if symb != self.init_symbol)

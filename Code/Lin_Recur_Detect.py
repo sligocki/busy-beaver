@@ -14,11 +14,14 @@ from Macro import Turing_Machine
 import io_pb2
 
 
+def in_range(tape, pos):
+  return tape.pos_leftmost() <= pos <= tape.pos_rightmost()
+
 def are_half_tapes_equal(tape1, start_pos1, tape2, start_pos2, dir_offset):
   pos1 = start_pos1
   pos2 = start_pos2
-  while tape1.in_range(pos1) or tape2.in_range(pos2):
-    if tape1.read(pos1) != tape2.read(pos2):
+  while in_range(tape1, pos1) or in_range(tape2, pos2):
+    if tape1.read_pos(pos1) != tape2.read_pos(pos2):
       return False
     pos1 += dir_offset
     pos2 += dir_offset
@@ -28,7 +31,7 @@ def are_half_tapes_equal(tape1, start_pos1, tape2, start_pos2, dir_offset):
 def are_sections_equal(start_tape, end_tape, most_left_pos, most_right_pos, offset):
   for start_pos in range(most_left_pos, most_right_pos + 1):
     end_pos = start_pos + offset
-    if start_tape.read(start_pos) != end_tape.read(end_pos):
+    if start_tape.read_pos(start_pos) != end_tape.read_pos(end_pos):
       return False
   return True
 

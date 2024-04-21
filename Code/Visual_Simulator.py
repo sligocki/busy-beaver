@@ -11,6 +11,7 @@ import struct
 import sys
 import termios
 
+from Direct_Simulator import DirectSimulator
 import IO
 from Macro import Turing_Machine
 
@@ -86,17 +87,19 @@ def run_visual(tm : Turing_Machine.Simple_Machine,
   """
   Start the tape and run it until it halts with visual output.
   """
-  tape = [0] * tape_length
-  start_pos = tape_length // 2  # Default to middle
-
+  # TM starts at middle of tape
+  start_pos = tape_length // 2
   position = start_pos
-
+  # Keep track of the leftmost and rightmost position TM has visited.
   position_left  = position
   position_right = position
 
-  state = start_state
+  # Setup tape including optional custom start configuration.
+  tape = [0] * tape_length
   tape[position - len(start_left_tape):position + len(start_right_tape)] = \
     start_left_tape + start_right_tape
+
+  state = start_state
 
   half_width = (print_width - 19) // 2
   if half_width < 1:
@@ -171,17 +174,22 @@ def main():
   parser.add_argument("record_num", type=int, nargs="?", default=0)
   parser.add_argument("--width", type=int, default=term_width,
                       help="width to print to terminal.")
-  parser.add_argument("--start-config",
-                      help="Start at non-blank tape configuration. "
-                      "Ex: 1 23^8 21 <B 0^6 12^7 1")
-  parser.add_argument("--only-leftmost", "-l", action="store_true",
-                      help="Only print tape when TM reaches the leftmost position")
-  parser.add_argument("--only-rightmost", "-r", action="store_true",
-                      help="Only print tape when TM reaches the rightmost position")
-
   parser.add_argument("--max-steps", type=int, default=math.inf,
                       help="Limit number of steps run")
   parser.add_argument("--no-ttable", action="store_true")
+
+  # Print options
+  parser.add_argument("--relative", "-r", action="store_true",
+                      help="Print so that TM head always at the same column.")
+  parser.add_argument("--only-leftmost", "-L", action="store_true",
+                      help="Only print tape when TM reaches the leftmost position.")
+  parser.add_argument("--only-rightmost", "-R", action="store_true",
+                      help="Only print tape when TM reaches the rightmost position.")
+
+  parser.add_argument("--start-config",
+                      help="Start at non-blank tape configuration. "
+                      "Ex: 1 23^8 21 <B 0^6 12^7 1")
+
   args = parser.parse_args()
 
   tm = IO.load_tm(args.tm_file, args.record_num)
@@ -197,6 +205,8 @@ def main():
     state = 0
     left = []
     right = []
+
+  # sim = DirectSimulator(tm)
 
   run_visual(tm, args.width, state, left, right,
              max_steps=args.max_steps, args=args)
