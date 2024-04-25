@@ -121,10 +121,9 @@ def main():
     term_width = 80
 
   parser = argparse.ArgumentParser()
-  parser.add_argument("tm_file")
-  parser.add_argument("record_num", type=int, nargs="?", default=0)
+  parser.add_argument("tm", help="Turing Machine or file or file:record_num (0-indexed).")
 
-  parser.add_argument("--start-config",
+  parser.add_argument("start_config", nargs="?",
                       help="Start at non-blank tape configuration. "
                       "Ex: 1 23^8 21 <B 0^6 12^7 1")
 
@@ -142,7 +141,7 @@ def main():
 
   args = parser.parse_args()
 
-  tm = IO.load_tm(args.tm_file, args.record_num)
+  tm = IO.get_tm(args.tm)
   sim = DirectSimulator(tm)
 
   if not args.no_ttable:
