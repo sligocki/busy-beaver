@@ -11,9 +11,9 @@ Format looks like:
 
 import gzip
 from pathlib import Path
+from typing import TextIO
 
 import Halting_Lib
-import IO
 from IO import TM_Record
 from IO.Common import RecordLocateError
 from Macro import Turing_Machine
@@ -23,19 +23,27 @@ import TM_Enum
 parse_tm = TM_Record.parse_tm
 
 class Writer:
-  def __init__(self, outfilename : Path):
-    self.outfilename = Path(outfilename)
-    self.outfile = None
+  def __init__(self, source : Path | str | TextIO):
+    self.outfilename : Path | None
+    self.outfile : TextIO | None
+    if isinstance(source, (Path, str)):
+      self.outfilename = Path(source)
+      self.outfile = None
+    else:
+      self.outfile = source
+      self.outfilename = None
 
   def __enter__(self):
-    if ".gz" in self.outfilename.suffixes:
-      self.outfile = gzip.open(self.outfilename, "w")
-    else:
-      self.outfile = open(self.outfilename, "w")
+    if self.outfilename:
+      if ".gz" in self.outfilename.suffixes:
+        self.outfile = gzip.open(self.outfilename, "w")
+      else:
+        self.outfile = open(self.outfilename, "w")
     return self
 
   def __exit__(self, *args):
-    self.outfile.close()
+    if self.outfilename:
+      self.outfile.close()
 
   def write_record(self, tm_record : TM_Record) -> None:
     self.outfile.write(tm_record.tm().ttable_str())
@@ -53,19 +61,27 @@ class Writer:
 
 
 class Reader:
-  def __init__(self, infilename : Path):
-    self.infilename = Path(infilename)
-    self.infile = None
+  def __init__(self, dest : Path | str | TextIO):
+    self.infilename : Path | None
+    self.infile : TextIO | None
+    if isinstance(dest, (Path, str)):
+      self.infilename = Path(dest)
+      self.infile = None
+    else:
+      self.infile = dest
+      self.infilename = None
 
   def __enter__(self):
-    if ".gz" in self.infilename.suffixes:
-      self.infile = gzip.open(self.infilename, "r")
-    else:
-      self.infile = open(self.infilename, "r")
+    if self.infilename:
+      if ".gz" in self.infilename.suffixes:
+        self.infile = gzip.open(self.infilename, "r")
+      else:
+        self.infile = open(self.infilename, "r")
     return self
 
   def __exit__(self, *args):
-    self.infile.close()
+    if self.infilename:
+      self.infile.close()
 
   def read_record(self):
     line = self.infile.readline()

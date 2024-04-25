@@ -50,29 +50,35 @@ def permute_start_state(tm : Turing_Machine.Simple_Machine):
     yield TNF.permute_table(tm, state_order, symbol_order)
 
 
+def write_adjacent(tm : Turing_Machine.Simple_Machine, writer, allow_no_halt, args) -> None:
+  for perm_tm in permute_start_state(tm):
+    new_tm_enum = TM_Enum(perm_tm, allow_no_halt = allow_no_halt)
+    new_tm_record = TM_Record(tm_enum = new_tm_enum)
+    writer.write_record(new_tm_record)
+  if not args.only_perms:
+    for adj_tm in adjacent(tm):
+      for perm_tm in permute_start_state(adj_tm):
+        new_tm_enum = TM_Enum(perm_tm, allow_no_halt = allow_no_halt)
+        new_tm_record = TM_Record(tm_enum = new_tm_enum)
+        writer.write_record(new_tm_record)
+
 def main():
   parser = argparse.ArgumentParser()
-  parser.add_argument("infile", type=Path)
-  parser.add_argument("outfile", type=Path)
+  parser.add_argument("tm", nargs="?",
+                      help="Literal Turing Machine. If missing read from stdin.")
 
   parser.add_argument("--only-perms", action="store_true",
                       help="Only list permutations.")
   args = parser.parse_args()
 
-  with IO.StdText.Writer(args.outfile) as writer:
-    with IO.Reader(args.infile) as reader:
-      for tm_record in reader:
-        allow_no_halt = tm_record.tm_enum().allow_no_halt
-        for perm_tm in permute_start_state(tm_record.tm()):
-          new_tm_enum = TM_Enum(perm_tm, allow_no_halt = allow_no_halt)
-          new_tm_record = TM_Record(tm_enum = new_tm_enum)
-          writer.write_record(new_tm_record)
-        if not args.only_perms:
-          for adj_tm in adjacent(tm_record.tm()):
-            for perm_tm in permute_start_state(adj_tm):
-              new_tm_enum = TM_Enum(perm_tm, allow_no_halt = allow_no_halt)
-              new_tm_record = TM_Record(tm_enum = new_tm_enum)
-              writer.write_record(new_tm_record)
+  with IO.StdText.Writer(sys.stdout) as writer:
+    if args.tm:
+      tm = IO.parse_tm(args.tm)
+      write_adjacent(tm, writer, False, args)
+    else:
+      with IO.Reader(sys.stdin) as reader:
+        for tm_record in reader:
+          write_adjacent(tm_record.tm(), writer, tm_record.tm_enum().allow_no_halt, args)
 
 if __name__ == "__main__":
   main()

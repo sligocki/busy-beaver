@@ -4,13 +4,14 @@ Generalized reader that can read from either Proto or Text format.
 
 from pathlib import Path
 import re
+from typing import TextIO
 
 import IO
 from IO.TM_Record import parse_tm
 from Macro import Turing_Machine
 
 
-def guess_module(filename : Path):
+def guess_module(filename : Path | str):
   # Currently we depend upon filename suffixes to decide filetype.
   #
   # TODO-maybe: Look at first 4 bytes to make an educated guess perhaps.
@@ -29,8 +30,13 @@ def guess_module(filename : Path):
     return IO.StdText
 
 
-def Reader(filename : Path, *, text_allow_no_halt : bool = False):
-  return guess_module(filename).Reader(filename)
+def Reader(source : Path | str | TextIO):
+  if isinstance(source, (Path, str)):
+    mod = guess_module(source)
+  else:
+    # If source is a file object, we can't guess the module, so default to StdText.
+    mod = IO.StdText
+  return mod.Reader(source)
 
 def load_tm(filename : Path, record_num : int) -> Turing_Machine.Simple_Machine:
   record = guess_module(filename).load_record(filename, record_num)

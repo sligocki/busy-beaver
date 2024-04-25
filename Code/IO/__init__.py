@@ -4,5 +4,5 @@
 from IO import StdText, Proto, Morphett, OldText, BBC
 
 from IO.General import Reader, load_tm, get_tm
-from IO.StdText import parse_tm
+from IO.TM_Record import parse_tm
 from IO.Timer import Timer
