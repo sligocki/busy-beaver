@@ -61,11 +61,6 @@ class DirectTape:
     self._expand_tape(pos)
     self.tape[self._pos2index(pos)] = symbol
 
-  def update_tape(self, start_pos : int, new_section : list[int]) -> None:
-    """Update a section of the tape with new content."""
-    for i, symb in enumerate(new_section):
-      self.write_pos(symb, i + start_pos)
-
   def copy(self):
     new_tape = DirectTape(self.init_symbol)
     new_tape.tape = self.tape.copy()

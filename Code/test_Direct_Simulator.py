@@ -7,6 +7,11 @@ import unittest
 import IO
 
 
+def write_range(tape : Direct_Simulator.DirectTape,
+                start_pos : int, new_section : list[int]) -> None:
+  for i, symb in enumerate(new_section):
+    tape.write_pos(symb, i + start_pos)
+
 def read_range(tape : Direct_Simulator.DirectTape,
                start_pos : int, end_pos : int) -> list[Direct_Simulator.Symbol]:
   return [tape.read_pos(pos) for pos in range(start_pos, end_pos)]
@@ -91,15 +96,15 @@ class SystemTest(unittest.TestCase):
 
     new_section = [5, 6, 7, 8]
     # No expansion necessary
-    sim.tape.update_tape(2, new_section)
+    write_range(sim.tape, 2, new_section)
     self.assertEqual(read_range(sim.tape, 2, 6), new_section)
 
     # Expansion to the right
-    sim.tape.update_tape(100, new_section)
+    write_range(sim.tape, 100, new_section)
     self.assertEqual(read_range(sim.tape, 100, 104), new_section)
 
     # Expansion to the left
-    sim.tape.update_tape(-100, new_section)
+    write_range(sim.tape, -100, new_section)
     self.assertEqual(read_range(sim.tape, -100, -96), new_section)
 
 

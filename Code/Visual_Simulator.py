@@ -3,8 +3,6 @@
 
 import argparse
 import fcntl
-import itertools
-import math
 import re
 import string
 import struct
@@ -59,96 +57,46 @@ def parse_config(config_str):
   return (state, left, right)
 
 
-def print_tape(tape : list[int], position : int, start_pos : int, half_width : int,
-               tm : Turing_Machine.Simple_Machine, state, step_num : int):
-  sys.stdout.write("\033[0m%10d: " % step_num)
+def should_print(sim : DirectSimulator, print_ops : str) -> bool:
+  if "a" in print_ops:
+    return True
+  if "l" in print_ops and sim.tape.pos_leftmost() == sim.tape.position:
+    return True
+  if "r" in print_ops and sim.tape.pos_rightmost() == sim.tape.position:
+    return True
+  return False
 
-  for j in range(2*half_width):
-    value = tape[start_pos+(j-half_width)]
-    if position == start_pos+(j-half_width):
-      # If this is the current possition ...
-      sys.stdout.write("\033[1;%dm%c" % (COLOR[value], STATES[state]))
-    else:
-      sys.stdout.write("\033[%dm " % COLOR[value])
+def print_tape(sim : DirectSimulator, args) -> None:
+  if should_print(sim, args.print):
+    half_width = args.print_width // 2 - 10
+    print_range = range(-half_width, half_width+1)
 
-  state_str = tm.states[state] if state >= 0 else "HALT"
-  sys.stdout.write(f"\033[0m{state_str:4}")
-  sys.stdout.write(" \033[%dm%2d\033[0m\n" % (
-    COLOR[tape[position]], tape[position]))
+    sys.stdout.write("\033[0m%10d: " % sim.step_num)
 
-  sys.stdout.flush()
-
-
-def run_visual(tm : Turing_Machine.Simple_Machine,
-               print_width : int,
-               start_state, start_left_tape, start_right_tape,
-               *, tape_length : int = 100_000, max_steps : int = math.inf,
-               args):
-  """
-  Start the tape and run it until it halts with visual output.
-  """
-  # TM starts at middle of tape
-  start_pos = tape_length // 2
-  position = start_pos
-  # Keep track of the leftmost and rightmost position TM has visited.
-  position_left  = position
-  position_right = position
-
-  # Setup tape including optional custom start configuration.
-  tape = [0] * tape_length
-  tape[position - len(start_left_tape):position + len(start_right_tape)] = \
-    start_left_tape + start_right_tape
-
-  state = start_state
-
-  half_width = (print_width - 19) // 2
-  if half_width < 1:
-    half_width = 1
-
-  print_tape(tape, position, start_pos, half_width, tm, state, 0)
-
-  for step_num in itertools.count(1):
-    value = tape[position]
-    trans = tm.get_trans_object(value, state)
-
-    tape[position] = trans.symbol_out
-
-    if trans.dir_out == Turing_Machine.LEFT:
-      position -= 1
-      if position < position_left:
-        position_left = position
-    else:
-      position += 1
-      if position > position_right:
-        position_right = position
-
-    state = trans.state_out
-
-    # Print configuration
-    if position > start_pos - half_width - 2 and position < start_pos + half_width +1:
-      just_on = True
-      if args.only_leftmost:
-        if position == position_left:
-          print_tape(tape, position, start_pos, half_width, tm, state, step_num)
-      elif args.only_rightmost:
-        if position == position_right:
-          print_tape(tape, position, start_pos, half_width, tm, state, step_num)
+    for pos in print_range:
+      value = sim.tape.read_pos(pos)
+      if sim.tape.position == pos:
+        # If this is the current possition ...
+        sys.stdout.write("\033[1;%dm%c" % (COLOR[value], STATES[sim.state]))
       else:
-        print_tape(tape, position, start_pos, half_width, tm, state, step_num)
-    elif just_on:
-      sys.stdout.write("       ...\n")
-      sys.stdout.flush()
-      just_on = False
+        sys.stdout.write("\033[%dm " % COLOR[value])
 
-    if position < 1 or position >= tape_length-1:
-      break
+    state_str = sim.tm.states[sim.state] if not sim.halted else "HALT"
+    sys.stdout.write(f"\033[0m{state_str:4}")
+    sys.stdout.write(" \033[%dm%2d\033[0m\n" % (
+      COLOR[sim.tape.read()], sim.tape.read()))
 
-    if step_num >= max_steps:
-      break
+    sys.stdout.flush()
 
-    if state == -1:
-      print("TM Halted on step", step_num)
-      break
+
+def run_visual(sim : DirectSimulator, args):
+  print_tape(sim, args)
+
+  while not sim.halted:
+    sim.step()
+    print_tape(sim, args)
+
+  print("TM Halted on step", sim.step_num)
 
 
 def ttable_with_colors(tm):
@@ -165,34 +113,34 @@ def main():
     # This will be fooled if you pipe in stdin from somewhere else, but I don't
     # know why you would do that since this program doesn't read stdin.
     fd = 0
-    term_height, term_width = struct.unpack('hh', fcntl.ioctl(fd, termios.TIOCGWINSZ, '1234'))
+    term_height, term_width = struct.unpack("hh", fcntl.ioctl(fd, termios.TIOCGWINSZ, "1234"))
   except:
     term_width = 80
 
   parser = argparse.ArgumentParser()
   parser.add_argument("tm_file")
   parser.add_argument("record_num", type=int, nargs="?", default=0)
-  parser.add_argument("--width", type=int, default=term_width,
-                      help="width to print to terminal.")
-  parser.add_argument("--max-steps", type=int, default=math.inf,
-                      help="Limit number of steps run")
-  parser.add_argument("--no-ttable", action="store_true")
-
-  # Print options
-  parser.add_argument("--relative", "-r", action="store_true",
-                      help="Print so that TM head always at the same column.")
-  parser.add_argument("--only-leftmost", "-L", action="store_true",
-                      help="Only print tape when TM reaches the leftmost position.")
-  parser.add_argument("--only-rightmost", "-R", action="store_true",
-                      help="Only print tape when TM reaches the rightmost position.")
 
   parser.add_argument("--start-config",
                       help="Start at non-blank tape configuration. "
                       "Ex: 1 23^8 21 <B 0^6 12^7 1")
 
+  parser.add_argument("--print-width", "-w", type=int, default=term_width,
+                      help="Width to print to terminal.")
+  parser.add_argument("--no-ttable", action="store_true",
+                      help="Don't print transition table.")
+
+  # Print options
+  parser.add_argument("--relative", "-r", action="store_true",
+                      help="Print so that TM head always at the same column.")
+  parser.add_argument("--print", "-p", default="a",
+                      help="When to print tape: a: always, l: leftmost, r: rightmost. "
+                      "May be combined, ex: lr")
+
   args = parser.parse_args()
 
   tm = IO.load_tm(args.tm_file, args.record_num)
+  sim = DirectSimulator(tm)
 
   if not args.no_ttable:
     print(ttable_with_colors(tm))
@@ -206,10 +154,14 @@ def main():
     left = []
     right = []
 
-  # sim = DirectSimulator(tm)
+  for i, symb in enumerate(left):
+    # Write left half of tape so that the rightmost symbol is at location -1.
+    sim.tape.write(i-len(left), symb)
+  for i, symb in enumerate(right):
+    # Write right half of tape so that the leftmost symbol is at location 0.
+    sim.tape.write(i, symb)
 
-  run_visual(tm, args.width, state, left, right,
-             max_steps=args.max_steps, args=args)
+  run_visual(sim, args=args)
   sys.stdout.flush()
 
 if __name__ == "__main__":
