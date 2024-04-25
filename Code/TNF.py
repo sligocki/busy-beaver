@@ -9,8 +9,6 @@ import Direct_Simulator
 import IO
 from Macro import Turing_Machine
 
-import io_pb2
-
 
 def permute_table(old_tm, state_order, symbol_order, swap_dirs=False):
   state_old2new = {old: new for (new, old) in enumerate(state_order)}
@@ -49,7 +47,7 @@ def permute_table(old_tm, state_order, symbol_order, swap_dirs=False):
         )
   return new_tm
 
-def to_TNF(tm, max_steps, skip_over_steps):
+def to_TNF(tm : Turing_Machine.Simple_Machine, max_steps : int) -> Turing_Machine.Simple_Machine | None:
   state_order = [0]
   symbol_order = [0]
   unordered_states = set(range(tm.num_states)) - set(state_order)
@@ -61,10 +59,7 @@ def to_TNF(tm, max_steps, skip_over_steps):
   sim = Direct_Simulator.DirectSimulator(tm)
   while unordered_states or unordered_symbols:
     if sim.step_num > max_steps:
-      if skip_over_steps:
-        return
-      else:
-        raise Exception
+      return None
 
     sim.step()
 
@@ -88,14 +83,15 @@ def main():
   parser = argparse.ArgumentParser()
   parser.add_argument("tm_file", type=Path)
   parser.add_argument("--max-steps", type=int, default=1_000)
-  parser.add_argument("--skip-over-steps", action="store_true")
   args = parser.parse_args()
 
   with IO.Reader(args.tm_file) as reader:
     for tm_record in reader:
-      new_tm = to_TNF(tm_record.tm(), args.max_steps, args.skip_over_steps)
+      new_tm = to_TNF(tm_record.tm(), args.max_steps)
       if new_tm:
         print(new_tm.ttable_str())
+      else:
+        print(f"Failed to find TNF for {tm_record.tm().ttable_str()}")
 
 if __name__ == "__main__":
   main()

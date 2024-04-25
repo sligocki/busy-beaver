@@ -56,6 +56,11 @@ class Writer:
       self.outfile.write(f" Halt {steps_str} {score_str}")
     self.outfile.write("\n")
 
+  def write_tm(self, tm : Turing_Machine.Simple_Machine) -> None:
+    """Convenience method to just write a TM directly without wrapping it in a record."""
+    self.outfile.write(tm.ttable_str())
+    self.outfile.write("\n")
+
   def flush(self):
     self.outfile.flush()
 

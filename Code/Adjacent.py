@@ -76,7 +76,7 @@ def main():
       tm = IO.parse_tm(args.tm)
       write_adjacent(tm, writer, False, args)
     else:
-      with IO.Reader(sys.stdin) as reader:
+      with IO.StdText.Reader(sys.stdin) as reader:
         for tm_record in reader:
           write_adjacent(tm_record.tm(), writer, tm_record.tm_enum().allow_no_halt, args)
 
