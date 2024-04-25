@@ -58,7 +58,7 @@ def to_TNF(tm : Turing_Machine.Simple_Machine, max_steps : int) -> Turing_Machin
 
   sim = Direct_Simulator.DirectSimulator(tm)
   while unordered_states or unordered_symbols:
-    if sim.step_num > max_steps:
+    if sim.step_num > max_steps or sim.halted:
       return None
 
     sim.step()

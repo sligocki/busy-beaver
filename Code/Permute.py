@@ -28,8 +28,8 @@ def permute_start_state(tm : Turing_Machine.Simple_Machine, tnf_max_steps : int)
     perm_tm = TNF.permute_table(tm, state_order, symbol_order)
     yield try_tnf(perm_tm, tnf_max_steps)
 
-def write_perms(tm : Turing_Machine.Simple_Machine, writer, args) -> None:
-  for perm_tm in permute_start_state(tm, args.tnf_max_steps):
+def write_perms(tm : Turing_Machine.Simple_Machine, writer, tnf_max_steps : int) -> None:
+  for perm_tm in permute_start_state(tm, tnf_max_steps):
     writer.write_tm(perm_tm)
 
 
@@ -44,11 +44,11 @@ def main():
   with IO.StdText.Writer(sys.stdout) as writer:
     if args.tm:
       tm = IO.parse_tm(args.tm)
-      write_perms(tm, writer, args)
+      write_perms(tm, writer, args.tnf_max_steps)
     else:
       with IO.StdText.Reader(sys.stdin) as reader:
         for tm_record in reader:
-          write_perms(tm_record.tm(), writer, args)
+          write_perms(tm_record.tm(), writer, args.tnf_max_steps)
 
 if __name__ == "__main__":
   main()
