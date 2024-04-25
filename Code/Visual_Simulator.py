@@ -69,7 +69,10 @@ def should_print(sim : DirectSimulator, print_ops : str) -> bool:
 def print_tape(sim : DirectSimulator, args) -> None:
   if should_print(sim, args.print):
     half_width = args.print_width // 2 - 10
-    print_range = range(-half_width, half_width+1)
+    if args.relative:
+      print_range = range(sim.tape.position - half_width, sim.tape.position + half_width + 1)
+    else:
+      print_range = range(-half_width, half_width+1)
 
     sys.stdout.write("\033[0m%10d: " % sim.step_num)
 
