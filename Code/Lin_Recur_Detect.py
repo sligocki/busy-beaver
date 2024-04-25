@@ -180,8 +180,7 @@ def filter(tm : Turing_Machine.Simple_Machine,
 
 def main():
   parser = argparse.ArgumentParser()
-  parser.add_argument("tm_file")
-  parser.add_argument("record_num", type=int, nargs="?", default=0)
+  parser.add_argument("tm", help="Turing Machine or file or file:record_num (0-indexed).")
   parser.add_argument("--max-steps", type=int, default = 0)
   parser.add_argument("--no-min-start-step", action="store_false",
                       dest="min_start_step")
@@ -192,7 +191,7 @@ def main():
   lr_info.parameters.find_min_start_step = args.min_start_step
   bb_status = io_pb2.BBStatus()
 
-  tm = IO.load_tm(args.tm_file, args.record_num)
+  tm = IO.get_tm(args.tm)
   filter(tm, lr_info, bb_status)
 
   print(lr_info)

@@ -141,12 +141,11 @@ class DirectSimulator:
 
 def main():
   parser = argparse.ArgumentParser()
-  parser.add_argument("tm_file")
-  parser.add_argument("record_num", type=int, nargs="?", default=0)
+  parser.add_argument("tm", help="Turing Machine or file or file:record_num (0-indexed).")
   parser.add_argument("num_steps", type=int)
   args = parser.parse_args()
 
-  tm = IO.load_tm(args.tm_file, args.record_num)
+  tm = IO.get_tm(args.tm)
   print(tm.ttable_str())
   sim = DirectSimulator(tm)
 

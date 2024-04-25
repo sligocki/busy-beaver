@@ -315,8 +315,7 @@ def filter(tm : Turing_Machine.Simple_Machine,
 
 def main():
   parser = argparse.ArgumentParser()
-  parser.add_argument("tm_file", type=Path)
-  parser.add_argument("record_num", type=int)
+  parser.add_argument("tm", help="Turing Machine or file or file:record_num (0-indexed).")
   parser.add_argument("block_size", type=int)
   parser.add_argument("window_size", type=int, nargs="?")
 
@@ -338,7 +337,7 @@ def main():
   cg_result = io_pb2.ClosedGraphFilterResult()
   bb_status = io_pb2.BBStatus()
 
-  tm = IO.load_tm(args.tm_file, args.record_num)
+  tm = IO.get_tm(args.tm)
   print(tm.ttable_str())
   graph_set = filter(tm, args.block_size, args.window_size,
                      args.max_steps, args.max_iters, args.max_configs, args.max_edges,

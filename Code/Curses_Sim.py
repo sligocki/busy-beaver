@@ -184,14 +184,13 @@ def sim(stdscr, tm, buffer_size, logfile):
 
 def main():
   parser = argparse.ArgumentParser()
-  parser.add_argument("tm_file")
-  parser.add_argument("record_num", type=int, nargs="?", default=0)
+  parser.add_argument("tm", help="Turing Machine or file or file:record_num (0-indexed).")
   parser.add_argument("--buffer-size", type=int, default=1000,
                       help="Number of rows and columns to buffer out to incrementally.")
   parser.add_argument("--log-file", default="curses_log.txt")
   args = parser.parse_args()
 
-  tm = IO.load_tm(args.tm_file, args.record_num)
+  tm = IO.get_tm(args.tm)
 
   with open(args.log_file, "w") as logfile:
     curses.wrapper(sim, tm, args.buffer_size, logfile)

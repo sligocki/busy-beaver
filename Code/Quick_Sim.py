@@ -157,7 +157,7 @@ def table_to_str(table):
 if __name__ == "__main__":
   from optparse import OptionParser, OptionGroup
   # Parse command line options.
-  usage = "usage: %prog [options] machine_file [line_number]"
+  usage = "usage: %prog [options] tm"
   parser = OptionParser(usage=usage)
   # TODO: One variable for different levels of verbosity.
   # TODO: Combine optparsers from MacroMachine, Enumerate and here.
@@ -204,19 +204,9 @@ if __name__ == "__main__":
   if options.max_loops and options.print_loops > options.max_loops:
     options.print_loops = options.max_loops
 
-  if len(args) < 1:
+  if len(args) != 1:
     parser.error("Must have at least one argument, machine_file")
-  filename = Path(args[0])
-
-  if len(args) >= 2:
-    try:
-      record_num = int(args[1])
-    except ValueError:
-      parser.error("record_num must be an integer.")
-  else:
-    record_num = 0
-
-  machine = IO.load_tm(filename, record_num)
+  machine = IO.get_tm(args[0])
 
   # Override start state
   start_state = ord(options.start_state) - ord("A")

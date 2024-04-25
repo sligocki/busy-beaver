@@ -138,15 +138,14 @@ def test_CTL(base_tm, cutoff, block_size=1, offset=None, use_backsymbol=True, ve
 
 def main():
   parser = argparse.ArgumentParser()
-  parser.add_argument("filename")
-  parser.add_argument("record_num", type=int)
+  parser.add_argument("tm", help="Turing Machine or file or file:record_num (0-indexed).")
   parser.add_argument("cutoff", type=int)
   parser.add_argument("block_size", type=int)
   parser.add_argument("offset", type=int)
   parser.add_argument("--no-backsymbol", action="store_true")
   args = parser.parse_args()
 
-  tm = IO.load_tm(args.filename, args.record_num)
+  tm = IO.get_tm(args.tm)
   success, num_iters = test_CTL(
     tm, cutoff=args.cutoff, block_size=args.block_size, offset=args.offset,
     use_backsymbol=(not args.no_backsymbol), verbose=True)
