@@ -152,6 +152,8 @@ def main():
   start_time = time.time()
   sim.seek(args.num_steps)
   print(f"Simulated {sim.step_num:_} steps in {time.time() - start_time:_.1f}s")
+  if sim.halted:
+    print(f"Halted with score {sim.halt_score:_} at step {sim.step_num:_}")
 
 if __name__ == "__main__":
   main()

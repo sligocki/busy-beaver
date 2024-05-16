@@ -23,6 +23,9 @@ void DirectSimMain(const std::string& tm_filename, const long line_num,
 
   std::cout << "Simulated " << sim.step_num()
             << " in " << timer.time_elapsed_s() << "s" << std::endl;
+  if (sim.is_halted()) {
+    std::cout << "Halted at step " << sim.step_num() << std::endl;
+  }
 }
 
 }  // namespace busy_beaver
