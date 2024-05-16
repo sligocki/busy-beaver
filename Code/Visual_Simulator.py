@@ -156,12 +156,13 @@ def main():
     left = []
     right = []
 
+  sim.state = state
   for i, symb in enumerate(left):
     # Write left half of tape so that the rightmost symbol is at location -1.
-    sim.tape.write(i-len(left), symb)
+    sim.tape.write_pos(symb, i-len(left))
   for i, symb in enumerate(right):
     # Write right half of tape so that the leftmost symbol is at location 0.
-    sim.tape.write(i, symb)
+    sim.tape.write_pos(symb, i)
 
   run_visual(sim, args=args)
   sys.stdout.flush()
