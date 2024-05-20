@@ -973,4 +973,147 @@ mod tests {
             panic!("{}", err);
         }
     }
+
+    #[test]
+    fn test_34_u6_uni() {
+        // 1RB3RB1LC2LA_2LA2RB1LB3RA_3LA1RZ1LC2RA
+        // Discovered by @uni
+        // Scores > 2 ↑^6 3
+
+        // f(0, x, y) = x
+        // f(k, x, y) = (λz.f(k-1, 2z+2))^x (y) > 2 ↑^k x = 2[k+2]x
+        fn f(k: CountType, x: CountExpr, y: CountExpr) -> CountExpr {
+            match k {
+                0 => x,
+                k => CountExpr::RecursiveExpr(RecursiveExpr {
+                    func: Box::new(Function {
+                        bound_var: "z".parse().unwrap(),
+                        expr: f(k - 1, "2z+2".parse().unwrap(), 0.into()),
+                    }),
+                    num_repeats: Box::new(x),
+                    base: Box::new(y),
+                }),
+            }
+        }
+
+        // This TM simulates an Ackermann level rule.
+        // We cannot prove that rule generally in our system (because it depends on double induction).
+        // But we can prove every level of it individually.
+        // This function proves each level of the Ackermann rule sequentially and then we use it up to k == 6 below.
+        //
+        // General rule:
+        //   3^n <C 1^k+1 2^2e+1 0^inf  -->  <C 1^k+1 2^2x+1 0^inf  for x = f(k, n, e)
+        fn rule_level(k: CountType, prev_rule_id: usize) -> Rule {
+            if k < 1 {
+                panic!("k must be >= 1");
+            }
+            Rule {
+                init_config: Config::from_str("3^n <C 1^k+1 2^2e+1 0^inf")
+                    .unwrap()
+                    .subst(&VarSubst::single("k".parse().unwrap(), k.into()))
+                    .unwrap(),
+                final_config: Config::from_str("<C 1^k+1 2^2x+1 0^inf")
+                    .unwrap()
+                    .subst(&VarSubst::from(&[
+                        ("k".parse().unwrap(), k.into()),
+                        (
+                            "x".parse().unwrap(),
+                            f(k, "n".parse().unwrap(), "e".parse().unwrap()),
+                        ),
+                    ]))
+                    .unwrap(),
+
+                proof: Proof::Inductive {
+                    proof_base: vec![],
+                    proof_inductive: vec![
+                        // 3^n+1 <C 1^k+1 2^2e+1 $
+                        base_step(1),
+                        // 3^n 2 A> 1^k+1 2^2e+1 $
+                        rule_step(4, &[("a", &k.to_string()), ("n", "2e+1")]),
+                        // 3^n 2 3^2e+1 A> 1^k+1 $
+                        base_step(2 * k + 2),
+                        // 3^n 2 3^2e+2 <C 1^k 2 $
+                        rule_step(prev_rule_id, &[("n", "2e+2"), ("e", "0")]),
+                        // 3^n 2 <C 1^k 2^2x+1 $  with x = f(k-1, 2e+2, 0)
+                        base_step(1),
+                        // 3^n <C 1^k+1 2^2x+1 $
+                        induction_step_expr(&[(
+                            "e".parse().unwrap(),
+                            f(k - 1, "2e+2".parse().unwrap(), 0.into()),
+                        )]),
+                    ],
+                },
+            }
+        }
+
+        let rule_set = RuleSet {
+            tm: TM::from_str("1RB3RB1LC2LA_2LA2RB1LB3RA_3LA1RZ1LC2RA").unwrap(),
+            rules: vec![
+                chain_rule("B> 1^n", "2^n B>", 1),     // 0
+                chain_rule("2^n <B", "<B 1^n", 1),     // 1
+                chain_rule("2^n <C", "<C 1^n", 1),     // 2
+                chain_rule("3^n <A 2", "<A 2^n+1", 1), // 3
+                // 4
+                Rule {
+                    init_config: Config::from_str("A> 1^a+1 2^n").unwrap(),
+                    final_config: Config::from_str("3^n A> 1^a+1").unwrap(),
+                    proof: Proof::Inductive {
+                        proof_base: vec![],
+                        proof_inductive: vec![
+                            base_step(1),
+                            chain_step(0, "a"),
+                            base_step(1),
+                            chain_step(1, "a"),
+                            base_step(1),
+                            induction_step(&[("n", "n+1")]),
+                        ],
+                    },
+                },
+                // 5
+                Rule {
+                    // 200 -> 271
+                    init_config: Config::from_str("3^n <C 1 2^2e+1 0^inf").unwrap(),
+                    final_config: Config::from_str("<C 1 2^2n+2e+1 0^inf").unwrap(),
+                    proof: Proof::Inductive {
+                        proof_base: vec![],
+                        proof_inductive: vec![
+                            base_step(1),
+                            rule_step(4, &[("a", "0"), ("n", "2e+1")]),
+                            base_step(2),
+                            chain_step(3, "2e+2"),
+                            base_step(1),
+                            induction_step(&[("e", "e+1")]),
+                        ],
+                    },
+                },
+                rule_level(1, 5),  // 6
+                rule_level(2, 6),  // 7
+                rule_level(3, 7),  // 8
+                rule_level(4, 8),  // 9
+                rule_level(5, 9),  // 10
+                rule_level(6, 10), // 11
+                // Halt Proof
+                Rule {
+                    init_config: Config::new(),
+                    final_config: Config::from_str("0^inf 1 Z> 1^7 2^2x+1 0^inf")
+                        .unwrap()
+                        .subst(&VarSubst::single(
+                            "x".parse().unwrap(),
+                            f(6, 3.into(), 0.into()),
+                        ))
+                        .unwrap(),
+                    proof: Proof::Simple(vec![
+                        base_step(86),
+                        // $ 1 3^3 <C 1^7 2 $
+                        rule_step(11, &[("n", "3"), ("e", "0")]),
+                        // $ 1 <C 1^7 2^2x+1 $  with x = f(6, 3, 0)
+                        base_step(1),
+                    ]),
+                },
+            ],
+        };
+        if let Err(err) = validate_rule_set(&rule_set) {
+            panic!("{}", err);
+        }
+    }
 }
