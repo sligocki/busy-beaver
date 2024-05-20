@@ -980,8 +980,8 @@ mod tests {
         // Discovered by @uni
         // Scores > 2 ↑^6 3
 
-        // f(0, x, y) = x
-        // f(k, x, y) = (λz.f(k-1, 2z+2))^x (y) > 2 ↑^k x = 2[k+2]x
+        // f(0, x, y) = x+y
+        // f(k, x, y) = (λz.f(k-1, 2z+2, 0))^x (y) > 2 ↑^k x = 2[k+2]x
         fn f(k: CountType, x: CountExpr, y: CountExpr) -> CountExpr {
             match k {
                 0 => x,
@@ -1107,6 +1107,159 @@ mod tests {
                         // $ 1 3^3 <C 1^7 2 $
                         rule_step(11, &[("n", "3"), ("e", "0")]),
                         // $ 1 <C 1^7 2^2x+1 $  with x = f(6, 3, 0)
+                        base_step(1),
+                    ]),
+                },
+            ],
+        };
+        if let Err(err) = validate_rule_set(&rule_set) {
+            panic!("{}", err);
+        }
+    }
+
+    #[test]
+    fn test_34_u15_uni() {
+        // 1RB3LB1RZ2RA_2LC3RB1LC2RA_3RB1LB3LC2RC
+        // Discovered by @uni
+        // Scores > 2 ↑^15 3
+        // Permutation of test_34_u6_uni with start state C:
+        //      (C -> A -> B -> C) and (3 -> 1 -> 2 -> 3) and (R <-> L)
+
+        // f(0, x, y) = x+y
+        // f(k, x, y) = (λz.f(k-1, 2z+2))^x (y) > 2 ↑^k x = 2[k+2]x
+        fn f(k: CountType, x: CountExpr, y: CountExpr) -> CountExpr {
+            match k {
+                0 => x,
+                k => CountExpr::RecursiveExpr(RecursiveExpr {
+                    func: Box::new(Function {
+                        bound_var: "z".parse().unwrap(),
+                        expr: f(k - 1, "2z+2".parse().unwrap(), 0.into()),
+                    }),
+                    num_repeats: Box::new(x),
+                    base: Box::new(y),
+                }),
+            }
+        }
+
+        // This TM simulates an Ackermann level rule.
+        // We cannot prove that rule generally in our system (because it depends on double induction).
+        // But we can prove every level of it individually.
+        // This function proves each level of the Ackermann rule sequentially and then we use it up to k == 6 below.
+        //
+        // General rule:
+        //      0^inf 3^2e+1 2^k+1 A> 1^n  -->  0^inf 3^2x+1 2^k+1 C>  for x = f(k, n, e)
+        fn rule_level(k: CountType, prev_rule_id: usize) -> Rule {
+            if k < 1 {
+                panic!("k must be >= 1");
+            }
+            Rule {
+                init_config: Config::from_str("0^inf 3^2e+1 2^k+1 A> 1^n")
+                    .unwrap()
+                    .subst(&VarSubst::single("k".parse().unwrap(), k.into()))
+                    .unwrap(),
+                final_config: Config::from_str("0^inf 3^2x+1 2^k+1 A>")
+                    .unwrap()
+                    .subst(&VarSubst::from(&[
+                        ("k".parse().unwrap(), k.into()),
+                        (
+                            "x".parse().unwrap(),
+                            f(k, "n".parse().unwrap(), "e".parse().unwrap()),
+                        ),
+                    ]))
+                    .unwrap(),
+
+                proof: Proof::Inductive {
+                    proof_base: vec![],
+                    proof_inductive: vec![
+                        // 0^inf 3^2e+1 2^k+1 A> 1^n+1
+                        base_step(1),
+                        // 0^inf 3^2e+1 2^k+1 <B 3 1^n
+                        rule_step(4, &[("a", &k.to_string()), ("n", "2e+1")]),
+                        // 0^inf 2^k+1 <B 1^2e+1 3 1^n
+                        base_step(2 * k + 2),
+                        // 0^inf 3 2^k A> 1^2e+2 3 1^n $
+                        rule_step(prev_rule_id, &[("n", "2e+2"), ("e", "0")]),
+                        // 0^inf 3^2x+1 2^k A> 3 1^n $
+                        base_step(1),
+                        // 0^inf 3^2x+1 2^k+1 A> 1^n $
+                        induction_step_expr(&[(
+                            "e".parse().unwrap(),
+                            f(k - 1, "2e+2".parse().unwrap(), 0.into()),
+                        )]),
+                    ],
+                },
+            }
+        }
+
+        let rule_set = RuleSet {
+            tm: TM::from_str("1RB3LB1RZ2RA_2LC3RB1LC2RA_3RB1LB3LC2RC").unwrap(),
+            rules: vec![
+                chain_rule("2^n <C", "<C 3^n", 1),     // 0
+                chain_rule("C> 3^n", "2^n C>", 1),     // 1
+                chain_rule("A> 3^n", "2^n A>", 1),     // 2
+                chain_rule("3 B> 1^n", "3^n+1 B>", 1), // 3
+                // 4
+                Rule {
+                    init_config: Config::from_str("3^n 2^a+1 <B").unwrap(),
+                    final_config: Config::from_str("2^a+1 <B 1^n").unwrap(),
+                    proof: Proof::Inductive {
+                        proof_base: vec![],
+                        proof_inductive: vec![
+                            base_step(1),
+                            chain_step(0, "a"),
+                            base_step(1),
+                            chain_step(1, "a"),
+                            base_step(1),
+                            induction_step(&[("n", "n+1")]),
+                        ],
+                    },
+                },
+                // 5
+                Rule {
+                    init_config: Config::from_str("0^inf 3^2e+1 2 A> 1^n").unwrap(),
+                    final_config: Config::from_str("0^inf 3^2n+2e+1 2 A>").unwrap(),
+                    proof: Proof::Inductive {
+                        proof_base: vec![],
+                        proof_inductive: vec![
+                            base_step(1),
+                            rule_step(4, &[("a", "0"), ("n", "2e+1")]),
+                            base_step(2),
+                            chain_step(3, "2e+2"),
+                            base_step(1),
+                            induction_step(&[("e", "e+1")]),
+                        ],
+                    },
+                },
+                rule_level(1, 5),   // 6
+                rule_level(2, 6),   // 7
+                rule_level(3, 7),   // 8
+                rule_level(4, 8),   // 9
+                rule_level(5, 9),   // 10
+                rule_level(6, 10),  // 11
+                rule_level(7, 11),  // 12
+                rule_level(8, 12),  // 13
+                rule_level(9, 13),  // 14
+                rule_level(10, 14), // 15
+                rule_level(11, 15), // 16
+                rule_level(12, 16), // 17
+                rule_level(13, 17), // 18
+                rule_level(14, 18), // 19
+                rule_level(15, 19), // 20
+                // Halt Proof
+                Rule {
+                    init_config: Config::new(),
+                    final_config: Config::from_str("0^inf 3^2x+1 2^16 1 Z> 0^inf")
+                        .unwrap()
+                        .subst(&VarSubst::single(
+                            "x".parse().unwrap(),
+                            f(15, 3.into(), 0.into()),
+                        ))
+                        .unwrap(),
+                    proof: Proof::Simple(vec![
+                        base_step(241),
+                        // $ 3 2^15 A> 1^3 2 $
+                        rule_step(20, &[("n", "3"), ("e", "0")]),
+                        // $ 3^2x+1 2^15 A> 2 $  with x = f(15, 3, 0)
                         base_step(1),
                     ]),
                 },
