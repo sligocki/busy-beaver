@@ -976,7 +976,7 @@ mod tests {
 
     #[test]
     fn test_34_a14_uni() {
-        // http://sligocki.com/2024/05/22/bb-2-5-a14.html
+        // https://www.sligocki.com/2024/05/22/bb-3-4-a14.html
         //   1RB3LB1RZ2RA_2LC3RB1LC2RA_3RB1LB3LC2RC
         //     Discovered by @uni on 25 Apr 2024.
         //     Scores exactly 2{15}5 + 14 = (2 ↑^15 5) + 14 > Ack(14)
