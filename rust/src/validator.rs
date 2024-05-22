@@ -975,13 +975,17 @@ mod tests {
     }
 
     #[test]
-    fn test_34_u15_uni() {
-        // 1RB3LB1RZ2RA_2LC3RB1LC2RA_3RB1LB3LC2RC
-        // Discovered by @uni
-        // Scores > 4 ↑^15 3
+    fn test_34_a14_uni() {
+        // http://sligocki.com/2024/05/22/bb-2-5-a14.html
+        //   1RB3LB1RZ2RA_2LC3RB1LC2RA_3RB1LB3LC2RC
+        //     Discovered by @uni on 25 Apr 2024.
+        //     Scores exactly 2{15}5 + 14 = (2 ↑^15 5) + 14 > Ack(14)
 
-        // f(0, x, y) = x+y
-        // f(k, x, y) = (λz.f(k-1, 2z+2, 0))^x (y) > 2 ↑^k x
+        // f(k, x, y) = g_k^x(y)
+        //      g_0(y) = y + 1
+        //      g_{k+1}(y) = g_k^{2y+2}(0)
+        // By some strange coincidence:
+        //      2 f(k, x, 0) + 4 = 2{k}(x+2) = 2 ↑^k (x+2)
         fn f(k: CountType, x: CountExpr, y: CountExpr) -> CountExpr {
             match k {
                 0 => x,
@@ -999,7 +1003,7 @@ mod tests {
         // This TM simulates an Ackermann level rule.
         // We cannot prove that rule generally in our system (because it depends on double induction).
         // But we can prove every level of it individually.
-        // This function proves each level of the Ackermann rule sequentially and then we use it up to k == 6 below.
+        // This function proves each level of the Ackermann rule sequentially and then we use it up to k == 15 below.
         //
         // General rule:
         //      0^inf 3^2e+1 2^k+1 A> 1^n  -->  0^inf 3^2x+1 2^k+1 A>  for x = f(k, n, e)
@@ -1049,10 +1053,10 @@ mod tests {
         let rule_set = RuleSet {
             tm: TM::from_str("1RB3LB1RZ2RA_2LC3RB1LC2RA_3RB1LB3LC2RC").unwrap(),
             rules: vec![
-                chain_rule("2^n <C", "<C 3^n", 1),     // 0
-                chain_rule("C> 3^n", "2^n C>", 1),     // 1
-                chain_rule("A> 3^n", "2^n A>", 1),     // 2
-                chain_rule("3 B> 1^n", "3^n+1 B>", 1), // 3
+                chain_rule("2^n <C", "<C 3^n", 1), // 0
+                chain_rule("C> 3^n", "2^n C>", 1), // 1
+                chain_rule("A> 3^n", "2^n A>", 1), // 2 [Unused]
+                chain_rule("B> 1^n", "3^n B>", 1), // 3
                 // 4
                 Rule {
                     init_config: Config::from_str("3^n 2^a+1 <B").unwrap(),
@@ -1076,15 +1080,22 @@ mod tests {
                     proof: Proof::Inductive {
                         proof_base: vec![],
                         proof_inductive: vec![
+                            // 0^inf 3^2e+1 2 A> 1^n+1
                             base_step(1),
+                            // 0^inf 3^2e+1 2 <B 3 1^n
                             rule_step(4, &[("a", "0"), ("n", "2e+1")]),
+                            // 0^inf 2 <B 1^2e+1 3 1^n
                             base_step(2),
+                            // 0^inf 3 B> 1^2e+2 3 1^n
                             chain_step(3, "2e+2"),
+                            // 0^inf 3^2e+3 B> 3 1^n
                             base_step(1),
+                            // 0^inf 3^2e+3 2 A> 1^n
                             induction_step(&[("e", "e+1")]),
                         ],
                     },
                 },
+                // 15 layers of Ackermann rules
                 rule_level(1, 5),   // 6
                 rule_level(2, 6),   // 7
                 rule_level(3, 7),   // 8
@@ -1100,7 +1111,6 @@ mod tests {
                 rule_level(13, 17), // 18
                 rule_level(14, 18), // 19
                 rule_level(15, 19), // 20
-
                 // Halt Proof
                 Rule {
                     init_config: Config::new(),
@@ -1119,10 +1129,9 @@ mod tests {
                         base_step(1),
                     ]),
                 },
-
                 // Permutation Halt Proof
-                // If you start in state B on a blank tape, this also leads to a
-                // spectacularly large score:  > 4 ↑^6 3
+                // If you start in state B on a blank tape, this leads to a
+                // slightly smaller giant score:  2{6}5 + 5
                 //      TNF: 1RB3RB1LC2LA_2LA2RB1LB3RA_3LA1RZ1LC2RA
                 Rule {
                     init_config: Config::from_str("0^inf B> 0^inf").unwrap(),
