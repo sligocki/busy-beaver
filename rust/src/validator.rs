@@ -1069,7 +1069,7 @@ mod tests {
                             base_step(1),
                             chain_step(1, "a"),
                             base_step(1),
-                            induction_step(&[("n", "n+1")]),
+                            induction_step(&[("a", "a")]),
                         ],
                     },
                 },
@@ -1147,6 +1147,188 @@ mod tests {
                         // $ 3 2^7 A> 1^3 2 $
                         rule_step(11, &[("n", "3"), ("e", "0")]),
                         // $ 3^2x+1 2^7 A> 2 $  with x = f(6, 3, 0)
+                        base_step(1),
+                    ]),
+                },
+            ],
+        };
+        if let Err(err) = validate_rule_set(&rule_set) {
+            panic!("{}", err);
+        }
+    }
+
+    #[test]
+    fn test_34_a11_uni() {
+        // 1RB1RZ1LA2RB_1RC3RC1LA2LB_2LB2RC1LC3RB
+        //      Shared by @uni on 23 May 2024.
+        //      Halt(SuperPowers(10))
+        //      https://discord.com/channels/960643023006490684/1026577255754903572/1243057809268932620
+        //  Score: g_13^2(1) + 14 = 2{12}4 + 11 > Ack(11)
+
+        // Common config: 3 <A 1^b 2^c 0^inf
+
+        // f(k, x, y) = g_k^x(y)
+        //      g_1(y) = y + 2
+        //      g_{k+1}(y) = g_k^{y+1}(1)
+        //
+        //  g_1^x(y) = 2x + y
+        //
+        //  g_k(y) = 2{k-2}(y+3) - 3
+        //  g_k^x(1) = g_{k+1}(x-1) = 2{k-1}(x+2) - 3
+        fn f(k: CountType, x: CountExpr, y: CountExpr) -> CountExpr {
+            match k {
+                0 => unreachable!("k must be >= 1"),
+                1 => CountExpr::from_str("2x+y")
+                    .unwrap()
+                    .subst(&VarSubst::from(&[
+                        ("x".parse().unwrap(), x.clone()),
+                        ("y".parse().unwrap(), y.clone()),
+                    ]))
+                    .unwrap(),
+                k => CountExpr::RecursiveExpr(RecursiveExpr {
+                    func: Box::new(Function {
+                        bound_var: "z".parse().unwrap(),
+                        expr: f(k - 1, "z+1".parse().unwrap(), 1.into()),
+                    }),
+                    num_repeats: Box::new(x),
+                    base: Box::new(y),
+                }),
+            }
+        }
+
+        // Ackermann level rule.
+        //
+        // General rule:
+        //      3^n <A 1^k 2^c 0^inf  -->  <A 1^k 2^x 0^inf  for x = f(k, n, c)
+        fn rule_level(k: CountType, prev_rule_id: usize) -> Rule {
+            if k < 2 {
+                panic!("k must be >= 2");
+            }
+            Rule {
+                init_config: Config::from_str("3^n <A 1^k 2^c 0^inf")
+                    .unwrap()
+                    .subst(&VarSubst::single("k".parse().unwrap(), k.into()))
+                    .unwrap(),
+                final_config: Config::from_str("<A 1^k 2^x 0^inf")
+                    .unwrap()
+                    .subst(&VarSubst::from(&[
+                        ("k".parse().unwrap(), k.into()),
+                        (
+                            "x".parse().unwrap(),
+                            f(k, "n".parse().unwrap(), "c".parse().unwrap()),
+                        ),
+                    ]))
+                    .unwrap(),
+
+                proof: Proof::Inductive {
+                    proof_base: vec![],
+                    proof_inductive: vec![
+                        // 3^n+1 <A 1^k 2^c 0^inf
+                        base_step(1),
+                        // 3^n 2 B> 1^k 2^c 0^inf
+                        rule_step(4, &[("b", &(k - 1).to_string()), ("n", "c")]),
+                        // 3^n 2 3^c B> 1^k 0^inf
+                        base_step(1),
+                        // 3^n 2 3^c+1 C> 1^k-1 0^inf
+                        chain_step(0, &(k - 1).to_string()),
+                        // 3^n 2 3^c+1 2^k-1 C> 0^inf
+                        base_step(2),
+                        // 3^n 2 3^c+1 2^k-2 <A 12 0^inf
+                        chain_step(3, &(k - 2).to_string()),
+                        // 3^n 2 3^c+1 <A 1^k-1 2 0^inf
+                        rule_step(prev_rule_id, &[("n", "c+1"), ("c", "1")]),
+                        // 3^n 2 <A 1^k-1 2^x 0^inf   for x = f(k-1, c+1, 1)
+                        base_step(1),
+                        // 3^n <A 1^k 2^x 0^inf
+                        induction_step_expr(&[(
+                            "c".parse().unwrap(),
+                            f(k - 1, "c+1".parse().unwrap(), 1.into()),
+                        )]),
+                        // <A 1^k 2^y 0^inf   for y = f(k, n, x)
+                    ],
+                },
+            }
+        }
+
+        let rule_set = RuleSet {
+            tm: TM::from_str("1RB1RZ1LA2RB_1RC3RC1LA2LB_2LB2RC1LC3RB").unwrap(),
+            rules: vec![
+                chain_rule("C> 1^n", "2^n C>", 1), // 0
+                chain_rule("2^n <C", "<C 1^n", 1), // 1
+                chain_rule("3^n <B", "<B 2^n", 1), // 2
+                chain_rule("2^n <A", "<A 1^n", 1), // 3
+                // 4
+                Rule {
+                    init_config: Config::from_str("B> 1^b+1 2^n").unwrap(),
+                    final_config: Config::from_str("3^n B> 1^b+1").unwrap(),
+                    proof: Proof::Inductive {
+                        proof_base: vec![],
+                        proof_inductive: vec![
+                            // B> 1^b+1 2^n+1
+                            base_step(1),
+                            // 3 C> 1^b 2^n+1
+                            chain_step(0, "b"),
+                            // 3 2^b C> 2^n+1
+                            base_step(1),
+                            // 3 2^b <C 1 2^n
+                            chain_step(1, "b"),
+                            // 3 <C 1^b+1 2^n
+                            base_step(1),
+                            // 3 B> 1^b+1 2^n
+                            induction_step(&[("b", "b")]),
+                        ],
+                    },
+                },
+                // 5
+                Rule {
+                    init_config: Config::from_str("3^n <A 1 2^c 0^inf").unwrap(),
+                    final_config: Config::from_str("<A 1 2^c+2n 0^inf").unwrap(),
+                    proof: Proof::Inductive {
+                        proof_base: vec![],
+                        proof_inductive: vec![
+                            // 3^n+1 <A 1 2^c 0^inf
+                            base_step(1),
+                            // 3^n 2 B> 1 2^c 0^inf
+                            rule_step(4, &[("b", "0"), ("n", "c")]),
+                            // 3^n 2 3^c B> 1 0^inf
+                            base_step(2),
+                            // 3^n 2 3^c+1 <B 2 0^inf
+                            chain_step(2, "c+1"),
+                            // 3^n 2 <B 2^c+2 0^inf
+                            base_step(1),
+                            // 3^n <A 1 2^c+2 0^inf
+                            induction_step(&[("c", "c+2")]),
+                        ],
+                    },
+                },
+                // Ackermann rules
+                rule_level(2, 5),   // 6
+                rule_level(3, 6),   // 7
+                rule_level(4, 7),   // 8
+                rule_level(5, 8),   // 9
+                rule_level(6, 9),   // 10
+                rule_level(7, 10),  // 11
+                rule_level(8, 11),  // 12
+                rule_level(9, 12),  // 13
+                rule_level(10, 13), // 14
+                rule_level(11, 14), // 15
+                rule_level(12, 15), // 16
+                rule_level(13, 16), // 17
+                // Halt Proof
+                Rule {
+                    init_config: Config::new(),
+                    final_config: Config::from_str("0^inf 1 Z> 1^13 2^x 0^inf")
+                        .unwrap()
+                        .subst(&VarSubst::single(
+                            "x".parse().unwrap(),
+                            f(13, 2.into(), 1.into()),
+                        ))
+                        .unwrap(),
+                    proof: Proof::Simple(vec![
+                        base_step(182),
+                        // 0^inf 1 3^2 <A 1^13 2 0^inf
+                        rule_step(17, &[("n", "2"), ("c", "1")]),
+                        // 0^inf 1 <A 1^13 2^x 0^inf   for x = f(13, 2, 1)
                         base_step(1),
                     ]),
                 },
