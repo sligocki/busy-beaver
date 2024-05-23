@@ -1332,6 +1332,26 @@ mod tests {
                         base_step(1),
                     ]),
                 },
+                // Permutation: Start State B.
+                //      TNF: 1RB3RB1LC2LA_2LA2RB1LB3RA_1RA1RZ1LC2RA
+                //      Score: g_7^2(1) + 8 = 2{6}4 + 5
+                Rule {
+                    init_config: Config::from_str("0^inf B> 0^inf").unwrap(),
+                    final_config: Config::from_str("0^inf 1 Z> 1^7 2^x 0^inf")
+                        .unwrap()
+                        .subst(&VarSubst::single(
+                            "x".parse().unwrap(),
+                            f(7, 2.into(), 1.into()),
+                        ))
+                        .unwrap(),
+                    proof: Proof::Simple(vec![
+                        base_step(84),
+                        // 0^inf 1 3^2 <A 1^7 2 0^inf
+                        rule_step(11, &[("n", "2"), ("c", "1")]),
+                        // 0^inf 1 <A 1^7 2^x 0^inf   for x = f(7, 2, 1)
+                        base_step(1),
+                    ]),
+                },
             ],
         };
         if let Err(err) = validate_rule_set(&rule_set) {
