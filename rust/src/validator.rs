@@ -467,6 +467,108 @@ mod tests {
     }
 
     #[test]
+    fn test_hydra() {
+        // https://www.sligocki.com/2024/05/10/bb-2-5-is-hard.html
+        // 1RB3RB---3LA1RA_2LA3RA4LB0LB0LA
+        // Let A(a, b) = 0^inf <B 0^a 3^b 2 0^inf
+
+        let rule_set = RuleSet {
+            tm: TM::from_str("1RB3RB1RZ3LA1RA_2LA3RA4LB0LB0LA").unwrap(),
+            rules: vec![
+                chain_rule("3^n <A", "<A 3^n", 1),     // 0
+                chain_rule("3^n <B", "<B 0^n", 1),     // 1
+                chain_rule("1 B> 3^n", "3^n 1 B>", 3), // 2
+                // 3:  0^inf 3^a 1 A> 00  -->  0^inf 3^a+3 1 A>
+                Rule {
+                    init_config: Config::from_str("0^inf 3^a 1 A> 0^2n").unwrap(),
+                    final_config: Config::from_str("0^inf 3^3n+a 1 A>").unwrap(),
+                    proof: Proof::Inductive {
+                        proof_base: vec![],
+                        proof_inductive: vec![
+                            // 0^inf 3^a 1 A> 00
+                            base_step(12),
+                            // 0^inf 3^a <A 332
+                            chain_step(0, "a"),
+                            // 0^inf <A 3^a+2 2
+                            base_step(1),
+                            // 0^inf 1 B> 3^a+2 2
+                            chain_step(2, "a+2"),
+                            // 0^inf 3^a+2 1 B> 2
+                            base_step(3),
+                            // 0^inf 3^a+3 1 A>
+                            induction_step(&[("a", "a+3")]),
+                        ],
+                    },
+                },
+                // Collatz rules
+                // A(2n, 0)  -->  Halt(3n+3)
+                Rule {
+                    init_config: Config::from_str("0^inf <B 0^2n 3^0 2 0^inf").unwrap(),
+                    final_config: Config::from_str("0^inf 3^3n+1 11 Z> 0^inf").unwrap(),
+                    proof: Proof::Simple(vec![
+                        // 0^inf <B 0^2n 2 0^inf
+                        base_step(5),
+                        // 0^inf 3 1 A> 0^2n 2 0^inf
+                        rule_step(3, &[("a", "1"), ("n", "n")]),
+                        // 0^inf 3^3n+1 1 A> 2 0^inf
+                        base_step(1),
+                        // 0^inf 3^3n+1 11 Z> 0^inf
+                    ]),
+                },
+                // A(2n, b+1)  -->  A(3n+3, b)
+                Rule {
+                    init_config: Config::from_str("0^inf <B 0^2n 3^b+1 2 0^inf").unwrap(),
+                    final_config: Config::from_str("0^inf <B 0^3n+3 3^b 2 0^inf").unwrap(),
+                    proof: Proof::Simple(vec![
+                        // 0^inf <B 0^2n 3^b+1 2 0^inf
+                        base_step(5),
+                        // 0^inf 3 1 A> 0^2n 3^b+1 2 0^inf
+                        rule_step(3, &[("a", "1"), ("n", "n")]),
+                        // 0^inf 3^3n+1 1 A> 3^b+1 2 0^inf
+                        base_step(3),
+                        // 0^inf 3^3n+2 <B 0 3^b 2 0^inf
+                        chain_step(1, "3n+2"),
+                        // 0^inf <B 0^3n+3 3^b 2 0^inf
+                    ]),
+                },
+                // A(2n+1, b)  -->  A(3n+3, b+2)
+                Rule {
+                    init_config: Config::from_str("0^inf <B 0^2n+1 3^b 2 0^inf").unwrap(),
+                    final_config: Config::from_str("0^inf <B 0^3n+3 3^b+2 2 0^inf").unwrap(),
+                    proof: Proof::Simple(vec![
+                        // 0^inf <B 0^2n+1 3^b 2 0^inf
+                        base_step(5),
+                        // 0^inf 3 1 A> 0^2n+1 3^b 2 0^inf
+                        rule_step(3, &[("a", "1"), ("n", "n")]),
+                        // 0^inf 3^3n+1 1 A> 0 3^b 2 0^inf
+                        base_step(1),
+                        // 0^inf 3^3n+1 1 1 B> 3^b 2 0^inf
+                        chain_step(2, "b"),
+                        // 0^inf 3^3n+1 1 3^b 1 B> 2 0^inf
+                        base_step(13),
+                        // 0^inf 3^3n+1 1 3^b+3 <A 2 0^inf
+                        chain_step(0, "b+3"),
+                        // 0^inf 3^3n+1 1 <A 3^b+3 2 0^inf
+                        base_step(2),
+                        // 0^inf 3^3n+2 <B 0 3^b+3 2 0^inf
+                        chain_step(1, "3n+2"),
+                        // 0^inf <B 0^3n+3 3^b+2 2 0^inf
+                    ]),
+                },
+                // 0^inf A> 0^inf  --(19)-->  A(3, 0)
+                Rule {
+                    init_config: Config::new(),
+                    final_config: Config::from_str("0^inf <B 0^3 3^0 2 0^inf").unwrap(),
+                    proof: Proof::Simple(vec![base_step(19)]),
+                },
+            ],
+        };
+        if let Err(err) = validate_rule_set(&rule_set) {
+            panic!("{}", err);
+        }
+    }
+
+    #[test]
     fn test_34_uni() {
         // Analysis of Pavel's 3x4 TM shared 31 May 2023:
         //      https://discord.com/channels/960643023006490684/1095740122139480195/1113545691994783804
@@ -1705,7 +1807,10 @@ mod tests {
                             rule_id: 7,
                             var_assignment: VarSubst::from(&[(
                                 "a".parse().unwrap(),
-                                f3((2_u64.pow(24) + 1).into(), f1(1.into(), f2(3.into(), 2.into()))),
+                                f3(
+                                    (2_u64.pow(24) + 1).into(),
+                                    f1(1.into(), f2(3.into(), 2.into())),
+                                ),
                             )]),
                         },
                         // 0^inf 1^2b+2 <D 1^2a+2 0^inf
