@@ -1,9 +1,12 @@
 #! /usr/bin/env python3
-"""Convert TMs from generic form to Tree Normal Form."""
+"""
+Convert TMs from generic form to Tree Normal Form.
+
+Note: Only permutes states/symbols/directions. It does not remove unreachable transitions.
+"""
 
 import argparse
 import copy
-from pathlib import Path
 import sys
 
 import Direct_Simulator
