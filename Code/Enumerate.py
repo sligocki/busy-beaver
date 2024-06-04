@@ -195,8 +195,7 @@ class Enumerator(object):
 def enum_initial_tms(options):
   if options.infilename:
     # Initialize with all machines from infile.
-    with IO.Reader(options.infilename,
-                   text_allow_no_halt = options.allow_no_halt) as reader:
+    with IO.Reader(options.infilename) as reader:
       for tm_record in reader:
         # Clear previous results, so that we only see the results from this run.
         tm_record.proto.ClearField("status")

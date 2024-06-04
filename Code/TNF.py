@@ -4,6 +4,7 @@
 import argparse
 import copy
 from pathlib import Path
+import sys
 
 import Direct_Simulator
 import IO
@@ -81,17 +82,27 @@ def to_TNF(tm : Turing_Machine.Simple_Machine, max_steps : int) -> Turing_Machin
 
 def main():
   parser = argparse.ArgumentParser()
-  parser.add_argument("tm_file", type=Path)
+  parser.add_argument("tm", nargs="?",
+                      help="Literal Turing Machine. If missing read from stdin.")
   parser.add_argument("--max-steps", type=int, default=1_000)
   args = parser.parse_args()
 
-  with IO.Reader(args.tm_file) as reader:
-    for tm_record in reader:
-      new_tm = to_TNF(tm_record.tm(), args.max_steps)
+  with IO.StdText.Writer(sys.stdout) as writer:
+    if args.tm:
+      tm = IO.parse_tm(args.tm)
+      new_tm = to_TNF(tm, args.max_steps)
       if new_tm:
-        print(new_tm.ttable_str())
+        writer.write_tm(new_tm)
       else:
-        print(f"Failed to find TNF for {tm_record.tm().ttable_str()}")
+        print(f"Failed to find TNF for {tm.ttable_str()}")
+    else:
+      with IO.StdText.Reader(sys.stdin) as reader:
+        for tm_record in reader:
+          new_tm = to_TNF(tm_record.tm(), args.max_steps)
+          if new_tm:
+            writer.write_tm(new_tm)
+          else:
+            print(f"Failed to find TNF for {tm.ttable_str()}")
 
 if __name__ == "__main__":
   main()
