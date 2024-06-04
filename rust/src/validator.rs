@@ -693,6 +693,149 @@ mod tests {
     }
 
     #[test]
+    fn test_bigfoot() {
+        // https://www.sligocki.com/2023/10/16/bb-3-3-is-hard.html
+        // 1RB2RA1LC_2LC1RB2RB_---2LA1LA
+        // Let A(a, b, c) = 0^inf 12^a 11^b <A 11^c 0^inf
+
+        let rule_set = RuleSet {
+            tm: TM::from_str("1RB2RA1LC_2LC1RB2RB_1RZ2LA1LA").unwrap(),
+            rules: vec![
+                chain_rule("A> 1^n", "2^n A>", 1),   // 0
+                chain_rule("2^2n <A", "<A 1^2n", 2), // 1
+                // 2: 1^n <A 1^2c 2^n  -->  <A 1^2c+2n
+                Rule {
+                    init_config: Config::from_str("1^n <A 1^2c 2^n").unwrap(),
+                    final_config: Config::from_str("<A 1^2c+2n").unwrap(),
+                    proof: Proof::Inductive {
+                        proof_base: vec![],
+                        proof_inductive: vec![
+                            // 1 <A 1^2c 2
+                            base_step(1),
+                            // 2 A> 1^2c 2
+                            chain_step(0, "2c"),
+                            // 2^2c+1 A> 2
+                            base_step(2),
+                            chain_step(1, "c"),
+                            // <A 1^2c+2
+                            induction_step(&[("c", "c+1")]),
+                        ],
+                    },
+                },
+                // 3: 1^3n <A 1^2c+1 2^n  -->  <A 1^2c+1+4n
+                Rule {
+                    init_config: Config::from_str("1^3n <A 1^2c+1 2^n").unwrap(),
+                    final_config: Config::from_str("<A 1^2c+1+4n").unwrap(),
+                    proof: Proof::Inductive {
+                        proof_base: vec![],
+                        proof_inductive: vec![
+                            // 111 <A 1^2c+1 2
+                            base_step(1),
+                            // 11 2 A> 1^2c+1 2
+                            chain_step(0, "2c+1"),
+                            // 11 2^2c+2 A> 2
+                            base_step(2),
+                            chain_step(1, "c"),
+                            // 11 2 <A 1^2c+2
+                            base_step(5),
+                            // <A 1^2c+5
+                            induction_step(&[("c", "c+2")]),
+                        ],
+                    },
+                },
+                // 4:  1^12 <A 1^2c 0^inf  -->  <A 1^2c+16 0^inf
+                Rule {
+                    init_config: Config::from_str("1^12n <A 1^2c 0^inf").unwrap(),
+                    final_config: Config::from_str("<A 1^2c+16n 0^inf").unwrap(),
+                    proof: Proof::Inductive {
+                        proof_base: vec![],
+                        proof_inductive: vec![
+                            // 1^12 <A 1^2c 0^inf
+                            base_step(1),
+                            chain_step(0, "2c"),
+                            // 1^11 2^2c+1 A> 0^inf
+                            base_step(3),
+                            // 1^11 2^2c+1 <A 22 0^inf
+                            chain_step(1, "c"),
+                            // 1^11 2 <A 1^2c 22 0^inf
+                            base_step(5),
+                            // 1^9 <A 1^2c+3 22 0^inf
+                            rule_step(3, &[("n", "2"), ("c", "c+1")]),
+                            // 1^3 <A 1^2c+11 0^inf
+                            base_step(1),
+                            chain_step(0, "2c+11"),
+                            // 1^2 2^2c+12 A> 0^inf
+                            base_step(3),
+                            // 1^2 2^2c+12 <A 22 0^inf
+                            chain_step(1, "c+6"),
+                            // 1^2 <A 1^2c+12 22 0^inf
+                            rule_step(2, &[("n", "2"), ("c", "c+6")]),
+                            // <A 1^2c+16 0^inf
+                            induction_step(&[("c", "c+8")]),
+                        ],
+                    },
+                },
+                // 5:  0^inf 12^n <A  -->  0^inf 12^n 1 B>
+                Rule {
+                    init_config: Config::from_str("0^inf 12^n <A").unwrap(),
+                    final_config: Config::from_str("0^inf 12^n 1 B>").unwrap(),
+                    proof: Proof::Inductive {
+                        proof_base: vec![base_step(1)],
+                        proof_inductive: vec![
+                            // 0^inf 12^n+1 <A
+                            base_step(2),
+                            // 0^inf 12^n <A 21
+                            induction_step(&[]),
+                            // 0^inf 12^n 1 B> 21
+                            base_step(2),
+                        ],
+                    },
+                },
+                chain_rule("B> 1^n", "1^n B>", 1), // 6
+                // Collatz rules
+                // A(a, 6k, c+1)  -->  A(a, 8k+c, 2)
+                Rule {
+                    init_config: Config::from_str("0^inf 12^a 1^12k <A 1^2c+2 0^inf").unwrap(),
+                    final_config: Config::from_str("0^inf 12^a 1^16k+2c <A 1^4 0^inf").unwrap(),
+                    proof: Proof::Simple(vec![
+                        // 0^inf 12^a 1^12k <A 1^2c+2 0^inf
+                        rule_step(4, &[("n", "k"), ("c", "c+1")]),
+                        // 0^inf 12^a <A 1^2c+2+16k 0^inf
+                        rule_step(5, &[("n", "a")]),
+                        // 0^inf 12^a 1 B> 1^2c+2+16k 0^inf
+                        chain_step(6, "2c+2+16k"),
+                        // 0^inf 12^a 1^16k+2c+3 B> 0^inf
+                        base_step(12),
+                        // 0^inf 12^a 1^16k+2c <A 1^4 0^inf
+                    ]),
+                },
+                // A(a, 6k+1, c+1)  -->  A(a, 8k+c, 2)
+                Rule {
+                    init_config: Config::from_str("0^inf 12^a 1^12k+2 <A 1^2c+2 0^inf").unwrap(),
+                    final_config: Config::from_str("0^inf 12^a+1 1^16k+2c <A 1^6 0^inf").unwrap(),
+                    proof: Proof::Simple(vec![
+                        // 0^inf 12^a 1^12k+2 <A 1^2c+2 0^inf
+                        rule_step(4, &[("n", "k"), ("c", "c+1")]),
+                        // 0^inf 12^a 11 <A 1^2c+2+16k 0^inf
+                        ProofStep::Admit, // TODO
+                    ]),
+                },
+                // TODO: Rest of rules:
+                // ...
+                // 0^inf A> 0^inf  --(69)-->  A(2, 1, 2)
+                Rule {
+                    init_config: Config::new(),
+                    final_config: Config::from_str("0^inf 12^2 1^2 <A 1^4 0^inf").unwrap(),
+                    proof: Proof::Simple(vec![base_step(69)]),
+                },
+            ],
+        };
+        if let Err(err) = validate_rule_set(&rule_set) {
+            panic!("{}", err);
+        }
+    }
+
+    #[test]
     fn test_34_uni() {
         // Analysis of Pavel's 3x4 TM shared 31 May 2023:
         //      https://discord.com/channels/960643023006490684/1095740122139480195/1113545691994783804
