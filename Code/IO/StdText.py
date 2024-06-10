@@ -49,10 +49,11 @@ class Writer:
     self.outfile.write(tm_record.tm().ttable_str())
     halt_status = tm_record.proto.status.halt_status
     if halt_status.is_halting:
+      # Remove _ from int strings so that we can sort them with `sort`.
       steps_str = Halting_Lib.big_int_approx_str(
-        Halting_Lib.get_big_int(halt_status.halt_steps))
+        Halting_Lib.get_big_int(halt_status.halt_steps)).replace("_", "")
       score_str = Halting_Lib.big_int_approx_str(
-        Halting_Lib.get_big_int(halt_status.halt_score))
+        Halting_Lib.get_big_int(halt_status.halt_score)).replace("_", "")
       self.outfile.write(f" Halt {steps_str} {score_str}")
     self.outfile.write("\n")
 
