@@ -10,6 +10,7 @@ set -e
 set -x
 
 ROOT_DIR=$1
+TOOLS_DIR=$(dirname "$0")
 
 echo "Tools/filter.sh $@" >> ${ROOT_DIR}/filter_log.txt
 
@@ -28,14 +29,14 @@ cp ${ROOT_DIR}/unknown.pb ${WORK_DIR}/in.pb
 time "$@" --infile=${WORK_DIR}/in.pb --outfile=${WORK_DIR}/out.pb
 
 # Categorize outputs
-time Code/IO_Categorize.py ${WORK_DIR}/out.pb --out-dir=${WORK_DIR}/
+time ${TOOLS_DIR}/../Code/IO_Categorize.py ${WORK_DIR}/out.pb --out-dir=${WORK_DIR}/
 
 # Update for next filter
 cp ${WORK_DIR}/unknown.pb ${ROOT_DIR}/unknown.pb
 
 # Human readable stuff
-time Code/TM_Analyze.py ${WORK_DIR}/out.pb
+time ${TOOLS_DIR}/../Code/TM_Analyze.py ${WORK_DIR}/out.pb
 # Only convert to text if it's reasonably small.
 if [[ "$(wc -c < ${ROOT_DIR}/unknown.pb)" < 1000000 ]]; then
-  Code/IO_Convert.py ${ROOT_DIR}/unknown.{pb,txt}
+  ${TOOLS_DIR}/../Code/IO_Convert.py ${ROOT_DIR}/unknown.{pb,txt}
 fi
