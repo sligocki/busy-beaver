@@ -1,12 +1,10 @@
 """Library for representing very large integers of the form: a b^n + c"""
 
 from fractions import Fraction
-import functools
 import math
 
 from Algebraic_Expression import Expression, min_val, variables, substitute
 from Common import is_const
-import io_pb2
 from Math import gcd, lcm, int_pow, exp_mod, prec_mult, prec_add
 
 
@@ -467,7 +465,7 @@ class ExpInt:
 
   # Basic comparision using tower notation.
   def __gt__(self, other):
-    assert self.is_const, self
+    assert is_const(self), self
     if other == math.inf:
       return False
     if other == -math.inf:
@@ -482,7 +480,7 @@ class ExpInt:
     return self.tower_value > tower_value(other)
 
   def __ge__(self, other):
-    assert self.is_const, self
+    assert is_const(self), self
     if other == math.inf:
       return False
     if other == -math.inf:
