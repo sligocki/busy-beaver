@@ -98,7 +98,6 @@ def get_big_int(field : io_pb2.BigInt):
     return None
   else:
     return None
-    raise NotImplementedError(type)
 
 
 # Protobuf serialization and parsing

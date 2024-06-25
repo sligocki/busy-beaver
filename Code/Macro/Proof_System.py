@@ -15,6 +15,7 @@ import Algebraic_Expression as ae
 from Algebraic_Expression import Expression, Variable, NewVariableExpression, VariableToExpression, ConstantToExpression, VarPlusConstExpression, Term, always_ge, is_const, variables, substitute
 import Exp_Int
 from Exp_Int import ExpInt
+import Halting_Lib
 from Macro import Rule_Func
 from Macro import Simulator
 from Macro import Tape
@@ -1221,7 +1222,7 @@ class Proof_System(object):
     ## Return the pertinent info
     if self.verbose:
       self.print_this("++ Rule successfully applied ++")
-      self.print_this("Times applied:", num_reps)
+      self.print_this("Times applied:", Halting_Lib.big_int_approx_str(num_reps))
       self.print_this("Diff steps:", diff_steps)
       self.print_this("Resulting tape:",
                       return_tape.print_with_state(new_state))

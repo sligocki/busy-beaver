@@ -9,10 +9,11 @@ import IO
 
 
 def sorting_func(tm_record):
-  try:
-    return Halting_Lib.get_big_int(tm_record.proto.status.halt_status.halt_score)
-  except:
+  val = Halting_Lib.get_big_int(tm_record.proto.status.halt_status.halt_score)
+  if not val:
     return 0
+  else:
+    return val
 
 def sort(in_filename, out_filename):
   start_time = time.time()
