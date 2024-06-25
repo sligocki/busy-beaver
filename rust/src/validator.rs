@@ -1345,6 +1345,186 @@ mod tests {
     }
 
     #[test]
+    fn test_25_t4_dyuan() {
+        // 1RB3LA4RB0RB2LA_1LB2LA3LA1RA1RZ
+        //   @dyuan01's halting 2x5 counter-bouncer.
+        //   https://discord.com/channels/960643023006490684/1084047886494470185/1254826217375273112
+        //   Estimated score > (10↑)^4 6.5
+
+        let a = (2_u64.pow(25) - 2_u64.pow(19) - 9) / 3;
+        assert!(a == 11010045);
+        //let b = (2^(a+27)-2^(a+2)-11)/3;
+
+        let rule_set = RuleSet {
+            tm: TM::from_str("1RB3LA4RB0RB2LA_1LB2LA3LA1RA1RZ").unwrap(),
+            rules: vec![
+                simple_rule("A>", "A>", 0), // Dummy rule so that numbers line up :P
+                // Basic Rules
+                simple_rule("01 <A", "11 A>", 3),          // 1
+                chain_rule("11^n <A", "<A 33^n", 2),       // 2
+                chain_rule("A> 33^n", "01^n A>", 2),       // 3
+                simple_rule("01 <A 3", "11 0 B>", 4),      // 4
+                chain_rule("11^n <A 3", "<A 3 33^n", 2),   // 5
+                chain_rule("0 B> 33^n", "01^n 0 B>", 2),   // 6
+                simple_rule("A> 21", "<A 22", 3),          // 7
+                simple_rule("A> 22", "<A 23", 3),          // 8
+                chain_rule("A> 23^n", "41^n A>", 2),       // 9
+                simple_rule("A> 0^inf", "<A 21 0^inf", 3), // 10
+                simple_rule("0 B> 21", "<A 3 33", 6),      // 11
+                simple_rule("0 B> 22 0^inf", "11 1 Z> 1 0^inf", 6), // 12
+                chain_rule("0 B> 23^n", "11^n 0 B>", 4),   // 13
+                chain_rule("41^n <A", "<A 23^n", 2),       // 14
+                simple_rule("0^inf 11 <A", "0^inf 11 0 B>", 5), // 15
+                // Counter Rules
+                // 16) Counter Rule (A)
+                // 01 11^x <A -> 11 01^x A>
+                Rule {
+                    init_config: Config::from_str("01 11^x <A").unwrap(),
+                    final_config: Config::from_str("11 01^x A>").unwrap(),
+                    proof: Proof::Simple(vec![
+                        chain_step(2, "x"),
+                        rule_step(1, &[]),
+                        chain_step(3, "x"),
+                    ]),
+                },
+                // 17) Counter Rule (1)
+                // 01 11^x <A 23^y 0^inf -> 11 01^x <A 23^y 21 0^inf
+                Rule {
+                    init_config: Config::from_str("01 11^x <A 23^y 0^inf").unwrap(),
+                    final_config: Config::from_str("11 01^x <A 23^y 21 0^inf").unwrap(),
+                    proof: Proof::Simple(vec![
+                        rule_step(16, &[("x", "x")]),
+                        chain_step(9, "y"),
+                        rule_step(10, &[]),
+                        chain_step(14, "y"),
+                    ]),
+                },
+                // 18) Counter Rule (2)
+                // 01 11^x <A 23^y 21 -> 11 01^x <A 23^y 22
+                Rule {
+                    init_config: Config::from_str("01 11^x <A 23^y 21").unwrap(),
+                    final_config: Config::from_str("11 01^x <A 23^y 22").unwrap(),
+                    proof: Proof::Simple(vec![
+                        rule_step(16, &[("x", "x")]),
+                        chain_step(9, "y"),
+                        rule_step(7, &[]),
+                        chain_step(14, "y"),
+                    ]),
+                },
+                // 19) Counter Rule (3)
+                // 01 11^x <A 23^y 22 -> 11 01^x <A 23^y 23
+                Rule {
+                    init_config: Config::from_str("01 11^x <A 23^y 22").unwrap(),
+                    final_config: Config::from_str("11 01^x <A 23^y+1").unwrap(),
+                    proof: Proof::Simple(vec![
+                        rule_step(16, &[("x", "x")]),
+                        chain_step(9, "y"),
+                        rule_step(8, &[]),
+                        chain_step(14, "y"),
+                    ]),
+                },
+                // 20) Counter Rule (4)
+                // 0^inf 11^x+1 <A 3 -> 0^inf 11 01^x 0 B>
+                Rule {
+                    init_config: Config::from_str("0^inf 11^x+1 <A").unwrap(),
+                    final_config: Config::from_str("0^inf 11 01^x 0 B>").unwrap(),
+                    proof: Proof::Simple(vec![
+                        chain_step(2, "x"),
+                        rule_step(15, &[]),
+                        chain_step(6, "x"),
+                    ]),
+                },
+                // 21) Counter Rule (5)
+                // 01 11^x <A 3 -> 11 01^x 0 B>
+                Rule {
+                    init_config: Config::from_str("01 11^x <A 3").unwrap(),
+                    final_config: Config::from_str("11 01^x 0 B>").unwrap(),
+                    proof: Proof::Simple(vec![rule_step(16, &[("x", "x")]), base_step(1)]),
+                },
+                // Advanced Rules
+                // 22) Advanced Rule (1)
+                // 01^3 0 B> 0^inf -> 11 01^3 <A 21 0^inf
+                simple_rule("01^3 0 B> 0^inf", "11 01^3 <A 21 0^inf", 36),
+                // 23) Advanced Rule (2)
+                // 01 11^x+2 0 B> 0^inf -> 11 01^x 11^2 01 <A 21 0^inf
+                Rule {
+                    init_config: Config::from_str("01 11^x+2 0 B> 0^inf").unwrap(),
+                    final_config: Config::from_str("11 01^x 11^2 01 <A 21 0^inf").unwrap(),
+                    proof: Proof::Simple(vec![
+                        base_step(4),
+                        chain_step(2, "x+1"),
+                        rule_step(1, &[]),
+                        chain_step(3, "x+1"),
+                        base_step(25),
+                    ]),
+                },
+                // Overflow Rules
+                // 24) Overflow Rule (1)
+                // 0^inf 11^x+2 <A 23^y+2 21 0^inf -> 0^inf 11 01^x 11 01^y 11 01^3 <A 21 0^inf
+                Rule {
+                    init_config: Config::from_str("0^inf 11^x+2 <A 23^y+2 21 0^inf").unwrap(),
+                    final_config: Config::from_str("0^inf 11 01^x 11 01^y 11 01^3 <A 21 0^inf")
+                        .unwrap(),
+                    proof: Proof::Simple(vec![
+                        rule_step(20, &[("x", "x+1")]),
+                        chain_step(13, "y+2"),
+                        rule_step(11, &[]),
+                        rule_step(21, &[("x", "y+2")]),
+                        chain_step(6, "1"),
+                        rule_step(22, &[]),
+                    ]),
+                },
+                // 25) Overflow Rule (2)
+                // 0^inf 11^x+2 <A 23^y+2 0^inf -> 0^inf 11 01^x 11 01^y 11^2 01 <A 21 0^inf
+                Rule {
+                    init_config: Config::from_str("0^inf 11^x+2 <A 23^y+2 0^inf").unwrap(),
+                    final_config: Config::from_str("0^inf 11 01^x 11 01^y 11^2 01 <A 21 0^inf")
+                        .unwrap(),
+                    proof: Proof::Simple(vec![
+                        rule_step(20, &[("x", "x+1")]),
+                        chain_step(13, "y+2"),
+                        rule_step(23, &[("x", "y")]),
+                    ]),
+                },
+                // 26) Overflow Rule (3)
+                // 0^inf 11^x+1 <A 23^y+1 22 0^inf -> 0^inf 11 01^x 11^y+2 1 Z> 1 0^inf
+                Rule {
+                    init_config: Config::from_str("0^inf 11^x+1 <A 23^y+1 22 0^inf").unwrap(),
+                    final_config: Config::from_str("0^inf 11 01^x 11^y+2 1 Z> 1 0^inf").unwrap(),
+                    proof: Proof::Simple(vec![
+                        rule_step(20, &[("x", "x")]),
+                        chain_step(13, "y+1"),
+                        rule_step(12, &[]),
+                    ]),
+                },
+                // Halt Proof
+                Rule {
+                    init_config: Config::new(),
+                    final_config: Config::from_str("0^inf 11 01^a+b+c+31 11^d+1 1 Z> 1 0^inf")
+                        .unwrap()
+                        .subst(&VarSubst::from(&[
+                            ("a".parse().unwrap(), a.into()),
+                            // ("b".parse().unwrap(), b),
+                            // ("c".parse().unwrap(), c),
+                            // ("d".parse().unwrap(), d),
+                        ]))
+                        .unwrap(),
+                    proof: Proof::Simple(vec![
+                        base_step(2430),
+                        // [11]^7 <A [23]^17 [21]
+                        rule_step(24, &[("x", "5"), ("y", "15")]),
+                        // [11] [01]^5 [11] [01]^15 [11] [01]^3 <A [21]
+                        ProofStep::Admit,
+                    ]),
+                },
+            ],
+        };
+        if let Err(err) = validate_rule_set(&rule_set) {
+            panic!("{}", err);
+        }
+    }
+
+    #[test]
     fn test_34_a14_uni() {
         // https://www.sligocki.com/2024/05/22/bb-3-4-a14.html
         //   1RB3LB1RZ2RA_2LC3RB1LC2RA_3RB1LB3LC2RC
