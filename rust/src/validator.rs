@@ -679,11 +679,119 @@ mod tests {
                         // 0^inf <B 0^3n+3 3^b+2 2 0^inf
                     ]),
                 },
-                // 0^inf A> 0^inf  --(19)-->  A(3, 0)
+                // 0^inf A> 0^inf  -->  A(3, 0)
                 Rule {
                     init_config: Config::new(),
                     final_config: Config::from_str("0^inf <D 00^3 10^0 11 0^inf").unwrap(),
                     proof: Proof::Simple(vec![base_step(51)]),
+                },
+            ],
+        };
+        if let Err(err) = validate_rule_set(&rule_set) {
+            panic!("{}", err);
+        }
+    }
+
+    #[test]
+    fn test_antihydra() {
+        // https://wiki.bbchallenge.org/wiki/Antihydra
+        // 1RB1RA_0LC1LE_1LD1LC_1LA0LB_1LF1RE_---0RA
+        // Let A(a+4, b) = 0^inf 1^b 0 1^a E> 0^inf
+
+        let rule_set = RuleSet {
+            tm: TM::from_str("1RB1RA_0LC1LE_1LD1LC_1LA0LB_1LF1RE_1RZ0RA").unwrap(),
+            rules: vec![
+                chain_rule("A> 1^n", "1^n A>", 1), // 0
+                chain_rule("1^n <C", "<C 1^n", 1), // 1
+                chain_rule("E> 1^n", "1^n E>", 1), // 2
+                // 3: 11 <B 0 1^c 0^inf -> <B 0 1^c+3 0^inf
+                Rule {
+                    init_config: Config::from_str("1^2n <B 0 1^c 0^inf").unwrap(),
+                    final_config: Config::from_str("<B 0 1^c+3n 0^inf").unwrap(),
+                    proof: Proof::Inductive {
+                        proof_base: vec![],
+                        proof_inductive: vec![
+                            // 11 <B 0 1^c $
+                            base_step(6),
+                            // 101 A> 1^c $
+                            chain_step(0, "c"),
+                            base_step(2),
+                            // 1 0 1^c+2 <C $
+                            chain_step(1, "c+2"),
+                            base_step(2),
+                            // <B 0 1^c+3
+                            induction_step(&[("c", "c+3")]),
+                        ],
+                    },
+                },
+                // 4: A(2a, b) -> A(3a, b+2)
+                Rule {
+                    init_config: Config::from_str("0^inf 1^b 0 1^2a+2 E> 0^inf").unwrap(),
+                    final_config: Config::from_str("0^inf 1^b+2 0 1^3a+5 E> 0^inf").unwrap(),
+                    proof: Proof::Simple(vec![
+                        base_step(9),
+                        // $ 1^b 0 1^2a <B 0 111 $
+                        rule_step(3, &[("n", "a"), ("c", "3")]),
+                        // $ 1^b 0 <B 0 1^3a+3 $
+                        base_step(1),
+                        chain_step(1, "b"),
+                        base_step(5),
+                        // $ 1 E> 1^b+2 00 1^3a+3 $
+                        chain_step(2, "b+2"),
+                        base_step(6),
+                        chain_step(2, "3a+3"),
+                    ]),
+                },
+                // 5: A(2a+1, 0) -> Halt
+                Rule {
+                    init_config: Config::from_str("0^inf 1^0 0 1^2a+3 E> 0^inf").unwrap(),
+                    final_config: Config::from_str("0^inf 1 Z> 110 1^3a+3 0^inf").unwrap(),
+                    proof: Proof::Simple(vec![
+                        base_step(9),
+                        // $ 1^2a+1 <B 0 111 $
+                        rule_step(3, &[("n", "a"), ("c", "3")]),
+                        // $ 1 <B 0 1^3a+3 $
+                        base_step(3),
+                    ]),
+                },
+                // 6: A(2a+1, b+1) -> A(3a+1, b)
+                Rule {
+                    init_config: Config::from_str("10 1^2a+3 E> 0^inf").unwrap(),
+                    final_config: Config::from_str("0 1^3a+6 E> 0^inf").unwrap(),
+                    proof: Proof::Simple(vec![
+                        base_step(9),
+                        // 10 1^2a+1 <B 0 111 $
+                        rule_step(3, &[("n", "a"), ("c", "3")]),
+                        // 101 <B 0 1^3a+3 $
+                        base_step(8),
+                        // 0 111 E> 1^3a+3 $
+                        chain_step(2, "3a+3"),
+                    ]),
+                },
+                // 0^inf A> 0^inf  -->  A(8, 0)  --->  A(202, 10)
+                Rule {
+                    init_config: Config::new(),
+                    final_config: Config::from_str("0^inf 1^10 0 1^198 E> 0^inf").unwrap(),
+                    proof: Proof::Simple(vec![
+                        base_step(11),
+                        // A(8, 0)
+                        rule_step(4, &[("a", "1"), ("b", "0")]),
+                        // A(12, 2)
+                        rule_step(4, &[("a", "3"), ("b", "2")]),
+                        // A(18, 4)
+                        rule_step(4, &[("a", "6"), ("b", "4")]),
+                        // A(27, 6)
+                        rule_step(6, &[("a", "10"), ("b", "6")]),
+                        // A(40, 5)
+                        rule_step(4, &[("a", "17"), ("b", "5")]),
+                        // A(60, 7)
+                        rule_step(4, &[("a", "27"), ("b", "7")]),
+                        // A(90, 9)
+                        rule_step(4, &[("a", "42"), ("b", "9")]),
+                        // A(135, 11)
+                        rule_step(6, &[("a", "64"), ("b", "11")]),
+                        // A(202, 10)
+                    ]),
                 },
             ],
         };
