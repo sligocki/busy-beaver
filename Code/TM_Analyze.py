@@ -17,6 +17,7 @@ class Stat:
   def __init__(self):
     self.count = 0
     self.total = 0
+    self.min_value = math.inf
     self.max_value = 0
 
     # # Histogram of the order of magnitudes.
@@ -27,6 +28,7 @@ class Stat:
     if value:
       self.count += 1
       self.total += value
+      self.min_value = min(self.min_value, value)
       self.max_value = max(self.max_value, value)
       # self.log_hist[int(math.log10(value))] += 1
 
@@ -215,7 +217,7 @@ class TMStats:
     print(f"  - num_loops         : Mean {self.sim_num_loops.mean():9_.0f}  Max {self.sim_num_loops.max_value:9_d}")
     # self.print_hist(self.sim_num_loops.log_hist)
     # print()
-    print(f"  - log10(num_steps)  : Mean {self.sim_log10_num_steps.mean():9_.0f}  Max {self.sim_log10_num_steps.max_value:9_d}")
+    print(f"  - log10(num_steps)  : Mean {self.sim_log10_num_steps.mean():9_.0f}  Max {self.sim_log10_num_steps.max_value:9_d}  Min {self.sim_log10_num_steps.min_value:9_d}")
     print(f"  - num_rules_proven  : Mean {self.sim_num_rules_proven.mean():9_.0f}  Max {self.sim_num_rules_proven.max_value:9_d}  (Set in {self.sim_num_rules_proven.count / self.count:7.2%})")
     print(f"  - num_linear_rules  : Mean {self.sim_num_linear_rules_proven.mean():9_.0f}  Max {self.sim_num_linear_rules_proven.max_value:9_d}  (Set in {self.sim_num_linear_rules_proven.count / self.count:7.2%})")
     print(f"  - num_exponential_rules  : Mean {self.sim_num_exponential_rules_proven.mean():9_.0f}  Max {self.sim_num_exponential_rules_proven.max_value:9_d}  (Set in {self.sim_num_exponential_rules_proven.count / self.count:7.2%})")
