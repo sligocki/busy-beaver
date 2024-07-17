@@ -467,6 +467,101 @@ mod tests {
     }
 
     #[test]
+    fn test_bouncer() {
+        // Simple Bouncer
+        // 1RB0RC_0LC---_1RD1RC_0LE1RA_1RD1LE
+
+        fn f(n: CountExpr) -> CountExpr {
+            CountExpr::RecursiveExpr(RecursiveExpr {
+                func: Box::new(Function {
+                    bound_var: "z".parse().unwrap(),
+                    expr: "2z+4".parse().unwrap(),
+                }),
+                num_repeats: Box::new(n),
+                base: Box::new(0.into()),
+            })
+        }
+
+        let rule_set = RuleSet {
+            tm: TM::from_str("1RB0RC_0LC---_1RD1RC_0LE1RA_1RD1LE").unwrap(),
+            rules: vec![
+                chain_rule("C> 1^n", "1^n C>", 1), // 0
+                chain_rule("1^n <E", "<E 1^n", 1), // 1
+                // 2: 0^inf 1^a A> 1^b 0^inf  -->  0^inf 1^{a+2} A> 1^{b-1} 0^inf  in 2b+4 steps
+                Rule {
+                    init_config: Config::from_str("0^inf 1^a A> 1^n 0^inf").unwrap(),
+                    final_config: Config::from_str("0^inf 1^a+2n A> 0^inf").unwrap(),
+                    proof: Proof::Inductive {
+                        proof_base: vec![],
+                        proof_inductive: vec![
+                            // 0^inf 1^a A> 1^n+1 0^inf
+                            base_step(1),
+                            // 0^inf 1^a 0 C> 1^n 0^inf
+                            chain_step(0, "n"),
+                            // 0^inf 1^a 0 1^n C> 0^inf
+                            base_step(2),
+                            // 0^inf 1^a 0 1^n+1 <E 0^inf
+                            chain_step(1, "n+1"),
+                            // 0^inf 1^a 0 <E 1^n+1 0^inf
+                            base_step(2),
+                            // 0^inf 1^a+2 A> 1^n 0^inf
+                            induction_step(&[("a", "a+2")]),
+                        ],
+                    },
+                },
+                // 3: 0^inf 1^a A> 0^inf  -->  0^inf 1^{2a + 6} A> 0^inf    in a^2 + 12a + 35 steps
+                Rule {
+                    init_config: Config::from_str("0^inf 1^a A> 0^inf").unwrap(),
+                    final_config: Config::from_str("0^inf 1^2a+4 A> 0^inf").unwrap(),
+                    proof: Proof::Simple(vec![
+                        // 0^inf 1^a A> 0^inf
+                        base_step(5),
+                        // 0^inf 1^a+2 <E 0^inf
+                        chain_step(1, "a+2"),
+                        // 0^inf <E 1^a+2 0^inf
+                        base_step(2),
+                        // 0^inf 1^2 A> 1^a+1 0^inf
+                        rule_step(2, &[("a", "2"), ("n", "a+1")]),
+                        // 0^inf 1^2f+4 A> 0^inf
+                    ]),
+                },
+                // Infinite Rule
+                Rule {
+                    init_config: Config::new(),
+                    final_config: Config::from_str("0^inf 1^x A> 0^inf")
+                        .unwrap()
+                        .subst(&VarSubst::single(
+                            Variable::from_str("x").unwrap(),
+                            f("n".parse().unwrap()),
+                        ))
+                        .unwrap(),
+                    proof: Proof::Inductive {
+                        proof_base: vec![
+                            // TODO: Need 0^inf 1^{(λz.2z+4)^0 0} A> == 0^inf 1^0 A> == 0^inf A>
+                            ProofStep::Admit,
+                        ],
+                        proof_inductive: vec![
+                            induction_step_expr(&[]),
+                            // 0^inf 1^{f^n(0)} A> 0^inf
+                            ProofStep::RuleStep {
+                                rule_id: 3,
+                                var_assignment: VarSubst::single(
+                                    Variable::from_str("a").unwrap(),
+                                    f("n".parse().unwrap()),
+                                ),
+                            },
+                            // 0^inf 1^{f^n+1(0)} A> 0^inf
+                        ],
+                    },
+                },
+            ],
+        };
+        if let Err(err) = validate_rule_set(&rule_set) {
+            panic!("{}", err);
+        }
+    }
+
+    #[test]
     fn test_hydra() {
         // https://www.sligocki.com/2024/05/10/bb-2-5-is-hard.html
         // 1RB3RB---3LA1RA_2LA3RA4LB0LB0LA
