@@ -1039,6 +1039,170 @@ mod tests {
     }
 
     #[test]
+    fn test_62_halt_cryptid() {
+        // https://wiki.bbchallenge.org/wiki/1RB1RA_0RC1RC_1LD0LF_0LE1LE_1RA0LB_---0LC
+        // Probviously halting BB(6) Cryptid
+        // C(a, b, c) = $ 1^2a+1 C> 0^2b 1^c 01 $
+
+        let rule_set = RuleSet {
+            tm: TM::from_str("1RB1RA_0RC1RC_1LD0LF_0LE1LE_1RA0LB_1RZ0LC").unwrap(),
+            rules: vec![
+                chain_rule("1^2n <E", "<E 1^2n", 4), // 0
+                chain_rule("A> 1^n", "1^n A>", 1),   // 1
+                // 2: 0 1^2a+1 C> 0 -> 1^2a+3 A>
+                Rule {
+                    init_config: Config::from_str("0 1^2a+1 C> 0").unwrap(),
+                    final_config: Config::from_str("1^2a+3 A>").unwrap(),
+                    proof: Proof::Simple(vec![
+                        // 0 1^2a+1 C> 0
+                        base_step(2),
+                        // 0 1^2a <E 11
+                        chain_step(0, "a"),
+                        // 0^ <E 1^2a+2
+                        base_step(1),
+                        chain_step(1, "2a+2"),
+                        // 1^2a+3 A>
+                    ]),
+                },
+                // 3: C(a, b+2, c)  ->  C(a+3, b, c)
+                Rule {
+                    init_config: Config::from_str("0^inf 1^2a+1 C> 0^4n").unwrap(),
+                    final_config: Config::from_str("0^inf 1^2a+6n+1 C>").unwrap(),
+                    proof: Proof::Inductive {
+                        proof_base: vec![],
+                        proof_inductive: vec![
+                            // 0^inf 1^2a+1 C> 0^4
+                            rule_step(2, &[("a", "a")]),
+                            // 0^inf 1^2a+3 A> 0^3
+                            base_step(4),
+                            // 0^inf 1^2a+4 <E 01
+                            chain_step(0, "a+2"),
+                            // 0^inf <E 1^2a+4 01
+                            base_step(1),
+                            chain_step(1, "2a+4"),
+                            // 0^inf 1^2a+5 A> 01
+                            base_step(2),
+                            // 0^inf 1^2a+7 C>
+                            induction_step(&[("a", "a+3")]),
+                        ],
+                    },
+                },
+                chain_rule("1^2n <C", "<C 0^2n", 2), // 4
+                // 5: C(1, 2b, c+1) -> C(1, 3b+2, c)
+                Rule {
+                    init_config: Config::from_str("0^inf 1^3 C> 0^4n 1").unwrap(),
+                    final_config: Config::from_str("0^inf 1^3 C> 0^6n+4").unwrap(),
+                    proof: Proof::Simple(vec![
+                        rule_step(3, &[("a", "1"), ("n", "n")]),
+                        // 0^inf 1^6n+3 C> 1
+                        base_step(2),
+                        chain_step(4, "3n+1"),
+                        // 0^inf <C 0^6n+4
+                        base_step(5),
+                    ]),
+                },
+                // 6: C(1, 2b+1, c+2) -> C(1, 3b+4, c)
+                Rule {
+                    init_config: Config::from_str("0^inf 1^3 C> 0^4n+2 11").unwrap(),
+                    final_config: Config::from_str("0^inf 1^3 C> 0^6n+8").unwrap(),
+                    proof: Proof::Simple(vec![
+                        rule_step(3, &[("a", "1"), ("n", "n")]),
+                        // 0^inf 1^6n+3 C> 0011
+                        rule_step(2, &[("a", "3n+1")]),
+                        // 0^inf 1^6n+5 A> 011
+                        base_step(4),
+                        chain_step(4, "3n+3"),
+                        // 0^inf <C 0^6n+8
+                        base_step(5),
+                    ]),
+                },
+                // 7: C(1, 2b, 0) -> C(1, 2, 6b+5)
+                Rule {
+                    init_config: Config::from_str("0^inf 1^3 C> 0^4n 01 0^inf").unwrap(),
+                    final_config: Config::from_str("0^inf 1^3 C> 0^4 1^6n+5 01 0^inf").unwrap(),
+                    proof: Proof::Simple(vec![
+                        rule_step(3, &[("a", "1"), ("n", "n")]),
+                        // 0^inf 1^6n+3 C> 01 0^inf
+                        rule_step(2, &[("a", "3n+1")]),
+                        // 0^inf 1^6n+5 A> 1 0^inf
+                        base_step(5),
+                        // 0^inf 1^6n+7 <E 01 0^inf
+                        chain_step(0, "3n+3"),
+                        // 0^inf 1 <E 1^6n+6 01 0^inf
+                        base_step(16),
+                        // 0^inf 1^3 C> 0^4 1^6n+5 01 0^inf
+                    ]),
+                },
+                // 8: 0^inf 1^2a+1 A> 1 0^inf -> 0^inf 1^3 C> 0^4 1^2a+1 01 0^inf
+                Rule {
+                    init_config: Config::from_str("0^inf 1^2a+1 A> 1 0^inf").unwrap(),
+                    final_config: Config::from_str("0^inf 1^3 C> 0^4 1^2a+1 01 0^inf").unwrap(),
+                    proof: Proof::Simple(vec![
+                        // 0^inf 1^2a+1 A> 1 0^inf
+                        base_step(5),
+                        // 0^inf 1^2a+3 <E 01 0^inf
+                        chain_step(0, "a+1"),
+                        // 0^inf 1 <E 1^2a+2 01 0^inf
+                        base_step(16),
+                    ]),
+                },
+                // 9: C(1, 2b, 0) -> C(1, 2, 6b+5)
+                Rule {
+                    init_config: Config::from_str("0^inf 1^3 C> 0^4b 01 0^inf").unwrap(),
+                    final_config: Config::from_str("0^inf 1^3 C> 0^4 1^6b+5 01 0^inf").unwrap(),
+                    proof: Proof::Simple(vec![
+                        rule_step(3, &[("a", "1"), ("n", "b")]),
+                        // 0^inf 1^6b+3 C> 01 0^inf
+                        rule_step(2, &[("a", "3b+1")]),
+                        // 0^inf 1^6b+5 A> 1 0^inf
+                        rule_step(8, &[("a", "3b+2")]),
+                        // 0^inf 1^3 C> 0^4 1^6b+5 01 0^inf
+                    ]),
+                },
+                // 10: C(1, 2b+1, 1) -> C(1, 2, 6b+9)
+                Rule {
+                    init_config: Config::from_str("0^inf 1^3 C> 0^4b+2 1 01 0^inf").unwrap(),
+                    final_config: Config::from_str("0^inf 1^3 C> 0^4 1^6b+9 01 0^inf").unwrap(),
+                    proof: Proof::Simple(vec![
+                        rule_step(3, &[("a", "1"), ("n", "b")]),
+                        // 0^inf 1^6b+3 C> 00101 0^inf
+                        rule_step(2, &[("a", "3b+1")]),
+                        // 0^inf 1^6b+5 A> 0101 0^inf
+                        base_step(2),
+                        // 0^inf 1^6b+7 C> 01 0^inf
+                        rule_step(2, &[("a", "3b+3")]),
+                        // 0^inf 1^6b+9 A> 1 0^inf
+                        rule_step(8, &[("a", "3b+4")]),
+                        // 0^inf 1^3 C> 0^4 1^6b+9 01 0^inf
+                    ]),
+                },
+                // 11: C(1, 2b+1, 0) -> Halt(6b+7)
+                Rule {
+                    init_config: Config::from_str("0^inf 1^3 C> 0^4b+2 01").unwrap(),
+                    final_config: Config::from_str("0^inf 1^6b+7 Z> 0").unwrap(),
+                    proof: Proof::Simple(vec![
+                        rule_step(3, &[("a", "1"), ("n", "b")]),
+                        // 0^inf 1^6b+3 C> 0001 0^inf
+                        rule_step(2, &[("a", "3b+1")]),
+                        // 0^inf 1^6b+5 A> 001 0^inf
+                        base_step(4),
+                    ]),
+                },
+                // Trajectory
+                // Start --(55)--> C(1, 2, 5)
+                Rule {
+                    init_config: Config::new(),
+                    final_config: Config::from_str("0^inf 1^3 C> 0^4 1^5 01 0^inf").unwrap(),
+                    proof: Proof::Simple(vec![base_step(55)]),
+                },
+            ],
+        };
+        if let Err(err) = validate_rule_set(&rule_set) {
+            panic!("{}", err);
+        }
+    }
+
+    #[test]
     fn test_34_uni() {
         // Analysis of Pavel's 3x4 TM shared 31 May 2023:
         //      https://discord.com/channels/960643023006490684/1095740122139480195/1113545691994783804
