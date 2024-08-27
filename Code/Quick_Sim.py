@@ -130,14 +130,14 @@ def run(machine, block_size, back, prover, recursive, options):
           trans = machine.trans_table[(macro_symbol_in, macro_state_in, dir_in)]
           state_dir_out_str = trans.state_out.print_with_dir(trans.dir_out)
           if trans.dir_out == Turing_Machine.RIGHT:
-            table[x+1][y+1] = "%s %s>" % (trans.symbol_out, state_dir_out_str)
+            table[x+1][y+1] = "%s %s> [%d]" % (trans.symbol_out, state_dir_out_str, trans.num_base_steps)
           else:
             assert trans.dir_out == Turing_Machine.LEFT, trans
-            table[x+1][y+1] = "<%s %s" % (state_dir_out_str, trans.symbol_out)
+            table[x+1][y+1] = "<%s %s [%d]" % (state_dir_out_str, trans.symbol_out, trans.num_base_steps)
           num_trans += 1
 
     print()
-    print("Macro Machine TTable (%d states, %d symbols, %d transitions):" % (
+    print("Macro Machine TTable (%d states, %d symbols, %d transitions) [n] is base steps per transition:" % (
       len(macro_states), len(macro_symbols), num_trans))
     print(table_to_str(table))
 
