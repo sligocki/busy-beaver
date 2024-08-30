@@ -105,7 +105,7 @@ def main():
           if new_tm:
             writer.write_tm(new_tm)
           else:
-            print(f"Failed to find TNF for {tm.ttable_str()}")
+            print(f"Failed to find TNF for {tm_record.tm().ttable_str()}")
 
 if __name__ == "__main__":
   main()
