@@ -2088,6 +2088,19 @@ mod tests {
         //
         // General rule:
         //      0^inf 3^2e+1 2^k+1 A> 1^n  -->  0^inf 3^2x+1 2^k+1 A>  for x = f(k, n, e)
+        // Steps (for e = 0):
+        //      t_0(n) ~= 4 n^2
+        //      t_k(n) ~= sum_{x=0}^{n-1} t_{k-1}(2 g_k^x(0) + 2)
+        //
+        //      t_1(n) = sum_{x=0}^{n-1} t_0(2 g_1^x(0) + 2)
+        //                ~= sum 4 (2^{x+2} - 2)^2
+        //                ~= 16/3 (g_1^n(0))^2
+        //
+        //      t_2(n) = sum_{x=0}^{n-1} t_1(2 g_2^x(0) + 2)
+        //                  ~= sum 16/3 (g_2^{x+1}(0))^2
+        //                  ~= 16/3 (g_2^n(0))^2
+        //
+        //      t_k(n) ~= 16/3 (g_k^n(0))^2
         fn rule_level(k: CountType, prev_rule_id: usize) -> Rule {
             if k < 1 {
                 panic!("k must be >= 1");
@@ -2138,7 +2151,8 @@ mod tests {
                 chain_rule("C> 3^n", "2^n C>", 1), // 1
                 chain_rule("A> 3^n", "2^n A>", 1), // 2 [Unused]
                 chain_rule("B> 1^n", "3^n B>", 1), // 3
-                // 4
+                // 4: 3^n 2^a+1 <B  -->  2^a+1 <B 1^n
+                //      in n(2a+3) steps
                 Rule {
                     init_config: Config::from_str("3^n 2^a+1 <B").unwrap(),
                     final_config: Config::from_str("2^a+1 <B 1^n").unwrap(),
@@ -2154,7 +2168,14 @@ mod tests {
                         ],
                     },
                 },
-                // 5
+                // 5: B(1, n, e)  -->  B(1, 0, e+n) = B(1, 0, g_0^n(e))
+                //      in t_0(n, e) steps
+                // Where:
+                //      t_0(0, e) = 0
+                //      t_0(n, e) = 8e+9 + t_0(n-1, e+1)
+                // So,
+                //      t_0(n, e) = 4n(n-1) + n(8e+9)
+                //      t_0(n, 0) = 4 n^2 + 5n
                 Rule {
                     init_config: Config::from_str("0^inf 3^2e+1 2 A> 1^n").unwrap(),
                     final_config: Config::from_str("0^inf 3^2n+2e+1 2 A>").unwrap(),
