@@ -492,6 +492,8 @@ class Proof_System(object):
 
     self.machine = machine
     self.options = options
+    # If self.frozen == True, no new rules will be proven.
+    self.frozen = False
     self.recursive = options.recursive
     self.exp_linear_rules = options.exp_linear_rules
     self.exp_meta_linear_rules = options.exp_meta_linear_rules
@@ -532,7 +534,7 @@ class Proof_System(object):
       rules = list(set([(rule.name, rule) for key in list(self.rules.keys()) for rule in self.rules[key]]))
       sorted_rules = sorted(rules)
       found_rule = False
-      for rule_name, rule in sorted_rules:
+      for _, rule in sorted_rules:
         if args:
           if rule.name != args:
             continue
@@ -584,7 +586,7 @@ class Proof_System(object):
       return result
 
     # self.past_configs is only None if we have disabled prover.
-    if self.past_configs is None:
+    if self.past_configs is None or self.frozen:
       return ProverResult(NOTHING_TO_DO)
 
     # Otherwise log it into past_configs and see if we should try and prove
@@ -739,6 +741,7 @@ class Proof_System(object):
     # That is, one that cannot prove new rules, only use already proven ones.
     if self.recursive:
       gen_sim.prover = copy.copy(self)
+      gen_sim.prover.frozen = True
       gen_sim.prover.past_configs = None
       gen_sim.prover.verbose_prefix = gen_sim.verbose_prefix + "  "
 

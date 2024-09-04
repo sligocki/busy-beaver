@@ -65,7 +65,9 @@ def run(machine, block_size, back, prover, recursive, options):
              (options.max_loops == 0 or total_loops < options.max_loops)):
         sim.print_self()
         sim.loop_run(options.print_loops)
-        total_loops += options.print_loops;
+        total_loops += options.print_loops
+        if options.freeze_prover:
+          sim.prover.frozen = True
   finally:
     sim.print_self()
 
@@ -170,6 +172,8 @@ if __name__ == "__main__":
                     help="Specify a maximum number of loops.")
   parser.add_option("--bf-loops", type=int, default=10_000,
                     help="Number of steps to run Block Finder.")
+  parser.add_option("--freeze-prover", action="store_true",
+                    help="Stop trying to prove new rules after first print.")
 
   parser.add_option("--start-state", "-s", default="A",
                     help="Override start state (Default A).")
@@ -177,7 +181,7 @@ if __name__ == "__main__":
   parser.add_option("--max-steps-in-block", type=int, default=1_000_000)
   parser.add_option("--max-steps-in-backsymbol", type=int, default=1_000)
 
-  parser.add_option("--print-loops", type=int, default=10_000, metavar="LOOPS",
+  parser.add_option("--print-loops", type=int, default=100_000, metavar="LOOPS",
                     help="Print every LOOPS loops [Default %default].")
   parser.add_option("--print-macro-ttable", action="store_true")
   parser.add_option("--latex", action="store_true",
