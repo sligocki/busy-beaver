@@ -51,15 +51,15 @@ def run(machine, block_size, back, prover, recursive, options):
       if options.verbose:
         sim.verbose_print()
 
-      total_loops = 0;
+      total_loops = 0
 
       while (sim.op_state == Turing_Machine.RUNNING and
              (options.max_loops == 0 or total_loops < options.max_loops)):
         sim.step()
-        total_loops += 1;
+        total_loops += 1
     else:
       # TODO: maybe print based on time
-      total_loops = 0;
+      total_loops = 0
 
       while (sim.op_state == Turing_Machine.RUNNING and
              (options.max_loops == 0 or total_loops < options.max_loops)):

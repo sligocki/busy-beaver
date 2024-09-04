@@ -83,7 +83,7 @@ class Enumerator(object):
     """
     while True:
       if self.options.num_enum and self.tm_num >= self.options.num_enum:
-        self.pout.write("Ran requested number of TMs...\n");
+        self.pout.write("Ran requested number of TMs...\n")
         break
 
       # While we have machines to run, pop one off the stack ...
