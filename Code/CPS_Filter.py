@@ -78,7 +78,7 @@ def main():
     args.max_block_size = args.block_size
   assert args.max_block_size or args.max_window_size, "Must specify either --block-size or --max-block-size or --max-window-size"
 
-  with IO.Proto.Writer(args.outfile) as writer:
+  with IO.Writer(args.outfile) as writer:
     with IO.Reader(args.infile) as reader:
       for tm_record in reader:
         filter_all(tm_record, args)
