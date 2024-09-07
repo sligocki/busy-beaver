@@ -38,6 +38,14 @@ def Reader(source : Path | str | TextIO):
     mod = IO.StdText
   return mod.Reader(source)
 
+def Writer(source : Path | str | TextIO):
+  if isinstance(source, (Path, str)):
+    mod = guess_module(source)
+  else:
+    # If source is a file object, we can't guess the module, so default to StdText.
+    mod = IO.StdText
+  return mod.Writer(source)
+
 def load_tm(filename : Path, record_num : int) -> Turing_Machine.Simple_Machine:
   record = guess_module(filename).load_record(filename, record_num)
   return record.tm()
