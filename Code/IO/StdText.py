@@ -89,7 +89,7 @@ class Reader:
     if self.infilename:
       self.infile.close()
 
-  def read_record(self):
+  def read_record(self) -> TM_Record:
     line = self.infile.readline()
     line = line.strip()
     if line:
@@ -98,8 +98,9 @@ class Reader:
       tm_record = TM_Record.TM_Record(tm_enum = tm_enum)
       return tm_record
 
-  def skip_record(self):
-    self.infile.readline()
+  def skip_record(self) -> bool:
+    line = self.infile.readline()
+    return line != ""
 
   def __iter__(self):
     tm_record = self.read_record()
