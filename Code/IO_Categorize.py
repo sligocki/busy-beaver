@@ -16,6 +16,12 @@ class OutputFiles:
     self.dir = dir
     self.writer = {}
     self.num_written = 0
+    self.num_unknown = 0
+    self.num_halt_small = 0
+    self.num_halt_large = 0
+    self.num_qhalt_small = 0
+    self.num_qhalt_large = 0
+    self.num_infinite = 0
 
   def __enter__(self):
     for type in ["halt.small", "halt.large",
@@ -32,23 +38,29 @@ class OutputFiles:
 
   def categorize_record(self, tm_record):
     if not tm_record.status.halt_status.is_decided:
+      self.num_unknown += 1
       return "unknown"
     elif tm_record.status.halt_status.is_halting:
       # Halting
       if Halting_Lib.get_big_int(
         tm_record.status.halt_status.halt_steps) < 1000:
+        self.num_halt_small += 1
         return "halt.small"
       else:
+        self.num_halt_large += 1
         return "halt.large"
     elif tm_record.status.quasihalt_status.is_quasihalting:
       # Quasihalting (non halting)
       if Halting_Lib.get_big_int(
         tm_record.status.quasihalt_status.quasihalt_steps) < 1000:
+        self.num_qhalt_small += 1
         return "qhalt.small"
       else:
+        self.num_qhalt_large += 1
         return "qhalt.large"
     else:
       # Infinite (non quasihalting)
+      self.num_infinite += 1
       return "infinite"
 
   def write_record(self, tm_record):
@@ -66,7 +78,15 @@ def filter(in_filenames, out_dir):
 
           if out.num_written % 1_000_000 == 0:
             print(f" ... categorized {out.num_written:_} records ...")
-  print(f"Done: Categorized {out.num_written:_} records total.")
+
+  print(f"Done:")
+  print(f"      Categorized {out.num_unknown:_} unknown records.")
+  print(f"      Categorized {out.num_halt_small:_} halt_small records.")
+  print(f"      Categorized {out.num_halt_large:_} halt_large records.")
+  print(f"      Categorized {out.num_qhalt_small:_} qhalt_small records.")
+  print(f"      Categorized {out.num_qhalt_large:_} qhalt_large records.")
+  print(f"      Categorized {out.num_infinite:_} infinite records.")
+  print(f"      Categorized {out.num_written:_} records total.")
 
 def main():
   parser = argparse.ArgumentParser()
