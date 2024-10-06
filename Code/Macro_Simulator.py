@@ -32,7 +32,7 @@ def add_option_group(parser):
   group.add_option("--max-loops", type=int, default=1000,
                    help="Max simulator loops to run each simulation (0 for infinite). "
                    "[Default: infinite]")
-  group.add_option("--time", type=int, default=15,
+  group.add_option("--time", type=float, default=15.0,
                    help="Max seconds to run each simulation. "
                    "[Default: %default]")
   group.add_option("--tape-limit", type=int, default=50,
