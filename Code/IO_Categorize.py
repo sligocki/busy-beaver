@@ -91,13 +91,17 @@ def filter(in_filenames, out_dir):
 
   print(f"Done:")
   print(f"      Categorized {out.num_unknown:_} unknown records.")
+  print("");
   print(f"      Categorized {out.num_halt_small:_} halt_small records.")
   print(f"      Categorized {out.num_halt_large:_} halt_large records.")
   print(f"      Categorized {out.num_halt_unk:_} halt_unk records.")
+  print("");
   print(f"      Categorized {out.num_qhalt_small:_} qhalt_small records.")
   print(f"      Categorized {out.num_qhalt_large:_} qhalt_large records.")
   print(f"      Categorized {out.num_qhalt_unk:_} qhalt_unk records.")
+  print("");
   print(f"      Categorized {out.num_infinite:_} infinite records.")
+  print("");
   print(f"      Categorized {out.num_written:_} records total.")
 
 def main():
