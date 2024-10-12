@@ -53,21 +53,25 @@ def add_option_group(parser):
   Simulator.add_option_group(parser)
   Block_Finder.add_option_group(parser)
 
-def run_timer(tm_record : TM_Record, options,
-              time_limit_sec : int):
+def run_timer(tm_record : TM_Record,
+              options,
+              time_limit_sec : float):
   try:
     start_time = time.time()
-    Alarm.ALARM.set_alarm(time_limit_sec)
+    #Alarm.ALARM.set_alarm(time_limit_sec)
 
-    run_options(tm_record, options)
-    Alarm.ALARM.cancel_alarm()
+    #run_options(tm_record, options)
+    run_options(tm_record, options,time_limit_sec)
+    #Alarm.ALARM.cancel_alarm()
 
   except Alarm.AlarmException:
-    Alarm.ALARM.cancel_alarm()
+    #Alarm.ALARM.cancel_alarm()
     tm_record.proto.filter.simulator.result.unknown_info.over_time.elapsed_time_sec = (
       time.time() - start_time)
 
-def run_options(tm_record : TM_Record, options) -> None:
+def run_options(tm_record : TM_Record,
+                options,
+                time_limit_sec : float) -> None:
   """Run the Accelerated Turing Machine Simulator, running a few simple filters
   first and using intelligent blockfinding."""
   base_tm = tm_record.tm()
@@ -136,12 +140,13 @@ def run_options(tm_record : TM_Record, options) -> None:
       sim_info = tm_record.proto.filter.simulator
       sim_info.parameters.block_size = block_size
       sim_info.parameters.has_blocksymbol_macro = options.backsymbol
-      simulate_machine(machine, options, sim_info, tm_record.proto.status)
+      simulate_machine(machine, options, sim_info, tm_record.proto.status, time_limit_sec)
 
 def simulate_machine(machine : Turing_Machine.Turing_Machine,
                      options,
                      sim_info : io_pb2.SimulatorInfo,
-                     bb_status : io_pb2.BBStatus) -> None:
+                     bb_status : io_pb2.BBStatus,
+                     time_limit_sec : float) -> None:
   """Simulate a TM using the Macro Machine / Chain Simulator.
   Save the results into `sim_info`."""
   with IO.Timer(sim_info.result):
@@ -159,11 +164,22 @@ def simulate_machine(machine : Turing_Machine.Turing_Machine,
 
     ## Run the simulator
     try:
+      #Alarm.ALARM.set_alarm(time_limit_sec)
+      start_time = time.time()
+
       while ((sim_info.parameters.max_loops == 0 or
               sim.num_loops < sim_info.parameters.max_loops) and
              sim.op_state == Turing_Machine.RUNNING and
              sim.tape.compressed_size() <= sim_info.parameters.max_tape_blocks):
         sim.step()
+        if time_limit_sec > 0:
+          if time.time() - start_time >= time_limit_sec:
+            break
+
+      #Alarm.ALARM.cancel_alarm()
+
+    #except Alarm.AlarmException:
+    #  Alarm.ALARM.cancel_alarm()
 
     finally:
       # Set these stats even if timeout (exception) is raised.

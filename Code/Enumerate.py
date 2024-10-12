@@ -1,4 +1,4 @@
-#! /usr/bin/env python3
+#!/usr/bin/env python3
 """
 This is a Busy Beaver Turing machine enumerator.
 
@@ -142,7 +142,8 @@ class Enumerator(object):
         Macro_Simulator.run_timer(tm_record, self.options,
                                   self.options.time)
       else:
-        Macro_Simulator.run_options(tm_record, self.options)
+        Macro_Simulator.run_options(tm_record, self.options, 0.0)
+
     except Exception as e:
       print("ERROR: Exception raised while simulating TM:",
             tm_record.ttable_str(), file=sys.stderr)

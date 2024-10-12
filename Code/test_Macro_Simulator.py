@@ -118,7 +118,7 @@ class MacroSimulatorTest(unittest.TestCase):
       filename = os.path.join(self.root_dir, name)
       tm_record = self.load_tm_record_filename(filename)
       try:
-        Macro_Simulator.run_options(tm_record, self.options)
+        Macro_Simulator.run_options(tm_record, self.options, 0.0)
       except:
         print("Error")
         print(name)
@@ -141,7 +141,7 @@ class MacroSimulatorTest(unittest.TestCase):
       filename = os.path.join(self.root_dir, name)
       tm_record = self.load_tm_record_filename(filename)
       try:
-        Macro_Simulator.run_options(tm_record, self.options)
+        Macro_Simulator.run_options(tm_record, self.options, 0.0)
       except:
         print("Error")
         print(name)
@@ -168,7 +168,7 @@ class MacroSimulatorTest(unittest.TestCase):
       filename = os.path.join(self.root_dir, name)
       tm_record = self.load_tm_record_filename(filename)
       try:
-        Macro_Simulator.run_options(tm_record, self.options)
+        Macro_Simulator.run_options(tm_record, self.options, 0.0)
       except:
         print("Error")
         print(name)
@@ -201,7 +201,7 @@ class MacroSimulatorTest(unittest.TestCase):
       if force_block_size:
         self.options.block_size = force_block_size
       try:
-        Macro_Simulator.run_options(tm_record, self.options)
+        Macro_Simulator.run_options(tm_record, self.options, 0.0)
       except:
         print("Error")
         print(name)
@@ -220,7 +220,7 @@ class MacroSimulatorTest(unittest.TestCase):
     tm = IO.parse_tm("1RB---2LA_2LB2RA0LB")
     tm_enum = TM_Enum.TM_Enum(tm, allow_no_halt = False)
     tm_record = TM_Record.TM_Record(tm_enum = tm_enum)
-    simulated_result = Macro_Simulator.run_options(tm_record, self.options)
+    simulated_result = Macro_Simulator.run_options(tm_record, self.options, 0.0)
 
     # Non halting
     self.assertFalse(tm_record.is_unknown_halting())

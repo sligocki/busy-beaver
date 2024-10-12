@@ -39,7 +39,8 @@ def re_sim(tm_record):
   tm_record.proto.status.Clear()
   Macro_Simulator.simulate_machine(tm, options,
                                    tm_record.proto.filter.simulator,
-                                   tm_record.proto.status)
+                                   tm_record.proto.status,
+                                   0.0)
   return tm_record
 
 
