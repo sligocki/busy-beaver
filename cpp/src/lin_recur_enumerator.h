@@ -37,14 +37,14 @@ class LinRecurEnum : public BaseEnumerator {
 
   const long max_steps_;
 
-  bool only_unknown;
+  bool only_unknown_;
 
-#ifdef BOOST_FOUND
   // Output streams
   std::ostream out_halt_stream_;
   std::ostream out_inf_stream_;
   std::ostream out_unknown_stream_;
 
+#ifdef BOOST_FOUND
   // Extra output streams for internal use with the "buf_"s below
   std::ofstream out_halt_stream_2_;
   std::ofstream out_inf_stream_2_;
@@ -54,11 +54,6 @@ class LinRecurEnum : public BaseEnumerator {
   boost::iostreams::filtering_streambuf<boost::iostreams::output> out_halt_buf_;
   boost::iostreams::filtering_streambuf<boost::iostreams::output> out_inf_buf_;
   boost::iostreams::filtering_streambuf<boost::iostreams::output> out_unknown_buf_;
-#else
-  // Output streams
-  std::ofstream out_halt_stream_;
-  std::ofstream out_inf_stream_;
-  std::ofstream out_unknown_stream_;
 #endif
 
   // Stats

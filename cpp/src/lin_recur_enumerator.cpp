@@ -27,12 +27,12 @@ LinRecurEnum::LinRecurEnum(const bool allow_no_halt,
                            const bool compress_output,
                            const bool only_unknown_in)
   : BaseEnumerator(allow_no_halt),
+    max_steps_(max_steps),
 #ifdef BOOST_FOUND
     out_halt_stream_   (&out_halt_buf_),
     out_inf_stream_    (&out_inf_buf_),
     out_unknown_stream_(&out_unknown_buf_),
 #endif
-    max_steps_(max_steps),
     proc_id_(proc_id)
 {
 #ifdef BOOST_FOUND
@@ -42,7 +42,7 @@ LinRecurEnum::LinRecurEnum(const bool allow_no_halt,
     file_suffix = ".gz";
   }
 
-  only_unknown = only_unknown_in;
+  only_unknown_ = only_unknown_in;
 
   out_halt_stream_2_   .open(out_halt_filename    + file_suffix, std::ios::out | std::ios::binary);
   out_inf_stream_2_    .open(out_inf_filename     + file_suffix, std::ios::out | std::ios::binary);
@@ -109,7 +109,7 @@ EnumExpandParams LinRecurEnum::filter_tm(const TuringMachine& tm) {
   if (result.is_halted) {
     num_tms_halt_ += 1;
     
-    if (!only_unknown) {
+    if (!only_unknown_) {
       // TODO: If writing Halting TMs. Add the halt state.
       WriteTuringMachine(tm, &out_halt_stream_);
       out_halt_stream_ << " | Halt " << result.steps_run << "\n";
@@ -117,7 +117,7 @@ EnumExpandParams LinRecurEnum::filter_tm(const TuringMachine& tm) {
   } else if (result.is_lin_recurrent) {
     num_tms_inf_ += 1;
 
-    if (!only_unknown) {
+    if (!only_unknown_) {
       // Write TM that entered Lin Recurence along with it's period, etc.
       WriteTuringMachine(tm, &out_inf_stream_);
       out_inf_stream_ << " | Lin_Recur " << result.lr_period << " "
