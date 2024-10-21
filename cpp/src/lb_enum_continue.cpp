@@ -25,7 +25,7 @@ void ContinueEnumerateFromFile(const std::string& in_tms_filename,
     std::string tm_base_name("(");
     tm_base_name.append(std::to_string(i));
     tm_base_name.append(")");
-    TuringMachine* tm = ReadTuringMachine(&in_tms_stream, tm_base_name);
+    TuringMachine* tm = ReadTuringMachineStream(&in_tms_stream, tm_base_name);
     if (tm == nullptr) {
       break;
     } else {

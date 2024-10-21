@@ -117,69 +117,74 @@ void WriteTuringMachine(const TuringMachine& tm, std::ostream* outstream) {
   }
 }
 
-TuringMachine* ReadTuringMachine(std::istream* instream,
-                                 const std::string& base_name) {
+TuringMachine* ReadTuringMachineStr(const std::string& tm_str,
+                                    const std::string& base_name) {
+  // Trim non-TM extra data.
+  auto end_pos = tm_str.find_first_of(" \n\t,#|");
+  if (end_pos == std::string::npos) {
+    end_pos = tm_str.size();
+  }
+
+  int i = 0;
+  std::vector<std::vector<TuringMachine::LookupResult>> transitions;
+  while (i < end_pos) {
+    std::vector<TuringMachine::LookupResult> row;
+    // Each trans in a row takes up exactly 3 bytes, Ex: "1RB".
+    // End of row is indicated by an underscore ("_").
+    for (;i < tm_str.size() && tm_str[i] != '_'; i += 3) {
+      TuringMachine::LookupResult trans;
+      if (tm_str[i] == '-') {
+        // Undecided transition
+        trans = {1, +1, HaltState, true};
+      } else {
+        ASSERT(!trans.undecided);
+        // Format: 1RB (write symbol, move dir, next state).
+        // '0' -> 0, '1' -> 1, ...
+        trans.symbol = tm_str[i] - '0';
+        ASSERT(0 <= trans.symbol && trans.symbol <= 9);
+        if (tm_str[i+1] == 'R') {
+          trans.move = +1;
+        } else {
+          ASSERT(tm_str[i+1] == 'L');
+          trans.move = -1;
+        }
+        char state_char = tm_str[i+2];
+        if (state_char == 'Z') {
+          trans.state = -1;
+        } else {
+          // 'A' -> 0, 'B' -> 1, ...
+          trans.state = state_char - 'A';
+          ASSERT(0 <= trans.state && trans.state < 26);
+        }
+      }
+      row.push_back(trans);
+    }
+    // We've reached "  " which indicates the end of a row.
+    transitions.push_back(row);
+    i += 1;
+  }
+  return new TuringMachine(transitions, base_name);
+}
+
+TuringMachine* ReadTuringMachineStream(std::istream* instream,
+                                       const std::string& base_name) {
   std::string line;
   if (std::getline(*instream, line)) {
-    // Trim non-TM extra data.
-    auto pos = line.find_first_of(" \n\t,#|");
-    if (pos != std::string::npos) {
-      line.erase(pos);
-    }
-
-    int i = 0;
-    std::vector<std::vector<TuringMachine::LookupResult>> transitions;
-    while (i < line.size()) {
-      std::vector<TuringMachine::LookupResult> row;
-      // Each trans in a row takes up exactly 3 bytes, Ex: "1RB".
-      // End of row is indicated by an underscore ("_").
-      for (;i < line.size() && line[i] != '_'; i += 3) {
-        TuringMachine::LookupResult trans;
-        if (line[i] == '-') {
-          // Undecided transition
-          trans = {1, +1, HaltState, true};
-        } else {
-          ASSERT(!trans.undecided);
-          // Format: 1RB (write symbol, move dir, next state).
-          // '0' -> 0, '1' -> 1, ...
-          trans.symbol = line[i] - '0';
-          ASSERT(0 <= trans.symbol && trans.symbol <= 9);
-          if (line[i+1] == 'R') {
-            trans.move = +1;
-          } else {
-            ASSERT(line[i+1] == 'L');
-            trans.move = -1;
-          }
-          char state_char = line[i+2];
-          if (state_char == 'Z') {
-            trans.state = -1;
-          } else {
-            // 'A' -> 0, 'B' -> 1, ...
-            trans.state = state_char - 'A';
-            ASSERT(0 <= trans.state && trans.state < 26);
-          }
-        }
-        row.push_back(trans);
-      }
-      // We've reached "  " which indicates the end of a row.
-      transitions.push_back(row);
-      i += 1;
-    }
-    return new TuringMachine(transitions, base_name);
+    return ReadTuringMachineStr(line);
   } else {
     // Couldn't read line, so we're done.
     return nullptr;
   }
 }
 
-TuringMachine* ReadTuringMachine(const std::string& filename,
-                                 const long line_num) {
+TuringMachine* ReadTuringMachineFile(const std::string& filename,
+                                     const long line_num) {
   std::ifstream instream(filename, std::ios::in);
   for (long i = line_num; i > 1; i -= 1) {
     std::string line;
     std::getline(instream, line);
   }
-  return ReadTuringMachine(&instream, "");
+  return ReadTuringMachineStream(&instream);
 }
 
 }  // namespace busy_beaver

@@ -30,7 +30,7 @@ void ContinueLinRecurEnumerate(
   // Go through all TMs in infile enumerating each (and all children).
   std::ifstream in_tms_stream(in_tms_filename, std::ios::in | std::ios::binary);
   while (true) {
-    TuringMachine* tm = ReadTuringMachine(&in_tms_stream, "");
+    TuringMachine* tm = ReadTuringMachineStream(&in_tms_stream, "");
     if (tm == nullptr) {
       break;
     } else {

@@ -21,7 +21,7 @@ void DirectSimMain(const std::string& in_tms_filename, const long num_steps,
   std::ifstream in_tms_stream(in_tms_filename, std::ios::in | std::ios::binary);
   std::ofstream out_tms_stream(out_tms_filename, std::ios::out | std::ios::binary);
   while (true) {
-    std::unique_ptr<TuringMachine> tm(ReadTuringMachine(&in_tms_stream, ""));
+    std::unique_ptr<TuringMachine> tm(ReadTuringMachineStream(&in_tms_stream, ""));
     if (tm == nullptr) {
       break;
     } else {

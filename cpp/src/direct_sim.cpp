@@ -14,7 +14,7 @@ namespace busy_beaver {
 void DirectSimMain(const std::string& tm_filename, const long line_num,
                    const long num_steps) {
   std::unique_ptr<TuringMachine> tm(
-    ReadTuringMachine(tm_filename, line_num));
+    ReadTuringMachineFile(tm_filename, line_num));
 
   std::cout << "Starting simulation" << std::endl;
   Timer timer;

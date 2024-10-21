@@ -66,12 +66,14 @@ class TuringMachine {
 // Write TM to outstream in a human-readable format.
 void WriteTuringMachine(const TuringMachine& tm, std::ostream* outstream);
 
-// Read one TM from file (written in WriteTuringMachine() format).
+// Read one TM from text or file (written in WriteTuringMachine() format).
 // Returns nullptr if there are no TMs left.
-TuringMachine* ReadTuringMachine(std::istream* instream,
-                                 const std::string& base_name);
-TuringMachine* ReadTuringMachine(const std::string& filename,
-                                 const long line_num);
+TuringMachine* ReadTuringMachineStr(const std::string& tm_str,
+                                    const std::string& base_name = "");
+TuringMachine* ReadTuringMachineStream(std::istream* instream,
+                                       const std::string& base_name = "");
+TuringMachine* ReadTuringMachineFile(const std::string& filename,
+                                     const long line_num);
 
 }  // namespace busy_beaver
 

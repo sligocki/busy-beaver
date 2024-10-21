@@ -32,6 +32,9 @@ target_link_libraries(direct_sim_all PUBLIC all_libs)
 add_executable(lin_recur src/lin_recur_main.cpp)
 target_link_libraries(lin_recur PUBLIC all_libs)
 
+add_executable(lr_check src/lr_check_main.cpp)
+target_link_libraries(lr_check PUBLIC all_libs)
+
 add_executable(lr_enum src/lr_enum.cpp)
 target_link_libraries(lr_enum PUBLIC all_libs ${Boost_LIBRARIES})
 

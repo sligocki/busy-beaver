@@ -101,4 +101,60 @@ LinRecurResult LinRecurDetect(const TuringMachine& tm, const long max_steps) {
   return {false, false, 0, 0, 0, 0, 0, init_step_num, sim.step_num()};
 }
 
+LinRecurResult LinRecurCheck(const TuringMachine& tm,
+                             const long start_step, const long period) {
+  DirectSimulator sim(tm);
+  sim.Seek(start_step);
+
+  const State init_state = sim.state();
+  const Tape init_tape = sim.tape();
+  const long init_pos = init_tape.position();
+  long most_left_pos = init_pos;
+  long most_right_pos = init_pos;
+  // TODO: states_used = set()
+
+  // Run exactly period steps just keeping track of tape range touched.
+  for (long i = 0; i < period; ++i) {
+    sim.Step();
+    if (sim.is_halted()) {
+      return {true, false, 0, 0, 0, sim.last_state(), sim.last_symbol(),
+              start_step, sim.step_num()};
+    }
+    most_left_pos = std::min(most_left_pos, sim.tape().position());
+    most_right_pos = std::max(most_right_pos, sim.tape().position());
+  }
+
+  if (sim.state() == init_state) {
+    long offset = sim.tape().position() - init_pos;
+    bool success = false;
+    if (offset > 0) {  // Right
+      if (are_half_tapes_equal(init_tape, most_left_pos,
+                                sim.tape(), most_left_pos + offset,
+                                +1)) {
+        success = true;
+      }
+    } else if (offset < 0) {  // Left
+      if (are_half_tapes_equal(init_tape, most_right_pos,
+                                sim.tape(), most_right_pos + offset,
+                                -1)) {
+        success = true;
+      }
+    } else {  // In place
+      if (are_sections_equal(init_tape, sim.tape(),
+                              most_left_pos, most_right_pos)) {
+        success = true;
+      }
+    }
+
+    if (success) {
+      const long period = sim.step_num() - start_step;
+      return {false, true, start_step, period, offset, 0, 0,
+              start_step, sim.step_num()};
+    }
+  }
+
+  // Neither halting nor LR detected.
+  return {false, false, 0, 0, 0, 0, 0, start_step, sim.step_num()};
+}
+
 }  // namespace busy_beaver
