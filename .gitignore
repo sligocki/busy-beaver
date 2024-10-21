@@ -17,3 +17,4 @@ cpp/lb_enum*
 cpp/lin_recur
 cpp/lr_enum*
 rust/target
+venv/
