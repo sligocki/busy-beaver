@@ -2,8 +2,7 @@
 """Convert TMs from generic form to Lexicographic Normal Form."""
 
 import argparse
-import collections
-from pathlib import Path
+import sys
 
 import IO
 from Macro import Turing_Machine
@@ -40,8 +39,12 @@ def brute_lnf(old_tm):
   """Calculate LNF using brute-force method."""
   best_str = old_tm.ttable_str()
   best_tm = old_tm
-  for state_order in iter_perms(list(range(old_tm.num_states))):
-    for symbol_order in iter_perms(list(range(old_tm.num_symbols))):
+  for post_state_order in iter_perms(list(range(1, old_tm.num_states))):
+    # Never change first state
+    state_order = [0] + post_state_order
+    for post_symbol_order in iter_perms(list(range(1, old_tm.num_symbols))):
+      # Never change blank symbol
+      symbol_order = [0] + post_symbol_order
       perm_tm = permute(old_tm, state_order, symbol_order)
       perm_str = perm_tm.ttable_str()
       # print(f" Debug: {state_order} / {perm_str}")
@@ -53,13 +56,20 @@ def brute_lnf(old_tm):
 
 def main():
   parser = argparse.ArgumentParser()
-  parser.add_argument("tm_file", type=Path)
+  parser.add_argument("tm", nargs="?",
+                      help="Literal Turing Machine. If missing read from stdin.")
   args = parser.parse_args()
 
-  with IO.Reader(args.tm_file) as reader:
-    for tm_record in reader:
-      new_tm = brute_lnf(tm_record.tm())
-      print(f"{new_tm.init_state}{new_tm.init_symbol}: {new_tm.ttable_str()}")
+  with IO.StdText.Writer(sys.stdout) as writer:
+    if args.tm:
+      tm = IO.parse_tm(args.tm)
+      new_tm = brute_lnf(tm)
+      writer.write_tm(new_tm)
+    else:
+      with IO.StdText.Reader(sys.stdin) as reader:
+        for tm_record in reader:
+          new_tm = brute_lnf(tm_record.tm())
+          writer.write_tm(new_tm)
 
 if __name__ == "__main__":
   main()
