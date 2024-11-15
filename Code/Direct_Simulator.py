@@ -108,6 +108,9 @@ class DirectSimulator:
 
       self.step_num = 0
 
+  def cur_symbol(self) -> Symbol:
+    return self.tape.read()
+
   def copy(self):
     new_sim = DirectSimulator(self.tm, initialize=False)
     new_sim.state = self.state

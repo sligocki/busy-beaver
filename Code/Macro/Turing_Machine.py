@@ -1,13 +1,9 @@
-#
-# Turing_Machine.py
-#
 """
 Abstract Turing Machine model with basic NxM TM and Macro-Machine derivatives
 """
 
 from functools import total_ordering
 from optparse import OptionParser, OptionGroup
-import sys
 import string
 
 
@@ -26,10 +22,13 @@ def add_option_group(parser):
 
   parser.add_option_group(group)
 
+# Some type aliases
+Symbol = int
+Dir = int
 
-LEFT = 0
-RIGHT = 1
-STAY = 2
+LEFT : Dir = 0
+RIGHT : Dir = 1
+STAY : Dir = 2
 
 # Return Conditions:
 RUNNING    = "Running"    # Machine still running normally
@@ -38,7 +37,7 @@ INF_REPEAT = "Inf_Repeat" # Machine proven not to halt within move
 UNDEFINED  = "Undefined"  # Machine encountered undefined transition
 GAVE_UP   = "Gave_Up"     # For some reason, we bailed on computation (maybe too many steps).
 
-def other_dir(dir):
+def other_dir(dir : Dir) -> Dir:
   if dir == LEFT:
     return RIGHT
   else:
@@ -50,7 +49,7 @@ class Transition(object):
   """Class representing the result of a transition."""
   def __init__(self,
                condition,
-               symbol_out, state_out, dir_out,
+               symbol_out, state_out, dir_out : Dir,
                num_base_steps, states_last_seen,
                condition_details = None):
     self.condition = condition
@@ -90,7 +89,7 @@ class Transition(object):
 
 
 # TODO: Make max_loops configurable via command-line options.
-def sim_limited(tm, state, start_tape, pos, dir, max_loops=10_000) -> Transition:
+def sim_limited(tm, state, start_tape, pos : int, dir : Dir, max_loops=10_000) -> Transition:
   """Simulate TM on a limited tape segment.
   Can detect HALT and INF_REPEAT. Used by Macro Machines."""
   # num_base_steps in the bottom level Simple_Machine.
