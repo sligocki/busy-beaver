@@ -19,6 +19,21 @@ from IO.Common import RecordLocateError
 from Macro import Turing_Machine
 import TM_Enum
 
+import io_pb2
+
+
+inf_reason2str = {
+  io_pb2.INF_UNSPECIFIED: "",
+  io_pb2.INF_MACRO_STEP: "Repeat_in_Place",
+  io_pb2.INF_CHAIN_STEP: "Chain_Move",
+  io_pb2.INF_PROOF_SYSTEM: "Proof_System",
+  io_pb2.INF_REVERSE_ENGINEER: "Reverse_Engineer",
+  io_pb2.INF_LIN_RECUR: "Lin_Recur",
+  io_pb2.INF_CTL: "CTL",
+  io_pb2.INF_BACKTRACK: "Backtracking",
+  io_pb2.INF_CPS: "CPS",
+}
+
 
 parse_tm = TM_Record.parse_tm
 
@@ -55,6 +70,8 @@ class Writer:
       score_str = Halting_Lib.big_int_approx_str(
         Halting_Lib.get_big_int(halt_status.halt_score)).replace("_", "")
       self.outfile.write(f" Halt {steps_str} {score_str}")
+    elif Halting_Lib.is_infinite(halt_status):
+      self.outfile.write(f" Inf {inf_reason2str[halt_status.inf_reason]}")
     self.outfile.write("\n")
 
   def write_tm(self, tm : Turing_Machine.Simple_Machine) -> None:

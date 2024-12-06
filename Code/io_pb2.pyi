@@ -9,6 +9,7 @@ It provides the main advantage of being extensible, adding a new field
 for new stats is trivial and backwards/forwards compatible. It also
 has the potential to be more efficient for data storage ...
 """
+
 import builtins
 import collections.abc
 import google.protobuf.descriptor
@@ -39,7 +40,7 @@ class _InfReasonEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._Enum
     INF_LIN_RECUR: _InfReason.ValueType  # 5
     INF_CTL: _InfReason.ValueType  # 6
     INF_BACKTRACK: _InfReason.ValueType  # 7
-    INF_CLOSED_GRAPH: _InfReason.ValueType  # 8
+    INF_CPS: _InfReason.ValueType  # 8
 
 class InfReason(_InfReason, metaclass=_InfReasonEnumTypeWrapper): ...
 
@@ -51,10 +52,10 @@ INF_REVERSE_ENGINEER: InfReason.ValueType  # 4
 INF_LIN_RECUR: InfReason.ValueType  # 5
 INF_CTL: InfReason.ValueType  # 6
 INF_BACKTRACK: InfReason.ValueType  # 7
-INF_CLOSED_GRAPH: InfReason.ValueType  # 8
+INF_CPS: InfReason.ValueType  # 8
 global___InfReason = InfReason
 
-@typing_extensions.final
+@typing.final
 class ExpTerm(google.protobuf.message.Message):
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
@@ -63,14 +64,16 @@ class ExpTerm(google.protobuf.message.Message):
     EXPONENT_FIELD_NUMBER: builtins.int
     COEF_OLD_FIELD_NUMBER: builtins.int
     base: builtins.int
+    coef_old: builtins.int
+    """Deprecated"""
     @property
     def coef(self) -> global___BigInt:
         """coef may be larger than 2^63-1"""
+
     @property
     def exponent(self) -> global___BigInt:
         """Exponent may be plain integer or another ExpInt"""
-    coef_old: builtins.int
-    """Deprecated"""
+
     def __init__(
         self,
         *,
@@ -79,12 +82,12 @@ class ExpTerm(google.protobuf.message.Message):
         exponent: global___BigInt | None = ...,
         coef_old: builtins.int = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing_extensions.Literal["coef", b"coef", "exponent", b"exponent"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing_extensions.Literal["base", b"base", "coef", b"coef", "coef_old", b"coef_old", "exponent", b"exponent"]) -> None: ...
+    def HasField(self, field_name: typing.Literal["coef", b"coef", "exponent", b"exponent"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing.Literal["base", b"base", "coef", b"coef", "coef_old", b"coef_old", "exponent", b"exponent"]) -> None: ...
 
 global___ExpTerm = ExpTerm
 
-@typing_extensions.final
+@typing.final
 class ExpInt(google.protobuf.message.Message):
     """protobuf version of type Exp_Int.ExpInt"""
 
@@ -94,14 +97,15 @@ class ExpInt(google.protobuf.message.Message):
     CONST_FIELD_NUMBER: builtins.int
     DENOM_FIELD_NUMBER: builtins.int
     CONST_OLD_FIELD_NUMBER: builtins.int
+    denom: builtins.int
+    const_old: builtins.int
+    """Deprecated"""
     @property
     def terms(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___ExpTerm]: ...
     @property
     def const(self) -> global___BigInt:
         """const may be larger than 2^63-1"""
-    denom: builtins.int
-    const_old: builtins.int
-    """Deprecated"""
+
     def __init__(
         self,
         *,
@@ -110,12 +114,12 @@ class ExpInt(google.protobuf.message.Message):
         denom: builtins.int = ...,
         const_old: builtins.int = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing_extensions.Literal["const", b"const"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing_extensions.Literal["const", b"const", "const_old", b"const_old", "denom", b"denom", "terms", b"terms"]) -> None: ...
+    def HasField(self, field_name: typing.Literal["const", b"const"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing.Literal["const", b"const", "const_old", b"const_old", "denom", b"denom", "terms", b"terms"]) -> None: ...
 
 global___ExpInt = ExpInt
 
-@typing_extensions.final
+@typing.final
 class BigInt(google.protobuf.message.Message):
     """A "potentially" big positive integer."""
 
@@ -131,9 +135,6 @@ class BigInt(google.protobuf.message.Message):
     """Small int: 0 to 2^63 - 1. Store directly."""
     hex_str: builtins.str
     """Medium int: 2^63 to ~2^1000 or so. Serialize in hex."""
-    @property
-    def exp_int(self) -> global___ExpInt:
-        """Giant int: ~10^^15. Represented using a formula."""
     exp_int_pickle: builtins.bytes
     exp_int_str: builtins.str
     """DEPRECATED base 10 version: string str = 2;
@@ -143,6 +144,10 @@ class BigInt(google.protobuf.message.Message):
     """DEPRECATED old format: ExpInt exp_int = 5;
     Deprecated
     """
+    @property
+    def exp_int(self) -> global___ExpInt:
+        """Giant int: ~10^^15. Represented using a formula."""
+
     def __init__(
         self,
         *,
@@ -153,13 +158,13 @@ class BigInt(google.protobuf.message.Message):
         exp_int_str: builtins.str = ...,
         uint_old: builtins.int = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing_extensions.Literal["big_int", b"big_int", "exp_int", b"exp_int", "exp_int_pickle", b"exp_int_pickle", "exp_int_str", b"exp_int_str", "hex_str", b"hex_str", "int", b"int", "uint_old", b"uint_old"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing_extensions.Literal["big_int", b"big_int", "exp_int", b"exp_int", "exp_int_pickle", b"exp_int_pickle", "exp_int_str", b"exp_int_str", "hex_str", b"hex_str", "int", b"int", "uint_old", b"uint_old"]) -> None: ...
-    def WhichOneof(self, oneof_group: typing_extensions.Literal["big_int", b"big_int"]) -> typing_extensions.Literal["int", "hex_str", "exp_int", "exp_int_pickle", "exp_int_str", "uint_old"] | None: ...
+    def HasField(self, field_name: typing.Literal["big_int", b"big_int", "exp_int", b"exp_int", "exp_int_pickle", b"exp_int_pickle", "exp_int_str", b"exp_int_str", "hex_str", b"hex_str", "int", b"int", "uint_old", b"uint_old"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing.Literal["big_int", b"big_int", "exp_int", b"exp_int", "exp_int_pickle", b"exp_int_pickle", "exp_int_str", b"exp_int_str", "hex_str", b"hex_str", "int", b"int", "uint_old", b"uint_old"]) -> None: ...
+    def WhichOneof(self, oneof_group: typing.Literal["big_int", b"big_int"]) -> typing.Literal["int", "hex_str", "exp_int", "exp_int_pickle", "exp_int_str", "uint_old"] | None: ...
 
 global___BigInt = BigInt
 
-@typing_extensions.final
+@typing.final
 class TMList(google.protobuf.message.Message):
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
@@ -177,11 +182,11 @@ class TMList(google.protobuf.message.Message):
         num_symbols: builtins.int = ...,
         ttable_list: collections.abc.Iterable[builtins.int] | None = ...,
     ) -> None: ...
-    def ClearField(self, field_name: typing_extensions.Literal["num_states", b"num_states", "num_symbols", b"num_symbols", "ttable_list", b"ttable_list"]) -> None: ...
+    def ClearField(self, field_name: typing.Literal["num_states", b"num_states", "num_symbols", b"num_symbols", "ttable_list", b"ttable_list"]) -> None: ...
 
 global___TMList = TMList
 
-@typing_extensions.final
+@typing.final
 class TuringMachine(google.protobuf.message.Message):
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
@@ -197,15 +202,16 @@ class TuringMachine(google.protobuf.message.Message):
       * 1 bit for dir
       * 1 bit for is_newrow  [indicates where to add row breaks to matrix]
     """
+    ttable_str: builtins.str
+    """Deprecated"""
+    allow_no_halt: builtins.bool
+    """Enumeration options"""
     @property
     def ttable_list(self) -> global___TMList:
         """Simple low density format. 12B / transition.
         Almost unbounded (up to 2^31 - 1 states and symbols).
         """
-    ttable_str: builtins.str
-    """Deprecated"""
-    allow_no_halt: builtins.bool
-    """Enumeration options"""
+
     def __init__(
         self,
         *,
@@ -214,13 +220,13 @@ class TuringMachine(google.protobuf.message.Message):
         ttable_str: builtins.str = ...,
         allow_no_halt: builtins.bool = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing_extensions.Literal["ttable", b"ttable", "ttable_list", b"ttable_list", "ttable_packed", b"ttable_packed", "ttable_str", b"ttable_str"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing_extensions.Literal["allow_no_halt", b"allow_no_halt", "ttable", b"ttable", "ttable_list", b"ttable_list", "ttable_packed", b"ttable_packed", "ttable_str", b"ttable_str"]) -> None: ...
-    def WhichOneof(self, oneof_group: typing_extensions.Literal["ttable", b"ttable"]) -> typing_extensions.Literal["ttable_packed", "ttable_list", "ttable_str"] | None: ...
+    def HasField(self, field_name: typing.Literal["ttable", b"ttable", "ttable_list", b"ttable_list", "ttable_packed", b"ttable_packed", "ttable_str", b"ttable_str"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing.Literal["allow_no_halt", b"allow_no_halt", "ttable", b"ttable", "ttable_list", b"ttable_list", "ttable_packed", b"ttable_packed", "ttable_str", b"ttable_str"]) -> None: ...
+    def WhichOneof(self, oneof_group: typing.Literal["ttable", b"ttable"]) -> typing.Literal["ttable_packed", "ttable_list", "ttable_str"] | None: ...
 
 global___TuringMachine = TuringMachine
 
-@typing_extensions.final
+@typing.final
 class HaltStatus(google.protobuf.message.Message):
     """Statuses for various searches (BB, BBB, ...)"""
 
@@ -237,16 +243,17 @@ class HaltStatus(google.protobuf.message.Message):
     """Have we made a halting decision?"""
     is_halting: builtins.bool
     """Does this machine halt? (Only meaningful if is_decided = True)"""
-    @property
-    def halt_steps(self) -> global___BigInt:
-        """Only meaningful if is_halting = True."""
-    @property
-    def halt_score(self) -> global___BigInt: ...
     from_state: builtins.int
     """Which transition led to halt (important for enumerating in TNF)."""
     from_symbol: builtins.int
     inf_reason: global___InfReason.ValueType
     """Only meaningful if is_halting = False."""
+    @property
+    def halt_steps(self) -> global___BigInt:
+        """Only meaningful if is_halting = True."""
+
+    @property
+    def halt_score(self) -> global___BigInt: ...
     def __init__(
         self,
         *,
@@ -258,12 +265,12 @@ class HaltStatus(google.protobuf.message.Message):
         from_symbol: builtins.int = ...,
         inf_reason: global___InfReason.ValueType = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing_extensions.Literal["halt_score", b"halt_score", "halt_steps", b"halt_steps"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing_extensions.Literal["from_state", b"from_state", "from_symbol", b"from_symbol", "halt_score", b"halt_score", "halt_steps", b"halt_steps", "inf_reason", b"inf_reason", "is_decided", b"is_decided", "is_halting", b"is_halting"]) -> None: ...
+    def HasField(self, field_name: typing.Literal["halt_score", b"halt_score", "halt_steps", b"halt_steps"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing.Literal["from_state", b"from_state", "from_symbol", b"from_symbol", "halt_score", b"halt_score", "halt_steps", b"halt_steps", "inf_reason", b"inf_reason", "is_decided", b"is_decided", "is_halting", b"is_halting"]) -> None: ...
 
 global___HaltStatus = HaltStatus
 
-@typing_extensions.final
+@typing.final
 class QuasihaltStatus(google.protobuf.message.Message):
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
@@ -275,9 +282,9 @@ class QuasihaltStatus(google.protobuf.message.Message):
     """Have we made a quasihalting decision?"""
     is_quasihalting: builtins.bool
     """Does this machine quasihalt? (Only meaningful if is_decided = True)"""
+    quasihalt_state: builtins.int
     @property
     def quasihalt_steps(self) -> global___BigInt: ...
-    quasihalt_state: builtins.int
     def __init__(
         self,
         *,
@@ -286,12 +293,12 @@ class QuasihaltStatus(google.protobuf.message.Message):
         quasihalt_steps: global___BigInt | None = ...,
         quasihalt_state: builtins.int = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing_extensions.Literal["quasihalt_steps", b"quasihalt_steps"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing_extensions.Literal["is_decided", b"is_decided", "is_quasihalting", b"is_quasihalting", "quasihalt_state", b"quasihalt_state", "quasihalt_steps", b"quasihalt_steps"]) -> None: ...
+    def HasField(self, field_name: typing.Literal["quasihalt_steps", b"quasihalt_steps"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing.Literal["is_decided", b"is_decided", "is_quasihalting", b"is_quasihalting", "quasihalt_state", b"quasihalt_state", "quasihalt_steps", b"quasihalt_steps"]) -> None: ...
 
 global___QuasihaltStatus = QuasihaltStatus
 
-@typing_extensions.final
+@typing.final
 class BBStatus(google.protobuf.message.Message):
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
@@ -302,18 +309,19 @@ class BBStatus(google.protobuf.message.Message):
     @property
     def quasihalt_status(self) -> global___QuasihaltStatus:
         """TODO: Add more, like lin_recur_status and blanking_status?"""
+
     def __init__(
         self,
         *,
         halt_status: global___HaltStatus | None = ...,
         quasihalt_status: global___QuasihaltStatus | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing_extensions.Literal["halt_status", b"halt_status", "quasihalt_status", b"quasihalt_status"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing_extensions.Literal["halt_status", b"halt_status", "quasihalt_status", b"quasihalt_status"]) -> None: ...
+    def HasField(self, field_name: typing.Literal["halt_status", b"halt_status", "quasihalt_status", b"quasihalt_status"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing.Literal["halt_status", b"halt_status", "quasihalt_status", b"quasihalt_status"]) -> None: ...
 
 global___BBStatus = BBStatus
 
-@typing_extensions.final
+@typing.final
 class SimulatorParams(google.protobuf.message.Message):
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
@@ -358,11 +366,11 @@ class SimulatorParams(google.protobuf.message.Message):
         use_limited_rules: builtins.bool = ...,
         use_recursive_rules: builtins.bool = ...,
     ) -> None: ...
-    def ClearField(self, field_name: typing_extensions.Literal["block_size", b"block_size", "has_blocksymbol_macro", b"has_blocksymbol_macro", "max_loops", b"max_loops", "max_tape_blocks", b"max_tape_blocks", "max_time_sec", b"max_time_sec", "only_log_configs_at_edge", b"only_log_configs_at_edge", "use_limited_rules", b"use_limited_rules", "use_prover", b"use_prover", "use_recursive_rules", b"use_recursive_rules"]) -> None: ...
+    def ClearField(self, field_name: typing.Literal["block_size", b"block_size", "has_blocksymbol_macro", b"has_blocksymbol_macro", "max_loops", b"max_loops", "max_tape_blocks", b"max_tape_blocks", "max_time_sec", b"max_time_sec", "only_log_configs_at_edge", b"only_log_configs_at_edge", "use_limited_rules", b"use_limited_rules", "use_prover", b"use_prover", "use_recursive_rules", b"use_recursive_rules"]) -> None: ...
 
 global___SimulatorParams = SimulatorParams
 
-@typing_extensions.final
+@typing.final
 class HaltInfo(google.protobuf.message.Message):
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
@@ -373,11 +381,11 @@ class HaltInfo(google.protobuf.message.Message):
         *,
         is_halting: builtins.bool = ...,
     ) -> None: ...
-    def ClearField(self, field_name: typing_extensions.Literal["is_halting", b"is_halting"]) -> None: ...
+    def ClearField(self, field_name: typing.Literal["is_halting", b"is_halting"]) -> None: ...
 
 global___HaltInfo = HaltInfo
 
-@typing_extensions.final
+@typing.final
 class InfMacroRepeatInfo(google.protobuf.message.Message):
     """TM repeats infinitely in place while evaluating a macro transition."""
 
@@ -397,11 +405,11 @@ class InfMacroRepeatInfo(google.protobuf.message.Message):
         macro_state: builtins.str = ...,
         macro_dir_is_right: builtins.bool = ...,
     ) -> None: ...
-    def ClearField(self, field_name: typing_extensions.Literal["macro_dir_is_right", b"macro_dir_is_right", "macro_state", b"macro_state", "macro_symbol", b"macro_symbol"]) -> None: ...
+    def ClearField(self, field_name: typing.Literal["macro_dir_is_right", b"macro_dir_is_right", "macro_state", b"macro_state", "macro_symbol", b"macro_symbol"]) -> None: ...
 
 global___InfMacroRepeatInfo = InfMacroRepeatInfo
 
-@typing_extensions.final
+@typing.final
 class InfChainMoveInfo(google.protobuf.message.Message):
     """Simulator attempted to apply a chain move to the infinite block of 0s
     thus demonstrating that this TM will move infinitely in one state across
@@ -421,11 +429,11 @@ class InfChainMoveInfo(google.protobuf.message.Message):
         macro_state: builtins.str = ...,
         dir_is_right: builtins.bool = ...,
     ) -> None: ...
-    def ClearField(self, field_name: typing_extensions.Literal["dir_is_right", b"dir_is_right", "macro_state", b"macro_state"]) -> None: ...
+    def ClearField(self, field_name: typing.Literal["dir_is_right", b"dir_is_right", "macro_state", b"macro_state"]) -> None: ...
 
 global___InfChainMoveInfo = InfChainMoveInfo
 
-@typing_extensions.final
+@typing.final
 class InfProofSystemInfo(google.protobuf.message.Message):
     """Simulator proved a PA-CTR rule that has all positive exponent changes, thus
     it will apply forever.
@@ -441,11 +449,11 @@ class InfProofSystemInfo(google.protobuf.message.Message):
         *,
         rule: builtins.str = ...,
     ) -> None: ...
-    def ClearField(self, field_name: typing_extensions.Literal["rule", b"rule"]) -> None: ...
+    def ClearField(self, field_name: typing.Literal["rule", b"rule"]) -> None: ...
 
 global___InfProofSystemInfo = InfProofSystemInfo
 
-@typing_extensions.final
+@typing.final
 class InfiniteInfo(google.protobuf.message.Message):
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
@@ -459,6 +467,7 @@ class InfiniteInfo(google.protobuf.message.Message):
     @property
     def proof_system(self) -> global___InfProofSystemInfo:
         """TODO: ..."""
+
     def __init__(
         self,
         *,
@@ -466,13 +475,13 @@ class InfiniteInfo(google.protobuf.message.Message):
         chain_move: global___InfChainMoveInfo | None = ...,
         proof_system: global___InfProofSystemInfo | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing_extensions.Literal["chain_move", b"chain_move", "macro_repeat", b"macro_repeat", "proof_system", b"proof_system", "reason", b"reason"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing_extensions.Literal["chain_move", b"chain_move", "macro_repeat", b"macro_repeat", "proof_system", b"proof_system", "reason", b"reason"]) -> None: ...
-    def WhichOneof(self, oneof_group: typing_extensions.Literal["reason", b"reason"]) -> typing_extensions.Literal["macro_repeat", "chain_move", "proof_system"] | None: ...
+    def HasField(self, field_name: typing.Literal["chain_move", b"chain_move", "macro_repeat", b"macro_repeat", "proof_system", b"proof_system", "reason", b"reason"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing.Literal["chain_move", b"chain_move", "macro_repeat", b"macro_repeat", "proof_system", b"proof_system", "reason", b"reason"]) -> None: ...
+    def WhichOneof(self, oneof_group: typing.Literal["reason", b"reason"]) -> typing.Literal["macro_repeat", "chain_move", "proof_system"] | None: ...
 
 global___InfiniteInfo = InfiniteInfo
 
-@typing_extensions.final
+@typing.final
 class OverLoopsInfo(google.protobuf.message.Message):
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
@@ -483,11 +492,11 @@ class OverLoopsInfo(google.protobuf.message.Message):
         *,
         num_loops: builtins.int = ...,
     ) -> None: ...
-    def ClearField(self, field_name: typing_extensions.Literal["num_loops", b"num_loops"]) -> None: ...
+    def ClearField(self, field_name: typing.Literal["num_loops", b"num_loops"]) -> None: ...
 
 global___OverLoopsInfo = OverLoopsInfo
 
-@typing_extensions.final
+@typing.final
 class OverTapeInfo(google.protobuf.message.Message):
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
@@ -498,11 +507,11 @@ class OverTapeInfo(google.protobuf.message.Message):
         *,
         compressed_tape_size: builtins.int = ...,
     ) -> None: ...
-    def ClearField(self, field_name: typing_extensions.Literal["compressed_tape_size", b"compressed_tape_size"]) -> None: ...
+    def ClearField(self, field_name: typing.Literal["compressed_tape_size", b"compressed_tape_size"]) -> None: ...
 
 global___OverTapeInfo = OverTapeInfo
 
-@typing_extensions.final
+@typing.final
 class OverTimeInfo(google.protobuf.message.Message):
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
@@ -513,11 +522,11 @@ class OverTimeInfo(google.protobuf.message.Message):
         *,
         elapsed_time_sec: builtins.float = ...,
     ) -> None: ...
-    def ClearField(self, field_name: typing_extensions.Literal["elapsed_time_sec", b"elapsed_time_sec"]) -> None: ...
+    def ClearField(self, field_name: typing.Literal["elapsed_time_sec", b"elapsed_time_sec"]) -> None: ...
 
 global___OverTimeInfo = OverTimeInfo
 
-@typing_extensions.final
+@typing.final
 class OverStepsInMacroInfo(google.protobuf.message.Message):
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
@@ -535,11 +544,11 @@ class OverStepsInMacroInfo(google.protobuf.message.Message):
         macro_state: builtins.str = ...,
         macro_dir_is_right: builtins.bool = ...,
     ) -> None: ...
-    def ClearField(self, field_name: typing_extensions.Literal["macro_dir_is_right", b"macro_dir_is_right", "macro_state", b"macro_state", "macro_symbol", b"macro_symbol"]) -> None: ...
+    def ClearField(self, field_name: typing.Literal["macro_dir_is_right", b"macro_dir_is_right", "macro_state", b"macro_state", "macro_symbol", b"macro_symbol"]) -> None: ...
 
 global___OverStepsInMacroInfo = OverStepsInMacroInfo
 
-@typing_extensions.final
+@typing.final
 class UnknownInfo(google.protobuf.message.Message):
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
@@ -548,6 +557,7 @@ class UnknownInfo(google.protobuf.message.Message):
     OVER_TIME_FIELD_NUMBER: builtins.int
     OVER_STEPS_IN_MACRO_FIELD_NUMBER: builtins.int
     THREW_EXCEPTION_FIELD_NUMBER: builtins.int
+    threw_exception: builtins.bool
     @property
     def over_loops(self) -> global___OverLoopsInfo: ...
     @property
@@ -556,7 +566,6 @@ class UnknownInfo(google.protobuf.message.Message):
     def over_time(self) -> global___OverTimeInfo: ...
     @property
     def over_steps_in_macro(self) -> global___OverStepsInMacroInfo: ...
-    threw_exception: builtins.bool
     def __init__(
         self,
         *,
@@ -566,13 +575,13 @@ class UnknownInfo(google.protobuf.message.Message):
         over_steps_in_macro: global___OverStepsInMacroInfo | None = ...,
         threw_exception: builtins.bool = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing_extensions.Literal["over_loops", b"over_loops", "over_steps_in_macro", b"over_steps_in_macro", "over_tape", b"over_tape", "over_time", b"over_time", "reason", b"reason", "threw_exception", b"threw_exception"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing_extensions.Literal["over_loops", b"over_loops", "over_steps_in_macro", b"over_steps_in_macro", "over_tape", b"over_tape", "over_time", b"over_time", "reason", b"reason", "threw_exception", b"threw_exception"]) -> None: ...
-    def WhichOneof(self, oneof_group: typing_extensions.Literal["reason", b"reason"]) -> typing_extensions.Literal["over_loops", "over_tape", "over_time", "over_steps_in_macro", "threw_exception"] | None: ...
+    def HasField(self, field_name: typing.Literal["over_loops", b"over_loops", "over_steps_in_macro", b"over_steps_in_macro", "over_tape", b"over_tape", "over_time", b"over_time", "reason", b"reason", "threw_exception", b"threw_exception"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing.Literal["over_loops", b"over_loops", "over_steps_in_macro", b"over_steps_in_macro", "over_tape", b"over_tape", "over_time", b"over_time", "reason", b"reason", "threw_exception", b"threw_exception"]) -> None: ...
+    def WhichOneof(self, oneof_group: typing.Literal["reason", b"reason"]) -> typing.Literal["over_loops", "over_tape", "over_time", "over_steps_in_macro", "threw_exception"] | None: ...
 
 global___UnknownInfo = UnknownInfo
 
-@typing_extensions.final
+@typing.final
 class SimulatorResult(google.protobuf.message.Message):
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
@@ -592,13 +601,6 @@ class SimulatorResult(google.protobuf.message.Message):
     NUM_GEN_RULES_PROVEN_FIELD_NUMBER: builtins.int
     NUM_COLLATZ_RULES_FIELD_NUMBER: builtins.int
     NUM_PROOFS_FAILED_FIELD_NUMBER: builtins.int
-    @property
-    def halt_info(self) -> global___HaltInfo: ...
-    @property
-    def infinite_info(self) -> global___InfiniteInfo: ...
-    @property
-    def unknown_info(self) -> global___UnknownInfo:
-        """We could not decide if this machine halted or will never halt."""
     elapsed_time_us: builtins.int
     """Stats"""
     num_loops: builtins.int
@@ -622,6 +624,14 @@ class SimulatorResult(google.protobuf.message.Message):
     exponents decreases by more than 1.
     """
     num_proofs_failed: builtins.int
+    @property
+    def halt_info(self) -> global___HaltInfo: ...
+    @property
+    def infinite_info(self) -> global___InfiniteInfo: ...
+    @property
+    def unknown_info(self) -> global___UnknownInfo:
+        """We could not decide if this machine halted or will never halt."""
+
     def __init__(
         self,
         *,
@@ -642,13 +652,13 @@ class SimulatorResult(google.protobuf.message.Message):
         num_collatz_rules: builtins.int = ...,
         num_proofs_failed: builtins.int = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing_extensions.Literal["exit_condition", b"exit_condition", "halt_info", b"halt_info", "infinite_info", b"infinite_info", "unknown_info", b"unknown_info"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing_extensions.Literal["elapsed_time_us", b"elapsed_time_us", "exit_condition", b"exit_condition", "halt_info", b"halt_info", "infinite_info", b"infinite_info", "log10_num_steps", b"log10_num_steps", "num_chain_moves", b"num_chain_moves", "num_collatz_rules", b"num_collatz_rules", "num_exponential_rules_proven", b"num_exponential_rules_proven", "num_gen_rules_proven", b"num_gen_rules_proven", "num_linear_rules_proven", b"num_linear_rules_proven", "num_loops", b"num_loops", "num_macro_moves", b"num_macro_moves", "num_meta_diff_rules_proven", b"num_meta_diff_rules_proven", "num_proofs_failed", b"num_proofs_failed", "num_rule_moves", b"num_rule_moves", "num_rules_proven", b"num_rules_proven", "unknown_info", b"unknown_info"]) -> None: ...
-    def WhichOneof(self, oneof_group: typing_extensions.Literal["exit_condition", b"exit_condition"]) -> typing_extensions.Literal["halt_info", "infinite_info", "unknown_info"] | None: ...
+    def HasField(self, field_name: typing.Literal["exit_condition", b"exit_condition", "halt_info", b"halt_info", "infinite_info", b"infinite_info", "unknown_info", b"unknown_info"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing.Literal["elapsed_time_us", b"elapsed_time_us", "exit_condition", b"exit_condition", "halt_info", b"halt_info", "infinite_info", b"infinite_info", "log10_num_steps", b"log10_num_steps", "num_chain_moves", b"num_chain_moves", "num_collatz_rules", b"num_collatz_rules", "num_exponential_rules_proven", b"num_exponential_rules_proven", "num_gen_rules_proven", b"num_gen_rules_proven", "num_linear_rules_proven", b"num_linear_rules_proven", "num_loops", b"num_loops", "num_macro_moves", b"num_macro_moves", "num_meta_diff_rules_proven", b"num_meta_diff_rules_proven", "num_proofs_failed", b"num_proofs_failed", "num_rule_moves", b"num_rule_moves", "num_rules_proven", b"num_rules_proven", "unknown_info", b"unknown_info"]) -> None: ...
+    def WhichOneof(self, oneof_group: typing.Literal["exit_condition", b"exit_condition"]) -> typing.Literal["halt_info", "infinite_info", "unknown_info"] | None: ...
 
 global___SimulatorResult = SimulatorResult
 
-@typing_extensions.final
+@typing.final
 class SimulatorInfo(google.protobuf.message.Message):
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
@@ -664,12 +674,12 @@ class SimulatorInfo(google.protobuf.message.Message):
         parameters: global___SimulatorParams | None = ...,
         result: global___SimulatorResult | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing_extensions.Literal["parameters", b"parameters", "result", b"result"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing_extensions.Literal["parameters", b"parameters", "result", b"result"]) -> None: ...
+    def HasField(self, field_name: typing.Literal["parameters", b"parameters", "result", b"result"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing.Literal["parameters", b"parameters", "result", b"result"]) -> None: ...
 
 global___SimulatorInfo = SimulatorInfo
 
-@typing_extensions.final
+@typing.final
 class BlockFinderParams(google.protobuf.message.Message):
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
@@ -698,11 +708,11 @@ class BlockFinderParams(google.protobuf.message.Message):
         max_block_size: builtins.int = ...,
         block_mult: builtins.int = ...,
     ) -> None: ...
-    def ClearField(self, field_name: typing_extensions.Literal["block_mult", b"block_mult", "compression_search_loops", b"compression_search_loops", "max_block_mult", b"max_block_mult", "max_block_size", b"max_block_size", "mult_sim_loops", b"mult_sim_loops"]) -> None: ...
+    def ClearField(self, field_name: typing.Literal["block_mult", b"block_mult", "compression_search_loops", b"compression_search_loops", "max_block_mult", b"max_block_mult", "max_block_size", b"max_block_size", "mult_sim_loops", b"mult_sim_loops"]) -> None: ...
 
 global___BlockFinderParams = BlockFinderParams
 
-@typing_extensions.final
+@typing.final
 class BlockFinderResult(google.protobuf.message.Message):
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
@@ -752,11 +762,11 @@ class BlockFinderResult(google.protobuf.message.Message):
         best_mult: builtins.int = ...,
         best_chain_factor: builtins.float = ...,
     ) -> None: ...
-    def ClearField(self, field_name: typing_extensions.Literal["best_block_size", b"best_block_size", "best_chain_factor", b"best_chain_factor", "best_compression_block_size", b"best_compression_block_size", "best_compression_tape_size", b"best_compression_tape_size", "best_mult", b"best_mult", "elapsed_time_us", b"elapsed_time_us", "least_compressed_loop", b"least_compressed_loop", "least_compressed_tape_size_chain", b"least_compressed_tape_size_chain", "least_compressed_tape_size_raw", b"least_compressed_tape_size_raw"]) -> None: ...
+    def ClearField(self, field_name: typing.Literal["best_block_size", b"best_block_size", "best_chain_factor", b"best_chain_factor", "best_compression_block_size", b"best_compression_block_size", "best_compression_tape_size", b"best_compression_tape_size", "best_mult", b"best_mult", "elapsed_time_us", b"elapsed_time_us", "least_compressed_loop", b"least_compressed_loop", "least_compressed_tape_size_chain", b"least_compressed_tape_size_chain", "least_compressed_tape_size_raw", b"least_compressed_tape_size_raw"]) -> None: ...
 
 global___BlockFinderResult = BlockFinderResult
 
-@typing_extensions.final
+@typing.final
 class BlockFinderInfo(google.protobuf.message.Message):
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
@@ -772,12 +782,12 @@ class BlockFinderInfo(google.protobuf.message.Message):
         parameters: global___BlockFinderParams | None = ...,
         result: global___BlockFinderResult | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing_extensions.Literal["parameters", b"parameters", "result", b"result"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing_extensions.Literal["parameters", b"parameters", "result", b"result"]) -> None: ...
+    def HasField(self, field_name: typing.Literal["parameters", b"parameters", "result", b"result"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing.Literal["parameters", b"parameters", "result", b"result"]) -> None: ...
 
 global___BlockFinderInfo = BlockFinderInfo
 
-@typing_extensions.final
+@typing.final
 class FilterInfo(google.protobuf.message.Message):
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
@@ -795,11 +805,11 @@ class FilterInfo(google.protobuf.message.Message):
         success: builtins.bool = ...,
         elapsed_time_us: builtins.int = ...,
     ) -> None: ...
-    def ClearField(self, field_name: typing_extensions.Literal["elapsed_time_us", b"elapsed_time_us", "success", b"success", "tested", b"tested"]) -> None: ...
+    def ClearField(self, field_name: typing.Literal["elapsed_time_us", b"elapsed_time_us", "success", b"success", "tested", b"tested"]) -> None: ...
 
 global___FilterInfo = FilterInfo
 
-@typing_extensions.final
+@typing.final
 class LinRecurFilterParams(google.protobuf.message.Message):
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
@@ -817,11 +827,11 @@ class LinRecurFilterParams(google.protobuf.message.Message):
         max_steps: builtins.int = ...,
         find_min_start_step: builtins.bool = ...,
     ) -> None: ...
-    def ClearField(self, field_name: typing_extensions.Literal["find_min_start_step", b"find_min_start_step", "max_steps", b"max_steps"]) -> None: ...
+    def ClearField(self, field_name: typing.Literal["find_min_start_step", b"find_min_start_step", "max_steps", b"max_steps"]) -> None: ...
 
 global___LinRecurFilterParams = LinRecurFilterParams
 
-@typing_extensions.final
+@typing.final
 class LinRecurFilterResult(google.protobuf.message.Message):
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
@@ -856,11 +866,11 @@ class LinRecurFilterResult(google.protobuf.message.Message):
         offset: builtins.int = ...,
         elapsed_time_us: builtins.int = ...,
     ) -> None: ...
-    def ClearField(self, field_name: typing_extensions.Literal["elapsed_time_us", b"elapsed_time_us", "offset", b"offset", "period", b"period", "start_step", b"start_step", "success", b"success"]) -> None: ...
+    def ClearField(self, field_name: typing.Literal["elapsed_time_us", b"elapsed_time_us", "offset", b"offset", "period", b"period", "start_step", b"start_step", "success", b"success"]) -> None: ...
 
 global___LinRecurFilterResult = LinRecurFilterResult
 
-@typing_extensions.final
+@typing.final
 class LinRecurFilterInfo(google.protobuf.message.Message):
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
@@ -876,12 +886,12 @@ class LinRecurFilterInfo(google.protobuf.message.Message):
         parameters: global___LinRecurFilterParams | None = ...,
         result: global___LinRecurFilterResult | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing_extensions.Literal["parameters", b"parameters", "result", b"result"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing_extensions.Literal["parameters", b"parameters", "result", b"result"]) -> None: ...
+    def HasField(self, field_name: typing.Literal["parameters", b"parameters", "result", b"result"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing.Literal["parameters", b"parameters", "result", b"result"]) -> None: ...
 
 global___LinRecurFilterInfo = LinRecurFilterInfo
 
-@typing_extensions.final
+@typing.final
 class CTLParams(google.protobuf.message.Message):
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
@@ -899,11 +909,11 @@ class CTLParams(google.protobuf.message.Message):
         offset: builtins.int = ...,
         cutoff: builtins.int = ...,
     ) -> None: ...
-    def ClearField(self, field_name: typing_extensions.Literal["block_size", b"block_size", "cutoff", b"cutoff", "offset", b"offset"]) -> None: ...
+    def ClearField(self, field_name: typing.Literal["block_size", b"block_size", "cutoff", b"cutoff", "offset", b"offset"]) -> None: ...
 
 global___CTLParams = CTLParams
 
-@typing_extensions.final
+@typing.final
 class CTLResult(google.protobuf.message.Message):
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
@@ -922,11 +932,11 @@ class CTLResult(google.protobuf.message.Message):
         num_iters: builtins.int = ...,
         elapsed_time_us: builtins.int = ...,
     ) -> None: ...
-    def ClearField(self, field_name: typing_extensions.Literal["elapsed_time_us", b"elapsed_time_us", "num_iters", b"num_iters", "success", b"success"]) -> None: ...
+    def ClearField(self, field_name: typing.Literal["elapsed_time_us", b"elapsed_time_us", "num_iters", b"num_iters", "success", b"success"]) -> None: ...
 
 global___CTLResult = CTLResult
 
-@typing_extensions.final
+@typing.final
 class CTLInfo(google.protobuf.message.Message):
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
@@ -942,12 +952,12 @@ class CTLInfo(google.protobuf.message.Message):
         parameters: global___CTLParams | None = ...,
         result: global___CTLResult | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing_extensions.Literal["parameters", b"parameters", "result", b"result"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing_extensions.Literal["parameters", b"parameters", "result", b"result"]) -> None: ...
+    def HasField(self, field_name: typing.Literal["parameters", b"parameters", "result", b"result"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing.Literal["parameters", b"parameters", "result", b"result"]) -> None: ...
 
 global___CTLInfo = CTLInfo
 
-@typing_extensions.final
+@typing.final
 class CTLFilterInfo(google.protobuf.message.Message):
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
@@ -958,15 +968,19 @@ class CTLFilterInfo(google.protobuf.message.Message):
     @property
     def ctl_as(self) -> global___CTLInfo:
         """CTL1: CTL_A*"""
+
     @property
     def ctl_as_b(self) -> global___CTLInfo:
         """CTL2: CTL_A*_B"""
+
     @property
     def ctl_a_bs(self) -> global___CTLInfo:
         """CTL3: CTL_A_B*"""
+
     @property
     def ctl_as_b_c(self) -> global___CTLInfo:
         """CTL4: CTL_A*_B_C"""
+
     def __init__(
         self,
         *,
@@ -975,12 +989,12 @@ class CTLFilterInfo(google.protobuf.message.Message):
         ctl_a_bs: global___CTLInfo | None = ...,
         ctl_as_b_c: global___CTLInfo | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing_extensions.Literal["ctl_a_bs", b"ctl_a_bs", "ctl_as", b"ctl_as", "ctl_as_b", b"ctl_as_b", "ctl_as_b_c", b"ctl_as_b_c"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing_extensions.Literal["ctl_a_bs", b"ctl_a_bs", "ctl_as", b"ctl_as", "ctl_as_b", b"ctl_as_b", "ctl_as_b_c", b"ctl_as_b_c"]) -> None: ...
+    def HasField(self, field_name: typing.Literal["ctl_a_bs", b"ctl_a_bs", "ctl_as", b"ctl_as", "ctl_as_b", b"ctl_as_b", "ctl_as_b_c", b"ctl_as_b_c"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing.Literal["ctl_a_bs", b"ctl_a_bs", "ctl_as", b"ctl_as", "ctl_as_b", b"ctl_as_b", "ctl_as_b_c", b"ctl_as_b_c"]) -> None: ...
 
 global___CTLFilterInfo = CTLFilterInfo
 
-@typing_extensions.final
+@typing.final
 class BacktrackFilterParams(google.protobuf.message.Message):
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
@@ -996,11 +1010,11 @@ class BacktrackFilterParams(google.protobuf.message.Message):
         num_steps: builtins.int = ...,
         max_width: builtins.int = ...,
     ) -> None: ...
-    def ClearField(self, field_name: typing_extensions.Literal["max_width", b"max_width", "num_steps", b"num_steps"]) -> None: ...
+    def ClearField(self, field_name: typing.Literal["max_width", b"max_width", "num_steps", b"num_steps"]) -> None: ...
 
 global___BacktrackFilterParams = BacktrackFilterParams
 
-@typing_extensions.final
+@typing.final
 class BacktrackFilterResult(google.protobuf.message.Message):
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
@@ -1027,11 +1041,11 @@ class BacktrackFilterResult(google.protobuf.message.Message):
         num_nodes: builtins.int = ...,
         elapsed_time_us: builtins.int = ...,
     ) -> None: ...
-    def ClearField(self, field_name: typing_extensions.Literal["elapsed_time_us", b"elapsed_time_us", "max_steps", b"max_steps", "max_width", b"max_width", "num_nodes", b"num_nodes", "success", b"success"]) -> None: ...
+    def ClearField(self, field_name: typing.Literal["elapsed_time_us", b"elapsed_time_us", "max_steps", b"max_steps", "max_width", b"max_width", "num_nodes", b"num_nodes", "success", b"success"]) -> None: ...
 
 global___BacktrackFilterResult = BacktrackFilterResult
 
-@typing_extensions.final
+@typing.final
 class BacktrackFilterInfo(google.protobuf.message.Message):
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
@@ -1047,12 +1061,12 @@ class BacktrackFilterInfo(google.protobuf.message.Message):
         parameters: global___BacktrackFilterParams | None = ...,
         result: global___BacktrackFilterResult | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing_extensions.Literal["parameters", b"parameters", "result", b"result"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing_extensions.Literal["parameters", b"parameters", "result", b"result"]) -> None: ...
+    def HasField(self, field_name: typing.Literal["parameters", b"parameters", "result", b"result"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing.Literal["parameters", b"parameters", "result", b"result"]) -> None: ...
 
 global___BacktrackFilterInfo = BacktrackFilterInfo
 
-@typing_extensions.final
+@typing.final
 class ClosedGraphFilterParams(google.protobuf.message.Message):
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
@@ -1082,11 +1096,11 @@ class ClosedGraphFilterParams(google.protobuf.message.Message):
         max_configs: builtins.int = ...,
         max_edges: builtins.int = ...,
     ) -> None: ...
-    def ClearField(self, field_name: typing_extensions.Literal["max_block_size", b"max_block_size", "max_configs", b"max_configs", "max_edges", b"max_edges", "max_iters", b"max_iters", "max_steps", b"max_steps", "min_block_size", b"min_block_size", "search_all_windows", b"search_all_windows"]) -> None: ...
+    def ClearField(self, field_name: typing.Literal["max_block_size", b"max_block_size", "max_configs", b"max_configs", "max_edges", b"max_edges", "max_iters", b"max_iters", "max_steps", b"max_steps", "min_block_size", b"min_block_size", "search_all_windows", b"search_all_windows"]) -> None: ...
 
 global___ClosedGraphFilterParams = ClosedGraphFilterParams
 
-@typing_extensions.final
+@typing.final
 class ClosedGraphFilterResult(google.protobuf.message.Message):
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
@@ -1125,11 +1139,11 @@ class ClosedGraphFilterResult(google.protobuf.message.Message):
         found_inf_loop: builtins.bool = ...,
         elapsed_time_us: builtins.int = ...,
     ) -> None: ...
-    def ClearField(self, field_name: typing_extensions.Literal["block_size", b"block_size", "elapsed_time_us", b"elapsed_time_us", "found_inf_loop", b"found_inf_loop", "num_configs", b"num_configs", "num_edges", b"num_edges", "num_iters", b"num_iters", "num_steps", b"num_steps", "success", b"success", "window_size", b"window_size"]) -> None: ...
+    def ClearField(self, field_name: typing.Literal["block_size", b"block_size", "elapsed_time_us", b"elapsed_time_us", "found_inf_loop", b"found_inf_loop", "num_configs", b"num_configs", "num_edges", b"num_edges", "num_iters", b"num_iters", "num_steps", b"num_steps", "success", b"success", "window_size", b"window_size"]) -> None: ...
 
 global___ClosedGraphFilterResult = ClosedGraphFilterResult
 
-@typing_extensions.final
+@typing.final
 class ClosedGraphFilterInfo(google.protobuf.message.Message):
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
@@ -1145,12 +1159,12 @@ class ClosedGraphFilterInfo(google.protobuf.message.Message):
         parameters: global___ClosedGraphFilterParams | None = ...,
         result: global___ClosedGraphFilterResult | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing_extensions.Literal["parameters", b"parameters", "result", b"result"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing_extensions.Literal["parameters", b"parameters", "result", b"result"]) -> None: ...
+    def HasField(self, field_name: typing.Literal["parameters", b"parameters", "result", b"result"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing.Literal["parameters", b"parameters", "result", b"result"]) -> None: ...
 
 global___ClosedGraphFilterInfo = ClosedGraphFilterInfo
 
-@typing_extensions.final
+@typing.final
 class FilterResults(google.protobuf.message.Message):
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
@@ -1164,6 +1178,7 @@ class FilterResults(google.protobuf.message.Message):
     @property
     def simulator(self) -> global___SimulatorInfo:
         """parameters, results and stats from various filters."""
+
     @property
     def block_finder(self) -> global___BlockFinderInfo: ...
     @property
@@ -1187,12 +1202,12 @@ class FilterResults(google.protobuf.message.Message):
         backtrack: global___BacktrackFilterInfo | None = ...,
         closed_graph: global___ClosedGraphFilterInfo | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing_extensions.Literal["backtrack", b"backtrack", "block_finder", b"block_finder", "closed_graph", b"closed_graph", "ctl", b"ctl", "lin_recur", b"lin_recur", "reverse_engineer", b"reverse_engineer", "simulator", b"simulator"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing_extensions.Literal["backtrack", b"backtrack", "block_finder", b"block_finder", "closed_graph", b"closed_graph", "ctl", b"ctl", "lin_recur", b"lin_recur", "reverse_engineer", b"reverse_engineer", "simulator", b"simulator"]) -> None: ...
+    def HasField(self, field_name: typing.Literal["backtrack", b"backtrack", "block_finder", b"block_finder", "closed_graph", b"closed_graph", "ctl", b"ctl", "lin_recur", b"lin_recur", "reverse_engineer", b"reverse_engineer", "simulator", b"simulator"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing.Literal["backtrack", b"backtrack", "block_finder", b"block_finder", "closed_graph", b"closed_graph", "ctl", b"ctl", "lin_recur", b"lin_recur", "reverse_engineer", b"reverse_engineer", "simulator", b"simulator"]) -> None: ...
 
 global___FilterResults = FilterResults
 
-@typing_extensions.final
+@typing.final
 class TMRecord(google.protobuf.message.Message):
     """The top level message for a TM. It contains:
      * TM specification (ttable)
@@ -1213,19 +1228,21 @@ class TMRecord(google.protobuf.message.Message):
     changes are made to the specification (changing message hierarchy or
     tag numbers).
     """
-    @property
-    def tm(self) -> global___TuringMachine: ...
-    @property
-    def status(self) -> global___BBStatus:
-        """Status of this machine with respect to BB, BBB, etc. criteria."""
-    @property
-    def filter(self) -> global___FilterResults:
-        """Detailed results and stats for all filters run."""
     elapsed_time_us: builtins.int
     """Total time spent on this TM (across all filters).
     TODO: For now it will be reset each time we run a filter, change this to
     add each time.
     """
+    @property
+    def tm(self) -> global___TuringMachine: ...
+    @property
+    def status(self) -> global___BBStatus:
+        """Status of this machine with respect to BB, BBB, etc. criteria."""
+
+    @property
+    def filter(self) -> global___FilterResults:
+        """Detailed results and stats for all filters run."""
+
     def __init__(
         self,
         *,
@@ -1235,7 +1252,7 @@ class TMRecord(google.protobuf.message.Message):
         filter: global___FilterResults | None = ...,
         elapsed_time_us: builtins.int = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing_extensions.Literal["filter", b"filter", "status", b"status", "tm", b"tm"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing_extensions.Literal["elapsed_time_us", b"elapsed_time_us", "filter", b"filter", "spec_version", b"spec_version", "status", b"status", "tm", b"tm"]) -> None: ...
+    def HasField(self, field_name: typing.Literal["filter", b"filter", "status", b"status", "tm", b"tm"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing.Literal["elapsed_time_us", b"elapsed_time_us", "filter", b"filter", "spec_version", b"spec_version", "status", b"status", "tm", b"tm"]) -> None: ...
 
 global___TMRecord = TMRecord

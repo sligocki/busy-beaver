@@ -131,6 +131,10 @@ def parse_exp_term(field : io_pb2.ExpTerm) -> ExpTerm:
   return ExpTerm(field.base, coef, exp)
 
 
+def is_infinite(halt_status : io_pb2.HaltStatus) -> bool:
+  # Only infinite if it is decided and not halting.
+  return halt_status.is_decided and not halt_status.is_halting
+
 def set_halting(tm_status  : io_pb2.BBStatus,
                 halt_steps : int,
                 halt_score : int,

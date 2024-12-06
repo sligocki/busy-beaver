@@ -293,11 +293,19 @@ class ClosedGraphSim:
       return f"Result {len(edges[LEFT])} {edges_str[LEFT]} {len(edges[RIGHT])} {edges_str[RIGHT]} {len(configs)} {configs_str}"
 
 
-def filter(tm : Turing_Machine.Simple_Machine,
+def filter(base_tm : Turing_Machine.Simple_Machine,
            block_size : int, window_size : int,
+           fixed_history : int, lru_history : bool,
            max_steps : int, max_iters : int, max_configs : int, max_edges : int,
            cg_result : io_pb2.ClosedGraphFilterResult,
            bb_status : io_pb2.BBStatus):
+  if fixed_history:
+    tm = Turing_Machine.Fixed_History_MM(base_tm, fixed_history)
+  elif lru_history:
+    tm = Turing_Machine.LRU_History_MM(base_tm)
+  else:
+    tm = base_tm
+
   cg_result.Clear()
   graph_set = ClosedGraphSim(tm, block_size, window_size,
                              max_steps, max_iters, max_configs, max_edges,
@@ -306,7 +314,7 @@ def filter(tm : Turing_Machine.Simple_Machine,
   cg_result.block_size = block_size
   cg_result.window_size = window_size
   if cg_result.success:
-    Halting_Lib.set_not_halting(bb_status, io_pb2.INF_CLOSED_GRAPH)
+    Halting_Lib.set_not_halting(bb_status, io_pb2.INF_CPS)
     # Note: quasihalting result is not computed when using Closed Graph filters.
   # Return graph_set in case you want to debug / print the verification details.
   return graph_set
@@ -341,17 +349,11 @@ def main():
   cg_result = io_pb2.ClosedGraphFilterResult()
   bb_status = io_pb2.BBStatus()
 
-  base_tm = IO.get_tm(args.tm)
-  print(base_tm.ttable_str())
-
-  if args.fixed_history:
-    tm = Turing_Machine.Fixed_History_MM(base_tm, args.fixed_history)
-  elif args.lru_history:
-    tm = Turing_Machine.LRU_History_MM(base_tm)
-  else:
-    tm = base_tm
+  tm = IO.get_tm(args.tm)
+  print(tm.ttable_str())
 
   graph_set = filter(tm, args.block_size, args.window_size,
+                     args.fixed_history, args.lru_history,
                      args.max_steps, args.max_iters, args.max_configs, args.max_edges,
                      cg_result, bb_status)
 
@@ -359,7 +361,7 @@ def main():
     graph_set.print_debug()
   if args.savask_cert:
     print()
-    print(base_tm.ttable_str(), graph_set.savask_cert())
+    print(tm.ttable_str(), graph_set.savask_cert())
 
   print()
   print_pb(cg_result)

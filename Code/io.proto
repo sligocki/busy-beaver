@@ -88,7 +88,7 @@ enum InfReason {
   INF_LIN_RECUR = 5;
   INF_CTL = 6;
   INF_BACKTRACK = 7;
-  INF_CLOSED_GRAPH = 8;
+  INF_CPS = 8;
 }
 
 // Statuses for various searches (BB, BBB, ...)
