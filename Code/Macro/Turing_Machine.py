@@ -2,6 +2,8 @@
 Abstract Turing Machine model with basic NxM TM and Macro-Machine derivatives
 """
 
+from __future__ import annotations
+
 from typing import Any
 import dataclasses
 from dataclasses import dataclass
@@ -49,7 +51,7 @@ def other_dir(dir : Dir) -> Dir:
     return LEFT
 
 
-@dataclass #TODO: (frozen=True)
+@dataclass(frozen=True)
 class Transition:
   """Class representing the result of a transition."""
   condition : Run_Condition
@@ -59,6 +61,10 @@ class Transition:
   num_base_steps : int
   states_last_seen : dict
   condition_details : tuple = tuple()
+
+  def replace(self, **kws) -> Transition:
+    """Return copy of object with some fields updated."""
+    return dataclasses.replace(self, **kws)
 
   # TODO: Deprecate
   def to_legacy_tuple(self) -> tuple[tuple, tuple, int]:
@@ -412,8 +418,7 @@ class Block_Macro_Machine(Macro_Machine):
                         max_loops=self.max_sim_steps_per_symbol)
 
     # Convert symbol into the correct format.
-    trans.symbol_out = Block_Symbol(trans.symbol_out)
-    return trans
+    return trans.replace(symbol_out = Block_Symbol(trans.symbol_out))
 
 
 @total_ordering
@@ -507,11 +512,8 @@ class Backsymbol_Macro_Machine(Macro_Machine):
       backsymbol, symbol_out = final_tape
 
     # Update symbol_out and state_out to be backsymbol-style.
-    trans.symbol_out = symbol_out
-    trans.state_out = Backsymbol_Macro_Machine_State(trans.state_out,
-                                                     backsymbol)
-
-    return trans
+    state_out = Backsymbol_Macro_Machine_State(trans.state_out, backsymbol)
+    return trans.replace(symbol_out = symbol_out, state_out = state_out)
 
 
 @dataclass(frozen=True, order=True)
@@ -566,7 +568,7 @@ class Fixed_History_MM(Macro_Machine):
     trans_pair = (trans.state_out, trans.symbol_out)
     # Update to a History_Symbol
     hist_symbol_out = update_history_lru(hist_symbol_in, trans.symbol_out, trans_pair)
-    return dataclasses.replace(trans, symbol_out = hist_symbol_out)
+    return trans.replace(symbol_out = hist_symbol_out)
   
   def eval_symbol(self, hist_symbol : History_Symbol) -> int:
     return self.base_tm.eval_symbol(hist_symbol.base_symbol)
@@ -599,7 +601,7 @@ class LRU_History_MM(Macro_Machine):
     trans_pair = (trans.state_out, trans.symbol_out)
     # Update to a History_Symbol
     hist_symbol_out = update_history_lru(hist_symbol_in, trans.symbol_out, trans_pair)
-    return dataclasses.replace(trans, symbol_out = hist_symbol_out)
+    return trans.replace(symbol_out = hist_symbol_out)
   
   def eval_symbol(self, hist_symbol : History_Symbol) -> int:
     return self.base_tm.eval_symbol(hist_symbol.base_symbol)
