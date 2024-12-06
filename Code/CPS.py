@@ -14,6 +14,7 @@ from typing import Optional
 import argparse
 from collections import defaultdict
 
+from Common import print_pb
 import Halting_Lib
 import IO
 from Macro import Turing_Machine
@@ -361,8 +362,14 @@ def main():
     print(base_tm.ttable_str(), graph_set.savask_cert())
 
   print()
-  print(cg_result)
-  print(bb_status)
+  print_pb(cg_result)
+  print_pb(bb_status)
+
+  print()
+  if cg_result.success:
+    print("Proven Infinite")
+  else:
+    print("Inconclusive")
 
 if __name__ == "__main__":
   main()
