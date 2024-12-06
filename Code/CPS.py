@@ -13,8 +13,6 @@ are captured directly in the Block Macro Machine idea.
 from typing import Optional
 import argparse
 from collections import defaultdict
-import math
-from pathlib import Path
 
 import Halting_Lib
 import IO
@@ -81,7 +79,7 @@ class Config:
 
 
 class ClosedGraphSim:
-  def __init__(self, tm : Turing_Machine.Simple_Machine,
+  def __init__(self, tm : Turing_Machine.Turing_Machine,
                block_size : int, window_size : int,
                max_steps : int, max_iters : int, max_configs : int, max_edges : int,
                result : io_pb2.ClosedGraphFilterResult):
@@ -324,6 +322,11 @@ def main():
   parser.add_argument("--max-configs", type=int, default=10_000)
   parser.add_argument("--max-edges", type=int, default=10_000)
 
+  parser.add_argument("--fixed-history", type=int,
+                      help="Keep track of fixed history of transitions for each cell.")
+  parser.add_argument("--lru-history", action="store_true",
+                      help="Keep track of all transitions used on each cell in lru order")
+
   parser.add_argument("--verbose", "-v", action="store_true")
   parser.add_argument("--savask-cert", action="store_true",
                       help="Print proof certificate in @savask's format.")
@@ -337,8 +340,16 @@ def main():
   cg_result = io_pb2.ClosedGraphFilterResult()
   bb_status = io_pb2.BBStatus()
 
-  tm = IO.get_tm(args.tm)
-  print(tm.ttable_str())
+  base_tm = IO.get_tm(args.tm)
+  print(base_tm.ttable_str())
+
+  if args.fixed_history:
+    tm = Turing_Machine.Fixed_History_MM(base_tm, args.fixed_history)
+  elif args.lru_history:
+    tm = Turing_Machine.LRU_History_MM(base_tm)
+  else:
+    tm = base_tm
+
   graph_set = filter(tm, args.block_size, args.window_size,
                      args.max_steps, args.max_iters, args.max_configs, args.max_edges,
                      cg_result, bb_status)
@@ -347,7 +358,7 @@ def main():
     graph_set.print_debug()
   if args.savask_cert:
     print()
-    print(tm.ttable_str(), graph_set.savask_cert())
+    print(base_tm.ttable_str(), graph_set.savask_cert())
 
   print()
   print(cg_result)

@@ -2,6 +2,9 @@
 Abstract Turing Machine model with basic NxM TM and Macro-Machine derivatives
 """
 
+from typing import Any
+import dataclasses
+from dataclasses import dataclass
 from functools import total_ordering
 from optparse import OptionParser, OptionGroup
 import string
@@ -25,6 +28,7 @@ def add_option_group(parser):
 # Some type aliases
 Symbol = int
 Dir = int
+Run_Condition = str
 
 LEFT : Dir = 0
 RIGHT : Dir = 1
@@ -45,29 +49,25 @@ def other_dir(dir : Dir) -> Dir:
     return LEFT
 
 
-class Transition(object):
+@dataclass #TODO: (frozen=True)
+class Transition:
   """Class representing the result of a transition."""
-  def __init__(self,
-               condition,
-               symbol_out, state_out, dir_out : Dir,
-               num_base_steps, states_last_seen,
-               condition_details = None):
-    self.condition = condition
-    self.condition_details = condition_details if condition_details else []
-    self.symbol_out = symbol_out
-    self.state_out = state_out
-    self.dir_out = dir_out
-    self.num_base_steps = num_base_steps
-    self.states_last_seen = states_last_seen
+  condition : Run_Condition
+  symbol_out : Any
+  state_out : Any
+  dir_out : Dir
+  num_base_steps : int
+  states_last_seen : dict
+  condition_details : tuple = tuple()
 
   # TODO: Deprecate
-  def to_legacy_tuple(self):
+  def to_legacy_tuple(self) -> tuple[tuple, tuple, int]:
     """Return legacy tuple-form of transition."""
-    return (tuple([self.condition] + self.condition_details),
+    return ((self.condition,) + self.condition_details,
             (self.symbol_out, self.state_out, self.dir_out),
             self.num_base_steps)
 
-  def to_ttable_str(self):
+  def to_ttable_str(self) -> str:
     if self.condition == UNDEFINED:
       return "---"
     else:
@@ -166,7 +166,7 @@ class Turing_Machine(object):
   """Abstract base for all specific Turing Machines
 
   Derived classes should define:
-    Function: get_transition, eval_symbol, eval_state
+    Function: get_trans_object, eval_symbol, eval_state
     Constants: init_symbol, init_state, and init_dir, num_states, num_symbols"""
 
   # TODO: Deprecate
@@ -174,7 +174,7 @@ class Turing_Machine(object):
     """Returns legacy tuple for now."""
     return self.get_trans_object(symbol_in, state_in, dir_in).to_legacy_tuple()
 
-  def get_trans_object(self, symbol_in, state_in, dir_in):
+  def get_trans_object(self, symbol_in, state_in, dir_in) -> Transition:
     """Returns Transition object."""
     return NotImplemented
 
@@ -253,7 +253,7 @@ class Simple_Machine_State(int):
 
 class Simple_Machine(Turing_Machine):
   """The most general Turing Machine based off of a transition table"""
-  def __init__(self, ttable, states, symbols):
+  def __init__(self, ttable, states, symbols) -> None:
     self.trans_table = ttable
     self.states = states
     self.symbols = symbols
@@ -265,7 +265,7 @@ class Simple_Machine(Turing_Machine):
     self.init_dir = RIGHT
     self.init_state = Simple_Machine_State(0)
 
-  def get_trans_object(self, symbol_in, state_in, dir_in = None):
+  def get_trans_object(self, symbol_in, state_in, dir_in = None) -> Transition:
     # Note: Simple_Machine ignores dir_in.
     return self.trans_table[state_in][symbol_in]
 
@@ -387,7 +387,7 @@ class Block_Macro_Machine(Macro_Machine):
   def list_base_states(self):
     return self.base_machine.list_base_states()
 
-  def get_trans_object(self, *args):
+  def get_trans_object(self, *args) -> Transition:
     if args not in self.trans_table:
       if len(self.trans_table) >= self.max_cells:
         self.trans_table.clear()
@@ -473,7 +473,7 @@ class Backsymbol_Macro_Machine(Macro_Machine):
   def list_base_states(self):
     return self.base_machine.list_base_states()
 
-  def get_trans_object(self, *args):
+  def get_trans_object(self, *args) -> Transition:
     if args not in self.trans_table:
       if len(self.trans_table) >= self.max_cells:
         self.trans_table.clear()
@@ -512,3 +512,96 @@ class Backsymbol_Macro_Machine(Macro_Machine):
                                                      backsymbol)
 
     return trans
+
+
+@dataclass(frozen=True, order=True)
+class History_Symbol:
+  """Symbol with history (previous transitions)."""
+  base_symbol : Any      # Symbol
+  history : tuple   # frozen list of transition (State, Symbol) pairs
+
+  def __post_init__(self):
+    assert not isinstance(self.base_symbol, History_Symbol), self.base_symbol
+
+  def __repr__(self) -> str:
+    hist_str = ",".join(str(trans) for trans in self.history)
+    return f"{self.base_symbol}[{hist_str}]"
+
+
+# Two strategies for keeping track of history:
+def update_history_fixed(hs : History_Symbol, new_symb, trans, max_hist : int) -> History_Symbol:
+  """Keep track of last `max_size` transitions allowing duplicates."""
+  new_hist = (trans,) + hs.history[:max_hist-1]
+  return History_Symbol(base_symbol=new_symb, history=new_hist)
+
+def update_history_lru(hs : History_Symbol, new_symb, trans) -> History_Symbol:
+  """Keep track of all previous transitions, ordered by last use. No max size."""
+  new_hist = (trans,) + tuple(tr for tr in hs.history if tr != trans)
+  return History_Symbol(base_symbol=new_symb, history=new_hist)
+
+
+class Fixed_History_MM(Macro_Machine):
+  """
+  Macro machine which augments the tape alphabet with a history of which transitions
+  were used on that cell the last K times it was visited.
+
+  This history does not affect behavior, but can be useful for distinguishing written
+  in different ways for deciders like CTL and CPS.
+  """
+
+  def __init__(self, base_tm : Turing_Machine, max_hist : int) -> None:
+    self.base_tm = base_tm
+    self.max_hist = max_hist
+
+    self.init_symbol = History_Symbol(base_tm.init_symbol, tuple())  # Empty history
+    self.init_state = base_tm.init_state
+    self.init_dir = base_tm.init_dir
+    # This is functionally true, but not literally true.
+    self.num_symbols = base_tm.num_symbols
+    self.num_states = base_tm.num_states
+
+  def get_trans_object(self, hist_symbol_in : History_Symbol, state_in, dir_in) -> Transition:
+    trans = self.base_tm.get_trans_object(hist_symbol_in.base_symbol,
+                                          state_in, dir_in)
+    trans_pair = (trans.state_out, trans.symbol_out)
+    # Update to a History_Symbol
+    hist_symbol_out = update_history_lru(hist_symbol_in, trans.symbol_out, trans_pair)
+    return dataclasses.replace(trans, symbol_out = hist_symbol_out)
+  
+  def eval_symbol(self, hist_symbol : History_Symbol) -> int:
+    return self.base_tm.eval_symbol(hist_symbol.base_symbol)
+  def eval_state(self, state) -> int:
+    return self.base_tm.eval_state(state)
+
+class LRU_History_MM(Macro_Machine):
+  """
+  Macro machine which augments the tape alphabet with a history of all transitions used
+  on that cell ordered by last use.
+
+  This history does not affect behavior, but can be useful for distinguishing written
+  in different ways for deciders like CTL and CPS.
+  """
+
+  def __init__(self, base_tm : Turing_Machine) -> None:
+    self.base_tm = base_tm
+
+    self.init_symbol = History_Symbol(base_tm.init_symbol, tuple())  # Empty history
+    self.init_state = base_tm.init_state
+    self.init_dir = base_tm.init_dir
+    # This is functionally true, but not literally true.
+    self.num_symbols = base_tm.num_symbols
+    self.num_states = base_tm.num_states
+
+  def get_trans_object(self, hist_symbol_in : History_Symbol, state_in, dir_in) -> Transition:
+    base_symbol = hist_symbol_in.base_symbol
+    assert not isinstance(base_symbol, History_Symbol), hist_symbol_in
+    trans = self.base_tm.get_trans_object(base_symbol, state_in, dir_in)
+    trans_pair = (trans.state_out, trans.symbol_out)
+    # Update to a History_Symbol
+    hist_symbol_out = update_history_lru(hist_symbol_in, trans.symbol_out, trans_pair)
+    return dataclasses.replace(trans, symbol_out = hist_symbol_out)
+  
+  def eval_symbol(self, hist_symbol : History_Symbol) -> int:
+    return self.base_tm.eval_symbol(hist_symbol.base_symbol)
+  def eval_state(self, state) -> int:
+    return self.base_tm.eval_state(state)
