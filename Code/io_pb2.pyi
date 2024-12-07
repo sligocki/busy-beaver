@@ -1067,7 +1067,7 @@ class BacktrackFilterInfo(google.protobuf.message.Message):
 global___BacktrackFilterInfo = BacktrackFilterInfo
 
 @typing.final
-class ClosedGraphFilterParams(google.protobuf.message.Message):
+class CPSFilterParams(google.protobuf.message.Message):
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
     MIN_BLOCK_SIZE_FIELD_NUMBER: builtins.int
@@ -1098,10 +1098,10 @@ class ClosedGraphFilterParams(google.protobuf.message.Message):
     ) -> None: ...
     def ClearField(self, field_name: typing.Literal["max_block_size", b"max_block_size", "max_configs", b"max_configs", "max_edges", b"max_edges", "max_iters", b"max_iters", "max_steps", b"max_steps", "min_block_size", b"min_block_size", "search_all_windows", b"search_all_windows"]) -> None: ...
 
-global___ClosedGraphFilterParams = ClosedGraphFilterParams
+global___CPSFilterParams = CPSFilterParams
 
 @typing.final
-class ClosedGraphFilterResult(google.protobuf.message.Message):
+class CPSFilterResult(google.protobuf.message.Message):
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
     SUCCESS_FIELD_NUMBER: builtins.int
@@ -1141,28 +1141,28 @@ class ClosedGraphFilterResult(google.protobuf.message.Message):
     ) -> None: ...
     def ClearField(self, field_name: typing.Literal["block_size", b"block_size", "elapsed_time_us", b"elapsed_time_us", "found_inf_loop", b"found_inf_loop", "num_configs", b"num_configs", "num_edges", b"num_edges", "num_iters", b"num_iters", "num_steps", b"num_steps", "success", b"success", "window_size", b"window_size"]) -> None: ...
 
-global___ClosedGraphFilterResult = ClosedGraphFilterResult
+global___CPSFilterResult = CPSFilterResult
 
 @typing.final
-class ClosedGraphFilterInfo(google.protobuf.message.Message):
+class CPSFilterInfo(google.protobuf.message.Message):
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
     PARAMETERS_FIELD_NUMBER: builtins.int
     RESULT_FIELD_NUMBER: builtins.int
     @property
-    def parameters(self) -> global___ClosedGraphFilterParams: ...
+    def parameters(self) -> global___CPSFilterParams: ...
     @property
-    def result(self) -> global___ClosedGraphFilterResult: ...
+    def result(self) -> global___CPSFilterResult: ...
     def __init__(
         self,
         *,
-        parameters: global___ClosedGraphFilterParams | None = ...,
-        result: global___ClosedGraphFilterResult | None = ...,
+        parameters: global___CPSFilterParams | None = ...,
+        result: global___CPSFilterResult | None = ...,
     ) -> None: ...
     def HasField(self, field_name: typing.Literal["parameters", b"parameters", "result", b"result"]) -> builtins.bool: ...
     def ClearField(self, field_name: typing.Literal["parameters", b"parameters", "result", b"result"]) -> None: ...
 
-global___ClosedGraphFilterInfo = ClosedGraphFilterInfo
+global___CPSFilterInfo = CPSFilterInfo
 
 @typing.final
 class FilterResults(google.protobuf.message.Message):
@@ -1174,7 +1174,7 @@ class FilterResults(google.protobuf.message.Message):
     LIN_RECUR_FIELD_NUMBER: builtins.int
     CTL_FIELD_NUMBER: builtins.int
     BACKTRACK_FIELD_NUMBER: builtins.int
-    CLOSED_GRAPH_FIELD_NUMBER: builtins.int
+    CPS_FIELD_NUMBER: builtins.int
     @property
     def simulator(self) -> global___SimulatorInfo:
         """parameters, results and stats from various filters."""
@@ -1190,7 +1190,7 @@ class FilterResults(google.protobuf.message.Message):
     @property
     def backtrack(self) -> global___BacktrackFilterInfo: ...
     @property
-    def closed_graph(self) -> global___ClosedGraphFilterInfo: ...
+    def cps(self) -> global___CPSFilterInfo: ...
     def __init__(
         self,
         *,
@@ -1200,10 +1200,10 @@ class FilterResults(google.protobuf.message.Message):
         lin_recur: global___LinRecurFilterInfo | None = ...,
         ctl: global___CTLFilterInfo | None = ...,
         backtrack: global___BacktrackFilterInfo | None = ...,
-        closed_graph: global___ClosedGraphFilterInfo | None = ...,
+        cps: global___CPSFilterInfo | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["backtrack", b"backtrack", "block_finder", b"block_finder", "closed_graph", b"closed_graph", "ctl", b"ctl", "lin_recur", b"lin_recur", "reverse_engineer", b"reverse_engineer", "simulator", b"simulator"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["backtrack", b"backtrack", "block_finder", b"block_finder", "closed_graph", b"closed_graph", "ctl", b"ctl", "lin_recur", b"lin_recur", "reverse_engineer", b"reverse_engineer", "simulator", b"simulator"]) -> None: ...
+    def HasField(self, field_name: typing.Literal["backtrack", b"backtrack", "block_finder", b"block_finder", "cps", b"cps", "ctl", b"ctl", "lin_recur", b"lin_recur", "reverse_engineer", b"reverse_engineer", "simulator", b"simulator"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing.Literal["backtrack", b"backtrack", "block_finder", b"block_finder", "cps", b"cps", "ctl", b"ctl", "lin_recur", b"lin_recur", "reverse_engineer", b"reverse_engineer", "simulator", b"simulator"]) -> None: ...
 
 global___FilterResults = FilterResults
 

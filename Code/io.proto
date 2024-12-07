@@ -410,7 +410,7 @@ message BacktrackFilterInfo {
   BacktrackFilterResult result = 2;
 }
 
-message ClosedGraphFilterParams {
+message CPSFilterParams {
   // Parameters
   uint64 min_block_size = 1;
   uint64 max_block_size = 2;
@@ -421,7 +421,7 @@ message ClosedGraphFilterParams {
   uint64 max_edges = 7;
 }
 
-message ClosedGraphFilterResult {
+message CPSFilterResult {
   // Results
   bool success = 1;
 
@@ -440,9 +440,9 @@ message ClosedGraphFilterResult {
   uint64 elapsed_time_us = 2;
 }
 
-message ClosedGraphFilterInfo {
-  ClosedGraphFilterParams parameters = 1;
-  ClosedGraphFilterResult result = 2;
+message CPSFilterInfo {
+  CPSFilterParams parameters = 1;
+  CPSFilterResult result = 2;
 }
 
 
@@ -455,7 +455,7 @@ message FilterResults {
   LinRecurFilterInfo lin_recur = 4;
   CTLFilterInfo ctl = 5;
   BacktrackFilterInfo backtrack = 6;
-  ClosedGraphFilterInfo closed_graph = 7;
+  CPSFilterInfo cps = 7;
 
   // TODO: Add results for other filters
 }

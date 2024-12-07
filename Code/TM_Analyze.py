@@ -148,13 +148,13 @@ class TMStats:
       self.bt_max_steps.add(tm_record.filter.backtrack.result.max_steps)
       self.bt_max_width.add(tm_record.filter.backtrack.result.max_width)
 
-    if tm_record.filter.closed_graph.result.success:
-      self.cg_block_size.add(tm_record.filter.closed_graph.result.block_size)
-      self.cg_num_steps.add(tm_record.filter.closed_graph.result.num_steps)
-      self.cg_num_configs.add(tm_record.filter.closed_graph.result.num_configs)
-      self.cg_num_edges.add(tm_record.filter.closed_graph.result.num_edges)
-      self.cg_num_iters.add(tm_record.filter.closed_graph.result.num_iters)
-      self.cg_found_inf_loop.add(tm_record.filter.closed_graph.result.found_inf_loop)
+    if tm_record.filter.cps.result.success:
+      self.cg_block_size.add(tm_record.filter.cps.result.block_size)
+      self.cg_num_steps.add(tm_record.filter.cps.result.num_steps)
+      self.cg_num_configs.add(tm_record.filter.cps.result.num_configs)
+      self.cg_num_edges.add(tm_record.filter.cps.result.num_edges)
+      self.cg_num_iters.add(tm_record.filter.cps.result.num_iters)
+      self.cg_found_inf_loop.add(tm_record.filter.cps.result.found_inf_loop)
 
     # Timing
     self.timings_s["total"].add(tm_record.elapsed_time_us / 1e6)
@@ -169,7 +169,7 @@ class TMStats:
       tm_record.filter.ctl.ctl_as_b_c.result.elapsed_time_us
       ) / 1e6)
     self.timings_s["backtrack"].add(tm_record.filter.backtrack.result.elapsed_time_us / 1e6)
-    self.timings_s["closed_graph"].add(tm_record.filter.closed_graph.result.elapsed_time_us / 1e6)
+    self.timings_s["cps"].add(tm_record.filter.cps.result.elapsed_time_us / 1e6)
 
     # Serialized Size
     self.sizes["total"].add(tm_record.ByteSize())
@@ -182,7 +182,7 @@ class TMStats:
     self.sizes["lin_recur"].add(tm_record.filter.lin_recur.ByteSize())
     self.sizes["ctl"].add(tm_record.filter.ctl.ByteSize())
     self.sizes["backtrack"].add(tm_record.filter.backtrack.ByteSize())
-    self.sizes["closed_graph"].add(tm_record.filter.closed_graph.ByteSize())
+    self.sizes["cps"].add(tm_record.filter.cps.ByteSize())
 
   def print(self):
     print()
@@ -251,7 +251,7 @@ class TMStats:
       print()
 
     if self.cg_num_configs.count:
-      print("Closed Graph:")
+      print("CPS:")
       print(f"  - block_size   : Mean {self.cg_block_size.mean():_.2f}  "
             f"Max {self.cg_block_size.max_value:_}")
       print(f"  - num_steps    : Mean {self.cg_num_steps.mean():_.0f}  "

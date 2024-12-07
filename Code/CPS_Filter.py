@@ -14,12 +14,12 @@ def filter(tm_record, block_size : int, window_size : int,
   CPS.filter(tm_record.tm(), block_size, window_size,
              fixed_history, lru_history,
              max_steps, max_iters, max_configs, max_edges,
-             tm_record.proto.filter.closed_graph.result,
+             tm_record.proto.filter.cps.result,
              tm_record.proto.status)
 
 def filter_all(tm_record, args) -> None:
   tm_record.clear_proto()
-  info = tm_record.proto.filter.closed_graph
+  info = tm_record.proto.filter.cps
   with IO.Timer(info.result):
     if args.max_block_size:
       info.parameters.min_block_size = args.min_block_size

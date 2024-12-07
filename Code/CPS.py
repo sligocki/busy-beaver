@@ -1,13 +1,10 @@
 #! /usr/bin/env python3
 """
-Closed Graph Filter (aka CPS, aka Markov) is a twist on CTL where the langauge is a graph-based language.
+Closed Position Set (aka CPS or Closed Graph) is a twist on CTL where the language is a graph-based language.
 
 This is my implementation of savask's Closed Position Set (CPS) decider
   https://gist.github.com/savask/1c43a0e5cdd81229f236dcf2b0611c3f
 Which they reverse-engineered from Skelet's program originally.
-
-While reading savask's description, I realized that many of the details he uses
-are captured directly in the Block Macro Machine idea.
 """
 
 from typing import Optional
@@ -79,11 +76,11 @@ class Config:
             self.window == other.window and self.pos == other.pos)
 
 
-class ClosedGraphSim:
+class CPSSim:
   def __init__(self, tm : Turing_Machine.Turing_Machine,
                block_size : int, window_size : int,
                max_steps : int, max_iters : int, max_configs : int, max_edges : int,
-               result : io_pb2.ClosedGraphFilterResult):
+               result : io_pb2.CPSFilterResult):
     self.tm = tm
     self.block_size = block_size
     self.window_size = window_size
@@ -297,7 +294,7 @@ def filter(base_tm : Turing_Machine.Simple_Machine,
            block_size : int, window_size : int,
            fixed_history : int, lru_history : bool,
            max_steps : int, max_iters : int, max_configs : int, max_edges : int,
-           cg_result : io_pb2.ClosedGraphFilterResult,
+           cg_result : io_pb2.CPSFilterResult,
            bb_status : io_pb2.BBStatus):
   if fixed_history:
     tm = Turing_Machine.Fixed_History_MM(base_tm, fixed_history)
@@ -307,9 +304,9 @@ def filter(base_tm : Turing_Machine.Simple_Machine,
     tm = base_tm
 
   cg_result.Clear()
-  graph_set = ClosedGraphSim(tm, block_size, window_size,
-                             max_steps, max_iters, max_configs, max_edges,
-                             cg_result)
+  graph_set = CPSSim(tm, block_size, window_size,
+                     max_steps, max_iters, max_configs, max_edges,
+                     cg_result)
   graph_set.run()
   cg_result.block_size = block_size
   cg_result.window_size = window_size
@@ -346,7 +343,7 @@ def main():
 
   assert args.window_size >= 2 * args.block_size
 
-  cg_result = io_pb2.ClosedGraphFilterResult()
+  cg_result = io_pb2.CPSFilterResult()
   bb_status = io_pb2.BBStatus()
 
   tm = IO.get_tm(args.tm)
