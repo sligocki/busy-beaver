@@ -415,6 +415,10 @@ message CPSFilterParams {
   uint64 min_block_size = 1;
   uint64 max_block_size = 2;
   bool search_all_windows = 3;
+
+  bool lru_history = 8;
+  uint64 fixed_history = 9;
+
   uint64 max_steps = 4;
   uint64 max_iters = 5;
   uint64 max_configs = 6;

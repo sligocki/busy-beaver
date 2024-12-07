@@ -1073,6 +1073,8 @@ class CPSFilterParams(google.protobuf.message.Message):
     MIN_BLOCK_SIZE_FIELD_NUMBER: builtins.int
     MAX_BLOCK_SIZE_FIELD_NUMBER: builtins.int
     SEARCH_ALL_WINDOWS_FIELD_NUMBER: builtins.int
+    LRU_HISTORY_FIELD_NUMBER: builtins.int
+    FIXED_HISTORY_FIELD_NUMBER: builtins.int
     MAX_STEPS_FIELD_NUMBER: builtins.int
     MAX_ITERS_FIELD_NUMBER: builtins.int
     MAX_CONFIGS_FIELD_NUMBER: builtins.int
@@ -1081,6 +1083,8 @@ class CPSFilterParams(google.protobuf.message.Message):
     """Parameters"""
     max_block_size: builtins.int
     search_all_windows: builtins.bool
+    lru_history: builtins.bool
+    fixed_history: builtins.int
     max_steps: builtins.int
     max_iters: builtins.int
     max_configs: builtins.int
@@ -1091,12 +1095,14 @@ class CPSFilterParams(google.protobuf.message.Message):
         min_block_size: builtins.int = ...,
         max_block_size: builtins.int = ...,
         search_all_windows: builtins.bool = ...,
+        lru_history: builtins.bool = ...,
+        fixed_history: builtins.int = ...,
         max_steps: builtins.int = ...,
         max_iters: builtins.int = ...,
         max_configs: builtins.int = ...,
         max_edges: builtins.int = ...,
     ) -> None: ...
-    def ClearField(self, field_name: typing.Literal["max_block_size", b"max_block_size", "max_configs", b"max_configs", "max_edges", b"max_edges", "max_iters", b"max_iters", "max_steps", b"max_steps", "min_block_size", b"min_block_size", "search_all_windows", b"search_all_windows"]) -> None: ...
+    def ClearField(self, field_name: typing.Literal["fixed_history", b"fixed_history", "lru_history", b"lru_history", "max_block_size", b"max_block_size", "max_configs", b"max_configs", "max_edges", b"max_edges", "max_iters", b"max_iters", "max_steps", b"max_steps", "min_block_size", b"min_block_size", "search_all_windows", b"search_all_windows"]) -> None: ...
 
 global___CPSFilterParams = CPSFilterParams
 
