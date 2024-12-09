@@ -26,7 +26,8 @@ def filter_all(tm_record, args) -> None:
       info.parameters.max_block_size = args.max_block_size
     info.parameters.search_all_windows = bool(args.max_window_size)
     info.parameters.lru_history = bool(args.lru_history)
-    info.parameters.fixed_history = args.fixed_history
+    if args.fixed_history:
+      info.parameters.fixed_history = args.fixed_history
     info.parameters.max_steps = args.max_steps
     info.parameters.max_iters = args.max_iters
     info.parameters.max_configs = args.max_configs
