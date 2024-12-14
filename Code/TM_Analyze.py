@@ -159,7 +159,7 @@ class TMStats:
       self.bt_max_steps.add(tm_record.filter.backtrack.result.max_steps)
       self.bt_max_width.add(tm_record.filter.backtrack.result.max_width)
 
-    if tm_record.filter.cps.result.success:
+    if tm_record.filter.cps.result.block_size:
       self.cg_block_size.add(tm_record.filter.cps.result.block_size)
       self.cg_num_steps.add(tm_record.filter.cps.result.num_steps)
       self.cg_num_configs.add(tm_record.filter.cps.result.num_configs)
@@ -264,21 +264,21 @@ class TMStats:
 
     if self.cg_num_configs.count:
       print("CPS:")
-      print(f"  - block_size   : Mean {self.cg_block_size.mean():7_.2f}  "
-            f"StdDev {self.cg_block_size.std_dev():7_.2f}  "
-            f"Max {self.cg_block_size.max_value:7_}")
-      print(f"  - num_steps    : Mean {self.cg_num_steps.mean():7_.0f}  "
-            f"StdDev {self.cg_num_steps.std_dev():7_.0f}  "
-            f"Max {self.cg_num_steps.max_value:7_}")
-      print(f"  - num_configs  : Mean {self.cg_num_configs.mean():7_.2f}  "
-            f"StdDev {self.cg_num_configs.std_dev():7_.2f}  "
-            f"Max {self.cg_num_configs.max_value:7_}")
-      print(f"  - num_edges    : Mean {self.cg_num_edges.mean():7_.2f}  "
-            f"StdDev {self.cg_num_edges.std_dev():7_.2f}  "
-            f"Max {self.cg_num_edges.max_value:7_}")
-      print(f"  - num_iters    : Mean {self.cg_num_iters.mean():7_.2f}  "
-            f"StdDev {self.cg_num_iters.std_dev():7_.2f}  "
-            f"Max {self.cg_num_iters.max_value:7_}")
+      print(f"  - block_size   : Mean {self.cg_block_size.mean():9_.2f}  "
+            f"StdDev {self.cg_block_size.std_dev():9_.2f}  "
+            f"Max {self.cg_block_size.max_value:9_}")
+      print(f"  - num_steps    : Mean {self.cg_num_steps.mean():9_.0f}  "
+            f"StdDev {self.cg_num_steps.std_dev():9_.0f}  "
+            f"Max {self.cg_num_steps.max_value:9_}")
+      print(f"  - num_configs  : Mean {self.cg_num_configs.mean():9_.2f}  "
+            f"StdDev {self.cg_num_configs.std_dev():9_.2f}  "
+            f"Max {self.cg_num_configs.max_value:9_}")
+      print(f"  - num_edges    : Mean {self.cg_num_edges.mean():9_.2f}  "
+            f"StdDev {self.cg_num_edges.std_dev():9_.2f}  "
+            f"Max {self.cg_num_edges.max_value:9_}")
+      print(f"  - num_iters    : Mean {self.cg_num_iters.mean():9_.2f}  "
+            f"StdDev {self.cg_num_iters.std_dev():9_.2f}  "
+            f"Max {self.cg_num_iters.max_value:9_}")
       print(f"  - found_inf_loop : {self.cg_found_inf_loop.count:_d} ({self.cg_found_inf_loop.count / self.count:8.4%})")
       print()
 
