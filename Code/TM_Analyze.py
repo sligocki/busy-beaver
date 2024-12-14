@@ -226,17 +226,17 @@ class TMStats:
 
     if self.sim_num_loops.count:
       print("Simulator:")
-      print(f"  - num_loops         : Mean {self.sim_num_loops.mean():9_.0f}  Max {self.sim_num_loops.max_value:9_d}")
+      print(f"  - num_loops             : Mean {self.sim_num_loops.mean():9_.0f}  Max {self.sim_num_loops.max_value:9_d}")
       # self.print_hist(self.sim_num_loops.log_hist)
       # print()
-      print(f"  - log10(num_steps)  : Mean {self.sim_log10_num_steps.mean():9_.0f}  Max {self.sim_log10_num_steps.max_value:9_.0f}  Min {self.sim_log10_num_steps.min_value:9_.0f}")
-      print(f"  - num_rules_proven  : Mean {self.sim_num_rules_proven.mean():9_.0f}  Max {self.sim_num_rules_proven.max_value:9_d}  (Set in {self.sim_num_rules_proven.count / self.count:7.2%})")
-      print(f"  - num_linear_rules  : Mean {self.sim_num_linear_rules_proven.mean():9_.0f}  Max {self.sim_num_linear_rules_proven.max_value:9_d}  (Set in {self.sim_num_linear_rules_proven.count / self.count:7.2%})")
-      print(f"  - num_exponential_rules  : Mean {self.sim_num_exponential_rules_proven.mean():9_.0f}  Max {self.sim_num_exponential_rules_proven.max_value:9_d}  (Set in {self.sim_num_exponential_rules_proven.count / self.count:7.2%})")
-      print(f"  - num_gen_rules     : Mean {self.sim_num_gen_rules_proven.mean():9_.0f}  Max {self.sim_num_gen_rules_proven.max_value:9_d}  (Set in {self.sim_num_gen_rules_proven.count / self.count:7.2%})")
-      print(f"  - num_collatz_rules : Mean {self.sim_num_collatz_rules.mean():9_.0f}  Max {self.sim_num_collatz_rules.max_value:9_d}  (Set in {self.sim_num_collatz_rules.count / self.count:7.2%})")
-      print(f"  - num_proofs_failed : Mean {self.sim_num_proofs_failed.mean():9_.0f}  Max {self.sim_num_proofs_failed.max_value:9_d}  (Set in {self.sim_num_proofs_failed.count / self.count:7.2%})")
-      print(f"  - num_rule_moves    : Mean {self.sim_num_rule_moves.mean():9_.0f}  Max {self.sim_num_rule_moves.max_value:9_d}  (Set in {self.sim_num_rule_moves.count / self.count:7.2%})")
+      print(f"  - log10(num_steps)      : Mean {self.sim_log10_num_steps.mean():9_.0f}  Max {self.sim_log10_num_steps.max_value:9_.0f}  Min {self.sim_log10_num_steps.min_value:9_.0f}")
+      print(f"  - num_rules_proven      : Mean {self.sim_num_rules_proven.mean():9_.0f}  Max {self.sim_num_rules_proven.max_value:9_d}  (Set in {self.sim_num_rules_proven.count / self.count:7.2%})")
+      print(f"  - num_linear_rules      : Mean {self.sim_num_linear_rules_proven.mean():9_.0f}  Max {self.sim_num_linear_rules_proven.max_value:9_d}  (Set in {self.sim_num_linear_rules_proven.count / self.count:7.2%})")
+      print(f"  - num_exponential_rules : Mean {self.sim_num_exponential_rules_proven.mean():9_.0f}  Max {self.sim_num_exponential_rules_proven.max_value:9_d}  (Set in {self.sim_num_exponential_rules_proven.count / self.count:7.2%})")
+      print(f"  - num_gen_rules         : Mean {self.sim_num_gen_rules_proven.mean():9_.0f}  Max {self.sim_num_gen_rules_proven.max_value:9_d}  (Set in {self.sim_num_gen_rules_proven.count / self.count:7.2%})")
+      print(f"  - num_collatz_rules     : Mean {self.sim_num_collatz_rules.mean():9_.0f}  Max {self.sim_num_collatz_rules.max_value:9_d}  (Set in {self.sim_num_collatz_rules.count / self.count:7.2%})")
+      print(f"  - num_proofs_failed     : Mean {self.sim_num_proofs_failed.mean():9_.0f}  Max {self.sim_num_proofs_failed.max_value:9_d}  (Set in {self.sim_num_proofs_failed.count / self.count:7.2%})")
+      print(f"  - num_rule_moves        : Mean {self.sim_num_rule_moves.mean():9_.0f}  Max {self.sim_num_rule_moves.max_value:9_d}  (Set in {self.sim_num_rule_moves.count / self.count:7.2%})")
       print()
 
     if self.lr_period.count:
@@ -264,21 +264,21 @@ class TMStats:
 
     if self.cg_num_configs.count:
       print("CPS:")
-      print(f"  - block_size   : Mean {self.cg_block_size.mean():9_.2f}  "
-            f"StdDev {self.cg_block_size.std_dev():9_.2f}  "
-            f"Max {self.cg_block_size.max_value:9_}")
-      print(f"  - num_steps    : Mean {self.cg_num_steps.mean():9_.0f}  "
-            f"StdDev {self.cg_num_steps.std_dev():9_.0f}  "
-            f"Max {self.cg_num_steps.max_value:9_}")
-      print(f"  - num_configs  : Mean {self.cg_num_configs.mean():9_.2f}  "
-            f"StdDev {self.cg_num_configs.std_dev():9_.2f}  "
-            f"Max {self.cg_num_configs.max_value:9_}")
-      print(f"  - num_edges    : Mean {self.cg_num_edges.mean():9_.2f}  "
-            f"StdDev {self.cg_num_edges.std_dev():9_.2f}  "
-            f"Max {self.cg_num_edges.max_value:9_}")
-      print(f"  - num_iters    : Mean {self.cg_num_iters.mean():9_.2f}  "
-            f"StdDev {self.cg_num_iters.std_dev():9_.2f}  "
-            f"Max {self.cg_num_iters.max_value:9_}")
+      print(f"  - block_size     : Mean {self.cg_block_size.mean():11_.2f}  "
+            f"StdDev {self.cg_block_size.std_dev():11_.2f}  "
+            f"Max {self.cg_block_size.max_value:11_}")
+      print(f"  - num_steps      : Mean {self.cg_num_steps.mean():11_.0f}  "
+            f"StdDev {self.cg_num_steps.std_dev():11_.0f}  "
+            f"Max {self.cg_num_steps.max_value:11_}")
+      print(f"  - num_configs    : Mean {self.cg_num_configs.mean():11_.2f}  "
+            f"StdDev {self.cg_num_configs.std_dev():11_.2f}  "
+            f"Max {self.cg_num_configs.max_value:11_}")
+      print(f"  - num_edges      : Mean {self.cg_num_edges.mean():11_.2f}  "
+            f"StdDev {self.cg_num_edges.std_dev():11_.2f}  "
+            f"Max {self.cg_num_edges.max_value:11_}")
+      print(f"  - num_iters      : Mean {self.cg_num_iters.mean():11_.2f}  "
+            f"StdDev {self.cg_num_iters.std_dev():11_.2f}  "
+            f"Max {self.cg_num_iters.max_value:11_}")
       print(f"  - found_inf_loop : {self.cg_found_inf_loop.count:_d} ({self.cg_found_inf_loop.count / self.count:8.4%})")
       print()
 
