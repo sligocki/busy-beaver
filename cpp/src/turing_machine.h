@@ -68,6 +68,9 @@ class TuringMachine {
   std::vector<std::vector<LookupResult>> transitions_;
 };
 
+// Standard halt transition: 1RZ
+const TuringMachine::LookupResult HALT_TRANS = {1 /* symbol */, RIGHT, HaltState};
+
 // Write TM to outstream in a human-readable format.
 void WriteTuringMachine(const TuringMachine& tm, std::ostream* outstream);
 
