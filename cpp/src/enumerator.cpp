@@ -33,7 +33,7 @@ void BaseEnumerator::expand_tm(
     int order = 0;
     for (State next_state = 0; next_state <= tm.max_next_state(); ++next_state) {
       for (Symbol next_symbol = 0; next_symbol <= tm.max_next_symbol(); ++next_symbol) {
-        for (int next_move : {+1, -1}) {
+        for (Dir next_move : {RIGHT, LEFT}) {
           if (next_move == +1 || tm.next_move_left_ok()) {
             const TuringMachine::LookupResult next = {
               next_symbol, next_move, next_state};

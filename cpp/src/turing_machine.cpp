@@ -13,7 +13,7 @@ TuringMachine::TuringMachine(int num_states, int num_symbols)
       max_next_state_(1), max_next_symbol_(1),
       next_move_left_ok_(false), num_halts_(num_states * num_symbols),
       hereditary_name_() {
-  const LookupResult empty_trans = {1, +1, HaltState, true};
+  const LookupResult empty_trans = {1, RIGHT, HaltState, true};
   for (int i = 0; i < num_states; ++i) {
     transitions_.emplace_back(num_symbols, empty_trans);
   }
@@ -135,7 +135,7 @@ TuringMachine* ReadTuringMachineStr(const std::string& tm_str,
       TuringMachine::LookupResult trans;
       if (tm_str[i] == '-') {
         // Undecided transition
-        trans = {1, +1, HaltState, true};
+        trans = {1, RIGHT, HaltState, true};
       } else {
         ASSERT(!trans.undecided);
         // Format: 1RB (write symbol, move dir, next state).
@@ -143,10 +143,10 @@ TuringMachine* ReadTuringMachineStr(const std::string& tm_str,
         trans.symbol = tm_str[i] - '0';
         ASSERT(0 <= trans.symbol && trans.symbol <= 9);
         if (tm_str[i+1] == 'R') {
-          trans.move = +1;
+          trans.move = RIGHT;
         } else {
           ASSERT(tm_str[i+1] == 'L');
-          trans.move = -1;
+          trans.move = LEFT;
         }
         char state_char = tm_str[i+2];
         if (state_char == 'Z') {

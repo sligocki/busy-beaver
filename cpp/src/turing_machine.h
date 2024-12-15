@@ -14,11 +14,16 @@ const Symbol BlankSymbol = 0;
 const State InitialState = 0;
 const State HaltState = -1;
 
+enum Dir {
+  LEFT = -1,
+  RIGHT = +1
+};
+
 class TuringMachine {
  public:
   struct LookupResult {
     Symbol symbol;
-    int move;  // +1 for Right, -1 for Left.
+    Dir move;
     State state;
     bool undecided = false;
   };

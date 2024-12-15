@@ -5,7 +5,6 @@ from pathlib import Path
 
 import CPS
 import IO
-from Macro import Turing_Machine
 
 
 def filter(tm_record, block_size : int, window_size : int,

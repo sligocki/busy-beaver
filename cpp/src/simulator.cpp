@@ -43,6 +43,16 @@ void Tape::print() const {
   std::cout << std::endl;
 }
 
+long Tape::sigma_score() const {
+  long score = 0;
+  for (const Symbol symbol : tape_) {
+    if (symbol != BlankSymbol) {
+      score += 1;
+    }
+  }
+  return score;
+}
+
 DirectSimulator::DirectSimulator(const TuringMachine& tm)
   : tm_(tm),
     state_(InitialState),

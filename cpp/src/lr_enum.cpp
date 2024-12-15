@@ -30,7 +30,7 @@ void LinRecurEnumerate(
   std::unique_ptr<TuringMachine> init_tm(
     new TuringMachine(num_states, num_symbols));
   if (first_1rb) {
-    const TuringMachine::LookupResult next = {1, +1, 1};  // 1RB
+    const TuringMachine::LookupResult next = {1, RIGHT, 1};  // 1RB
     init_tm.reset(new TuringMachine(
       *init_tm, InitialState, BlankSymbol, next, 0));
   }

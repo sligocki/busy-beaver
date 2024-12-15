@@ -26,6 +26,9 @@ class Tape {
 
   void print() const;
 
+  // Count Rado sigma() score (number of non-zero symbols on tape).
+  long sigma_score() const;
+
  private:
   const long unit_size_;
   std::vector<Symbol> tape_;

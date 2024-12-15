@@ -20,6 +20,11 @@ void DirectSimMain(const std::string& in_tms_filename, const long num_steps,
   // Go through all TMs in infile simulating each.
   std::ifstream in_tms_stream(in_tms_filename, std::ios::in | std::ios::binary);
   std::ofstream out_tms_stream(out_tms_filename, std::ios::out | std::ios::binary);
+
+  // Standard Halting transition that we add to all halting TMs.
+  const TuringMachine::LookupResult halt_trans = {
+    1 /* next_symbol */, RIGHT, HaltState};
+
   while (true) {
     std::unique_ptr<TuringMachine> tm(ReadTuringMachineStream(&in_tms_stream, ""));
     if (tm == nullptr) {
@@ -29,11 +34,15 @@ void DirectSimMain(const std::string& in_tms_filename, const long num_steps,
       sim.Seek(num_steps);
       num_total += 1;
 
+      if (sim.is_halted()) {
+        // Add halting transition if the TM halted.
+        tm.reset(new TuringMachine(*tm, sim.last_state(), sim.last_symbol(), halt_trans, 0));
+      }
       // Write results
       WriteTuringMachine(*tm, &out_tms_stream);
       if (sim.is_halted()) {
         num_halted += 1;
-        out_tms_stream << " Halt " << sim.step_num() << std::endl;
+        out_tms_stream << " Halt " << sim.step_num() << " " << sim.tape().sigma_score() << std::endl;
       } else {
         num_unknown += 1;
         out_tms_stream << " Unknown " << sim.step_num() << std::endl;
