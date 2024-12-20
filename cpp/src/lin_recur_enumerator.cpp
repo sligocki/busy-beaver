@@ -44,43 +44,87 @@ LinRecurEnum::LinRecurEnum(const bool allow_no_halt,
 
   only_unknown_ = only_unknown_in;
 
-  out_halt_stream_2_   .open(out_halt_filename    + file_suffix, std::ios::out | std::ios::binary);
-  out_inf_stream_2_    .open(out_inf_filename     + file_suffix, std::ios::out | std::ios::binary);
-  out_unknown_stream_2_.open(out_unknown_filename + file_suffix, std::ios::out | std::ios::binary);
+  if (!only_unknown_) {
+    out_halt_stream_2_   .open(out_halt_filename    + file_suffix, std::ios::out | std::ios::binary);
+    if (!out_halt_stream_2_.is_open()) {
+      std::cerr << "Unable to open '" << out_halt_filename + file_suffix << "'" << std::endl;
+      std::exit(1);
+    }
 
-  if (compress_output) {
-    out_halt_buf_   .push(boost::iostreams::gzip_compressor());
-    out_inf_buf_    .push(boost::iostreams::gzip_compressor());
-    out_unknown_buf_.push(boost::iostreams::gzip_compressor());
+    out_inf_stream_2_    .open(out_inf_filename     + file_suffix, std::ios::out | std::ios::binary);
+    if (!out_inf_stream_2_.is_open()) {
+      std::cerr << "Unable to open '" << out_inf_filename + file_suffix << "'" << std::endl;
+      std::exit(1);
+    }
   }
 
-  out_halt_buf_   .push(out_halt_stream_2_);
-  out_inf_buf_    .push(out_inf_stream_2_);
-  out_unknown_buf_.push(out_unknown_stream_2_);
-#else
-  if (compress_output) {
-    std::cerr << "Compressing TM output without compiling with Boost isn't supported\n";
+  out_unknown_stream_2_.open(out_unknown_filename + file_suffix, std::ios::out | std::ios::binary);
+  if (!out_unknown_stream_2_.is_open()) {
+    std::cerr << "Unable to open '" << out_unknown_filename + file_suffix << "'" << std::endl;
     std::exit(1);
   }
 
-  out_halt_stream_.open(out_halt_filename, std::ios::out | std::ios::binary);
-  out_inf_stream_.open(out_inf_filename, std::ios::out | std::ios::binary);
+  if (compress_output) {
+    if (!only_unknown_) {
+      out_halt_buf_   .push(boost::iostreams::gzip_compressor());
+      out_inf_buf_    .push(boost::iostreams::gzip_compressor());
+    }
+    out_unknown_buf_.push(boost::iostreams::gzip_compressor());
+  }
+
+  if (!only_unknown_) {
+    out_halt_buf_   .push(out_halt_stream_2_);
+    out_inf_buf_    .push(out_inf_stream_2_);
+  }
+  out_unknown_buf_.push(out_unknown_stream_2_);
+#else
+  if (compress_output) {
+    std::cerr << "Compressing TM output without compiling with Boost isn't supported" << std:endl;
+    std::exit(1);
+  }
+
+  if (!only_unknown_) {
+    out_halt_stream_.open(out_halt_filename, std::ios::out | std::ios::binary);
+    if (!out_halt_stream.is_open()) {
+      std::cerr << "Unable to open '" << out_halt_filename << "'" << std::endl;
+      std::exit(1);
+    }
+
+    out_inf_stream_.open(out_inf_filename, std::ios::out | std::ios::binary);
+    if (!out_inf_stream.is_open()) {
+      std::cerr << "Unable to open '" << out_inf_filename << "'" << std::endl;
+      std::exit(1);
+    }
+  }
+
   out_unknown_stream_.open(out_unknown_filename, std::ios::out | std::ios::binary);
+  if (!out_unknown_stream.is_open()) {
+    std::cerr << "Unable to open '" << out_unknown_filename << "'" << std::endl;
+    std::exit(1);
+  }
 #endif
 }
 
 LinRecurEnum::~LinRecurEnum() {
 #if BOOST_FOUND
-  boost::iostreams::close(out_halt_buf_   );
-  boost::iostreams::close(out_inf_buf_    );
+  if (!only_unknown_) {
+    boost::iostreams::close(out_halt_buf_   );
+    boost::iostreams::close(out_inf_buf_    );
+  }
+
   boost::iostreams::close(out_unknown_buf_);
 
-  out_halt_stream_2_   .close();
-  out_inf_stream_2_    .close();
+  if (!only_unknown_) {
+    out_halt_stream_2_   .close();
+    out_inf_stream_2_    .close();
+  }
+
   out_unknown_stream_2_.close();
 #else
-  out_halt_stream_   .close();
-  out_inf_stream_    .close();
+  if (!only_unknown_) {
+    out_halt_stream_   .close();
+    out_inf_stream_    .close();
+  }
   out_unknown_stream_.close();
 #endif
 }
