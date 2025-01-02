@@ -61,7 +61,7 @@ LinRecurResult LinRecurDetect(const TuringMachine& tm, const long max_steps) {
       sim.Step();
       if (sim.is_halted()) {
         return {true, false, 0, 0, 0, sim.last_state(), sim.last_symbol(),
-                init_step_num, sim.step_num()};
+                init_step_num, sim.step_num(), sim.tape().sigma_score()};
       }
 
       most_left_pos = std::min(most_left_pos, sim.tape().position());

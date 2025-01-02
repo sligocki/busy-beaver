@@ -157,7 +157,9 @@ EnumExpandParams LinRecurEnum::filter_tm(const TuringMachine& tm) {
       // Add explicit halt transitions to halting TMs enumerated.
       const TuringMachine halt_tm(tm, result.last_state, result.last_symbol, HALT_TRANS, 0);
       WriteTuringMachine(halt_tm, &out_halt_stream_);
-      out_halt_stream_ << " | Halt " << result.steps_run << "\n";
+      out_halt_stream_ << " Halt " << result.steps_run 
+                       << " "        << result.sigma_score
+                       << "\n";
     }
   } else if (result.is_lin_recurrent) {
     num_tms_inf_ += 1;
@@ -165,7 +167,7 @@ EnumExpandParams LinRecurEnum::filter_tm(const TuringMachine& tm) {
     if (!only_unknown_) {
       // Write TM that entered Lin Recurrence along with it's period, etc.
       WriteTuringMachine(tm, &out_inf_stream_);
-      out_inf_stream_ << " | Lin_Recur " << result.lr_period << " "
+      out_inf_stream_ << " Lin_Recur " << result.lr_period << " "
                        << result.lr_offset << " <" << result.lr_start_step << "\n";
       if (result.lr_period > max_period_) {
         max_period_ = result.lr_period;

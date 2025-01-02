@@ -30,6 +30,7 @@ void LinRecurMain(const std::string& tm_filename, const long line_num,
   } else if (result.is_halted) {
     std::cout << "Halted" << std::endl;
     std::cout << "  steps_run: " << result.steps_run << std::endl;
+    std::cout << "  sigma_score: " << result.sigma_score << std::endl;
     std::cout << "  last_state: " << result.last_state << std::endl;
     std::cout << "  last_symbol: " << result.last_symbol << std::endl;
   } else {

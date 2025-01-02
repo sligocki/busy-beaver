@@ -16,6 +16,7 @@ struct LinRecurResult {
   Symbol last_symbol;
   long max_ref_config_step;
   long steps_run;
+  long sigma_score;
 };
 
 // Search for Lin Recurrence detectable within the first max_steps.

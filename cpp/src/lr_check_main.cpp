@@ -29,6 +29,7 @@ void LRCheckMain(const std::string& tm_str,
     std::cout << "Failed" << std::endl;
     std::cout << "  is_halted: " << result.is_halted << std::endl;
     std::cout << "  steps_run: " << result.steps_run << std::endl;
+    std::cout << "  sigma_score: " << result.sigma_score << std::endl;
   }
   std::cout << "Runtime: " << timer.time_elapsed_s() << "s" << std::endl;
 }
