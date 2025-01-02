@@ -10,17 +10,18 @@ from Exp_Int import ExpInt, ExpTerm, tower_value, fractional_height, try_eval
 import io_pb2
 
 
-def big_int_approx_str(value):
+def big_int_approx_str(value, digits_cutoff : int = 10):
   if value is None:
     return "N/A"
   if value in (math.inf, -math.inf) or not is_const(value):
     return str(value)
 
-  if value < 10**10:
+  cutoff = 10**digits_cutoff
+  if value < cutoff:
     return f"{try_eval(value):_}"
 
   (height, top) = tower_value(value)
-  while top > 10**10:
+  while top > cutoff:
     height += 1
     top = math.log10(top)
 
