@@ -12,7 +12,7 @@ import TNF
 
 def try_tnf(tm : Turing_Machine.Simple_Machine, tnf_max_steps : int) -> Turing_Machine.Simple_Machine:
   """Attempt to convert a TM to TNF, return original if it fails."""
-  tnf_tm = TNF.to_TNF(tm, tnf_max_steps)
+  tnf_tm = TNF.to_TNF(tm, skip_zeros=False, max_steps=tnf_max_steps)
   if tnf_tm:
     return tnf_tm
   return tm

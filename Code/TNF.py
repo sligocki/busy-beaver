@@ -51,16 +51,28 @@ def permute_table(old_tm, state_order, symbol_order, swap_dirs=False):
         )
   return new_tm
 
-def to_TNF(tm : Turing_Machine.Simple_Machine, max_steps : int) -> Turing_Machine.Simple_Machine | None:
-  state_order = [0]
-  symbol_order = [0]
+def sim_skip_zeros(sim : Direct_Simulator.DirectSimulator, max_steps : int) -> None:
+  while sim.step_num <= max_steps and not sim.halted:
+    if sim.tm.get_trans_object(sim.cur_symbol(), sim.state).symbol_out != sim.tm.init_symbol:
+      return
+    sim.step()
+
+def to_TNF(tm : Turing_Machine.Simple_Machine,
+           skip_zeros : bool, max_steps : int) -> Turing_Machine.Simple_Machine | None:
+  sim = Direct_Simulator.DirectSimulator(tm)
+
+  if skip_zeros:
+    sim_skip_zeros(sim, max_steps)
+
+  state_order = [sim.state]
+  symbol_order = [sim.cur_symbol()]
   unordered_states = set(range(tm.num_states)) - set(state_order)
   unordered_symbols = set(range(tm.num_symbols)) - set(symbol_order)
+
   # If first trans is to the LEFT, swap dirs.
-  swap_dirs = (tm.get_trans_object(tm.init_symbol, tm.init_state).dir_out
+  swap_dirs = (tm.get_trans_object(sim.cur_symbol(), sim.state).dir_out
                == Turing_Machine.LEFT)
 
-  sim = Direct_Simulator.DirectSimulator(tm)
   while unordered_states or unordered_symbols:
     if sim.step_num > max_steps or sim.halted:
       return None
@@ -87,13 +99,15 @@ def main():
   parser = argparse.ArgumentParser()
   parser.add_argument("tm", nargs="?",
                       help="Literal Turing Machine. If missing read from stdin.")
+  parser.add_argument("--skip-0s", "--1rb", action="store_true",
+                      help="Change start state to be first state which writes a 1 (TNF-1RB).")
   parser.add_argument("--max-steps", type=int, default=1_000)
   args = parser.parse_args()
 
   with IO.StdText.Writer(sys.stdout) as writer:
     if args.tm:
       tm = IO.parse_tm(args.tm)
-      new_tm = to_TNF(tm, args.max_steps)
+      new_tm = to_TNF(tm, args.skip_0s, args.max_steps)
       if new_tm:
         writer.write_tm(new_tm)
       else:
@@ -101,7 +115,7 @@ def main():
     else:
       with IO.StdText.Reader(sys.stdin) as reader:
         for tm_record in reader:
-          new_tm = to_TNF(tm_record.tm(), args.max_steps)
+          new_tm = to_TNF(tm_record.tm(), args.skip_0s, args.max_steps)
           if new_tm:
             writer.write_tm(new_tm)
           else:

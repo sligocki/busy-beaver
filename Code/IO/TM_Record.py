@@ -97,8 +97,10 @@ def tm_to_list(tm : Turing_Machine.Simple_Machine, tm_list : io_pb2.TMList) -> N
     for symbol in range(tm.num_symbols):
       trans = tm.get_trans_object(symbol, state)
       if trans.condition == Turing_Machine.UNDEFINED:
-        trans.symbol_out = -1
-      tm_list.ttable_list.append(trans.symbol_out)
+        symbol_out = -1
+      else:
+        symbol_out = trans.symbol_out
+      tm_list.ttable_list.append(symbol_out)
       tm_list.ttable_list.append(trans.dir_out)
       tm_list.ttable_list.append(trans.state_out)
 
