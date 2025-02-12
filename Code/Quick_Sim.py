@@ -100,6 +100,12 @@ def run(machine, block_size, back, prover, recursive, options):
     print()
     print("Gave up while simulating Turing Machine")
     print("Info:", sim.op_details)
+  elif total_loops >= options.max_loops:
+    print()
+    if total_loops == options.max_loops:
+      print("Maximum number of loops (%d) reached" % (options.max_loops,))
+    else:
+      print("Maximum number of loops (%d) exceeded (%d)" % (options.max_loops,total_loops))
   else:
     print()
     print("Unexpected sim exit condition:", sim.op_state, sim.op_details)
