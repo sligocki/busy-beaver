@@ -4,7 +4,7 @@ Generalized reader that can read from either Proto or Text format.
 
 from pathlib import Path
 import re
-from typing import TextIO
+from typing import Iterator, TextIO
 
 import IO
 from IO.TM_Record import parse_tm
@@ -65,3 +65,18 @@ def get_tm(tm : str) -> Turing_Machine.Simple_Machine:
       filename = Path(tm)
       record_num = 0
     return load_tm(filename, record_num)
+
+def iter_tms(tm : str) -> Iterator[Turing_Machine.Simple_Machine]:
+  """Load all TMs from string. Supports TM directly in StdText format, filename or filename:record_num."""
+  if re.fullmatch(r"([0-9][LR][A-Z]|---|_)+", tm):
+    # Parse literal TM.
+    yield parse_tm(tm)
+  elif ":" in tm:
+    parts = tm.split(":")
+    filename = Path(parts[0])
+    record_num = int(parts[1])
+    yield load_tm(filename, record_num)
+  else:
+    with Reader(Path(tm)) as reader:
+      for tm_record in reader:
+        yield tm_record.tm()

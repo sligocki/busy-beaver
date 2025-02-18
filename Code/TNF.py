@@ -14,7 +14,9 @@ import IO
 from Macro import Turing_Machine
 
 
-def permute_table(old_tm, state_order, symbol_order, swap_dirs=False):
+def permute_table(old_tm : Turing_Machine.Simple_Machine,
+                  state_order, symbol_order,
+                  swap_dirs : bool = False) -> Turing_Machine.Simple_Machine:
   state_old2new = {old: new for (new, old) in enumerate(state_order)}
   symbol_old2new = {old: new for (new, old) in enumerate(symbol_order)}
   new_tm = copy.deepcopy(old_tm)
