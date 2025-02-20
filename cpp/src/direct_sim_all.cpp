@@ -37,7 +37,9 @@ void DirectSimMain(const std::string& in_tms_filename, const long num_steps,
       WriteTuringMachine(*tm, &out_tms_stream);
       if (sim.is_halted()) {
         num_halted += 1;
-        out_tms_stream << " Halt " << sim.step_num() << " " << sim.tape().sigma_score() << std::endl;
+        out_tms_stream << " Halt " << sim.step_num() << " "
+                       << sim.tape().sigma_score() << " " << sim.tape().space()
+                       << std::endl;
       } else {
         num_unknown += 1;
         out_tms_stream << " Unknown " << sim.step_num() << std::endl;

@@ -1,5 +1,6 @@
 #include "simulator.h"
 
+#include <algorithm>
 #include <iostream>
 #include <vector>
 
@@ -12,7 +13,9 @@ Tape::Tape()
   : unit_size_(100),  // TODO: Optimize
     tape_(unit_size_, BlankSymbol),
     index_start_(tape_.size() / 2),  // Start in middle of tape.
-    index_(index_start_) {}
+    index_(index_start_),
+    min_index_(index_start_),
+    max_index_(index_start_) {}
 
 Symbol Tape::read(const long pos) const {
   long index = pos + index_start_;
@@ -23,13 +26,22 @@ Symbol Tape::read(const long pos) const {
   }
 }
 
+void Tape::write(const Symbol symb) {
+  tape_[index_] = symb;
+  min_index_ = std::min(min_index_, index_);
+  max_index_ = std::max(max_index_, index_);
+}
+
 void Tape::move(const long move_dir) {
   index_ += move_dir;
   // Extend tape if necessary.
   if (index_ < 0) {
     tape_.insert(tape_.begin(), unit_size_, BlankSymbol);
+    // Shift all indexes
     index_ += unit_size_;
     index_start_ += unit_size_;
+    min_index_ += unit_size_;
+    max_index_ += unit_size_;
   } else if (index_ >= tape_.size()) {
     tape_.insert(tape_.end(), unit_size_, BlankSymbol);
   }

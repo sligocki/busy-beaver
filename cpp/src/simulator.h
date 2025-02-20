@@ -14,7 +14,7 @@ class Tape {
 
   Symbol read() const { return tape_[index_]; }
   Symbol read(long pos) const;
-  void write(const Symbol symb) { tape_[index_] = symb; }
+  void write(const Symbol symb);
   void move(const long move_dir);
 
   // Position on tape (relative to start position.)
@@ -26,14 +26,24 @@ class Tape {
 
   void print() const;
 
-  // Count Rado sigma() score (number of non-zero symbols on tape).
+  // Evaluate various Busy Beaver functions on the tape.
+  // Rado Sigma score (number of non-zero symbols on tape).
   long sigma_score() const;
+  // Ben-Amram space (number of TM cells read).
+  //   Note: We actually count number or cells _written_, but these are the same
+  //   for this TM definition.
+  //   Note: This may not be the same as the number of cells _visited_ since it
+  //   does not (necessarily) count the final head position (which is never read).
+  long space() const { return max_index_ - min_index_ + 1; }
 
  private:
   const long unit_size_;
   std::vector<Symbol> tape_;
   long index_start_;
   long index_;
+  // Track subset of tape written to (in order to compute BB_space).
+  long min_index_;
+  long max_index_;
 };
 
 class DirectSimulator {
