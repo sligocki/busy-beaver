@@ -1039,7 +1039,7 @@ mod tests {
     }
 
     #[test]
-    fn test_62_halt_cryptid1() {
+    fn test_62_mxdys_halt_cryptid1() {
         // https://wiki.bbchallenge.org/wiki/1RB1RA_0RC1RC_1LD0LF_0LE1LE_1RA0LB_---0LC
         // Probviously halting BB(6) Cryptid
         // C(a, b, c) = $ 1^2a+1 C> 0^2b 1^c 01 $
@@ -1203,7 +1203,7 @@ mod tests {
     }
 
     #[test]
-    fn test_62_halt_cryptid2() {
+    fn test_62_mxdys_halt_cryptid2() {
         // Variation of test_62_halt_cryptid1
         // Probviously halting BB(6) Cryptid
         // C(a, b, c) = $ 1^2a+1 F> 0^2b 1^c 01 $
@@ -1358,6 +1358,296 @@ mod tests {
                     init_config: Config::new(),
                     final_config: Config::from_str("0^inf 1^3 F> 0^4 1^5 01 0^inf").unwrap(),
                     proof: Proof::Simple(vec![base_step(43)]),
+                },
+            ],
+        };
+        if let Err(err) = validate_rule_set(&rule_set) {
+            panic!("{}", err);
+        }
+    }
+
+    #[test]
+    fn test_62_racheline_halt_cryptid() {
+        // https://wiki.bbchallenge.org/wiki/1RB0RD_0RC1RE_1RD0LA_1LE1LC_1RF0LD_---0RA
+        // Probviously halting BB(6) Cryptid
+        // C(a, b, c) = 0^inf 1011^a 1^b 10^c C> 0^inf
+        // C(a, b) = C(a, b, 1) = 0^inf 1011^a 1^b 10 C> 0^inf
+
+        let rule_set = RuleSet {
+            tm: TM::from_str("1RB0RD_0RC1RE_1RD0LA_1LE1LC_1RF0LD_1RZ0RA").unwrap(),
+            rules: vec![
+                chain_rule("10^n <D 0", "<D 0 10^n", 2),   // 0: D0 E1
+                chain_rule("A> 10^n", "10^n A>", 4),       // 1: A1 D0 E0 F1
+                chain_rule("01 D> 10^n", "1^2n 01 D>", 8), // 2: D1 C1 A0 B0 C1 A0 B0 C0
+                chain_rule("1 F> 10^2n", "1011^n 1 F>", 4), // 3: F1 A0 B1 E0
+                // Tape reparsing rules
+                simple_rule("<D 0 1 0", "<D 0 10", 0), // 4
+                simple_rule("1 0 A>", "10 A>", 0),     // 5
+                // 6: 111 10^n C> 0^5 -> 10^n+4 C>
+                Rule {
+                    init_config: Config::from_str("111 10^n C> 0^5").unwrap(),
+                    final_config: Config::from_str("10^n+4 C>").unwrap(),
+                    proof: Proof::Simple(vec![
+                        // 111 10^n C> 0^5
+                        base_step(3), // C0 D0 E1
+                        rule_step(4, &[]),
+                        // 111 10^n <D 0 10
+                        chain_step(0, "n"),
+                        // 111 <D 0 10^n+1
+                        base_step(6), // D1 C1 A1 D0 E0 F1
+                        rule_step(5, &[]),
+                        // 10 A> 10^n+2
+                        chain_step(1, "n+2"),
+                        // 10^n+3 A>
+                        base_step(2), // A0 B0
+                    ]),
+                },
+                // 7: 101 10^n C> 0^5 -> 10^n+4 C>
+                Rule {
+                    init_config: Config::from_str("101 10^n C> 0^5").unwrap(),
+                    final_config: Config::from_str("10^n+4 C>").unwrap(),
+                    proof: Proof::Simple(vec![
+                        // 101 10^n C> 0^5
+                        base_step(3), // C0 D0 E1
+                        rule_step(4, &[]),
+                        // 101 10^n <D 0 10
+                        chain_step(0, "n"),
+                        // 101 <D 0 10^n+1
+                        base_step(8), // D1 C0 D1 C1 A1 D0 E0 F1
+                        rule_step(5, &[]),
+                        // 10 A> 10^n+2
+                        chain_step(1, "n+2"),
+                        // 10^n+3 A>
+                        base_step(2), // A0 B0
+                    ]),
+                },
+                // 8: 011 10^n C> 0^2  --> 1^2n+3 10 C>
+                Rule {
+                    init_config: Config::from_str("011 10^n C> 0^2").unwrap(),
+                    final_config: Config::from_str("1^2n+3 10 C>").unwrap(),
+                    proof: Proof::Simple(vec![
+                        // 011 10^n C> 0^2
+                        base_step(3), // C0 D0 E1
+                        // 011 10^n <D 0 1
+                        chain_step(0, "n"),
+                        // 011 <D 0 10^n 1
+                        base_step(8), // D1 C1 A0 B0 C1 A0 B0 C0
+                        // 11 01 D> 10^n 1
+                        chain_step(2, "n"),
+                        // 1^2n+2 01 D> 1
+                        base_step(7), // D1 C1 A0 B0 C1 A0 B0
+                    ]),
+                },
+                // 9: 001 10^n C> 0^2 --> 1^2n+3 10 C>
+                Rule {
+                    init_config: Config::from_str("001 10^n C> 0^2").unwrap(),
+                    final_config: Config::from_str("1^2n+3 10 C>").unwrap(),
+                    proof: Proof::Simple(vec![
+                        // 001 10^n C> 0^2
+                        base_step(3), // C0 D0 E1
+                        // 001 10^n <D 0 1
+                        chain_step(0, "n"),
+                        // 001 <D 0 10^n 1
+                        base_step(2), // D1 C0
+                        // 01 D> 10^n+1 1
+                        chain_step(2, "n+1"),
+                        // 1^2n+2 01 D> 1
+                        base_step(7), // D1 C1 A0 B0 C1 A0 B0
+                    ]),
+                },
+                // 10: 00 10^2n+1 C> 0^4 -> 1011^n+1 10^2 C>
+                Rule {
+                    init_config: Config::from_str("00 10^2n+1 C> 0^4").unwrap(),
+                    final_config: Config::from_str("1011^n+1 10^2 C>").unwrap(),
+                    proof: Proof::Simple(vec![
+                        // 00 10^2n+1 C> 0^4
+                        base_step(3), // C0 D0 E1
+                        // 00 10^2n+1 <D 0 10 0
+                        chain_step(0, "2n+1"),
+                        // 00 <D 0 10^2n+2 0
+                        base_step(2), // D0 E0
+                        // 1 F> 10^2n+3 0
+                        chain_step(3, "n+1"),
+                        // 1011^n+1 1 F> 100
+                        base_step(3), // F1 A0 B0
+                    ]),
+                },
+                // 11: 00 10^2n C> 0^4 -> Halt
+                Rule {
+                    init_config: Config::from_str("00 10^2n C> 0^4").unwrap(),
+                    final_config: Config::from_str("1011^n+1 11 Z>").unwrap(),
+                    proof: Proof::Simple(vec![
+                        // 00 10^2n C> 0^4
+                        base_step(3), // C0 D0 E1
+                        rule_step(4, &[]),
+                        // 00 10^2n <D 0 10 0
+                        chain_step(0, "2n"),
+                        // 00 <D 0 10^2n+2 0
+                        base_step(2), // D0 E0
+                        // 1 F> 10^2n+2 0
+                        chain_step(3, "n+1"),
+                        // 1011^n+1 1 F> 00
+                        base_step(1), // F0
+                    ]),
+                },
+                // 12: C(a, 3n+r, c) --> C(a, r, 4n+c)
+                Rule {
+                    init_config: Config::from_str("1^3n 10^c C> 0^inf").unwrap(),
+                    final_config: Config::from_str("10^4n+c C> 0^inf").unwrap(),
+                    proof: Proof::Inductive {
+                        proof_base: vec![],
+                        proof_inductive: vec![
+                            rule_step(6, &[("n", "c")]),
+                            induction_step(&[("n", "n"), ("c", "c+4")]),
+                        ],
+                    },
+                },
+                // 13: C(a+1, 3k) --> C(a, 8k+6)
+                Rule {
+                    init_config: Config::from_str("1011 1^3k 10 C> 0^inf").unwrap(),
+                    final_config: Config::from_str("1^8k+6 10 C> 0^inf").unwrap(),
+                    proof: Proof::Simple(vec![
+                        // 1011 1^3k 10 C> 0^inf
+                        rule_step(12, &[("n", "k"), ("c", "1")]),
+                        // 1011 10^4k+1 C> 0^inf
+                        rule_step(8, &[("n", "4k+1")]),
+                        // 1^8k+6 10 C>
+                    ]),
+                },
+                // 14: C(a+2, 3k+1) --> C(a, 8k+16)
+                Rule {
+                    init_config: Config::from_str("1011^2 1^3k+1 10 C> 0^inf").unwrap(),
+                    final_config: Config::from_str("1^8k+16 10 C> 0^inf").unwrap(),
+                    proof: Proof::Simple(vec![
+                        // 1011^2 1^3k+1 10 C> 0^inf
+                        rule_step(12, &[("n", "k"), ("c", "1")]),
+                        // 1011 1011 1 10^4k+1 C> 0^inf
+                        rule_step(6, &[("n", "4k+1")]),
+                        // 1011 10 10^4k+5 C> 0^inf
+                        rule_step(8, &[("n", "4k+6")]),
+                        // 1^8k+16 10 C>
+                    ]),
+                },
+                // 15: C(a+2, 3k+2) --> C(a, 8k+22)
+                Rule {
+                    init_config: Config::from_str("1011^2 1^3k+2 10 C> 0^inf").unwrap(),
+                    final_config: Config::from_str("1^8k+22 10 C> 0^inf").unwrap(),
+                    proof: Proof::Simple(vec![
+                        // 1011^2 1^3k+2 10 C> 0^inf
+                        rule_step(12, &[("n", "k"), ("c", "1")]),
+                        // 1011 1011 11 10^4k+1 C> 0^inf
+                        rule_step(6, &[("n", "4k+1")]),
+                        // 1011 101 10^4k+5 C> 0^inf
+                        rule_step(7, &[("n", "4k+5")]),
+                        // 1011 10^4k+9 C> 0^inf
+                        rule_step(8, &[("n", "4k+9")]),
+                        // 1^8k+22 10 C>
+                    ]),
+                },
+                // 16: C(0, 3k) --> C(2k, 8)
+                Rule {
+                    init_config: Config::from_str("0^inf 1^3k 10 C> 0^inf").unwrap(),
+                    final_config: Config::from_str("0^inf 1011^2k 1^8 10 C> 0^inf").unwrap(),
+                    proof: Proof::Simple(vec![
+                        // 0^inf 1^3k 10 C> 0^inf
+                        rule_step(12, &[("n", "k"), ("c", "1")]),
+                        // 0^inf 10^4k+1 C> 0^inf
+                        rule_step(10, &[("n", "2k")]),
+                        // 1011^2k+1 10^2 C>
+                        rule_step(8, &[("n", "2")]),
+                        // 1011^2k 1^8 10 C>
+                    ]),
+                },
+                // 17: C(0, 3k+1) --> C(0, 8k+5)
+                Rule {
+                    init_config: Config::from_str("0^inf 1^3k+1 10 C> 0^inf").unwrap(),
+                    final_config: Config::from_str("0^inf 1^8k+5 10 C> 0^inf").unwrap(),
+                    proof: Proof::Simple(vec![
+                        // 0^inf 1^3k+1 10 C> 0^inf
+                        rule_step(12, &[("n", "k"), ("c", "1")]),
+                        // 0^inf 1 10^4k+1 C> 0^inf
+                        rule_step(9, &[("n", "4k+1")]),
+                        // 0^inf 1^8k+5 10 C> 0^inf
+                    ]),
+                },
+                // 18: C(1, 3k+1) --> Halt(6k+14)
+                Rule {
+                    init_config: Config::from_str("0^inf 1011 1^3k+1 10 C> 0^inf").unwrap(),
+                    final_config: Config::from_str("0^inf 1011^2k+4 11 Z> 0^inf").unwrap(),
+                    proof: Proof::Simple(vec![
+                        // 0^inf 1011 1^3k+1 10 C> 0^inf
+                        rule_step(12, &[("n", "k"), ("c", "1")]),
+                        // 0^inf 1011 1 10^4k+1 C> 0^inf
+                        rule_step(6, &[("n", "4k+1")]),
+                        // 0^inf 10 10^4k+5 C> 0^inf
+                        rule_step(11, &[("n", "2k+3")]),
+                        // 1011^2k+4 11 Z>
+                    ]),
+                },
+                // 19: C(0, 3k+2) --> C(0, 8k+5)
+                Rule {
+                    init_config: Config::from_str("0^inf 1^3k+2 10 C> 0^inf").unwrap(),
+                    final_config: Config::from_str("0^inf 1^8k+5 10 C> 0^inf").unwrap(),
+                    proof: Proof::Simple(vec![
+                        // 0^inf 1^3k+2 10 C> 0^inf
+                        rule_step(12, &[("n", "k"), ("c", "1")]),
+                        // 0^inf 11 10^4k+1 C> 0^inf
+                        rule_step(8, &[("n", "4k+1")]),
+                        // 0^inf 1^8k+5 10 C> 0^inf
+                    ]),
+                },
+                // 20: C(1, 3k+2) --> C(2k+4, 8)
+                Rule {
+                    init_config: Config::from_str("0^inf 1011 1^3k+2 10 C> 0^inf").unwrap(),
+                    final_config: Config::from_str("0^inf 1011^2k+4 1^8 10 C> 0^inf").unwrap(),
+                    proof: Proof::Simple(vec![
+                        // 0^inf 1011 1^3k+2 10 C> 0^inf
+                        rule_step(12, &[("n", "k"), ("c", "1")]),
+                        // 0^inf 1011 11 10^4k+1 C> 0^inf
+                        rule_step(6, &[("n", "4k+1")]),
+                        // 0^inf 101 10^4k+5 C> 0^inf
+                        rule_step(7, &[("n", "4k+5")]),
+                        // 0^inf 10^4k+9 C> 0^inf
+                        // 0^inf 10^4k+1 C> 0^inf
+                        rule_step(10, &[("n", "2k+4")]),
+                        // 1011^2k+5 10^2 C>
+                        rule_step(8, &[("n", "2")]),
+                        // 1011^2k+4 1^8 10 C>
+                    ]),
+                },
+                // Initial Trajectory
+                // Start --(2)--> C(0, 0) --> C(11_292, 8) --> ...
+                Rule {
+                    init_config: Config::new(),
+                    final_config: Config::from_str("0^inf 1011^11292 1^8 10 C> 0^inf").unwrap(),
+                    proof: Proof::Simple(vec![
+                        base_step(2), // A0 B0
+                        // C(0, 0): $ 10 C> $
+                        rule_step(16, &[("k", "0")]),
+                        // C(0, 8)
+                        rule_step(19, &[("k", "2")]),
+                        // C(0, 21)
+                        rule_step(16, &[("k", "7")]),
+                        // C(14, 8)
+                        rule_step(15, &[("k", "2")]),
+                        // C(12, 38)
+                        rule_step(15, &[("k", "12")]),
+                        // C(10, 118)
+                        rule_step(14, &[("k", "39")]),
+                        // C(8, 328)
+                        rule_step(14, &[("k", "109")]),
+                        // C(6, 888)
+                        rule_step(13, &[("k", "296")]),
+                        // C(5, 2374)
+                        rule_step(14, &[("k", "791")]),
+                        // C(3, 6344)
+                        rule_step(15, &[("k", "2114")]),
+                        // C(1, 16934)
+                        rule_step(20, &[("k", "5644")]),
+                        // C(11291, 8)
+                        // Rule 17 not used yet ... it will be used at next reset:
+                        //  6_818  C(0, ~10^2_900.82 ≡ 1 (mod 3))
+                    ]),
                 },
             ],
         };
