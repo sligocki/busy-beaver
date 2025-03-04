@@ -29,9 +29,9 @@ def parse_tm(line : str) -> Turing_Machine.Simple_Machine:
         state_out = STATES_DISPLAY.find(trans_str[2])
         if state_out >= num_states:
           state_out = -1
-        assert symbol_out >= 0
-        assert dir_out in [0, 1]
-        assert state_out >= -1
+        assert symbol_out >= 0, trans_str
+        assert dir_out in [0, 1], trans_str
+        assert state_out >= -1, trans_str
         quints.append((state_in, symbol_in, symbol_out, dir_out, state_out))
   return Turing_Machine.tm_from_quintuples(quints, states = list(range(num_states)),
                                            symbols = list(range(max_symbol + 1)))
