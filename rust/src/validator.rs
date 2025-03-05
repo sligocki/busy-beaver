@@ -1644,7 +1644,7 @@ mod tests {
                         rule_step(15, &[("k", "2114")]),
                         // C(1, 16934)
                         rule_step(20, &[("k", "5644")]),
-                        // C(11291, 8)
+                        // C(11292, 8)
                         // Rule 17 not used yet ... it will be used at next reset:
                         //  6_818  C(0, ~10^2_900.82 ≡ 1 (mod 3))
                     ]),
