@@ -6,9 +6,7 @@
 #include <memory>
 #include <string>
 
-#ifdef BOOST_FOUND
 #include <boost/iostreams/filtering_streambuf.hpp>
-#endif
 
 #include "enumerator.h"
 #include "turing_machine.h"
@@ -44,7 +42,6 @@ class LinRecurEnum : public BaseEnumerator {
   std::ostream out_inf_stream_;
   std::ostream out_unknown_stream_;
 
-#ifdef BOOST_FOUND
   // Extra output streams for internal use with the "buf_"s below
   std::ofstream out_halt_stream_2_;
   std::ofstream out_inf_stream_2_;
@@ -54,7 +51,6 @@ class LinRecurEnum : public BaseEnumerator {
   boost::iostreams::filtering_streambuf<boost::iostreams::output> out_halt_buf_;
   boost::iostreams::filtering_streambuf<boost::iostreams::output> out_inf_buf_;
   boost::iostreams::filtering_streambuf<boost::iostreams::output> out_unknown_buf_;
-#endif
 
   // Stats
   const std::string proc_id_;

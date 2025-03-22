@@ -5,11 +5,9 @@
 #include <ostream>
 #include <string>
 
-#ifdef BOOST_FOUND
 #include <boost/iostreams/filtering_streambuf.hpp>
 #include <boost/iostreams/copy.hpp>
 #include <boost/iostreams/filter/gzip.hpp>
-#endif
 
 #include "enumerator.h"
 #include "lin_recur.h"
@@ -28,14 +26,11 @@ LinRecurEnum::LinRecurEnum(const bool allow_no_halt,
                            const bool only_unknown_in)
   : BaseEnumerator(allow_no_halt),
     max_steps_(max_steps),
-#ifdef BOOST_FOUND
     out_halt_stream_   (&out_halt_buf_),
     out_inf_stream_    (&out_inf_buf_),
     out_unknown_stream_(&out_unknown_buf_),
-#endif
     proc_id_(proc_id)
 {
-#ifdef BOOST_FOUND
   std::string file_suffix = "";
 
   if (compress_output) {
@@ -77,36 +72,9 @@ LinRecurEnum::LinRecurEnum(const bool allow_no_halt,
     out_inf_buf_    .push(out_inf_stream_2_);
   }
   out_unknown_buf_.push(out_unknown_stream_2_);
-#else
-  if (compress_output) {
-    std::cerr << "Compressing TM output without compiling with Boost isn't supported" << std:endl;
-    std::exit(1);
-  }
-
-  if (!only_unknown_) {
-    out_halt_stream_.open(out_halt_filename, std::ios::out | std::ios::binary);
-    if (!out_halt_stream.is_open()) {
-      std::cerr << "Unable to open '" << out_halt_filename << "'" << std::endl;
-      std::exit(1);
-    }
-
-    out_inf_stream_.open(out_inf_filename, std::ios::out | std::ios::binary);
-    if (!out_inf_stream.is_open()) {
-      std::cerr << "Unable to open '" << out_inf_filename << "'" << std::endl;
-      std::exit(1);
-    }
-  }
-
-  out_unknown_stream_.open(out_unknown_filename, std::ios::out | std::ios::binary);
-  if (!out_unknown_stream.is_open()) {
-    std::cerr << "Unable to open '" << out_unknown_filename << "'" << std::endl;
-    std::exit(1);
-  }
-#endif
 }
 
 LinRecurEnum::~LinRecurEnum() {
-#if BOOST_FOUND
   if (!only_unknown_) {
     boost::iostreams::close(out_halt_buf_   );
     boost::iostreams::close(out_inf_buf_    );
@@ -120,13 +88,6 @@ LinRecurEnum::~LinRecurEnum() {
   }
 
   out_unknown_stream_2_.close();
-#else
-  if (!only_unknown_) {
-    out_halt_stream_   .close();
-    out_inf_stream_    .close();
-  }
-  out_unknown_stream_.close();
-#endif
 }
 
 void LinRecurEnum::print_stats(const std::string& prefix) const {
