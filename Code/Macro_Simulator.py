@@ -164,8 +164,8 @@ def simulate_machine(machine : Turing_Machine.Turing_Machine,
 
     ## Run the simulator
     try:
-      #Alarm.ALARM.set_alarm(time_limit_sec)
       start_time = time.time()
+      timeout = False
 
       while ((sim_info.parameters.max_loops == 0 or
               sim.num_loops < sim_info.parameters.max_loops) and
@@ -174,12 +174,8 @@ def simulate_machine(machine : Turing_Machine.Turing_Machine,
         sim.step()
         if time_limit_sec > 0:
           if time.time() - start_time >= time_limit_sec:
+            timeout = True
             break
-
-      #Alarm.ALARM.cancel_alarm()
-
-    #except Alarm.AlarmException:
-    #  Alarm.ALARM.cancel_alarm()
 
     finally:
       # Set these stats even if timeout (exception) is raised.
@@ -200,7 +196,10 @@ def simulate_machine(machine : Turing_Machine.Turing_Machine,
       sim_info.result.num_proofs_failed = sim.prover.num_failed_proofs
 
     # Various Unknown conditions
-    if sim.tape.compressed_size() > sim_info.parameters.max_tape_blocks:
+    if timeout:
+      sim_info.result.unknown_info.over_time.elapsed_time_sec = time.time() - start_time
+
+    elif sim.tape.compressed_size() > sim_info.parameters.max_tape_blocks:
       sim_info.result.unknown_info.over_tape.compressed_tape_size = sim.tape.compressed_size()
 
     elif sim.op_state == Turing_Machine.RUNNING:
