@@ -1052,6 +1052,7 @@ mod tests {
                 chain_rule("1^n <D", "<D 1^n", 1),   // 1
                 chain_rule("A> 1^2n", "10^n A>", 2), // 2
                 // 3: 10^n <D 1^a 0 -> <D 1^a+n 0 1^n
+                //      R3(n, a) = (D0 B1^a+k+1 B0 C1 D1^a+k+1)^{k:0 -> n-1}
                 Rule {
                     init_config: Config::from_str("10^n <D 1^a 0").unwrap(),
                     final_config: Config::from_str("<D 1^a+n 0 1^n").unwrap(),
@@ -1070,7 +1071,8 @@ mod tests {
                         ],
                     },
                 },
-                // 4: C(n, n) -> C(n+1, n+1)
+                // 4: C(a, a) -> C(a+1, a+1)
+                //      A0 B1^a B0 C1 D1^a R3(a, a) D0 B0 C0 (A1 E1)^a+1
                 Rule {
                     init_config: Config::from_str("0^inf 10^a A> 0 1^a 0^inf").unwrap(),
                     final_config: Config::from_str("0^inf 10^a+1 A> 0 1^a+1 0^inf").unwrap(),
