@@ -562,6 +562,124 @@ mod tests {
     }
 
     #[test]
+    fn test_bb5() {
+        // BB(5) Champion
+        // https://discuss.bbchallenge.org/t/10756090-finned-3-is-irregular/137
+        //      1RB1LC_1RC1RB_1RD0LE_1LA1LD_1RZ0LA
+        // A(n) = 0^inf <A 1^n 0^inf
+
+        let rule_set = RuleSet {
+            tm: TM::from_str("1RB1LC_1RC1RB_1RD0LE_1LA1LD_1RZ0LA").unwrap(),
+            rules: vec![
+                chain_rule("B> 1^n", "1^n B>", 1),    // 0
+                chain_rule("1^n <D", "<D 1^n", 1),    // 1
+                chain_rule("1^3n <A", "<A 001^n", 3), // 2
+                // 3: 0^inf <A 1^a 001^n  ->  0^inf <A 1^5n+a
+                //      R3(a, n) = (A0 B1^a+k B0 C0 D1^a+k+4 D0)^{k: 0 -> n-1}
+                Rule {
+                    init_config: Config::from_str("0^inf <A 1^a 001^n").unwrap(),
+                    final_config: Config::from_str("0^inf <A 1^5n+a").unwrap(),
+                    proof: Proof::Inductive {
+                        proof_base: vec![],
+                        proof_inductive: vec![
+                            // <A 1^a 001^n+1
+                            base_step(1),
+                            // 1 B> 1^a 001^n+1
+                            chain_step(0, "a"),
+                            base_step(3),
+                            // 1^a+3 <D 1 001^n
+                            chain_step(1, "a+3"),
+                            base_step(1),
+                            // <A 1^a+5 001^n
+                            induction_step(&[("n", "n"), ("a", "a+5")]),
+                        ],
+                    },
+                },
+                // 4: A(3k) -> A(5k+6)
+                //      A0 B1^3k B0 C0 D0 (A1 C1 E1)^k+1 R3(0, k+1)
+                Rule {
+                    init_config: Config::from_str("0^inf <A 1^3k 0^inf").unwrap(),
+                    final_config: Config::from_str("0^inf <A 1^5k+6 0^inf").unwrap(),
+                    proof: Proof::Simple(vec![
+                        // <A 1^3k
+                        base_step(1),
+                        // 1 B> 1^3k
+                        chain_step(0, "3k"),
+                        base_step(3),
+                        // 1^3k+3 <A 1
+                        chain_step(2, "k+1"),
+                        // <A 001^k+1 1
+                        rule_step(3, &[("a", "0"), ("n", "k+1")]),
+                        // <A 1^5k+5 1
+                    ]),
+                },
+                // 5: A(3k+1) -> A(5k+9)
+                //      A0 B1^3k B0 C0 D0 (A1 C1 E1)^k+1 A1 C0 D1 D1 D0 R3(3, k+1)
+                Rule {
+                    init_config: Config::from_str("0^inf <A 1^3k+1 0^inf").unwrap(),
+                    final_config: Config::from_str("0^inf <A 1^5k+9 0^inf").unwrap(),
+                    proof: Proof::Simple(vec![
+                        // <A 1^3k+1
+                        base_step(1),
+                        // 1 B> 1^3k+1
+                        chain_step(0, "3k+1"),
+                        base_step(3),
+                        // 1^3k+4 <A 1
+                        chain_step(2, "k+1"),
+                        // 1 <A 001^k+1 1
+                        base_step(5),
+                        // <A 1^3 001^k+1 1
+                        rule_step(3, &[("a", "3"), ("n", "k+1")]),
+                        // <A 1^5k+8 1
+                    ]),
+                },
+                // 6: A(3k+2) -> Halt
+                //      A0 B1^3k B0 C0 D0 (A1 C1 E1)^k+1 A1 C1 E0
+                Rule {
+                    init_config: Config::from_str("0^inf <A 1^3k+2 0^inf").unwrap(),
+                    final_config: Config::from_str("0^inf 1 Z> 01 001^k+1 1 0^inf").unwrap(),
+                    proof: Proof::Simple(vec![
+                        // <A 1^3k+2
+                        base_step(1),
+                        // 1 B> 1^3k+2
+                        chain_step(0, "3k+2"),
+                        base_step(3),
+                        // 1^3k+5 <A 1
+                        chain_step(2, "k+1"),
+                        // 11 <A 001^k+1 1
+                        base_step(3),
+                    ]),
+                },
+                // Halting trajectory
+                Rule {
+                    init_config: Config::from_str("0^inf <A 0^inf").unwrap(),
+                    final_config: Config::from_str("0^inf 1 Z> 01 001^4095 1 0^inf").unwrap(),
+                    proof: Proof::Simple(vec![
+                        rule_step(4, &[("k", "0")]), // A(0)
+                        rule_step(4, &[("k", "2")]), // A(6)
+                        rule_step(5, &[("k", "5")]), // A(16)
+                        rule_step(5, &[("k", "11")]),
+                        rule_step(5, &[("k", "21")]),
+                        rule_step(4, &[("k", "38")]),
+                        rule_step(5, &[("k", "65")]),
+                        rule_step(5, &[("k", "111")]),
+                        rule_step(4, &[("k", "188")]),
+                        rule_step(5, &[("k", "315")]),
+                        rule_step(4, &[("k", "528")]),
+                        rule_step(4, &[("k", "882")]),
+                        rule_step(4, &[("k", "1472")]), // A(4416)
+                        rule_step(5, &[("k", "2455")]), // A(7366)
+                        rule_step(6, &[("k", "4094")]), // A(12284)
+                    ]),
+                },
+            ],
+        };
+        if let Err(err) = validate_rule_set(&rule_set) {
+            panic!("{}", err);
+        }
+    }
+
+    #[test]
     fn test_hydra() {
         // https://www.sligocki.com/2024/05/10/bb-2-5-is-hard.html
         // 1RB3RB---3LA1RA_2LA3RA4LB0LB0LA
