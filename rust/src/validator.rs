@@ -1046,10 +1046,10 @@ mod tests {
         // C(n, m) = 0^inf 10^n A> 0 1^m 0^inf
 
         let rule_set = RuleSet {
-            tm: TM::from_str("1RB1RE_1LC1RB_0RA0LD_1LB1LD_---0RA").unwrap(),
+            tm: TM::from_str("1RB1RE_1LC1RB_0RA0LD_1LB1LD_1RZ0RA").unwrap(),
             rules: vec![
-                chain_rule("B> 1^n", "1^n B>", 1), // 0
-                chain_rule("1^n <D", "<D 1^n", 1), // 1
+                chain_rule("B> 1^n", "1^n B>", 1),   // 0
+                chain_rule("1^n <D", "<D 1^n", 1),   // 1
                 chain_rule("A> 1^2n", "10^n A>", 2), // 2
                 // 3: 10^n <D 1^a 0 -> <D 1^a+n 0 1^n
                 Rule {
@@ -1075,19 +1075,19 @@ mod tests {
                     init_config: Config::from_str("0^inf 10^a A> 0 1^a 0^inf").unwrap(),
                     final_config: Config::from_str("0^inf 10^a+1 A> 0 1^a+1 0^inf").unwrap(),
                     proof: Proof::Simple(vec![
-                            base_step(1),
-                            // 10^a 1 B> 1^a
-                            chain_step(0, "a"),
-                            base_step(2),
-                            // 10^a 1^a <D 01
-                            chain_step(1, "a"),
-                            // 10^a <D 1^a 0 1
-                            rule_step(3, &[("n", "a"), ("a", "a")]),
-                            // <D 1^2a 0 1^a+1
-                            base_step(3),
-                            // A> 1^2a+2 0 1^a+1
-                            chain_step(2, "a+1"),
-                        ]),
+                        base_step(1),
+                        // 10^a 1 B> 1^a
+                        chain_step(0, "a"),
+                        base_step(2),
+                        // 10^a 1^a <D 01
+                        chain_step(1, "a"),
+                        // 10^a <D 1^a 0 1
+                        rule_step(3, &[("n", "a"), ("a", "a")]),
+                        // <D 1^2a 0 1^a+1
+                        base_step(3),
+                        // A> 1^2a+2 0 1^a+1
+                        chain_step(2, "a+1"),
+                    ]),
                 },
                 // Proof of non-halting
                 Rule {
@@ -1101,6 +1101,50 @@ mod tests {
                             rule_step(4, &[("a", "n")]),
                         ],
                     },
+                },
+                // Proof of irregularity:
+                // C(n, m) for n+m even
+                // C(2b+r, 2c+r) -> C(b+c+r+1, 2b+r+1)
+                Rule {
+                    init_config: Config::from_str("0^inf 10^2b+r A> 0 1^2c+r 0^inf").unwrap(),
+                    final_config: Config::from_str("0^inf 10^b+c+r+1 A> 0 1^2b+r+1 0^inf").unwrap(),
+                    proof: Proof::Simple(vec![
+                        base_step(1),
+                        // 10^2b+r 1 B> 1^a+2c
+                        chain_step(0, "2c+r"),
+                        base_step(2),
+                        // 10^2b+r 1^2c+r <D 01
+                        chain_step(1, "2c+r"),
+                        // 10^2b+r <D 1^2c+r 0 1
+                        rule_step(3, &[("n", "2b+r"), ("a", "2c+r")]),
+                        // <D 1^2b+2c+2r 0 1^2b+r+1
+                        base_step(3),
+                        // A> 1^2b+2c+2r+2 0 1^2b+r+1
+                        chain_step(2, "b+c+r+1"),
+                    ]),
+                },
+                // C(n, m) for n+m odd
+                // C(2b+r+1, 2c+r) -> Halt
+                Rule {
+                    init_config: Config::from_str("0^inf 10^2b+r+1 A> 0 1^2c+r 0^inf").unwrap(),
+                    final_config: Config::from_str("0^inf 10^b+c+r+1 11 Z> 1^2b+r+2 0^inf")
+                        .unwrap(),
+                    proof: Proof::Simple(vec![
+                        base_step(1),
+                        // 10^2b+r+1 1 B> 1^a+2c
+                        chain_step(0, "2c+r"),
+                        base_step(2),
+                        // 10^2b+r+1 1^2c+r <D 01
+                        chain_step(1, "2c+r"),
+                        // 10^2b+r+1 <D 1^2c+r 0 1
+                        rule_step(3, &[("n", "2b+r+1"), ("a", "2c+r")]),
+                        // <D 1^2b+2c+2r+1 0 1^2b+r+2
+                        base_step(3),
+                        // A> 1^2b+2c+2r+3 0 1^2b+r+2
+                        chain_step(2, "b+c+r+1"),
+                        // 10^b+c+r+1 A> 1 0 1^2b+r+2
+                        base_step(2),
+                    ]),
                 },
             ],
         };
@@ -1447,9 +1491,9 @@ mod tests {
         let rule_set = RuleSet {
             tm: TM::from_str("1RB0RD_0RC1RE_1RD0LA_1LE1LC_1RF0LD_1RZ0RA").unwrap(),
             rules: vec![
-                chain_rule("10^n <D 0", "<D 0 10^n", 2),   // 0: D0 E1
-                chain_rule("A> 10^n", "10^n A>", 4),       // 1: A1 D0 E0 F1
-                chain_rule("01 D> 10^n", "1^2n 01 D>", 8), // 2: D1 C1 A0 B0 C1 A0 B0 C0
+                chain_rule("10^n <D 0", "<D 0 10^n", 2),    // 0: D0 E1
+                chain_rule("A> 10^n", "10^n A>", 4),        // 1: A1 D0 E0 F1
+                chain_rule("01 D> 10^n", "1^2n 01 D>", 8),  // 2: D1 C1 A0 B0 C1 A0 B0 C0
                 chain_rule("1 F> 10^2n", "1011^n 1 F>", 4), // 3: F1 A0 B1 E0
                 // Tape reparsing rules
                 simple_rule("<D 0 1 0", "<D 0 10", 0), // 4
