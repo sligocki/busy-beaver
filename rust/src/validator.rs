@@ -257,7 +257,7 @@ fn validate_rule_set(rule_set: &RuleSet) -> Result<(), ValidationError> {
 mod tests {
     use std::{str::FromStr, vec};
 
-    use crate::count_expr::{Function, RecursiveExpr};
+    use crate::count_expr::{Function, RecursiveExpr, VarSum};
 
     use super::*;
 
@@ -563,8 +563,7 @@ mod tests {
 
     #[test]
     fn test_bb5() {
-        // BB(5) Champion
-        // https://discuss.bbchallenge.org/t/10756090-finned-3-is-irregular/137
+        // Marxen's BB(5) Champion
         //      1RB1LC_1RC1RB_1RD0LE_1LA1LD_1RZ0LA
         // A(n) = 0^inf <A 1^n 0^inf
 
@@ -672,6 +671,150 @@ mod tests {
                         rule_step(6, &[("k", "4094")]), // A(12284)
                     ]),
                 },
+            ],
+        };
+        if let Err(err) = validate_rule_set(&rule_set) {
+            panic!("{}", err);
+        }
+    }
+
+    #[test]
+    fn test_62_uni_t15() {
+        // Pavel's BB(6) > 10^^15 Champion
+        //      https://www.sligocki.com/2022/06/21/bb-6-2-t15.html
+        //      1RB0LD_1RC0RF_1LC1LA_0LE1RZ_1LF0RB_0RC0RE
+        // D(n, m) = 0^inf 1 0^n <D 0 1^3m+4 0^inf
+
+        // f1(x) = 3x+7
+        // f2(x, y) = f1^x(y)  = ((2y+7) 3^x - 7)/2
+        fn f2(x: CountExpr, y: CountExpr) -> CountExpr {
+            CountExpr::RecursiveExpr(RecursiveExpr {
+                func: Box::new(Function {
+                    bound_var: "x".parse().unwrap(),
+                    expr: "3x+7".parse().unwrap(),
+                }),
+                num_repeats: Box::new(x),
+                base: Box::new(y),
+            })
+        }
+
+        let rule_set = RuleSet {
+            tm: TM::from_str("1RB0LD_1RC0RF_1LC1LA_0LE1RZ_1LF0RB_0RC0RE").unwrap(),
+            rules: vec![
+                chain_rule("B> 1^3n", "0^3n B>", 3), // 0
+                chain_rule("0^n <C", "<C 1^n", 1),   // 1
+                // 2: 0^n <A 1^3k+1 0^inf  ->  <A 1^3n+3k+1 0^inf
+                Rule {
+                    init_config: Config::from_str("0^n <A 1^3k+1 0^inf").unwrap(),
+                    final_config: Config::from_str("<A 1^3n+3k+1 0^inf").unwrap(),
+                    proof: Proof::Inductive {
+                        proof_base: vec![],
+                        proof_inductive: vec![
+                            // 0^n+1 <A 1^3k+1
+                            base_step(1),
+                            // 0^n 1 B> 1^3k+1
+                            chain_step(0, "k"),
+                            // 0^n 1 0^3k B> 1
+                            base_step(3),
+                            // 0^n 1 0^3k+2 <C 1
+                            chain_step(1, "3k+2"),
+                            base_step(1),
+                            // 0^n <A 1^3k+4
+                            induction_step(&[("n", "n"), ("k", "k+1")]),
+                        ],
+                    },
+                },
+                // 3: D(a+4, b) -> D(a, 3b+7)
+                Rule {
+                    init_config: Config::from_str("0^4 <D 0 1^3b+4 0^inf").unwrap(),
+                    final_config: Config::from_str("<D 0 1^9b+25 0^inf").unwrap(),
+                    proof: Proof::Simple(vec![
+                        base_step(12),
+                        // 1 B> 1^3b+8
+                        chain_step(0, "b+2"),
+                        // 1 0^3b+6 B> 1^2
+                        base_step(5),
+                        // 1 0^3b+8 <A 1
+                        rule_step(2, &[("n", "3b+8"), ("k", "0")]),
+                        // 1 <A 1^3b+25 0^inf
+                        base_step(1),
+                    ]),
+                },
+                // 4: D(4k+r, b) -> D(r, f^k(b))
+                //      for f(b) = 3b+7
+                //          f^k(b) = ((2b+7) 3^k - 7)/2
+                Rule {
+                    init_config: Config::from_str("0^4n <D 0 1^3b+4 0^inf").unwrap(),
+                    final_config: Config::from_str("<D 0 1^3x+4 0^inf")
+                        .unwrap()
+                        .subst(&VarSubst::single(
+                            Variable::from_str("x").unwrap(),
+                            f2("n".parse().unwrap(), "b".parse().unwrap()),
+                        ))
+                        .unwrap(),
+                    proof: Proof::Inductive {
+                        proof_base: vec![],
+                        proof_inductive: vec![
+                            rule_step(3, &[("b", "b")]),
+                            induction_step(&[("n", "n"), ("b", "3b+7")]),
+                        ],
+                    },
+                },
+                // 5: D(4k, 1) -> Halt( 3/2 (9 3^k - 7) + 5 )
+                Rule {
+                    init_config: Config::from_str("1 0^4k <D 0 1^7 0^inf").unwrap(),
+                    final_config: Config::from_str("1 Z> 0 1^3x+4 0^inf")
+                        .unwrap()
+                        .subst(&VarSubst::single(
+                            Variable::from_str("x").unwrap(),
+                            f2("k".parse().unwrap(), 1.into()),
+                        ))
+                        .unwrap(),
+                    proof: Proof::Simple(vec![
+                        rule_step(4, &[("n", "k"), ("b", "1")]),
+                        // 1 <D 0 1^3x+4   for x = f^k(1)
+                        base_step(1),
+                    ]),
+                },
+                // 6: TODO: D(4k+1, 1) -> D( ? )
+                // Rule {
+                //     init_config: Config::from_str("1 0^4k+1 <D 0 1^7 0^inf").unwrap(),
+                //     final_config: Config::from_str("?")
+                //         .unwrap()
+                //         .subst(&VarSubst::single(
+                //             Variable::from_str("x").unwrap(),
+                //             f2("k".parse().unwrap(), 1.into()),
+                //         ))
+                //         .unwrap(),
+                //     proof: Proof::Simple(vec![
+                //         rule_step(4, &[("n", "k"), ("b", "1")]),
+                //         // 10 <D 0 1^3x+4   for x = f^k(1)
+                //         base_step(6),
+                //         // 1 B> 1^3x+6
+                //         ProofStep::RuleStep {
+                //             rule_id: 0,
+                //             var_assignment: VarSubst::from(&[(
+                //                 "n".parse().unwrap(),
+                //                 VarSum::from_str("x+2").unwrap().subst(&VarSubst::single(
+                //                     Variable::from_str("x").unwrap(),
+                //                     f2("k".parse().unwrap(), 1.into()),
+                //                 )),
+                //             )]),
+                //         },
+                //     ]),
+                // },
+                // TODO: Halting trajectory
+                // Rule {
+                //     init_config: Config::new(),
+                //     // TODO: Eval x
+                //     final_config: Config::from_str("0^inf 1 Z> 1^x 0^inf").unwrap(),
+                //     proof: Proof::Simple(vec![
+                //         base_step(53),
+                //         // D(5, 1)
+                //         rule_step(6, &[("k", "1")]),
+                //         // D(35, 1)
+                //     ]),
+                // },
             ],
         };
         if let Err(err) = validate_rule_set(&rule_set) {
