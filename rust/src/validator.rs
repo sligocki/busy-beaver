@@ -1039,6 +1039,77 @@ mod tests {
     }
 
     #[test]
+    fn test_finned3() {
+        // "Irregular" TM "Finned #3"
+        // https://discuss.bbchallenge.org/t/10756090-finned-3-is-irregular/137
+        // 1RB1RE_1LC1RB_0RA0LD_1LB1LD_---0RA
+        // C(n, m) = 0^inf 10^n A> 0 1^m 0^inf
+
+        let rule_set = RuleSet {
+            tm: TM::from_str("1RB1RE_1LC1RB_0RA0LD_1LB1LD_---0RA").unwrap(),
+            rules: vec![
+                chain_rule("B> 1^n", "1^n B>", 1), // 0
+                chain_rule("1^n <D", "<D 1^n", 1), // 1
+                chain_rule("A> 1^2n", "10^n A>", 2), // 2
+                // 3: 10^n <D 1^a 0 -> <D 1^a+n 0 1^n
+                Rule {
+                    init_config: Config::from_str("10^n <D 1^a 0").unwrap(),
+                    final_config: Config::from_str("<D 1^a+n 0 1^n").unwrap(),
+                    proof: Proof::Inductive {
+                        proof_base: vec![],
+                        proof_inductive: vec![
+                            // 10^n+1 <D 1^a 0
+                            base_step(2),
+                            // 10^n 1 B> 1^a+1 0
+                            chain_step(0, "a+1"),
+                            base_step(2),
+                            // 10^n 1^a+1 <D 01
+                            chain_step(1, "a+1"),
+                            // 10^n <D 1^a+1 0 1
+                            induction_step(&[("n", "n"), ("a", "a+1")]),
+                        ],
+                    },
+                },
+                // 4: C(n, n) -> C(n+1, n+1)
+                Rule {
+                    init_config: Config::from_str("0^inf 10^a A> 0 1^a 0^inf").unwrap(),
+                    final_config: Config::from_str("0^inf 10^a+1 A> 0 1^a+1 0^inf").unwrap(),
+                    proof: Proof::Simple(vec![
+                            base_step(1),
+                            // 10^a 1 B> 1^a
+                            chain_step(0, "a"),
+                            base_step(2),
+                            // 10^a 1^a <D 01
+                            chain_step(1, "a"),
+                            // 10^a <D 1^a 0 1
+                            rule_step(3, &[("n", "a"), ("a", "a")]),
+                            // <D 1^2a 0 1^a+1
+                            base_step(3),
+                            // A> 1^2a+2 0 1^a+1
+                            chain_step(2, "a+1"),
+                        ]),
+                },
+                // Proof of non-halting
+                Rule {
+                    init_config: Config::new(),
+                    final_config: Config::from_str("0^inf 10^n A> 0 1^n 0^inf").unwrap(),
+                    proof: Proof::Inductive {
+                        proof_base: vec![],
+                        proof_inductive: vec![
+                            induction_step(&[("n", "n")]),
+                            // 10^n A> 0 1^n
+                            rule_step(4, &[("a", "n")]),
+                        ],
+                    },
+                },
+            ],
+        };
+        if let Err(err) = validate_rule_set(&rule_set) {
+            panic!("{}", err);
+        }
+    }
+
+    #[test]
     fn test_62_mxdys_halt_cryptid1() {
         // https://wiki.bbchallenge.org/wiki/1RB1RA_0RC1RC_1LD0LF_0LE1LE_1RA0LB_---0LC
         // Probviously halting BB(6) Cryptid
