@@ -6,7 +6,6 @@ import collections
 import math
 from pathlib import Path
 
-from Exp_Int import ExpInt
 import Halting_Lib
 import IO
 
@@ -53,18 +52,23 @@ class BigIntStat:
   def __init__(self):
     self.count = 0
     self.max_value = 0
+    self.best_tm = ""
 
-  def add(self, value):
+  def add(self, value, tm: str):
     if value:
       self.count += 1
-      self.max_value = max(self.max_value, value)
+      if value > self.max_value:
+        self.max_value = value
+        self.best_tm = tm
 
   def max_str(self):
-    return Halting_Lib.big_int_approx_and_full_str(self.max_value)
+    return Halting_Lib.big_int_approx_and_full_str(self.max_value) + "   " + self.best_tm
 
 
 class TMStats:
-  def __init__(self):
+  def __init__(self, options):
+    self.options = options
+
     self.count = 0
 
     self.num_unknown = 0
@@ -107,93 +111,94 @@ class TMStats:
     self.timings_s = collections.defaultdict(Stat)
     self.sizes = collections.defaultdict(Stat)
 
-  def add_record(self, tm_record):
+  def add_record(self, tm_record: IO.TM_Record):
     self.count += 1
+    proto = tm_record.proto
 
     # Halt status
-    if not tm_record.status.halt_status.is_decided:
+    if not proto.status.halt_status.is_decided:
       self.num_unknown += 1
-      self.unknown_reason[tm_record.filter.simulator.result.unknown_info.WhichOneof("reason")] += 1
+      self.unknown_reason[proto.filter.simulator.result.unknown_info.WhichOneof("reason")] += 1
 
-    elif tm_record.status.halt_status.is_halting:
+    elif proto.status.halt_status.is_halting:
       self.num_halt += 1
-      num_steps = Halting_Lib.get_big_int(tm_record.status.halt_status.halt_steps)
-      self.halt_steps.add(num_steps)
-      score = Halting_Lib.get_big_int(tm_record.status.halt_status.halt_score)
-      self.halt_score.add(score)
+      num_steps = Halting_Lib.get_big_int(proto.status.halt_status.halt_steps)
+      self.halt_steps.add(num_steps, tm_record.ttable_str())
+      score = Halting_Lib.get_big_int(proto.status.halt_status.halt_score)
+      self.halt_score.add(score, tm_record.ttable_str())
 
     else:
       self.num_inf += 1
-      self.inf_reason[tm_record.status.halt_status.inf_reason] += 1
+      self.inf_reason[proto.status.halt_status.inf_reason] += 1
 
     # Quasihalt status
-    if tm_record.status.quasihalt_status.is_quasihalting:
+    if proto.status.quasihalt_status.is_quasihalting:
       self.num_qhalt += 1
-      num_steps = Halting_Lib.get_big_int(tm_record.status.quasihalt_status.quasihalt_steps)
+      num_steps = Halting_Lib.get_big_int(proto.status.quasihalt_status.quasihalt_steps)
       self.qhalt_steps.add(num_steps)
 
     # Which filters were run
-    for descr in tm_record.filter.DESCRIPTOR.fields:
+    for descr in proto.filter.DESCRIPTOR.fields:
       filter = descr.name
-      if tm_record.filter.HasField(filter):
+      if proto.filter.HasField(filter):
         self.filters_run[filter] += 1
 
     # Simulator stats
-    self.sim_num_loops.add(tm_record.filter.simulator.result.num_loops)
-    sim_log10_num_steps = tm_record.filter.simulator.result.log10_num_steps
+    self.sim_num_loops.add(proto.filter.simulator.result.num_loops)
+    sim_log10_num_steps = proto.filter.simulator.result.log10_num_steps
     self.sim_log10_num_steps.add(sim_log10_num_steps)
-    self.sim_num_rules_proven.add(tm_record.filter.simulator.result.num_rules_proven)
-    self.sim_num_linear_rules_proven.add(tm_record.filter.simulator.result.num_linear_rules_proven)
-    self.sim_num_exponential_rules_proven.add(tm_record.filter.simulator.result.num_exponential_rules_proven)
-    self.sim_num_gen_rules_proven.add(tm_record.filter.simulator.result.num_gen_rules_proven)
-    self.sim_num_collatz_rules.add(tm_record.filter.simulator.result.num_collatz_rules)
-    self.sim_num_proofs_failed.add(tm_record.filter.simulator.result.num_proofs_failed)
-    self.sim_num_rule_moves.add(tm_record.filter.simulator.result.num_rule_moves)
+    self.sim_num_rules_proven.add(proto.filter.simulator.result.num_rules_proven)
+    self.sim_num_linear_rules_proven.add(proto.filter.simulator.result.num_linear_rules_proven)
+    self.sim_num_exponential_rules_proven.add(proto.filter.simulator.result.num_exponential_rules_proven)
+    self.sim_num_gen_rules_proven.add(proto.filter.simulator.result.num_gen_rules_proven)
+    self.sim_num_collatz_rules.add(proto.filter.simulator.result.num_collatz_rules)
+    self.sim_num_proofs_failed.add(proto.filter.simulator.result.num_proofs_failed)
+    self.sim_num_rule_moves.add(proto.filter.simulator.result.num_rule_moves)
 
-    self.lr_start_step.add(tm_record.filter.lin_recur.result.start_step)
-    self.lr_period.add(tm_record.filter.lin_recur.result.period)
-    self.lr_abs_offset.add(abs(tm_record.filter.lin_recur.result.offset))
+    self.lr_start_step.add(proto.filter.lin_recur.result.start_step)
+    self.lr_period.add(proto.filter.lin_recur.result.period)
+    self.lr_abs_offset.add(abs(proto.filter.lin_recur.result.offset))
 
     # Backtrack stats
-    if tm_record.filter.backtrack.result.success:
-      self.bt_max_steps.add(tm_record.filter.backtrack.result.max_steps)
-      self.bt_max_width.add(tm_record.filter.backtrack.result.max_width)
+    if proto.filter.backtrack.result.success:
+      self.bt_max_steps.add(proto.filter.backtrack.result.max_steps)
+      self.bt_max_width.add(proto.filter.backtrack.result.max_width)
 
-    if tm_record.filter.cps.result.block_size:
-      self.cg_block_size.add(tm_record.filter.cps.result.block_size)
-      self.cg_num_steps.add(tm_record.filter.cps.result.num_steps)
-      self.cg_num_configs.add(tm_record.filter.cps.result.num_configs)
-      self.cg_num_edges.add(tm_record.filter.cps.result.num_edges)
-      self.cg_num_iters.add(tm_record.filter.cps.result.num_iters)
-      self.cg_found_inf_loop.add(tm_record.filter.cps.result.found_inf_loop)
+    if proto.filter.cps.result.block_size:
+      self.cg_block_size.add(proto.filter.cps.result.block_size)
+      self.cg_num_steps.add(proto.filter.cps.result.num_steps)
+      self.cg_num_configs.add(proto.filter.cps.result.num_configs)
+      self.cg_num_edges.add(proto.filter.cps.result.num_edges)
+      self.cg_num_iters.add(proto.filter.cps.result.num_iters)
+      self.cg_found_inf_loop.add(proto.filter.cps.result.found_inf_loop)
 
     # Timing
-    self.timings_s["total"].add(tm_record.elapsed_time_us / 1e6)
-    self.timings_s["simulator"].add(tm_record.filter.simulator.result.elapsed_time_us / 1e6)
-    self.timings_s["block_finder"].add(tm_record.filter.block_finder.result.elapsed_time_us / 1e6)
-    self.timings_s["reverse_engineer"].add(tm_record.filter.reverse_engineer.elapsed_time_us / 1e6)
-    self.timings_s["lin_recur"].add(tm_record.filter.lin_recur.result.elapsed_time_us / 1e6)
+    self.timings_s["total"].add(proto.elapsed_time_us / 1e6)
+    self.timings_s["simulator"].add(proto.filter.simulator.result.elapsed_time_us / 1e6)
+    self.timings_s["block_finder"].add(proto.filter.block_finder.result.elapsed_time_us / 1e6)
+    self.timings_s["reverse_engineer"].add(proto.filter.reverse_engineer.elapsed_time_us / 1e6)
+    self.timings_s["lin_recur"].add(proto.filter.lin_recur.result.elapsed_time_us / 1e6)
     self.timings_s["ctl"].add((
-      tm_record.filter.ctl.ctl_as.result.elapsed_time_us +
-      tm_record.filter.ctl.ctl_as_b.result.elapsed_time_us +
-      tm_record.filter.ctl.ctl_a_bs.result.elapsed_time_us +
-      tm_record.filter.ctl.ctl_as_b_c.result.elapsed_time_us
+      proto.filter.ctl.ctl_as.result.elapsed_time_us +
+      proto.filter.ctl.ctl_as_b.result.elapsed_time_us +
+      proto.filter.ctl.ctl_a_bs.result.elapsed_time_us +
+      proto.filter.ctl.ctl_as_b_c.result.elapsed_time_us
       ) / 1e6)
-    self.timings_s["backtrack"].add(tm_record.filter.backtrack.result.elapsed_time_us / 1e6)
-    self.timings_s["cps"].add(tm_record.filter.cps.result.elapsed_time_us / 1e6)
+    self.timings_s["backtrack"].add(proto.filter.backtrack.result.elapsed_time_us / 1e6)
+    self.timings_s["cps"].add(proto.filter.cps.result.elapsed_time_us / 1e6)
 
     # Serialized Size
-    self.sizes["total"].add(tm_record.ByteSize())
-    self.sizes["tm"].add(tm_record.tm.ByteSize())
-    self.sizes["status"].add(tm_record.status.ByteSize())
-    self.sizes["filter"].add(tm_record.filter.ByteSize())
+    self.sizes["total"].add(proto.ByteSize())
+    self.sizes["tm"].add(proto.tm.ByteSize())
+    self.sizes["status"].add(proto.status.ByteSize())
+    self.sizes["filter"].add(proto.filter.ByteSize())
 
-    self.sizes["simulator"].add(tm_record.filter.simulator.ByteSize())
-    self.sizes["block_finder"].add(tm_record.filter.block_finder.ByteSize())
-    self.sizes["lin_recur"].add(tm_record.filter.lin_recur.ByteSize())
-    self.sizes["ctl"].add(tm_record.filter.ctl.ByteSize())
-    self.sizes["backtrack"].add(tm_record.filter.backtrack.ByteSize())
-    self.sizes["cps"].add(tm_record.filter.cps.ByteSize())
+    self.sizes["simulator"].add(proto.filter.simulator.ByteSize())
+    self.sizes["block_finder"].add(proto.filter.block_finder.ByteSize())
+    self.sizes["lin_recur"].add(proto.filter.lin_recur.ByteSize())
+    self.sizes["ctl"].add(proto.filter.ctl.ByteSize())
+    self.sizes["backtrack"].add(proto.filter.backtrack.ByteSize())
+    self.sizes["cps"].add(proto.filter.cps.ByteSize())
 
   def print(self):
     print()
@@ -296,20 +301,21 @@ class TMStats:
             f"(Set in {self.timings_s[filter].count / self.count:4.0%})")
     print()
 
-    print("Serialized Sizes:")
-    # Note: These are the mean space for each message over all TMs
-    # (even ones without this message set).
-    mean_sizes = sorted([(size.total / self.count, message)
-                         for (message, size) in self.sizes.items()
-                         if size.count > 0],
-                        reverse=True)
-    for (mean_size_bytes, message) in mean_sizes:
-      # TODO: Add Percentages
-      print(f"  - {message:16s} : Mean(all) {mean_size_bytes:7_.1f} B   "
-            f"Mean(set) {self.sizes[message].mean():7_.1f} B   "
-            f"Max {self.sizes[message].max_value:7_.1f} B   "
-            f"(Set in {self.sizes[message].count / self.count:4.0%})")
-    print()
+    if self.options.sizes:
+      print("Serialized Sizes:")
+      # Note: These are the mean space for each message over all TMs
+      # (even ones without this message set).
+      mean_sizes = sorted([(size.total / self.count, message)
+                          for (message, size) in self.sizes.items()
+                          if size.count > 0],
+                          reverse=True)
+      for (mean_size_bytes, message) in mean_sizes:
+        # TODO: Add Percentages
+        print(f"  - {message:16s} : Mean(all) {mean_size_bytes:7_.1f} B   "
+              f"Mean(set) {self.sizes[message].mean():7_.1f} B   "
+              f"Max {self.sizes[message].max_value:7_.1f} B   "
+              f"(Set in {self.sizes[message].count / self.count:4.0%})")
+      print()
 
   def print_hist(self, hist):
     cum_total = 0
@@ -329,15 +335,16 @@ class TMStats:
 def main():
   parser = argparse.ArgumentParser()
   parser.add_argument("tm_file", type=Path, nargs="+")
+  parser.add_argument("--sizes", action="store_true", help="Print stats on record sizes")
   parser.add_argument("--print-freq", type=int, default=1_000_000)
   args = parser.parse_args()
 
-  stats = TMStats()
+  stats = TMStats(args)
   for filename in args.tm_file:
     try:
       with IO.Proto.Reader(filename) as reader:
         for tm_record in reader:
-          stats.add_record(tm_record.proto)
+          stats.add_record(tm_record)
           if args.print_freq and (stats.count % args.print_freq == 0):
             stats.print()
     except IO.Proto.IO_Error:
