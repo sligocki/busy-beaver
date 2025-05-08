@@ -15,15 +15,16 @@ def sorting_func(tm_record):
   else:
     return val
 
-def sort(in_filename, out_filename):
+def sort(in_filenames: list[Path], out_filename: Path) -> None:
   start_time = time.time()
   tm_records = []
-  try:
-    with IO.Reader(in_filename) as reader:
-      for tm_record in reader:
-        tm_records.append(tm_record)
-  except IO.Proto.IO_Error:
-    print(f"ERROR: {in_filename} has unexpected EOF. Moving on.")
+  for in_filename in in_filenames:
+    try:
+      with IO.Reader(in_filename) as reader:
+        for tm_record in reader:
+          tm_records.append(tm_record)
+    except IO.Proto.IO_Error:
+      print(f"ERROR: {in_filename} has unexpected EOF. Moving on.")
   print(f"Read {len(tm_records):_} records ({time.time() - start_time:_.2f}s)")
 
   start_time = time.time()
@@ -38,11 +39,11 @@ def sort(in_filename, out_filename):
 
 def main():
   parser = argparse.ArgumentParser()
-  parser.add_argument("in_file", type=Path)
+  parser.add_argument("in_files", type=Path, nargs="+")
   parser.add_argument("out_file", type=Path)
   args = parser.parse_args()
 
-  sort(args.in_file, args.out_file)
+  sort(args.in_files, args.out_file)
 
 if __name__ == "__main__":
   main()
