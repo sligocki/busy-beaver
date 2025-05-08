@@ -190,6 +190,7 @@ def simulate_machine(machine : Turing_Machine.Turing_Machine,
       sim_info.result.num_rules_proven = sim.prover.num_rules
       sim_info.result.num_meta_diff_rules_proven = sim.prover.num_meta_diff_rules
       sim_info.result.num_linear_rules_proven = sim.prover.num_linear_rules
+      sim_info.result.num_finite_linear_rules_proven = sim.prover.num_finite_linear_rules
       sim_info.result.num_exponential_rules_proven = sim.prover.num_exponential_rules
       sim_info.result.num_gen_rules_proven = sim.prover.num_gen_rules
       sim_info.result.num_collatz_rules = sim.prover.num_collatz_rules

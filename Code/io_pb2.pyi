@@ -597,6 +597,7 @@ class SimulatorResult(google.protobuf.message.Message):
     NUM_RULES_PROVEN_FIELD_NUMBER: builtins.int
     NUM_META_DIFF_RULES_PROVEN_FIELD_NUMBER: builtins.int
     NUM_LINEAR_RULES_PROVEN_FIELD_NUMBER: builtins.int
+    NUM_FINITE_LINEAR_RULES_PROVEN_FIELD_NUMBER: builtins.int
     NUM_EXPONENTIAL_RULES_PROVEN_FIELD_NUMBER: builtins.int
     NUM_GEN_RULES_PROVEN_FIELD_NUMBER: builtins.int
     NUM_COLLATZ_RULES_FIELD_NUMBER: builtins.int
@@ -617,6 +618,8 @@ class SimulatorResult(google.protobuf.message.Message):
     num_rules_proven: builtins.int
     num_meta_diff_rules_proven: builtins.int
     num_linear_rules_proven: builtins.int
+    num_finite_linear_rules_proven: builtins.int
+    """Only count non-infinite rules (rules with at least one exponent reducing)."""
     num_exponential_rules_proven: builtins.int
     num_gen_rules_proven: builtins.int
     num_collatz_rules: builtins.int
@@ -647,13 +650,14 @@ class SimulatorResult(google.protobuf.message.Message):
         num_rules_proven: builtins.int = ...,
         num_meta_diff_rules_proven: builtins.int = ...,
         num_linear_rules_proven: builtins.int = ...,
+        num_finite_linear_rules_proven: builtins.int = ...,
         num_exponential_rules_proven: builtins.int = ...,
         num_gen_rules_proven: builtins.int = ...,
         num_collatz_rules: builtins.int = ...,
         num_proofs_failed: builtins.int = ...,
     ) -> None: ...
     def HasField(self, field_name: typing.Literal["exit_condition", b"exit_condition", "halt_info", b"halt_info", "infinite_info", b"infinite_info", "unknown_info", b"unknown_info"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["elapsed_time_us", b"elapsed_time_us", "exit_condition", b"exit_condition", "halt_info", b"halt_info", "infinite_info", b"infinite_info", "log10_num_steps", b"log10_num_steps", "num_chain_moves", b"num_chain_moves", "num_collatz_rules", b"num_collatz_rules", "num_exponential_rules_proven", b"num_exponential_rules_proven", "num_gen_rules_proven", b"num_gen_rules_proven", "num_linear_rules_proven", b"num_linear_rules_proven", "num_loops", b"num_loops", "num_macro_moves", b"num_macro_moves", "num_meta_diff_rules_proven", b"num_meta_diff_rules_proven", "num_proofs_failed", b"num_proofs_failed", "num_rule_moves", b"num_rule_moves", "num_rules_proven", b"num_rules_proven", "unknown_info", b"unknown_info"]) -> None: ...
+    def ClearField(self, field_name: typing.Literal["elapsed_time_us", b"elapsed_time_us", "exit_condition", b"exit_condition", "halt_info", b"halt_info", "infinite_info", b"infinite_info", "log10_num_steps", b"log10_num_steps", "num_chain_moves", b"num_chain_moves", "num_collatz_rules", b"num_collatz_rules", "num_exponential_rules_proven", b"num_exponential_rules_proven", "num_finite_linear_rules_proven", b"num_finite_linear_rules_proven", "num_gen_rules_proven", b"num_gen_rules_proven", "num_linear_rules_proven", b"num_linear_rules_proven", "num_loops", b"num_loops", "num_macro_moves", b"num_macro_moves", "num_meta_diff_rules_proven", b"num_meta_diff_rules_proven", "num_proofs_failed", b"num_proofs_failed", "num_rule_moves", b"num_rule_moves", "num_rules_proven", b"num_rules_proven", "unknown_info", b"unknown_info"]) -> None: ...
     def WhichOneof(self, oneof_group: typing.Literal["exit_condition", b"exit_condition"]) -> typing.Literal["halt_info", "infinite_info", "unknown_info"] | None: ...
 
 global___SimulatorResult = SimulatorResult

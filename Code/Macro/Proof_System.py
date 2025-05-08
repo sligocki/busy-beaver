@@ -513,6 +513,7 @@ class Proof_System(object):
     self.num_rules = 0
     self.num_meta_diff_rules = 0
     self.num_linear_rules = 0
+    self.num_finite_linear_rules = 0
     self.num_exponential_rules = 0
     self.num_gen_rules = 0
     # Number of rules with an exponent that decreases by > 1 and thus
@@ -900,6 +901,8 @@ class Proof_System(object):
         gen_sim.num_loops, self.num_rules, states_last_seen)
       if rule:
         self.num_linear_rules += 1
+        if not rule.infinite:
+          self.num_finite_linear_rules += 1
         if rule.has_collatz_decrease:
           self.num_collatz_rules += 1
 
