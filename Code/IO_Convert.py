@@ -4,6 +4,7 @@ Convert a data file from text format to protobuf or vice-versa.
 """
 
 import argparse
+import math
 from pathlib import Path
 
 import IO
@@ -83,6 +84,9 @@ def main():
   parser = argparse.ArgumentParser()
   parser.add_argument("infile", type=Path)
   parser.add_argument("outfile", type=Path)
+  parser.add_argument("num_tms", type=int, default=math.inf, nargs="?",
+                      help="Number of TMs to convert [Default: all].")
+
   parser.add_argument("--informat", choices=FORMATS, default="auto",
                       help="Manually set format of input file. "
                       "Default is to auto detect based on filename extension.")
@@ -108,6 +112,8 @@ def main():
       for tm_record in reader:
         num_records += 1
         writer.write_record(tm_record)
+        if num_records >= args.num_tms:
+          break
 
   print(f"Done: Converted {num_records:_} records")
 
