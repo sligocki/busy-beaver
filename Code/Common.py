@@ -8,7 +8,7 @@ from google.protobuf.json_format import MessageToJson
 
 
 # Increase some annoying limits
-sys.set_int_max_str_digits(20_000)
+sys.set_int_max_str_digits(0)
 sys.setrecursionlimit(10_000)
 
 
