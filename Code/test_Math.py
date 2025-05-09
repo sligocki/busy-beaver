@@ -48,7 +48,7 @@ class MathTest(unittest.TestCase):
     for b in range(2, 11):
       for m in range(2, 101):
         for k in range(20):
-          self.assertEqual(exp_mod(b, b**k, m), pow(b, b**k, m))
+          self.assertEqual(exp_mod(b, k, m), pow(b, k, m))
 
     for k in range(3, 20):
       self.assertEqual(exp_mod(3, 2**(k-2) + 1, 2**k), 3)
