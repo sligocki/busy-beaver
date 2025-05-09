@@ -47,7 +47,7 @@ class MathTest(unittest.TestCase):
   def test_exp_mod(self):
     for b in range(2, 11):
       for m in range(2, 101):
-        for k in range(20):
+        for k in range(100):
           self.assertEqual(exp_mod(b, k, m), pow(b, k, m))
 
     for k in range(3, 20):

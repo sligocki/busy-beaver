@@ -44,10 +44,12 @@ def prime_factor(n):
   raise NotImplementedError("Need more primes!")
 
 
-def carmichael(n):
+def carmichael(n: int) -> tuple[int, int]:
   """
   Carmichael's lambda function: https://en.wikipedia.org/wiki/Carmichael_function
-  Returns the smallest m such that for all a coprime to n: a^m = 1 (mod n).
+  Returns a pair containing:
+    1) The smallest m such that for all a coprime to n: a^m = 1 (mod n)
+    2) The maximum power of any prime dividing n
   """
   res = 1
   max_k = 1
@@ -60,14 +62,13 @@ def carmichael(n):
     max_k = max(max_k, k)
   return res, max_k
 
-def exp_mod(b, k, m):
+def exp_mod(b: int, k, m: int) -> int:
   """Evaluate b^k % m efficiently for huge k."""
-  a = gcd(b, m)
   kp, k0 = carmichael(m)
   # for all kn >= k0: b^kn = b^{kp+kn} (mod m)
   #   See: https://en.wikipedia.org/wiki/Carmichael_function#Exponential_cycle_length
   if k < k0:
-    return pow(b, k, m)
+    return pow(b, int(k), m)
   else:
     kn = (k - k0) % kp + k0
     # b^k = b^kn (mod m)

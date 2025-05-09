@@ -1,5 +1,10 @@
-"""Library for representing very large integers of the form: a b^n + c"""
+"""
+Library for representing very large integers (ExpInt) of the form:
+  (a b^n + c)/d
+where a,b,c,d are normal int and n is either an int or ExpInt.
+"""
 
+from __future__ import annotations
 from fractions import Fraction
 import math
 
@@ -16,7 +21,7 @@ MAX_DEPTH = 10_000
 
 
 # Standard way to create an ExpInt
-def exp_int(base, exponent):
+def exp_int(base: int, exponent: int | ExpInt | Expression) -> ExpInt:
   """Returns either int or ExpInt based on size of exponent."""
   assert isinstance(base, int), base
   assert isinstance(exponent, (int, ExpInt, Expression)), exponent
@@ -31,7 +36,7 @@ def exp_int(base, exponent):
 class ExpIntException(Exception):
   pass
 
-def tex_formula(x):
+def tex_formula(x: ExpInt | ExpTerm | int) -> str:
   if isinstance(x, ExpInt):
     s = " + ".join(tex_formula(term) for term in x.terms)
     if x.const != 0:
@@ -48,11 +53,11 @@ def tex_formula(x):
     return str(x)
 
 
-def is_simple(value):
+def is_simple(value) -> bool:
   """Is `value` a "simple" numeric type (integer or Fraction)."""
   return isinstance(value, (int, Fraction))
 
-def try_eval(x):
+def try_eval(x: BigInt) -> int | None:
   """Return integer value (if it's small enough) or None (if too big)."""
   if isinstance(x, (ExpInt, ExpTerm)):
     (height, top) = x.tower_value
@@ -75,7 +80,7 @@ def try_simplify(x):
   else:
     return x
 
-def struct_eq(a, b):
+def struct_eq(a, b) -> bool:
   """Test for structural equality (not math equality)."""
   if is_simple(a) and is_simple(b):
     return a == b
@@ -88,7 +93,7 @@ def struct_eq(a, b):
     # Cannot compare
     return False
 
-def fractional_height(x):
+def fractional_height(x) -> int:
   (height, top) = tower_value(x)
   assert top > 0, x
   # Invariant: x ≈ 10^^height[^top]
@@ -109,13 +114,13 @@ def tower_value(x):
   else:
     return (0, abs(x))
 
-def sign(x):
+def sign(x) -> int:
   if isinstance(x, ExpInt):
     return x.sign
   else:
     return (x > 0) - (x < 0)
 
-def exp_int_depth(x):
+def exp_int_depth(x) -> int:
   if isinstance(x, ExpInt):
     return x.depth
   elif isinstance(x, Expression):
@@ -291,6 +296,12 @@ class ExpInt:
       self.denom //= common
       self.terms = [term.div_int(common) for term in self.terms]
     assert self.denom > 0, self
+
+  def __int__(self) -> int:
+    val = try_eval(self)
+    if val is None:
+      raise ValueError("Attempt to convert large ExpInt -> int")
+    return val
 
   def eval(self):
     self.is_const = all(term.is_const for term in self.terms)
