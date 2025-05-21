@@ -7,9 +7,10 @@ This is my implementation of savask's Closed Position Set (CPS) decider
 Which they reverse-engineered from Skelet's program originally.
 """
 
-from typing import Optional
 import argparse
 from collections import defaultdict
+import time
+from typing import Optional
 
 from Common import print_pb
 import Halting_Lib
@@ -317,11 +318,39 @@ def filter(base_tm : Turing_Machine.Simple_Machine,
   return graph_set
 
 
+def cps_one(tm, args, block_size: int, window_size: int | None = None):
+  if not window_size:
+    window_size = 3 * block_size
+
+  assert window_size >= 2 * block_size
+
+  cg_result = io_pb2.CPSFilterResult()
+  bb_status = io_pb2.BBStatus()
+
+  graph_set = filter(tm, block_size, window_size,
+                     args.fixed_history, args.lru_history,
+                     args.max_steps, args.max_iters, args.max_configs, args.max_edges,
+                     cg_result, bb_status)
+  
+  return graph_set, cg_result, bb_status
+
+def cps_many(tm, args):
+  start_time = time.time()
+  for block_size in range(1, args.max_block_size + 1):
+    print(f"Testing block size {block_size} ({time.time() - start_time:.2f}s)")
+    graph_set, cg_result, bb_status = cps_one(tm, args, block_size)
+    if cg_result.success:
+      break
+  return graph_set, cg_result, bb_status
+
 def main():
   parser = argparse.ArgumentParser()
   parser.add_argument("tm", help="Turing Machine or file or file:record_num (0-indexed).")
-  parser.add_argument("block_size", type=int)
-  parser.add_argument("window_size", type=int, nargs="?")
+
+  parser.add_argument("--max-block-size", type=int, default=10)
+
+  parser.add_argument("--block-size", type=int)
+  parser.add_argument("--window-size", type=int, nargs="?")
 
   parser.add_argument("--max-steps", type=int, default=1_000_000)
   parser.add_argument("--max-iters", type=int, default=500)
@@ -338,21 +367,14 @@ def main():
                       help="Print proof certificate in @savask's format.")
   args = parser.parse_args()
 
-  if not args.window_size:
-    args.window_size = 3 * args.block_size
-
-  assert args.window_size >= 2 * args.block_size
-
-  cg_result = io_pb2.CPSFilterResult()
-  bb_status = io_pb2.BBStatus()
-
   tm = IO.get_tm(args.tm)
   print(tm.ttable_str())
 
-  graph_set = filter(tm, args.block_size, args.window_size,
-                     args.fixed_history, args.lru_history,
-                     args.max_steps, args.max_iters, args.max_configs, args.max_edges,
-                     cg_result, bb_status)
+  if args.block_size:
+    graph_set, cg_result, bb_status = cps_one(
+      tm, args, args.block_size, args.window_size)
+  else:
+    graph_set, cg_result, bb_status = cps_many(tm, args)
 
   if args.verbose:
     graph_set.print_debug()
@@ -369,6 +391,7 @@ def main():
     print("Proven Infinite")
   else:
     print("Inconclusive")
+
 
 if __name__ == "__main__":
   main()
