@@ -53,22 +53,6 @@ def add_option_group(parser):
   Simulator.add_option_group(parser)
   Block_Finder.add_option_group(parser)
 
-def run_timer(tm_record : TM_Record,
-              options,
-              time_limit_sec : float):
-  try:
-    start_time = time.time()
-    #Alarm.ALARM.set_alarm(time_limit_sec)
-
-    #run_options(tm_record, options)
-    run_options(tm_record, options,time_limit_sec)
-    #Alarm.ALARM.cancel_alarm()
-
-  except Alarm.AlarmException:
-    #Alarm.ALARM.cancel_alarm()
-    tm_record.proto.filter.simulator.result.unknown_info.over_time.elapsed_time_sec = (
-      time.time() - start_time)
-
 def run_options(tm_record : TM_Record,
                 options,
                 time_limit_sec : float) -> None:

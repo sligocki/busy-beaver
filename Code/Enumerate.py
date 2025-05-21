@@ -7,27 +7,19 @@ Macro Machine simulator, gathers statistics, and outputs all of the machines
 like Generate does.
 """
 
-import collections
-import copy
 import pickle as pickle
 import math
 from optparse import OptionParser, OptionGroup
 import os
-from pprint import pprint
 import random
-import shutil
 import sys
 import time
 
-import Halting_Lib
 import IO
 from IO.TM_Record import TM_Record
-from Macro import Block_Finder, Turing_Machine
 import Macro_Simulator
 import TM_Enum
 import Work_Queue
-
-import io_pb2
 
 
 def long_to_eng_str(number, left, right):
@@ -138,11 +130,7 @@ class Enumerator(object):
   def run(self, tm_record : TM_Record) -> TM_Record:
     """Simulate TM"""
     try:
-      if self.options.time > 0:
-        Macro_Simulator.run_timer(tm_record, self.options,
-                                  self.options.time)
-      else:
-        Macro_Simulator.run_options(tm_record, self.options, 0.0)
+      Macro_Simulator.run_options(tm_record, self.options, self.options.time)
 
     except Exception as e:
       print("ERROR: Exception raised while simulating TM:",
@@ -212,8 +200,6 @@ def enum_initial_tms(options):
     yield tm_record
 
 def main(args):
-  start_time = time.time()
-
   ## Parse command line options.
   usage = "usage: %prog [options]"
   parser = OptionParser(usage=usage)
