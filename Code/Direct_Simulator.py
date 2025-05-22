@@ -18,11 +18,13 @@ from Macro.Turing_Machine import Symbol
 
 @dataclass(frozen=True)
 class SymbolOrBlank:
+  """Symbol marked to indicate if it was written or was a "blank" (initialized on tape)."""
   value : Symbol
-  is_initial : bool
+  # Blank means this is a symbol initialized on the tape, not written.
+  is_blank : bool
 
   def __str__(self) -> str:
-    if self.is_initial:
+    if self.is_blank:
       return "_"
     else:
       return str(self.value)

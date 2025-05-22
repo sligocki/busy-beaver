@@ -29,6 +29,9 @@ class Transcript:
       s += " ..."
     return s
   
+  def __len__(self) -> int:
+    return len(self.history)
+  
   def extend_history(self, size : int) -> None:
     target = self.sim.step_num + size
     while self.sim.step_num < target and not self.sim.halted:
