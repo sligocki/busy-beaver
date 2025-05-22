@@ -2,20 +2,34 @@
 Class for managing direct simulations (non-chain tape).
 """
 
+from __future__ import annotations
+
 import argparse
 import collections
+from dataclasses import dataclass
 import time
 
 import Common
 import IO
-from Macro import Turing_Machine
+from Macro.Turing_Machine import Simple_Machine as TM
+from Macro.Turing_Machine import Simple_Machine_State as State
+from Macro.Turing_Machine import Symbol
 
 
-Symbol = int
+@dataclass(frozen=True)
+class SymbolOrBlank:
+  value : Symbol
+  is_initial : bool
+
+  def __str__(self) -> str:
+    if self.is_initial:
+      return "_"
+    else:
+      return str(self.value)
 
 class DirectTape:
-  def __init__(self, init_symbol):
-    self.init_symbol = init_symbol
+  def __init__(self, init_symbol : Symbol):
+    self.init_symbol = SymbolOrBlank(init_symbol, True)
 
     # Internal storage
     self.tape = collections.deque([self.init_symbol])
@@ -28,20 +42,32 @@ class DirectTape:
 
   # Tape is grown lazily, so the leftmost/rightmost positions are at the
   # extreme ends of the deque.
-  def pos_leftmost(self):
+  def pos_leftmost(self) -> int:
     """Furthest left position visited on the tape."""
     return self._index2pos(0)
-  def pos_rightmost(self):
+  def pos_rightmost(self) -> int:
     """Furthest right position visited on the tape."""
     return self._index2pos(len(self.tape) - 1)
 
-  def read(self) -> Symbol:
-    return self.tape[self.index]
+  def read_or_blank(self, pos : int | None = None) -> SymbolOrBlank:
+    if pos is None:
+      pos = self.position
+    index = self._pos2index(pos)
+    if 0 <= index < len(self.tape):
+      return self.tape[index]
+    else:
+      return self.init_symbol
 
-  def write(self, symbol : Symbol) -> None:
-    self.tape[self.index] = symbol
+  def read(self, pos : int | None = None) -> Symbol:
+    return self.read_or_blank(pos).value
 
-  def move(self, dir):
+  def write(self, symbol : Symbol, pos : int | None = None) -> None:
+    if pos is None:
+      pos = self.position
+    self._expand_tape(pos)
+    self.tape[self._pos2index(pos)] = SymbolOrBlank(symbol, False)
+
+  def move(self, dir) -> None:
     if dir:  # Right
       self.position += 1
       self.index += 1
@@ -50,17 +76,6 @@ class DirectTape:
       self.index -= 1
     self._expand_tape()
 
-  def read_pos(self, pos):
-    index = self._pos2index(pos)
-    if 0 <= index < len(self.tape):
-      return self.tape[index]
-    else:
-      return self.init_symbol
-  
-  def write_pos(self, symbol, pos):
-    self._expand_tape(pos)
-    self.tape[self._pos2index(pos)] = symbol
-
   def copy(self):
     new_tape = DirectTape(self.init_symbol)
     new_tape.tape = self.tape.copy()
@@ -68,17 +83,17 @@ class DirectTape:
     new_tape.position = self.position
     return new_tape
 
-  def _pos2index(self, pos):
+  def _pos2index(self, pos : int) -> int:
     return pos - self.position + self.index
-  def _index2pos(self, index):
+  def _index2pos(self, index : int) -> int:
     return index - self.index + self.position
-  def _index_default(self, pos = None):
+  def _index_default(self, pos : int | None = None) -> int:
     if pos == None:
       return self.index
     else:
       return self._pos2index(pos)
 
-  def _expand_tape(self, new_pos = None):
+  def _expand_tape(self, new_pos : int | None = None) -> None:
     """Expand the deque to include the given position (defaults to current pos)."""
     new_index = self._index_default(new_pos)
     if new_index < 0:
@@ -90,20 +105,19 @@ class DirectTape:
     # Note: We must recompute index since the deque may have been extended to the left.
     assert 0 <= self._index_default(new_pos) < len(self.tape)
 
-  def count_nonzero(self):
-    return sum(1 for symb in self.tape if symb != self.init_symbol)
+  def count_nonzero(self) -> int:
+    return sum(1 for symb in self.tape if symb.value != self.init_symbol.value)
 
 
 class DirectSimulator:
-  def __init__(self, tm : Turing_Machine.Simple_Machine, *,
-               initialize : bool = True, blank_init_symbol : bool = False):
+  def __init__(self, tm : TM, *, initialize : bool = True):
     self.tm = tm
 
     if initialize:
       self.halted = False
-      self.state = tm.init_state
+      self.state : State = tm.init_state
 
-      init_symbol = tm.init_symbol if not blank_init_symbol else None
+      init_symbol = tm.init_symbol
       self.tape = DirectTape(init_symbol = init_symbol)
 
       self.step_num = 0
@@ -111,7 +125,7 @@ class DirectSimulator:
   def cur_symbol(self) -> Symbol:
     return self.tape.read()
 
-  def copy(self):
+  def copy(self) -> DirectSimulator:
     new_sim = DirectSimulator(self.tm, initialize=False)
     new_sim.state = self.state
     new_sim.halted = self.halted
@@ -119,7 +133,7 @@ class DirectSimulator:
     new_sim.step_num = self.step_num
     return new_sim
 
-  def step(self):
+  def step(self) -> None:
     if not self.halted:
       state_in = self.state
       symbol_in = self.tape.read()
@@ -137,7 +151,7 @@ class DirectSimulator:
 
       self.step_num += 1
 
-  def seek(self, target_step_num):
+  def seek(self, target_step_num : int) -> None:
     while not self.halted and self.step_num < target_step_num:
       self.step()
 

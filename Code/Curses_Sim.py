@@ -111,7 +111,7 @@ class VisSim:
     for col_num in range(col_min, col_max + 1):
       pos = col_num - self.pos_offset
       # Color based on the symbol at this position starting from color 1.
-      attr = curses.color_pair(tape.read_pos(pos) + 1)
+      attr = curses.color_pair(tape.read(pos) + 1)
       if pos == tape.position:
         # Convert state from integer to letter.
         text = STATES[state]

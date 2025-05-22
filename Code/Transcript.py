@@ -3,18 +3,15 @@
 import argparse
 from dataclasses import dataclass
 
-from Direct_Simulator import DirectSimulator
+from Direct_Simulator import DirectSimulator, TM, State, SymbolOrBlank
 import IO
-from Macro.Turing_Machine import Simple_Machine as TM
-from Macro.Turing_Machine import Simple_Machine_State as State
-from Macro.Turing_Machine import Symbol
 
 
 @dataclass
 class Trans:
   """Single TM transition index (state and symbol read)."""
   state : State
-  symbol : Symbol
+  symbol : SymbolOrBlank
 
   def __str__(self) -> str:
     return f"{self.state}{self.symbol}"
@@ -35,7 +32,7 @@ class Transcript:
   def extend_history(self, size : int) -> None:
     target = self.sim.step_num + size
     while self.sim.step_num < target and not self.sim.halted:
-      self.history.append(Trans(self.sim.state, self.sim.cur_symbol()))
+      self.history.append(Trans(self.sim.state, self.sim.tape.read_or_blank()))
       self.sim.step()
 
 

@@ -1,29 +1,30 @@
 #! /usr/bin/env python3
 
-import Direct_Simulator
+from Direct_Simulator import DirectTape, DirectSimulator, State, Symbol, SymbolOrBlank
 
 import unittest
 
 import IO
 
 
-def write_range(tape : Direct_Simulator.DirectTape,
-                start_pos : int, new_section : list[int]) -> None:
+def write_range(tape : DirectTape, start_pos : int, new_section : list[int]) -> None:
   for i, symb in enumerate(new_section):
-    tape.write_pos(symb, i + start_pos)
+    tape.write(symb, i + start_pos)
 
-def read_range(tape : Direct_Simulator.DirectTape,
-               start_pos : int, end_pos : int) -> list[Direct_Simulator.Symbol]:
-  return [tape.read_pos(pos) for pos in range(start_pos, end_pos)]
+def read_range(tape : DirectTape, start_pos : int, end_pos : int) -> list[Symbol]:
+  return [tape.read(pos) for pos in range(start_pos, end_pos)]
+
+def read_tape(tape : DirectTape) -> list[Symbol]:
+  return read_range(tape, tape.pos_leftmost(), tape.pos_rightmost() + 1)
 
 class SystemTest(unittest.TestCase):
   def test_simple(self):
     tm = IO.parse_tm("1RB1LA_0LA1RA")
-    sim = Direct_Simulator.DirectSimulator(tm)
+    sim = DirectSimulator(tm)
 
     self.assertFalse(sim.halted)
     self.assertEqual(sim.state, 0)
-    self.assertEqual(sim.tape.read(), 0)
+    self.assertEqual(sim.tape.read_or_blank(), SymbolOrBlank(0, True))
     self.assertEqual(sim.tape.position, 0)
     self.assertEqual(sim.tape.pos_leftmost(), 0)
     self.assertEqual(sim.tape.pos_rightmost(), 0)
@@ -32,7 +33,7 @@ class SystemTest(unittest.TestCase):
     sim.step()
     self.assertFalse(sim.halted)
     self.assertEqual(sim.state, 1)
-    self.assertEqual(sim.tape.read(), 0)
+    self.assertEqual(sim.tape.read_or_blank(), SymbolOrBlank(0, True))
     self.assertEqual(sim.tape.position, 1)
     self.assertEqual(sim.tape.pos_leftmost(), 0)
     self.assertEqual(sim.tape.pos_rightmost(), 1)
@@ -41,7 +42,7 @@ class SystemTest(unittest.TestCase):
     sim.seek(100)
     self.assertFalse(sim.halted)
     self.assertEqual(sim.state, 0)
-    self.assertEqual(sim.tape.read(), 0)
+    self.assertEqual(sim.tape.read_or_blank(), SymbolOrBlank(0, True))
     self.assertEqual(sim.tape.position, -20)
     self.assertEqual(sim.tape.pos_leftmost(), -20)
     self.assertEqual(sim.tape.pos_rightmost(), 2)
@@ -50,26 +51,27 @@ class SystemTest(unittest.TestCase):
   def test_halt(self):
     # BB4 champion
     tm = IO.parse_tm("1RB1LB_1LA0LC_1RZ1LD_1RD0RA")
-    sim = Direct_Simulator.DirectSimulator(tm)
+    sim = DirectSimulator(tm)
     sim.seek(1000)
     self.assertTrue(sim.halted)
     self.assertEqual(sim.step_num, 107)
-    self.assertEqual(sim.tape.read(), 0)
-    self.assertEqual(list(sim.tape.tape), [1, 0] + [1]*12)
+    self.assertEqual(sim.halt_score, 13)
+    self.assertEqual(sim.tape.read_or_blank(), SymbolOrBlank(0, False))
+    self.assertEqual(read_tape(sim.tape), [1, 0] + [1]*12)
 
   def test_example(self):
-    # This is testing a speicific TM that was broken by a change I was working on.
+    # This is testing a specific TM that was broken by a change I was working on.
     tm = IO.parse_tm("1RB3LA1RB2LA1RA_1LB2LA3RA4RB---")
-    sim = Direct_Simulator.DirectSimulator(tm)
+    sim = DirectSimulator(tm)
     sim.seek(1000)
     self.assertFalse(sim.halted)
     self.assertEqual(sim.state, 0)
-    self.assertEqual(sim.tape.read(), 2)
-    self.assertEqual(list(sim.tape.tape), [1, 4, 1, 2, 2, 2, 3, 3, 2, 3, 2, 3, 3, 3] + [2]*9 + [3, 3, 2, 3, 2, 2, 3, 3, 3, 2, 3, 3, 3, 2, 2, 3, 3, 3, 2, 3])
+    self.assertEqual(sim.tape.read_or_blank(), SymbolOrBlank(2, False))
+    self.assertEqual(read_tape(sim.tape), [1, 4, 1, 2, 2, 2, 3, 3, 2, 3, 2, 3, 3, 3] + [2]*9 + [3, 3, 2, 3, 2, 2, 3, 3, 3, 2, 3, 3, 3, 2, 2, 3, 3, 3, 2, 3])
 
   def test_expand_tape(self):
     tm = IO.parse_tm("1RB1LB_1LA0LC_1RZ1LD_1RD0RA")
-    sim = Direct_Simulator.DirectSimulator(tm)
+    sim = DirectSimulator(tm)
     sim.seek(100)
 
     start_pos = sim.tape.pos_leftmost()
@@ -91,7 +93,7 @@ class SystemTest(unittest.TestCase):
 
   def test_update_tape(self):
     tm = IO.parse_tm("1RB1LB_1LA0LC_1RZ1LD_1RD0RA")
-    sim = Direct_Simulator.DirectSimulator(tm)
+    sim = DirectSimulator(tm)
     sim.seek(100)
 
     new_section = [5, 6, 7, 8]

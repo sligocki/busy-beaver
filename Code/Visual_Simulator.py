@@ -77,7 +77,7 @@ def print_tape(sim : DirectSimulator, args) -> None:
     sys.stdout.write("\033[0m%10d: " % sim.step_num)
 
     for pos in print_range:
-      value = sim.tape.read_pos(pos)
+      value = sim.tape.read(pos)
       if sim.tape.position == pos:
         # If this is the current possition ...
         sys.stdout.write("\033[1;%dm%c" % (COLOR[value], STATES[sim.state]))
@@ -159,10 +159,10 @@ def main():
   sim.state = state
   for i, symb in enumerate(left):
     # Write left half of tape so that the rightmost symbol is at location -1.
-    sim.tape.write_pos(symb, i-len(left))
+    sim.tape.write(symb, i-len(left))
   for i, symb in enumerate(right):
     # Write right half of tape so that the leftmost symbol is at location 0.
-    sim.tape.write_pos(symb, i)
+    sim.tape.write(symb, i)
 
   run_visual(sim, args=args)
   sys.stdout.flush()
