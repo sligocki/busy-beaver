@@ -6,6 +6,7 @@
 Runs the trivial CTL (A*) on a machine to discover infinite behavior
 """
 
+import sys
 import argparse
 import time
 
@@ -23,7 +24,7 @@ class CTL_Table(dict):
       self[key] = (set(), set())
     return dict.__getitem__(self, key)
 
-def CTL(machine, config, end_time=None, verbose=False):
+def CTL(machine, config, max_time=0.0, verbose=False):
   """Runs the CTL on a machine given an advaced tape config"""
   # Initialize the table with the current configuration
   new_table = CTL_Table()
@@ -36,6 +37,10 @@ def CTL(machine, config, end_time=None, verbose=False):
   #   2) The table is unchanged after iteration (Success)
   table = None
   num_iters = 0
+  end_time = None
+  if max_time > 0:
+    end_time = time.time() + max_time
+
   while table != new_table:
     if end_time and time.time() >= end_time:
       return False, num_iters
@@ -84,7 +89,8 @@ class GenContainer:
     for atr in args:
       self.__dict__[atr] = args[atr]
 
-def test_CTL(base_tm, cutoff, block_size=1, offset=None, use_backsymbol=True, verbose=False):
+def test_CTL(base_tm, cutoff, block_size=1, offset=None, use_backsymbol=True,
+             max_time=0.0, verbose=False):
   if verbose:
     print(base_tm.ttable_str())
   m = base_tm
@@ -105,7 +111,7 @@ def test_CTL(base_tm, cutoff, block_size=1, offset=None, use_backsymbol=True, ve
   for d in range(2):
     tape[d] = [block.symbol for block in reversed(sim.tape.tape[d]) if block.num != "Inf"]
   config = GenContainer(state=sim.state, dir=sim.dir, tape=tape)
-  return CTL(m, config, verbose=verbose)
+  return CTL(m, config, max_time=max_time, verbose=verbose)
 
 
 def main():

@@ -6,7 +6,9 @@
 Runs the CTL (A* B C) on a machine to discover infinite behavior
 """
 
+import sys
 import argparse
+import time
 
 import IO
 from Macro import Turing_Machine, Simulator
@@ -17,7 +19,7 @@ class CTL_Table(dict):
       self[key] = ((set(), set(), set()), (set(), set(), set()))
     return dict.__getitem__(self, key)
 
-def CTL(machine, config, verbose=False):
+def CTL(machine, config, max_time=0.0, verbose=False):
   """Runs the CTL on a machine given an advaced tape config"""
   # Initialize the table with the current configuration
   new_table = CTL_Table()
@@ -27,7 +29,14 @@ def CTL(machine, config, verbose=False):
   #   2) The table is unchanged after iteration (Success)
   table = None
   num_iters = 0
+  end_time = None
+  if max_time > 0:
+    end_time = time.time() + max_time
+
   while table != new_table:
+    if end_time and time.time() >= end_time:
+      return False, num_iters
+
     if verbose:
       for term in new_table:
         print(term,":",new_table[term])
@@ -81,7 +90,8 @@ class GenContainer:
     for atr in args:
       self.__dict__[atr] = args[atr]
 
-def test_CTL(base_tm, cutoff, block_size=1, offset=None, use_backsymbol=True, verbose=False):
+def test_CTL(base_tm, cutoff, block_size=1, offset=None, use_backsymbol=True,
+             max_time=0.0, verbose=False):
   if verbose:
     print(base_tm.ttable_str())
   m = base_tm
@@ -133,7 +143,7 @@ def test_CTL(base_tm, cutoff, block_size=1, offset=None, use_backsymbol=True, ve
       B = set([sim.tape.tape[d][0].symbol])
     sets[d] = (A, B, C)
   config = GenContainer(state=sim.state, dir=sim.dir, init_sets=tuple(sets))
-  return CTL(m, config, verbose=verbose)
+  return CTL(m, config, max_time=max_time, verbose=verbose)
 
 
 def main():
