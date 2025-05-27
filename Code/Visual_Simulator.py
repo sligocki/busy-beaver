@@ -53,6 +53,9 @@ def parse_config(config_str):
     # Normalize so that current (top) symbol is always on right.
     top = left.pop() if left else 0
     right.insert(0, top)
+  
+  if state is None:
+    raise ValueError(f"`{config_str}` is not a valid start_config (state missing)")
 
   return (state, left, right)
 
