@@ -167,7 +167,7 @@ class ExpTerm:
 
       if not exp_as_int:
         assert isinstance(self.exponent, ExpInt), self.exponent
-        # For large enough exponent, the coeficient and even base don't have much effect.
+        # For large enough exponent, the coefficient and even base don't have much effect.
         (height, top) = self.exponent.tower_value
         assert top >= 0, top
         # self = b^(10^^height[^top]) ~= 10^^(height+1)[^top]
@@ -284,7 +284,7 @@ class ExpInt:
 
   def normalize(self):
     common = gcd(self.const, self.denom)
-    # Force denominator to be postitive
+    # Force denominator to be positive
     common = abs(common) * sign(self.denom)
     assert isinstance(common, int), (common, repr(self.denom))
     if common != 1:
@@ -309,7 +309,7 @@ class ExpInt:
       term_values = [try_eval(term) for term in self.terms]
       if all(term_values):
         # All terms are small enough to fit in `int`s. We can represent the sum
-        # percisely here.
+        # precisely here.
         value = (sum(term_values) + self.const) // self.denom
         self.tower_value = tower_value(value)
         self.sign = sign(value)
@@ -321,7 +321,7 @@ class ExpInt:
         max_neg_tower = max((term.tower_value for term in self.terms
                              if term.sign < 0), default = tower_value(0))
         if max_pos_tower == max_neg_tower:
-          raise ExpIntException(f"Cannot evalulate sign of ExpInt: {self}    ({max_pos_tower} == {max_neg_tower})")
+          raise ExpIntException(f"Cannot evaluate sign of ExpInt: {self}    ({max_pos_tower} == {max_neg_tower})")
         self.tower_value = max(max_pos_tower, max_neg_tower)
         if max_neg_tower > max_pos_tower:
           self.sign = -1
@@ -474,7 +474,7 @@ class ExpInt:
     return ExpInt(self.terms, self.const, self.denom * other_int)
 
 
-  # Basic comparision using tower notation.
+  # Basic comparison using tower notation.
   def __gt__(self, other):
     assert is_const(self), self
     if other == math.inf:
