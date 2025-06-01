@@ -1087,7 +1087,6 @@ class Proof_System(object):
     # We keep track because even recursive proofs cannot contain rules
     # with large_deltas.
     large_delta = False
-    has_variable = False
     for dir in range(2):
       for i, (init_block, diff_block, new_block) in enumerate(zip(
           rule.initial_tape.tape[dir], rule.diff_tape.tape[dir], new_tape.tape[dir])):
@@ -1155,7 +1154,7 @@ class Proof_System(object):
                 #   Diff:    0^Inf 2^-1  0^0 1^+2  B> 0^0 1^-1  0^Inf
                 # Applied to tape:
                 #   0^Inf 2^d+5 0^1 1^3 B> 0^1 1^e+3 0^Inf
-                # We shoud apply the rule either d+4 or e+2 times depending
+                # We should apply the rule either d+4 or e+2 times depending
                 # on which is smaller. Too complicated, we fail.
                 if self.verbose:
                   self.print_this("++ Multiple negative diffs for expressions ++")
@@ -1282,7 +1281,14 @@ class Proof_System(object):
     for i, (cur, func) in enumerate(zip(current_list, rule.func_list)):
       if func and func.is_decreasing:
         this_reps, this_final = func.max_reps(cur)
-        if not num_reps or this_reps < num_reps:
+        if isinstance(this_reps, Algebraic_Expression) and isinstance(num_reps, Algebraic_Expression):
+          # There are two different decreasing exponents in the rule and both
+          # are attempting to be applied to Algebraic_Expressions.
+          # We cannot know which one will run out first, so just give up.
+          if self.verbose:
+            self.print_this("++ Multiple decreasing exponents for expressions ++")
+          return False, None
+        elif not num_reps or this_reps < num_reps:
           num_reps = this_reps
           limit_index = i
           limit_final = this_final
