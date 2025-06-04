@@ -2723,6 +2723,249 @@ mod tests {
         }
     }
 
+    // Incomplete: Requires fancier math matching.
+    #[test]
+    fn test_62_t7_isokate() {
+        // 1RB0LF_1RC1RB_1LD0RA_1LB0LE_1RZ0LC_1LA1LF
+        // Katelyn Doucette's halting 6x2 shift-overflow bouncer-counters:
+        //      https://discord.com/channels/960643023006490684/1375512968569028648
+        //  Estimated score = ~10↑↑7.52390
+        //  Common config: A(a, 2^n - 1, c) = 1^a B> 010^n 001^c
+
+        // Repeat λx.2x+2 n times starting from 0.
+        //   = 2^n+1 - 2
+        fn rep2n2(n: CountExpr) -> CountExpr {
+            CountExpr::RecursiveExpr(RecursiveExpr {
+                func: Box::new(Function::affine(2, 2)),
+                num_repeats: Box::new(n),
+                base: Box::new(0.into()),
+            })
+        }
+
+        let rule_set = RuleSet {
+            tm: TM::from_str("1RB0LF_1RC1RB_1LD0RA_1LB0LE_1RZ0LC_1LA1LF").unwrap(),
+            rules: vec![
+                // Shift Rules
+                chain_rule("B> 1^n", "1^n B>", 1),     // 0
+                chain_rule("1^n <F", "<F 1^n", 1),     // 1
+                chain_rule("B> 010^n", "101^n B>", 3), // 2
+                chain_rule("101^n <F", "<F 011^n", 3), // 3
+                chain_rule("101^n <E", "<E 010^n", 3), // 4
+                // 5: Bouncer Rule
+                Rule {
+                    init_config: Config::from_str("0^inf 1^a <F").unwrap(),
+                    final_config: Config::from_str("0^inf 1^a+2 B>").unwrap(),
+                    proof: Proof::Simple(vec![
+                        chain_step(1, "a"),
+                        base_step(2),
+                        chain_step(0, "a+1"),
+                    ]),
+                },
+                // 6: Counter Increment
+                Rule {
+                    init_config: Config::from_str("B> 010^a 011").unwrap(),
+                    final_config: Config::from_str("<F 011^a 010").unwrap(),
+                    proof: Proof::Simple(vec![
+                        chain_step(2, "a"),
+                        base_step(5),
+                        chain_step(3, "a"),
+                    ]),
+                },
+                // 7: Counter Shift
+                Rule {
+                    init_config: Config::from_str("1^3 B> 010^a 0 010").unwrap(),
+                    final_config: Config::from_str("<F 011^a+1 010 0").unwrap(),
+                    proof: Proof::Simple(vec![
+                        chain_step(2, "a"),
+                        base_step(3),
+                        chain_step(4, "a"),
+                        // 1^3 <E 010^a 011
+                        base_step(3),
+                        rule_step(6, &[("a", "a")]),
+                        // 101 <F 011^a 010
+                        chain_step(3, "1"),
+                    ]),
+                },
+                // Needed to make sure system treats 010 as a single block.
+                simple_rule("B> 000", "<E 010", 3), // 8
+                // 9: Counter Overflow
+                Rule {
+                    init_config: Config::from_str("B> 010^a 0^3").unwrap(),
+                    final_config: Config::from_str("<E 010^a+1").unwrap(),
+                    proof: Proof::Simple(vec![
+                        chain_step(2, "a"),
+                        rule_step(8, &[]),
+                        chain_step(4, "a"),
+                        // <E 010^a 011
+                    ]),
+                },
+                // 10: Reset Phase
+                Rule {
+                    init_config: Config::from_str("1^3n <E 010^a 0^inf").unwrap(),
+                    final_config: Config::from_str("<E 010^a+2n 0^inf").unwrap(),
+                    proof: Proof::Inductive {
+                        proof_base: vec![],
+                        proof_inductive: vec![
+                            // 1^3n+3 <E 010^a
+                            base_step(3),
+                            rule_step(9, &[("a", "a")]),
+                            chain_step(4, "1"),
+                            // 1^3n <E 010^a+2
+                            induction_step(&[("n", "n"), ("a", "a+2")]),
+                        ],
+                    },
+                },
+                // 11: Reset Remainder 0
+                Rule {
+                    init_config: Config::from_str("0^inf <E 010^a 0^inf").unwrap(),
+                    final_config: Config::from_str("0^inf 1 Z> 010^a 0^inf").unwrap(),
+                    proof: Proof::Simple(vec![base_step(1)]),
+                },
+                // 12: Reset Remainder 1
+                Rule {
+                    init_config: Config::from_str("0^inf 1^1 <E 010^a+1 0^inf").unwrap(),
+                    final_config: Config::from_str("0^inf 1^5 B> 010^2 0 010^a 0^inf").unwrap(),
+                    proof: Proof::Simple(vec![
+                        base_step(11),
+                        // 1^2 B> 010 0 010^a+1
+                        chain_step(2, "1"),
+                        base_step(3),
+                        chain_step(4, "1"),
+                        // 1^2 <E 010^a 011
+                        base_step(3),
+                        // 1 B> 010 011 0 010^a
+                        rule_step(6, &[("a", "1")]),
+                        rule_step(5, &[("a", "1")]),
+                        // 1^3 B> 011 010 0 010^a
+                        rule_step(6, &[("a", "0")]),
+                        rule_step(5, &[("a", "3")]),
+                    ]),
+                },
+                // 13: Reset Remainder 2
+                Rule {
+                    init_config: Config::from_str("0^inf 1^2 <E 010^a 0^inf").unwrap(),
+                    final_config: Config::from_str("0^inf 1^5 B> 010^2 0 010^a 0^inf").unwrap(),
+                    proof: Proof::Simple(vec![
+                        // 1^3n+3 <E 010^a
+                        base_step(3),
+                        rule_step(9, &[("a", "a")]),
+                        // 01 <E 010^a+1
+                        rule_step(12, &[("a", "a")]),
+                    ]),
+                },
+                // 14: Counter Inductive
+                // 0^inf 1^a B> 011^n  -->  0^inf 1^a+2^{n+1}-2 B> 010^n
+                Rule {
+                    init_config: Config::from_str("0^inf 1^a B> 011^n").unwrap(),
+                    final_config: Config::from_str("0^inf 1^a+x B> 010^n")
+                        .unwrap()
+                        .subst(&VarSubst::from(&[("x".parse().unwrap(), rep2n2("n".parse().unwrap()))]))
+                        .unwrap(),
+                    proof: Proof::Inductive {
+                        proof_base: vec![],
+                        proof_inductive: vec![
+                            // 1^a B> 011^n+1
+                            induction_step(&[("n", "n"), ("a", "a")]),
+                            // 1^a+x B> 010^n 011
+                            rule_step(6, &[("a", "n")]),
+                            ProofStep::RuleStep {
+                                rule_id: 5,
+                                var_assignment: VarSubst::from(&[(
+                                    "a".parse().unwrap(),
+                                    CountExpr::from_str("a+x")
+                                        .unwrap()
+                                        .subst(&VarSubst::from(&[(
+                                            "x".parse().unwrap(),
+                                            rep2n2("n".parse().unwrap()),
+                                        )]))
+                                        .unwrap(),
+                                )]),
+                            },
+                            // 1^a+x+2 B> 011^n 010
+                            ProofStep::Admit,
+                            // TODO: Code currently cannot detect equality between:
+                            //      λx.a+x+2 ((λn.2n+1)^n 0)
+                            //      λa.a+2 (λx.a+x ((λn.2n+1)^n 0))
+                            ProofStep::InductiveStep(VarSubst::from(&[
+                                ("n".parse().unwrap(), "n".parse().unwrap()),
+                                (
+                                    "a".parse().unwrap(),
+                                    CountExpr::from_str("a+x+2")
+                                        .unwrap()
+                                        .subst(&VarSubst::from(&[(
+                                            "x".parse().unwrap(),
+                                            rep2n2("n".parse().unwrap()),
+                                        )]))
+                                        .unwrap(),
+                                ),
+                            ])),
+                            // 1^a+2x+2 B> 010^n+1
+                        ],
+                    },
+                },
+                // 15
+                Rule {
+                    init_config: Config::from_str("0^inf 1^a+3 B> 011^b 0 010").unwrap(),
+                    final_config: Config::from_str("0^inf 1^a+x+y+2 B> 011^b+2 0")
+                        .unwrap()
+                        .subst(&VarSubst::from(&[
+                            ("x".parse().unwrap(), rep2n2("b".parse().unwrap())),
+                            ("x".parse().unwrap(), rep2n2("b+1".parse().unwrap())),
+                        ]))
+                        .unwrap(),
+                    proof: Proof::Simple(vec![
+                        // 1^a+3 B> 011^b 0 010
+                        rule_step(14, &[("a", "a+3"), ("n", "b")]),
+                        // 1^a+f(b)+3 B> 010^b 0 010
+                        ProofStep::Admit,
+                        // TODO: Allow `1^3 B>` to match 1^(λx.a+x+3 ((λn.2n+2)^b 0)) B>
+                        rule_step(7, &[("a", "b")]),
+                        // 1^a+f(b) <F 011^b+1 010 0
+                        ProofStep::RuleStep {
+                            rule_id: 5,
+                            var_assignment: VarSubst::from(&[(
+                                "n".parse().unwrap(),
+                                CountExpr::from_str("a+x")
+                                    .unwrap()
+                                    .subst(&VarSubst::from(&[(
+                                        "x".parse().unwrap(),
+                                        rep2n2("b".parse().unwrap()),
+                                    )]))
+                                    .unwrap(),
+                            )]),
+                        },
+                        // 1^a+f(b)+2 B> 011^b+1 010 0
+                        rule_step(14, &[("a", "a+x-1"), ("n", "b+1")]),
+                        // 1^a+f(b)+f(b+1)+2 B> 010^b+2 0
+                    ]),
+                },
+                // // Halt Proof
+                // Rule {
+                //     init_config: Config::new(),
+                //     final_config: Config::from_str("0^inf 11 01^a+b+c+31 11^d+1 1 Z> 1 0^inf")
+                //         .unwrap()
+                //         .subst(&VarSubst::from(&[
+                //             ("a".parse().unwrap(), a.into()),
+                //             // ("b".parse().unwrap(), b),
+                //             // ("c".parse().unwrap(), c),
+                //             // ("d".parse().unwrap(), d),
+                //         ]))
+                //         .unwrap(),
+                //     proof: Proof::Simple(vec![
+                //         base_step(2430),
+                //         // [11]^7 <A [23]^17 [21]
+                //         rule_step(24, &[("x", "5"), ("y", "15")]),
+                //         // [11] [01]^5 [11] [01]^15 [11] [01]^3 <A [21]
+                //         ProofStep::Admit,
+                //     ]),
+                // },
+            ],
+        };
+        if let Err(err) = validate_rule_set(&rule_set) {
+            panic!("{}", err);
+        }
+    }
+
     #[test]
     fn test_34_a14_uni() {
         // https://www.sligocki.com/2024/05/22/bb-3-4-a14.html
