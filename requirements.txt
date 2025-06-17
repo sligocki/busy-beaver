@@ -1,4 +1,4 @@
 mypy-protobuf>=3.5.0
 mypy>=1.8.0
-protobuf==5.29.3
+protobuf==5.29.5
 
