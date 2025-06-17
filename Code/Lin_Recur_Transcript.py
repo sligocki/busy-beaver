@@ -10,6 +10,7 @@ See also: Lin_Recur_Detect.py for the traditional algorithm.
 import argparse
 from dataclasses import dataclass
 import math
+import time
 
 import IO
 from Transcript import Transcript, TM
@@ -29,7 +30,7 @@ def has_blank(ts: Transcript, start: int, delta: int) -> bool:
   return False
 
 
-def find_cycle_not_min(tm: TM, max_steps: int) -> TCResult:
+def find_cycle_not_min(tm: TM, max_steps: int, verbose: bool = False) -> TCResult:
   """Search for a Translated Cycle without knowing period or start step.
   If cycle found, start_step may not be minimal.
   """
@@ -39,6 +40,8 @@ def find_cycle_not_min(tm: TM, max_steps: int) -> TCResult:
   while len(ts) < max_steps:
     ref_step = len(ts)
     ts.extend_history(ref_step)
+    if verbose:
+      print(f"Simulated {len(ts):_d} steps ({time.process_time():_.1f}s)")
 
     # Search for a delta such that
     #   ts.history[ref_step:ref_step+delta] == ts.history[ref_step+delta:ref_step+delta*2]
@@ -86,8 +89,8 @@ def minimize_cycle(tm: TM, result: TCResult) -> TCResult:
 
   raise ValueError("TM did not cycle")
 
-def find_min_cycle(tm: TM, max_steps: int) -> TCResult:
-  result = find_cycle_not_min(tm, max_steps)
+def find_min_cycle(tm: TM, max_steps: int, verbose: bool) -> TCResult:
+  result = find_cycle_not_min(tm, max_steps, verbose)
   result = minimize_cycle(tm, result)
   return result
 
@@ -99,7 +102,7 @@ def main():
   args = parser.parse_args()
 
   tm = IO.get_tm(args.tm)
-  result = find_min_cycle(tm, args.max_steps)
+  result = find_min_cycle(tm, args.max_steps, verbose=True)
 
   print(result)
 
