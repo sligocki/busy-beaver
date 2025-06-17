@@ -6,6 +6,24 @@ The main use of this codebase is to enumerate an entire class of TMs(ex: all 5 s
 
 The second use is to analyze individual machines for human analysis and record confirmations.
 
+
+## Setup
+
+The python code depends on the Protobuf library, install it with:
+
+```sh
+> python3 -m pip install -r requirements.txt
+```
+
+If you wish to update `io.proto` you will also need to install the `protoc` compiler. See https://protobuf.dev/installation/ for instructions. You will need to use a reasonably recent version. Once that is installed you can compile `io.proto` with:
+
+```sh
+> cd Code; make
+```
+
+which will produce `io_pb2.py` that needs to be checked in.
+
+
 ## General overview
 
 Top level directories:
