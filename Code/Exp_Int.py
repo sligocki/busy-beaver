@@ -18,6 +18,8 @@ from Math import gcd, lcm, int_pow, exp_mod, prec_mult, prec_add
 EXP_THRESHOLD = 1000
 # Fail if we have too many layers of ExpInt
 MAX_DEPTH = 10_000
+# Maximum (recursive) number of ExpTerms in a single ExpInt
+MAX_TERMS = 1_000_000
 
 
 # Standard way to create an ExpInt
@@ -34,6 +36,9 @@ def exp_int(base: int, exponent: int | ExpInt | Expression) -> ExpInt:
 
 
 class ExpIntException(Exception):
+  pass
+
+class ExpIntGaveUp(ExpIntException):
   pass
 
 def tex_formula(x: ExpInt | ExpTerm | int) -> str:
@@ -256,7 +261,7 @@ def normalize_terms(terms):
 
 class ExpInt:
   """An integer represented by a formula: `(a1 b^n1 + a2 b^n2 + ... + c) / d` """
-  def __init__(self, terms, const : int, denom : int):
+  def __init__(self, terms: list[ExpTerm], const : int, denom : int):
     assert terms
     assert isinstance(const, int), const
     assert isinstance(denom, int), denom
@@ -268,7 +273,7 @@ class ExpInt:
     self.normalize()
     self.depth = max(term.depth for term in terms)
     if self.depth > MAX_DEPTH:
-      raise ExpIntException(f"Too many layers of ExpInt: {self.depth}")
+      raise ExpIntGaveUp(f"Too many layers of ExpInt: {self.depth}")
 
     self.formula_str = " + ".join(term.formula_str for term in self.terms)
     if self.const != 0:
@@ -281,6 +286,14 @@ class ExpInt:
     bases = frozenset(term.base for term in terms)
     assert len(bases) == 1, bases
     self.base = list(bases)[0]
+
+    # Number of ExpTerms (recursively) inside this one.
+    # Once it gets too large, we give up to avoid OOM.
+    self.rec_num_terms = len(self.terms)
+    for term in self.terms:
+      self.rec_num_terms += getattr(term.exponent, "rec_num_terms", 0)
+    if self.rec_num_terms > MAX_TERMS:
+      raise ExpIntGaveUp(f"Too many subterms of ExpInt: {self.rec_num_terms}")
 
   def normalize(self):
     common = gcd(self.const, self.denom)
