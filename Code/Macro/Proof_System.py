@@ -608,8 +608,6 @@ class Proof_System(object):
           result, large_delta = res
           rule.num_uses += 1
           assert isinstance(result, ProverResult), result
-          if self.options.compute_steps and not result.states_last_seen:
-            print("UNIMPLEMENTED: Prover missing states_last_seen for rule:", rule, result, file=sys.stderr)
           return result
     elif len(self.past_configs) > self.options.max_prover_configs:
       self.past_configs.clear()
@@ -632,8 +630,6 @@ class Proof_System(object):
               self.past_configs.clear()
           rule.num_uses += 1
           assert isinstance(result, ProverResult), result
-          if self.options.compute_steps and not result.states_last_seen:
-            print("UNIMPLEMENTED: Prover missing states_last_seen for rule:", rule, result, file=sys.stderr)
           return result
         if res != UNPROVEN_PARITY:
           return ProverResult(NOTHING_TO_DO)
@@ -667,8 +663,6 @@ class Proof_System(object):
             self.past_configs.clear()
         rule.num_uses += 1
         assert isinstance(result, ProverResult), result
-        if self.options.compute_steps and not result.states_last_seen:
-          print("UNIMPLEMENTED: Prover missing states_last_seen for rule:", rule, result, file=sys.stderr)
         return result
 
   def add_rule(self, rule, stripped_config):
