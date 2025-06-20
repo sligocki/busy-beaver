@@ -52,7 +52,7 @@ class Writer:
   def __enter__(self):
     if self.outfilename:
       if ".gz" in self.outfilename.suffixes:
-        self.outfile = gzip.open(self.outfilename, "w")
+        self.outfile = gzip.open(self.outfilename, "wt")
       else:
         self.outfile = open(self.outfilename, "w")
     return self
@@ -100,7 +100,7 @@ class Reader:
   def __enter__(self):
     if self.infilename:
       if ".gz" in self.infilename.suffixes:
-        self.infile = gzip.open(self.infilename, "r")
+        self.infile = gzip.open(self.infilename, "rt")
       else:
         self.infile = open(self.infilename, "r")
     return self
