@@ -44,6 +44,11 @@ class MathTest(unittest.TestCase):
     self.assertEqual(prime_factor(3**10), [(3, 10)])
     self.assertEqual(prime_factor(2**5 * 3**4 * 13**3), [(2, 5), (3, 4), (13, 3)])
 
+    # Giant stuff
+    self.assertEqual(prime_factor(997**2), [(997, 2)])
+    self.assertEqual(prime_factor(993_997), [(993_997, 1)])
+    self.assertEqual(prime_factor(997**2 + 1), [(2, 1), (5, 1), (99_401, 1)])
+
   def test_exp_mod(self):
     for b in range(2, 11):
       for m in range(2, 101):
