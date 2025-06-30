@@ -6,12 +6,13 @@ on backtracking.
 
 import argparse
 import copy
+from dataclasses import dataclass
 from pathlib import Path
-import sys
 
-from Common import HALT_STATE
 import Halting_Lib
 import IO
+from Macro.Turing_Machine import Simple_Machine as TM
+from Macro.Turing_Machine import HALT, UNDEFINED, other_dir
 
 import io_pb2
 
@@ -19,28 +20,27 @@ import io_pb2
 # Constants
 BACKTRACK = "Backtrack"
 
-def get_info(TTable):
+def get_info(tm: TM):
   """Finds all halt transitions, transitions that could get to
   each state and all of the single-sided symbols."""
-  num_states = len(TTable)
-  num_symbols = len(TTable[0])
   halts = []
-  to_state = [[] for x in range(num_states)]
-  dir_to_symbol = [[False, False] for x in range(num_symbols)]
+  to_state = [[] for x in range(tm.num_states)]
+  dir_to_symbol = [[False, False] for x in range(tm.num_symbols)]
   # The zero symbol is in both directions by default.
   dir_to_symbol[0] = [True, True]
-  for state_in in range(num_states):
-    for symbol_in in range(num_symbols):
-      symbol_out, dir_out, state_out = cell = TTable[state_in][symbol_in]
-      if state_out == HALT_STATE:
+  for state_in in range(tm.num_states):
+    for symbol_in in range(tm.num_symbols):
+      trans = tm.get_trans_object(symbol_in, state_in)
+      if trans.condition in (HALT, UNDEFINED):
         # Counts both halting and undefined transitions.
         halts.append((state_in, symbol_in))
       else:
         # Add this input transition to those that can lead to this state.
-        to_state[state_out].append(((state_in, symbol_in), cell))
+        to_state[trans.state_out].append((
+          (state_in, symbol_in), (trans.symbol_out, trans.dir_out, trans.state_out)))
         # And note that that this symbol can be found on the opposite
         # side of the tape (the direction we are moving away from).
-        dir_to_symbol[symbol_out][not dir_out] = True
+        dir_to_symbol[trans.symbol_out][other_dir(trans.dir_out)] = True
   return halts, to_state, dir_to_symbol
 
 class Partial_Config:
@@ -96,26 +96,35 @@ def is_possible_config(config, dir_to_symbol):
         return False
   return True
 
+@dataclass(frozen=True)
 class BacktrackResult:
-  def __init__(self, success, halted, max_steps, max_width, num_nodes):
-    self.success = success
-    self.halted = halted
-    self.max_steps = max_steps
-    self.max_width = max_width
-    self.num_nodes = num_nodes
+  success: bool
+  halted: bool
+  max_steps: int
+  max_width: int
+  num_nodes: int
 
-  def merge(self, other):
-    self.success = self.success and other.success
-    self.halted = self.halted or other.halted
-    self.max_steps = max(self.max_steps, other.max_steps)
-    self.max_width = max(self.max_width, other.max_width)
-    self.num_nodes += other.num_nodes
+def merge_results(results: list[BacktrackResult]) -> BacktrackResult:
+    if not results:
+      return BacktrackResult(success = False, halted = False,
+                             max_steps = 0, max_width = 0, num_nodes = 0)
+    return BacktrackResult(
+      success = all(r.success for r in results),
+      halted = any(r.halted for r in results),
+      max_steps=max(r.max_steps for r in results),
+      max_width=max(r.max_width for r in results),
+      num_nodes=sum(r.num_nodes for r in results)
+    )
 
 def backtrack_single_halt(halt_state, halt_symbol,
-                          to_state, dir_to_symbol, steps, max_width_allowed):
-  """Try backtrackying |steps| steps from this specific halting
+                          to_state, dir_to_symbol, steps, max_width_allowed) -> BacktrackResult:
+  """Try backtracking |steps| steps from this specific halting
   config. |to_state| is a list of transitions that lead to each state.
   |dir_to_symbol| indicates which direction symbols can be found."""
+  if halt_state == 0 and halt_symbol == 0:
+    # Special case: A0 -> Halt always halts (obviously, haha)
+    return BacktrackResult(success = False, halted = True,
+                           max_steps = 0, max_width = 0, num_nodes = 0)
   pos_configs = [Partial_Config(halt_state, halt_symbol)]
   max_width_seen = len(pos_configs)
   num_nodes = 0
@@ -149,45 +158,38 @@ def backtrack_single_halt(halt_state, halt_symbol,
                          max_steps = i + 1, max_width = max_width_seen,
                          num_nodes = num_nodes)
 
-def backtrack_ttable(TTable, steps, max_width):
-  """Try backtracking |steps| steps for each halting config in TTable,
+def backtrack(tm: TM, steps: int, max_width: int | None) -> BacktrackResult:
+  """Try backtracking |steps| steps for each halting config in |tm|,
   giving up if there are more than |max_width| possible configs."""
-  # Get initial ttable info.
-  halts, to_state, dir_to_symbol = get_info(TTable)
-  combined_result = None
+  # Preprocess transition table to find all halting transitions and
+  # the possible pre-states, etc.
+  halts, to_state, dir_to_symbol = get_info(tm)
+  results : list[BacktrackResult] = []
   # See if all halts cannot be reached
-  for halt_state, halt_symbol in halts:
-    for symbol_out, dir_out, state_out in TTable[halt_state]:
-      if state_out == halt_state:
+  for prehalt_state, prehalt_symbol in halts:
+    for symbol_in in range(tm.num_symbols):
+      trans = tm.get_trans_object(symbol_in, prehalt_state)
+      if trans.state_out == prehalt_state:
         # Optimization: Fail early if there are any Q -> Q transitions
         # (for any Q -> Halt).
-        # TODO(shawn): With new improvements, this initial criterion may be
-        # stifling.
-        # For example, this is why we cannot prove "1RB ---  1LB 1RZ" Halting.
         return BacktrackResult(success = False, halted = False,
                                max_steps = 0, max_width = 0, num_nodes = 0)
 
-    result = backtrack_single_halt(halt_state, halt_symbol,
+    result = backtrack_single_halt(prehalt_state, prehalt_symbol,
                                    to_state, dir_to_symbol,
                                    steps, max_width)
     # If any of the backtracks fail, the whole thing fails.
     if not result.success:
       return result
-
-    if combined_result:
-      combined_result.merge(result)
-    else:
-      combined_result = result
+    results.append(result)
 
   # If all halt states cannot be reached, we have succeeded!
-  return combined_result
+  return merge_results(results)
 
-def backtrack(tm_record, num_steps, max_width):
+def backtrack_filter(tm_record, num_steps: int, max_width: int) -> bool:
   info = tm_record.proto.filter.backtrack
   with IO.Timer(info.result):
-    TTable = IO.parse_ttable(tm_record.tm().ttable_str())
-    # Run the simulator/filter on this machine
-    result = backtrack_ttable(TTable, num_steps, max_width)
+    result = backtrack(tm_record.tm(), num_steps, max_width)
 
     info.parameters.num_steps = num_steps
     info.parameters.max_width = max_width
@@ -204,7 +206,7 @@ def backtrack(tm_record, num_steps, max_width):
   return False
 
 
-def main(argv):
+def main():
   parser = argparse.ArgumentParser()
   parser.add_argument("--infile", type=Path, required=True)
   parser.add_argument("--outfile", type=Path, required=True)
@@ -219,8 +221,8 @@ def main(argv):
   with IO.Proto.Writer(args.outfile) as writer:
     with IO.Reader(args.infile) as reader:
       for tm_record in reader:
-        backtrack(tm_record, args.steps, args.max_width)
+        backtrack_filter(tm_record, args.steps, args.max_width)
         writer.write_record(tm_record)
 
 if __name__ == "__main__":
-  main(sys.argv)
+  main()

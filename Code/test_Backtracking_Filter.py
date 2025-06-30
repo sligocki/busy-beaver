@@ -1,57 +1,80 @@
 #! /usr/bin/env python3
-#
-# test_Backtracking_Filter.py
-#
-"""
-Unit test for "Backtracking_Filter.py"
-"""
 
-import Backtracking_Filter
+from Backtracking_Filter import backtrack
 
-import os.path
-import sys
-import tempfile
 import unittest
 
-class SystemTest(unittest.TestCase):
-  def setUp(self):
-    # Get busy-beaver root direcory.
-    test_dir = os.path.dirname(sys.argv[0])
-    self.testdata_dir = os.path.join(test_dir, os.pardir, "Testdata")
+from IO import parse_tm
 
-  def read(self, filename):
-    with open(os.path.join(self.testdata_dir, filename), "r") as f:
-      return f.read()
+class BacktrackingTest(unittest.TestCase):
+  def test_1step(self):
+    result = backtrack(parse_tm("1RB---_1LB1RB"), steps=5, max_width=10)
+    self.assertTrue(result.success)
+    self.assertFalse(result.halted)
+    self.assertEqual(result.max_steps, 1)
 
-  def backtrack(self, filename):
-    filename = os.path.join(self.testdata_dir, filename)
-    outfile = tempfile.NamedTemporaryFile()
-    Backtracking_Filter.main([sys.argv[0],
-                              "--infile=%s" % filename,
-                              "--outfile=%s" % outfile.name,
-                              "--force",
-                              "--backsteps=5"])
-    return self.read(outfile.name)
+  def test_3step(self):
+    result = backtrack(parse_tm("1RB0LA_1LA---"), steps=5, max_width=10)
+    self.assertTrue(result.success)
+    self.assertFalse(result.halted)
+    self.assertEqual(result.max_steps, 3)
 
-  def test_2x2(self):
-    self.assertEqual(self.read("Backtracking.2x2.gold"),
-                     self.backtrack("2x2"))
+  def test_5step(self):
+    result = backtrack(parse_tm("1RB1LC_1LA1RC_0RD0LA_---1LB"), steps=5, max_width=10)
+    self.assertTrue(result.success)
+    self.assertFalse(result.halted)
+    self.assertEqual(result.max_steps, 5)
 
-  def test_2x3(self):
-    self.assertEqual(self.read("Backtracking.2x3.gold"),
-                     self.backtrack("2x3.sample"))
+  def test_mult_halts(self):
+    result = backtrack(parse_tm("1RB---_1LC---_1LD0LC_1RD0LD"), steps=5, max_width=10)
+    self.assertTrue(result.success)
+    self.assertFalse(result.halted)
+    self.assertEqual(result.max_steps, 2)
 
-  def test_2x4(self):
-    self.assertEqual(self.read("Backtracking.2x4.gold"),
-                     self.backtrack("2x4.sample"))
+  def test_deep(self):
+    result = backtrack(parse_tm("1RB0RC_1LC1RB_0LE0RD_---1LC_1RF1LE_1LE1RG_1RA0RB"), steps=100, max_width=100)
+    self.assertTrue(result.success)
+    self.assertFalse(result.halted)
+    self.assertEqual(result.max_steps, 66)
+    self.assertEqual(result.max_width, 25)
+    self.assertEqual(result.num_nodes, 517)
 
-  def test_3x2(self):
-    self.assertEqual(self.read("Backtracking.3x2.gold"),
-                     self.backtrack("3x2.sample"))
+  def test_no_halt_trans(self):
+    result = backtrack(parse_tm("1RB1LA_1LB1RB"), steps=5, max_width=10)
+    self.assertFalse(result.success)
+    self.assertFalse(result.halted)
 
-  def test_4x2(self):
-    self.assertEqual(self.read("Backtracking.4x2.gold"),
-                     self.backtrack("4x2.sample"))
+  def test_tony_but(self):
+    # One of TonyG's bbchallenge backtracking bug TMs
+    #   https://discuss.bbchallenge.org/t/decider-backward-reasoning/35/11
+    result = backtrack(parse_tm("1RB0RE_0RC---_1LC0LD_1RE1LA_0RC1LB"), steps=100, max_width=100)
+    self.assertFalse(result.success)
+    self.assertFalse(result.halted)
+
+  def test_halt_trivial(self):
+    result = backtrack(parse_tm("1RZ1RZ"), steps=5, max_width=10)
+    self.assertFalse(result.success)
+    self.assertTrue(result.halted)
+
+  def test_halt_bb2(self):
+    # BB(2) champion
+    result = backtrack(parse_tm("1RB1LB_1LA1RZ"), steps=10, max_width=100)
+    self.assertFalse(result.success)
+    self.assertTrue(result.halted)
+
+  def test_halt_bb3(self):
+    # BB(3) champion
+    result = backtrack(parse_tm("1RB1RZ_1LB0RC_1LC1LA"), steps=100, max_width=100)
+    self.assertFalse(result.success)
+    self.assertTrue(result.halted)
+
+  def test_halt_bb4(self):
+    # BB(4) champion
+    result = backtrack(parse_tm("1RB1LB_1LA0LC_1RZ1LD_1RD0RA"), steps=1000, max_width=100)
+    print(result)
+    self.assertFalse(result.success)
+    # We cannot go deep enough to prove halting b/c tree grows too big.
+    # self.assertTrue(result.halted)
 
 if __name__ == "__main__":
   unittest.main()
