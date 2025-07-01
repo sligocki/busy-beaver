@@ -39,15 +39,27 @@ class BacktrackingTest(unittest.TestCase):
     self.assertEqual(result.max_width, 25)
     self.assertEqual(result.num_nodes, 517)
 
+    result = backtrack(parse_tm("1RB0RB_1RC1LE_1RD1LA_1LB---_0LE0RA"), steps=200, max_width=10)
+    self.assertTrue(result.success)
+    self.assertFalse(result.halted)
+    self.assertEqual(result.max_steps, 115)
+    self.assertEqual(result.max_width, 9)
+    self.assertEqual(result.num_nodes, 402)
+
   def test_no_halt_trans(self):
     result = backtrack(parse_tm("1RB1LA_1LB1RB"), steps=5, max_width=10)
     self.assertFalse(result.success)
     self.assertFalse(result.halted)
 
-  def test_tony_but(self):
+  def test_not_provable(self):
     # One of TonyG's bbchallenge backtracking bug TMs
     #   https://discuss.bbchallenge.org/t/decider-backward-reasoning/35/11
     result = backtrack(parse_tm("1RB0RE_0RC---_1LC0LD_1RE1LA_0RC1LB"), steps=100, max_width=100)
+    self.assertFalse(result.success)
+    self.assertFalse(result.halted)
+
+    # Nick Drozd's false positive
+    result = backtrack(parse_tm("1RB2LA0RC_2LA---1RC_1LA0LB2RC"), steps=100, max_width=100)
     self.assertFalse(result.success)
     self.assertFalse(result.halted)
 
