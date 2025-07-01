@@ -4,20 +4,16 @@ Try Reverse_Engineer_Filter, CTL and then simulate TM as a Macro Machine using
 the Proof System.
 """
 
-import copy
 import math
 from optparse import OptionParser, OptionGroup
-import sys
 import time
 
-import Alarm
 import CTL_Filter
 import Halting_Lib
 import IO
 from IO import TM_Record
 import Lin_Recur_Detect
 from Macro import Turing_Machine, Simulator, Block_Finder
-from Macro.Tape import INF
 import Reverse_Engineer_Filter
 
 import io_pb2
