@@ -97,6 +97,31 @@ impl HalfTape {
         });
     }
 
+    // Try to pop a symbol from this half-tape by sending it through the top block.
+    fn pop_symbol_rotate(&mut self) -> Option<Symbol> {
+        // Create a new half-tape without the top block.
+        let mut new_tape = self.clone();
+        let mut top = new_tape.0.pop().unwrap();
+        // Pop the top symbol from this tape.
+        let symbol = new_tape.pop_symbol()?;
+
+        if *top.symbols.last().unwrap() == symbol {
+            // If the popped symbol matches the last symbol in the top block,
+            // we send it through by rotating the block's symbols.
+            top.symbols.rotate_right(1);
+
+            // Add the rotated top block back to this half-tape.
+            new_tape.0.push(top);
+            *self = new_tape.normalize();
+
+            Some(symbol)
+        } else {
+            // Otherwise, we have an ambiguous situation where the top symbol
+            // could be different things depending on the value of variables.
+            None
+        }
+    }
+
     // Pop the top symbol from this half-tape if possible.
     // Returns None if the tape is empty or if the top symbol is ambiguous (based on variable assignments).
     pub fn pop_symbol(&mut self) -> Option<Symbol> {
@@ -109,10 +134,10 @@ impl HalfTape {
 
                 // Try to remove one repetition (decrement the rep count).
                 // If decrement fails, this is because rep is not guaranteed to be >= 0.
-                // And so we have an ambiguous situation where top symbol could be
-                // different things depending on the value of variables.
-                // So, fail pop_symbol().
-                let decr_rep = rep.decrement()?;
+                // In this case, try sending a symbol through it instead.
+                let Some(decr_rep) = rep.decrement() else {
+                    return self.pop_symbol_rotate();
+                };
 
                 // New RepBlock
                 let mut new_symbols = symbols.clone();
