@@ -4,24 +4,30 @@ from Macro import Turing_Machine
 
 
 def blank_tm_enum(num_states : int, num_symbols : int,
-                  *, first_1rb : bool, allow_no_halt : bool):
+                  *, first_1rb : bool, allow_no_halt : bool,
+                  max_transitions : int | None = None):
   quints = []
   if first_1rb:
     quints.append((0, 0, 1, 1, 1))  # A1 -> 1RB
 
   tm = Turing_Machine.tm_from_quintuples(quints, states = list(range(num_states)),
                                          symbols = list(range(num_symbols)))
-  return TM_Enum(tm, allow_no_halt = allow_no_halt)
+  return TM_Enum(tm, allow_no_halt=allow_no_halt, max_transitions=max_transitions)
 
 class TM_Enum:
   """Collection of TM (Turing_Machine.Simple_Machine) and enumeration
   information (config and state needed to perform Brady's TNF algorithm)."""
 
   def __init__(self, tm : Turing_Machine.Simple_Machine,
-               *, allow_no_halt : bool):
+               *, allow_no_halt : bool, max_transitions : int | None = None):
     self.tm = tm
     # Options
-    self.allow_no_halt = allow_no_halt
+    if max_transitions:
+      self.max_transitions = max_transitions
+    elif allow_no_halt:
+      self.max_transitions = tm.num_states * tm.num_symbols
+    else:
+      self.max_transitions = tm.num_states * tm.num_symbols - 1
 
   def set_trans(self, *, state_in, symbol_in, symbol_out, dir_out, state_out):
     self.tm.trans_table[state_in][symbol_in] = Turing_Machine.Transition(
@@ -46,20 +52,17 @@ class TM_Enum:
     # Evaluate a few metrics
     max_state = 0
     max_symbol = 0
-    num_undefined_transitions = 0
-    is_a_trans_defined = False
+    num_def_trans = 0
     for state in range(self.tm.num_states):
       for symbol in range(self.tm.num_symbols):
         trans = self.tm.get_trans_object(state_in = state,
                                          symbol_in = symbol)
-        if trans.condition == Turing_Machine.UNDEFINED:
-          num_undefined_transitions += 1
-        else:  # RUNNING or HALT
-          is_a_trans_defined = True
+        if trans.condition != Turing_Machine.UNDEFINED:
+          num_def_trans += 1
           max_state = max(max_state, trans.state_out)
           max_symbol = max(max_symbol, trans.symbol_out)
 
-    if is_a_trans_defined:
+    if num_def_trans > 0:
       num_dirs = 2
     else:
       # If no transitions are defined yet, always force first trans to be to
@@ -74,7 +77,7 @@ class TM_Enum:
     # Enumerate
     # If this is the last undefined transition (and not allow_no_halt) then
     # there's nothing left to do, this trans can only be a halting trans.
-    if self.allow_no_halt or num_undefined_transitions > 1:
+    if num_def_trans < self.max_transitions:
       for state_out in range(num_states):
         for symbol_out in range(num_symbols):
           # If only one dir available, default to RIGHT.

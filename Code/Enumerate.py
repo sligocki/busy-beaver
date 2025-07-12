@@ -195,6 +195,7 @@ def enum_initial_tms(options):
     # If no infile is specified, then default to the NxM blank TM.
     blank_tm = TM_Enum.blank_tm_enum(options.states, options.symbols,
                                      first_1rb = options.first_1rb,
+                                     max_transitions = options.max_transitions,
                                      allow_no_halt = options.allow_no_halt)
     tm_record = TM_Record(tm_enum = blank_tm)
     yield tm_record
@@ -206,6 +207,9 @@ def main(args):
   enum_parser = OptionGroup(parser, "Enumeration Options")
   enum_parser.add_option("--states",  type=int, help="Number of states")
   enum_parser.add_option("--symbols", type=int, help="Number of symbols")
+  enum_parser.add_option("--max-transitions", type=int,
+                         help="Maximum number of defined transitions to allow. "
+                         "Defaults to unlimited.")
   enum_parser.add_option("--breadth-first", action="store_true", default=False,
                          help="Run search breadth first (only works in single "
                          "process mode).")
