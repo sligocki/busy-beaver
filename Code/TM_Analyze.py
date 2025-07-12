@@ -135,7 +135,7 @@ class TMStats:
     if proto.status.quasihalt_status.is_quasihalting:
       self.num_qhalt += 1
       num_steps = Halting_Lib.get_big_int(proto.status.quasihalt_status.quasihalt_steps)
-      self.qhalt_steps.add(num_steps)
+      self.qhalt_steps.add(num_steps, tm_record.ttable_str())
 
     # Which filters were run
     for descr in proto.filter.DESCRIPTOR.fields:
