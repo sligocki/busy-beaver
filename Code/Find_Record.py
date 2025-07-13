@@ -2,17 +2,17 @@
 
 import argparse
 from pathlib import Path
-import time
 
 import IO
-from IO.TM_Record import pack_tm
+from IO.TM_Record import _pack_tm
 
 
 def find(tm_std, in_filename):
   tm = IO.parse_tm(tm_std)
-  ttable_bytes = pack_tm(tm)
+  ttable_bytes = _pack_tm(tm)
   with IO.Reader(in_filename) as reader:
     for record_num, tm_record in enumerate(reader):
+      assert tm_record.proto.tm.WhichOneof("ttable") == "ttable_packed", f"Find_Record.py has not implemented finding records of this type: {tm_record.proto.tm}"
       if tm_record.proto.tm.ttable_packed == ttable_bytes:
         print(record_num)
         print(tm_record.proto)

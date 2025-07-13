@@ -118,7 +118,7 @@ class ReaderWriter(object):
     io_record = Record()
     if self.log_number is not None:
       io_record.log_number = self.log_number
-    io_record.tm = TM_Record.unpack_tm(tm_record.proto.tm.ttable_packed)
+    io_record.tm = TM_Record.read_tm(tm_record.proto.tm)
 
     if tm_record.is_unknown_halting():
       io_record.category = Exit_Condition.UNKNOWN

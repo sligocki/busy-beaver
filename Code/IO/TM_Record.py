@@ -37,7 +37,7 @@ def parse_tm(line : str) -> Turing_Machine.Simple_Machine:
                                            symbols = list(range(max_symbol + 1)))
 
 
-def pack_trans_ints(symbol : int, dir : int, state : int,
+def _pack_trans_ints(symbol : int, dir : int, state : int,
                     is_newrow : bool) -> int:
   if dir not in [0, 1]:
     dir = 0
@@ -48,7 +48,7 @@ def pack_trans_ints(symbol : int, dir : int, state : int,
   assert 0 <= byte_int < 256, byte_int
   return byte_int
 
-def unpack_trans_ints(byte_int : int):
+def _unpack_trans_ints(byte_int : int):
   symbol = (byte_int & 0b111) - 1
   state = ((byte_int >> 3) & 0b111) - 1
   dir = (byte_int >> 6) & 0b1
@@ -56,31 +56,31 @@ def unpack_trans_ints(byte_int : int):
   return symbol, dir, state, is_newrow
 
 
-def pack_trans(trans : Turing_Machine.Transition, is_newrow : bool) -> int:
+def _pack_trans(trans : Turing_Machine.Transition, is_newrow : bool) -> int:
   if trans.condition == Turing_Machine.UNDEFINED:
-    return pack_trans_ints(symbol = -1, dir = 0, state = -1,
+    return _pack_trans_ints(symbol = -1, dir = 0, state = -1,
                            is_newrow = is_newrow)
   else:
-    return pack_trans_ints(symbol = trans.symbol_out, dir = trans.dir_out,
+    return _pack_trans_ints(symbol = trans.symbol_out, dir = trans.dir_out,
                            state = trans.state_out, is_newrow = is_newrow)
 
 
-def pack_tm(tm : Turing_Machine.Simple_Machine) -> bytes:
+def _pack_tm(tm : Turing_Machine.Simple_Machine) -> bytes:
   pack = bytearray(tm.num_states * tm.num_symbols)
   i = 0
   for row in tm.trans_table:
     is_newrow = True
     for trans in row:
-      pack[i] = pack_trans(trans, is_newrow)
+      pack[i] = _pack_trans(trans, is_newrow)
       is_newrow = False
       i += 1
   return bytes(pack)
 
-def unpack_tm(pack : bytes) -> Turing_Machine.Simple_Machine:
+def _unpack_tm(pack : bytes) -> Turing_Machine.Simple_Machine:
   quints = []
   state_in = -1
   for byte in pack:
-    (symbol, dir, state, is_newrow) = unpack_trans_ints(byte)
+    (symbol, dir, state, is_newrow) = _unpack_trans_ints(byte)
     if is_newrow:
       state_in += 1
       symbol_in = 0
@@ -119,7 +119,7 @@ def tm_from_list(tm_list : io_pb2.TMList) -> Turing_Machine.Simple_Machine:
 def read_tm(proto_tm : io_pb2.TuringMachine) -> Turing_Machine.Simple_Machine:
   type = proto_tm.WhichOneof("ttable")
   if type == "ttable_packed":
-    return unpack_tm(proto_tm.ttable_packed)
+    return _unpack_tm(proto_tm.ttable_packed)
   elif type == "ttable_str":
     return IO.StdText.parse_tm(proto_tm.ttable_str)
   elif type == "ttable_list":
@@ -129,7 +129,7 @@ def read_tm(proto_tm : io_pb2.TuringMachine) -> Turing_Machine.Simple_Machine:
 
 def write_tm(tm : Turing_Machine.Simple_Machine, proto_tm : io_pb2.TuringMachine):
   if tm.num_states <= 7 and tm.num_symbols <= 8:
-    proto_tm.ttable_packed = pack_tm(tm)
+    proto_tm.ttable_packed = _pack_tm(tm)
   else:
     tm_to_list(tm, proto_tm.ttable_list)
 
@@ -179,7 +179,7 @@ class TM_Record:
     self.tme.set_halt_trans(
       state_in = self.proto.status.halt_status.from_state,
       symbol_in = self.proto.status.halt_status.from_symbol)
-    self.proto.tm.ttable_packed = pack_tm(self.tme.tm)
+    write_tm(self.tme.tm, self.proto.tm)
 
 
   def is_unknown_halting(self):
