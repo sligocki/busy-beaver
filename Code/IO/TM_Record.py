@@ -93,6 +93,7 @@ def _unpack_tm(pack : bytes) -> Turing_Machine.Simple_Machine:
 def tm_to_list(tm : Turing_Machine.Simple_Machine, tm_list : io_pb2.TMList) -> None:
   tm_list.num_states = tm.num_states
   tm_list.num_symbols = tm.num_symbols
+  tm_list.ttable_list = []
   for state in range(tm.num_states):
     for symbol in range(tm.num_symbols):
       trans = tm.get_trans_object(symbol, state)
@@ -103,6 +104,7 @@ def tm_to_list(tm : Turing_Machine.Simple_Machine, tm_list : io_pb2.TMList) -> N
       tm_list.ttable_list.append(symbol_out)
       tm_list.ttable_list.append(trans.dir_out)
       tm_list.ttable_list.append(trans.state_out)
+  assert len(tm_list.ttable_list) == 3 * tm.num_states * tm.num_symbols
 
 def tm_from_list(tm_list : io_pb2.TMList) -> Turing_Machine.Simple_Machine:
   quints = []
@@ -112,6 +114,8 @@ def tm_from_list(tm_list : io_pb2.TMList) -> Turing_Machine.Simple_Machine:
       symbol_out, dir_out, state_out = tm_list.ttable_list[i:i+3]
       if symbol_out != -1:
         quints.append((state_in, symbol_in, symbol_out, dir_out, state_out))
+      i += 3
+  # assert i == len(tm_list.ttable_list), (i, len(tm_list.ttable_list))
   return Turing_Machine.tm_from_quintuples(quints,
                                            states = list(range(tm_list.num_states)),
                                            symbols = list(range(tm_list.num_symbols)))
