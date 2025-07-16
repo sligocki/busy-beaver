@@ -132,7 +132,7 @@ class TMStats:
       self.inf_reason[proto.status.halt_status.inf_reason] += 1
 
     # Quasihalt status
-    if proto.status.quasihalt_status.is_quasihalting:
+    if self.options.beep and proto.status.quasihalt_status.is_quasihalting:
       self.num_qhalt += 1
       num_steps = Halting_Lib.get_big_int(proto.status.quasihalt_status.quasihalt_steps)
       self.qhalt_steps.add(num_steps, tm_record.ttable_str())
@@ -143,62 +143,64 @@ class TMStats:
       if proto.filter.HasField(filter):
         self.filters_run[filter] += 1
 
-    # Simulator stats
-    self.sim_num_loops.add(proto.filter.simulator.result.num_loops)
-    sim_log10_num_steps = proto.filter.simulator.result.log10_num_steps
-    self.sim_log10_num_steps.add(sim_log10_num_steps)
-    self.sim_num_rules_proven.add(proto.filter.simulator.result.num_rules_proven)
-    self.sim_num_finite_linear_rules_proven.add(proto.filter.simulator.result.num_finite_linear_rules_proven)
-    self.sim_num_exponential_rules_proven.add(proto.filter.simulator.result.num_exponential_rules_proven)
-    self.sim_num_gen_rules_proven.add(proto.filter.simulator.result.num_gen_rules_proven)
-    self.sim_num_collatz_rules.add(proto.filter.simulator.result.num_collatz_rules)
-    self.sim_num_proofs_failed.add(proto.filter.simulator.result.num_proofs_failed)
-    self.sim_num_rule_moves.add(proto.filter.simulator.result.num_rule_moves)
+    if self.options.filter_details:
+      # Simulator stats
+      self.sim_num_loops.add(proto.filter.simulator.result.num_loops)
+      sim_log10_num_steps = proto.filter.simulator.result.log10_num_steps
+      self.sim_log10_num_steps.add(sim_log10_num_steps)
+      self.sim_num_rules_proven.add(proto.filter.simulator.result.num_rules_proven)
+      self.sim_num_finite_linear_rules_proven.add(proto.filter.simulator.result.num_finite_linear_rules_proven)
+      self.sim_num_exponential_rules_proven.add(proto.filter.simulator.result.num_exponential_rules_proven)
+      self.sim_num_gen_rules_proven.add(proto.filter.simulator.result.num_gen_rules_proven)
+      self.sim_num_collatz_rules.add(proto.filter.simulator.result.num_collatz_rules)
+      self.sim_num_proofs_failed.add(proto.filter.simulator.result.num_proofs_failed)
+      self.sim_num_rule_moves.add(proto.filter.simulator.result.num_rule_moves)
 
-    self.lr_start_step.add(proto.filter.lin_recur.result.start_step)
-    self.lr_period.add(proto.filter.lin_recur.result.period)
-    self.lr_abs_offset.add(abs(proto.filter.lin_recur.result.offset))
+      self.lr_start_step.add(proto.filter.lin_recur.result.start_step)
+      self.lr_period.add(proto.filter.lin_recur.result.period)
+      self.lr_abs_offset.add(abs(proto.filter.lin_recur.result.offset))
 
-    # Backtrack stats
-    if proto.filter.backtrack.result.success:
-      self.bt_max_steps.add(proto.filter.backtrack.result.max_steps)
-      self.bt_max_width.add(proto.filter.backtrack.result.max_width)
+      if proto.filter.backtrack.result.success:
+        self.bt_max_steps.add(proto.filter.backtrack.result.max_steps)
+        self.bt_max_width.add(proto.filter.backtrack.result.max_width)
 
-    if proto.filter.cps.result.block_size:
-      self.cg_block_size.add(proto.filter.cps.result.block_size)
-      self.cg_num_steps.add(proto.filter.cps.result.num_steps)
-      self.cg_num_configs.add(proto.filter.cps.result.num_configs)
-      self.cg_num_edges.add(proto.filter.cps.result.num_edges)
-      self.cg_num_iters.add(proto.filter.cps.result.num_iters)
-      self.cg_found_inf_loop.add(proto.filter.cps.result.found_inf_loop)
+      if proto.filter.cps.result.block_size:
+        self.cg_block_size.add(proto.filter.cps.result.block_size)
+        self.cg_num_steps.add(proto.filter.cps.result.num_steps)
+        self.cg_num_configs.add(proto.filter.cps.result.num_configs)
+        self.cg_num_edges.add(proto.filter.cps.result.num_edges)
+        self.cg_num_iters.add(proto.filter.cps.result.num_iters)
+        self.cg_found_inf_loop.add(proto.filter.cps.result.found_inf_loop)
 
-    # Timing
-    self.timings_s["total"].add(proto.elapsed_time_us / 1e6)
-    self.timings_s["simulator"].add(proto.filter.simulator.result.elapsed_time_us / 1e6)
-    self.timings_s["block_finder"].add(proto.filter.block_finder.result.elapsed_time_us / 1e6)
-    self.timings_s["reverse_engineer"].add(proto.filter.reverse_engineer.elapsed_time_us / 1e6)
-    self.timings_s["lin_recur"].add(proto.filter.lin_recur.result.elapsed_time_us / 1e6)
-    self.timings_s["ctl"].add((
-      proto.filter.ctl.ctl_as.result.elapsed_time_us +
-      proto.filter.ctl.ctl_as_b.result.elapsed_time_us +
-      proto.filter.ctl.ctl_a_bs.result.elapsed_time_us +
-      proto.filter.ctl.ctl_as_b_c.result.elapsed_time_us
-      ) / 1e6)
-    self.timings_s["backtrack"].add(proto.filter.backtrack.result.elapsed_time_us / 1e6)
-    self.timings_s["cps"].add(proto.filter.cps.result.elapsed_time_us / 1e6)
+    if self.options.time:
+      # Timing
+      self.timings_s["total"].add(proto.elapsed_time_us / 1e6)
+      self.timings_s["simulator"].add(proto.filter.simulator.result.elapsed_time_us / 1e6)
+      self.timings_s["block_finder"].add(proto.filter.block_finder.result.elapsed_time_us / 1e6)
+      self.timings_s["reverse_engineer"].add(proto.filter.reverse_engineer.elapsed_time_us / 1e6)
+      self.timings_s["lin_recur"].add(proto.filter.lin_recur.result.elapsed_time_us / 1e6)
+      self.timings_s["ctl"].add((
+        proto.filter.ctl.ctl_as.result.elapsed_time_us +
+        proto.filter.ctl.ctl_as_b.result.elapsed_time_us +
+        proto.filter.ctl.ctl_a_bs.result.elapsed_time_us +
+        proto.filter.ctl.ctl_as_b_c.result.elapsed_time_us
+        ) / 1e6)
+      self.timings_s["backtrack"].add(proto.filter.backtrack.result.elapsed_time_us / 1e6)
+      self.timings_s["cps"].add(proto.filter.cps.result.elapsed_time_us / 1e6)
 
-    # Serialized Size
-    self.sizes["total"].add(proto.ByteSize())
-    self.sizes["tm"].add(proto.tm.ByteSize())
-    self.sizes["status"].add(proto.status.ByteSize())
-    self.sizes["filter"].add(proto.filter.ByteSize())
+    if self.options.size:
+      # Serialized Size
+      self.sizes["total"].add(proto.ByteSize())
+      self.sizes["tm"].add(proto.tm.ByteSize())
+      self.sizes["status"].add(proto.status.ByteSize())
+      self.sizes["filter"].add(proto.filter.ByteSize())
 
-    self.sizes["simulator"].add(proto.filter.simulator.ByteSize())
-    self.sizes["block_finder"].add(proto.filter.block_finder.ByteSize())
-    self.sizes["lin_recur"].add(proto.filter.lin_recur.ByteSize())
-    self.sizes["ctl"].add(proto.filter.ctl.ByteSize())
-    self.sizes["backtrack"].add(proto.filter.backtrack.ByteSize())
-    self.sizes["cps"].add(proto.filter.cps.ByteSize())
+      self.sizes["simulator"].add(proto.filter.simulator.ByteSize())
+      self.sizes["block_finder"].add(proto.filter.block_finder.ByteSize())
+      self.sizes["lin_recur"].add(proto.filter.lin_recur.ByteSize())
+      self.sizes["ctl"].add(proto.filter.ctl.ByteSize())
+      self.sizes["backtrack"].add(proto.filter.backtrack.ByteSize())
+      self.sizes["cps"].add(proto.filter.cps.ByteSize())
 
   def print(self):
     print()
@@ -219,7 +221,7 @@ class TMStats:
             f"{count:15_}  ({count / self.num_inf:7.2%})")
     print()
 
-    if self.num_qhalt:
+    if self.options.beep and self.num_qhalt:
       print(f"Quasihalt: {self.num_qhalt:_} ({self.num_qhalt / self.count:.3%})")
       print(f"  - Steps: Max {self.qhalt_steps.max_str()}")
       print()
@@ -229,79 +231,81 @@ class TMStats:
       print(f"  - {filter:20s} : {num_run:15_d}  ({num_run / self.count:7.2%})")
     print()
 
-    if self.sim_num_loops.count:
-      print("Simulator:")
-      print(f"  - num_loops             : Mean {self.sim_num_loops.mean():9_.0f}  Max {self.sim_num_loops.max_value:9_d}")
-      # self.print_hist(self.sim_num_loops.log_hist)
-      # print()
-      print(f"  - log10(num_steps)      : Mean {self.sim_log10_num_steps.mean():9_.0f}  Max {self.sim_log10_num_steps.max_value:9_.0f}  Min {self.sim_log10_num_steps.min_value:9_.0f}")
-      print(f"  - num_rules_proven      : Mean {self.sim_num_rules_proven.mean():9_.0f}  Max {self.sim_num_rules_proven.max_value:9_d}  (Set in {self.sim_num_rules_proven.count / self.count:7.2%})")
-      print(f"  - num_linear_rules      : Mean {self.sim_num_finite_linear_rules_proven.mean():9_.0f}  Max {self.sim_num_finite_linear_rules_proven.max_value:9_d}  (Set in {self.sim_num_finite_linear_rules_proven.count / self.count:7.2%})")
-      print(f"  - num_exponential_rules : Mean {self.sim_num_exponential_rules_proven.mean():9_.0f}  Max {self.sim_num_exponential_rules_proven.max_value:9_d}  (Set in {self.sim_num_exponential_rules_proven.count / self.count:7.2%})")
-      print(f"  - num_gen_rules         : Mean {self.sim_num_gen_rules_proven.mean():9_.0f}  Max {self.sim_num_gen_rules_proven.max_value:9_d}  (Set in {self.sim_num_gen_rules_proven.count / self.count:7.2%})")
-      print(f"  - num_collatz_rules     : Mean {self.sim_num_collatz_rules.mean():9_.0f}  Max {self.sim_num_collatz_rules.max_value:9_d}  (Set in {self.sim_num_collatz_rules.count / self.count:7.2%})")
-      print(f"  - num_proofs_failed     : Mean {self.sim_num_proofs_failed.mean():9_.0f}  Max {self.sim_num_proofs_failed.max_value:9_d}  (Set in {self.sim_num_proofs_failed.count / self.count:7.2%})")
-      print(f"  - num_rule_moves        : Mean {self.sim_num_rule_moves.mean():9_.0f}  Max {self.sim_num_rule_moves.max_value:9_d}  (Set in {self.sim_num_rule_moves.count / self.count:7.2%})")
+    if self.options.filter_details:
+      if self.sim_num_loops.count:
+        print("Simulator:")
+        print(f"  - num_loops             : Mean {self.sim_num_loops.mean():9_.0f}  Max {self.sim_num_loops.max_value:9_d}")
+        # self.print_hist(self.sim_num_loops.log_hist)
+        # print()
+        print(f"  - log10(num_steps)      : Mean {self.sim_log10_num_steps.mean():9_.0f}  Max {self.sim_log10_num_steps.max_value:9_.0f}  Min {self.sim_log10_num_steps.min_value:9_.0f}")
+        print(f"  - num_rules_proven      : Mean {self.sim_num_rules_proven.mean():9_.0f}  Max {self.sim_num_rules_proven.max_value:9_d}  (Set in {self.sim_num_rules_proven.count / self.count:7.2%})")
+        print(f"  - num_linear_rules      : Mean {self.sim_num_finite_linear_rules_proven.mean():9_.0f}  Max {self.sim_num_finite_linear_rules_proven.max_value:9_d}  (Set in {self.sim_num_finite_linear_rules_proven.count / self.count:7.2%})")
+        print(f"  - num_exponential_rules : Mean {self.sim_num_exponential_rules_proven.mean():9_.0f}  Max {self.sim_num_exponential_rules_proven.max_value:9_d}  (Set in {self.sim_num_exponential_rules_proven.count / self.count:7.2%})")
+        print(f"  - num_gen_rules         : Mean {self.sim_num_gen_rules_proven.mean():9_.0f}  Max {self.sim_num_gen_rules_proven.max_value:9_d}  (Set in {self.sim_num_gen_rules_proven.count / self.count:7.2%})")
+        print(f"  - num_collatz_rules     : Mean {self.sim_num_collatz_rules.mean():9_.0f}  Max {self.sim_num_collatz_rules.max_value:9_d}  (Set in {self.sim_num_collatz_rules.count / self.count:7.2%})")
+        print(f"  - num_proofs_failed     : Mean {self.sim_num_proofs_failed.mean():9_.0f}  Max {self.sim_num_proofs_failed.max_value:9_d}  (Set in {self.sim_num_proofs_failed.count / self.count:7.2%})")
+        print(f"  - num_rule_moves        : Mean {self.sim_num_rule_moves.mean():9_.0f}  Max {self.sim_num_rule_moves.max_value:9_d}  (Set in {self.sim_num_rule_moves.count / self.count:7.2%})")
+        print()
+
+      if self.lr_period.count:
+        print("Lin Recur:")
+        print(f"  - start_step  : Mean {self.lr_start_step.mean():_.0f}  "
+              f"Max {self.lr_start_step.max_value:_}  "
+              f"(Set in {self.lr_start_step.count / self.count:4.0%})")
+        print(f"  - period      : Mean {self.lr_period.mean():_.0f}  "
+              f"Max {self.lr_period.max_value:_}  "
+              f"(Set in {self.lr_period.count / self.count:4.0%})")
+        print(f"  - abs(offset) : Mean {self.lr_abs_offset.mean():_.0f}  "
+              f"Max {self.lr_abs_offset.max_value:_}  "
+              f"(Set in {self.lr_abs_offset.count / self.count:4.0%})")
+        print()
+
+      if self.bt_max_steps.count:
+        print("Backtrack:")
+        print(f"  - max_steps  : Mean {self.bt_max_steps.mean():_.2f}  "
+              f"Max {self.bt_max_steps.max_value:_}  "
+              f"(Set in {self.bt_max_steps.count / self.count:4.0%})")
+        print(f"  - max_width  : Mean {self.bt_max_width.mean():_.2f}  "
+              f"Max {self.bt_max_width.max_value:_}  "
+              f"(Set in {self.bt_max_width.count / self.count:4.0%})")
+        print()
+
+      if self.cg_num_configs.count:
+        print("CPS:")
+        print(f"  - block_size     : Mean {self.cg_block_size.mean():11_.2f}  "
+              f"StdDev {self.cg_block_size.std_dev():11_.2f}  "
+              f"Max {self.cg_block_size.max_value:11_}")
+        print(f"  - num_steps      : Mean {self.cg_num_steps.mean():11_.0f}  "
+              f"StdDev {self.cg_num_steps.std_dev():11_.0f}  "
+              f"Max {self.cg_num_steps.max_value:11_}")
+        print(f"  - num_configs    : Mean {self.cg_num_configs.mean():11_.2f}  "
+              f"StdDev {self.cg_num_configs.std_dev():11_.2f}  "
+              f"Max {self.cg_num_configs.max_value:11_}")
+        print(f"  - num_edges      : Mean {self.cg_num_edges.mean():11_.2f}  "
+              f"StdDev {self.cg_num_edges.std_dev():11_.2f}  "
+              f"Max {self.cg_num_edges.max_value:11_}")
+        print(f"  - num_iters      : Mean {self.cg_num_iters.mean():11_.2f}  "
+              f"StdDev {self.cg_num_iters.std_dev():11_.2f}  "
+              f"Max {self.cg_num_iters.max_value:11_}")
+        print(f"  - found_inf_loop : {self.cg_found_inf_loop.count:_d} ({self.cg_found_inf_loop.count / self.count:8.4%})")
+        print()
+
+    if self.options.time:
+      print("Timings:")
+      # Note: These are the mean timings for each filter over all TMs.
+      mean_timings_s = sorted(
+        [(timing.total / self.count, filter)
+        for (filter, timing) in self.timings_s.items()
+        if timing.count > 0],
+        reverse=True)
+      for (mean_time_s, filter) in mean_timings_s:
+        print(f"  - {filter:16s} : Mean(all) {mean_time_s:7_.3f} s  "
+              f"Mean(run) {self.timings_s[filter].mean():7_.3f} s  "
+              f"Max {self.timings_s[filter].max_value:7_.3f} s  "
+              f"(Set in {self.timings_s[filter].count / self.count:4.0%})")
       print()
 
-    if self.lr_period.count:
-      print("Lin Recur:")
-      print(f"  - start_step  : Mean {self.lr_start_step.mean():_.0f}  "
-            f"Max {self.lr_start_step.max_value:_}  "
-            f"(Set in {self.lr_start_step.count / self.count:4.0%})")
-      print(f"  - period      : Mean {self.lr_period.mean():_.0f}  "
-            f"Max {self.lr_period.max_value:_}  "
-            f"(Set in {self.lr_period.count / self.count:4.0%})")
-      print(f"  - abs(offset) : Mean {self.lr_abs_offset.mean():_.0f}  "
-            f"Max {self.lr_abs_offset.max_value:_}  "
-            f"(Set in {self.lr_abs_offset.count / self.count:4.0%})")
-      print()
-
-    if self.bt_max_steps.count:
-      print("Backtrack:")
-      print(f"  - max_steps  : Mean {self.bt_max_steps.mean():_.2f}  "
-            f"Max {self.bt_max_steps.max_value:_}  "
-            f"(Set in {self.bt_max_steps.count / self.count:4.0%})")
-      print(f"  - max_width  : Mean {self.bt_max_width.mean():_.2f}  "
-            f"Max {self.bt_max_width.max_value:_}  "
-            f"(Set in {self.bt_max_width.count / self.count:4.0%})")
-      print()
-
-    if self.cg_num_configs.count:
-      print("CPS:")
-      print(f"  - block_size     : Mean {self.cg_block_size.mean():11_.2f}  "
-            f"StdDev {self.cg_block_size.std_dev():11_.2f}  "
-            f"Max {self.cg_block_size.max_value:11_}")
-      print(f"  - num_steps      : Mean {self.cg_num_steps.mean():11_.0f}  "
-            f"StdDev {self.cg_num_steps.std_dev():11_.0f}  "
-            f"Max {self.cg_num_steps.max_value:11_}")
-      print(f"  - num_configs    : Mean {self.cg_num_configs.mean():11_.2f}  "
-            f"StdDev {self.cg_num_configs.std_dev():11_.2f}  "
-            f"Max {self.cg_num_configs.max_value:11_}")
-      print(f"  - num_edges      : Mean {self.cg_num_edges.mean():11_.2f}  "
-            f"StdDev {self.cg_num_edges.std_dev():11_.2f}  "
-            f"Max {self.cg_num_edges.max_value:11_}")
-      print(f"  - num_iters      : Mean {self.cg_num_iters.mean():11_.2f}  "
-            f"StdDev {self.cg_num_iters.std_dev():11_.2f}  "
-            f"Max {self.cg_num_iters.max_value:11_}")
-      print(f"  - found_inf_loop : {self.cg_found_inf_loop.count:_d} ({self.cg_found_inf_loop.count / self.count:8.4%})")
-      print()
-
-    print("Timings:")
-    # Note: These are the mean timings for each filter over all TMs.
-    mean_timings_s = sorted(
-      [(timing.total / self.count, filter)
-       for (filter, timing) in self.timings_s.items()
-       if timing.count > 0],
-      reverse=True)
-    for (mean_time_s, filter) in mean_timings_s:
-      print(f"  - {filter:16s} : Mean(all) {mean_time_s:7_.3f} s  "
-            f"Mean(run) {self.timings_s[filter].mean():7_.3f} s  "
-            f"Max {self.timings_s[filter].max_value:7_.3f} s  "
-            f"(Set in {self.timings_s[filter].count / self.count:4.0%})")
-    print()
-
-    if self.options.sizes:
+    if self.options.size:
       print("Serialized Sizes:")
       # Note: These are the mean space for each message over all TMs
       # (even ones without this message set).
@@ -335,8 +339,13 @@ class TMStats:
 def main():
   parser = argparse.ArgumentParser()
   parser.add_argument("tm_file", type=Path, nargs="+")
-  parser.add_argument("--sizes", action="store_true", help="Print stats on record sizes")
-  parser.add_argument("--print-freq", type=int, default=1_000_000)
+  parser.add_argument("--print-freq", "-n", type=int, default=1_000_000)
+
+  parser.add_argument("--time", action="store_true", help="Print stats on timing")
+  parser.add_argument("--size", action="store_true", help="Print stats on record sizes")
+  parser.add_argument("--beep", action="store_true", help="Print stats on quasihalting")
+  parser.add_argument("--filter-details", action="store_true",
+                      help="Print stats on filter details")
   args = parser.parse_args()
 
   stats = TMStats(args)
