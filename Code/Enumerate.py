@@ -196,7 +196,8 @@ def enum_initial_tms(options):
     blank_tm = TM_Enum.blank_tm_enum(options.states, options.symbols,
                                      first_1rb = options.first_1rb,
                                      max_transitions = options.max_transitions,
-                                     allow_no_halt = options.allow_no_halt)
+                                     allow_no_halt = options.allow_no_halt,
+                                     only_reversible = options.only_reversible)
     tm_record = TM_Record(tm_enum = blank_tm)
     yield tm_record
 
@@ -207,9 +208,6 @@ def main(args):
   enum_parser = OptionGroup(parser, "Enumeration Options")
   enum_parser.add_option("--states",  type=int, help="Number of states")
   enum_parser.add_option("--symbols", type=int, help="Number of symbols")
-  enum_parser.add_option("--max-transitions", type=int,
-                         help="Maximum number of defined transitions to allow. "
-                         "Defaults to unlimited.")
   enum_parser.add_option("--breadth-first", action="store_true", default=False,
                          help="Run search breadth first (only works in single "
                          "process mode).")
@@ -226,6 +224,13 @@ def main(args):
                          action="store_false", default=True,
                          help="Allow first transition to be anything (not just restricted to A1->1RB).")
   enum_parser.add_option("--debug-print-current", dest="debug_print_current", action="store_true", default=False)
+
+  # TM model restrictions.
+  enum_parser.add_option("--max-transitions", type=int,
+                         help="Maximum number of defined transitions to allow. "
+                         "Defaults to unlimited.")
+  enum_parser.add_option("--only-reversible", action="store_true",
+                         help="Only enumerate reversible TMs.")
   parser.add_option_group(enum_parser)
 
   Macro_Simulator.add_option_group(parser)
