@@ -189,6 +189,11 @@ def enum_initial_tms(options):
         # Clear previous results, so that we only see the results from this run.
         tm_record.proto.ClearField("status")
         tm_record.proto.ClearField("filter")
+        # Pre-load the TM so that options can be set below.
+        tm_record.tm()
+        if options.max_transitions:
+          tm_record.tme.max_transitions = options.max_transitions
+        tm_record.tme.only_reversible = options.only_reversible
         yield tm_record
   else:
     assert options.states and options.symbols, (options.states, options.symbols)
