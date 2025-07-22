@@ -131,7 +131,7 @@ def sim_limited(tm, state, start_tape, pos : int, dir : Dir, max_loops=10_000) -
     if (state, dir, pos, tape) == old_config:
       # Found a repeated config.
       condition = INF_REPEAT
-      condition_details = [pos]
+      condition_details = (pos,)
       break
     if num_loops >= next_config_save:
       # Brent's algorithm for loop detection:
@@ -145,18 +145,18 @@ def sim_limited(tm, state, start_tape, pos : int, dir : Dir, max_loops=10_000) -
     if num_loops > max_loops:
       # Simulation ran too long, we give up.
       condition = GAVE_UP
-      condition_details = [num_loops]
+      condition_details = (num_loops,)
       break
 
     if trans.condition != RUNNING:
       # Base machine stopped running (HALT, INF_REPEAT, etc.)
       condition = trans.condition
-      condition_details = trans.condition_details + [pos]
+      condition_details = tuple(trans.condition_details) + (pos,)
       break
     if not (0 <= pos < len(tape)):
       # We ran off one end of the macro symbol. We're done.
       condition = RUNNING
-      condition_details = None
+      condition_details = tuple()
       break
 
   return Transition(
@@ -309,10 +309,10 @@ def tm_from_quintuples(quints, states, symbols) -> Simple_Machine:
 
       if state_out == -1:
         condition = HALT
-        condition_details = [(symbol_in, state_in)]
+        condition_details = ((symbol_in, state_in),)
       else:
         condition = RUNNING
-        condition_details = None
+        condition_details = tuple()
         state_out = states.index(state_out)
 
       ttable[state_in][symbol_in] = Transition(
@@ -329,7 +329,7 @@ def tm_from_quintuples(quints, states, symbols) -> Simple_Machine:
       if not ttable[state_in][symbol_in]:
         ttable[state_in][symbol_in] = Transition(
           condition = UNDEFINED,
-          condition_details = [(symbol_in, state_in)],
+          condition_details = ((symbol_in, state_in),),
           # Make all undefined transitions act like the default halt trans: 1RH
           symbol_out = 1,
           state_out = Simple_Machine_State(-1),
