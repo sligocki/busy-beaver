@@ -93,7 +93,7 @@ def _unpack_tm(pack : bytes) -> Turing_Machine.Simple_Machine:
 def tm_to_list(tm : Turing_Machine.Simple_Machine, tm_list : io_pb2.TMList) -> None:
   tm_list.num_states = tm.num_states
   tm_list.num_symbols = tm.num_symbols
-  tm_list.ttable_list = []
+  del tm_list.ttable_list[:]
   for state in range(tm.num_states):
     for symbol in range(tm.num_symbols):
       trans = tm.get_trans_object(symbol, state)
@@ -132,7 +132,7 @@ def read_tm(proto_tm : io_pb2.TuringMachine) -> Turing_Machine.Simple_Machine:
     raise NotImplementedError(f"Unexpected ttable type: {type}")
 
 def write_tm(tm : Turing_Machine.Simple_Machine, proto_tm : io_pb2.TuringMachine):
-  if tm.num_states <= 7 and tm.num_symbols <= 8:
+  if tm.num_states < 7 and tm.num_symbols < 7:
     proto_tm.ttable_packed = _pack_tm(tm)
   else:
     tm_to_list(tm, proto_tm.ttable_list)
