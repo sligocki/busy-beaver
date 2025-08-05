@@ -175,17 +175,21 @@ if __name__ == "__main__":
                     "and prover (Overrides other --verbose-* flags).")
 
   parser.add_option("--max-loops", type=int, default=0,
-                    help="Specify a maximum number of loops.")
+                    help="Specify a maximum number of loops (0 for infinite). "
+                    "[Default: %default]")
   parser.add_option("--bf-loops", type=int, default=10_000,
-                    help="Number of steps to run Block Finder.")
+                    help="Number of steps to run Block Finder. "
+                    "[Default: %default]")
   parser.add_option("--freeze-prover", action="store_true",
                     help="Stop trying to prove new rules after first print.")
 
   parser.add_option("--start-state", "-s", default="A",
-                    help="Override start state (Default A).")
+                    help="Override start state [Default %default].")
 
-  parser.add_option("--max-steps-in-block", type=int, default=1_000_000)
-  parser.add_option("--max-steps-in-backsymbol", type=int, default=1_000)
+  parser.add_option("--max-steps-in-block", type=int, default=1_000_000,
+                    help="[Default: %default]")
+  parser.add_option("--max-steps-in-backsymbol", type=int, default=1_000,
+                    help="[Default: %default]")
 
   parser.add_option("--print-loops", type=int, default=100_000, metavar="LOOPS",
                     help="Print every LOOPS loops [Default %default].")

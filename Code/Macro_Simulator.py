@@ -27,14 +27,16 @@ def add_option_group(parser):
 
   group.add_option("--max-loops", type=int, default=1000,
                    help="Max simulator loops to run each simulation (0 for infinite). "
-                   "[Default: infinite]")
+                   "[Default: %default]")
   group.add_option("--time", type=float, default=15.0,
                    help="Max seconds to run each simulation. "
                    "[Default: %default]")
   group.add_option("--tape-limit", type=int, default=50,
-                   help="Max tape size to allow.")
+                   help="Max tape size to allow. "
+                   "[Default: %default]")
   group.add_option("--lin-steps", type=int, default=127,
-                   help="Number of steps to run Lin_Recur detection (0 means skip).")
+                   help="Number of steps to run Lin_Recur detection (0 means skip). "
+                   "[Default: %default]")
   group.add_option("--lin-min", action="store_true", default=False)
   group.add_option("--no-reverse-engineer", dest="reverse_engineer",
                    action="store_false", default=True,

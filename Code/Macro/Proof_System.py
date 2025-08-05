@@ -44,9 +44,14 @@ def add_option_group(parser):
 
   # A quick experiment shows that 100k past_configs -> 100MB, 1M -> 1GB RAM.
   group.add_option("--max-prover-configs", type=int, default=100_000,
-                   help="Limit size of prover's previous configs (so avoid memory issues in situations where we're not applying any rules ...).")
+                   help="Limit size of prover's previous configs (so avoid "
+                   "memory issues in situations where we're not applying any "
+                   "rules ...). "
+                   "[Default: %default]")
   group.add_option("--max-num-reps", type=int, default=10,
-                    help="Maximum consecutive number of times a General rule is applied (Does not apply to standard Diff Rules).")
+                    help="Maximum consecutive number of times a General rule "
+                    "is applied (Does not apply to standard Diff Rules). "
+                    "[Default: %default]")
 
   parser.add_option_group(group)
 
