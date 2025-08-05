@@ -337,9 +337,12 @@ class TMStats:
 
 
 def main():
+  print_default = 1_000_000
+
   parser = argparse.ArgumentParser()
   parser.add_argument("tm_file", type=Path, nargs="+")
-  parser.add_argument("--print-freq", "-n", type=int, default=1_000_000)
+  parser.add_argument("--print-freq", "-n", type=int, default=print_default,
+                      help="[Default: {:_}]".format(print_default))
 
   parser.add_argument("--time", action="store_true", help="Print stats on timing")
   parser.add_argument("--size", action="store_true", help="Print stats on record sizes")
