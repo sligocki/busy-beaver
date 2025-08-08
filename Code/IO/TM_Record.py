@@ -22,16 +22,16 @@ def parse_tm(line : str) -> Turing_Machine.Simple_Machine:
     for symbol_in, i in enumerate(range(0, len(row), 3)):
       max_symbol = max(max_symbol, symbol_in)
       trans_str = row[i:i+3]
-      assert len(trans_str) == 3, trans_str
+      assert len(trans_str) == 3, f"'{trans_str}' - {line}"
       if trans_str != "---":
         symbol_out = SYMBOLS_DISPLAY.find(trans_str[0])
         dir_out = DIRS_DISPLAY.find(trans_str[1])
         state_out = STATES_DISPLAY.find(trans_str[2])
         if state_out >= num_states:
           state_out = -1
-        assert symbol_out >= 0, trans_str
-        assert dir_out in [0, 1], trans_str
-        assert state_out >= -1, trans_str
+        assert symbol_out >= 0,   f"'{trans_str}' - {line}"
+        assert dir_out in [0, 1], f"'{trans_str}' - {line}"
+        assert state_out >= -1,   f"'{trans_str}' - {line}"
         quints.append((state_in, symbol_in, symbol_out, dir_out, state_out))
   return Turing_Machine.tm_from_quintuples(quints, states = list(range(num_states)),
                                            symbols = list(range(max_symbol + 1)))
