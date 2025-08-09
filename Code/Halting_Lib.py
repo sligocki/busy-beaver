@@ -178,7 +178,7 @@ def set_inf_recur(tm_status : io_pb2.BBStatus,
   it's infinite).
   """
   if states_last_seen is None or states_to_ignore is None:
-    # If we didn't keep track of the relevent info:
+    # If we didn't keep track of the relevant info:
     tm_status.quasihalt_status.is_decided = False
     return
 

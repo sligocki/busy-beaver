@@ -1,7 +1,7 @@
 import sys, time, collections
 
 class Work_Queue(object):
-  """A generic interface for sending and recieving work."""
+  """A generic interface for sending and receiving work."""
 
   def pop_job(self):
     """Take a job off of the queue. The implementation may buffer up
@@ -19,7 +19,7 @@ class Work_Queue(object):
     raise NotImplemented
 
   def print_stats(self):
-    """Hook for printing stats, default implemenation does nothing."""
+    """Hook for printing stats, default implementation does nothing."""
     pass
 
 class Basic_LIFO_Work_Queue(Work_Queue):

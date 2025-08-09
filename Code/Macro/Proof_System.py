@@ -67,7 +67,7 @@ class Diff_Rule(Rule):
     # TODO: Use basic lists instead of tapes, we never use the symbols.
     # TODO: Have a variable list and a min list instead of packing both
     # into init_tape.
-    # TOOD: Or maybe we don't even need variables, we could just have the
+    # TODO: Or maybe we don't even need variables, we could just have the
     # things that depend on variables index directly into the tapes?
     # TODO: Actually, variables only appear in num_steps, so we don't even
     # need them if we are not computing steps.
@@ -509,7 +509,7 @@ class Proof_System(object):
     # try to prove rules. Set to None to disable proving new rules (for example
     # if this is a recursive proof system being used simply to apply rules).
     self.past_configs = defaultdict(Past_Config)
-    # Colection of proven rules indexed by stripped configurations.
+    # Collection of proven rules indexed by stripped configurations.
     self.rules = {}
 
     self.max_num_reps = options.max_num_reps
@@ -786,7 +786,7 @@ class Proof_System(object):
         # This would also allow us to avoid treating rep count 1 as special in
         # the stripped config.
         #
-        # For now we just fail. It may not be worth implimenting this anyway
+        # For now we just fail. It may not be worth implementing this anyway.
         if self.verbose:
           print()
           self.print_this("** Failed: Exponent below min **")
@@ -1348,7 +1348,7 @@ class Proof_System(object):
     # Unpack input
     start_state, start_tape, start_step_num, start_loop_num = start_config
 
-    large_delta = True  # Not editted in this function.
+    large_delta = True  # Not edited in this function.
     # Current list of all block exponents. We will update it in place repeatedly
     # rather than creating new tapes.
     current_list = [block.num for block in start_tape.tape[0] + start_tape.tape[1]]
@@ -1367,7 +1367,7 @@ class Proof_System(object):
 
     # Keep applying rule until we can't anymore.
     # TODO: Maybe we can use some intelligence when all negative rules are
-    # constants becuase, then we know how many time we can apply the rule.
+    # constants because, then we know how many time we can apply the rule.
     success = False  # If we fail before doing anything, return false.
     num_reps = 0
     diff_steps = 0

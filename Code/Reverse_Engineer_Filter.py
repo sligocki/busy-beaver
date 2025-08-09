@@ -37,7 +37,7 @@ def get_stats(tm):
   return halts, to_state, to_symbol
 
 def cannot_reach_halt(halt_state, halt_symbol, to_state, to_symbol):
-  """True means it is imposible to reach the halt state.
+  """True means it is impossible to reach the halt state.
      False is inconclusive."""
   def same_direction():
     """Test whether all transitions to halt_state are in the same direction as

@@ -1,5 +1,5 @@
-// Enumerate TMs using Lin Recurence (and Direct Simulation) to quickly cull the
-// vast majority which halt / enter Lin Recurence within say 100 steps.
+// Enumerate TMs using Lin Recurrence (and Direct Simulation) to quickly cull the
+// vast majority which halt / enter Lin Recurrence within say 100 steps.
 
 #include <iostream>
 #include <string>

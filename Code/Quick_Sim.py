@@ -171,7 +171,7 @@ if __name__ == "__main__":
   # TODO: Combine optparsers from MacroMachine, Enumerate and here.
   parser.add_option("-q", "--quiet", action="store_true", help="Brief output")
   parser.add_option("-v", "--verbose", action="store_true",
-                    help="Print step-by-step informaion from simulator "
+                    help="Print step-by-step information from simulator "
                     "and prover (Overrides other --verbose-* flags).")
 
   parser.add_option("--max-loops", type=int, default=0,
