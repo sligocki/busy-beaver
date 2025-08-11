@@ -151,8 +151,8 @@ impl VarSum {
 
     pub fn subst(&self, var_subst: &VarSubst) -> CountExpr {
         let mut new_var_sum = VarSum::from(self.constant);
-        // Set of substitutions whose values are RecurisveExprs.
-        // We must process those seperately below.
+        // Set of substitutions whose values are RecursiveExprs.
+        // We must process those separately below.
         let mut rec_subst: Vec<(Variable, u64, RecursiveExpr)> = Vec::new();
         for (x, count) in self.var_counts.iter() {
             match var_subst.0.get(&x) {

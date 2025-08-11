@@ -141,7 +141,7 @@ class Chain_Tape(object):
     if top.symbol == new_symbol:
       if top.num is not INF:
         top.num += 1
-    # Otherwise, just add it seperately.
+    # Otherwise, just add it separately.
     else:
       half_tape.append(Repeated_Symbol(new_symbol, 1))
     # Update direction

@@ -2,7 +2,7 @@
 # Simulator.py
 #
 """
-Turing Machine Simulator with considerable accelleration due to tape
+Turing Machine Simulator with considerable acceleration due to tape
 compression, chain moves and a proof system.
 """
 

@@ -50,7 +50,7 @@ class Exit_Condition(object):
   TIME_OUT = 5
   NOT_RUN = 7
   OVER_STEPS_IN_MACRO = 8
-  # Set of all unkown conditions
+  # Set of all unknown conditions
   UNKNOWN_SET = (UNKNOWN, OVER_TAPE, MAX_STEPS, TIME_OUT, NOT_RUN)
 
   names = { ERROR: "Error",

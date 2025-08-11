@@ -305,7 +305,7 @@ class Expression:
       raise BadOperation("Expression %s is not of correct form" % self)
 
   def scalars(self):
-    """Returns a list of all scalars (coeficients and constant)."""
+    """Returns a list of all scalars (coefficients and constant)."""
     return [term.coef for term in self.terms] + [self.const]
 
 Algebraic_Expression = Expression
@@ -366,7 +366,7 @@ def compare_terms(t1, t2):
   vars1 = t1.vars
   vars2 = t2.vars
 
-  # Shorter terms preceed longer terms
+  # Shorter terms precede longer terms
   if len(vars1) < len(vars2):
     return -1
   elif len(vars1) > len(vars2):
@@ -374,13 +374,13 @@ def compare_terms(t1, t2):
 
   # Same length
   for vp1, vp2 in zip(vars1, vars2):
-    # Older variables preceed younger variables
+    # Older variables precede younger variables
     if vp1.var.id < vp2.var.id:
       return -1
     elif vp1.var.id > vp2.var.id:
       return +1
 
-    # Variables to smaller exponents preceed those with larger exponents
+    # Variables to smaller exponents precede those with larger exponents
     if vp1.pow < vp2.pow:
       return -1
     elif vp1.pow > vp2.pow:

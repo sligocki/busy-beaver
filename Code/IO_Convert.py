@@ -14,7 +14,7 @@ FORMATS = ["auto", "text", "proto", "morphett", "text_old",
            "bbc_db", "bbc_index", "bbc_index_text"]
 
 def Detect_Format(path):
-  # Currently, this detection is very primative ... perhaps improve over time?
+  # Currently, this detection is very primitive ... perhaps improve over time?
   if ".pb" in path.suffixes:
     # My custom Protobuf based format.
     return "proto"

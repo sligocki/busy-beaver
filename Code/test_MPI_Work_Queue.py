@@ -30,5 +30,5 @@ if __name__ == "__main__":
       if job == None:
         file.close()
         break
-      file.write("Process %d recieved job %d\n" % (MPI_Work_Queue.rank, job))
+      file.write("Process %d received job %d\n" % (MPI_Work_Queue.rank, job))
       time.sleep(0.0001 * job)

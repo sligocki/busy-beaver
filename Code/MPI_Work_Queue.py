@@ -26,7 +26,7 @@ DEFAULT_TARGET_LOCAL_JOBS = 25
 
 # Worker code
 class MPI_Worker_Work_Queue(Work_Queue.Work_Queue):
-  """Work queue based on mpi4py MPI libary. Allows maintaining a global work
+  """Work queue based on mpi4py MPI library. Allows maintaining a global work
   queue for many processes possibly distributed across many machines."""
 
   def __init__(self, master_proc_num, pout = sys.stdout):
@@ -170,12 +170,12 @@ class Master(object):
     # Where we spend our time.
     # Downtime waiting for message from workers.
     self.waiting_time = 0.0
-    # Time spent recieving WAITING_FOR_POP messages from workers.
-    self.recieving_waiting_for_pop_time = 0.0
-    # Time spent recieving jobs from workers with PUSH_JOBS tag.
-    self.recieving_jobs_time = 0.0
-    # Time spent recieving REPORT_QUEUE_SIZE messages from workers.
-    self.recieving_queue_size_time = 0.0
+    # Time spent receiving WAITING_FOR_POP messages from workers.
+    self.receiving_waiting_for_pop_time = 0.0
+    # Time spent receiving jobs from workers with PUSH_JOBS tag.
+    self.receiving_jobs_time = 0.0
+    # Time spent receiving REPORT_QUEUE_SIZE messages from workers.
+    self.receiving_queue_size_time = 0.0
     # Time spent sending UPDATE_MAX_QUEUE_SIZE messages.
     self.update_max_queue_sizes_time = 0.0
     # Time spent sending jobs to workers with POP_JOBS tag.
@@ -206,18 +206,18 @@ class Master(object):
     self.pout.write("\n")
     self.pout.write("Waiting time               : %8.2f\n" % self.waiting_time)
     self.pout.write("WAITING_FOR_POP time       : %8.2f\n" %
-                    self.recieving_waiting_for_pop_time)
-    self.pout.write("Recieving jobs time        : %8.2f\n" %
-                    self.recieving_jobs_time)
-    self.pout.write("Recieving queue size time  : %8.2f\n" %
-                    self.recieving_queue_size_time)
+                    self.receiving_waiting_for_pop_time)
+    self.pout.write("Receiving jobs time        : %8.2f\n" %
+                    self.receiving_jobs_time)
+    self.pout.write("Receiving queue size time  : %8.2f\n" %
+                    self.receiving_queue_size_time)
     self.pout.write("Update max queue sizes time: %8.2f\n" %
                     self.update_max_queue_sizes_time)
     self.pout.write("Sending jobs time          : %8.2f\n" %
                     self.sending_jobs_time)
     self.pout.write("Total time                 : %8.2f\n" %
-                    (self.waiting_time + self.recieving_waiting_for_pop_time +
-                     self.recieving_jobs_time + self.recieving_queue_size_time +
+                    (self.waiting_time + self.receiving_waiting_for_pop_time +
+                     self.receiving_jobs_time + self.receiving_queue_size_time +
                      self.update_max_queue_sizes_time + self.sending_jobs_time))
 
     self.pout.flush()
@@ -241,12 +241,12 @@ class Master(object):
         rank_waiting = status.Get_source()
         worker_state[rank_waiting] = False
         worker_queue_size[rank_waiting] = 0
-      self.recieving_waiting_for_pop_time += self.time_diff()
+      self.receiving_waiting_for_pop_time += self.time_diff()
 
       # Collect all jobs pushed from workers.
       while comm.Iprobe(source=MPI.ANY_SOURCE, tag=PUSH_JOBS):
         self.master_queue += comm.recv(source=MPI.ANY_SOURCE, tag=PUSH_JOBS)
-      self.recieving_jobs_time += self.time_diff()
+      self.receiving_jobs_time += self.time_diff()
 
       # Collect reported queue sizes from workers.
       while comm.Iprobe(source=MPI.ANY_SOURCE, tag=REPORT_QUEUE_SIZE):
@@ -255,7 +255,7 @@ class Master(object):
                          status=status)
         rank = status.Get_source()
         worker_queue_size[rank] = size
-      self.recieving_queue_size_time += self.time_diff()
+      self.receiving_queue_size_time += self.time_diff()
 
       # Push out max queue sizes to workers.
       worker_queue_size[0] = len(self.master_queue)
@@ -280,7 +280,7 @@ class Master(object):
 
       # Quit when all workers are waiting for work.
       # TODO(shawn): If we pre-emptively request jobs we will need a new
-      # request type to distingush workers which have no jobs and are thus
+      # request type to distinguish workers which have no jobs and are thus
       # waiting and workers which are simply pre-emptively requesting new jobs.
       if not self.master_queue and True not in worker_state:
         for n in range(1, num_proc):

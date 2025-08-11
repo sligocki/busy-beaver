@@ -172,7 +172,7 @@ def block_finder(machine : Turing_Machine.Turing_Machine,
     sys.stdout.flush()
 
 def uncompress_tape(compr_tape):
-  """Expand out repatition counts in tape."""
+  """Expand out repetition counts in tape."""
   tape_out = []
   left_tape = compr_tape[0][1:]
   right_tape = compr_tape[1][1:]

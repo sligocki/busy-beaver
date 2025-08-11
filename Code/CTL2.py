@@ -121,7 +121,7 @@ def test_CTL(base_tm, cutoff, block_size=1, offset=None, use_backsymbol=True,
   tape = [None, None]
   for d in range(2):
     # Pass all symbols from this side of tape except for inf 0s
-    #   and possably the last symbol before the inf 0s
+    #   and possibly the last symbol before the inf 0s
     tape[d] = [block.symbol for block in reversed(sim.tape.tape[d][1:])]
     if len(sim.tape.tape[d]) >= 2 and sim.tape.tape[d][1].num > 1:
       tape[d].append(sim.tape.tape[d][1].symbol)
