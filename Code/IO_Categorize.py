@@ -115,11 +115,11 @@ def split_unknown(in_filenames: list[Path], out_dir: Path) -> None:
     with IO.Proto.Reader(in_filename) as reader:
       for tm_record in reader:
         reason = tm_record.proto.filter.simulator.result.unknown_info.WhichOneof("reason")
-        out[reason].write_record(tm_record)
-        num_written += 1
-
-        if num_written % 1_000_000 == 0:
-          print(f" ... categorized {num_written:_} records ...")
+        if reason:
+          out[reason].write_record(tm_record)
+          num_written += 1
+          if num_written % 1_000_000 == 0:
+            print(f" ... categorized {num_written:_} records ...")
     print(f"Categorized {num_written:_} records total")
 
 def main():
