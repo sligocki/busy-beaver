@@ -299,9 +299,9 @@ class TMStats:
         if timing.count > 0],
         reverse=True)
       for (mean_time_s, filter) in mean_timings_s:
-        print(f"  - {filter:16s} : Mean(all) {mean_time_s:7_.3f} s  "
-              f"Mean(run) {self.timings_s[filter].mean():7_.3f} s  "
-              f"Max {self.timings_s[filter].max_value:7_.3f} s  "
+        print(f"  - {filter:16s} : Mean(all) {mean_time_s*1000:7_.3f} ms  "
+              f"Mean(run) {self.timings_s[filter].mean()*1000:7_.3f} ms  "
+              f"Max {self.timings_s[filter].max_value*1000:7_.3f} ms  "
               f"(Set in {self.timings_s[filter].count / self.count:4.0%})")
       print()
 
