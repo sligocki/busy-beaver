@@ -1,14 +1,10 @@
 #! /usr/bin/env python3
 
 import argparse
-import collections
-import math
 from pathlib import Path
 
 import Halting_Lib
 import IO
-
-import io_pb2
 
 
 class OutputFiles:
@@ -79,7 +75,7 @@ class OutputFiles:
     self.num_written += 1
 
 
-def filter(in_filenames, out_dir):
+def categorize(in_filenames, out_dir):
   with OutputFiles(out_dir) as out:
     for in_filename in in_filenames:
       with IO.Proto.Reader(in_filename) as reader:
@@ -104,13 +100,41 @@ def filter(in_filenames, out_dir):
   print("");
   print(f"      Categorized {out.num_written:_} records total.")
 
+def split_unknown(in_filenames: list[Path], out_dir: Path) -> None:
+  out = {
+    "over_loops": IO.Proto.Writer(out_dir / "unknown_over_loops.pb"),
+    "over_tape": IO.Proto.Writer(out_dir / "unknown_over_tape.pb"),
+    "over_time": IO.Proto.Writer(out_dir / "unknown_over_time.pb"),
+    "over_steps_in_macro": IO.Proto.Writer(out_dir / "unknown_over_steps_in_macro.pb"),
+    "threw_exception": IO.Proto.Writer(out_dir / "unknown_threw_exception.pb"),
+  }
+  for writer in out.values():
+    writer.__enter__()
+  num_written = 0
+  for in_filename in in_filenames:
+    with IO.Proto.Reader(in_filename) as reader:
+      for tm_record in reader:
+        reason = tm_record.proto.filter.simulator.result.unknown_info.WhichOneof("reason")
+        out[reason].write_record(tm_record)
+        num_written += 1
+
+        if num_written % 1_000_000 == 0:
+          print(f" ... categorized {num_written:_} records ...")
+    print(f"Categorized {num_written:_} records total")
+
 def main():
   parser = argparse.ArgumentParser()
   parser.add_argument("in_files", nargs="*", type=Path)
   parser.add_argument("--out-dir", type=Path, required=True)
+
+  parser.add_argument("--split-unknown", action="store_true",
+                      help="Split unknown TMs by reason (over tape, over time, etc.)")
   args = parser.parse_args()
 
-  filter(args.in_files, args.out_dir)
+  if args.split_unknown:
+    split_unknown(args.in_files, args.out_dir)
+  else:
+    categorize(args.in_files, args.out_dir, args)
 
 if __name__ == "__main__":
   main()
