@@ -96,9 +96,9 @@ def run(machine, block_size, back, prover, recursive, options):
     print("Reason:", io_pb2.InfReason.Name(sim.inf_reason))
     print("Quasihalt:")
     print(bb_status.quasihalt_status)
-  elif sim.op_state == Turing_Machine.GAVE_UP:
+  elif sim.op_state == Turing_Machine.OVER_STEPS_IN_MACRO:
     print()
-    print("Gave up while simulating Turing Machine")
+    print("Over base steps in a single Macro step")
     print("Info:", sim.op_details)
   elif total_loops >= options.max_loops:
     print()

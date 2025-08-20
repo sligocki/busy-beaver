@@ -41,7 +41,8 @@ RUNNING    = "Running"    # Machine still running normally
 HALT       = "Halt"       # Machine halts in or directly after move
 INF_REPEAT = "Inf_Repeat" # Machine proven not to halt within move
 UNDEFINED  = "Undefined"  # Machine encountered undefined transition
-GAVE_UP   = "Gave_Up"     # For some reason, we bailed on computation (maybe too many steps).
+# TODO: Called "Gave_Up" for historical reasons
+OVER_STEPS_IN_MACRO = "Gave_Up" # Machine took too many base steps in a single macro step
 
 def other_dir(dir : Dir) -> Dir:
   if dir == LEFT:
@@ -144,7 +145,7 @@ def sim_limited(tm, state, start_tape, pos : int, dir : Dir, max_loops=10_000) -
 
     if num_loops > max_loops:
       # Simulation ran too long, we give up.
-      condition = GAVE_UP
+      condition = OVER_STEPS_IN_MACRO
       condition_details = (num_loops,)
       break
 

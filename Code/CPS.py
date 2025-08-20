@@ -17,7 +17,7 @@ import Halting_Lib
 import IO
 from Macro import Turing_Machine
 from Macro.Turing_Machine import (LEFT, RIGHT, other_dir,
-                                  RUNNING, INF_REPEAT, HALT, UNDEFINED, GAVE_UP)
+                                  RUNNING, INF_REPEAT, HALT, UNDEFINED, OVER_STEPS_IN_MACRO)
 
 import io_pb2
 
@@ -241,7 +241,7 @@ class CPSSim:
       return f"{old_config}  --({trans.num_base_steps:3d})-->  {new_config}"
     elif trans.condition == INF_REPEAT:
       return f"{old_config}  -->  (Infinite Loop)"
-    elif trans.condition == GAVE_UP:
+    elif trans.condition == OVER_STEPS_IN_MACRO:
       return f"{old_config}  --({trans.num_base_steps:3d})-->  (Over Max Steps)"
     else:
       assert trans.condition in (HALT, UNDEFINED)

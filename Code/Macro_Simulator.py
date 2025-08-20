@@ -189,8 +189,7 @@ def simulate_machine(machine : Turing_Machine.Turing_Machine,
     elif sim.op_state == Turing_Machine.RUNNING:
       sim_info.result.unknown_info.over_loops.num_loops = sim.num_loops
 
-    # TODO: Stop calling this "GAVE_UP" if we're only using it for one failure type.
-    elif sim.op_state == Turing_Machine.GAVE_UP:
+    elif sim.op_state == Turing_Machine.OVER_STEPS_IN_MACRO:
       over_steps_in_macro_info = sim_info.result.unknown_info.over_steps_in_macro
       over_steps_in_macro_info.macro_symbol = str(sim.tape.get_top_symbol())
       over_steps_in_macro_info.macro_state = str(sim.state)

@@ -204,7 +204,7 @@ class Simulator(object):
         self.step_num += trans.num_base_steps * num_reps
         self.steps_from_chain += trans.num_base_steps * num_reps
     # Simple move
-    elif self.op_state != Turing_Machine.GAVE_UP:
+    elif self.op_state != Turing_Machine.OVER_STEPS_IN_MACRO:
       self.tape.apply_single_move(trans.symbol_out, trans.dir_out)
       self.state = trans.state_out
       self.dir = trans.dir_out
