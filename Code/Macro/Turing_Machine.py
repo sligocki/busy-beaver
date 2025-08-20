@@ -95,8 +95,8 @@ class Transition:
             self.dir_out == other.dir_out)
 
 
-# TODO: Make max_loops configurable via command-line options.
-def sim_limited(tm, state, start_tape, pos : int, dir : Dir, max_loops=10_000) -> Transition:
+def sim_limited(tm, state, start_tape, pos : int, dir : Dir,
+                max_loops : int) -> Transition:
   """Simulate TM on a limited tape segment.
   Can detect HALT and INF_REPEAT. Used by Macro Machines."""
   # num_base_steps in the bottom level Simple_Machine.

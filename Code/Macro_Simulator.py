@@ -34,6 +34,8 @@ def add_option_group(parser):
   group.add_option("--tape-limit", type=int, default=50,
                    help="Max tape size to allow. "
                    "[Default: %default]")
+  group.add_option("--max-steps-per-macro", type=int, default=10_000,
+                   help="Maximum base TM steps within one Macro step before giving up.")
   group.add_option("--lin-steps", type=int, default=127,
                    help="Number of steps to run Lin_Recur detection (0 means skip). "
                    "[Default: %default]")
@@ -104,9 +106,11 @@ def run_options(tm_record : TM_Record,
       machine = base_tm
       # Do not create a 1-Block Macro-Machine (just use base machine)
       if block_size != 1:
-        machine = Turing_Machine.Block_Macro_Machine(machine, block_size)
+        machine = Turing_Machine.Block_Macro_Machine(
+          machine, block_size, max_sim_steps_per_symbol=options.max_steps_per_macro)
       if options.backsymbol:
-        machine = Turing_Machine.Backsymbol_Macro_Machine(machine)
+        machine = Turing_Machine.Backsymbol_Macro_Machine(
+          machine, max_sim_steps_per_symbol=options.max_steps_per_macro)
 
       if options.ctl:
         if options.max_loops:
