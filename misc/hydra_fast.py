@@ -1,4 +1,5 @@
 # Python script to demonstrate almost linear time hydra simulation
+# This is addapted from an example shared by Greg Kuperberg.
 
 import argparse
 from functools import lru_cache
