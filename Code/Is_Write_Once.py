@@ -6,6 +6,7 @@ import argparse
 from pathlib import Path
 import sys
 
+from Macro.Turing_Machine import RUNNING
 from Macro.Turing_Machine import Simple_Machine as TM
 import IO
 
@@ -15,7 +16,7 @@ def is_write_once(tm: TM):
     for symbol_in in tm.symbols:
       if symbol_in != tm.init_symbol:
         trans = tm.get_trans_object(symbol_in, state_in)
-        if trans.symbol_out != symbol_in:
+        if trans.condition == RUNNING and trans.symbol_out != symbol_in:
           return False
   return True
 
