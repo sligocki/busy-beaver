@@ -22,6 +22,9 @@ def guess_module(filename : Path | str):
   filename = Path(filename)
   if ".pb" in filename.suffixes:
     return IO.Proto
+  
+  if ".csv" in filename.suffixes:
+    return IO.CSV
 
   elif ".morphett" in filename.suffixes:
     return IO.Morphett
