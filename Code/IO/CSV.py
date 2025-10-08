@@ -58,9 +58,19 @@ class Reader:
   def read_record(self) -> TM_Record:
     try:
       row = next(self.reader)
-      tm = parse_tm(row["machine"])
+      tm_str = row["machine_with_halt_transition"]
+      if not tm_str:
+        tm_str = row["machine"]
+      tm = parse_tm(tm_str)
       tm_enum = TM_Enum.TM_Enum(tm, allow_no_halt = False)
       tm_record = TM_Record.TM_Record(tm_enum = tm_enum)
+      match row["status"]:
+        case "halt":
+          Halting_Lib.set_halting(tm_record.proto.status,
+                                  int(row["steps"]), int(row["sigma"]),
+                                  None, None)
+        case "nonhalt":
+          Halting_Lib.set_not_halting(tm_record.proto.status)
       return tm_record
     except StopIteration:
       return None

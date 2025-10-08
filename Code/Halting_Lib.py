@@ -138,9 +138,9 @@ def is_infinite(halt_status : io_pb2.HaltStatus) -> bool:
 
 def set_halting(tm_status  : io_pb2.BBStatus,
                 halt_steps : int,
-                halt_score : int,
-                from_state  : Optional[int],
-                from_symbol : Optional[int]):
+                halt_score : Optional[int],
+                from_state  : Optional[int] = None,
+                from_symbol : Optional[int] = None):
   """Specify that we know that this machine halts."""
   tm_status.halt_status.is_decided = True
   tm_status.halt_status.is_halting = True
@@ -157,7 +157,7 @@ def set_halting(tm_status  : io_pb2.BBStatus,
   set_not_quasihalting(tm_status)
 
 def set_not_halting(tm_status  : io_pb2.BBStatus,
-                    inf_reason : io_pb2.InfReason):
+                    inf_reason : io_pb2.InfReason = io_pb2.INF_UNSPECIFIED):
   """Specify that we know that this machine does not halt."""
   tm_status.halt_status.is_decided = True
   tm_status.halt_status.is_halting = False
