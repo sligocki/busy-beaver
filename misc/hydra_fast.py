@@ -1,4 +1,4 @@
-# Python script to demonstrate almost linear time hydra simulation
+# Fast simulation of iterated hydra map. Almost linear runtime.
 # This is addapted from an example shared by Greg Kuperberg.
 
 import argparse
@@ -11,7 +11,7 @@ from gmpy2 import mpz, bit_mask, log2, floor
 import psutil
 
 
-# Straight computation of 2**e steps of hydra
+# Direct computation of t steps of hydra
 def direct(n,t):
   for _ in range(t): n += n>>1
   return n
