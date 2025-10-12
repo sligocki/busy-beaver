@@ -60,7 +60,8 @@ def main():
   parser.add_argument("--outfile", type=Path, required=True)
 
   parser.add_argument("--block-size", type=int)
-  parser.add_argument("--min-block-size", type=int, default=1)
+  parser.add_argument("--min-block-size", type=int, default=1,
+                      help="[Default: 1]")
   parser.add_argument("--max-block-size", type=int,
                       help="If set, try all block sizes between "
                       "--min-block-size and --max-block-size (inclusive).")
@@ -74,10 +75,14 @@ def main():
   # The vast majority of TMs are decided within 1/10 of these parameters.
   # A few TMs are not decided (even with inf maxes) but take a looong time to
   # fail (30min+). So we restrict these to keep max time down.
-  parser.add_argument("--max-steps", type=int, default=1_000_000)
-  parser.add_argument("--max-iters", type=int, default=500)
-  parser.add_argument("--max-configs", type=int, default=10_000)
-  parser.add_argument("--max-edges", type=int, default=10_000)
+  parser.add_argument("--max-steps", type=int, default=1_000_000,
+                      help="[Default: 1_000_000]")
+  parser.add_argument("--max-iters", type=int, default=500,
+                      help="[Default: 500]")
+  parser.add_argument("--max-configs", type=int, default=10_000,
+                      help="[Default: 10_000]")
+  parser.add_argument("--max-edges", type=int, default=10_000,
+                      help="[Default: 10_000]")
   args = parser.parse_args()
 
   if args.block_size:

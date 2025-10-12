@@ -11,7 +11,8 @@ import IO
 def main():
   parser = argparse.ArgumentParser()
   parser.add_argument("tm_file", type=Path, nargs="+")
-  parser.add_argument("--print-freq", type=int, default=1_000_000)
+  parser.add_argument("--print-freq", type=int, default=1_000_000,
+                      help="[Default: 1_000_000]")
   parser.add_argument("--summary", "-s", action="store_true",
                       help="Only show total across all input files. Not individual files sizes.")
   args = parser.parse_args()
