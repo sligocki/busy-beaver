@@ -28,6 +28,7 @@ class TM_Enum:
     # Are we enumerating only reversible TMs?
     # https://wiki.bbchallenge.org/wiki/Reversible_Turing_Machine
     self.only_reversible = only_reversible
+    self.write_once = False
     if max_transitions:
       self.max_transitions = max_transitions
     elif allow_no_halt:
@@ -86,16 +87,21 @@ class TM_Enum:
     num_symbols = min(self.tm.num_symbols, max_symbol + 2)
 
     def is_valid_trans(symbol_out, dir_out, state_out) -> bool:
-      if not self.only_reversible:
-        return True
-      if state_out not in state_dirs:
-        # New state can do anything
-        return True
-      if dir_out != state_dirs[state_out]:
-        # dir must be consistent for all transitions going to same state.
-        return False
-      # symbol must be different for all transitions going to same state.
-      return (symbol_out not in state_symbols[state_out])
+      if self.write_once:
+        # Write-once TMs are TMs that never modify a non-blank symbol (they only
+        # ever modify each cell at most once).
+        if symbol_in not in {0, symbol_out}:
+          return False
+      if self.only_reversible:
+        if state_out not in state_dirs:
+          # New state can do anything
+          return True
+        if dir_out != state_dirs[state_out]:
+          # dir must be consistent for all transitions going to same state.
+          return False
+        # symbol must be different for all transitions going to same state.
+        return (symbol_out not in state_symbols[state_out])
+      return True
 
     # Enumerate
     # If this is the last undefined transition (and not allow_no_halt) then
