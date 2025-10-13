@@ -447,7 +447,7 @@ class Past_Config(object):
   def __repr__(self):
     return repr(self.__dict__)
 
-  def log_config(self, step_num, loop_num):
+  def log_config(self, loop_num):
     """Decide whether we should try to prove a rule.
 
     Currently, we try to prove a rule we've seen happen twice (not necessarily
@@ -575,7 +575,7 @@ class Proof_System(object):
       if found_rule:
         print()
 
-  def log_and_apply(self, tape, state, step_num, loop_num):
+  def log_and_apply(self, tape, state, loop_num):
     """
     Log this configuration into the memory and check if it is similar to a
     past one. Apply rule if possible.
@@ -584,7 +584,7 @@ class Proof_System(object):
     # Note: we ignore the number of repetitions of these sequences so that we
     #   can get a very general view of the tape.
     stripped_config = strip_config(state, tape.dir, tape.tape)
-    full_config = (state, tape, step_num, loop_num)
+    full_config = (state, tape, loop_num)
 
     # Try to apply an already proven rule.
     result = self.try_apply_a_rule(stripped_config, full_config)
@@ -598,7 +598,7 @@ class Proof_System(object):
     # Otherwise log it into past_configs and see if we should try and prove
     # a new rule.
     past_config = self.past_configs[stripped_config]
-    if past_config.log_config(step_num, loop_num):
+    if past_config.log_config(loop_num):
       # We see enough of a pattern to try and prove a rule.
       rule = self.prove_rule(stripped_config, full_config,
                              loop_num - past_config.last_loop_num)
@@ -715,7 +715,7 @@ class Proof_System(object):
     Returns rule if successful or None.
     """
     # Unpack configurations
-    new_state, new_tape, new_step_num, new_loop_num = full_config
+    new_state, new_tape, new_loop_num = full_config
 
     if self.verbose:
       print()
@@ -1020,7 +1020,7 @@ class Proof_System(object):
   def apply_rule(self, rule, start_config):
     """Try to apply a rule to a given configuration."""
     if self.verbose:
-      start_state, start_tape, start_step_num, start_loop_num = start_config
+      start_state, start_tape, start_loop_num = start_config
       print()
       self.print_this("++ Applying Rule ++")
       self.print_this("Loop:", start_loop_num, "Rule ID:", rule.name)
@@ -1038,7 +1038,7 @@ class Proof_System(object):
     elif isinstance(rule, General_Rule):
       return self.apply_general_rule(rule, start_config)
     elif isinstance(rule, Limited_Diff_Rule):
-      start_state, start_tape, start_step_num, start_loop_num = start_config
+      start_state, start_tape, start_loop_num = start_config
 
       limited_start_tape = start_tape.copy()
 
@@ -1048,7 +1048,7 @@ class Proof_System(object):
       limited_start_tape.tape[0] = limited_start_tape.tape[0][-rule.left_dist:]
       limited_start_tape.tape[1] = limited_start_tape.tape[1][-rule.right_dist:]
 
-      limited_start_config = (start_state, limited_start_tape, start_step_num, start_loop_num)
+      limited_start_config = (start_state, limited_start_tape, start_loop_num)
 
       success, other = self.apply_diff_rule(rule, limited_start_config)
 
@@ -1071,7 +1071,7 @@ class Proof_System(object):
 
   def apply_diff_rule(self, rule, start_config):
     ## Unpack input
-    new_state, new_tape, new_step_num, new_loop_num = start_config
+    new_state, new_tape, new_loop_num = start_config
     new_tape = new_tape.copy()  # Make a clean copy that we can edit here.
 
     ## Calculate number of repetitions allowable and other tape-based info.
@@ -1245,7 +1245,7 @@ class Proof_System(object):
       return self.apply_general_rule(rule.gen_rule, start_config)
 
     # Unpack input
-    start_state, start_tape, start_step_num, start_loop_num = start_config
+    start_state, start_tape, start_loop_num = start_config
     current_list = [block.num for block in start_tape.tape[0] + start_tape.tape[1]]
     assert len(current_list) == len(rule.var_list)
 
@@ -1314,7 +1314,7 @@ class Proof_System(object):
 
   def apply_exponential_rule(self, rule, start_config):
     # Unpack input
-    start_state, start_tape, start_step_num, start_loop_num = start_config
+    start_state, start_tape, start_loop_num = start_config
     current_list = [block.num for block in start_tape.tape[0] + start_tape.tape[1]]
     assert len(current_list) == len(rule.var_list)
 
@@ -1346,7 +1346,7 @@ class Proof_System(object):
       raise Exception("Not simulating General_Rule")
 
     # Unpack input
-    start_state, start_tape, start_step_num, start_loop_num = start_config
+    start_state, start_tape, start_loop_num = start_config
 
     large_delta = True  # Not edited in this function.
     # Current list of all block exponents. We will update it in place repeatedly
