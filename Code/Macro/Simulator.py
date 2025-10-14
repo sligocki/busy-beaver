@@ -139,7 +139,7 @@ class Simulator(object):
     if self.prover:
       # Log the configuration in the prover and apply rule if possible.
       prover_result = self.prover.log_and_apply(
-        self.tape, self.state, self.step_num, self.num_loops-1)
+        self.tape, self.state, self.num_loops-1)
 
       # Proof system says that machine will repeat forever
       if prover_result.condition == Proof_System.INF_REPEAT:

@@ -108,7 +108,7 @@ class ProofSystemTest(unittest.TestCase):
     ]
 
     state_A = Turing_Machine.Simple_Machine_State(0)
-    full_config = (state_A, tape, None, None)
+    full_config = (state_A, tape, None)
     stripped_config = Proof_System.strip_config(
       state_A, Turing_Machine.RIGHT, tape.tape)
 
@@ -131,7 +131,7 @@ class ProofSystemTest(unittest.TestCase):
       Tape.Repeated_Symbol(0,math.inf),
       Tape.Repeated_Symbol(2, 10),
     ]
-    bad_full_config = (state_A, bad_tape, None, None)
+    bad_full_config = (state_A, bad_tape, None)
     bad_stripped_config = Proof_System.strip_config(
       state_A, Turing_Machine.RIGHT, bad_tape.tape)
 
@@ -147,8 +147,7 @@ class ProofSystemTest(unittest.TestCase):
 
     # To call "apply_rule", a "rule" and a "start_config" are needed.
 
-    # Build the "start_config".  It is a tuple contains a "state", "tape",
-    # "step_num", and "loop_num".
+    # Build the "start_config". It is a tuple containing a "state", "tape", and "loop_num".
     current_state = Turing_Machine.Simple_Machine_State(0)
 
     current_tape = Tape.Chain_Tape()
@@ -164,10 +163,9 @@ class ProofSystemTest(unittest.TestCase):
                             Tape.Repeated_Symbol(0,15),
                            ]
 
-    step_num = 10
-    loop_num =  3
+    loop_num = 3
 
-    current_config = (current_state, current_tape, step_num, loop_num)
+    current_config = (current_state, current_tape, loop_num)
 
     # Build the "Limited_Diff_Rule" which is constructed with an
     # "initial_tape", "left_dist", "right_dist", "diff_tape", "initial_state",
@@ -254,7 +252,7 @@ class ProofSystemTest(unittest.TestCase):
                    ]
 
     state_A = Turing_Machine.Simple_Machine_State(0)
-    full_config = (state_A, tape, None, None)
+    full_config = (state_A, tape, None)
     stripped_config = Proof_System.strip_config(
       state_A, Turing_Machine.RIGHT, tape.tape)
     base_rule = prover.prove_rule(stripped_config, full_config, delta_loop = 5)
@@ -291,7 +289,7 @@ class ProofSystemTest(unittest.TestCase):
                    ]
 
     state_A = Turing_Machine.Simple_Machine_State(0)
-    full_config = (state_A, tape, None, None)
+    full_config = (state_A, tape, None)
     stripped_config = Proof_System.strip_config(
       state_A, Turing_Machine.RIGHT, tape.tape)
     meta_rule = prover.prove_rule(stripped_config, full_config, delta_loop = 36)
@@ -313,7 +311,7 @@ class ProofSystemTest(unittest.TestCase):
                     Tape.Repeated_Symbol(0, 20),
                    ]
 
-    full_config = (state_A, tape, None, None)
+    full_config = (state_A, tape, None)
 
     success, rest = prover.apply_rule(meta_rule, full_config)
     self.assertTrue(success)
@@ -362,7 +360,7 @@ class ProofSystemTest(unittest.TestCase):
                    ]
 
     state_E = Turing_Machine.Simple_Machine_State(4)
-    full_config = (state_E, tape, None, None)
+    full_config = (state_E, tape, None)
     stripped_config = Proof_System.strip_config(
       state_E, Turing_Machine.LEFT, tape.tape)
     rule_d1 = prover.prove_rule(stripped_config, full_config, delta_loop = 10)
@@ -392,7 +390,7 @@ class ProofSystemTest(unittest.TestCase):
                     Tape.Repeated_Symbol(Block_Symbol((1, 1)), 20),
                    ]
 
-    full_config = (state_E, tape, None, None)
+    full_config = (state_E, tape, None)
     stripped_config = Proof_System.strip_config(
       state_E, Turing_Machine.LEFT, tape.tape)
     rule_d2 = prover.prove_rule(stripped_config, full_config, delta_loop = 10)
@@ -423,7 +421,7 @@ class ProofSystemTest(unittest.TestCase):
                     Tape.Repeated_Symbol(Block_Symbol((1, 1)), 20),
                    ]
 
-    full_config = (state_E, tape, None, None)
+    full_config = (state_E, tape, None)
     stripped_config = Proof_System.strip_config(
       state_E, Turing_Machine.LEFT, tape.tape)
     rule_linear = prover.prove_rule(stripped_config, full_config, delta_loop = 28)
@@ -455,7 +453,7 @@ class ProofSystemTest(unittest.TestCase):
                     Tape.Repeated_Symbol(Block_Symbol((1, 1)), 10),
                    ]
 
-    full_config = (state_E, tape, None, None)
+    full_config = (state_E, tape, None)
     stripped_config = Proof_System.strip_config(
       state_E, Turing_Machine.LEFT, tape.tape)
     rule_meta = prover.prove_rule(stripped_config, full_config, delta_loop = 68)
