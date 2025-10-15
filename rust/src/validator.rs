@@ -2859,7 +2859,10 @@ mod tests {
                     init_config: Config::from_str("0^inf 1^a B> 011^n").unwrap(),
                     final_config: Config::from_str("0^inf 1^a+x B> 010^n")
                         .unwrap()
-                        .subst(&VarSubst::from(&[("x".parse().unwrap(), rep2n2("n".parse().unwrap()))]))
+                        .subst(&VarSubst::from(&[(
+                            "x".parse().unwrap(),
+                            rep2n2("n".parse().unwrap()),
+                        )]))
                         .unwrap(),
                     proof: Proof::Inductive {
                         proof_base: vec![],
@@ -3418,7 +3421,8 @@ mod tests {
             rules: vec![
                 chain_rule("A> 1^2n", "12^n A>", 2), // 0
                 chain_rule("12^n <A", "<A 1^2n", 2), // 1
-                // 2
+                chain_rule("B> 1^n", "1^n B>", 1),   // 2
+                // 3: 12^n <C 1^2a+1 0^inf -> <C 1^2a+1+4n 0^inf
                 Rule {
                     init_config: Config::from_str("12^n <C 1^2a+1 0^inf").unwrap(),
                     final_config: Config::from_str("<C 1^2a+1+4n 0^inf").unwrap(),
@@ -3440,10 +3444,32 @@ mod tests {
                         ],
                     },
                 },
-                // 3
+                // 4: 12 2  <C 11^a 1 00 -> 2 12^a+2 <C 1
                 Rule {
-                    init_config: Config::from_str("12^n <D 1^2a+2 0^inf").unwrap(),
-                    final_config: Config::from_str("<D 1^2x+2 0^inf")
+                    init_config: Config::from_str("12 2 <C 1^2a+1 0^inf").unwrap(),
+                    final_config: Config::from_str("2 12^a+2 <C 1 0^inf").unwrap(),
+                    proof: Proof::Simple(vec![
+                        // 12 2 <C 1^2a+1 0^inf
+                        base_step(3),
+                        // 12 2 A> 1^2a+1 0^inf
+                        chain_step(0, "a"),
+                        // 12 2 12^a A> 1 0^inf
+                        base_step(7),
+                        // 12 2 12^a <A 1^2 2 0^inf
+                        chain_step(1, "a"),
+                        // 12 2 <A 1^2a+2 2 0^inf
+                        base_step(3),
+                        // 2 A> 1^2a+4 2 0^inf
+                        chain_step(0, "a+2"),
+                        // 2 12^a+2 A> 2 0^inf
+                        base_step(1),
+                        // 2 12^a+2 <C 1 0^inf
+                    ]),
+                },
+                // 5: 12^n 2 <C 1^2a+1 0^inf -> 2 <C 1^2x+1 0^inf       x = f1^n(a)
+                Rule {
+                    init_config: Config::from_str("12^n 2 <C 1^2a+1 0^inf").unwrap(),
+                    final_config: Config::from_str("2 <C 1^2x+1 0^inf")
                         .unwrap()
                         .subst(&VarSubst::from(&[(
                             "x".parse().unwrap(),
@@ -3453,33 +3479,49 @@ mod tests {
                     proof: Proof::Inductive {
                         proof_base: vec![],
                         proof_inductive: vec![
-                            // 12 <D 1^2a+2 0^inf
-                            base_step(2),
-                            // 12 2 A> 1^2a+1 0^inf
-                            chain_step(0, "a"),
-                            // 12 2 12^a A> 1 0^inf
-                            base_step(7),
-                            // 12 2 12^a <A 1^2 2 0^inf
-                            chain_step(1, "a"),
-                            // 12 2 <A 1^2a+2 2 0^inf
-                            base_step(3),
-                            // 2 A> 1^2a+4 2 0^inf
-                            chain_step(0, "a+2"),
-                            // 2 12^a+2 A> 2 0^inf
-                            base_step(1),
+                            // 12 2 <C 1^2a+1 0^inf
+                            rule_step(4, &[("a", "a")]),
                             // 2 12^a+2 <C 1 0^inf
-                            rule_step(2, &[("n", "a+2"), ("a", "0")]),
+                            rule_step(3, &[("n", "a+2"), ("a", "0")]),
                             // 2 <C 1^4a+9 0^inf
-                            base_step(1),
-                            // <D 1^4a+10 0^inf
                             induction_step(&[("a", "2a+4")]),
                         ],
                     },
                 },
-                // 4
+                // 6: 12 22 <C 1^2a+1 0^inf -> 2 12^a+2 2 <C 1^5
                 Rule {
-                    init_config: Config::from_str("12^n 2 <D 1^2a+2 0^inf").unwrap(),
-                    final_config: Config::from_str("2 <D 1^2x+2 0^inf")
+                    init_config: Config::from_str("12 22 <C 1^2a+1 0^inf").unwrap(),
+                    final_config: Config::from_str("2 12^a+2 2 <C 1^5 0^inf").unwrap(),
+                    proof: Proof::Simple(vec![
+                        // 1222 <C 1^2a+1 0^inf
+                        base_step(3),
+                        // 1222 A> 1^2a+1 0^inf
+                        chain_step(0, "a"),
+                        // 1222 12^a A> 1 0^inf
+                        base_step(7),
+                        // 1222 12^a <A 1^2 2 0^inf
+                        chain_step(1, "a"),
+                        // 1222 <A 1^2a+2 2 0^inf
+                        base_step(4),
+                        // 122 A> 1^2a+3 2 0^inf
+                        chain_step(0, "a+1"),
+                        // 122 12^a+1 A> 12 0^inf
+                        base_step(7),
+                        // 122 12^a+1 <A 1^2 22 0^inf
+                        chain_step(1, "a+1"),
+                        // 122 <A 1^2a+4 22 0^inf
+                        base_step(3),
+                        // 2 A> 1^2a+6 22 0^inf
+                        chain_step(0, "a+3"),
+                        // 2 12^a+3 A> 22 0^inf
+                        base_step(18),
+                        // 2 12^a+2 2 <C 1^5 0^inf
+                    ]),
+                },
+                // 7: 12^n 22 <C 1^2a+1 0^inf -> 22 <C 1^2x+1 0^inf     x - f2^n(a)
+                Rule {
+                    init_config: Config::from_str("12^n 22 <C 1^2a+1 0^inf").unwrap(),
+                    final_config: Config::from_str("22 <C 1^2x+1 0^inf")
                         .unwrap()
                         .subst(&VarSubst::from(&[(
                             "x".parse().unwrap(),
@@ -3489,31 +3531,11 @@ mod tests {
                     proof: Proof::Inductive {
                         proof_base: vec![],
                         proof_inductive: vec![
-                            // 122 <D 1^2a+2 0^inf
-                            base_step(2),
-                            // 1222 A> 1^2a+1 0^inf
-                            chain_step(0, "a"),
-                            // 1222 12^a A> 1 0^inf
-                            base_step(7),
-                            // 1222 12^a <A 1^2 2 0^inf
-                            chain_step(1, "a"),
-                            // 1222 <A 1^2a+2 2 0^inf
-                            base_step(4),
-                            // 122 A> 1^2a+3 2 0^inf
-                            chain_step(0, "a+1"),
-                            // 122 12^a+1 A> 12 0^inf
-                            base_step(7),
-                            // 122 12^a+1 <A 1^2 22 0^inf
-                            chain_step(1, "a+1"),
-                            // 122 <A 1^2a+4 22 0^inf
-                            base_step(3),
-                            // 2 A> 1^2a+6 22 0^inf
-                            chain_step(0, "a+3"),
-                            // 2 12^a+3 A> 22 0^inf
-                            base_step(19),
-                            // 2 12^a+2 <D 1^6 0^inf
-                            rule_step(3, &[("n", "a+2"), ("a", "2")]),
-                            // 2 <D 1^2x+2 0^inf   for x = f1(a+2, 2)
+                            // 1222 <C 1^2a+1 0^inf
+                            rule_step(6, &[("a", "a")]),
+                            // 2 12^a+2 2 <C 1^5 0^inf
+                            rule_step(5, &[("n", "a+2"), ("a", "2")]),
+                            // 22 <C 1^2x+1 0^inf   for x = f1(a+2, 2)
                             induction_step_expr(&[(
                                 "a".parse().unwrap(),
                                 f1("a+2".parse().unwrap(), 2.into()),
@@ -3521,29 +3543,13 @@ mod tests {
                         ],
                     },
                 },
-                // 5: 1 <D 1^2a 0^inf -> 2 <A 1^2a+2 0^inf
+                // 8: 11 <C 1^2a+1 0^inf -> 1 <C 1^2a+3 2 0^inf
                 Rule {
-                    init_config: Config::from_str("1 <D 1^2a 0^inf").unwrap(),
-                    final_config: Config::from_str("2 <A 1^2a+2 0^inf").unwrap(),
+                    init_config: Config::from_str("11 <C 1^2a+1 0^inf").unwrap(),
+                    final_config: Config::from_str("1 <C 1^2a+3 2 0^inf").unwrap(),
                     proof: Proof::Simple(vec![
-                        // 1 <D 1^2a 0^inf
-                        base_step(1),
-                        // 2 A> 1^2a 0^inf
-                        chain_step(0, "a"),
-                        // 2^2a A> 0^inf
-                        base_step(5),
-                        // 2^2a+1 <A 1^2 0^inf
-                        chain_step(1, "a"),
-                        // 2 <A 1^2a+2 0^inf
-                    ]),
-                },
-                // 6: 112 <A 1^2a 0^inf -> 12 <A 1^2a+2 2 0^inf
-                Rule {
-                    init_config: Config::from_str("112 <A 1^2a 0^inf").unwrap(),
-                    final_config: Config::from_str("12 <A 1^2a+2 2 0^inf").unwrap(),
-                    proof: Proof::Simple(vec![
-                        // 112 <A 1^2a 0^inf
-                        base_step(4),
+                        // 11 <C 1^2a+1 0^inf
+                        base_step(3),
                         // 12 A> 1^2a+1 0^inf
                         chain_step(0, "a"),
                         // 12^a A> 1 0^inf
@@ -3551,15 +3557,15 @@ mod tests {
                         // 12^a+1 <A 1^2 2 0^inf
                         chain_step(1, "a"),
                         // 12 <A 1^2a+6 2 0^inf
+                        base_step(1),
                     ]),
                 },
-                // 7: 112 <A 1^2a 2 0^inf -> 12 <A 1^2a+2 22 0^inf
+                // 9: 11 <C 1^2a+1 2 0^inf -> 1 <C 1^2a+3 22 0^inf
                 Rule {
-                    init_config: Config::from_str("112 <A 1^2a 2 0^inf").unwrap(),
-                    final_config: Config::from_str("12 <A 1^2a+2 22 0^inf").unwrap(),
+                    init_config: Config::from_str("11 <C 1^2a+1 2 0^inf").unwrap(),
+                    final_config: Config::from_str("1 <C 1^2a+3 22 0^inf").unwrap(),
                     proof: Proof::Simple(vec![
-                        // 112 <A 1^2a 2 0^inf
-                        base_step(4),
+                        base_step(3),
                         // 12 A> 1^2a+1 2 0^inf
                         chain_step(0, "a"),
                         // 12^a A> 12 0^inf
@@ -3567,36 +3573,46 @@ mod tests {
                         // 12^a+1 <A 11 22 0^inf
                         chain_step(1, "a"),
                         // 12 <A 1^2a+2 22 0^inf
+                        base_step(1),
                     ]),
                 },
                 // Basic rule needed to preserve block structure.
-                simple_rule("112 <A", "12 A> 1", 4),  // 8
-                // 9: 112 <A 1^2a 22 0^inf -> 2 <D 1^2x+2 0^inf
+                simple_rule("11 <C", "12 A>", 3), // 10
+                // 11: 11 <C 1^2a+1 22 0^inf -> 12^a+1 22 <C 1^5 0^inf
                 Rule {
-                    init_config: Config::from_str("112 <A 1^2a 22 0^inf").unwrap(),
-                    final_config: Config::from_str("2 <D 1^2x+2 0^inf")
-                        .unwrap()
-                        .subst(&VarSubst::from(&[(
-                            "x".parse().unwrap(),
-                            f2("a+1".parse().unwrap(), 2.into())
-                        )]))
-                        .unwrap(),
+                    init_config: Config::from_str("11 <C 1^2a+1 22 0^inf").unwrap(),
+                    final_config: Config::from_str("12^a+1 22 <C 1^5 0^inf").unwrap(),
                     proof: Proof::Simple(vec![
-                        // 112 <A 1^2a 22 0^inf
-                        rule_step(8, &[]),
+                        // 11 <C 1^2a+1 22 0^inf
+                        rule_step(10, &[]),
                         // 12 A> 1^2a+1 22 0^inf
                         chain_step(0, "a"),
                         // 12^a+1 A> 122 0^inf
-                        base_step(30),
-                        // 12^a+1 2 <D 1^6 0^inf
-                        rule_step(4, &[("n", "a+1"), ("a", "2")]),
-                        // 2 <D 1^2x+2 0^inf  x = f2(a+1, 2)
+                        base_step(29),
+                        // 12^a+1 22 <C 1^5 0^inf
                     ]),
                 },
-                // 10: 1^6n <D 1^2a+2 0^inf -> <D 1^2x+2 0^inf      x = f3^n(a)
+                // 12: 11 <C 1^2a+1 22 0^inf -> 22 <C 1^2x+1 0^inf      x = f2^{a+1}(2)
                 Rule {
-                    init_config: Config::from_str("1^6n <D 1^2a+2 0^inf").unwrap(),
-                    final_config: Config::from_str("<D 1^2x+2 0^inf")
+                    init_config: Config::from_str("11 <C 1^2a+1 22 0^inf").unwrap(),
+                    final_config: Config::from_str("22 <C 1^2x+1 0^inf")
+                        .unwrap()
+                        .subst(&VarSubst::from(&[(
+                            "x".parse().unwrap(),
+                            f2("a+1".parse().unwrap(), 2.into()),
+                        )]))
+                        .unwrap(),
+                    proof: Proof::Simple(vec![
+                        rule_step(11, &[("a", "a")]),
+                        // 12^a+1 22 <C 1^5 0^inf
+                        rule_step(7, &[("n", "a+1"), ("a", "2")]),
+                        // 22 <C 1^2x+1 0^inf  x = f2(a+1, 2)
+                    ]),
+                },
+                // 13: 1^6n <C 1^2a+5 0^inf -> <C 1^2x+5 0^inf          x = f3^n(a)
+                Rule {
+                    init_config: Config::from_str("1^6n <C 1^2a+5 0^inf").unwrap(),
+                    final_config: Config::from_str("<C 1^2x+5 0^inf")
                         .unwrap()
                         .subst(&VarSubst::from(&[(
                             "x".parse().unwrap(),
@@ -3606,23 +3622,32 @@ mod tests {
                     proof: Proof::Inductive {
                         proof_base: vec![],
                         proof_inductive: vec![
-                            // 1^6n .. 1^6 <D 1^2a+2 0^inf
-                            rule_step(5, &[("a", "a+1")]),
-                            // 1^6n .. 1^5 2 <A 1^2a+4 0^inf
-                            rule_step(6, &[("a", "a+2")]),
-                            // 1^6n .. 1^4 2 <A 1^2a+6 2 0^inf
-                            rule_step(7, &[("a", "a+3")]),
-                            // 1^6n .. 1^3 2 <A 1^2a+8 22 0^inf
-                            rule_step(9, &[("a", "a+4")]),
-                            // 1^6n .. 12 <D 1^2x+2 0^inf  x = f2(a+5, 2)
+                            // 1^6n .. 1^6 <C 1^2a+5 0^inf
+                            rule_step(8, &[("a", "a+2")]),
+                            // 1^6n .. 1^5 <C 1^2a+7 2 0^inf
+                            rule_step(9, &[("a", "a+3")]),
+                            // 1^6n .. 1^4 <C 1^2a+9 22 0^inf
+                            rule_step(12, &[("a", "a+4")]),
+                            // 1^6n .. 11 22 <C 1^2x+1 0^inf  x = f2(a+5, 2)
                             ProofStep::RuleStep {
-                                rule_id: 3,
+                                rule_id: 5,
                                 var_assignment: VarSubst::from(&[
                                     ("n".parse().unwrap(), 1.into()),
                                     ("a".parse().unwrap(), f2("a+5".parse().unwrap(), 2.into())),
                                 ]),
                             },
-                            // <D 1^2y+2 0^inf  y = f1(1, x) = 2x+4
+                            // 1^6n .. 12 <C 1^4x+9 0^inf
+                            ProofStep::RuleStep {
+                                rule_id: 3,
+                                var_assignment: VarSubst::from(&[
+                                    ("n".parse().unwrap(), 1.into()),
+                                    (
+                                        "a".parse().unwrap(),
+                                        f1(1.into(), f2("a+5".parse().unwrap(), 2.into())),
+                                    ),
+                                ]),
+                            },
+                            // 1^6n .. <C 1^4x+13 0^inf
                             induction_step_expr(&[(
                                 "a".parse().unwrap(),
                                 f1(1.into(), f2("a+5".parse().unwrap(), 2.into())),
@@ -3630,83 +3655,179 @@ mod tests {
                         ],
                     },
                 },
-                chain_rule("B> 1^n", "1^n B>", 1), // 11
-                // 12
+                // 14: 0^inf 1 <C 1^2a+1 0^inf -> 0^inf 1^2a+3 <C 1 0^inf
                 Rule {
-                    init_config: Config::from_str("0^inf 11 <D 1^2a+2 0^inf").unwrap(),
-                    final_config: Config::from_str("0^inf 1^2a+2 <D 1^2x+2 0^inf")
+                    init_config: Config::from_str("0^inf 1 <C 1^2a+1 0^inf").unwrap(),
+                    final_config: Config::from_str("0^inf 1^2a+3 <C 1 0^inf")
                         .unwrap()
                         .subst(&VarSubst::from(&[(
                             "x".parse().unwrap(),
-                            f1(1.into(), f2(3.into(), 2.into())),
+                            f1(1.into(), f2("a+3".parse().unwrap(), 2.into())),
                         )]))
                         .unwrap(),
                     proof: Proof::Simple(vec![
-                        // 0^inf 11 <D 1^2a+2 0^inf
-                        rule_step(5, &[("a", "a+1")]),
-                        // 0^inf 12 <A 1^2a+4 0^inf
+                        base_step(2),
+                        // 0^inf 1 B> 1^2a+2 0^inf
+                        chain_step(2, "2a+2"),
+                        // 0^inf 1^2a+3 B> 0^inf
                         base_step(3),
-                        // 0^inf 1 B> 1^2a+6 0^inf
-                        chain_step(11, "2a+6"),
-                        // 0^inf 1 1^2a+6 B> 0^inf
-                        base_step(66),
-                        // 0^inf 1^2a+3 12^3 2 <D 1^6 0^inf
-                        rule_step(4, &[("n", "3"), ("a", "2")]),
-                        // 0^inf 1^2a+3 2 <D 1^2x+2 0^inf  x = f2(3, 2)
-                        ProofStep::RuleStep {
-                            rule_id: 3,
-                            var_assignment: VarSubst::from(&[
-                                ("n".parse().unwrap(), 1.into()),
-                                ("a".parse().unwrap(), f2(3.into(), 2.into())),
-                            ]),
-                        },
-                        // 0^inf 1^2a+2 <D 1^2y+2 0^inf  y = f1(1, x) = 2x+4
                     ]),
                 },
-                // 13
+                // 15: 0^inf 11 <C 1^2a+1 0^inf -> 0^inf 1^2a+5 <C 1 0^inf
                 Rule {
-                    init_config: Config::from_str("0^inf 111 <D 1^2a+2 0^inf").unwrap(),
-                    final_config: Config::from_str("0^inf 1^2a+4 <D 1^2x+2 0^inf")
+                    init_config: Config::from_str("0^inf 1^2 <C 1^2a+1 0^inf").unwrap(),
+                    final_config: Config::from_str("0^inf 1^2a+5 <C 1 0^inf").unwrap(),
+                    proof: Proof::Simple(vec![
+                        rule_step(8, &[("a", "a")]),
+                        // 0^inf 1 <C 1^2a+3 2 0^inf
+                        base_step(2),
+                        // 0^inf 1 B> 1^2a+4 2 0^inf
+                        chain_step(2, "2a+4"),
+                        // 0^inf 1^2a+5 B> 2 0^inf
+                        base_step(1),
+                    ]),
+                },
+                // 16: 0^inf 1^3 <C 11^a 1 0^inf -> 0^inf 1^2a+2 <C 1^2x+5 0^inf        x = f1(f2^2(2))
+                Rule {
+                    init_config: Config::from_str("0^inf 1^3 <C 1^2a+1 0^inf").unwrap(),
+                    final_config: Config::from_str("0^inf 1^2a+2 <C 1^2x+5 0^inf")
                         .unwrap()
                         .subst(&VarSubst::from(&[(
                             "x".parse().unwrap(),
-                            f1(1.into(), f2(3.into(), 2.into())),
+                            f1(1.into(), f2(2.into(), 2.into())),
                         )]))
                         .unwrap(),
                     proof: Proof::Simple(vec![
-                        // 0^inf 111 <D 1^2a+2 0^inf
+                        rule_step(8, &[("a", "a")]),
+                        // 0^inf 11 <C 1^2a+3 2 0^inf
+                        rule_step(9, &[("a", "a+1")]),
+                        // 0^inf 1 <C 1^2a+5 22 0^inf
+                        base_step(2),
+                        // 0^inf 1 B> 1^2a+6 22 0^inf
+                        chain_step(2, "2a+6"),
+                        // 0^inf 1^2a+7 B> 22 0^inf
                         base_step(1),
-                        // 0^inf 1 12 A> 1^2a+2 0^inf
-                        chain_step(0, "a+1"),
-                        // 0^inf 1 12^a+2 A> 0^inf
-                        base_step(5),
-                        // 0^inf 1 12^a+2 <A 1^2 0^inf
-                        chain_step(1, "a+1"),
-                        // 0^inf 112 <A 1^2a+4 0^inf
-                        base_step(4),
-                        // 0^inf 12 A> 1^2a+5 0^inf
-                        chain_step(0, "a+2"),
-                        // 0^inf 12^a+3 A> 1 0^inf
-                        base_step(7),
-                        // 0^inf 12^a+3 <A 1^2 2 0^inf
-                        chain_step(1, "a+2"),
-                        // 0^inf 12 <A 1^2a+6 2 0^inf
-                        base_step(3),
-                        // 0^inf 1 B> 1^2a+8 2 0^inf
-                        chain_step(11, "2a+8"),
-                        // 0^inf 1 1^2a+8 B> 2 0^inf
-                        base_step(64),
-                        // 0^inf 1^2a+5 12^3 2 <D 1^6 0^inf
-                        rule_step(4, &[("n", "3"), ("a", "2")]),
-                        // 0^inf 1^2a+5 2 <D 1^2x+2 0^inf  x = f2(3, 2)
+                        // 0^inf 1^2a+7 <C 1 2 0^inf
+                        rule_step(9, &[("a", "0")]),
+                        // 0^inf 1^2a+6 <C 1^3 22 0^inf
+                        rule_step(12, &[("a", "1")]),
+                        // 0^inf 1^2a+4 22 <C 1^2x+1 0^inf      x = f2(2, 2)
+                        ProofStep::RuleStep {
+                            rule_id: 5,
+                            var_assignment: VarSubst::from(&[
+                                ("n".parse().unwrap(), 1.into()),
+                                ("a".parse().unwrap(), f2(2.into(), 2.into())),
+                            ]),
+                        },
+                        // 0^inf 1^2a+3 2 <C 1^2y+1 0^inf       y = f1(x) = 2x+4
                         ProofStep::RuleStep {
                             rule_id: 3,
                             var_assignment: VarSubst::from(&[
                                 ("n".parse().unwrap(), 1.into()),
-                                ("a".parse().unwrap(), f2(3.into(), 2.into())),
+                                ("a".parse().unwrap(), f1(1.into(), f2(2.into(), 2.into()))),
                             ]),
                         },
-                        // 0^inf 1^2a+4 <D 1^2y+2 0^inf  y = f1(1, x) = 2x+4
+                        // 0^inf 1^2a+2 <C 1^2y+5 0^inf
+                    ]),
+                },
+                simple_rule("22 <C", "22 A>", 3), // 17
+                // TODO: 18: 0^inf 1^4 <C 11^a 1 0^inf -> 0^inf 1^2a+4 22 <C 1^2x+1 0^inf       x = f2^2(2)
+                Rule {
+                    init_config: Config::from_str("0^inf 1^4 <C 1^2a+1 0^inf").unwrap(),
+                    final_config: Config::from_str("0^inf 1^2x+4 <C 1 0^inf")
+                        .unwrap()
+                        .subst(&VarSubst::from(&[(
+                            "x".parse().unwrap(),
+                            f2("a+3".parse().unwrap(), 2.into()),
+                        )]))
+                        .unwrap(),
+                    proof: Proof::Simple(vec![
+                        rule_step(8, &[("a", "a")]),
+                        // 0^inf 1^3 <C 1^2a+3 2 0^inf
+                        rule_step(9, &[("a", "a+1")]),
+                        // 0^inf 11 <C 1^2a+5 22 0^inf
+                        rule_step(12, &[("a", "a+2")]),
+                        // 0^inf 22 <C 1^2x+1 0^inf  x = f2(a+3, 2)
+                        rule_step(17, &[]),
+                        // 0^inf 22 A> 1^2x+1 0^inf
+                        ProofStep::Admit,
+                        // TODO: Cannot match: A> 1^(λn.2n x) with A> 1^(λn.2n+1 x)
+                        ProofStep::RuleStep {
+                            rule_id: 0,
+                            var_assignment: VarSubst::from(&[(
+                                "n".parse().unwrap(),
+                                f2("a+3".parse().unwrap(), 2.into()),
+                            )]),
+                        },
+                        // 0^inf 22 12^x A> 1 0^inf
+                        base_step(7),
+                        // 0^inf 22 12^x <A 1^2 2 0^inf
+                        ProofStep::RuleStep {
+                            rule_id: 0,
+                            var_assignment: VarSubst::from(&[(
+                                "n".parse().unwrap(),
+                                f2("a+3".parse().unwrap(), 2.into()),
+                            )]),
+                        },
+                        // 0^inf 22 <A 1^2x+2 2 0^inf
+                        base_step(3),
+                        // 0^inf B> 1^2x+4 2 0^inf
+                        ProofStep::RuleStep {
+                            rule_id: 2,
+                            var_assignment: VarSubst::from(&[(
+                                "n".parse().unwrap(),
+                                CountExpr::from_str("2x+4")
+                                    .unwrap()
+                                    .subst(&VarSubst::from(&[(
+                                        "x".parse().unwrap(),
+                                        f2("a+3".parse().unwrap(), 2.into()),
+                                    )]))
+                                    .unwrap(),
+                            )]),
+                        },
+                        // 0^inf 1^2x+4 B> 2 0^inf
+                        base_step(1),
+                        // 0^inf 1^2x+4 <C 1 0^inf
+                    ]),
+                },
+                // TODO: 19: 0^inf 1^5 <C 1^2a+1 0^inf -> ?
+                Rule {
+                    init_config: Config::from_str("0^inf 1^5 <C 1^2a+1 0^inf").unwrap(),
+                    final_config: Config::from_str("0^inf 1^4x+10 <C 1 0^inf")
+                        .unwrap()
+                        .subst(&VarSubst::from(&[(
+                            "x".parse().unwrap(),
+                            f1(1.into(), f2("a+3".parse().unwrap(), 2.into())),
+                        )]))
+                        .unwrap(),
+                    proof: Proof::Simple(vec![
+                        // 0^inf 1^5 <C 1^2a+1 0^inf
+                        rule_step(8, &[("a", "a")]),
+                        // 0^inf 1^4 <C 1^2a+3 2 0^inf
+                        rule_step(9, &[("a", "a+1")]),
+                        // 0^inf 1^3 <C 1^2a+5 22 0^inf
+                        rule_step(12, &[("a", "a+2")]),
+                        // 0^inf 1 22 <C 1^2x+1 0^inf  x = f2(a+3, 2)
+                        ProofStep::RuleStep {
+                            rule_id: 5,
+                            var_assignment: VarSubst::from(&[
+                                ("n".parse().unwrap(), 1.into()),
+                                ("a".parse().unwrap(), f2("a+3".parse().unwrap(), 2.into())),
+                            ]),
+                        },
+                        // 0^inf 2 <C 1^4x+9 0^inf
+                        ProofStep::Admit, // TODO
+                        base_step(3),
+                        // 0^inf 1 B> 1^4x+9 0^inf
+                        ProofStep::RuleStep {
+                            rule_id: 2,
+                            var_assignment: VarSubst::from(&[(
+                                "n".parse().unwrap(),
+                                f1(1.into(), f2("a+3".parse().unwrap(), 2.into())),
+                            )]),
+                        },
+                        base_step(3),
+                        // 0^inf 1^4x+10 <C 1 0^inf
                     ]),
                 },
                 // Halt Proof
@@ -3714,34 +3835,30 @@ mod tests {
                     init_config: Config::new(),
                     final_config: Config::from_str("0^inf Z> 0^inf").unwrap(),
                     proof: Proof::Simple(vec![
-                        base_step(92),
-                        // 0^inf 1^4 12^2 2 <D 1^6 0^inf
-                        rule_step(4, &[("n", "2"), ("a", "2")]),
-                        // 0^inf 1^4 2 <D 1^2x+2 0^inf  x = f2(2, 2)
+                        base_step(4),
+                        // 0^inf 1 <C 1 0^inf
+                        rule_step(14, &[("a", "0")]),
+                        // 0^inf 1^3 <C 1 0^inf
+                        rule_step(16, &[("a", "0")]),
+                        // 0^inf 11 <C 1^2a+5 0^inf     a = f1(f2^2(2))
+                        ProofStep::Admit,
+                        // TODO: Cannot match: 1^(λn.2n+1 a+2) with 1^(λn.2n+5 a)
                         ProofStep::RuleStep {
-                            rule_id: 3,
-                            var_assignment: VarSubst::from(&[
-                                ("n".parse().unwrap(), 1.into()),
-                                ("a".parse().unwrap(), f2(2.into(), 2.into())),
-                            ]),
-                        },
-                        // 0^inf 1^3 <D 1^2y+2 0^inf    y = f1(1, x) = 2x+4
-                        ProofStep::RuleStep {
-                            rule_id: 13,
+                            rule_id: 15,
                             var_assignment: VarSubst::from(&[(
                                 "a".parse().unwrap(),
                                 f1(1.into(), f2(2.into(), 2.into())),
                             )]),
                         },
-                        // 0^inf 1^4x+12 <D 1^2a+2 0^inf    a = f1(1, f2(3, 2))
-                        //
-                        ProofStep::Admit, // TODO
+                        // 0^inf 1^2a+9 <C 1 0^inf
+                        ProofStep::Admit,
                         //
                         // At this point we need to calculate the remainder of
-                        // 4x+12 % 6 where x = f2(2, 2) = f1(f1(4, 2)+2, 2)
-                        //                   = f1(6 2^2 - 2, 2) = f1(22, 2)
-                        //                   = 6 2^22 - 4
-                        // so x % 6 = 2 and 4x+12 % 6 = 2
+                        // 2a+9 % 6 where a = f1(f2^2(2))
+                        //                  f2(2) = 6 2^4 - 2 = 94
+                        //                  f2^2(2) = 6 2^96 - 4
+                        //                  a = f1(f2^2(2)) = 6 2^97 - 4 ≡ 2 (mod 6)
+                        // so a % 6 = 2 and (2a+9) % 6 = 1
                         // ... but we cannot yet prove this in our system ...
                         //
                         // TODO: In this case this number can fit in memory,
