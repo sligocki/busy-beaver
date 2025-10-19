@@ -21,7 +21,7 @@ def reverse(in_list):
   return reversed_in_list
 
 class Repeated_Symbol(object):
-  """Slice of tape with repatitions."""
+  """Slice of tape with repetitions."""
   def __init__(self, symbol, number_of_repetitions, id = None):
     self.symbol = symbol
     self.num = number_of_repetitions
@@ -124,11 +124,11 @@ class Chain_Tape(object):
     return self.tape[self.dir][-1].symbol
 
   def apply_single_move(self, new_symbol, new_dir):
-    """Apply a single macro step.  del old symbol, push new one."""
+    """Apply a single macro step. Delete old symbol, push new one."""
     ## Delete old symbol
     half_tape = self.tape[self.dir]
     top = half_tape[-1]
-    if top.num is not INF:  # Don't decriment infinity
+    if top.num is not INF:  # Don't decrement infinity
       # If not infinity, decrement (delete one symbol)
       top.num -= 1
       # If there are none left, remove from the tape

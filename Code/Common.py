@@ -34,7 +34,7 @@ class GenContainer(object):
 class Exit_Condition(object):
   """Basically an enum of Turing machine exit conditions."""
   # TODO(shawn): It'd be nice to convert these to strings or something less
-  # cryptic. However, these constants have weasled there way throughout the
+  # cryptic. However, these constants have weaseled their way throughout the
   # code. For example, they are in Turing_Machine_Sim.c, Macro_Machine.c and
   # Dual_Machine.c :/
   ERROR = -1

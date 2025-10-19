@@ -1,7 +1,7 @@
 #! /usr/bin/env python3
 """
 Given two text files. Split into 3 categories of the Venn Diagram:
- 1) Common lines between both files (indersection).
+ 1) Common lines between both files (intersection).
  2) Lines only in left file (set diff 1).
  3) Lines only in right file (set diff 2).
 """
