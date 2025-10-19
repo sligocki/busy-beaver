@@ -761,7 +761,7 @@ class Proof_System(object):
         if block.num not in (math.inf, 1):
           x = Variable()
           init_count = Exp_Int.try_eval(block.num)
-          # Avoid proving rules with rediculously huge initial values (like ExpInt).
+          # Avoid proving rules with ridiculously huge initial values (like ExpInt).
           if not init_count or init_count > 2**20:
             init_count = 2**20
             assert block.num > init_count, block.num
@@ -778,7 +778,7 @@ class Proof_System(object):
     while gen_sim.num_loops < delta_loop:
       block = gen_sim.tape.get_top_block()
       if ae.min_val(block.num) <= 0:
-        # This corresponds to a block which looks like 2^n+0 .
+        # This corresponds to a block which looks like (abc)^(n+0).
         # In this situation, we can no longer generalize over all n >= 0.
         # Instead the simulator will act differently if n == 0 or n > 0.
         #
@@ -1335,7 +1335,7 @@ class Proof_System(object):
         states_last_seen = None
       return True, (ProverResult(INF_REPEAT, states_last_seen=states_last_seen), True)
 
-    # TODO?: Implement repeated application of Exponetial_Rule?
+    # TODO?: Implement repeated application of Exponential_Rule?
     return self.apply_general_rule(rule.gen_rule, start_config)
 
 

@@ -28,7 +28,7 @@ def fact2(n, m):
 
 def count(tm : Turing_Machine.Simple_Machine,
           allow_no_halt : bool) -> int:
-  """Count the number of TM's that are equivolent to this one.
+  """Count the number of TM's that are equivalent to this one.
      With the restriction that A0->1RB and Halt=1RH."""
   num_undefs = 0
   has_halt = False

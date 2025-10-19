@@ -33,9 +33,9 @@ def add_option_group(parser : OptionParser):
                    "[Default: %default]")
 
   group.add_option("--block-mult", type=int, default=0,
-                   help="Set fixed multiple of the block sized decided by block"
-                   "finder (often better than setting --block-size directly in"
-                   "order to avoid sizes that completely fail to compress the"
+                   help="Set fixed multiple of the block sized decided by block "
+                   "finder (often better than setting --block-size directly in "
+                   "order to avoid sizes that completely fail to compress the "
                    "tape). "
                    "[Default: %default]")
 

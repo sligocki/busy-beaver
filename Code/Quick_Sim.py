@@ -45,7 +45,7 @@ def run(machine, block_size, back, prover, recursive, options):
   sim = Simulator.Simulator(machine, options)
 
   if options.manual:
-    return  # Let's us run the machine manually. Must be run as python -i Quick_Sim.py
+    return  # Lets us run the machine manually. Must be run as python -i Quick_Sim.py
   try:
     if options.quiet or options.verbose:  # Note verbose prints inside sim.step()
       if options.verbose:
@@ -195,7 +195,7 @@ if __name__ == "__main__":
                     help="Print every LOOPS loops [Default %default].")
   parser.add_option("--print-macro-ttable", action="store_true")
   parser.add_option("--latex", action="store_true",
-                    help="Print score in Latex math format")
+                    help="Print score in LaTeX math format")
 
   parser.add_option("--manual", action="store_true",
                     help="Don't run any simulation, just set up simulator "
