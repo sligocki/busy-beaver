@@ -480,16 +480,21 @@ mod tests {
 
     #[test]
     fn test_pop_ambiguous() {
-        // Tape: 01^{x+1}
-        let x1 = CountOrInf::from_str("x+1").unwrap();
-        let mut tape = HalfTape(vec![RepBlock {
-            symbols: vec![1, 0],
-            rep: x1,
-        }]);
+        let mut tape = HalfTape::from_str("01^x+1", Dir::Right).unwrap();
 
         assert_eq!(tape.pop_symbol(), Some(0)); // 0 ... 1 01^x
         assert_eq!(tape.pop_symbol(), Some(1)); // 1 ... 01^x
         assert_eq!(tape.pop_symbol(), None); // 01^x is ambiguous
+    }
+
+    #[test]
+    fn test_pop_symbol_rotate() {
+        let mut tape = HalfTape::from_str("123^n 124", Dir::Right).unwrap();
+
+        // Pull the 1,2 "through" the block (using pop_symbol_rotate())
+        assert_eq!(tape.pop_symbol(), Some(1)); // 231^n 24
+        assert_eq!(tape.pop_symbol(), Some(2)); // 312^n 4
+        assert_eq!(tape.pop_symbol(), None);    // 312^n 4 is ambiguous
     }
 
     #[test]
