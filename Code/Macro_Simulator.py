@@ -15,6 +15,7 @@ from IO import TM_Record
 import Lin_Recur_Detect
 from Macro import Turing_Machine, Simulator, Block_Finder
 import Reverse_Engineer_Filter
+import globals
 
 import io_pb2
 
@@ -54,8 +55,7 @@ def add_option_group(parser):
   Block_Finder.add_option_group(parser)
 
 def run_options(tm_record : TM_Record,
-                options,
-                time_limit_sec : float) -> None:
+                options) -> None:
   """Run the Accelerated Turing Machine Simulator, running a few simple filters
   first and using intelligent blockfinding."""
   base_tm = tm_record.tm()
@@ -119,21 +119,19 @@ def run_options(tm_record : TM_Record,
           ctl_init_step = 1000
 
         if CTL_Filter.filter(tm_record, "CTL2", block_size, offset=0,
-                             max_time=options.time, cutoff=ctl_init_step,
-                             use_backsymbol=True):
+                             cutoff=ctl_init_step, use_backsymbol=True):
           return
 
       # Finally: Do the actual Macro Machine / Chain simulation.
       sim_info = tm_record.proto.filter.simulator
       sim_info.parameters.block_size = block_size
       sim_info.parameters.has_blocksymbol_macro = options.backsymbol
-      simulate_machine(machine, options, sim_info, tm_record.proto.status, time_limit_sec)
+      simulate_machine(machine, options, sim_info, tm_record.proto.status)
 
 def simulate_machine(machine : Turing_Machine.Turing_Machine,
                      options,
                      sim_info : io_pb2.SimulatorInfo,
-                     bb_status : io_pb2.BBStatus,
-                     time_limit_sec : float) -> None:
+                     bb_status : io_pb2.BBStatus) -> None:
   """Simulate a TM using the Macro Machine / Chain Simulator.
   Save the results into `sim_info`."""
   with IO.Timer(sim_info.result):
@@ -159,10 +157,9 @@ def simulate_machine(machine : Turing_Machine.Turing_Machine,
              sim.op_state == Turing_Machine.RUNNING and
              sim.tape.compressed_size() <= sim_info.parameters.max_tape_blocks):
         sim.step()
-        if time_limit_sec > 0:
-          if time.time() - start_time >= time_limit_sec:
-            timeout = True
-            break
+        if not globals.time_remaining:
+          timeout = True
+          break
 
     finally:
       # Set these stats even if timeout (exception) is raised.

@@ -14,12 +14,14 @@ import os
 import random
 import sys
 import time
+import threading
 
 import IO
 from IO.TM_Record import TM_Record
 import Macro_Simulator
 import TM_Enum
 import Work_Queue
+import globals
 
 
 def long_to_eng_str(number, left, right):
@@ -37,6 +39,10 @@ def long_to_eng_str(number, left, right):
                             expo)
   else:
     return "0.%se+00" % ("0" * right)
+
+def timeout():
+  globals.time_remaining = False
+
 
 class Enumerator(object):
   def __init__(self, options, stack, writer, pout):
@@ -92,9 +98,23 @@ class Enumerator(object):
       if (self.tm_num % self.save_freq) == 0:
         self.save()
 
+      # Initialize globals
+      globals.init()
+
       # ... and run it.
       start_time = time.time()
+
+      # Start the timer if maximum time is > 0.0
+      if self.options.time != 0.0:
+        t = threading.Timer(self.options.time, timeout)
+        t.start()
+
       self.run(tm_record)
+
+      # Cancel the timer if maximum time is > 0.0
+      if self.options.time != 0.0:
+        t.cancel()
+
       sim_time = time.time() - start_time
       self.max_sim_time_s = max(sim_time, self.max_sim_time_s)
 
@@ -129,8 +149,9 @@ class Enumerator(object):
 
   def run(self, tm_record : TM_Record) -> TM_Record:
     """Simulate TM"""
+
     try:
-      Macro_Simulator.run_options(tm_record, self.options, self.options.time)
+      Macro_Simulator.run_options(tm_record, self.options)
 
     except Exception as e:
       print("ERROR: Exception raised while simulating TM:",
@@ -138,6 +159,7 @@ class Enumerator(object):
       print(e)
       tm_record.proto.filter.simulator.result.unknown_info.threw_exception = True
       # raise
+
     return tm_record
 
   def expand_undefined_transition(self, old_tm_record : TM_Record) -> None:
@@ -157,6 +179,7 @@ class Enumerator(object):
   def add_result(self, tm_record : TM_Record) -> None:
     # Update stats
     self.tm_num += 1
+
     if tm_record.is_unknown_halting():
       self.num_unknown += 1
 

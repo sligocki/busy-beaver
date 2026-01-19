@@ -10,6 +10,7 @@ from optparse import OptionParser
 import os
 import sys
 import unittest
+import globals
 
 import Algebraic_Expression
 import IO
@@ -477,4 +478,5 @@ class ProofSystemTest(unittest.TestCase):
 
 
 if __name__ == '__main__':
+  globals.init()
   unittest.main()

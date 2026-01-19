@@ -42,14 +42,13 @@ def get_proto(type, tm_record):
   raise Exception(type)
 
 
-def filter(tm_record, type, block_size, offset, cutoff, use_backsymbol,
-           max_time=0.0):
+def filter(tm_record, type, block_size, offset, cutoff, use_backsymbol):
   info = get_proto(type, tm_record)
   with IO.Timer(info.result):
     module = get_module(type)
     success, num_iters = module.test_CTL(
       tm_record.tm(), cutoff=cutoff, block_size=block_size, offset=offset,
-      use_backsymbol=use_backsymbol, max_time=max_time)
+      use_backsymbol=use_backsymbol)
     if success:
       info.parameters.block_size = block_size
       info.parameters.offset = offset
@@ -67,14 +66,14 @@ def filter_block_size(tm_record, block_size, args):
     for offset in range(block_size):
       if filter(tm_record, args.type,
                 block_size=block_size, offset=offset, cutoff=args.cutoff,
-                use_backsymbol=(not args.no_backsymbol),max_time=args.time):
+                use_backsymbol=(not args.no_backsymbol)):
         return True
     return False
 
   else:
     return filter(tm_record, args.type,
                   block_size=block_size, offset=args.offset, cutoff=args.cutoff,
-                  use_backsymbol=(not args.no_backsymbol),max_time=args.time)
+                  use_backsymbol=(not args.no_backsymbol))
 
 def filter_all(tm_record, args):
   if args.max_block_size:

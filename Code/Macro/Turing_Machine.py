@@ -11,6 +11,8 @@ from functools import total_ordering
 from optparse import OptionParser, OptionGroup
 import string
 
+import globals
+
 
 def add_option_group(parser):
   """Add Turing_Machine options group to an OptParser parser object."""
@@ -41,6 +43,7 @@ RUNNING    = "Running"    # Machine still running normally
 HALT       = "Halt"       # Machine halts in or directly after move
 INF_REPEAT = "Inf_Repeat" # Machine proven not to halt within move
 UNDEFINED  = "Undefined"  # Machine encountered undefined transition
+TIME_OUT   = "Time_Out"   # Machine ran over time limit
 # TODO: Called "Gave_Up" for historical reasons
 OVER_STEPS_IN_MACRO = "Gave_Up" # Machine took too many base steps in a single macro step
 
@@ -114,7 +117,7 @@ def sim_limited(tm, state, start_tape, pos : int, dir : Dir,
   next_config_save = 128
 
   # Simulate Machine on macro symbol
-  while True:
+  while globals.time_remaining:
     symbol = tape[pos]
     trans = tm.get_trans_object(symbol, state, dir)
     for state, base_last_seen in trans.states_last_seen.items():
@@ -154,11 +157,16 @@ def sim_limited(tm, state, start_tape, pos : int, dir : Dir,
       condition = trans.condition
       condition_details = tuple(trans.condition_details) + (pos,)
       break
+
     if not (0 <= pos < len(tape)):
       # We ran off one end of the macro symbol. We're done.
       condition = RUNNING
       condition_details = tuple()
       break
+
+  if not globals.time_remaining:
+    condition = TIME_OUT
+    condition_details = tuple()
 
   return Transition(
     condition=condition, condition_details=condition_details,
@@ -170,11 +178,13 @@ def sim_limited(tm, state, start_tape, pos : int, dir : Dir,
 
 
 class Turing_Machine(object):
-  """Abstract base for all specific Turing Machines
+  """
+  Abstract base for all specific Turing Machines
 
   Derived classes should define:
     Function: get_trans_object, eval_symbol, eval_state
-    Constants: init_symbol, init_state, and init_dir, num_states, num_symbols"""
+    Constants: init_symbol, init_state, and init_dir, num_states, num_symbols
+  """
 
   # TODO: Deprecate
   def get_transition(self, symbol_in, state_in, dir_in):
@@ -350,8 +360,10 @@ class Block_Symbol(tuple):
     return "".join((str(x) for x in self))
 
 class OffsetStartState:
-  """Dummy initial state for running block size with an offset (starting in
-  the middle of a symbol)."""
+  """
+  Dummy initial state for running block size with an offset (starting in
+  the middle of a symbol).
+  """
   def __init__(self, state, offset):
     self.state = state
     self.offset = offset
