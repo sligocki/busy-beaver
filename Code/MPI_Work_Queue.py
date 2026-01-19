@@ -131,7 +131,7 @@ class MPI_Worker_Work_Queue(Work_Queue.Work_Queue):
     while comm.Iprobe(source=self.master, tag=UPDATE_MAX_QUEUE_SIZE):
       self.max_queue_size = comm.recv(source=self.master,
                                       tag=UPDATE_MAX_QUEUE_SIZE)
-      self.target_queue_size = self.max_queue_size * 3 / 4
+      self.target_queue_size = self.max_queue_size * 3 // 4
     self.update_max_queue_size_time += self.time_diff()
 
   def _send_extra(self):
@@ -261,7 +261,7 @@ class Master(object):
       worker_queue_size[0] = len(self.master_queue)
       max_queue_size = max(sum(worker_queue_size) // len(worker_queue_size),
                            MAX_NUM_JOBS_PER_BATCH)
-      target_queue_size = max_queue_size * 3 / 4
+      target_queue_size = max_queue_size * 3 // 4
       if time.time() - self.last_update_time > self.update_interval:
         for rank in range(1, num_proc):
           if update_requests[rank]:
