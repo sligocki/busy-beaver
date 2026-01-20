@@ -36,7 +36,8 @@ def add_option_group(parser):
                    help="Max tape size to allow. "
                    "[Default: %default]")
   group.add_option("--max-steps-per-macro", type=int, default=10_000,
-                   help="Maximum base TM steps within one Macro step before giving up.")
+                   help="Maximum base TM steps within one Macro step before giving up. "
+                   "[Default: %default]")
   group.add_option("--lin-steps", type=int, default=127,
                    help="Number of steps to run Lin_Recur detection (0 means skip). "
                    "[Default: %default]")
