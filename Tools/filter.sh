@@ -29,7 +29,7 @@ cp ${ROOT_DIR}/unknown.pb ${WORK_DIR}/in.pb
 time "$@" --infile=${WORK_DIR}/in.pb --outfile=${WORK_DIR}/out.pb
 
 # Categorize outputs
-time ${TOOLS_DIR}/../Code/IO_Categorize.py ${WORK_DIR}/out.pb --out-dir=${WORK_DIR}/
+time ${TOOLS_DIR}/../Code/IO_Categorize.py ${WORK_DIR}/out.pb --outdir=${WORK_DIR}/
 
 # Update for next filter
 cp ${WORK_DIR}/unknown.pb ${ROOT_DIR}/unknown.pb

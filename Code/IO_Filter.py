@@ -11,14 +11,14 @@ import IO
 def matches(tm_record):
   return tm_record.filter.simulator.result.num_finite_linear_rules_proven > 0
 
-def filter(in_filenames, out_filename):
+def filter(infilenames, outfilename):
   start_time = time.time()
   num_records_read = 0
   num_records_written = 0
-  with IO.Proto.Writer(out_filename) as writer:
-    for in_filename in in_filenames:
+  with IO.Proto.Writer(outfilename) as writer:
+    for infilename in infilenames:
       try:
-        with IO.Reader(in_filename) as reader:
+        with IO.Reader(infilename) as reader:
           for tm_record in reader:
             num_records_read += 1
             # try:
@@ -32,17 +32,17 @@ def filter(in_filenames, out_filename):
               print(f" ... {num_records_read:_d} -> {num_records_written:_d} ({time.time() - start_time:_.2f}s)")
               writer.flush()
       except IO.Proto.IO_Error:
-        print(f"ERROR: {in_filename} has unexpected EOF. Moving on.")
+        print(f"ERROR: {infilename} has unexpected EOF. Moving on.")
 
   print(f"Filtered {num_records_read:_d} -> {num_records_written:_d} ({time.time() - start_time:_.2f}s)")
 
 def main():
   parser = argparse.ArgumentParser()
-  parser.add_argument("in_files", type=Path, nargs="+")
-  parser.add_argument("out_file", type=Path)
+  parser.add_argument("infiles", type=Path, nargs="+")
+  parser.add_argument("outfile", type=Path)
   args = parser.parse_args()
 
-  filter(args.in_files, args.out_file)
+  filter(args.infiles, args.outfile)
 
 if __name__ == "__main__":
   main()
