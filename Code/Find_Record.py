@@ -7,10 +7,10 @@ import IO
 from IO.TM_Record import _pack_tm
 
 
-def find(tm_std, in_filename):
+def find(tm_std, infilename):
   tm = IO.parse_tm(tm_std)
   ttable_bytes = _pack_tm(tm)
-  with IO.Reader(in_filename) as reader:
+  with IO.Reader(infilename) as reader:
     for record_num, tm_record in enumerate(reader):
       assert tm_record.proto.tm.WhichOneof("ttable") == "ttable_packed", f"Find_Record.py has not implemented finding records of this type: {tm_record.proto.tm}"
       if tm_record.proto.tm.ttable_packed == ttable_bytes:
@@ -22,10 +22,10 @@ def find(tm_std, in_filename):
 def main():
   parser = argparse.ArgumentParser()
   parser.add_argument("tm_std", help="TM in std text format")
-  parser.add_argument("in_file", type=Path)
+  parser.add_argument("infile", type=Path)
   args = parser.parse_args()
 
-  find(args.tm_std, args.in_file)
+  find(args.tm_std, args.infile)
 
 if __name__ == "__main__":
   main()

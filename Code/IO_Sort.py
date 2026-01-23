@@ -15,16 +15,16 @@ def sorting_func(tm_record):
   else:
     return val
 
-def sort(in_filenames: list[Path], out_filename: Path) -> None:
+def sort(infilenames: list[Path], outfilename: Path) -> None:
   start_time = time.time()
   tm_records = []
-  for in_filename in in_filenames:
+  for infilename in infilenames:
     try:
-      with IO.Reader(in_filename) as reader:
+      with IO.Reader(infilename) as reader:
         for tm_record in reader:
           tm_records.append(tm_record)
     except IO.Proto.IO_Error:
-      print(f"ERROR: {in_filename} has unexpected EOF. Moving on.")
+      print(f"ERROR: {infilename} has unexpected EOF. Moving on.")
   print(f"Read {len(tm_records):_} records ({time.time() - start_time:_.2f}s)")
 
   start_time = time.time()
@@ -32,18 +32,18 @@ def sort(in_filenames: list[Path], out_filename: Path) -> None:
   print(f"Sorted records ({time.time() - start_time:_.2f}s)")
 
   start_time = time.time()
-  with IO.Proto.Writer(out_filename) as writer:
+  with IO.Proto.Writer(outfilename) as writer:
     for tm_record in tm_records:
       writer.write_record(tm_record)
   print(f"Wrote records ({time.time() - start_time:_.2f}s)")
 
 def main():
   parser = argparse.ArgumentParser()
-  parser.add_argument("in_files", type=Path, nargs="+")
-  parser.add_argument("out_file", type=Path)
+  parser.add_argument("infiles", type=Path, nargs="+")
+  parser.add_argument("outfile", type=Path)
   args = parser.parse_args()
 
-  sort(args.in_files, args.out_file)
+  sort(args.infiles, args.outfile)
 
 if __name__ == "__main__":
   main()

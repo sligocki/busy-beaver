@@ -42,7 +42,7 @@ if (( $NUM_BEFORE != $NUM_AFTER )); then
 fi
 
 # Categorize TMs by type
-time python3 Code/IO_Categorize.py ${OUT_DIR}/out.pb --out-dir=${OUT_DIR}
+time python3 Code/IO_Categorize.py ${OUT_DIR}/out.pb --outdir=${OUT_DIR}
 
 # Convert unknown to text so that it will be easier to start next filter.
 time python3 Code/IO_Convert.py ${OUT_DIR}/unknown.{pb,txt}

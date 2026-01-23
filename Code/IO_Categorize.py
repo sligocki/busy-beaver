@@ -51,10 +51,10 @@ class OutputFiles:
     self.num_written += 1
 
 
-def categorize(in_filenames, out_dir):
-  with OutputFiles(out_dir) as out:
-    for in_filename in in_filenames:
-      with IO.Proto.Reader(in_filename) as reader:
+def categorize(infilenames, outdir):
+  with OutputFiles(outdir) as out:
+    for infilename in infilenames:
+      with IO.Proto.Reader(infilename) as reader:
         for tm_record in reader:
           out.write_record(tm_record)
 
@@ -68,19 +68,19 @@ def categorize(in_filenames, out_dir):
   print(f"      Categorized {out.num_infinite:_} infinite records.")
   print(f"      Categorized {out.num_written:_} records total.")
 
-def split_unknown(in_filenames: list[Path], out_dir: Path) -> None:
+def split_unknown(infilenames: list[Path], outdir: Path) -> None:
   out = {
-    "over_loops": IO.Proto.Writer(out_dir / "unknown_over_loops.pb"),
-    "over_tape": IO.Proto.Writer(out_dir / "unknown_over_tape.pb"),
-    "over_time": IO.Proto.Writer(out_dir / "unknown_over_time.pb"),
-    "over_steps_in_macro": IO.Proto.Writer(out_dir / "unknown_over_steps_in_macro.pb"),
-    "threw_exception": IO.Proto.Writer(out_dir / "unknown_threw_exception.pb"),
+    "over_loops": IO.Proto.Writer(outdir / "unknown_over_loops.pb"),
+    "over_tape": IO.Proto.Writer(outdir / "unknown_over_tape.pb"),
+    "over_time": IO.Proto.Writer(outdir / "unknown_over_time.pb"),
+    "over_steps_in_macro": IO.Proto.Writer(outdir / "unknown_over_steps_in_macro.pb"),
+    "threw_exception": IO.Proto.Writer(outdir / "unknown_threw_exception.pb"),
   }
   for writer in out.values():
     writer.__enter__()
   num_written = 0
-  for in_filename in in_filenames:
-    with IO.Proto.Reader(in_filename) as reader:
+  for infilename in infilenames:
+    with IO.Proto.Reader(infilename) as reader:
       for tm_record in reader:
         reason = tm_record.proto.filter.simulator.result.unknown_info.WhichOneof("reason")
         if reason:
@@ -92,17 +92,17 @@ def split_unknown(in_filenames: list[Path], out_dir: Path) -> None:
 
 def main():
   parser = argparse.ArgumentParser()
-  parser.add_argument("in_files", nargs="*", type=Path)
-  parser.add_argument("--out-dir", type=Path, required=True)
+  parser.add_argument("infiles", nargs="*", type=Path)
+  parser.add_argument("--outdir", type=Path, required=True)
 
   parser.add_argument("--split-unknown", action="store_true",
                       help="Split unknown TMs by reason (over tape, over time, etc.)")
   args = parser.parse_args()
 
   if args.split_unknown:
-    split_unknown(args.in_files, args.out_dir)
+    split_unknown(args.infiles, args.outdir)
   else:
-    categorize(args.in_files, args.out_dir)
+    categorize(args.infiles, args.outdir)
 
 if __name__ == "__main__":
   main()
