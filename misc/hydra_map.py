@@ -53,7 +53,7 @@ def print_info(n, t, res):
   # print(f"H^{t:_}({n:_}): ~2^{res.bit_length():_} ≡ {res % (1<<128)} (mod 2^128) hash: {shahash(res)}  ({time.process_time():_.0f}s)")
   print(f"H^{t:_}({n:_}): ~2^{res.bit_length():_} ≡ {res % (1<<128)} (mod 2^128)  ({process_memory() // 10**6:_}MB {time.process_time():_.0f}s)")
 
-def sim_forever(start_n: int, start_e: int = 20) -> None:
+def sim_forever(start_n: int, start_e: int = 0) -> None:
   e = start_e
   n = accel_pow(mpz(start_n), e)
   while True:
@@ -66,9 +66,16 @@ def main():
   parser = argparse.ArgumentParser()
   parser.add_argument("start_value", type=int)
   parser.add_argument("num_iters", type=int, nargs="?")
+  parser.add_argument("--verbose", "-v", action="store_true")
   args = parser.parse_args()
 
-  if args.num_iters:
+  if args.verbose:
+    n = args.start_value
+    for i in range(args.num_iters):
+      print_info(args.start_value, i, n)
+      n = direct(n, 1)
+    print_info(args.start_value, i+1, n)
+  elif args.num_iters:
     res = hydra(args.start_value, args.num_iters)
     print_info(args.start_value, args.num_iters, res)
   else:
