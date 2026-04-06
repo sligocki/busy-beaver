@@ -201,7 +201,7 @@ class ProofSystemTest(unittest.TestCase):
 
     rule_num = 1
 
-    rule = Proof_System.Limited_Diff_Rule(initial_tape,left_dist,right_dist,diff_tape,initial_state,num_steps,num_loops,rule_num, states_last_seen={})
+    rule = Proof_System.Limited_Diff_Rule(initial_tape,left_dist,right_dist,diff_tape,initial_state,num_steps,num_loops,rule_num, states_last_seen={}, level=1)
 
     success, (prover_result, large_delta) = proof.apply_rule(rule,current_config)
 
@@ -297,7 +297,7 @@ class ProofSystemTest(unittest.TestCase):
 
     # Check that rule was proven successfully
     self.assertTrue(meta_rule)
-    self.assertTrue(meta_rule.is_meta_rule)
+    self.assertEqual(meta_rule.level, 2)
 
     # Test rule on an example:
     #   1^10 A> 0^20 2^40 -> 1^48 A> 0^58 2^2

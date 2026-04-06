@@ -238,11 +238,11 @@ class Simulator(object):
     if self.prover:
       print(template("Rule:", self.steps_from_rule, self.num_rule_moves))
       print("Rules proven:", self.prover.num_rules)
-      if self.prover.recursive:
-        print("Meta Diff rules proven:", self.prover.num_meta_diff_rules)
-        print("Linear rules proven:", self.prover.num_linear_rules)
-        print("Exponential rules proven:", self.prover.num_exponential_rules)
-        print("General rules proven:", self.prover.num_gen_rules)
+      for level in sorted(self.prover.num_rules_by_level):
+        print(f"  Level {level} rules:", self.prover.num_rules_by_level[level])
+      print("Linear rules proven:", self.prover.num_linear_rules)
+      print("Exponential rules proven:", self.prover.num_exponential_rules)
+      print("General rules proven:", self.prover.num_gen_rules)
       print("Collatz rules:", self.prover.num_collatz_rules)
       print("Failed proofs:", self.prover.num_failed_proofs)
       print(f"Prover num past configs: {len(self.prover.past_configs):_}")
