@@ -1507,7 +1507,7 @@ def series_sum(expr : Algebraic_Expression, k : Variable, N):
     elif k_pow == 3:
       # sum_{k=0}^{N-1}(coef * k^3) = coef * (N(N-1)/2)^2
       # https://proofwiki.org/wiki/Sum_of_Sequence_of_Cubes
-      total += ((rest * N * (N - 1)) // 2)**2
+      total += rest * ((N * (N - 1)) // 2)**2
     else:
       raise NotImplementedError(f"Cannot series sum {term} over {k}")
   return total
