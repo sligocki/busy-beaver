@@ -69,10 +69,11 @@ def big_int_approx_or_full_str(value):
 _BIG_INT_MAX = 2**63 - 1
 def set_big_int(field : io_pb2.BigInt, value):
   field.Clear()
+  if value < 0:
+    raise ValueError("set_big_int only supports non-negative values")
   if isinstance(value, int):
-    if abs(value) <= _BIG_INT_MAX:
-      # For "small" (non-negative) integers, store them directly.
-      # Setting with negative value will cause a ValueError here.
+    if value <= _BIG_INT_MAX:
+      # For "small" integers, store them directly.
       field.int = value
     else:
       # For "big" integers, store them as serialized text.
