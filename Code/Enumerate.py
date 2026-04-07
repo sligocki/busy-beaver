@@ -14,14 +14,13 @@ import os
 import random
 import sys
 import time
-import threading
 
 import IO
 from IO.TM_Record import TM_Record
 import Macro_Simulator
 import TM_Enum
 import Work_Queue
-import globals
+from Time_Limit import TimeLimit
 
 
 def long_to_eng_str(number, left, right):
@@ -39,10 +38,6 @@ def long_to_eng_str(number, left, right):
                             expo)
   else:
     return "0.%se+00" % ("0" * right)
-
-def timeout():
-  globals.time_remaining = False
-
 
 class Enumerator(object):
   def __init__(self, options, stack, writer, pout):
@@ -98,22 +93,15 @@ class Enumerator(object):
       if (self.tm_num % self.save_freq) == 0:
         self.save()
 
-      # Initialize globals
-      globals.init()
-
       # ... and run it.
       start_time = time.time()
 
-      # Start the timer if maximum time is > 0.0
-      if self.options.time != 0.0:
-        t = threading.Timer(self.options.time, timeout)
-        t.start()
+      time_limit = TimeLimit()
+      time_limit.start(self.options.time)
 
-      self.run(tm_record)
+      self.run(tm_record, time_limit)
 
-      # Cancel the timer if maximum time is > 0.0
-      if self.options.time != 0.0:
-        t.cancel()
+      time_limit.cancel()
 
       sim_time = time.time() - start_time
       self.max_sim_time_s = max(sim_time, self.max_sim_time_s)
@@ -147,11 +135,11 @@ class Enumerator(object):
     self.start_time = time.time()
     self.max_sim_time_s = 0.0
 
-  def run(self, tm_record : TM_Record) -> TM_Record:
+  def run(self, tm_record : TM_Record, time_limit=None) -> TM_Record:
     """Simulate TM"""
 
     try:
-      Macro_Simulator.run_options(tm_record, self.options)
+      Macro_Simulator.run_options(tm_record, self.options, time_limit)
 
     except Exception as e:
       print("ERROR: Exception raised while simulating TM:",

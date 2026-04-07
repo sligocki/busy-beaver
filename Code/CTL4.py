@@ -12,7 +12,6 @@ import time
 
 import IO
 from Macro import Turing_Machine, Simulator
-import globals
 
 class CTL_Table(dict):
   def __getitem__(self, key):
@@ -32,7 +31,7 @@ def CTL(machine, config, verbose=False):
   num_iters = 0
 
   while table != new_table:
-    if not globals.time_remaining:
+    if machine.time_limit.timed_out:
       print("--- CTL4 timeout ---")
       sys.stdout.flush()
       return False, num_iters

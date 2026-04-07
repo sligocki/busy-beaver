@@ -13,8 +13,6 @@ import Exp_Int
 import Halting_Lib
 from Halting_Lib import big_int_approx_and_full_str
 import IO
-import globals
-
 import io_pb2
 
 
@@ -219,7 +217,7 @@ if __name__ == "__main__":
   if options.max_loops and options.print_loops > options.max_loops:
     options.print_loops = options.max_loops
 
-  globals.init()
+
 
   if len(args) != 1:
     parser.error("Must have at least one argument, machine_file")

@@ -11,7 +11,7 @@ from functools import total_ordering
 from optparse import OptionParser, OptionGroup
 import string
 
-import globals
+from Time_Limit import TimeLimit
 
 
 def add_option_group(parser):
@@ -117,7 +117,7 @@ def sim_limited(tm, state, start_tape, pos : int, dir : Dir,
   next_config_save = 128
 
   # Simulate Machine on macro symbol
-  while globals.time_remaining:
+  while not tm.time_limit.timed_out:
     symbol = tape[pos]
     trans = tm.get_trans_object(symbol, state, dir)
     for state, base_last_seen in trans.states_last_seen.items():
@@ -164,7 +164,7 @@ def sim_limited(tm, state, start_tape, pos : int, dir : Dir,
       condition_details = tuple()
       break
 
-  if not globals.time_remaining:
+  if tm.time_limit.timed_out:
     condition = TIME_OUT
     condition_details = tuple()
 
@@ -281,6 +281,7 @@ class Simple_Machine(Turing_Machine):
     self.init_symbol = 0
     self.init_dir = RIGHT
     self.init_state = Simple_Machine_State(0)
+    self.time_limit = TimeLimit()
 
   def get_trans_object(self, symbol_in, state_in, dir_in = None) -> Transition:
     # Note: Simple_Machine ignores dir_in.
@@ -396,6 +397,7 @@ class Block_Macro_Machine(Macro_Machine):
     self.max_steps = block_size * self.num_states * self.num_symbols
     self.max_cells = Block_Macro_Machine.MAX_TTABLE_CELLS
     self.max_sim_steps_per_symbol = max_sim_steps_per_symbol
+    self.time_limit = base_machine.time_limit
 
   def eval_symbol(self, macro_symbol):
     return sum(map(self.base_machine.eval_symbol, macro_symbol))
@@ -481,6 +483,7 @@ class Backsymbol_Macro_Machine(Macro_Machine):
     self.max_steps = 2 * self.num_states * self.num_symbols**2
     self.max_cells = Backsymbol_Macro_Machine.MAX_TTABLE_CELLS
     self.max_sim_steps_per_symbol = max_sim_steps_per_symbol
+    self.time_limit = base_machine.time_limit
 
   def eval_symbol(self, symbol):
     return self.base_machine.eval_symbol(symbol)

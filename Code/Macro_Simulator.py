@@ -15,7 +15,6 @@ from IO import TM_Record
 import Lin_Recur_Detect
 from Macro import Turing_Machine, Simulator, Block_Finder
 import Reverse_Engineer_Filter
-import globals
 
 import io_pb2
 
@@ -56,10 +55,12 @@ def add_option_group(parser):
   Block_Finder.add_option_group(parser)
 
 def run_options(tm_record : TM_Record,
-                options) -> None:
+                options, time_limit=None) -> None:
   """Run the Accelerated Turing Machine Simulator, running a few simple filters
   first and using intelligent blockfinding."""
   base_tm = tm_record.tm()
+  if time_limit is not None:
+    base_tm.time_limit = time_limit
   ## Test for quickly for infinite machine
   with IO.Timer(tm_record.proto):
     if options.reverse_engineer:
@@ -158,7 +159,7 @@ def simulate_machine(machine : Turing_Machine.Turing_Machine,
              sim.op_state == Turing_Machine.RUNNING and
              sim.tape.compressed_size() <= sim_info.parameters.max_tape_blocks):
         sim.step()
-        if not globals.time_remaining:
+        if machine.time_limit.timed_out:
           timeout = True
           break
 

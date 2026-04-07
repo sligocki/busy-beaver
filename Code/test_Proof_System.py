@@ -10,8 +10,6 @@ from optparse import OptionParser
 import os
 import sys
 import unittest
-import globals
-
 import Algebraic_Expression
 import IO
 
@@ -28,8 +26,6 @@ def factor_expr(expr, var):
 
 class ProofSystemTest(unittest.TestCase):
   def setUp(self):
-    globals.init()
-
     # Get busy-beaver root directory.
     test_dir = os.path.dirname(sys.argv[0])
     self.root_dir = os.path.join(test_dir, os.pardir)
@@ -732,5 +728,4 @@ class ProofSystemTest(unittest.TestCase):
 
 
 if __name__ == '__main__':
-  globals.init()
   unittest.main()

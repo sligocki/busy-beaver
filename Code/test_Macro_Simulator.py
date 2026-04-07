@@ -3,7 +3,6 @@
 Unit test for "Macro_Simulator.py"
 """
 
-import globals
 import Macro_Simulator
 
 from optparse import OptionParser
@@ -230,6 +229,4 @@ class MacroSimulatorTest(unittest.TestCase):
                      io_pb2.INF_CTL)
 
 if __name__ == '__main__':
-  globals.init()
-
   unittest.main()

@@ -8,8 +8,6 @@ from Macro import Turing_Machine
 import os
 import sys
 import unittest
-import globals
-
 from Macro.Tape import INF
 import IO
 
@@ -102,5 +100,4 @@ Transition table:
 """)
 
 if __name__ == '__main__':
-  globals.init()
   unittest.main()
