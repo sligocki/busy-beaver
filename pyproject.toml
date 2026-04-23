@@ -1,0 +1,17 @@
+[project]
+name = "busy-beaver"
+version = "1.0.0"
+description = "Tools for enumerating, deciding and simulating Turing Machines for Busy Beaver search"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "gmpy2>=2.2",
+    "mypy>=1.8.0",
+    "mypy-protobuf>=3.5.0",
+    "protobuf>=6.31",
+    "psutil>=7",
+]
+
+[tool.pyright]
+venvPath = "."
+venv = ".venv"
