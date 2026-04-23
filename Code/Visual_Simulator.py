@@ -6,8 +6,6 @@ from __future__ import annotations
 import argparse
 from dataclasses import dataclass
 import fcntl
-import re
-import string
 import struct
 import sys
 import termios
@@ -15,10 +13,10 @@ import termios
 from Direct_Simulator import DirectSimulator, State
 import IO
 from Macro import Turing_Machine
+from Parse_Config import STATES, expand_config, parse_tape_config
 
 
-# Note: Halt will be "!"
-STATES = string.ascii_uppercase + string.ascii_lowercase + "!"
+# Note: Halt will be "!" (already defined in Parse_Config.STATES)
 # White, Red, Green, Blue, Cyan, Brown/Yellow, Magenta
 COLOR = [49, 41, 42, 44, 46, 43, 45]
 
@@ -58,46 +56,6 @@ class PrintFilter:
     if "r" in self.extreme and sim.tape.pos_rightmost() == sim.tape.position:
       return True
     return False
-
-
-def parse_config(config_str: str):
-  left = []
-  right = []
-  in_left = True
-  dir_left = None
-  state = None
-  for block in config_str.split():
-    if (m := re.fullmatch(r"<([A-Za-z])", block)):
-      dir_left = True
-      state = STATES.index(m.group(1))
-      in_left = False
-
-    elif (m := re.fullmatch(r"([A-Za-z])>", block)):
-      dir_left = False
-      state = STATES.index(m.group(1))
-      in_left = False
-
-    else:
-      assert (m := re.fullmatch(r"(\d+)(\^(\d+))?", block)), block
-      base = [int(x) for x in m.group(1)]
-      if m.group(3):
-        exp = int(m.group(3))
-      else:
-        exp = 1
-      if in_left:
-        left += base * exp
-      else:
-        right += base * exp
-
-  if dir_left:
-    # Normalize so that current (top) symbol is always on right.
-    top = left.pop() if left else 0
-    right.insert(0, top)
-  
-  if state is None:
-    raise ValueError(f"`{config_str}` is not a valid start_config (state missing)")
-
-  return (state, left, right)
 
 
 def print_tape(sim : DirectSimulator, args) -> None:
@@ -184,14 +142,14 @@ def main():
     print(tm.ttable_str())
     print()
 
+  state = 0
+  left = []
+  right = []
   if args.start_config:
-    state, left, right = parse_config(args.start_config)
-  else:
-    state = 0
-    left = []
-    right = []
+    parsed = parse_tape_config(args.start_config)
+    state, left, right = expand_config(parsed)
 
-  sim.state = state
+  sim.state = Turing_Machine.Simple_Machine_State(state)
   for i, symb in enumerate(left):
     # Write left half of tape so that the rightmost symbol is at location -1.
     sim.tape.write(symb, i-len(left))
