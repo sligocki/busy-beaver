@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
     "gmpy2>=2.2",
+    "matplotlib>=3.10.9",
     "mypy>=1.8.0",
     "mypy-protobuf>=3.5.0",
     "protobuf>=6.31",
