@@ -23,3 +23,8 @@ class TimeLimit:
     @property
     def timed_out(self):
         return self._timed_out
+
+    def __deepcopy__(self, memo):
+        # threading.Timer holds a contextvars.Context that can't be pickled in
+        # Python 3.14+. Child TMs get fresh time limits when they're simulated.
+        return TimeLimit()
