@@ -18,6 +18,7 @@ Examples:
 from __future__ import annotations
 
 import argparse
+import math
 import re
 from typing import Optional
 
@@ -136,7 +137,7 @@ def main() -> None:
                       help="TM string (e.g. 1RB0LA_1LB0RA), filename, or filename:record_num.")
   parser.add_argument("pattern",
                       help='Generalized tape config, e.g. "0^inf 1^a 10^b C> 1^c 0^inf".')
-  parser.add_argument("num_results", type=int, nargs="?", default=100,
+  parser.add_argument("num_results", type=int, nargs="?", default=math.inf,
                       help="Number of results to print")
   parser.add_argument("--max-steps", type=int, default=1_000_000,
                       help="Stop after this many steps (default: 1,000,000).")
