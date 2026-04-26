@@ -133,24 +133,30 @@ def main() -> None:
   parser = argparse.ArgumentParser(
     description="Print every DirectSim config matching a tape pattern.")
   parser.add_argument("tm",
-    help="TM string (e.g. 1RB0LA_1LB0RA), filename, or filename:record_num.")
+                      help="TM string (e.g. 1RB0LA_1LB0RA), filename, or filename:record_num.")
   parser.add_argument("pattern",
-    help='Generalized tape config, e.g. "0^inf 1^a 10^b C> 1^c 0^inf".')
+                      help='Generalized tape config, e.g. "0^inf 1^a 10^b C> 1^c 0^inf".')
+  parser.add_argument("num_results", type=int, nargs="?", default=100,
+                      help="Number of results to print")
   parser.add_argument("--max-steps", type=int, default=1_000_000,
-    help="Stop after this many steps (default: 1,000,000).")
+                      help="Stop after this many steps (default: 1,000,000).")
   args = parser.parse_args()
 
   tm = IO.get_tm(args.tm)
   parsed = parse_tape_config(args.pattern)
   sim = DirectSimulator(tm)
+  num_printed = 0
 
   while True:
     bindings = match_pattern(sim, parsed)
     if bindings is not None:
       print(f"Step {sim.step_num}: {format_match(bindings, parsed)}")
+      num_printed += 1
 
     if sim.halted:
       print(f"Halted at step {sim.step_num}")
+      break
+    if num_printed >= args.num_results:
       break
     if sim.step_num >= args.max_steps:
       print(f"Reached max-steps limit ({args.max_steps})")
