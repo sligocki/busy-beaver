@@ -27,11 +27,12 @@ def fact2(n, m):
 
 
 def count(tm : Turing_Machine.Simple_Machine,
-          allow_no_halt : bool) -> int:
+          allow_no_halt : bool,
+          rado : bool = False) -> int:
   """Count the number of TM's that are equivalent to this one.
-     With the restriction that A0->1RB and Halt=1RH."""
+     With the restriction that A0->1RB and Halt=1RH (unless rado=True)."""
   num_undefs = 0
-  has_halt = False
+  num_halts = 0
   max_symbol = 0
   max_state = 0
   # Get stats.  Number of undefined transitions, whether there is a halt
@@ -42,29 +43,48 @@ def count(tm : Turing_Machine.Simple_Machine,
       if trans.condition == Turing_Machine.UNDEFINED:
         num_undefs += 1
       elif trans.condition == Turing_Machine.HALT:
-        has_halt = True
+        num_halts += 1
       else:
         assert trans.condition == Turing_Machine.RUNNING, trans.condition
         max_symbol = max(max_symbol, trans.symbol_out)
         max_state = max(max_state, trans.state_out)
   num_symbols_used = max_symbol + 1
   num_states_used = max_state + 1
-  # Count the number of permutations of symbols/states possible
-  num_tms = fact2(tm.num_symbols - 2, tm.num_symbols - num_symbols_used) \
-          * fact2(tm.num_states  - 2, tm.num_states  - num_states_used)
-  if has_halt:
-    # All possible assignments of trans for each undefined transition.
-    # num_dirs * num_states * num_symbols for each trans.
-    num_tms *= (2*tm.num_states*tm.num_symbols)**num_undefs
+  
+  if rado:
+    # Rado allows any A0 transition, so we permute all S-1 and Q-1 non-initial symbols/states.
+    num_tms = fact2(tm.num_symbols - 1, tm.num_symbols - num_symbols_used) \
+            * fact2(tm.num_states  - 1, tm.num_states  - num_states_used)
+    
+    # If there is at least one defined running transition, the L/R symmetry is fixed.
+    # We multiply by 2 to account for the symmetric Rado TMs that would move L.
+    if num_symbols_used > 1 or num_states_used > 1:
+      num_tms *= 2
+      
+    if num_halts > 0:
+      # Each explicit halt represents 2S distinct halting configurations.
+      num_tms *= (2 * tm.num_symbols) ** num_halts
+    
+    # Each undefined transition can be any of the 2QS running or 2S halting transitions.
+    num_tms *= (2 * (tm.num_states + 1) * tm.num_symbols) ** num_undefs
+
   else:
-    this_mult = 0
-    if num_undefs >= 1:
-      # Count with 1 halt added.
-      this_mult += num_undefs * (2*tm.num_states*tm.num_symbols)**(num_undefs - 1)
-    if allow_no_halt:
-      # Count with 0 halts added.
-      this_mult += (2*tm.num_states*tm.num_symbols)**num_undefs
-    num_tms *= this_mult
+    # Count the number of permutations of symbols/states possible
+    num_tms = fact2(tm.num_symbols - 2, tm.num_symbols - num_symbols_used) \
+            * fact2(tm.num_states  - 2, tm.num_states  - num_states_used)
+    if num_halts > 0:
+      # All possible assignments of trans for each undefined transition.
+      # num_dirs * num_states * num_symbols for each trans.
+      num_tms *= (2*tm.num_states*tm.num_symbols)**num_undefs
+    else:
+      this_mult = 0
+      if num_undefs >= 1:
+        # Count with 1 halt added.
+        this_mult += num_undefs * (2*tm.num_states*tm.num_symbols)**(num_undefs - 1)
+      if allow_no_halt:
+        # Count with 0 halts added.
+        this_mult += (2*tm.num_states*tm.num_symbols)**num_undefs
+      num_tms *= this_mult
   return num_tms
 
 
@@ -72,13 +92,14 @@ def main():
   parser = argparse.ArgumentParser()
   parser.add_argument("tm_file", nargs="+", type=Path)
   parser.add_argument("--allow-no-halt", action="store_true")
+  parser.add_argument("--rado", action="store_true", help="Calculate Rado count")
   args = parser.parse_args()
 
   total = 0
   for filename in args.tm_file:
     with IO.Reader(filename) as reader:
       for tm_record in reader:
-        total += count(tm_record.tm(), args.allow_no_halt)
+        total += count(tm_record.tm(), args.allow_no_halt, args.rado)
 
   print(total)
 
