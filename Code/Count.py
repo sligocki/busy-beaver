@@ -96,12 +96,16 @@ def main():
   parser.add_argument("tm_file", nargs="+", type=Path)
   parser.add_argument("--allow-no-halt", action="store_true")
   parser.add_argument("--rado", action="store_true", help="Calculate Rado count")
+  parser.add_argument("--halt", action="store_true", help="Only count TMs with status halt")
   args = parser.parse_args()
 
   total = 0
   for filename in args.tm_file:
     with IO.Reader(filename) as reader:
       for tm_record in reader:
+        if args.halt:
+          if not tm_record.proto.status.halt_status.is_decided or not tm_record.is_halting():
+            continue
         total += count(tm_record.tm(), args.allow_no_halt, args.rado)
 
   print(total)
