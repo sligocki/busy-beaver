@@ -70,8 +70,11 @@ def count(tm : Turing_Machine.Simple_Machine,
 
   else:
     # Count the number of permutations of symbols/states possible
-    num_tms = fact2(tm.num_symbols - 2, tm.num_symbols - num_symbols_used) \
-            * fact2(tm.num_states  - 2, tm.num_states  - num_states_used)
+    if num_symbols_used < 2 or num_states_used < 2:
+      num_tms = 0
+    else:
+      num_tms = fact2(tm.num_symbols - 2, tm.num_symbols - num_symbols_used) \
+              * fact2(tm.num_states  - 2, tm.num_states  - num_states_used)
     if num_halts > 0:
       # All possible assignments of trans for each undefined transition.
       # num_dirs * num_states * num_symbols for each trans.
