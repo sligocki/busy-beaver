@@ -4,9 +4,8 @@ A TM simulator with a variety of advanced features, options, and output
 formats.
 """
 
-from pathlib import Path
-import string
-import sys
+from optparse import OptionParser
+import time
 
 from Macro import Turing_Machine, Simulator, Block_Finder
 import Exp_Int
@@ -57,16 +56,24 @@ def run(machine, block_size, back, prover, recursive, options):
         sim.step()
         total_loops += 1
     else:
-      # TODO: maybe print based on time
       total_loops = 0
+      last_print_time = time.time()
+      sim.print_self()
 
       while (sim.op_state == Turing_Machine.RUNNING and
              (options.max_loops == 0 or total_loops < options.max_loops)):
-        sim.print_self()
-        sim.loop_run(options.print_loops)
-        total_loops += options.print_loops
-        if options.freeze_prover:
-          sim.prover.frozen = True
+        chunk = 1_000
+        if options.max_loops:
+          chunk = min(chunk, options.max_loops - total_loops)
+        sim.loop_run(chunk)
+        total_loops += chunk
+
+        cur_time = time.time()
+        if cur_time - last_print_time >= options.print_time:
+          sim.print_self()
+          last_print_time = cur_time
+          if options.freeze_prover:
+            sim.prover.frozen = True
   finally:
     sim.print_self()
 
@@ -162,7 +169,6 @@ def table_to_str(table):
 
 
 if __name__ == "__main__":
-  from optparse import OptionParser, OptionGroup
   # Parse command line options.
   usage = "usage: %prog [options] tm"
   parser = OptionParser(usage=usage)
@@ -190,8 +196,8 @@ if __name__ == "__main__":
   parser.add_option("--max-steps-in-backsymbol", type=int, default=1_000,
                     help="[Default: %default]")
 
-  parser.add_option("--print-loops", type=int, default=100_000, metavar="LOOPS",
-                    help="Print every LOOPS loops [Default %default].")
+  parser.add_option("--print-time", type=float, default=5.0, metavar="SECONDS",
+                    help="Print update every SECONDS [Default %default].")
   parser.add_option("--print-macro-ttable", action="store_true")
   parser.add_option("--latex", action="store_true",
                     help="Print score in LaTeX math format")
@@ -213,9 +219,6 @@ if __name__ == "__main__":
   elif options.verbose:
     options.verbose_simulator = True
     options.verbose_prover = True
-
-  if options.max_loops and options.print_loops > options.max_loops:
-    options.print_loops = options.max_loops
 
 
 
