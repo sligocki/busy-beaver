@@ -1,10 +1,19 @@
+import ctypes
 import string
+import sys
 
 import TM_Enum
 
 import io_pb2
 
 from Macro import Turing_Machine
+
+
+# Workaround to protobuf bug
+_NONE_REFCNT_ADDR = id(None)
+# Python 3.12+ uses a massive refcount for immortal objects (e.g., 0xc0000000)
+_NONE_IS_IMMORTAL = sys.getrefcount(None) > 0x10000000
+_NONE_IMMORTAL_REFCNT = sys.getrefcount(None)
 
 
 # Parse TMs in standard text format.
@@ -105,6 +114,11 @@ def tm_to_list(tm : Turing_Machine.Simple_Machine, tm_list : io_pb2.TMList) -> N
       tm_list.ttable_list.append(trans.dir_out)
       tm_list.ttable_list.append(trans.state_out)
   assert len(tm_list.ttable_list) == 3 * tm.num_states * tm.num_symbols
+
+  # WORKAROUND: Protobuf RepeatedScalarFieldContainer.append leaks Py_None refs.
+  # We reset the refcount to the initial immortal threshold to prevent 32-bit overflow.
+  if _NONE_IS_IMMORTAL:
+      ctypes.c_uint32.from_address(_NONE_REFCNT_ADDR).value = _NONE_IMMORTAL_REFCNT
 
 def tm_from_list(tm_list : io_pb2.TMList) -> Turing_Machine.Simple_Machine:
   quints = []
