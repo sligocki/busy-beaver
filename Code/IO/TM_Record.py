@@ -102,7 +102,7 @@ def _unpack_tm(pack : bytes) -> Turing_Machine.Simple_Machine:
 def tm_to_list(tm : Turing_Machine.Simple_Machine, tm_list : io_pb2.TMList) -> None:
   tm_list.num_states = tm.num_states
   tm_list.num_symbols = tm.num_symbols
-  del tm_list.ttable_list[:]
+  ttable = []
   for state in range(tm.num_states):
     for symbol in range(tm.num_symbols):
       trans = tm.get_trans_object(symbol, state)
@@ -110,12 +110,13 @@ def tm_to_list(tm : Turing_Machine.Simple_Machine, tm_list : io_pb2.TMList) -> N
         symbol_out = -1
       else:
         symbol_out = trans.symbol_out
-      tm_list.ttable_list.append(symbol_out)
-      tm_list.ttable_list.append(trans.dir_out)
-      tm_list.ttable_list.append(trans.state_out)
-  assert len(tm_list.ttable_list) == 3 * tm.num_states * tm.num_symbols
+      ttable.extend([symbol_out, trans.dir_out, trans.state_out])
+  assert len(ttable) == 3 * tm.num_states * tm.num_symbols
 
-  # WORKAROUND: Protobuf RepeatedScalarFieldContainer.append leaks Py_None refs.
+  del tm_list.ttable_list[:]
+  tm_list.ttable_list.extend(ttable)
+
+  # WORKAROUND: Protobuf RepeatedScalarFieldContainer.extend also leaks Py_None refs (1 per call).
   # We reset the refcount to the initial immortal threshold to prevent 32-bit overflow.
   if _NONE_IS_IMMORTAL:
       ctypes.c_uint32.from_address(_NONE_REFCNT_ADDR).value = _NONE_IMMORTAL_REFCNT
