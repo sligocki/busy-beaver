@@ -577,6 +577,7 @@ class Fixed_History_MM(Macro_Machine):
     # This is functionally true, but not literally true.
     self.num_symbols = base_tm.num_symbols
     self.num_states = base_tm.num_states
+    self.time_limit = base_tm.time_limit
 
   def get_trans_object(self, hist_symbol_in : History_Symbol, state_in, dir_in) -> Transition:
     trans = self.base_tm.get_trans_object(hist_symbol_in.base_symbol,
@@ -609,6 +610,7 @@ class LRU_History_MM(Macro_Machine):
     # This is functionally true, but not literally true.
     self.num_symbols = base_tm.num_symbols
     self.num_states = base_tm.num_states
+    self.time_limit = base_tm.time_limit
 
   def get_trans_object(self, hist_symbol_in : History_Symbol, state_in, dir_in) -> Transition:
     base_symbol = hist_symbol_in.base_symbol
