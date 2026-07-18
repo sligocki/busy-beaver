@@ -44,6 +44,7 @@ def lin_detect_not_min(tm : Turing_Machine.Simple_Machine,
   sim = Direct_Simulator.DirectSimulator(tm)
   states_last_seen = {sim.state: sim.step_num}
   sim.step()
+  steps_reset = sim.step_num
 
   while (not max_steps or sim.step_num < max_steps) and not result.success:
     # Brent's algorithm for loop detection:
