@@ -268,13 +268,16 @@ def main(args):
   parser.add_option_group(out_parser)
 
   (options, args) = parser.parse_args(args)
+  
+  if not options.infilename:
+    parser.error("--infile is required")
+  
+  if not options.outfilename:
+    parser.error("--outfile is required")
 
   ## Set complex defaults
   if options.randomize and not options.seed:
     options.seed = int(1000*time.time())
-
-  if not options.outfilename:
-    parser.error("--outfile is required")
 
   pout = None
   if not options.no_output:
