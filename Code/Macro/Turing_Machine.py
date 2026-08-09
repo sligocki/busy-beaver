@@ -369,6 +369,50 @@ class OffsetStartState:
     self.state = state
     self.offset = offset
 
+class Tape_Head_Symbol(object):
+  """Wrapper for block symbols where the head is embedded inside."""
+  is_embedded = True
+  def __init__(self, tup, state, dir, pos):
+    self.tup = tup
+    self.state = state
+    self.dir = dir
+    self.pos = pos
+  def __iter__(self):
+    return iter(self.tup)
+  def __len__(self):
+    return len(self.tup)
+  def __getitem__(self, i):
+    return self.tup[i]
+  def to_string(self):
+    left = "".join((str(x) for x in self.tup[:self.pos]))
+    right = "".join((str(x) for x in self.tup[self.pos:]))
+    if hasattr(self.state, "print_with_dir"):
+      state_str = self.state.print_with_dir(self.dir)
+    else:
+      state_str = str(self.state)
+    if getattr(self.state, "is_embedded_in_tape", False):
+      return " ".join(filter(None, [left, state_str, right]))
+    elif self.dir == RIGHT:
+      # Clean up extra spaces if left or right are empty
+      return " ".join(filter(None, [left, "%s>" % state_str, right]))
+    else:
+      return " ".join(filter(None, [left, "<%s" % state_str, right]))
+  def __repr__(self):
+    return self.to_string()
+  def __eq__(self, other):
+    return (type(self) == type(other) and
+            self.tup == other.tup and
+            self.state == other.state and
+            self.dir == other.dir and
+            self.pos == other.pos)
+  def __hash__(self):
+    return hash((self.tup, self.state, self.dir, self.pos))
+
+class Hidden_State:
+  is_embedded_in_tape = True
+  def print_with_dir(self, dir):
+    return ""
+
 class Block_Macro_Machine(Macro_Machine):
   """A derivative Turing Machine which simulates another machine clumping k-symbols together into a block-symbol"""
   MAX_TTABLE_CELLS = 100000
@@ -433,17 +477,33 @@ class Block_Macro_Machine(Macro_Machine):
                         max_loops=self.max_sim_steps_per_symbol)
 
     # Convert symbol into the correct format.
-    return trans.replace(symbol_out = Block_Symbol(trans.symbol_out))
+    if trans.condition != RUNNING:
+      pos = trans.condition_details[-1]
+      symbol_out = Tape_Head_Symbol(trans.symbol_out, trans.state_out, trans.dir_out, pos)
+      state_out = Hidden_State()
+      return trans.replace(symbol_out = symbol_out, state_out = state_out)
+    else:
+      return trans.replace(symbol_out = Block_Symbol(trans.symbol_out))
 
 
 @total_ordering
 class Backsymbol_Macro_Machine_State:
   def __init__(self, base_state, back_symbol):
-    assert isinstance(base_state, (Simple_Machine_State, OffsetStartState)), base_state
+    assert isinstance(base_state, (Simple_Machine_State, OffsetStartState, Hidden_State)), base_state
     self.base_state  = base_state
     self.back_symbol = back_symbol
 
+  @property
+  def is_embedded_in_tape(self):
+    return hasattr(self.back_symbol, "is_embedded") or getattr(self.base_state, "is_embedded_in_tape", False)
+
   def print_with_dir(self, dir):
+    if hasattr(self.back_symbol, "is_embedded"):
+      return self.back_symbol.to_string()
+
+    if getattr(self.base_state, "is_embedded_in_tape", False):
+      return str(self.back_symbol)
+
     if dir == LEFT:
       return "%s (%s)" % (self.base_state.print_with_dir(dir),self.back_symbol)
     else:

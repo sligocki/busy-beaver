@@ -37,6 +37,8 @@ class Repeated_Symbol(object):
     return self.symbol + self.num
 
   def to_string(self, html_format, full_reps):
+    if hasattr(self.symbol, "is_embedded"):
+      return str(self.symbol)
     if html_format:
       return "%s<sup>%s</sup>" % (str(self.symbol),
                                   big_int_approx_or_full_str(self.num))
@@ -86,10 +88,13 @@ class Chain_Tape(object):
     else:
       state_str = state.print_with_dir(self.dir)
 
-    if self.dir:
-      dir_str = "%s>" % state_str
+    if getattr(state, "is_embedded_in_tape", False):
+      dir_str = state_str
     else:
-      dir_str = "<%s" % state_str
+      if self.dir:
+        dir_str = "%s>" % state_str
+      else:
+        dir_str = "<%s" % state_str
 
     if self.options.html_format:
       dir_str = "<b>%s</b>" % dir_str
