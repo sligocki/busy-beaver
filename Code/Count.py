@@ -28,7 +28,8 @@ def fact2(n, m):
 
 def count(tm : Turing_Machine.Simple_Machine,
           allow_no_halt : bool,
-          rado : bool = False) -> int:
+          rado : bool = False,
+          ignore_sym_perms : bool = False) -> int:
   """Count the number of TM's that are equivalent to this one.
      With the restriction that A0->1RB and Halt=1RH (unless rado=True)."""
   num_undefs = 0
@@ -53,8 +54,11 @@ def count(tm : Turing_Machine.Simple_Machine,
   
   if rado:
     # Rado allows any A0 transition, so we permute all S-1 and Q-1 non-initial symbols/states.
-    num_tms = fact2(tm.num_symbols - 1, tm.num_symbols - num_symbols_used) \
-            * fact2(tm.num_states  - 1, tm.num_states  - num_states_used)
+    if ignore_sym_perms:
+      sym_perms = 1
+    else:
+      sym_perms = fact2(tm.num_symbols - 1, tm.num_symbols - num_symbols_used)
+    num_tms = sym_perms * fact2(tm.num_states  - 1, tm.num_states  - num_states_used)
     
     # If there is at least one defined running transition, the L/R symmetry is fixed.
     # We multiply by 2 to account for the symmetric Rado TMs that would move L.
@@ -73,8 +77,11 @@ def count(tm : Turing_Machine.Simple_Machine,
     if num_symbols_used < 2 or num_states_used < 2:
       num_tms = 0
     else:
-      num_tms = fact2(tm.num_symbols - 2, tm.num_symbols - num_symbols_used) \
-              * fact2(tm.num_states  - 2, tm.num_states  - num_states_used)
+      if ignore_sym_perms:
+        sym_perms = 1
+      else:
+        sym_perms = fact2(tm.num_symbols - 2, tm.num_symbols - num_symbols_used)
+      num_tms = sym_perms * fact2(tm.num_states  - 2, tm.num_states  - num_states_used)
     if num_halts > 0:
       # All possible assignments of trans for each undefined transition.
       # num_dirs * num_states * num_symbols for each trans.
@@ -97,6 +104,7 @@ def main():
   parser.add_argument("--allow-no-halt", action="store_true")
   parser.add_argument("--rado", action="store_true", help="Calculate Rado count")
   parser.add_argument("--halt", action="store_true", help="Only count TMs with status halt")
+  parser.add_argument("--ignore-sym-perms", action="store_true", help="Ignore doing symbol permutations")
   args = parser.parse_args()
 
   total = 0
@@ -106,7 +114,7 @@ def main():
         if args.halt:
           if not tm_record.proto.status.halt_status.is_decided or not tm_record.is_halting():
             continue
-        total += count(tm_record.tm(), args.allow_no_halt, args.rado)
+        total += count(tm_record.tm(), args.allow_no_halt, args.rado, args.ignore_sym_perms)
 
   print(total)
 
