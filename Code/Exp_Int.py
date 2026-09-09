@@ -356,7 +356,12 @@ class ExpInt:
         self.min_value = -math.inf
       else:
         min_terms = sum(min_terms)
-        self.min_value = (min_terms + min_val(self.const)) / self.denom
+        a = min_terms + min_val(self.const)
+        b = self.denom
+        if isinstance(a, int):
+            self.min_value = a // b
+        else:
+            self.min_value = a / b
         assert isinstance(self.min_value, (ExpInt, int)), self
       self.vars = set(variables(self.const) | variables(self.denom))
       for term in self.terms:
