@@ -99,6 +99,22 @@ class MacroSimulatorTest(unittest.TestCase):
     sim.loop_run(1000)
     self.assertNotEqual(sim.op_state, Turing_Machine.HALT)
 
+  def test_nested_exp_int_infinite_rule(self):
+    # This machine evaluates to a nested ExpInt general rule.
+    # Previously, the rule was falsely thought to be finite because `always_ge` 
+    # evaluated `result - var` and conservatively returned `-inf` due to the `-var`.
+    tm = IO.parse_tm("1RB0LC_1LC0RA_1RE0LD_0LB0LC_1RC1RB")
+    tm = Turing_Machine.Block_Macro_Machine(tm, 6)
+    tm = Turing_Machine.Backsymbol_Macro_Machine(tm)
+    self.options.recursive = True
+    self.options.exp_linear_rules = True
+    self.options.exp_meta_linear_rules = True
+    self.options.compute_steps = False
+    sim = Simulator.Simulator(tm, self.options)
+    # The rule is proven infinite very quickly (under 5000 loops).
+    sim.loop_run(5000)
+    self.assertEqual(sim.op_state, Turing_Machine.INF_REPEAT)
+
 
   def test_small_halting(self):
     self.options.max_loops = 10_000

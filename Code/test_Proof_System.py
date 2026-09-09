@@ -502,6 +502,7 @@ class ProofSystemTest(unittest.TestCase):
     # Note: This is an infinite rule, so we must monkey with things a bit to
     # allow us to apply it only once.
     rule_meta.infinite = False
+    rule_meta.gen_rule.infinite = False
     # Test rule on an example:
     #   $ <E 11^10 10 00 11 10 $ -> $ <E 11^(-6 + 5 * 2^(20 + 8)) 10 00 11 10 $
     success, rest = prover.apply_rule(rule_meta, full_config)

@@ -353,10 +353,12 @@ class General_Rule(Rule):
 
     # Is this an infinite rule?
     self.infinite = True
-    for var, result in zip(self.var_list, self.result_list):
+    subs = {v: VariableToExpression(v) + m for v, m in zip(self.var_list, self.min_list) if v}
+    for var, result, min_val in zip(self.var_list, self.result_list, self.min_list):
       if var:  # If this exponent changes in this rule (has a variable)
-        if not always_ge(result, VariableToExpression(var)):
-          # If any exponent can decrease, this is not an infinite rule.
+        new_result = substitute(result, subs)
+        if not always_ge(new_result, min_val):
+          # If any exponent can drop below its minimum, this rule might not be infinite.
           self.infinite = False
           break
 
