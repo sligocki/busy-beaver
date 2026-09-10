@@ -14,6 +14,7 @@ import os
 import random
 import sys
 import time
+import traceback
 
 import IO
 from IO.TM_Record import TM_Record
@@ -40,7 +41,7 @@ def long_to_eng_str(number, left, right):
     return "0.%se+00" % ("0" * right)
 
 class Enumerator(object):
-  def __init__(self, options, stack, writer, pout):
+  def __init__(self, options, stack, writer, pout, pipeline=None):
     self.options = options
 
     # Main TM attributes
@@ -48,6 +49,7 @@ class Enumerator(object):
     self.writer = writer
     self.pout = pout
     self.save_freq = options.save_freq
+    self.pipeline = pipeline
 
     # Stack of TM descriptions to simulate
     assert isinstance(stack, Work_Queue.Work_Queue)
@@ -129,6 +131,8 @@ class Enumerator(object):
                       f"unk {self.num_unknown:_} - "
                       f"max {self.max_sim_time_s * 1000:_.0f}ms / "
                       f"total {time.time() - self.start_time:_.2f}s\n")
+      if self.pipeline:
+        self.pipeline.print_stats(self.pout)
       self.pout.flush()
 
     # Restart timer and time stats.
@@ -139,12 +143,15 @@ class Enumerator(object):
     """Simulate TM"""
 
     try:
-      Macro_Simulator.run_options(tm_record, self.options, time_limit)
+      if self.pipeline:
+        self.pipeline.run(tm_record, self.options, time_limit)
+      else:
+        Macro_Simulator.run_options(tm_record, self.options, time_limit)
 
     except Exception as e:
       print("ERROR: Exception raised while simulating TM:",
             tm_record.ttable_str(), file=sys.stderr)
-      print(e)
+      traceback.print_exc(file=sys.stderr)
       tm_record.proto.filter.simulator.result.unknown_info.threw_exception = True
       # raise
 
@@ -217,7 +224,7 @@ def enum_initial_tms(options):
     tm_record = TM_Record(tm_enum = blank_tm)
     yield tm_record
 
-def main(args):
+def main(args, pipeline=None):
   ## Parse command line options.
   usage = "usage: %prog [options]"
   parser = OptionParser(usage=usage)
@@ -297,7 +304,7 @@ def main(args):
 
   with IO.Proto.Writer(options.outfilename) as writer:
     ## Enumerate machines
-    enumerator = Enumerator(options, stack, writer, pout)
+    enumerator = Enumerator(options, stack, writer, pout, pipeline=pipeline)
 
     # Push input TMs one at a time so we don't blow up memory if there are a
     # lot of input machines.
