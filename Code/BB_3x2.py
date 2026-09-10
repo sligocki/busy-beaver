@@ -12,9 +12,10 @@ def main():
 
     pipeline = Pipeline([
         RevEngDecider(),
-        SimulatorDecider(),
+        SimulatorDecider(200),
         LinRecurDecider(127),
         CTLDecider(type="CTL2", max_block_size=6),
+        SimulatorDecider(10000),
     ])
 
     enumerate(3, 2, pipeline, args.outfile)

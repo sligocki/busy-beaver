@@ -30,14 +30,18 @@ class Pipeline:
 
 
 class SimulatorDecider:
-    def __init__(self, block_size=None, name=None):
+    def __init__(self, max_loops, block_size=None, name=None):
+        self.max_loops = max_loops
         self.block_size = block_size
-        self.name = name or ("Simulator" if block_size is None else f"Simulator_b{block_size}")
+
+        suffix = f"_b{block_size}" if block_size else ""
+        self.name = name or f"Simulator_{max_loops}{suffix}"
 
     def apply(self, tm_record, options, time_limit=None):
-        if self.block_size is not None:
-            options.block_size = self.block_size
-            
+        # Override options based on our decider's explicit config
+        options.max_loops = self.max_loops
+        options.block_size = self.block_size
+
         machine = tm_record.tm()
         if time_limit is not None:
             machine.time_limit = time_limit

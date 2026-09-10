@@ -12,7 +12,7 @@ def main():
 
     pipeline = Pipeline([
         RevEngDecider(),
-        SimulatorDecider(),
+        SimulatorDecider(10),
     ])
 
     enumerate(2, 2, pipeline, args.outfile)
