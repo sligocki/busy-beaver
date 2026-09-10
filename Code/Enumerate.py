@@ -19,9 +19,10 @@ import traceback
 import IO
 from IO.TM_Record import TM_Record
 import Macro_Simulator
+from Pipeline import Pipeline
+from Time_Limit import TimeLimit
 import TM_Enum
 import Work_Queue
-from Time_Limit import TimeLimit
 
 
 def long_to_eng_str(number, left, right):
@@ -224,8 +225,7 @@ def enum_initial_tms(options):
     tm_record = TM_Record(tm_enum = blank_tm)
     yield tm_record
 
-def main(args, pipeline=None):
-  ## Parse command line options.
+def get_options_parser():
   usage = "usage: %prog [options]"
   parser = OptionParser(usage=usage)
   enum_parser = OptionGroup(parser, "Enumeration Options")
@@ -273,7 +273,47 @@ def main(args, pipeline=None):
   out_parser.add_option("--save-freq", type=int, default=100_000, metavar="FREQ",
                         help="Freq to save output and write stats [Default: %default]")
   parser.add_option_group(out_parser)
+  return parser
 
+def get_options(states, symbols, **kwargs):
+  """Return an options object with default values, overriding with provided kwargs."""
+  import time
+  parser = get_options_parser()
+  (options, args) = parser.parse_args([])
+  options.states = states
+  options.symbols = symbols
+  for key, value in kwargs.items():
+      setattr(options, key, value)
+      
+  ## Set complex defaults
+  if options.randomize and not options.seed:
+    options.seed = int(1000*time.time())
+
+  if not options.max_block_size:
+    options.max_block_size = 5
+    
+  return options
+
+def enumerate(states: int, symbols: int, pipeline: Pipeline, outfilename: Path, **kw):
+  options = get_options(states, symbols, outfilename=outfilename, **kw)
+
+  # Depth-first search
+  stack = Work_Queue.Basic_LIFO_Work_Queue()
+  pout = sys.stdout
+
+  with IO.Proto.Writer(options.outfilename) as writer:
+    enumerator = Enumerator(options, stack, writer, pout, pipeline=pipeline)
+    
+    # Push initial TMs
+    for tm_record in enum_initial_tms(options):
+      stack.push_job(tm_record)
+        
+    enumerator.continue_enum()
+    enumerator.save()
+
+def main(args, pipeline=None):
+  ## Parse command line options.
+  parser = get_options_parser()
   (options, args) = parser.parse_args(args)
 
   if not options.outfilename:
