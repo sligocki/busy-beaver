@@ -67,7 +67,7 @@ class RevEngDecider:
 
 
 class CTLDecider:
-    def __init__(self, type, min_block_size, max_block_size, cutoff=200, all_offsets=True, no_backsymbol=False, name=None):
+    def __init__(self, type: str, max_block_size: int, min_block_size : int = 1, cutoff : int = 200, all_offsets=False, no_backsymbol=False, name=None):
         self.name = name or f"{type}_{min_block_size}-{max_block_size}"
         self.type = type
         self.min_block_size = min_block_size
@@ -82,6 +82,7 @@ class CTLDecider:
             min_block_size=self.min_block_size,
             max_block_size=self.max_block_size,
             cutoff=self.cutoff,
+            offset=0,
             all_offsets=self.all_offsets,
             no_backsymbol=self.no_backsymbol,
             max_block_size_for_all_offsets=self.max_block_size
