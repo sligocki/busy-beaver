@@ -30,17 +30,22 @@ class Pipeline:
 
 
 class SimulatorDecider:
-    def __init__(self, max_loops, block_size=None, name=None):
+    def __init__(self, max_loops, block_size=None, recursive=False, name=None):
         self.max_loops = max_loops
         self.block_size = block_size
+        self.recursive = recursive
 
-        suffix = f"_b{block_size}" if block_size else ""
-        self.name = name or f"Simulator_{max_loops}{suffix}"
+        self.name = name or f"Simulator_{max_loops}"
+        if block_size:
+            self.name += f"_b{block_size}"
+        if recursive:
+            self.name += "_rec"
 
     def apply(self, tm_record, options, time_limit=None):
         # Override options based on our decider's explicit config
         options.max_loops = self.max_loops
         options.block_size = self.block_size
+        options.recursive = self.recursive
 
         machine = tm_record.tm()
         if time_limit is not None:
@@ -71,10 +76,10 @@ class RevEngDecider:
 
 
 class CTLDecider:
-    def __init__(self, type: str, max_block_size: int, min_block_size : int = 1, cutoff : int = 200, all_offsets=False, no_backsymbol=False, name=None):
-        self.name = name or f"{type}_{min_block_size}-{max_block_size}"
+    def __init__(self, type: str, max_block_size: int,
+                 cutoff : int = 200, all_offsets=False, no_backsymbol=False, name=None):
+        self.name = name or f"{type}_mb{max_block_size}"
         self.type = type
-        self.min_block_size = min_block_size
         self.max_block_size = max_block_size
         self.cutoff = cutoff
         self.all_offsets = all_offsets
@@ -83,7 +88,7 @@ class CTLDecider:
     def apply(self, tm_record, options, time_limit=None):
         args = argparse.Namespace(
             type=self.type,
-            min_block_size=self.min_block_size,
+            min_block_size=1,
             max_block_size=self.max_block_size,
             cutoff=self.cutoff,
             offset=0,
