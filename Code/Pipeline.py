@@ -34,16 +34,18 @@ class SimulatorDecider:
         self.name = name
 
     def apply(self, tm_record, options, time_limit=None):
-        # Temporarily disable built-in filters to let the pipeline handle them explicitly
-        old_rev = getattr(options, "reverse_engineer", False)
-        old_ctl = getattr(options, "ctl", False)
-        options.reverse_engineer = False
-        options.ctl = False
+        import Macro_Simulator
+        machine = tm_record.tm()
+        if time_limit is not None:
+            machine.time_limit = time_limit
+            
+        sim_info = tm_record.proto.filter.simulator
+        sim_info.parameters.block_size = 1
+        sim_info.parameters.has_blocksymbol_macro = False
         
-        Macro_Simulator.run_options(tm_record, options, time_limit)
-        
-        options.reverse_engineer = old_rev
-        options.ctl = old_ctl
+        # Directly run the simulator loop, bypassing Macro_Simulator's implicit pipeline
+        # (which includes Block_Finder, LinRecur, RevEng, CTL).
+        Macro_Simulator.simulate_machine(machine, options, sim_info, tm_record.proto.status)
 
 
 class RevEngDecider:
@@ -91,3 +93,16 @@ class BacktrackingDecider:
 
     def apply(self, tm_record, options, time_limit=None):
         Backtracking_Filter.backtrack_filter(tm_record, self.num_steps, self.max_width)
+
+class LinRecurDecider:
+    def __init__(self, max_steps, find_min_start_step=False, name=None):
+        self.name = name or f"LinRecur_{max_steps}"
+        self.max_steps = max_steps
+        self.find_min_start_step = find_min_start_step
+
+    def apply(self, tm_record, options, time_limit=None):
+        import Lin_Recur_Detect
+        lr_info = tm_record.proto.filter.lin_recur
+        lr_info.parameters.max_steps = self.max_steps
+        lr_info.parameters.find_min_start_step = self.find_min_start_step
+        Lin_Recur_Detect.filter(tm_record.tm(), lr_info, tm_record.proto.status)
