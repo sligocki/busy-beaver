@@ -12,6 +12,7 @@ class Pipeline:
     def __init__(self, deciders):
         self.deciders = deciders
         self.stats = {decider.name: 0 for decider in deciders}
+        self.stats["Undecided"] = 0
         
     def run(self, tm_record, options, time_limit=None):
         """Try each decider in pipeline on this TM until one successfully decides it (or all fail)."""
@@ -20,12 +21,13 @@ class Pipeline:
             if not tm_record.is_unknown_halting():
                 self.stats[decider.name] += 1
                 break
+        else:
+            self.stats["Undecided"] += 1
 
     def print_stats(self, pout):
         pout.write(f"--- Pipeline Filter Stats ---\n")
         for name, count in self.stats.items():
-            if count > 0:
-                pout.write(f"  {name}: {count:_}\n")
+            pout.write(f"  {name}: {count:_}\n")
         pout.write("-----------------------------\n")
 
 
