@@ -17,7 +17,6 @@ def filter(tm_record, block_size : int, window_size : int,
              tm_record.proto.status)
 
 def filter_all(tm_record, args) -> None:
-  tm_record.clear_proto()
   info = tm_record.proto.filter.cps
   with IO.Timer(info.result):
     if args.max_block_size:
@@ -94,6 +93,7 @@ def main():
   with IO.Writer(args.outfile) as writer:
     with IO.Reader(args.infile) as reader:
       for tm_record in reader:
+        tm_record.clear_proto()
         filter_all(tm_record, args)
         writer.write_record(tm_record)
 

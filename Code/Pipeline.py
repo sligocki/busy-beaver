@@ -116,3 +116,37 @@ class LinRecurDecider:
         lr_info.parameters.max_steps = self.max_steps
         lr_info.parameters.find_min_start_step = self.find_min_start_step
         Lin_Recur_Detect.filter(tm_record.tm(), lr_info, tm_record.proto.status)
+
+class CpsDecider:
+    def __init__(self, max_block_size : int, fixed_history=None, lru_history=False,
+                 max_steps=1_000_000, max_iters=500, max_configs=10_000, max_edges=10_000,
+                 name=None):
+        self.name = f"CPS_mb{max_block_size}"
+        if fixed_history:
+            self.name += f"_h{fixed_history}"
+        if lru_history:
+            self.name += "_lru"
+            
+        self.max_block_size = max_block_size
+        self.fixed_history = fixed_history
+        self.lru_history = lru_history
+        self.max_steps = max_steps
+        self.max_iters = max_iters
+        self.max_configs = max_configs
+        self.max_edges = max_edges
+        
+    def apply(self, tm_record, options, time_limit=None):
+        import CPS_Filter
+        import argparse
+        args = argparse.Namespace(
+            max_window_size=None,
+            min_block_size=1,
+            max_block_size=self.max_block_size,
+            fixed_history=self.fixed_history,
+            lru_history=self.lru_history,
+            max_steps=self.max_steps,
+            max_iters=self.max_iters,
+            max_configs=self.max_configs,
+            max_edges=self.max_edges
+        )
+        CPS_Filter.filter_all(tm_record, args)
