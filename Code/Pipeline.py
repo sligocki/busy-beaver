@@ -30,21 +30,26 @@ class Pipeline:
 
 
 class SimulatorDecider:
-    def __init__(self, name="Simulator"):
-        self.name = name
+    def __init__(self, block_size=None, name=None):
+        self.block_size = block_size
+        self.name = name or ("Simulator" if block_size is None else f"Simulator_b{block_size}")
 
     def apply(self, tm_record, options, time_limit=None):
-        import Macro_Simulator
+        if self.block_size is not None:
+            options.block_size = self.block_size
+            
         machine = tm_record.tm()
         if time_limit is not None:
             machine.time_limit = time_limit
             
-        sim_info = tm_record.proto.filter.simulator
-        sim_info.parameters.block_size = 1
-        sim_info.parameters.has_blocksymbol_macro = False
+        # Get wrapped macro-machine
+        machine, best_block_size = Macro_Simulator.setup_macromachine(machine, options, tm_record)
         
-        # Directly run the simulator loop, bypassing Macro_Simulator's implicit pipeline
-        # (which includes Block_Finder, LinRecur, RevEng, CTL).
+        sim_info = tm_record.proto.filter.simulator
+        sim_info.parameters.block_size = best_block_size
+        # Setup has_blocksymbol_macro correctly as requested!
+        sim_info.parameters.has_blocksymbol_macro = getattr(options, "backsymbol", True)
+        
         Macro_Simulator.simulate_machine(machine, options, sim_info, tm_record.proto.status)
 
 

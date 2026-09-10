@@ -54,6 +54,37 @@ def add_option_group(parser):
   Simulator.add_option_group(parser)
   Block_Finder.add_option_group(parser)
 
+def setup_macromachine(base_tm, options, tm_record):
+  """Finds block size (if needed) and wraps the TM in Macro Machine(s)."""
+  # If no explicit block-size given, use heuristics to find one.
+  block_size = getattr(options, "block_size", None)
+  if not block_size:
+    if getattr(options, "max_loops", None):
+      bf_loops = options.max_loops // 100
+    else:
+      bf_loops = 100
+
+    bf_info = tm_record.proto.filter.block_finder
+    bf_info.parameters.compression_search_loops = bf_loops
+    bf_info.parameters.mult_sim_loops = bf_loops
+    bf_info.parameters.max_block_mult = options.max_block_mult
+    bf_info.parameters.block_mult = options.block_mult
+    bf_info.parameters.max_block_size = options.max_block_size
+    Block_Finder.block_finder(base_tm, options,
+                              bf_info.parameters, bf_info.result)
+    block_size = bf_info.result.best_block_size
+
+  machine = base_tm
+  # Do not create a 1-Block Macro-Machine (just use base machine)
+  if block_size != 1:
+    machine = Turing_Machine.Block_Macro_Machine(
+      machine, block_size, max_sim_steps_per_symbol=options.max_steps_per_macro)
+  if getattr(options, "backsymbol", True):
+    machine = Turing_Machine.Backsymbol_Macro_Machine(
+      machine, max_sim_steps_per_symbol=options.max_steps_per_macro)
+      
+  return machine, block_size
+
 def run_options(tm_record : TM_Record,
                 options, time_limit=None) -> None:
   """Run the Accelerated Turing Machine Simulator, running a few simple filters
@@ -87,32 +118,7 @@ def run_options(tm_record : TM_Record,
         return
 
     if options.run_sim:
-      # If no explicit block-size given, use heuristics to find one.
-      block_size = options.block_size
-      if not block_size:
-        if options.max_loops:
-          bf_loops = options.max_loops // 100
-        else:
-          bf_loops = 100
-
-        bf_info = tm_record.proto.filter.block_finder
-        bf_info.parameters.compression_search_loops = bf_loops
-        bf_info.parameters.mult_sim_loops = bf_loops
-        bf_info.parameters.max_block_mult = options.max_block_mult
-        bf_info.parameters.block_mult = options.block_mult
-        bf_info.parameters.max_block_size = options.max_block_size
-        Block_Finder.block_finder(base_tm, options,
-                                  bf_info.parameters, bf_info.result)
-        block_size = bf_info.result.best_block_size
-
-      machine = base_tm
-      # Do not create a 1-Block Macro-Machine (just use base machine)
-      if block_size != 1:
-        machine = Turing_Machine.Block_Macro_Machine(
-          machine, block_size, max_sim_steps_per_symbol=options.max_steps_per_macro)
-      if options.backsymbol:
-        machine = Turing_Machine.Backsymbol_Macro_Machine(
-          machine, max_sim_steps_per_symbol=options.max_steps_per_macro)
+      machine, block_size = setup_macromachine(base_tm, options, tm_record)
 
       if options.ctl:
         if options.max_loops:

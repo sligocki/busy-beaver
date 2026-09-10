@@ -15,7 +15,6 @@ def main():
     pipeline = Pipeline([
         RevEngDecider(),
         SimulatorDecider(),
-        LinRecurDecider(127),
     ])
     
     import optparse
