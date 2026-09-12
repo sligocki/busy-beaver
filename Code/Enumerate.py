@@ -294,8 +294,8 @@ def get_options(states, symbols, **kwargs):
     
   return options
 
-def enumerate(states: int, symbols: int, pipeline: Pipeline, outfilename: Path, **kw):
-  options = get_options(states, symbols, outfilename=outfilename, **kw)
+def enumerate(states: int, symbols: int, pipeline: Pipeline, outfilename: Path, time=0.0, **kw):
+  options = get_options(states, symbols, outfilename=outfilename, time=time, **kw)
 
   # Depth-first search
   stack = Work_Queue.Basic_LIFO_Work_Queue()
