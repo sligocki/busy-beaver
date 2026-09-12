@@ -96,17 +96,18 @@ class CPSSim:
 
     # set of |Config|s to evaluate and add to |transitions|
     self.todo_configs = {
-      Config(tm.init_state, RIGHT, blank_window, self.block_size)
+      Config(tm.init_state, RIGHT, blank_window, self.block_size): None
     }
     # Dict of Config -> PostConfig saving evaluation on window.
     self.transitions : dict[Config, tuple[Turing_Machine.Transition, Optional[Config]]] = {}
+
     # continuations[dir][block] = set of blocks that can appear directly after
-    # |block| on that half-tape.
-    self.continuations : dict[int, dict[tuple, set[tuple]]] = {}
+    #   |block| in direction |dir|.
+    self.continuations : dict[int, dict[tuple, dict[tuple, None]]] = {}
     # Initially, the only continuations are blank block -> blank block
     for dir in DIRS:
-      self.continuations[dir] = defaultdict(set)
-      self.continuations[dir][blank_block].add(blank_block)
+      self.continuations[dir] = defaultdict(dict)
+      self.continuations[dir][blank_block][blank_block] = None
 
 
   def run(self):
@@ -115,8 +116,8 @@ class CPSSim:
       self.result.num_iters += 1
       while self.todo_configs:
         # Note: We need to make a copy, since step() updates todo_configs.
-        configs = self.todo_configs
-        self.todo_configs = set()
+        configs = list(self.todo_configs.keys())
+        self.todo_configs = {}
         for config in configs:
           sim_condition = self.sim_config(config)
           if sim_condition == RUNNING:
@@ -133,7 +134,7 @@ class CPSSim:
 
       # Re-examine self.transitions to see if any have grown.
       was_modified = False
-      configs = frozenset(self.transitions.keys())
+      configs = list(self.transitions.keys())
       for config in configs:
         if self.update_set(config):
           was_modified = True
@@ -205,13 +206,13 @@ class CPSSim:
       # NOTE: This block may not have been behind in old_config. It is instead
       # the original contents of |new_behind_furthest|.
       old_behind_furthest = old_config.get_block(behind_dir, 0)
-      for dst in self.continuations[behind_dir][old_behind_furthest]:
+      for dst in list(self.continuations[behind_dir][old_behind_furthest].keys()):
         if self.add_edge(behind_dir, new_behind_furthest, dst):
           was_modified = True
 
       # Update self.configs by using graphs to find new front block options.
       old_front = old_config.get_block(trans.dir_out, 0)
-      for new_front in self.continuations[front_dir][old_front]:
+      for new_front in list(self.continuations[front_dir][old_front].keys()):
         next_config = new_config.shift_front(new_front)
         if self.add_config(next_config):
           was_modified = True
@@ -221,7 +222,7 @@ class CPSSim:
   def add_edge(self, dir, src, dst) -> bool:
     # DEBUG: print("    Adding edge", dir, src, dst)
     if dst not in self.continuations[dir][src]:
-      self.continuations[dir][src].add(dst)
+      self.continuations[dir][src][dst] = None
       self.result.num_edges += 1
       return True
     return False
@@ -230,7 +231,7 @@ class CPSSim:
     # DEBUG: print("    Adding config", str(config))
     # assert 0 <= config.pos < len(config.window), str(config)
     if config not in self.transitions and config not in self.todo_configs:
-      self.todo_configs.add(config)
+      self.todo_configs[config] = None
       self.result.num_configs += 1
       return True
     return False
