@@ -13,14 +13,21 @@ class Pipeline:
         self.deciders = deciders
         self.stats = {decider.name: 0 for decider in deciders}
         self.stats["Undecided"] = 0
+        self.stats["Timeout"] = 0
         
     def run(self, tm_record, options, time_limit=None):
         """Try each decider in pipeline on this TM until one successfully decides it (or all fail)."""
         for decider in self.deciders:
+            if time_limit is not None and time_limit.timed_out:
+                break
+                
             decider.apply(tm_record, options, time_limit)
             if not tm_record.is_unknown_halting():
                 self.stats[decider.name] += 1
-                break
+                return
+                
+        if time_limit is not None and time_limit.timed_out:
+            self.stats["Timeout"] += 1
         else:
             self.stats["Undecided"] += 1
 
