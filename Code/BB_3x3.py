@@ -17,8 +17,10 @@ def main():
         CpsDecider(max_block_size=6),
         CTLDecider(type="CTL2", max_block_size=6),
         CTLDecider(type="CTL4", max_block_size=6),
-        SimulatorDecider(100000, recursive=True),
         CpsDecider(max_block_size=6, fixed_history=1),
+        SimulatorDecider(10000),
+        SimulatorDecider(100000, recursive=True),
+        SimulatorDecider(1000000),
     ])
 
     enumerate(3, 3, pipeline, args.outfile)
