@@ -153,15 +153,15 @@ class Linear_Rule(Rule):
         # Variable run_length
         if variables(result_block.num) != {var_list[i]}:
           # Don't allow rules like: x -> 7 or x -> 3y+2
-          return False
+          return None, f"Variable mismatch for block {i}: expected {{{var_list[i]}}}, got {variables(result_block.num)} from {result_block.num}"
         if not isinstance(result_block.num, Expression):
           # Don't allow rules like: x -> 2^x
-          return False
+          return None, f"Not an Expression: block {i} is {result_block.num} ({type(result_block.num)})"
 
         res = result_block.num.as_strictly_linear()
         if not res:
           # Don't allow rules like: x -> x^2
-          return False
+          return None, f"Not strictly linear: block {i} is {result_block.num}"
         (var, coef, const) = res
         assert var == var_list[i]
         if coef == 1:
@@ -172,7 +172,7 @@ class Linear_Rule(Rule):
         else:
           func_list.append(Rule_Func.Mult_Func(var, min_list[i], coef, const))
     return Linear_Rule(var_list, min_list, func_list,
-                       result_tape, num_steps, num_loops, rule_num, states_last_seen, level)
+                       result_tape, num_steps, num_loops, rule_num, states_last_seen, level), None
 
   def __repr__(self):
     def start_block(i):
@@ -256,20 +256,20 @@ class Exponential_Rule(Rule):
         const_list.append(None)
         if variables(result_block.num) != {var_list[i]}:
           # Don't allow rules like: x -> 7 or x -> 3y+2
-          return False
+          return None, f"Variable mismatch for block {i}: expected {{{var_list[i]}}}, got {variables(result_block.num)} from {result_block.num}"
 
         if isinstance(result_block.num, ExpInt):
           if len(result_block.num.terms) != 1:
             # Don't allow rules like: x -> 2^{2x+1} + 2^x
-            return False
+            return None, f"Multiple exp terms: block {i} is {result_block.num}"
           exp_term = result_block.num.terms[0]
           if not isinstance(exp_term.exponent, Expression):
             # Don't allow rules like: x -> 2^2^x
-            return False
+            return None, f"Exponent not an Expression: block {i} is {result_block.num}"
           res_exp = exp_term.exponent.as_strictly_linear()
           if not res_exp:
             # Don't allow rules like: x -> 2^x^2
-            return False
+            return None, f"Exponent not strictly linear: block {i} is {result_block.num}"
 
           (var, coef_exp, const_exp) = res_exp
           assert var == var_list[i]
@@ -284,7 +284,7 @@ class Exponential_Rule(Rule):
           res = result_block.num.as_strictly_linear()
           if not res:
             # Don't allow rules like: x -> x^2
-            return False
+            return None, f"Not strictly linear: block {i} is {result_block.num}"
           (var, coef, const) = res
           assert var == var_list[i]
           if coef == 1:
@@ -294,8 +294,9 @@ class Exponential_Rule(Rule):
               func_list.append(Rule_Func.Add_Func(var, min_list[i], const))
           else:
             func_list.append(Rule_Func.Mult_Func(var, min_list[i], coef, const))
+
     return Exponential_Rule(func_list, const_list, result_tape,
-                            num_steps, num_loops, rule_num, states_last_seen, level)
+                            num_steps, num_loops, rule_num, states_last_seen, level), None
 
   def __repr__(self):
     def start_block(i):
@@ -806,7 +807,7 @@ class Proof_System(object):
         # For now we just fail. It may not be worth implementing this anyway.
         if self.verbose:
           print()
-          self.print_this("** Failed: Exponent below min **")
+          self.print_this("[PROVER FAILURE] Exponent below min **")
           self.print_this(gen_sim.tape.print_with_state(gen_sim.state))
           print()
         return False
@@ -829,7 +830,7 @@ class Proof_System(object):
       if gen_sim.op_state is not Turing_Machine.RUNNING:
         if self.verbose:
           print()
-          self.print_this("** Failed: Machine stopped running:", gen_sim.op_state)
+          self.print_this("[PROVER FAILURE] Machine stopped running:", gen_sim.op_state)
           print()
         return False
       # Update min_val for each expression.
@@ -841,7 +842,7 @@ class Proof_System(object):
           if len(vars) > 1:
             if self.verbose:
               print()
-              self.print_this("** Failed: Multiple vars in one term **")
+              self.print_this("[PROVER FAILURE] Multiple vars in one term **")
               self.print_this(gen_sim.tape)
               print()
             return False
@@ -855,7 +856,7 @@ class Proof_System(object):
     if gen_stripped_config != stripped_config:
       if self.verbose:
         print()
-        self.print_this("** Failed: Config mismatch **")
+        self.print_this("[PROVER FAILURE] Config mismatch **")
         self.print_this(gen_sim.tape)
         self.print_this(gen_stripped_config)
         self.print_this(stripped_config)
@@ -919,7 +920,7 @@ class Proof_System(object):
         states_last_seen = None
 
       # Figure out if this is a Linear_Rule
-      rule = Linear_Rule.try_gen(
+      rule, lin_err = Linear_Rule.try_gen(
         var_list, min_list, result_tape, num_steps,
         gen_sim.num_loops, self.num_rules, states_last_seen, rule_level)
       if rule:
@@ -936,8 +937,10 @@ class Proof_System(object):
           print()
 
       if not rule:
+        if self.verbose:
+          self.print_this(f"[PROVER FAILURE] Linear_Rule generation failed: {lin_err}")
         # Figure out if this is an Exponential_Rule
-        rule = Exponential_Rule.try_gen(
+        rule, exp_err = Exponential_Rule.try_gen(
           var_list, min_list, result_tape, num_steps,
           gen_sim.num_loops, self.num_rules, states_last_seen, rule_level)
         if rule:
@@ -952,6 +955,8 @@ class Proof_System(object):
             print()
 
       if not rule:
+        if self.verbose:
+          self.print_this(f"[PROVER FAILURE] Exponential_Rule generation failed: {exp_err}")
         # If not a Diff_Rule, Linear_Rule or Exponential_Rule ... it's a General_Rule
 
         # TODO: Deal with "Swap rules" like:
