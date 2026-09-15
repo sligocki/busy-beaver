@@ -39,12 +39,15 @@ class Repeated_Symbol(object):
   def to_string(self, html_format, full_reps):
     if hasattr(self.symbol, "is_embedded"):
       return str(self.symbol)
+      
+    num_str = big_int_approx_or_full_str(self.num)
+    if num_str.startswith("~"):
+      num_str = f"({num_str})"
+      
     if html_format:
-      return "%s<sup>%s</sup>" % (str(self.symbol),
-                                  big_int_approx_or_full_str(self.num))
+      return "%s<sup>%s</sup>" % (str(self.symbol), num_str)
     else:
-      return "%s^%s" % (str(self.symbol),
-                        big_int_approx_or_full_str(self.num))
+      return "%s^%s" % (str(self.symbol), num_str)
 
   def __repr__(self):
     return self.to_string(html_format=False, full_reps=False)

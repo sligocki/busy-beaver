@@ -51,13 +51,13 @@ def big_int_approx_str(value, digits_cutoff : int = 10):
     if top <= 0:
       return str(top)
     else:
-      return f"~ 10^{math.log10(top):_.5f}"
+      return f"~ 10^{math.log10(top):_.1f}"
   elif height == 1:
     # value = 10^top
-    return f"~ 10^{top:_.5f}"
+    return f"~ 10^{top:_.1f}"
   else:
     assert height > 1, height
-    return f"~ 10 ↑↑ {fractional_height(value):_.5f}"
+    return f"~ 10 ↑↑ {fractional_height(value):_.1f}"
 
 def big_int_approx_and_full_str(value):
   if value is None:
