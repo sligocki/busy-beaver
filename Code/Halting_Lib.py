@@ -13,12 +13,16 @@ import io_pb2
 def big_int_approx_str(value, digits_cutoff : int = 10):
   if value is None:
     return "N/A"
-  if value in (math.inf, -math.inf) or not is_const(value):
+  if value in (math.inf, -math.inf):
     return str(value)
 
   cutoff = 10**digits_cutoff
-  if value < cutoff:
-    return f"{try_eval(value):_}"
+  if is_const(value):
+    try:
+      if value < cutoff:
+        return f"{try_eval(value):_}"
+    except:
+      pass
 
   val = uparrow_size_approx(value)
   if val[0] >= 4:
@@ -29,6 +33,15 @@ def big_int_approx_str(value, digits_cutoff : int = 10):
 
   assert val[0] == 2, val
   height, top = val[1], val[2]
+  
+  if not is_const(value):
+    if height == 0:
+      return f"{top}"
+    elif height == 1:
+      return f"~ 10^{top}"
+    else:
+      return f"~ 10 ↑↑ {height}"
+
   while top > cutoff:
     height += 1
     top = math.log10(top)
@@ -51,27 +64,31 @@ def big_int_approx_and_full_str(value):
     return "N/A"
 
   approx_str = big_int_approx_str(value)
-  if isinstance(value, ExpInt):
-    return f"{approx_str}  =  {value}"
-  elif 0 < value < 10**50:
-    return f"{approx_str}  =  {value:_}"
-  else:
+  full_str = str(value)
+  if approx_str == full_str:
     return approx_str
+  elif len(full_str) > 100:
+    return f"{approx_str} (_{len(full_str)} chars_)"
+  else:
+    return f"{approx_str} ({full_str})"
 
 def big_int_approx_or_full_str(value):
   if value is None:
     return "N/A"
 
-  if isinstance(value, (ExpInt, Expression)):
-    return str(value)
-  elif type(value).__name__ in ('Iterated_Expression', 'Iterated_Math'):
-    return str(value)
-  elif value < 10**9:
-    return f"{value:_}"
-  elif value == math.inf:
-    return str(value)
-  else:
+  if type(value).__name__ in ('ExpInt', 'Expression', 'Iterated_Expression', 'Iterated_Math'):
     return big_int_approx_str(value)
+    
+  if value == math.inf:
+    return str(value)
+    
+  try:
+    if value < 10**9:
+      return f"{value:_}"
+  except:
+    pass
+    
+  return big_int_approx_str(value)
 
 
 _BIG_INT_MAX = 2**63 - 1
