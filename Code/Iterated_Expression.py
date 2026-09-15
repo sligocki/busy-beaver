@@ -40,7 +40,7 @@ class Iterated_Expression:
     assert expr_vars.issubset({self.var}), f"step_expr {self.step_expr} contains other variables: {expr_vars}"
 
   def __repr__(self):
-    return f"{self.step_expr}^({self.num_reps})({self.start_val})"
+    return f"((λ{self.var} → {self.step_expr})^({self.num_reps}) ({self.start_val}))"
   __str__ = __repr__
 
   def is_const(self):
@@ -134,7 +134,18 @@ class Iterated_Math:
     self.coef = coef
 
   def __repr__(self):
-    return f"({self.coef} * {self.it_expr} + {self.const})"
+    if self.coef == 1 and self.const == 0:
+      return f"{self.it_expr}"
+    elif self.coef == 1:
+      if self.const < 0:
+        return f"({self.it_expr} - {-self.const})"
+      return f"({self.it_expr} + {self.const})"
+    elif self.const == 0:
+      return f"({self.coef} * {self.it_expr})"
+    else:
+      if self.const < 0:
+        return f"({self.coef} * {self.it_expr} - {-self.const})"
+      return f"({self.coef} * {self.it_expr} + {self.const})"
   __str__ = __repr__
 
   def is_const(self):

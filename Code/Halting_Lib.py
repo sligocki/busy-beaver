@@ -54,9 +54,9 @@ def big_int_approx_or_full_str(value):
   if value is None:
     return "N/A"
 
-  if isinstance(value, ExpInt):
+  if isinstance(value, (ExpInt, Expression)):
     return str(value)
-  elif isinstance(value, Expression):
+  elif type(value).__name__ in ('Iterated_Expression', 'Iterated_Math'):
     return str(value)
   elif value < 10**9:
     return f"{value:_}"
