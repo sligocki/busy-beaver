@@ -36,7 +36,7 @@ def div(a, b):
 
 def as_const(x):
   assert is_const(x)
-  if is_expr(x):
+  if isinstance(x, Expression):
     return x.const
   else:
     return x

@@ -43,6 +43,7 @@ class Iterated_Expression:
     return f"((λ{self.var} → {self.step_expr})^({self.num_reps}) ({self.start_val}))"
   __str__ = __repr__
 
+  @property
   def is_const(self):
     return is_const(self.start_val) and is_const(self.num_reps)
 
@@ -122,9 +123,13 @@ class Iterated_Expression:
     return self > other or self == other
 
   def __mul__(self, other):
+    if other == 0:
+      return 0
     return Iterated_Math(self, 0, coef=other)
 
   def __rmul__(self, other):
+    if other == 0:
+      return 0
     return Iterated_Math(self, 0, coef=other)
 
 class Iterated_Math:
@@ -148,8 +153,9 @@ class Iterated_Math:
       return f"({self.coef} * {self.it_expr} + {self.const})"
   __str__ = __repr__
 
+  @property
   def is_const(self):
-    return False
+    return is_const(self.it_expr)
 
   def min_val(self):
     return self.coef * min_val(self.it_expr) + min_val(self.const)
@@ -177,15 +183,19 @@ class Iterated_Math:
     raise NotImplementedError("Cannot rsub Iterated_Math")
 
   def __mul__(self, other):
+    if other == 0:
+      return 0
     return Iterated_Math(self.it_expr, self.const * other, self.coef * other)
 
   def __rmul__(self, other):
+    if other == 0:
+      return 0
     return Iterated_Math(self.it_expr, self.const * other, self.coef * other)
 
   def __divmod__(self, other):
     if other == 1:
       return (self, 0)
-    raise NotImplementedError("Cannot mod Iterated_Math by non-1 value")
+    raise NotImplementedError(f"Cannot mod Iterated_Math by non-1 value: {other}")
 
   def __abs__(self):
     return self

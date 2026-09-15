@@ -26,7 +26,7 @@ MAX_TERMS = 1_000_000
 def exp_int(base: int, exponent: int | ExpInt | Expression) -> ExpInt:
   """Returns either int or ExpInt based on size of exponent."""
   assert isinstance(base, int), base
-  assert isinstance(exponent, (int, ExpInt, Expression)), exponent
+  assert isinstance(exponent, (int, ExpInt, Expression)) or type(exponent).__name__ in ('Iterated_Expression', 'Iterated_Math'), exponent
 
   if exponent == 0:
     return 1
@@ -139,7 +139,7 @@ class ExpTerm:
   def __init__(self, base : int, coef : int, exponent):
     assert isinstance(base, int), base
     assert isinstance(coef, int), coef
-    assert isinstance(exponent, (int, ExpInt, Expression)), exponent
+    assert isinstance(exponent, (int, ExpInt, Expression)) or type(exponent).__name__ in ('Iterated_Expression', 'Iterated_Math'), exponent
     assert coef != 0
 
     self.base = base
@@ -171,7 +171,7 @@ class ExpTerm:
       exp_as_int = try_eval(self.exponent)
 
       if not exp_as_int:
-        assert isinstance(self.exponent, ExpInt), self.exponent
+        assert isinstance(self.exponent, ExpInt) or type(self.exponent).__name__ in ('Iterated_Expression', 'Iterated_Math'), self.exponent
         # For large enough exponent, the coefficient and even base don't have much effect.
         (height, top) = self.exponent.tower_value
         assert top >= 0, top
