@@ -21,6 +21,16 @@ def get_depth(expr, var):
     d = get_depth(expr.exponent, var)
     if d >= 0:
       return 1 + d
+  elif type(expr).__name__ == 'Iterated_Math':
+    return get_depth(expr.it_expr, var)
+  elif type(expr).__name__ == 'Iterated_Expression':
+    d_reps = get_depth(expr.num_reps, var)
+    if d_reps >= 0:
+      D = get_depth(expr.step_expr, expr.var)
+      if D < 1: D = 1
+      arr_f = D + 1
+      arr_N = d_reps + 1
+      return max(arr_f, arr_N) - 1
   return -1000
 
 class Iterated_Expression:
@@ -105,8 +115,15 @@ class Iterated_Expression:
       return (val_start[0], val_start[1] + n_val * depth, *val_start[2:])
     except:
       if hasattr(self.num_reps, 'uparrow_size_approx'):
-        val_reps = self.num_reps.uparrow_size_approx
-        return (val_reps[0] + 1, *val_reps[1:], top_start)
+        val_N = self.num_reps.uparrow_size_approx
+        arr_N = val_N[0]
+        arr_f = depth + 1
+        if arr_f > arr_N:
+          return (arr_f, *val_N[1:], top_start)
+        elif arr_f == arr_N:
+          return (arr_N, val_N[1] + 1, *val_N[2:])
+        else:
+          return val_N
       return (3, 0, 10.0)
 
   def __lt__(self, other):
