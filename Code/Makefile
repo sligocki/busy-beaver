@@ -20,6 +20,7 @@ test-small:
 
 test-large:
 	uv run python3 -m unittest \
+		./test_ack34.py \
 		./test_Enumerate.py \
 		./test_Lin_Recur.py \
 		./test_Macro_Simulator.py
