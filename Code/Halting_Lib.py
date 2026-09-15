@@ -81,8 +81,10 @@ def big_int_approx_or_full_str(value):
   if value is None:
     return "N/A"
 
-  if type(value).__name__ in ('ExpInt', 'Expression', 'Iterated_Expression', 'Iterated_Math'):
+  if type(value).__name__ in ('Iterated_Expression', 'Iterated_Math'):
     return big_int_approx_str(value)
+  if type(value).__name__ in ('ExpInt', 'Expression'):
+    return str(value)
     
   if isinstance(value, float) and math.isinf(value):
     return str(value)
