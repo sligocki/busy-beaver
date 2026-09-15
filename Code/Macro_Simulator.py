@@ -150,7 +150,7 @@ def simulate_machine(machine : Turing_Machine.Turing_Machine,
     sim_info.parameters.use_limited_rules = options.limited_rules
     sim_info.parameters.use_recursive_rules = options.recursive
 
-    # TODO: For now, we can't compute steps when evaluating Linear_Rules
+    # TODO: For now, we can't compute steps when evaluating Iterated_Rules
     if options.exp_linear_rules:
       options.compute_steps = False
     sim = Simulator.Simulator(machine, options)

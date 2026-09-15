@@ -4,8 +4,9 @@ Func types used by Rules in Proof_System.
 
 import math
 
-from Algebraic_Expression import Expression, VariableToExpression
+from Algebraic_Expression import Expression, VariableToExpression, variables
 from Exp_Int import ExpInt, exp_int
+from Iterated_Expression import Iterated_Expression
 
 
 def ceil_div(a, b):
@@ -15,6 +16,25 @@ class Func:
   """Abstract base class for various classes of functions."""
   def apply_rep(self, start, num_reps):
     raise NotImplementedError
+
+
+class Iterated_Func(Func):
+  """Represents a fallback function like: `x -> expr` applied N times."""
+  def __init__(self, var, min_val, step_expr):
+    self.var = var
+    self.min = min_val
+    self.step_expr = step_expr
+    self.is_decreasing = False
+    
+    expr_vars = variables(step_expr)
+    assert expr_vars.issubset({var}), f"step_expr {step_expr} contains other variables: {expr_vars}"
+
+  def __repr__(self):
+    return f"{self.step_expr}"
+  __str__ = __repr__
+
+  def apply_rep(self, start, num_reps):
+    return Iterated_Expression(self.step_expr, self.var, start, num_reps)
 
 
 class Subtract_Func(Func):

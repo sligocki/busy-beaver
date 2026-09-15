@@ -451,8 +451,8 @@ class ProofSystemTest(unittest.TestCase):
       state_E, Turing_Machine.LEFT, tape.tape)
     rule_linear = prover.prove_rule(stripped_config, full_config, delta_loop = 28)
     self.assertIsNotNone(rule_linear)
-    self.assertTrue(isinstance(rule_linear, Proof_System.Linear_Rule))
-    self.assertIn("Linear Rule", repr(rule_linear))
+    self.assertTrue(isinstance(rule_linear, Proof_System.Iterated_Rule))
+    self.assertIn("Iterated Rule", repr(rule_linear))
     self.assertIn("Level:", repr(rule_linear))
     self.assertIn("General Rule", repr(rule_linear.gen_rule))
     prover.add_rule(rule_linear, stripped_config)
@@ -487,9 +487,9 @@ class ProofSystemTest(unittest.TestCase):
     rule_meta = prover.prove_rule(stripped_config, full_config, delta_loop = 68)
     # Check that rule was proven successfully
     self.assertIsNotNone(rule_meta)
-    self.assertTrue(isinstance(rule_meta, Proof_System.Exponential_Rule))
+    self.assertTrue(isinstance(rule_meta, Proof_System.Iterated_Rule))
     self.assertTrue(rule_meta.infinite)
-    self.assertIn("Exponential Rule", repr(rule_meta))
+    self.assertIn("Iterated Rule", repr(rule_meta))
     self.assertIn("Level:", repr(rule_meta))
 
     # Test that applying the infinite rule returns INF_REPEAT
@@ -505,7 +505,7 @@ class ProofSystemTest(unittest.TestCase):
     rule_meta.gen_rule.infinite = False
     # Test rule on an example:
     #   $ <E 11^10 10 00 11 10 $ -> $ <E 11^(-6 + 5 * 2^(20 + 8)) 10 00 11 10 $
-    success, rest = prover.apply_rule(rule_meta, full_config)
+    success, rest = prover.apply_rule(rule_meta.gen_rule, full_config)
     self.assertTrue(success)
     result, _ = rest
     self.assertEqual(result.condition, Proof_System.APPLY_RULE)
@@ -577,7 +577,7 @@ class ProofSystemTest(unittest.TestCase):
     stripped_config = Proof_System.strip_config(state_E, Turing_Machine.LEFT, tape.tape)
     rule_linear = prover.prove_rule(stripped_config, full_config, delta_loop=28)
     self.assertIsNotNone(rule_linear)
-    self.assertIsInstance(rule_linear, Proof_System.Linear_Rule)
+    self.assertIsInstance(rule_linear, Proof_System.Iterated_Rule)
     # rule_linear.gen_rule is the embedded General_Rule with infinite=False
     self.assertFalse(rule_linear.gen_rule.infinite)
 

@@ -114,7 +114,7 @@ def tower_value(x):
   Return y such that x ≈ 10^^y. Uses definition for fractional tetration
   as described in https://www.sligocki.com/2022/06/25/ext-up-notation.html
   """
-  if isinstance(x, ExpInt):
+  if hasattr(x, "tower_value"):
     return x.tower_value
   else:
     return (0, abs(x))

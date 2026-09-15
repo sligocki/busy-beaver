@@ -277,7 +277,6 @@ def get_options_parser():
 
 def get_options(states, symbols, **kwargs):
   """Return an options object with default values, overriding with provided kwargs."""
-  import time
   parser = get_options_parser()
   (options, args) = parser.parse_args([])
   options.states = states

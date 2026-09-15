@@ -16,7 +16,9 @@ class BadOperation(Exception):
   """This operation cannot be performed on this Expression."""
 
 def is_expr(value):
-  return isinstance(value, Expression)
+  if isinstance(value, Expression):
+    return True
+  return type(value).__name__ in ('Iterated_Expression', 'Iterated_Math')
 
 def simp_frac(val):
   """Simplify Fraction -> int if it is integral."""

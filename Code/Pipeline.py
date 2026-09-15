@@ -7,6 +7,8 @@ import Backtracking_Filter
 import Halting_Lib
 import IO
 import io_pb2
+import Lin_Recur_Detect
+import CPS_Filter
 
 class Pipeline:
     def __init__(self, deciders):
@@ -125,7 +127,6 @@ class LinRecurDecider:
         self.find_min_start_step = find_min_start_step
 
     def apply(self, tm_record, options, time_limit=None):
-        import Lin_Recur_Detect
         lr_info = tm_record.proto.filter.lin_recur
         lr_info.parameters.max_steps = self.max_steps
         lr_info.parameters.find_min_start_step = self.find_min_start_step
@@ -150,8 +151,6 @@ class CpsDecider:
         self.max_edges = max_edges
         
     def apply(self, tm_record, options, time_limit=None):
-        import CPS_Filter
-        import argparse
         args = argparse.Namespace(
             max_window_size=None,
             min_block_size=1,

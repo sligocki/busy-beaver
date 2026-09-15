@@ -38,9 +38,9 @@ def add_option_group(parser):
                    help="Rules are saved and applied based on the maximum they "
                    "effect the tape to the left and right. [Experimental]")
   group.add_option("--exp-linear-rules", action="store_true", default=False,
-                   help="Allow accelerating Linear_Rules [Experimental]")
+                   help="Allow accelerating Iterated_Rules [Experimental]")
   group.add_option("--exp-meta-linear-rules", action="store_true", default=False,
-                   help="Allow using Linear_Rules in Meta Rules [Experimental]")
+                   help="Allow using Iterated_Rules in Meta Rules [Experimental]")
 
   # A quick experiment shows that 100k past_configs -> 100MB, 1M -> 1GB RAM.
   group.add_option("--max-prover-configs", type=int, default=100_000,
@@ -98,7 +98,7 @@ Steps: {self.num_steps}, Loops: {self.num_loops}
 Level: {self.level}
 States last seen: {self.states_last_seen!r}"""
 
-class Linear_Rule(Rule):
+class Iterated_Rule(Rule):
   """A rule where all run counts change like `x -> m x + b` for constants `m, b`."""
   def __init__(self, var_list, min_list, func_list,
                result_tape, num_steps, num_loops, rule_num, states_last_seen, level: int):
@@ -118,7 +118,7 @@ class Linear_Rule(Rule):
         min_list[i] = func.min
     self.min_list = min_list
 
-    # TODO: Remove this once we add logic for applying Linear_Rules repeatedly.
+    # TODO: Remove this once we add logic for applying Iterated_Rules repeatedly.
     self.gen_rule = General_Rule(
       var_list, min_list, result_tape,
       num_steps, num_loops, rule_num, states_last_seen, level=level)
@@ -154,24 +154,33 @@ class Linear_Rule(Rule):
         if variables(result_block.num) != {var_list[i]}:
           # Don't allow rules like: x -> 7 or x -> 3y+2
           return None, f"Variable mismatch for block {i}: expected {{{var_list[i]}}}, got {variables(result_block.num)} from {result_block.num}"
-        if not isinstance(result_block.num, Expression):
-          # Don't allow rules like: x -> 2^x
-          return None, f"Not an Expression: block {i} is {result_block.num} ({type(result_block.num)})"
-
-        res = result_block.num.as_strictly_linear()
-        if not res:
-          # Don't allow rules like: x -> x^2
-          return None, f"Not strictly linear: block {i} is {result_block.num}"
-        (var, coef, const) = res
-        assert var == var_list[i]
-        if coef == 1:
-          if const < 0:
-            func_list.append(Rule_Func.Subtract_Func(var, min_list[i], -const))
+        res = None
+        if hasattr(result_block.num, "as_strictly_linear"):
+          res = result_block.num.as_strictly_linear()
+        
+        if res:
+          (var, coef, const) = res
+          assert var == var_list[i]
+          if coef == 1:
+            if const < 0:
+              func_list.append(Rule_Func.Subtract_Func(var, min_list[i], -const))
+            else:
+              func_list.append(Rule_Func.Add_Func(var, min_list[i], const))
           else:
-            func_list.append(Rule_Func.Add_Func(var, min_list[i], const))
+            func_list.append(Rule_Func.Mult_Func(var, min_list[i], coef, const))
         else:
-          func_list.append(Rule_Func.Mult_Func(var, min_list[i], coef, const))
-    return Linear_Rule(var_list, min_list, func_list,
+          # always_ge is too crude for ExpInt - x, so we just evaluate at min_val
+          val_at_min = substitute(result_block.num, {var_list[i]: min_list[i]})
+          if val_at_min < min_list[i]:
+            return None, f"Iterated block {i} is not >= var at min_val: {result_block.num} ({val_at_min} < {min_list[i]})"
+          
+          # Also check val at min_val + 1 to ensure it's increasing
+          val_at_min_1 = substitute(result_block.num, {var_list[i]: min_list[i] + 1})
+          if val_at_min_1 <= val_at_min:
+             return None, f"Iterated block {i} is not strictly increasing: {result_block.num}"
+
+          func_list.append(Rule_Func.Iterated_Func(var_list[i], min_list[i], result_block.num))
+    return Iterated_Rule(var_list, min_list, func_list,
                        result_tape, num_steps, num_loops, rule_num, states_last_seen, level), None
 
   def __repr__(self):
@@ -195,7 +204,7 @@ class Linear_Rule(Rule):
       end_block(i) for i in range(self.left_size, len(self.block_list))]))
 
     # TODO: Replace `<>` with state/dir, like `<A`
-    return f"""Linear Rule {self.name}
+    return f"""Iterated Rule {self.name}
 Start Tape: {left_start_str} <> {right_start_str}
 End Tape: {left_end_str} <> {right_end_str}
 Steps {self.num_steps} Loops {self.num_loops}
@@ -919,8 +928,8 @@ class Proof_System(object):
         num_steps = 0
         states_last_seen = None
 
-      # Figure out if this is a Linear_Rule
-      rule, lin_err = Linear_Rule.try_gen(
+      # Figure out if this is a Iterated_Rule
+      rule, lin_err = Iterated_Rule.try_gen(
         var_list, min_list, result_tape, num_steps,
         gen_sim.num_loops, self.num_rules, states_last_seen, rule_level)
       if rule:
@@ -932,13 +941,13 @@ class Proof_System(object):
 
         if self.verbose:
           print()
-          self.print_this("** New linear rule proven **")
+          self.print_this("** New iterated rule proven **")
           self.print_this(str(rule).replace("\n", "\n " + self.verbose_prefix))
           print()
 
       if not rule:
         if self.verbose:
-          self.print_this(f"[PROVER FAILURE] Linear_Rule generation failed: {lin_err}")
+          self.print_this(f"[PROVER FAILURE] Iterated_Rule generation failed: {lin_err}")
         # Figure out if this is an Exponential_Rule
         rule, exp_err = Exponential_Rule.try_gen(
           var_list, min_list, result_tape, num_steps,
@@ -957,7 +966,7 @@ class Proof_System(object):
       if not rule:
         if self.verbose:
           self.print_this(f"[PROVER FAILURE] Exponential_Rule generation failed: {exp_err}")
-        # If not a Diff_Rule, Linear_Rule or Exponential_Rule ... it's a General_Rule
+        # If not a Diff_Rule, Iterated_Rule or Exponential_Rule ... it's a General_Rule
 
         # TODO: Deal with "Swap rules" like:
         #    Start Tape: 000000^inf 111111^1 101101^(j|2) <C (011101) 111111^(k|1) 111100^1 000000^inf
@@ -1060,7 +1069,7 @@ class Proof_System(object):
 
     if isinstance(rule, Diff_Rule):
       return self.apply_diff_rule(rule, start_config)
-    elif isinstance(rule, Linear_Rule):
+    elif isinstance(rule, Iterated_Rule):
       return self.apply_linear_rule(rule, start_config)
     elif isinstance(rule, Exponential_Rule):
       return self.apply_exponential_rule(rule, start_config)
@@ -1333,7 +1342,7 @@ class Proof_System(object):
         new_block.num = rule.func_list[i].apply_rep(new_block.num, num_reps)
 
     if self.verbose:
-      self.print_this("++ Linear rule applied ++")
+      self.print_this("++ Iterated rule applied ++")
       self.print_this("Times applied", num_reps)
       self.print_this("Resulting tape:", new_tape)
 

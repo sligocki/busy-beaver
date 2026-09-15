@@ -240,7 +240,7 @@ class Simulator(object):
       print("Rules proven:", self.prover.num_rules)
       for level in sorted(self.prover.num_rules_by_level):
         print(f"  Level {level} rules:", self.prover.num_rules_by_level[level])
-      print("Linear rules proven:", self.prover.num_linear_rules)
+      print("Iterated rules proven:", self.prover.num_linear_rules)
       print("Exponential rules proven:", self.prover.num_exponential_rules)
       print("General rules proven:", self.prover.num_gen_rules)
       print("Collatz rules:", self.prover.num_collatz_rules)
