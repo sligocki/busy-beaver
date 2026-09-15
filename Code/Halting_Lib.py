@@ -21,9 +21,11 @@ def big_int_approx_str(value, digits_cutoff : int = 10):
     return f"{try_eval(value):_}"
 
   val = uparrow_size_approx(value)
-  if val[0] > 2:
+  if val[0] >= 4:
+    return f"~ 10 ↑^{val[0]} {val[1]}"
+  elif val[0] > 2:
     arrows = "↑" * val[0]
-    return f"~10{arrows}{val[1]}"
+    return f"~ 10 {arrows} {val[1]}"
 
   assert val[0] == 2, val
   height, top = val[1], val[2]
@@ -36,13 +38,13 @@ def big_int_approx_str(value, digits_cutoff : int = 10):
     if top <= 0:
       return str(top)
     else:
-      return f"~10^{math.log10(top):_.5f}"
+      return f"~ 10^{math.log10(top):_.5f}"
   elif height == 1:
     # value = 10^top
-    return f"~10^{top:_.5f}"
+    return f"~ 10^{top:_.5f}"
   else:
     assert height > 1, height
-    return f"~10↑↑{fractional_height(value):_.5f}"
+    return f"~ 10 ↑↑ {fractional_height(value):_.5f}"
 
 def big_int_approx_and_full_str(value):
   if value is None:
