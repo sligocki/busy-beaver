@@ -5,8 +5,16 @@ from Common import is_const
 from Exp_Int import uparrow_size_approx
 
 def get_depth(expr, var):
+  """
+  Returns the exponentiation depth of `var` within `expr`.
+  Returns None if `var` is not found.
+  """
   if hasattr(expr, 'terms'):
-    return max([0] + [get_depth(term, var) for term in expr.terms])
+    depths = [get_depth(term, var) for term in expr.terms]
+    valid_depths = [d for d in depths if d is not None]
+    if valid_depths:
+      return max(valid_depths)
+    return None
   elif hasattr(expr, 'var_power') and expr.var_power is not None:
     return get_depth(expr.var_power, var)
   elif hasattr(expr, 'var'):
@@ -15,23 +23,23 @@ def get_depth(expr, var):
       return 0
     elif hasattr(v, 'exponent'):
       d = get_depth(v.exponent, var)
-      if d >= 0:
+      if d is not None:
         return 1 + d
   elif hasattr(expr, 'exponent'):
     d = get_depth(expr.exponent, var)
-    if d >= 0:
+    if d is not None:
       return 1 + d
   elif type(expr).__name__ == 'Iterated_Math':
     return get_depth(expr.it_expr, var)
   elif type(expr).__name__ == 'Iterated_Expression':
     d_reps = get_depth(expr.num_reps, var)
-    if d_reps >= 0:
+    if d_reps is not None:
       D = get_depth(expr.step_expr, expr.var)
-      if D < 1: D = 1
+      if D is None or D < 1: D = 1
       arr_f = D + 1
       arr_N = d_reps + 1
       return max(arr_f, arr_N) - 1
-  return -1000
+  return None
 
 class Iterated_Expression:
   """Represents f^N(start) lazily."""
@@ -105,7 +113,7 @@ class Iterated_Expression:
   @property
   def uparrow_size_approx(self):
     depth = get_depth(self.step_expr, self.var)
-    if depth < 1:
+    if depth is None or depth < 1:
       depth = 1 # fallback
       
     val_start = uparrow_size_approx(self.start_val)
@@ -124,7 +132,7 @@ class Iterated_Expression:
           return (arr_N, val_N[1] + 1, *val_N[2:])
         else:
           return val_N
-      return (3, 0, 10.0)
+      raise ValueError(f"uparrow_size_approx cannot evaluate num_reps: {self.num_reps} (type: {type(self.num_reps)})")
 
   def __lt__(self, other):
     if isinstance(other, int):
