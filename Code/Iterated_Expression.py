@@ -136,6 +136,15 @@ class Iterated_Expression:
       return 0
     return Iterated_Math(self, 0, coef=other)
 
+  def __add__(self, other):
+    return Iterated_Math(self, other, coef=1)
+
+  def __radd__(self, other):
+    return Iterated_Math(self, other, coef=1)
+
+  def __sub__(self, other):
+    return Iterated_Math(self, -other, coef=1)
+
 class Iterated_Math:
   def __init__(self, it_expr, const, coef=1):
     self.it_expr = it_expr

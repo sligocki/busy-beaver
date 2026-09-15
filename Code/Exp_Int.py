@@ -457,7 +457,7 @@ class ExpInt:
     if isinstance(other, Expression):
       return other + self
 
-    raise ExpIntException(f"ExpInt add: unsupported type {type(other)}")
+    return NotImplemented
 
   def __mul__(self, other):
     other = try_simplify(other)
@@ -492,12 +492,12 @@ class ExpInt:
     if isinstance(other, Expression):
       return other * self
 
-    raise ExpIntException(f"ExpInt mul: unsupported type {type(other)}")
+    return NotImplemented
 
   def __truediv__(self, other):
     other_int = try_eval(other)
     if not other_int:
-      raise ExpIntException(f"ExpInt truediv: unsupported type {type(other)}")
+      return NotImplemented
 
     return ExpInt(self.terms, self.const, self.denom * other_int)
 
