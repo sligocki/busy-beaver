@@ -65,9 +65,11 @@ def is_simple(value) -> bool:
 def try_eval(x: BigInt) -> int | None:
   """Return integer value (if it's small enough) or None (if too big)."""
   if isinstance(x, (ExpInt, ExpTerm)):
-    (height, top) = x.tower_value
+    val = x.uparrow_size_approx
+    # Top is always the last element
+    top = val[-1]
     assert top >= 0, (top, x.formula_str)
-    if height == 0:
+    if val[0] == 2 and val[1] == 0:
       return x.sign * top
     else:
       # Too big to represent as `int`
@@ -98,8 +100,10 @@ def struct_eq(a, b) -> bool:
     # Cannot compare
     return False
 
-def fractional_height(x) -> int:
-  (height, top) = tower_value(x)
+def fractional_height(x) -> float:
+  val = uparrow_size_approx(x)
+  assert val[0] == 2, val
+  height, top = val[1], val[2]
   assert top > 0, x
   # Invariant: x ≈ 10^^height[^top]
   while top >= 1:
@@ -109,15 +113,15 @@ def fractional_height(x) -> int:
   #  10^^2.5 = 10^^2[^10^0.5] = 10^^3[^0.5]
   return height - 1 + top
 
-def tower_value(x):
+def uparrow_size_approx(x):
   """
   Return y such that x ≈ 10^^y. Uses definition for fractional tetration
   as described in https://www.sligocki.com/2022/06/25/ext-up-notation.html
   """
-  if hasattr(x, "tower_value"):
-    return x.tower_value
+  if hasattr(x, "uparrow_size_approx"):
+    return x.uparrow_size_approx
   else:
-    return (0, abs(x))
+    return (2, 0, abs(x))
 
 def sign(x) -> int:
   if isinstance(x, ExpInt):
@@ -173,22 +177,27 @@ class ExpTerm:
       if not exp_as_int:
         assert isinstance(self.exponent, ExpInt) or type(self.exponent).__name__ in ('Iterated_Expression', 'Iterated_Math'), self.exponent
         # For large enough exponent, the coefficient and even base don't have much effect.
-        (height, top) = self.exponent.tower_value
+        val = self.exponent.uparrow_size_approx
+        top = val[-1]
         assert top >= 0, top
-        # self = b^(10^^height[^top]) ~= 10^^(height+1)[^top]
-        self.tower_value = (height + 1, top)
+        if val[0] == 2:
+          # self = b^(10^^height[^top]) ~= 10^^(height+1)[^top]
+          self.uparrow_size_approx = (2, val[1] + 1, val[2])
+        else:
+          # For pentation or higher, adding 1 to the base of the tower is negligible
+          self.uparrow_size_approx = val
 
       else:
         assert isinstance(exp_as_int, int)
         if exp_as_int < EXP_THRESHOLD:
           # self = value = 10^^0[^value]
-          self.tower_value = tower_value(self.coef * self.base**exp_as_int)
+          self.uparrow_size_approx = uparrow_size_approx(self.coef * self.base**exp_as_int)
 
         else:
           top = prec_mult(exp_as_int, math.log10(self.base))
           top = prec_add(top, math.log10(abs(self.coef)))
           # self = 10^top = 10^^1[^top]
-          self.tower_value = (1, abs(top))
+          self.uparrow_size_approx = (2, 1, abs(top))
 
     else:  # not self.is_const
       min_coef = min_val(self.coef)
@@ -243,7 +252,7 @@ def normalize_terms(terms):
   prev_exponent = None
   prev_coef = None
   prev_base = None
-  for term in sorted(terms, key=lambda t: tower_value(t.exponent), reverse=True):
+  for term in sorted(terms, key=lambda t: uparrow_size_approx(t.exponent), reverse=True):
     if struct_eq(term.exponent, prev_exponent):
       assert term.base == prev_base
       prev_coef += term.coef
@@ -324,18 +333,18 @@ class ExpInt:
         # All terms are small enough to fit in `int`s. We can represent the sum
         # precisely here.
         value = (sum(term_values) + self.const) // self.denom
-        self.tower_value = tower_value(value)
+        self.uparrow_size_approx = uparrow_size_approx(value)
         self.sign = sign(value)
 
       else:
         # At least one term is too large to fit in an `int`.
-        max_pos_tower = max((term.tower_value for term in self.terms
-                             if term.sign > 0), default = tower_value(0))
-        max_neg_tower = max((term.tower_value for term in self.terms
-                             if term.sign < 0), default = tower_value(0))
+        max_pos_tower = max((term.uparrow_size_approx for term in self.terms
+                             if term.sign > 0), default = uparrow_size_approx(0))
+        max_neg_tower = max((term.uparrow_size_approx for term in self.terms
+                             if term.sign < 0), default = uparrow_size_approx(0))
         if max_pos_tower == max_neg_tower:
           raise ExpIntException(f"Cannot evaluate sign of ExpInt: {self}    ({max_pos_tower} == {max_neg_tower})")
-        self.tower_value = max(max_pos_tower, max_neg_tower)
+        self.uparrow_size_approx = max(max_pos_tower, max_neg_tower)
         if max_neg_tower > max_pos_tower:
           self.sign = -1
         else:
@@ -343,11 +352,12 @@ class ExpInt:
 
         # Tweak tower value for denom
         if self.denom != 1:
-          (height, top) = self.tower_value
-          assert height >= 1, self
-          if height == 1:
-            top = prec_add(top, -math.log10(self.denom))
-            self.tower_value = (height, top)
+          val = self.uparrow_size_approx
+          if val[0] == 2:
+            assert val[1] >= 1, self
+            if val[1] == 1:
+              top = prec_add(val[2], -math.log10(self.denom))
+              self.uparrow_size_approx = (2, 1, top)
 
     else:  # not self.is_const
       assert is_const(self.denom), self
@@ -506,7 +516,7 @@ class ExpInt:
       # self > 0 > other
       return True
 
-    return self.tower_value > tower_value(other)
+    return self.uparrow_size_approx > uparrow_size_approx(other)
 
   def __ge__(self, other):
     assert is_const(self), self
@@ -521,7 +531,7 @@ class ExpInt:
       # self > 0 > other
       return True
 
-    return self.tower_value >= tower_value(other)
+    return self.uparrow_size_approx >= uparrow_size_approx(other)
 
   # Boilerplate
   def __neg__(self):

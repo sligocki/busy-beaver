@@ -2,7 +2,7 @@ import math
 
 from Algebraic_Expression import Expression, min_val, variables, substitute
 from Common import is_const
-from Exp_Int import tower_value
+from Exp_Int import uparrow_size_approx
 
 def get_depth(expr, var):
   if hasattr(expr, 'terms'):
@@ -93,17 +93,21 @@ class Iterated_Expression:
     return self
 
   @property
-  def tower_value(self):
+  def uparrow_size_approx(self):
     depth = get_depth(self.step_expr, self.var)
     if depth < 1:
       depth = 1 # fallback
       
-    h_start, top_start = tower_value(self.start_val)
+    val_start = uparrow_size_approx(self.start_val)
+    top_start = val_start[-1]
     try:
       n_val = int(self.num_reps)
-      return (h_start + n_val * depth, top_start)
+      return (val_start[0], val_start[1] + n_val * depth, *val_start[2:])
     except:
-      return (1000, 10.0)
+      if hasattr(self.num_reps, 'uparrow_size_approx'):
+        val_reps = self.num_reps.uparrow_size_approx
+        return (val_reps[0] + 1, *val_reps[1:], top_start)
+      return (3, 0, 10.0)
 
   def __lt__(self, other):
     if isinstance(other, int):
@@ -201,8 +205,8 @@ class Iterated_Math:
     return self
 
   @property
-  def tower_value(self):
-    return self.it_expr.tower_value
+  def uparrow_size_approx(self):
+    return self.it_expr.uparrow_size_approx
 
   def __lt__(self, other):
     if isinstance(other, int):

@@ -6,7 +6,7 @@ from typing import Optional
 
 from Algebraic_Expression import Expression
 from Common import is_const
-from Exp_Int import ExpInt, ExpTerm, tower_value, fractional_height, try_eval
+from Exp_Int import ExpInt, ExpTerm, uparrow_size_approx, fractional_height, try_eval
 import io_pb2
 
 
@@ -20,7 +20,13 @@ def big_int_approx_str(value, digits_cutoff : int = 10):
   if value < cutoff:
     return f"{try_eval(value):_}"
 
-  (height, top) = tower_value(value)
+  val = uparrow_size_approx(value)
+  if val[0] > 2:
+    arrows = "↑" * val[0]
+    return f"~10{arrows}{val[1]}"
+
+  assert val[0] == 2, val
+  height, top = val[1], val[2]
   while top > cutoff:
     height += 1
     top = math.log10(top)
