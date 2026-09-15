@@ -122,34 +122,28 @@ class Iterated_Expression:
       n_val = int(self.num_reps)
       return (val_start[0], val_start[1] + n_val * depth, *val_start[2:])
     except:
-      if hasattr(self.num_reps, 'uparrow_size_approx'):
-        val_N = self.num_reps.uparrow_size_approx
-        arr_N = val_N[0]
-        arr_f = depth + 1
-        if arr_f > arr_N:
-          return (arr_f, *val_N[1:], top_start)
-        elif arr_f == arr_N:
-          return (arr_N, val_N[1] + 1, *val_N[2:])
-        else:
-          return val_N
-      raise ValueError(f"uparrow_size_approx cannot evaluate num_reps: {self.num_reps} (type: {type(self.num_reps)})")
+      return (depth + 1, self.num_reps, top_start)
 
   def __lt__(self, other):
     if isinstance(other, int):
       # Assume Iterated_Expressions are huge
       return False
-    raise NotImplementedError()
+    return self.uparrow_size_approx < uparrow_size_approx(other)
     
   def __gt__(self, other):
     if isinstance(other, int):
       return True
-    raise NotImplementedError()
+    return self.uparrow_size_approx > uparrow_size_approx(other)
 
   def __le__(self, other):
-    return self < other or self == other
+    if isinstance(other, int): return False
+    from Exp_Int import uparrow_size_approx
+    return uparrow_size_approx(self) <= uparrow_size_approx(other)
 
   def __ge__(self, other):
-    return self > other or self == other
+    if isinstance(other, int): return True
+    from Exp_Int import uparrow_size_approx
+    return uparrow_size_approx(self) >= uparrow_size_approx(other)
 
   def __mul__(self, other):
     if other == 0:
@@ -245,17 +239,23 @@ class Iterated_Math:
   def __lt__(self, other):
     if isinstance(other, int):
       return False
-    raise NotImplementedError()
+    from Exp_Int import uparrow_size_approx
+    return uparrow_size_approx(self) < uparrow_size_approx(other)
     
   def __gt__(self, other):
     if isinstance(other, int):
       return True
-    raise NotImplementedError()
+    from Exp_Int import uparrow_size_approx
+    return uparrow_size_approx(self) > uparrow_size_approx(other)
 
   def __le__(self, other):
-    return self < other or self == other
+    if isinstance(other, int): return False
+    from Exp_Int import uparrow_size_approx
+    return uparrow_size_approx(self) <= uparrow_size_approx(other)
 
   def __ge__(self, other):
-    return self > other or self == other
+    if isinstance(other, int): return True
+    from Exp_Int import uparrow_size_approx
+    return uparrow_size_approx(self) >= uparrow_size_approx(other)
 
 

@@ -13,9 +13,13 @@ import io_pb2
 def big_int_approx_str(value, digits_cutoff : int = 10):
   if value is None:
     return "N/A"
-  if value in (math.inf, -math.inf):
+  if isinstance(value, float) and math.isinf(value):
     return str(value)
-
+  if type(value).__name__ in ('Expression', 'Variable'):
+    return str(value)
+  if type(value).__name__ == 'ExpInt' and not is_const(value):
+    return str(value)
+    
   cutoff = 10**digits_cutoff
   if is_const(value):
     try:
@@ -34,13 +38,14 @@ def big_int_approx_str(value, digits_cutoff : int = 10):
   assert val[0] == 2, val
   height, top = val[1], val[2]
   
-  if not is_const(value):
+  if not is_const(value) or not isinstance(height, (int, float)):
     if height == 0:
       return f"{top}"
     elif height == 1:
       return f"~ 10^{top}"
     else:
-      return f"~ 10 ↑↑ {height}"
+      height_str = big_int_approx_str(height, digits_cutoff) if not isinstance(height, (int, float)) else height
+      return f"~ 10 ↑↑ {height_str}"
 
   while top > cutoff:
     height += 1
@@ -79,7 +84,7 @@ def big_int_approx_or_full_str(value):
   if type(value).__name__ in ('ExpInt', 'Expression', 'Iterated_Expression', 'Iterated_Math'):
     return big_int_approx_str(value)
     
-  if value == math.inf:
+  if isinstance(value, float) and math.isinf(value):
     return str(value)
     
   try:
