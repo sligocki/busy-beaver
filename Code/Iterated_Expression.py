@@ -41,8 +41,10 @@ def get_depth(expr, var):
       return max(arr_f, arr_N) - 1
   return None
 
-class Iterated_Expression:
-  """Represents f^N(start) lazily."""
+from NatExpr import NatExpr
+
+class Iterated_Expression(NatExpr):
+  """An expression representing `f^n(x)`."""
   def __init__(self, step_expr, var, start_val, num_reps):
     # step_expr is the function f(x)
     # var is the variable x in step_expr
@@ -60,6 +62,9 @@ class Iterated_Expression:
   def __repr__(self):
     return f"((λ{self.var} → {self.step_expr})^({self.num_reps}) ({self.start_val}))"
   __str__ = __repr__
+
+  def try_eval(self):
+    return None
 
   @property
   def is_const(self):
@@ -125,24 +130,22 @@ class Iterated_Expression:
       return (depth + 1, self.num_reps, top_start)
 
   def __lt__(self, other):
-    if isinstance(other, int):
+    if isinstance(other, (int, NatExpr)):
       # Assume Iterated_Expressions are huge
       return False
     return self.uparrow_size_approx < uparrow_size_approx(other)
     
   def __gt__(self, other):
-    if isinstance(other, int):
+    if isinstance(other, (int, NatExpr)):
       return True
     return self.uparrow_size_approx > uparrow_size_approx(other)
 
   def __le__(self, other):
-    if isinstance(other, int): return False
-    from Exp_Int import uparrow_size_approx
+    if isinstance(other, (int, NatExpr)): return False
     return uparrow_size_approx(self) <= uparrow_size_approx(other)
 
   def __ge__(self, other):
-    if isinstance(other, int): return True
-    from Exp_Int import uparrow_size_approx
+    if isinstance(other, (int, NatExpr)): return True
     return uparrow_size_approx(self) >= uparrow_size_approx(other)
 
   def __mul__(self, other):
@@ -164,7 +167,8 @@ class Iterated_Expression:
   def __sub__(self, other):
     return Iterated_Math(self, -other, coef=1)
 
-class Iterated_Math:
+class Iterated_Math(NatExpr):
+  """A shifted iterated expression: `Iterated_Expression + const`"""
   def __init__(self, it_expr, const, coef=1):
     self.it_expr = it_expr
     self.const = const
@@ -184,6 +188,9 @@ class Iterated_Math:
         return f"({self.coef} * {self.it_expr} - {-self.const})"
       return f"({self.coef} * {self.it_expr} + {self.const})"
   __str__ = __repr__
+
+  def try_eval(self):
+    return None
 
   @property
   def is_const(self):
@@ -237,25 +244,21 @@ class Iterated_Math:
     return self.it_expr.uparrow_size_approx
 
   def __lt__(self, other):
-    if isinstance(other, int):
+    if isinstance(other, (int, NatExpr)):
       return False
-    from Exp_Int import uparrow_size_approx
     return uparrow_size_approx(self) < uparrow_size_approx(other)
     
   def __gt__(self, other):
-    if isinstance(other, int):
+    if isinstance(other, (int, NatExpr)):
       return True
-    from Exp_Int import uparrow_size_approx
     return uparrow_size_approx(self) > uparrow_size_approx(other)
 
   def __le__(self, other):
-    if isinstance(other, int): return False
-    from Exp_Int import uparrow_size_approx
+    if isinstance(other, (int, NatExpr)): return False
     return uparrow_size_approx(self) <= uparrow_size_approx(other)
 
   def __ge__(self, other):
-    if isinstance(other, int): return True
-    from Exp_Int import uparrow_size_approx
+    if isinstance(other, (int, NatExpr)): return True
     return uparrow_size_approx(self) >= uparrow_size_approx(other)
 
 

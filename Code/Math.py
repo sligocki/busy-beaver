@@ -74,11 +74,13 @@ def exp_mod(b: int, k, m: int) -> int:
   else:
     kn = (k - k0) % kp + k0
     # b^k = b^kn (mod m)
-    return pow(b, kn, m)
+    return pow(b, int(kn), int(m))
 
 
-def prec_mult(n : int, x : float):
+def prec_mult(n: int | float, x : float):
   """Approximate n * x even if result is too large to fit in float."""
+  if isinstance(n, float): return n * x
+  n = int(n)
   if n.bit_length() < 50:
     # float provides more precision up to about 2**52.
     return n * x
@@ -87,9 +89,11 @@ def prec_mult(n : int, x : float):
     x = int(math.ldexp(x, 64))
     return (n * x) >> 64
 
-def prec_add(n : int, x : float):
+def prec_add(n: int | float, x : float):
   """Approximate n + x even if result is too large to fit in float."""
-  if not isinstance(n, int) or n.bit_length() < 50:
+  if isinstance(n, float): return n + x
+  n = int(n)
+  if n.bit_length() < 50:
     # float provides more precision up to about 2**52.
     return n + x
   else:

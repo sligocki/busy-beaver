@@ -10,6 +10,8 @@ from optparse import OptionParser
 import os
 import sys
 import unittest
+import contextlib
+import io
 import Algebraic_Expression
 import IO
 
@@ -631,7 +633,6 @@ class ProofSystemTest(unittest.TestCase):
 
   def test_verbose_mode(self):
     """Test that verbose_prover=True doesn't crash and covers verbose print paths."""
-    import contextlib, io
     tm = IO.parse_tm("1RB------_"
                      "0RB0LC1LD_"
                      "0LC1RA---_"

@@ -8,6 +8,7 @@ from __future__ import annotations
 from fractions import Fraction
 import math
 
+from NatExpr import NatExpr, ConstInt
 from Algebraic_Expression import Expression, min_val, variables, substitute
 from Common import is_const
 from Math import gcd, lcm, int_pow, exp_mod, prec_mult, prec_add
@@ -25,8 +26,9 @@ MAX_TERMS = 1_000_000
 # Standard way to create an ExpInt
 def exp_int(base: int, exponent: int | ExpInt | Expression) -> ExpInt:
   """Returns either int or ExpInt based on size of exponent."""
+  base = int(base)
   assert isinstance(base, int), base
-  assert isinstance(exponent, (int, ExpInt, Expression)) or type(exponent).__name__ in ('Iterated_Expression', 'Iterated_Math'), exponent
+  assert isinstance(exponent, (int, NatExpr)) or type(exponent).__name__ in ('Iterated_Expression', 'Iterated_Math'), exponent
 
   if exponent == 0:
     return 1
@@ -60,20 +62,12 @@ def tex_formula(x: ExpInt | ExpTerm | int) -> str:
 
 def is_simple(value) -> bool:
   """Is `value` a "simple" numeric type (integer or Fraction)."""
-  return isinstance(value, (int, Fraction))
+  return isinstance(value, (int, Fraction, ConstInt))
 
 def try_eval(x: BigInt) -> int | None:
   """Return integer value (if it's small enough) or None (if too big)."""
-  if isinstance(x, (ExpInt, ExpTerm)):
-    val = x.uparrow_size_approx
-    # Top is always the last element
-    top = val[-1]
-    assert top >= 0, (top, x.formula_str)
-    if val[0] == 2 and val[1] == 0:
-      return x.sign * top
-    else:
-      # Too big to represent as `int`
-      return None
+  if hasattr(x, 'try_eval'):
+    return x.try_eval()
   elif isinstance(x, int):
     return x
   else:
@@ -81,9 +75,11 @@ def try_eval(x: BigInt) -> int | None:
 
 def try_simplify(x):
   """Return integer value (if it's small enough) or ExpInt (if too big)."""
+  if hasattr(x, 'try_simplify'):
+    return x.try_simplify()
   y = try_eval(x)
   if y is not None:
-    return y
+    return ConstInt(y) if 'ConstInt' in globals() else y
   else:
     return x
 
@@ -140,10 +136,18 @@ def exp_int_depth(x) -> int:
 
 class ExpTerm:
   """An integer represented by a formula: `a b^n`"""
+  def try_eval(self) -> int | None:
+    if not self.is_const: return None
+    val = uparrow_size_approx(self)
+    top = val[-1]
+    if val[0] == 2 and val[1] == 0:
+      return self.sign * top
+    return None
+
   def __init__(self, base : int, coef : int, exponent):
     assert isinstance(base, int), base
     assert isinstance(coef, int), coef
-    assert isinstance(exponent, (int, ExpInt, Expression)) or type(exponent).__name__ in ('Iterated_Expression', 'Iterated_Math'), exponent
+    assert isinstance(exponent, (int, NatExpr)) or type(exponent).__name__ in ('Iterated_Expression', 'Iterated_Math'), exponent
     assert coef != 0
 
     self.base = base
@@ -168,9 +172,12 @@ class ExpTerm:
       self.coef //= self.base
       self.exponent += 1
 
+  @property
+  def is_const(self):
+    return is_const(self.exponent)
+
   def eval(self):
     # Is this a constant? Or an expression?
-    self.is_const = is_const(self.exponent)
     if self.is_const:
       exp_as_int = try_eval(self.exponent)
 
@@ -224,6 +231,7 @@ class ExpTerm:
     return (exp_mod(self.base, self.exponent, m) * self.coef) % m
 
   def mul_int(self, n : int):
+    n = int(n)
     assert isinstance(n, int), n
     assert n != 0
     return ExpTerm(self.base, self.coef * n, self.exponent)
@@ -268,10 +276,20 @@ def normalize_terms(terms):
   return new_terms
 
 
-class ExpInt:
+class ExpInt(NatExpr):
   """An integer represented by a formula: `(a1 b^n1 + a2 b^n2 + ... + c) / d` """
+  
+
+  def try_eval(self) -> int | None:
+    if not self.is_const: return None
+    val = uparrow_size_approx(self)
+    top = val[-1]
+    if val[0] == 2 and val[1] == 0:
+      return self.sign * top
+    return None
   def __init__(self, terms: list[ExpTerm], const : int, denom : int):
     assert terms
+    const = int(const)
     assert isinstance(const, int), const
     assert isinstance(denom, int), denom
 
@@ -325,8 +343,11 @@ class ExpInt:
       raise ValueError("Attempt to convert large ExpInt -> int")
     return val
 
+  @property
+  def is_const(self):
+    return all(term.is_const for term in self.terms)
+
   def eval(self):
-    self.is_const = all(term.is_const for term in self.terms)
     if self.is_const:
       term_values = [try_eval(term) for term in self.terms]
       if all(term_values):

@@ -17,6 +17,7 @@ from Macro import Turing_Machine, Simulator, Block_Finder
 import Reverse_Engineer_Filter
 
 import io_pb2
+import Exp_Int
 
 
 def add_option_group(parser):
@@ -177,7 +178,10 @@ def simulate_machine(machine : Turing_Machine.Turing_Machine,
       sim_info.result.num_rule_moves = sim.num_rule_moves
 
       if sim.step_num > 0:
-        sim_info.result.log10_num_steps = int(math.log10(sim.step_num))
+        if type(sim.step_num).__name__ in ('ExpInt', 'Iterated_Expression', 'Iterated_Math'):
+          assert not options.compute_steps, "Cannot exactly compute steps for complex formula-based numbers."
+        else:
+          sim_info.result.log10_num_steps = int(math.log10(int(sim.step_num)))
 
       sim_info.result.num_rules_proven = sim.prover.num_rules
       sim_info.result.num_meta_diff_rules_proven = sim.prover.num_meta_diff_rules

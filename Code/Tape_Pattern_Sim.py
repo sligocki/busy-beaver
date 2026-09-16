@@ -20,11 +20,14 @@ from __future__ import annotations
 import argparse
 import math
 import re
+import sys
 from typing import Optional
 
 from Direct_Simulator import DirectSimulator
 import IO
+from IO.Machine import Machine
 from Parse_Config import INF, ParsedConfig, parse_tape_config
+from NatExpr import NatExpr
 
 
 def _build_side_regex(elements: list[tuple]) -> tuple[str, list[tuple[str, int]]]:
@@ -41,7 +44,7 @@ def _build_side_regex(elements: list[tuple]) -> tuple[str, list[tuple[str, int]]
     block_re = re.escape("".join(str(d) for d in block))
     if count is INF or isinstance(count, float):
       pieces.append(f"(?:{block_re})*")
-    elif isinstance(count, int):
+    elif isinstance(count, (int, NatExpr)):
       if count == 1:
         pieces.append(block_re)
       else:

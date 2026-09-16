@@ -12,7 +12,8 @@ from optparse import OptionParser, OptionGroup
 import sys
 
 import Algebraic_Expression as ae
-from Algebraic_Expression import Expression, Variable, NewVariableExpression, VariableToExpression, ConstantToExpression, VarPlusConstExpression, Term, always_ge, is_const, variables, substitute
+from NatExpr import NatExpr, ConstInt
+from Algebraic_Expression import Expression, Variable, min_val, ConstantToExpression, VariableToExpression, VarPlusConstExpression, Term, always_ge, is_const, variables, substitute, NewVariableExpression
 import Exp_Int
 from Exp_Int import ExpInt
 import Halting_Lib
@@ -1142,7 +1143,7 @@ class Proof_System(object):
               self.print_this("")
             return False, None
           delta_value[x] = Exp_Int.try_simplify(diff_block.num)
-          assert isinstance(delta_value[x], int), repr(delta_value[x])
+          assert isinstance(delta_value[x], (int, NatExpr)), repr(delta_value[x])
           # If this block's repetitions will be depleted during this transition,
           #   count the number of repetitions that it can allow while staying
           #   above the minimum requirement.
@@ -1251,11 +1252,15 @@ class Proof_System(object):
     for dir in range(2):
       for i, (diff_block, return_block) in enumerate(zip(
         rule.diff_tape.tape[dir], return_tape.tape[dir])):
-        if return_block.num is not math.inf:
+        if return_block.num != math.inf:
           if dir == limit_dir and i == limit_index:
             return_block.num = limit_final
           else:
-            return_block.num += num_reps * diff_block.num
+            try:
+              return_block.num += num_reps * diff_block.num
+            except TypeError:
+              print(f"CRASH: return_block.num={type(return_block.num)} ({return_block.num}), num_reps={type(num_reps)} ({num_reps}) diff_block.num={type(diff_block.num)} ({diff_block.num})")
+              raise
           if (isinstance(return_block.num, Algebraic_Expression) and
               return_block.num.is_const):
             return_block.num = return_block.num.const
@@ -1504,8 +1509,8 @@ def factor_var(term : Term, k : Variable):
 
 def series_sum(expr : Algebraic_Expression, k : Variable, N):
   """Sums the series expr over k = 0 to N-1 if we can."""
-  if isinstance(expr, int):
-    return expr * N
+  if isinstance(expr, (int, ConstInt)):
+    return int(expr) * N
 
   assert isinstance(expr, Algebraic_Expression), expr
   assert isinstance(k, Variable), k

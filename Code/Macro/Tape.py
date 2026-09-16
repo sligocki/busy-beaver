@@ -20,11 +20,13 @@ def reverse(in_list):
   reversed_in_list.reverse()
   return reversed_in_list
 
+from NatExpr import NatExpr
+
 class Repeated_Symbol(object):
   """Slice of tape with repetitions."""
   def __init__(self, symbol, number_of_repetitions, id = None):
     self.symbol = symbol
-    self.num = number_of_repetitions
+    self.num = NatExpr.wrap(number_of_repetitions)
     self.id = id
 
   def __eq__(self, other):
@@ -34,7 +36,7 @@ class Repeated_Symbol(object):
             other.id       == self.id)
 
   def __hash__(self):
-    return self.symbol + self.num
+    return hash((self.symbol, self.num))
 
   def to_string(self, html_format, full_reps):
     if hasattr(self.symbol, "is_embedded"):

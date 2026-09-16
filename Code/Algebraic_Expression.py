@@ -9,6 +9,9 @@ import math
 import operator
 import string
 
+from typing import Optional
+from NatExpr import NatExpr
+
 from Common import is_const
 
 
@@ -29,8 +32,8 @@ def simp_frac(val):
 
 def div(a, b):
   """Return a / b as either int or Fraction."""
-  if isinstance(a, int) and isinstance(b, int):
-    return simp_frac(Fraction(a, b))
+  if isinstance(a, (int, NatExpr)) and isinstance(b, (int, NatExpr)):
+    return simp_frac(Fraction(int(a), int(b)))
   else:
     return a / b
 
@@ -169,12 +172,13 @@ def Term_from_string(input):
 
   return Term(var_powers,coef)
 
-class Expression:
-  """An algebraic expression, i.e. a multi-variable polynomial."""
+from NatExpr import NatExpr
+
+class Expression(NatExpr):
+  """A sum of Terms."""
   def __init__(self, terms, constant):
     self.terms = terms
     self.const = constant
-    self.is_const = (len(self.terms) == 0) and is_const(self.const)
 
   def __repr__(self):
     if len(self.terms) == 0:
@@ -227,6 +231,7 @@ class Expression:
 
   def __truediv__(self, other):
     """Divide the expression by a scalar."""
+    other = int(other) if isinstance(other, NatExpr) else other
     assert isinstance(other, int), (self, other, type(other))
     if other == 1:
       return self
@@ -242,6 +247,23 @@ class Expression:
     if other == 1:
       return (self, 0)
     raise NotImplementedError("Cannot mod Expression by non-1 value")
+
+  def __mod__(self, other):
+    raise NotImplementedError("Cannot mod Expression")
+  def __lt__(self, other):
+    raise TypeError("Cannot compare Expressions")
+  
+  def try_eval(self):
+    return self.const if self.is_const else None
+
+  @property
+  def is_const(self):
+    return len(self.terms) == 0
+
+  @property
+  def uparrow_size_approx(self):
+    assert self.is_const, self
+    return (2, 0, abs(self.const))
 
   def substitute(self, subs):
     """Substitute values from dict 'subs' to get an int."""
