@@ -187,7 +187,7 @@ class Simulator(object):
     elif trans.state_out == self.state and trans.dir_out == self.dir and \
        self.op_state == Turing_Machine.RUNNING:
       num_reps = self.tape.apply_chain_move(trans.symbol_out)
-      if num_reps == math.inf:
+      if num_reps.is_inf:
         self.op_state = Turing_Machine.INF_REPEAT
         self.inf_reason = io_pb2.INF_CHAIN_STEP
         self.inf_recur_states = list(trans.states_last_seen.keys())

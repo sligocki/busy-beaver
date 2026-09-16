@@ -25,6 +25,10 @@ class NatExpr(abc.ABC):
             return ConstInt(val)
         return self
 
+    @property
+    def is_inf(self) -> bool:
+        return False
+
 
 
 
@@ -184,6 +188,9 @@ class InfNat(NatExpr):
     __slots__ = []
     
     def try_eval(self): return None
+    
+    @property
+    def is_inf(self) -> bool: return True
     
     @property
     def is_const(self) -> bool: return True

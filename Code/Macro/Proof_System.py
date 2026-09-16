@@ -786,7 +786,7 @@ class Proof_System(object):
         offset -= 1
         # Generalize, eg. (abc)^5 -> (abc)^(n+5)
         # Blocks with one rep are not generalized, eg. (abc)^1 -> (abc)^1
-        if block.num not in (math.inf, 1):
+        if not block.num.is_inf and block.num != 1:
           x = Variable()
           init_count = Exp_Int.try_eval(block.num)
           # Avoid proving rules with ridiculously huge initial values (like ExpInt).
@@ -888,7 +888,7 @@ class Proof_System(object):
     for dir in range(2):
       for diff_block, initial_block in zip(diff_tape.tape[dir],
                                            initial_tape.tape[dir]):
-        if diff_block.num != math.inf:
+        if not diff_block.num.is_inf:
           diff_block.num -= initial_block.num
           if isinstance(diff_block.num, Algebraic_Expression):
             if diff_block.num.is_const:
@@ -1252,7 +1252,7 @@ class Proof_System(object):
     for dir in range(2):
       for i, (diff_block, return_block) in enumerate(zip(
         rule.diff_tape.tape[dir], return_tape.tape[dir])):
-        if return_block.num != math.inf:
+        if not return_block.num.is_inf:
           if dir == limit_dir and i == limit_index:
             return_block.num = limit_final
           else:
