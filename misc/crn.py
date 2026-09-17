@@ -6,13 +6,12 @@
 
 from __future__ import annotations
 
-from collections import defaultdict
-from dataclasses import dataclass
 import itertools
 import math
 import time
-from typing import Iterator
-
+from collections import defaultdict
+from collections.abc import Iterator
+from dataclasses import dataclass
 
 type SpeciesID = int
 type SpeciesPair = tuple[SpeciesID, SpeciesID]

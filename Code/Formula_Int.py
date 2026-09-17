@@ -6,7 +6,6 @@ from dataclasses import dataclass
 
 from Math import carmichael
 
-
 type GenInt = FormulaInt | int
 
 
@@ -75,7 +74,7 @@ class Sum(FormulaInt):
     terms: list[FormulaInt] = []
     const = 0
     for val in vals:
-      if (ival := try_as_basic_int(val)) != None:
+      if (ival := try_as_basic_int(val)) is not None:
         const += ival
       else:
         terms.append(val)

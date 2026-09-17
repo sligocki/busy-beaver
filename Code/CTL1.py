@@ -6,11 +6,11 @@
 Runs the trivial CTL (A*) on a machine to discover infinite behavior
 """
 
-import sys
 import argparse
+import sys
 
 import IO
-from Macro import Turing_Machine, Simulator
+from Macro import Simulator, Turing_Machine
 
 DIR_NAME = {
   Turing_Machine.LEFT: "L",

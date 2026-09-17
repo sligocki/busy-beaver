@@ -5,13 +5,13 @@ where a,b,c,d are normal int and n is either an int or ExpInt.
 """
 
 from __future__ import annotations
-from fractions import Fraction
+
 import math
+from fractions import Fraction
 
-from Algebraic_Expression import Expression, min_val, variables, substitute
-from NatExpr import NatExpr, ConstInt, is_const
-from Math import gcd, lcm, int_pow, exp_mod, prec_mult, prec_add
-
+from Algebraic_Expression import Expression, min_val, substitute, variables
+from Math import exp_mod, gcd, int_pow, lcm, prec_add, prec_mult
+from NatExpr import ConstInt, NatExpr, is_const
 
 # If x < 10^EXP_THRESHOLD, evaluate it as an int
 # if x > 10^EXP_THRESHOLD, only consider as formula
@@ -65,7 +65,7 @@ def is_simple(value) -> bool:
   return isinstance(value, (int, Fraction, ConstInt))
 
 
-def try_eval(x: BigInt) -> int | None:
+def try_eval(x: int | NatExpr) -> int | None:
   """Return integer value (if it's small enough) or None (if too big)."""
   if hasattr(x, "try_eval"):
     return x.try_eval()
@@ -446,7 +446,7 @@ class ExpInt(NatExpr):
   def __mod__(self, other):
     other_int = try_eval(other)
     if not other_int:
-      raise ExpIntException(f"Cannot eval %: {self} % {repr(other)}")
+      raise ExpIntException(f"Cannot eval %: {self} % {other!r}")
 
     if other_int == 1:
       return 0

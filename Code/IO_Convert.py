@@ -9,7 +9,6 @@ from pathlib import Path
 
 import IO
 
-
 FORMATS = [
   "auto",
   "text",
@@ -87,9 +86,7 @@ def get_writer(format, filename, args):
 
   elif format == "bbc_db":
     return IO.BBC.Writer(filename)
-  elif format == "bbc_index":
-    return NotImplementedError("We do not support writing BBC index files.")
-  elif format == "bbc_index_text":
+  elif format == "bbc_index" or format == "bbc_index_text":
     return NotImplementedError("We do not support writing BBC index files.")
 
   else:

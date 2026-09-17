@@ -3,12 +3,12 @@ Filter TMs to only ones that are "write-once" meaning that they never modify a n
 """
 
 import argparse
-from pathlib import Path
 import sys
+from pathlib import Path
 
+import IO
 from Macro.Turing_Machine import RUNNING
 from Macro.Turing_Machine import Simple_Machine as TM
-import IO
 
 
 def is_write_once(tm: TM):
@@ -27,11 +27,10 @@ def main():
   parser.add_argument("outfile", type=Path, nargs="?", default=sys.stdout)
   args = parser.parse_args()
 
-  with IO.Writer(args.outfile) as writer:
-    with IO.Reader(args.infile) as reader:
-      for tm_record in reader:
-        if is_write_once(tm_record.tm()):
-          writer.write_record(tm_record)
+  with IO.Writer(args.outfile) as writer, IO.Reader(args.infile) as reader:
+    for tm_record in reader:
+      if is_write_once(tm_record.tm()):
+        writer.write_record(tm_record)
 
 
 if __name__ == "__main__":

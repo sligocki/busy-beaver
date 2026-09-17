@@ -1,8 +1,8 @@
-import unittest
-import IO
-from Macro import Simulator
-from Macro import Turing_Machine
 import optparse
+import unittest
+
+import IO
+from Macro import Simulator, Turing_Machine
 
 
 class TestAck34(unittest.TestCase):

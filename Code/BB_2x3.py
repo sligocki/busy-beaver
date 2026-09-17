@@ -4,11 +4,11 @@ from pathlib import Path
 
 from Enumerate import enumerate
 from Pipeline import (
-  Pipeline,
-  SimulatorDecider,
-  RevEngDecider,
-  LinRecurDecider,
   CpsDecider,
+  LinRecurDecider,
+  Pipeline,
+  RevEngDecider,
+  SimulatorDecider,
 )
 
 

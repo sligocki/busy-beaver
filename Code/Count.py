@@ -11,10 +11,10 @@ For the entire space of Q-state, S-symbol TMs, the number of distinct TM's is:
 """
 
 import argparse
+from pathlib import Path
 
 import IO
 from Macro import Turing_Machine
-from pathlib import Path
 
 
 def fact2(n, m):

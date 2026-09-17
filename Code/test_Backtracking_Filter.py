@@ -1,9 +1,8 @@
 #! /usr/bin/env python3
 
-from Backtracking_Filter import backtrack
-
 import unittest
 
+from Backtracking_Filter import backtrack
 from IO import parse_tm
 
 

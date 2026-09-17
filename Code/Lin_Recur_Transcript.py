@@ -7,12 +7,12 @@ See also: Lin_Recur_Detect.py for the traditional algorithm.
 """
 
 import argparse
-from dataclasses import dataclass
 import math
 import time
+from dataclasses import dataclass
 
 import IO
-from Transcript import Transcript, TM
+from Transcript import TM, Transcript
 
 
 @dataclass(frozen=True)

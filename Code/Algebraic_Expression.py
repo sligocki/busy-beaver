@@ -3,11 +3,11 @@ Classes to do various algebraic operations on different abstract expression
 which contain number and variables.
 """
 
-from fractions import Fraction
-from functools import reduce
 import math
 import operator
 import string
+from fractions import Fraction
+from functools import reduce
 
 from NatExpr import NatExpr, is_const
 
@@ -79,7 +79,7 @@ class Variable:
   num_vars = 0
 
   def __init__(self, id=None):
-    if id == None:
+    if id is None:
       self.id = Variable.num_vars
       Variable.num_vars += 1
     else:

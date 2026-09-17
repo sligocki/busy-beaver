@@ -5,7 +5,6 @@ import time
 import IO
 from Macro import Turing_Machine
 
-
 # Simple repeating machine.
 tm = IO.parse_tm("0RA1LA")
 for block_size in range(2, 21):

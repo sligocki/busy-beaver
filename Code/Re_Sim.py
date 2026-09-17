@@ -8,8 +8,8 @@ import argparse
 from pathlib import Path
 
 import IO
-from Macro import Simulator, Turing_Machine
 import Macro_Simulator
+from Macro import Simulator, Turing_Machine
 
 
 def re_sim(tm_record):
@@ -47,11 +47,10 @@ def main():
   parser.add_argument("outfile", type=Path)
   args = parser.parse_args()
 
-  with IO.Proto.Writer(args.outfile) as writer:
-    with IO.Reader(args.infile) as reader:
-      for tm_record in reader:
-        tm_record = re_sim(tm_record)
-        writer.write_record(tm_record)
+  with IO.Proto.Writer(args.outfile) as writer, IO.Reader(args.infile) as reader:
+    for tm_record in reader:
+      tm_record = re_sim(tm_record)
+      writer.write_record(tm_record)
 
 
 main()

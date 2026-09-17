@@ -3,33 +3,30 @@ Proof System which observes and attempts to prove patterns in computation.
 """
 
 import copy
-from collections import defaultdict
 import math
 import optparse
-from optparse import OptionParser, OptionGroup
+from collections import defaultdict
+from optparse import OptionGroup, OptionParser
 
 import Algebraic_Expression as ae
-from NatExpr import NatExpr, ConstInt, is_const
+import Exp_Int
+import Halting_Lib
 from Algebraic_Expression import (
-  Expression,
-  Variable,
   ConstantToExpression,
+  Expression,
+  NewVariableExpression,
+  Term,
+  Variable,
   VariableToExpression,
   VarPlusConstExpression,
-  Term,
   always_ge,
-  variables,
   substitute,
-  NewVariableExpression,
+  variables,
 )
-import Exp_Int
 from Exp_Int import ExpInt
-import Halting_Lib
-from Macro import Rule_Func
-from Macro import Simulator
-from Macro import Tape
-from Macro import Turing_Machine
+from Macro import Rule_Func, Simulator, Tape, Turing_Machine
 from Macro.Turing_Machine import LEFT, RIGHT
+from NatExpr import ConstInt, NatExpr, is_const
 
 # TODO: Remove this old naming.
 Algebraic_Expression = Expression
@@ -93,7 +90,7 @@ def add_option_group(parser):
 UNPROVEN_PARITY = "Unproven parity"
 
 
-class Rule(object):
+class Rule:
   """Base type for Proof_System rules."""
 
 
@@ -630,7 +627,7 @@ def strip_config(state, dir, tape):
   )
 
 
-class Past_Config(object):
+class Past_Config:
   """A record of info from past instances of a stripped_config."""
 
   def __init__(self):
@@ -649,7 +646,7 @@ class Past_Config(object):
     consecutive) with the same num of loops (last_delta or delta_loops).
     """
     # First time we see stripped_config, store loop_num.
-    if self.last_loop_num == None:
+    if self.last_loop_num is None:
       self.last_loop_num = loop_num
       self.times_seen += 1
       return False
@@ -676,7 +673,7 @@ APPLY_RULE = "Apply_Rule"  # Rule applies, but only finitely many times.
 INF_REPEAT = "Inf_Repeat"  # Rule applies infinitely.
 
 
-class ProverResult(object):
+class ProverResult:
   def __init__(self, condition, *, new_tape=None, num_base_steps=None, states_last_seen=None):
     self.condition = condition
     self.new_tape = new_tape
@@ -684,7 +681,7 @@ class ProverResult(object):
     self.states_last_seen = states_last_seen
 
 
-class Proof_System(object):
+class Proof_System:
   """Stores past information, looks for patterns and tries to prove general
   rules when it finds patterns.
   """
@@ -1738,7 +1735,7 @@ def config_fits_min(var_list, min_list, current_list, assignment=None):
     if var:
       if not always_ge(current_val, min_val):
         return False
-      if assignment != None:
+      if assignment is not None:
         assignment[var] = current_val
   return True
 

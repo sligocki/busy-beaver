@@ -1,9 +1,8 @@
 #! /usr/bin/env python3
 
-import Halting_Lib
-
 import unittest
 
+import Halting_Lib
 import io_pb2
 
 

@@ -5,12 +5,11 @@ See: https://bbchallenge.org/method#format
 """
 
 import struct
-from typing import Optional
 import zipfile
 
+import TM_Enum
 from IO.TM_Record import TM_Record
 from Macro import Turing_Machine
-import TM_Enum
 
 
 class IO_Error(Exception):
@@ -76,7 +75,7 @@ class Reader:
 
   def __init__(self, infilename: str):
     self.infilename = infilename
-    self.infile: Optional[Any] = None
+    self.infile = None
 
   def __enter__(self):
     self.zipfile = zipfile.ZipFile(self.infilename, "r")
@@ -96,7 +95,7 @@ class Reader:
     # whence = 0 means (from the start).
     self.infile.seek(_BYTES_HEADER, 0)
 
-  def read_record(self) -> Optional[TM_Record]:
+  def read_record(self) -> TM_Record | None:
     tm_bytes = self.infile.read(_BYTES_PER_RECORD)
     if not tm_bytes:
       return None
@@ -128,7 +127,7 @@ class Reader:
     ...   # do something with tm_record
     """
     tm_record = self.read_record()
-    while tm_record != None:
+    while tm_record is not None:
       yield tm_record
       tm_record = self.read_record()
 
@@ -164,7 +163,7 @@ class IndexReader:
       if not n_bytes:
         return
       elif len(n_bytes) != 4:
-        raise IO_Error(f"Unexpected EOF while reading block (expected 4 bytes, got {len(len_bytes)}).")
+        raise IO_Error(f"Unexpected EOF while reading block (expected 4 bytes, got {len(n_bytes)}).")
       # Big Endian (>), 4 bytes (L).
       yield struct.unpack(">L", n_bytes)[0]
 

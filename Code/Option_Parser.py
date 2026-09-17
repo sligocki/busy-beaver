@@ -54,8 +54,7 @@ def Generator_Option_Parser(argv, extra_opt, ignore_infile=True):
   # The furthest that the machine can travel in n steps is n+1 away from the
   # origin.  It could travel in either direction so the tape need not be longer
   # than 2 * max_steps + 3
-  if opts["tape"] > 2 * opts["steps"] + 3:
-    opts["tape"] = 2 * opts["steps"] + 3
+  opts["tape"] = min(opts["tape"], 2 * opts["steps"] + 3)
 
   # Default output filename is based off of parameters.
   if not opts["outfile"]:
@@ -76,7 +75,7 @@ def Read_Attributes(input_file):
   temp_in = IO(input_file, None)
   line = temp_in.read_result()
   input_file.seek(0)
-  if line == None:
+  if line is None:
     return (0, 0, 0, 0)
   else:
     return line[1:5]
@@ -152,7 +151,7 @@ def Option_Parser(argv, opts, help_flag=True, no_mult=True, ignore_opts=[]):
       if opt not in ignore_opts:
         if is_required:
           usage += " --%s=" % opt
-        elif default_val != None:
+        elif default_val is not None:
           usage += " [--%s=%s]" % (opt, repr(default_val))
         else:
           usage += " [--%s=]" % opt

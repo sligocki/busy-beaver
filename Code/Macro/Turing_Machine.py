@@ -4,12 +4,12 @@ Abstract Turing Machine model with basic NxM TM and Macro-Machine derivatives
 
 from __future__ import annotations
 
-from typing import Any
 import dataclasses
+import string
 from dataclasses import dataclass
 from functools import total_ordering
-from optparse import OptionParser, OptionGroup
-import string
+from optparse import OptionGroup, OptionParser
+from typing import Any
 
 from Time_Limit import TimeLimit
 
@@ -197,7 +197,7 @@ def sim_limited(tm, state, start_tape, pos: int, dir: Dir, max_loops: int) -> Tr
   )
 
 
-class Turing_Machine(object):
+class Turing_Machine:
   """
   Abstract base for all specific Turing Machines
 
@@ -337,7 +337,7 @@ def tm_from_quintuples(quints, states, symbols) -> Simple_Machine:
   # Set all defined transitions.
   ttable = [[None for _ in symbols] for _ in states]
   for state_in, symbol_in, symbol_out, dir_out, state_out in quints:
-    if symbol_out != None:
+    if symbol_out is not None:
       # Convert all into integers
       state_in = states.index(state_in)
       symbol_in = symbols.index(symbol_in)
@@ -390,7 +390,7 @@ class Block_Symbol(tuple):
 
   def __repr__(self):
     # TODO: this assumes single digit sub-symbols
-    return "".join((str(x) for x in self))
+    return "".join(str(x) for x in self)
 
 
 class OffsetStartState:
@@ -404,7 +404,7 @@ class OffsetStartState:
     self.offset = offset
 
 
-class Tape_Head_Symbol(object):
+class Tape_Head_Symbol:
   """Wrapper for block symbols where the head is embedded inside."""
 
   is_embedded = True
@@ -425,8 +425,8 @@ class Tape_Head_Symbol(object):
     return self.tup[i]
 
   def to_string(self):
-    left = "".join((str(x) for x in self.tup[: self.pos]))
-    right = "".join((str(x) for x in self.tup[self.pos :]))
+    left = "".join(str(x) for x in self.tup[: self.pos])
+    right = "".join(str(x) for x in self.tup[self.pos :])
     if hasattr(self.state, "print_with_dir"):
       state_str = self.state.print_with_dir(self.dir)
     else:
@@ -444,7 +444,7 @@ class Tape_Head_Symbol(object):
 
   def __eq__(self, other):
     return (
-      type(self) == type(other)
+      type(self) is type(other)
       and self.tup == other.tup
       and self.state == other.state
       and self.dir == other.dir

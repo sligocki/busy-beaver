@@ -6,11 +6,11 @@
 Runs the CTL (A* B C) on a machine to discover infinite behavior
 """
 
-import sys
 import argparse
+import sys
 
 import IO
-from Macro import Turing_Machine, Simulator
+from Macro import Simulator, Turing_Machine
 
 
 class CTL_Table(dict):

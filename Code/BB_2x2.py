@@ -3,7 +3,7 @@ import argparse
 from pathlib import Path
 
 from Enumerate import enumerate
-from Pipeline import Pipeline, SimulatorDecider, RevEngDecider, LinRecurDecider
+from Pipeline import LinRecurDecider, Pipeline, RevEngDecider, SimulatorDecider
 
 
 def main():

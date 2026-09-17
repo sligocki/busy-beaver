@@ -7,6 +7,7 @@ $ mpirun -np 8 python Code/test_MPI_Work_Queue.py
 
 import time
 
+import sys
 import MPI_Work_Queue
 
 if __name__ == "__main__":
@@ -27,7 +28,7 @@ if __name__ == "__main__":
     file = open("test_MPI_Work_Queue_%d" % (MPI_Work_Queue.rank,), "w")
     while True:
       job = queue.pop_job()
-      if job == None:
+      if job is None:
         file.close()
         break
       file.write("Process %d received job %d\n" % (MPI_Work_Queue.rank, job))

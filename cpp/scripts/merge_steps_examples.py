@@ -7,7 +7,6 @@ after a parallel run.
 import argparse
 import sys
 
-
 parser = argparse.ArgumentParser()
 parser.add_argument("-n", type=int, default=20, help="number of holes to print")
 parser.add_argument("steps_example_files", nargs="+")
@@ -29,7 +28,7 @@ for filename in args.steps_example_files:
 steps_example_sorted = sorted(steps_example.items())
 
 for n, tm in steps_example_sorted:
-  sys.stdout.write("{}\t{}\n".format(n, tm))
+  sys.stdout.write(f"{n}\t{tm}\n")
 
 smallest_holes = []
 total_holes = 0

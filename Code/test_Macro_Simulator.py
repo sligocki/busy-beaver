@@ -3,21 +3,19 @@
 Unit test for "Macro_Simulator.py"
 """
 
-import Macro_Simulator
-
-from optparse import OptionParser
 import os
 import sys
 import unittest
+from optparse import OptionParser
 
 import Exp_Int
 import Halting_Lib
 import IO
+import io_pb2
+import Macro_Simulator
+import TM_Enum
 from IO import TM_Record
 from Macro import Simulator, Turing_Machine
-import TM_Enum
-
-import io_pb2
 
 
 class MacroSimulatorTest(unittest.TestCase):

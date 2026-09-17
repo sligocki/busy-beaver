@@ -1,14 +1,14 @@
 import argparse
 
-import Macro_Simulator
-import Reverse_Engineer_Filter
-import CTL_Filter
 import Backtracking_Filter
+import CPS_Filter
+import CTL_Filter
 import Halting_Lib
 import IO
 import io_pb2
 import Lin_Recur_Detect
-import CPS_Filter
+import Macro_Simulator
+import Reverse_Engineer_Filter
 
 
 class Pipeline:

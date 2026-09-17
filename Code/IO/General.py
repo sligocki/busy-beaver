@@ -2,9 +2,10 @@
 Generalized reader that can read from either Proto or Text format.
 """
 
-from pathlib import Path
 import re
-from typing import Iterator, TextIO
+from collections.abc import Iterator
+from pathlib import Path
+from typing import TextIO
 
 import IO
 from IO.TM_Record import parse_tm

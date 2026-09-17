@@ -7,10 +7,9 @@ import argparse
 from pathlib import Path
 
 import IO
+import TM_Enum
 from IO import TM_Record
 from Macro import Turing_Machine
-import TM_Enum
-
 
 DIRS = "LR"
 

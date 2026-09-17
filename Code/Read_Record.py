@@ -6,7 +6,6 @@ import argparse
 import Halting_Lib
 import IO
 
-
 parser = argparse.ArgumentParser()
 parser.add_argument("infile")
 parser.add_argument(

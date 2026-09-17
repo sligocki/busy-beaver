@@ -6,7 +6,6 @@ import sys
 
 from google.protobuf.json_format import MessageToJson
 
-
 # Increase some annoying limits
 sys.set_int_max_str_digits(0)
 sys.setrecursionlimit(10_000)
@@ -17,7 +16,7 @@ def print_pb(pb):
   print(pb_str)
 
 
-class GenContainer(object):
+class GenContainer:
   """Generic container class"""
 
   def __init__(self, **args):
@@ -25,7 +24,7 @@ class GenContainer(object):
       self.__dict__[atr] = args[atr]
 
 
-class Exit_Condition(object):
+class Exit_Condition:
   """Basically an enum of Turing machine exit conditions."""
 
   # TODO(shawn): It'd be nice to convert these to strings or something less

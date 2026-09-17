@@ -7,22 +7,23 @@ Macro Machine simulator, gathers statistics, and outputs all of the machines
 like Generate does.
 """
 
-import pickle as pickle
 import math
-from optparse import OptionParser, OptionGroup
 import os
+import pickle as pickle
 import random
 import sys
 import time
+from pathlib import Path
 import traceback
+from optparse import OptionGroup, OptionParser
 
 import IO
-from IO.TM_Record import TM_Record
 import Macro_Simulator
-from Pipeline import Pipeline
-from Time_Limit import TimeLimit
 import TM_Enum
 import Work_Queue
+from IO.TM_Record import TM_Record
+from Pipeline import Pipeline
+from Time_Limit import TimeLimit
 
 
 def long_to_eng_str(number, left, right):
@@ -46,7 +47,7 @@ def long_to_eng_str(number, left, right):
     return "0.%se+00" % ("0" * right)
 
 
-class Enumerator(object):
+class Enumerator:
   def __init__(self, options, stack, writer, pout, pipeline=None):
     self.options = options
 

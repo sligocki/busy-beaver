@@ -1,13 +1,12 @@
 #! /usr/bin/env python3
 
-import Exp_Int
-from Exp_Int import *
-
 import sys
 import unittest
 
-from Halting_Lib import set_big_int, get_big_int
+import Exp_Int
 import io_pb2
+from Exp_Int import exp_int, sign, try_eval
+from Halting_Lib import get_big_int, set_big_int
 
 
 class ExpIntTest(unittest.TestCase):

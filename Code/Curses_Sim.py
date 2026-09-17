@@ -5,10 +5,9 @@ import argparse
 import curses
 import string
 
-from Direct_Simulator import DirectSimulator
 import IO
+from Direct_Simulator import DirectSimulator
 from Macro import Turing_Machine
-
 
 STATES = string.ascii_uppercase
 
@@ -125,8 +124,7 @@ class VisSim:
   def move_vert(self, vert_offset):
     # TODO: if self.cur_line +
     self.cur_line += vert_offset
-    if self.cur_line < 0:
-      self.cur_line = 0
+    self.cur_line = max(self.cur_line, 0)
     while self.cur_line + curses.LINES > self.sim.step_num:
       self.expand_pad(self.pad_height() + self.buffer_size)
     self.draw()

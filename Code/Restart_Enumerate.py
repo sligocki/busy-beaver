@@ -6,8 +6,9 @@
 Simple code to restart TM enumeration started be "Enumerate.py".
 """
 
-import sys
 import pickle
+import sys
+
 from Enumerate import *
 from IO import IO
 

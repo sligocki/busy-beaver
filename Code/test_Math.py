@@ -1,8 +1,8 @@
 #! /usr/bin/env python3
 
-from Math import *
-
 import unittest
+
+from Math import exp_mod, gcd, int_pow, lcm, prec_mult, prime_factor
 
 
 class MathTest(unittest.TestCase):

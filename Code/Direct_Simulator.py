@@ -6,8 +6,8 @@ from __future__ import annotations
 
 import argparse
 import collections
-from dataclasses import dataclass
 import time
+from dataclasses import dataclass
 
 import Common
 import IO
@@ -95,7 +95,7 @@ class DirectTape:
     return index - self.index + self.position
 
   def _index_default(self, pos: int | None = None) -> int:
-    if pos == None:
+    if pos is None:
       return self.index
     else:
       return self._pos2index(pos)

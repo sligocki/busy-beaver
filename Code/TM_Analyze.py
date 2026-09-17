@@ -8,7 +8,6 @@ from pathlib import Path
 
 import Halting_Lib
 import IO
-
 import io_pb2
 
 
@@ -212,7 +211,7 @@ class TMStats:
     print()
     print(f"Unknown: {self.num_unknown:_} ({self.num_unknown / self.count:.3%})")
     for reason, count in sorted(self.unknown_reason.items(), key=lambda x: x[1], reverse=True):
-      print(f"  - {str(reason):20s} : {count:15_}  ({count / self.num_unknown:7.2%})")
+      print(f"  - {reason!s:20s} : {count:15_}  ({count / self.num_unknown:7.2%})")
     print()
     print(f"Halt: {self.num_halt:_} ({self.num_halt / self.count:.3%})")
     print(f"  - Steps: Max {self.halt_steps.max_str()}")
@@ -395,7 +394,7 @@ def main():
     "-n",
     type=int,
     default=print_default,
-    help="[Default: {:_}]".format(print_default),
+    help=f"[Default: {print_default:_}]",
   )
 
   parser.add_argument("--time", action="store_true", help="Print stats on timing")

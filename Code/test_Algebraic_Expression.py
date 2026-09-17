@@ -3,9 +3,9 @@
 Unit test for "Numbers/Algebraic_Expression.py"
 """
 
-import Algebraic_Expression
-
 import unittest
+
+import Algebraic_Expression
 
 
 def expr(expr_str):

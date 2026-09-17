@@ -8,27 +8,24 @@ Which they reverse-engineered from Skelet's program originally.
 """
 
 import argparse
-from collections import defaultdict
 import time
-from typing import Optional
+from collections import defaultdict
 
-from Common import print_pb
 import Halting_Lib
 import IO
+import io_pb2
+from Common import print_pb
 from Macro import Turing_Machine
 from Macro.Turing_Machine import (
-  LEFT,
-  RIGHT,
-  other_dir,
-  RUNNING,
-  INF_REPEAT,
   HALT,
-  UNDEFINED,
+  INF_REPEAT,
+  LEFT,
   OVER_STEPS_IN_MACRO,
+  RIGHT,
+  RUNNING,
+  UNDEFINED,
+  other_dir,
 )
-
-import io_pb2
-
 
 DIRS = (LEFT, RIGHT)
 
@@ -47,7 +44,7 @@ class Config:
     self.window = tuple(window)
     self.block_size = block_size
 
-    if pos == None:
+    if pos is None:
       # TM should have block_size symbols in front of it.
       if dir == LEFT:
         pos = block_size - 1
@@ -114,7 +111,7 @@ class CPSSim:
     # set of |Config|s to evaluate and add to |transitions|
     self.todo_configs = {Config(tm.init_state, RIGHT, blank_window, self.block_size): None}
     # Dict of Config -> PostConfig saving evaluation on window.
-    self.transitions: dict[Config, tuple[Turing_Machine.Transition, Optional[Config]]] = {}
+    self.transitions: dict[Config, tuple[Turing_Machine.Transition, Config | None]] = {}
 
     # continuations[dir][block] = set of blocks that can appear directly after
     #   |block| in direction |dir|.

@@ -3,12 +3,12 @@
 Unit test for "Macro/Turing_Machine.py"
 """
 
-from Macro import Turing_Machine
-
 import os
 import sys
 import unittest
+
 import IO
+from Macro import Turing_Machine
 
 
 class SystemTest(unittest.TestCase):

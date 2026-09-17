@@ -1,9 +1,8 @@
 import sys
 import time
 
-from mpi4py import MPI
-
 import Work_Queue
+from mpi4py import MPI
 
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
@@ -162,7 +161,7 @@ class MPI_Worker_Work_Queue(Work_Queue.Work_Queue):
 
 
 # Master code
-class Master(object):
+class Master:
   """Only one process should create and MPI Master object and all workers
   Should refer to it. You can use push_job() to add initial jobs and then
   run_master() to run the select loop for listening for workers."""

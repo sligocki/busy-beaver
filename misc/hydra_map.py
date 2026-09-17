@@ -2,13 +2,13 @@
 # This is addapted from an example shared by Greg Kuperberg.
 
 import argparse
-from functools import lru_cache
 import hashlib
 import os
 import time
+from functools import lru_cache
 
-from gmpy2 import mpz, bit_mask, log2, floor
 import psutil
+from gmpy2 import bit_mask, floor, log2, mpz
 
 
 # Direct computation of t steps of hydra

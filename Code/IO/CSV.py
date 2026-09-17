@@ -22,10 +22,9 @@ from pathlib import Path
 from typing import TextIO
 
 import Halting_Lib
+import TM_Enum
 from IO import TM_Record
 from IO.Common import RecordLocateError
-import TM_Enum
-
 
 parse_tm = TM_Record.parse_tm
 

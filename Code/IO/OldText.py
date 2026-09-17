@@ -11,13 +11,11 @@ Format looks like:
 import io
 import string
 
-from Common import Exit_Condition
 import Halting_Lib
+import io_pb2
+from Common import Exit_Condition
 from IO import TM_Record
 from Macro import Turing_Machine
-
-import io_pb2
-
 
 inf_reason2str = {
   io_pb2.INF_UNSPECIFIED: "",
@@ -53,7 +51,7 @@ def display_ttable(tm):
   return s.strip()
 
 
-class Record(object):
+class Record:
   """Structuring of information in a Turing machine result line."""
 
   def __init__(self):
@@ -70,10 +68,10 @@ class Record(object):
   def write(self, out):
     """Write out a Record object result."""
     out.write(display_ttable(self.tm))
-    if self.category != None:
+    if self.category is not None:
       out.write(" | %r %s" % (self.log_number, Exit_Condition.name(self.category)))
       self.write_list(self.category_reason, out)
-      if self.extended != None:
+      if self.extended is not None:
         out.write(" | %s" % Exit_Condition.name(self.extended))
         self.write_list(self.extended_reason, out)
     out.write("\n")
@@ -100,7 +98,7 @@ class Record(object):
       return str(obj)
 
 
-class ReaderWriter(object):
+class ReaderWriter:
   """
   Reads and writes Busy Beaver results:
     input_file  - file to read*
@@ -110,8 +108,8 @@ class ReaderWriter(object):
   """
 
   def __init__(self, input_file, output_file, log_number=None):
-    assert input_file == None or isinstance(input_file, io.TextIOBase), type(input_file)
-    assert output_file == None or isinstance(output_file, io.TextIOBase), type(output_file)
+    assert input_file is None or isinstance(input_file, io.TextIOBase), type(input_file)
+    assert output_file is None or isinstance(output_file, io.TextIOBase), type(output_file)
     self.input_file = input_file
     self.output_file = output_file
     self.log_number = log_number

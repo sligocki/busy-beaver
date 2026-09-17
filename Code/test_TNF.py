@@ -1,10 +1,9 @@
 #! /usr/bin/env python3
 
-import TNF
-
 import unittest
 
 import IO
+import TNF
 
 
 class SystemTest(unittest.TestCase):

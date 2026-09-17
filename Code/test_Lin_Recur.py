@@ -1,13 +1,11 @@
 #! /usr/bin/env python3
 
-import Lin_Recur_Detect
-
 import unittest
 
 import Halting_Lib
 import IO
-
 import io_pb2
+import Lin_Recur_Detect
 
 
 class SystemTest(unittest.TestCase):

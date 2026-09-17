@@ -5,18 +5,17 @@ the Proof System.
 """
 
 import math
-from optparse import OptionParser, OptionGroup
 import time
+from optparse import OptionGroup, OptionParser
 
 import CTL_Filter
 import Halting_Lib
 import IO
-from IO import TM_Record
-import Lin_Recur_Detect
-from Macro import Turing_Machine, Simulator, Block_Finder
-import Reverse_Engineer_Filter
-
 import io_pb2
+import Lin_Recur_Detect
+import Reverse_Engineer_Filter
+from IO import TM_Record
+from Macro import Block_Finder, Simulator, Turing_Machine
 
 
 def add_option_group(parser):
@@ -294,4 +293,4 @@ def simulate_machine(
       )
 
     else:
-      raise Exception(sim.op_state, tm.ttable_str(), sim)
+      raise Exception(sim.op_state, base_tm.ttable_str(), sim)

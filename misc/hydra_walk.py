@@ -5,8 +5,8 @@ import argparse
 import os
 import time
 
-from gmpy2 import mpz, bit_mask
 import psutil
+from gmpy2 import bit_mask, mpz
 
 
 # Direct computation of t steps of hydra map with random walk.

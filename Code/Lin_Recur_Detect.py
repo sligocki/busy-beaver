@@ -8,9 +8,8 @@ import argparse
 import Direct_Simulator
 import Halting_Lib
 import IO
-from Macro import Turing_Machine
-
 import io_pb2
+from Macro import Turing_Machine
 
 
 def in_range(tape, pos):

@@ -31,7 +31,7 @@ class NatExpr(abc.ABC):
   def try_eval(self) -> int | None:
     pass
 
-  def try_simplify(self) -> "NatExpr":
+  def try_simplify(self) -> NatExpr:
     val = self.try_eval()
     if val is not None:
       return ConstInt(val)

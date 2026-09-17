@@ -11,11 +11,9 @@ from pathlib import Path
 
 import Halting_Lib
 import IO
-from Macro.Turing_Machine import Simple_Machine as TM
-from Macro.Turing_Machine import HALT, UNDEFINED, other_dir
-
 import io_pb2
-
+from Macro.Turing_Machine import HALT, UNDEFINED, other_dir
+from Macro.Turing_Machine import Simple_Machine as TM
 
 # Constants
 BACKTRACK = "Backtrack"
@@ -240,11 +238,10 @@ def main():
   )
   args = parser.parse_args()
 
-  with IO.Proto.Writer(args.outfile) as writer:
-    with IO.Reader(args.infile) as reader:
-      for tm_record in reader:
-        backtrack_filter(tm_record, args.steps, args.max_width)
-        writer.write_record(tm_record)
+  with IO.Proto.Writer(args.outfile) as writer, IO.Reader(args.infile) as reader:
+    for tm_record in reader:
+      backtrack_filter(tm_record, args.steps, args.max_width)
+      writer.write_record(tm_record)
 
 
 if __name__ == "__main__":

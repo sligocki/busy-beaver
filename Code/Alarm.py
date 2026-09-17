@@ -13,7 +13,7 @@ class AlarmException(Exception):
   """An exception to be tied to a timer running out."""
 
 
-class Alarm(object):
+class Alarm:
   """Singleton class that takes care of setting and turning off timer."""
 
   def __init__(self):

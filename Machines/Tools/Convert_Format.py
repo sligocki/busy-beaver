@@ -7,8 +7,8 @@ Convert various TM formats.  Currently this only reads "Marxen2" format and
 outputs in our current format.
 """
 
-import sys
 import string
+import sys
 
 for infilename in sys.argv[1:]:
   infile = open(infilename, "r")

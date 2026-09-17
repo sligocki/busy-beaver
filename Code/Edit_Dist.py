@@ -7,7 +7,7 @@ order to convert from one to the other modulo state/symbol permutations.
 
 import argparse
 import itertools
-from typing import Iterator
+from collections.abc import Iterator
 
 import IO
 from Macro.Turing_Machine import Simple_Machine as TM

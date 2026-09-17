@@ -5,8 +5,8 @@ import argparse
 import sys
 
 import IO
-from Macro import Turing_Machine
 import TNF
+from Macro import Turing_Machine
 
 
 def permute(old_tm, state_order, symbol_order):

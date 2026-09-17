@@ -2,12 +2,10 @@ import ctypes
 import string
 import sys
 
-import TM_Enum
-
 import io_pb2
-
+from IO import StdText
+import TM_Enum
 from Macro import Turing_Machine
-
 
 # Workaround to protobuf bug
 _NONE_REFCNT_ADDR = id(None)
@@ -149,7 +147,7 @@ def read_tm(proto_tm: io_pb2.TuringMachine) -> Turing_Machine.Simple_Machine:
   if type == "ttable_packed":
     return _unpack_tm(proto_tm.ttable_packed)
   elif type == "ttable_str":
-    return IO.StdText.parse_tm(proto_tm.ttable_str)
+    return StdText.parse_tm(proto_tm.ttable_str)
   elif type == "ttable_list":
     return tm_from_list(proto_tm.ttable_list)
   else:

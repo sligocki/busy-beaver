@@ -1,7 +1,7 @@
 import collections
 
 
-class Work_Queue(object):
+class Work_Queue:
   """A generic interface for sending and receiving work."""
 
   def pop_job(self):
@@ -21,7 +21,6 @@ class Work_Queue(object):
 
   def print_stats(self):
     """Hook for printing stats, default implementation does nothing."""
-    pass
 
 
 class Basic_LIFO_Work_Queue(Work_Queue):

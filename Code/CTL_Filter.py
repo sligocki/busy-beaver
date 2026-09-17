@@ -6,13 +6,12 @@ Run one of the CTL algorithms - CTL1, CTL2, CTL3, CTL4.
 import argparse
 from pathlib import Path
 
-import IO
 import CTL1
 import CTL2
 import CTL3
 import CTL4
 import Halting_Lib
-
+import IO
 import io_pb2
 
 
@@ -127,11 +126,10 @@ def main():
 
   args = parser.parse_args()
 
-  with IO.Proto.Writer(args.outfile) as writer:
-    with IO.Reader(args.infile) as reader:
-      for tm_record in reader:
-        filter_all(tm_record, args)
-        writer.write_record(tm_record)
+  with IO.Proto.Writer(args.outfile) as writer, IO.Reader(args.infile) as reader:
+    for tm_record in reader:
+      filter_all(tm_record, args)
+      writer.write_record(tm_record)
 
 
 if __name__ == "__main__":

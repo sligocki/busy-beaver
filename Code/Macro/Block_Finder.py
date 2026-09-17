@@ -8,14 +8,13 @@ Search for a good block size for the TM simulator.
 import copy
 import math
 import optparse
-from optparse import OptionParser, OptionGroup
 import sys
+from optparse import OptionGroup, OptionParser
 
 import IO
-from Macro.Simulator import Simulator
-from Macro import Turing_Machine
-
 import io_pb2
+from Macro import Turing_Machine
+from Macro.Simulator import Simulator
 
 
 def add_option_group(parser: OptionParser):

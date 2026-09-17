@@ -26,7 +26,7 @@ def reverse(in_list):
 from NatExpr import NatExpr
 
 
-class Repeated_Symbol(object):
+class Repeated_Symbol:
   """Slice of tape with repetitions."""
 
   def __init__(self, symbol, number_of_repetitions, id=None):
@@ -65,7 +65,7 @@ class Repeated_Symbol(object):
     return Repeated_Symbol(self.symbol, self.num, self.id)
 
 
-class Chain_Tape(object):
+class Chain_Tape:
   """Stores the turing machine tape with repetition compression."""
 
   # Total number of times tapes are copied. Copies are expensive.

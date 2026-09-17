@@ -2,8 +2,8 @@
 """Simple tool to count # of TM records in a protobuf file."""
 
 import argparse
-from pathlib import Path
 import time
+from pathlib import Path
 
 import IO
 

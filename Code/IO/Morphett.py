@@ -5,10 +5,9 @@ TM format used on http://morphett.info/turing/turing.html and commonly used in G
 import gzip
 from pathlib import Path
 
+import TM_Enum
 from IO import TM_Record
 from Macro import Turing_Machine
-import TM_Enum
-
 
 DIRS = "lr"
 

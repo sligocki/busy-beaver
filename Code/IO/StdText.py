@@ -14,13 +14,11 @@ from pathlib import Path
 from typing import TextIO
 
 import Halting_Lib
+import io_pb2
+import TM_Enum
 from IO import TM_Record
 from IO.Common import RecordLocateError
 from Macro import Turing_Machine
-import TM_Enum
-
-import io_pb2
-
 
 inf_reason2str = {
   io_pb2.INF_UNSPECIFIED: "",

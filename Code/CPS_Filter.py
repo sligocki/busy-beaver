@@ -128,12 +128,11 @@ def main():
     "Must specify either --block-size or --max-block-size or --max-window-size"
   )
 
-  with IO.Writer(args.outfile) as writer:
-    with IO.Reader(args.infile) as reader:
-      for tm_record in reader:
-        tm_record.clear_proto()
-        filter_all(tm_record, args)
-        writer.write_record(tm_record)
+  with IO.Writer(args.outfile) as writer, IO.Reader(args.infile) as reader:
+    for tm_record in reader:
+      tm_record.clear_proto()
+      filter_all(tm_record, args)
+      writer.write_record(tm_record)
 
 
 if __name__ == "__main__":

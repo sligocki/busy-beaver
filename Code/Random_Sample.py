@@ -6,8 +6,8 @@
 Get a random sample from a very large set of machines.
 """
 
-import sys
 import random
+import sys
 
 try:
   infilename = sys.argv[1]

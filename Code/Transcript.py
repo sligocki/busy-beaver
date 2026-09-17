@@ -3,8 +3,8 @@
 import argparse
 from dataclasses import dataclass
 
-from Direct_Simulator import DirectSimulator, TM, State, SymbolOrBlank
 import IO
+from Direct_Simulator import TM, DirectSimulator, State, SymbolOrBlank
 
 
 @dataclass

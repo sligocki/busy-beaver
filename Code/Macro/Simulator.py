@@ -7,15 +7,13 @@ compression, chain moves and a proof system.
 """
 
 import optparse
-from optparse import OptionParser, OptionGroup
 import time
+from optparse import OptionGroup, OptionParser
 
-from Algebraic_Expression import Algebraic_Expression
-from Halting_Lib import big_int_approx_str, big_int_approx_and_full_str
-from Macro import Proof_System
-from Macro import Tape
-from Macro import Turing_Machine
 import io_pb2
+from Algebraic_Expression import Algebraic_Expression
+from Halting_Lib import big_int_approx_and_full_str, big_int_approx_str
+from Macro import Proof_System, Tape, Turing_Machine
 
 
 def add_option_group(parser: OptionParser):
@@ -61,7 +59,7 @@ def create_default_options() -> OptionParser:
   return options
 
 
-class Simulator(object):
+class Simulator:
   """Turing machine simulator using chain-tape optimization."""
 
   def __init__(
@@ -288,7 +286,7 @@ class Simulator(object):
         if self.compute_steps:
           print("(%s, %s)" % (self.step_num - self.old_step_num, self.step_num))
         else:
-          print("")
+          print()
 
 
 def template(title, steps, loops):

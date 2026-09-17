@@ -14,9 +14,8 @@ from pathlib import Path
 
 import Halting_Lib
 import IO
-from Macro import Turing_Machine
-
 import io_pb2
+from Macro import Turing_Machine
 
 
 def get_stats(tm):
@@ -101,11 +100,10 @@ def main():
   parser.add_argument("--outfile", type=Path, required=True)
   args = parser.parse_args()
 
-  with IO.Proto.Writer(args.outfile) as writer:
-    with IO.Reader(args.infile) as reader:
-      for tm_record in reader:
-        filter(tm_record)
-        writer.write_record(tm_record)
+  with IO.Proto.Writer(args.outfile) as writer, IO.Reader(args.infile) as reader:
+    for tm_record in reader:
+      filter(tm_record)
+      writer.write_record(tm_record)
 
 
 if __name__ == "__main__":

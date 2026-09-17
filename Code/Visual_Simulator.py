@@ -4,17 +4,16 @@
 from __future__ import annotations
 
 import argparse
-from dataclasses import dataclass
 import fcntl
 import struct
 import sys
 import termios
+from dataclasses import dataclass
 
-from Direct_Simulator import DirectSimulator, State
 import IO
+from Direct_Simulator import DirectSimulator, State
 from Macro import Turing_Machine
 from Parse_Config import STATES, expand_config, parse_tape_config
-
 
 # Note: Halt will be "!" (already defined in Parse_Config.STATES)
 # White, Red, Green, Blue, Cyan, Brown/Yellow, Magenta

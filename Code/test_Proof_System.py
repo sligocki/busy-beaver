@@ -3,22 +3,18 @@
 Unit test for "Macro/Proof_System.py".
 """
 
-from Macro import Proof_System
-
-from NatExpr import InfNat
-
-from optparse import OptionParser
+import contextlib
+import io
 import os
 import sys
 import unittest
-import contextlib
-import io
+from optparse import OptionParser
+
 import Algebraic_Expression
 import IO
-
-from Macro import Tape
-from Macro import Turing_Machine
+from Macro import Proof_System, Tape, Turing_Machine
 from Macro.Turing_Machine import Block_Symbol
+from NatExpr import InfNat
 
 
 def factor_expr(expr, var):

@@ -20,12 +20,11 @@ from __future__ import annotations
 import argparse
 import math
 import re
-from typing import Optional
 
-from Direct_Simulator import DirectSimulator
 import IO
-from Parse_Config import INF, ParsedConfig, parse_tape_config
+from Direct_Simulator import DirectSimulator
 from NatExpr import NatExpr
+from Parse_Config import INF, ParsedConfig, parse_tape_config
 
 
 def _build_side_regex(elements: list[tuple]) -> tuple[str, list[tuple[str, int]]]:
@@ -58,7 +57,7 @@ def _build_side_regex(elements: list[tuple]) -> tuple[str, list[tuple[str, int]]
 def _match_side(
   syms: list[int],
   elements: list[tuple],
-) -> Optional[dict[str, int]]:
+) -> dict[str, int] | None:
   """Try to match a list of symbols against pattern elements.
 
   Returns a dict of variable -> count on success, or None.
@@ -77,7 +76,7 @@ def _match_side(
 def match_pattern(
   sim: DirectSimulator,
   parsed: ParsedConfig,
-) -> Optional[dict[str, int]]:
+) -> dict[str, int] | None:
   """Check if sim's current config matches the parsed pattern.
 
   Returns variable bindings on match, or None.
@@ -103,7 +102,7 @@ def match_pattern(
   return {**left_bindings, **right_bindings}
 
 
-def _count_str(count: int | float | str, bindings: dict[str, int]) -> str:
+def _count_str(count: float | str, bindings: dict[str, int]) -> str:
   if count is INF or isinstance(count, float):
     return "inf"
   if isinstance(count, str):

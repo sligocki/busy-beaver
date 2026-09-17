@@ -4,15 +4,15 @@ A TM simulator with a variety of advanced features, options, and output
 formats.
 """
 
-from optparse import OptionParser
 import time
+from optparse import OptionParser
 
-from Macro import Turing_Machine, Simulator, Block_Finder
 import Exp_Int
 import Halting_Lib
-from Halting_Lib import big_int_approx_and_full_str
 import IO
 import io_pb2
+from Halting_Lib import big_int_approx_and_full_str
+from Macro import Block_Finder, Simulator, Turing_Machine
 
 
 def run(machine, block_size, back, prover, recursive, options):

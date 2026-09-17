@@ -1,10 +1,9 @@
 #! /usr/bin/env python3
 
-from Direct_Simulator import DirectTape, DirectSimulator, Symbol, SymbolOrBlank
-
 import unittest
 
 import IO
+from Direct_Simulator import DirectSimulator, DirectTape, Symbol, SymbolOrBlank
 
 
 def write_range(tape: DirectTape, start_pos: int, new_section: list[int]) -> None:

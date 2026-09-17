@@ -1,8 +1,8 @@
 #! /usr/bin/env python3
 
-from Formula_Int import *
-
 import unittest
+
+from Formula_Int import FormulaInt, Int
 
 
 class FormulaIntTest(unittest.TestCase):

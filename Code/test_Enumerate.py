@@ -6,13 +6,12 @@
 Unit test for "Enumerate.py".
 """
 
-import Enumerate
-
 import os
 import subprocess
 import sys
 import unittest
 
+import Enumerate
 
 regold = False
 

@@ -1,14 +1,13 @@
 #!/usr/bin/env python3
 import argparse
-from pathlib import Path
-
-import IO
-import Halting_Lib
 import heapq
 import sys
+from pathlib import Path
 
-from Macro import Turing_Machine
+import Halting_Lib
+import IO
 import TNF
+from Macro import Turing_Machine
 
 
 def find_rewinds(tm):

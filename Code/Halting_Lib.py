@@ -2,13 +2,11 @@
 
 import math
 import pickle
-from typing import Optional
 
-from NatExpr import NatExpr, ConstInt, is_const
-from Algebraic_Expression import Expression, Variable
-
-from Exp_Int import ExpInt, ExpTerm, uparrow_size_approx, fractional_height, try_eval
 import io_pb2
+from Algebraic_Expression import Expression, Variable
+from Exp_Int import ExpInt, ExpTerm, fractional_height, try_eval, uparrow_size_approx
+from NatExpr import ConstInt, NatExpr, is_const
 
 
 def big_int_approx_str(value, digits_cutoff: int = 10):
@@ -186,9 +184,9 @@ def is_infinite(halt_status: io_pb2.HaltStatus) -> bool:
 def set_halting(
   tm_status: io_pb2.BBStatus,
   halt_steps: int,
-  halt_score: Optional[int],
-  from_state: Optional[int] = None,
-  from_symbol: Optional[int] = None,
+  halt_score: int | None,
+  from_state: int | None = None,
+  from_symbol: int | None = None,
 ):
   """Specify that we know that this machine halts."""
   tm_status.halt_status.is_decided = True
@@ -236,11 +234,11 @@ def set_inf_recur(tm_status: io_pb2.BBStatus, states_to_ignore, states_last_seen
     if state not in states_to_ignore:
       if last_seen > q_last_seen:
         q_state = state
-        q_last_seen = states_last_seen[state]
+        q_last_seen = last_seen
 
   # Either way, we have made a conclusive decision.
   tm_status.quasihalt_status.is_decided = True
-  if q_state == None:
+  if q_state is None:
     # We can definitively say that this machine does NOT quasihalt.
     # Instead it enters Lin Recurrence cycling through all states forever.
     tm_status.quasihalt_status.is_quasihalting = False

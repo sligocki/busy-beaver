@@ -9,13 +9,12 @@ Protobuffers are written using custom length-delimed sequential format. See ex:
 """
 
 import gzip
-from pathlib import Path
 import struct
-
-from IO.Common import RecordLocateError
-from IO.TM_Record import TM_Record
+from pathlib import Path
 
 import io_pb2
+from IO.Common import RecordLocateError
+from IO.TM_Record import TM_Record
 
 
 class IO_Error(Exception):
@@ -88,7 +87,7 @@ class Reader:
   def read_record(self) -> TM_Record:
     """Read TMRecord protobuf using length-delimited format (written by `Writer`)."""
     pb_len = self._read_message_len()
-    if pb_len != None:
+    if pb_len is not None:
       # Read protobuf bytes
       pb_bytes = self.infile.read(pb_len)
       if len(pb_bytes) != pb_len:
@@ -103,7 +102,7 @@ class Reader:
   def skip_record(self) -> bool:
     """Skip ahead 1 record. Return False if no records left in file."""
     pb_len = self._read_message_len()
-    if pb_len != None:
+    if pb_len is not None:
       # Skip ahead pb_len bytes.
       pb_bytes = self.infile.seek(pb_len, 1)
       return True
@@ -119,7 +118,7 @@ class Reader:
     ...   # do something with tm_record
     """
     tm_record = self.read_record()
-    while tm_record != None:
+    while tm_record is not None:
       yield tm_record
       tm_record = self.read_record()
 
