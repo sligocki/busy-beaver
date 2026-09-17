@@ -3,7 +3,7 @@ import string
 import sys
 
 import io_pb2
-from IO import StdText
+import IO
 import TM_Enum
 from Macro import Turing_Machine
 
@@ -147,7 +147,7 @@ def read_tm(proto_tm: io_pb2.TuringMachine) -> Turing_Machine.Simple_Machine:
   if type == "ttable_packed":
     return _unpack_tm(proto_tm.ttable_packed)
   elif type == "ttable_str":
-    return StdText.parse_tm(proto_tm.ttable_str)
+    return IO.StdText.parse_tm(proto_tm.ttable_str)
   elif type == "ttable_list":
     return tm_from_list(proto_tm.ttable_list)
   else:
