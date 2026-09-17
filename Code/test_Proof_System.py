@@ -5,7 +5,6 @@ Unit test for "Macro/Proof_System.py".
 
 from Macro import Proof_System
 
-import math
 from NatExpr import InfNat
 
 from optparse import OptionParser
@@ -27,6 +26,7 @@ def factor_expr(expr, var):
   assert len(expr.terms) == 1, expr
   assert expr.const == 0, expr
   return Proof_System.factor_var(expr.terms[0], var)
+
 
 class ProofSystemTest(unittest.TestCase):
   def setUp(self):
@@ -74,15 +74,18 @@ class ProofSystemTest(unittest.TestCase):
 
     # Quadratic
     self.assertEqual(Proof_System.series_sum(k**2 + 1, k_var, 10), 10 * 9 * 19 / 6 + 10)
-    self.assertEqual(Proof_System.series_sum(5 * k**2 - 2 * k + 13, k_var, 10),
-                     5 * 10 * 9 * 19 / 6 - 10 * 9 + 130)
+    self.assertEqual(
+      Proof_System.series_sum(5 * k**2 - 2 * k + 13, k_var, 10),
+      5 * 10 * 9 * 19 / 6 - 10 * 9 + 130,
+    )
 
     # With other variables
     n = Algebraic_Expression.Expression_from_string("n")
-    self.assertEqual(Proof_System.series_sum(k * n, k_var, 10),
-                     n * 10 * 9 / 2)
-    self.assertEqual(Proof_System.series_sum(3 * k * n + 5 * k + 7 * n + 13, k_var, 10),
-                     (3 * n + 5) * 10 * 9 / 2 + (7 * n + 13) * 10)
+    self.assertEqual(Proof_System.series_sum(k * n, k_var, 10), n * 10 * 9 / 2)
+    self.assertEqual(
+      Proof_System.series_sum(3 * k * n + 5 * k + 7 * n + 13, k_var, 10),
+      (3 * n + 5) * 10 * 9 / 2 + (7 * n + 13) * 10,
+    )
 
     # Cubic: sum_{k=0}^{N-1}(k^3) = (N(N-1)/2)^2
     self.assertEqual(Proof_System.series_sum(k**3, k_var, 10), (10 * 9 // 2) ** 2)
@@ -91,7 +94,6 @@ class ProofSystemTest(unittest.TestCase):
     # k^4 is not implemented
     with self.assertRaises(NotImplementedError):
       Proof_System.series_sum(k**4, k_var, 5)
-
 
   def test_bug_limited_diff_rule(self):
     # See: https://github.com/sligocki/busy-beaver/issues/2
@@ -109,21 +111,20 @@ class ProofSystemTest(unittest.TestCase):
     tape.init(0, 0, self.options)
     tape.dir = Turing_Machine.RIGHT
     tape.tape[0] = [
-      Tape.Repeated_Symbol(0,InfNat()),
+      Tape.Repeated_Symbol(0, InfNat()),
       Tape.Repeated_Symbol(3, 1),
       Tape.Repeated_Symbol(4, 1),
     ]
     tape.tape[1] = [
-      Tape.Repeated_Symbol(0,InfNat()),
+      Tape.Repeated_Symbol(0, InfNat()),
       Tape.Repeated_Symbol(2, 10),
     ]
 
     state_A = Turing_Machine.Simple_Machine_State(0)
     full_config = (state_A, tape, None)
-    stripped_config = Proof_System.strip_config(
-      state_A, Turing_Machine.RIGHT, tape.tape)
+    stripped_config = Proof_System.strip_config(state_A, Turing_Machine.RIGHT, tape.tape)
 
-    rule = prover.prove_rule(stripped_config, full_config, delta_loop = 5)
+    rule = prover.prove_rule(stripped_config, full_config, delta_loop=5)
     self.assertIsNotNone(rule)
     prover.add_rule(rule, stripped_config)
     self.assertGreaterEqual(len(prover.rules), 1)
@@ -133,18 +134,17 @@ class ProofSystemTest(unittest.TestCase):
     bad_tape.init(0, 0, self.options)
     bad_tape.dir = Turing_Machine.RIGHT
     bad_tape.tape[0] = [
-      Tape.Repeated_Symbol(0,InfNat()),
+      Tape.Repeated_Symbol(0, InfNat()),
       Tape.Repeated_Symbol(1, 10),  # Note: This 1 is the key to the bug.
       Tape.Repeated_Symbol(3, 1),
       Tape.Repeated_Symbol(4, 1),
     ]
     bad_tape.tape[1] = [
-      Tape.Repeated_Symbol(0,InfNat()),
+      Tape.Repeated_Symbol(0, InfNat()),
       Tape.Repeated_Symbol(2, 10),
     ]
     bad_full_config = (state_A, bad_tape, None)
-    bad_stripped_config = Proof_System.strip_config(
-      state_A, Turing_Machine.RIGHT, bad_tape.tape)
+    bad_stripped_config = Proof_System.strip_config(state_A, Turing_Machine.RIGHT, bad_tape.tape)
 
     result = prover.try_apply_a_limited_rule(bad_stripped_config, bad_full_config)
     self.assertIsNone(result)
@@ -153,7 +153,6 @@ class ProofSystemTest(unittest.TestCase):
     result_good = prover.try_apply_a_limited_rule(stripped_config, full_config)
     self.assertIsNotNone(result_good)
     self.assertEqual(result_good.condition, Proof_System.APPLY_RULE)
-
 
   def test_apply_rule_limited_diff_rule(self):
     tm_filename = os.path.join(self.root_dir, "Machines/2x5-e704")
@@ -167,17 +166,19 @@ class ProofSystemTest(unittest.TestCase):
     current_state = Turing_Machine.Simple_Machine_State(0)
 
     current_tape = Tape.Chain_Tape()
-    current_tape.init(0,0,self.options)
-    current_tape.tape[0] = [Tape.Repeated_Symbol(0,InfNat()),
-                            Tape.Repeated_Symbol(1,10),
-                            Tape.Repeated_Symbol(2,10),
-                            Tape.Repeated_Symbol(0,10),
-                           ]
-    current_tape.tape[1] = [Tape.Repeated_Symbol(0,InfNat()),
-                            Tape.Repeated_Symbol(2,10),
-                            Tape.Repeated_Symbol(1,15),
-                            Tape.Repeated_Symbol(0,15),
-                           ]
+    current_tape.init(0, 0, self.options)
+    current_tape.tape[0] = [
+      Tape.Repeated_Symbol(0, InfNat()),
+      Tape.Repeated_Symbol(1, 10),
+      Tape.Repeated_Symbol(2, 10),
+      Tape.Repeated_Symbol(0, 10),
+    ]
+    current_tape.tape[1] = [
+      Tape.Repeated_Symbol(0, InfNat()),
+      Tape.Repeated_Symbol(2, 10),
+      Tape.Repeated_Symbol(1, 15),
+      Tape.Repeated_Symbol(0, 15),
+    ]
 
     loop_num = 3
 
@@ -191,23 +192,27 @@ class ProofSystemTest(unittest.TestCase):
     expr_c = Algebraic_Expression.Expression_from_string("(c+2)")
 
     initial_tape = Tape.Chain_Tape()
-    initial_tape.init(0,0,self.options)
-    initial_tape.tape[0] = [Tape.Repeated_Symbol(0,expr_a),
-                           ]
-    initial_tape.tape[1] = [Tape.Repeated_Symbol(1,expr_c),
-                            Tape.Repeated_Symbol(0,expr_b),
-                           ]
+    initial_tape.init(0, 0, self.options)
+    initial_tape.tape[0] = [
+      Tape.Repeated_Symbol(0, expr_a),
+    ]
+    initial_tape.tape[1] = [
+      Tape.Repeated_Symbol(1, expr_c),
+      Tape.Repeated_Symbol(0, expr_b),
+    ]
 
     left_dist = 1
     right_dist = 2
 
     diff_tape = Tape.Chain_Tape()
-    diff_tape.init(0,0,self.options)
-    diff_tape.tape[0] = [Tape.Repeated_Symbol(0,-2),
-                        ]
-    diff_tape.tape[1] = [Tape.Repeated_Symbol(1,-1),
-                         Tape.Repeated_Symbol(0,1),
-                        ]
+    diff_tape.init(0, 0, self.options)
+    diff_tape.tape[0] = [
+      Tape.Repeated_Symbol(0, -2),
+    ]
+    diff_tape.tape[1] = [
+      Tape.Repeated_Symbol(1, -1),
+      Tape.Repeated_Symbol(0, 1),
+    ]
 
     initial_state = Turing_Machine.Simple_Machine_State(0)
 
@@ -216,64 +221,72 @@ class ProofSystemTest(unittest.TestCase):
 
     rule_num = 1
 
-    rule = Proof_System.Limited_Diff_Rule(initial_tape,left_dist,right_dist,diff_tape,initial_state,num_steps,num_loops,rule_num, states_last_seen={}, level=1)
+    rule = Proof_System.Limited_Diff_Rule(
+      initial_tape,
+      left_dist,
+      right_dist,
+      diff_tape,
+      initial_state,
+      num_steps,
+      num_loops,
+      rule_num,
+      states_last_seen={},
+      level=1,
+    )
     self.assertIn("Limited Diff Rule", repr(rule))
     self.assertIn("Level: 1", repr(rule))
 
-    success, (prover_result, large_delta) = proof.apply_rule(rule,current_config)
+    success, (prover_result, large_delta) = proof.apply_rule(rule, current_config)
 
     expected_tape = Tape.Chain_Tape()
-    expected_tape.init(0,0,self.options)
-    expected_tape.tape[0] = [Tape.Repeated_Symbol(0,InfNat()),
-                             Tape.Repeated_Symbol(1,10),
-                             Tape.Repeated_Symbol(2,10),
-                             Tape.Repeated_Symbol(0, 2),
-                            ]
-    expected_tape.tape[1] = [Tape.Repeated_Symbol(0,InfNat()),
-                             Tape.Repeated_Symbol(2,10),
-                             Tape.Repeated_Symbol(1,11),
-                             Tape.Repeated_Symbol(0,19),
-                            ]
+    expected_tape.init(0, 0, self.options)
+    expected_tape.tape[0] = [
+      Tape.Repeated_Symbol(0, InfNat()),
+      Tape.Repeated_Symbol(1, 10),
+      Tape.Repeated_Symbol(2, 10),
+      Tape.Repeated_Symbol(0, 2),
+    ]
+    expected_tape.tape[1] = [
+      Tape.Repeated_Symbol(0, InfNat()),
+      Tape.Repeated_Symbol(2, 10),
+      Tape.Repeated_Symbol(1, 11),
+      Tape.Repeated_Symbol(0, 19),
+    ]
 
     self.assertEqual(success, True)
     self.assertEqual(prover_result.condition, Proof_System.APPLY_RULE)
     self.assertEqual(prover_result.new_tape, expected_tape)
     self.assertEqual(prover_result.num_base_steps, 44)
 
-
   def test_complex_meta(self):
     """
     Test evaluation for a complex meta diff rule where # steps is non-linear.
     """
     # Hand-built TM to demonstrate this situation simply.
-    tm = IO.parse_tm("1RB------_"
-                     "0RB0LC1LD_"
-                     "0LC1RA---_"
-                     "1LD0LE---_"
-                     "1RA0LE---")
+    tm = IO.parse_tm("1RB------_0RB0LC1LD_0LC1RA---_1LD0LE---_1RA0LE---")
     self.options.recursive = True
     prover = Proof_System.Proof_System(tm, self.options, "")
-
 
     # Base rule:
     #   1^a A> 0^b 1^c -> 1^a+1 A> 0^b 1^c-1   in 2b + 1 steps
     tape = Tape.Chain_Tape()
     tape.init(0, 0, self.options)
     tape.dir = Turing_Machine.RIGHT
-    tape.tape[0] = [Tape.Repeated_Symbol(0, InfNat()),
-                    Tape.Repeated_Symbol(1, 10),
-                   ]
-    tape.tape[1] = [Tape.Repeated_Symbol(0, InfNat()),
-                    Tape.Repeated_Symbol(2, 40),
-                    Tape.Repeated_Symbol(1, 30),
-                    Tape.Repeated_Symbol(0, 20),
-                   ]
+    tape.tape[0] = [
+      Tape.Repeated_Symbol(0, InfNat()),
+      Tape.Repeated_Symbol(1, 10),
+    ]
+    tape.tape[1] = [
+      Tape.Repeated_Symbol(0, InfNat()),
+      Tape.Repeated_Symbol(2, 40),
+      Tape.Repeated_Symbol(1, 30),
+      Tape.Repeated_Symbol(0, 20),
+    ]
 
     state_A = Turing_Machine.Simple_Machine_State(0)
     full_config = (state_A, tape, None)
-    stripped_config = Proof_System.strip_config(
-      state_A, Turing_Machine.RIGHT, tape.tape)
-    base_rule = prover.prove_rule(stripped_config, full_config, delta_loop = 5)
+    stripped_config = Proof_System.strip_config(state_A, Turing_Machine.RIGHT, tape.tape)
+    base_rule = prover.prove_rule(stripped_config, full_config, delta_loop=5)
     self.assertIsNotNone(base_rule)
     prover.add_rule(base_rule, stripped_config)
     self.assertGreaterEqual(len(prover.rules), 1)
@@ -288,7 +301,6 @@ class ProofSystemTest(unittest.TestCase):
     # Each application should take 2b+1 (2 * 20 + 1) steps and we apply 29 times.
     self.assertEqual(result.num_base_steps, 29 * (2 * 20 + 1))
 
-
     # Second-level (meta) rule:
     #   0^inf 1^a A> 0^b 2^d
     #     -> 0^inf 1^1 A> 0^a+1 1^b 2^d-1  (Steps: 2b+a+2)
@@ -298,19 +310,20 @@ class ProofSystemTest(unittest.TestCase):
     tape = Tape.Chain_Tape()
     tape.init(0, 0, self.options)
     tape.dir = Turing_Machine.RIGHT
-    tape.tape[0] = [Tape.Repeated_Symbol(0, InfNat()),
-                    Tape.Repeated_Symbol(1, 10),
-                   ]
-    tape.tape[1] = [Tape.Repeated_Symbol(0, InfNat()),
-                    Tape.Repeated_Symbol(2, 4),
-                    Tape.Repeated_Symbol(0, 20),
-                   ]
+    tape.tape[0] = [
+      Tape.Repeated_Symbol(0, InfNat()),
+      Tape.Repeated_Symbol(1, 10),
+    ]
+    tape.tape[1] = [
+      Tape.Repeated_Symbol(0, InfNat()),
+      Tape.Repeated_Symbol(2, 4),
+      Tape.Repeated_Symbol(0, 20),
+    ]
 
     state_A = Turing_Machine.Simple_Machine_State(0)
     full_config = (state_A, tape, None)
-    stripped_config = Proof_System.strip_config(
-      state_A, Turing_Machine.RIGHT, tape.tape)
-    meta_rule = prover.prove_rule(stripped_config, full_config, delta_loop = 36)
+    stripped_config = Proof_System.strip_config(state_A, Turing_Machine.RIGHT, tape.tape)
+    meta_rule = prover.prove_rule(stripped_config, full_config, delta_loop=36)
 
     # Check repr for base Diff_Rule
     r = repr(base_rule)
@@ -331,13 +344,15 @@ class ProofSystemTest(unittest.TestCase):
     tape = Tape.Chain_Tape()
     tape.init(0, 0, self.options)
     tape.dir = Turing_Machine.RIGHT
-    tape.tape[0] = [Tape.Repeated_Symbol(0, InfNat()),
-                    Tape.Repeated_Symbol(1, 10),
-                   ]
-    tape.tape[1] = [Tape.Repeated_Symbol(0, InfNat()),
-                    Tape.Repeated_Symbol(2, 40),
-                    Tape.Repeated_Symbol(0, 20),
-                   ]
+    tape.tape[0] = [
+      Tape.Repeated_Symbol(0, InfNat()),
+      Tape.Repeated_Symbol(1, 10),
+    ]
+    tape.tape[1] = [
+      Tape.Repeated_Symbol(0, InfNat()),
+      Tape.Repeated_Symbol(2, 40),
+      Tape.Repeated_Symbol(0, 20),
+    ]
 
     full_config = (state_A, tape, None)
 
@@ -352,10 +367,10 @@ class ProofSystemTest(unittest.TestCase):
     #   = 16 sum_k k^2  +  (240+32) sum_k k  +  (800+240+12) sum_k 1
     #   = 8/3 N(N-1)(2N-1) + 136 N(N-1) + 1052 N
     N = 19
-    self.assertEqual(result.num_base_steps,
-                     N * (N-1) * (2*N-1) * 8 / 3 +
-                     136 * N * (N-1) + 1052 * N)
-
+    self.assertEqual(
+      result.num_base_steps,
+      N * (N - 1) * (2 * N - 1) * 8 / 3 + 136 * N * (N - 1) + 1052 * N,
+    )
 
   def test_meta_linear_rule(self):
     """
@@ -372,26 +387,26 @@ class ProofSystemTest(unittest.TestCase):
     self.options.max_num_reps = 1
     prover = Proof_System.Proof_System(tm, self.options, "")
 
-
     # Diff Rule 1:
     #   $ <E 11^a 10 00^b 10 $ -> $ <E 11^a+2 10 00^b-1 10 $
     tape = Tape.Chain_Tape()
     tape.init(0, 0, self.options)
     tape.dir = Turing_Machine.LEFT
-    tape.tape[0] = [Tape.Repeated_Symbol(Block_Symbol((0, 0)), InfNat()),
-                   ]
-    tape.tape[1] = [Tape.Repeated_Symbol(Block_Symbol((0, 0)), InfNat()),
-                    Tape.Repeated_Symbol(Block_Symbol((1, 0)), 1),
-                    Tape.Repeated_Symbol(Block_Symbol((0, 0)), 30),
-                    Tape.Repeated_Symbol(Block_Symbol((1, 0)), 1),
-                    Tape.Repeated_Symbol(Block_Symbol((1, 1)), 20),
-                   ]
+    tape.tape[0] = [
+      Tape.Repeated_Symbol(Block_Symbol((0, 0)), InfNat()),
+    ]
+    tape.tape[1] = [
+      Tape.Repeated_Symbol(Block_Symbol((0, 0)), InfNat()),
+      Tape.Repeated_Symbol(Block_Symbol((1, 0)), 1),
+      Tape.Repeated_Symbol(Block_Symbol((0, 0)), 30),
+      Tape.Repeated_Symbol(Block_Symbol((1, 0)), 1),
+      Tape.Repeated_Symbol(Block_Symbol((1, 1)), 20),
+    ]
 
     state_E = Turing_Machine.Simple_Machine_State(4)
     full_config = (state_E, tape, None)
-    stripped_config = Proof_System.strip_config(
-      state_E, Turing_Machine.LEFT, tape.tape)
-    rule_d1 = prover.prove_rule(stripped_config, full_config, delta_loop = 10)
+    stripped_config = Proof_System.strip_config(state_E, Turing_Machine.LEFT, tape.tape)
+    rule_d1 = prover.prove_rule(stripped_config, full_config, delta_loop=10)
     self.assertIsNotNone(rule_d1)
     self.assertIn("Diff Rule", repr(rule_d1))
     prover.add_rule(rule_d1, stripped_config)
@@ -409,20 +424,21 @@ class ProofSystemTest(unittest.TestCase):
     tape = Tape.Chain_Tape()
     tape.init(0, 0, self.options)
     tape.dir = Turing_Machine.LEFT
-    tape.tape[0] = [Tape.Repeated_Symbol(Block_Symbol((0, 0)), InfNat()),
-                   ]
-    tape.tape[1] = [Tape.Repeated_Symbol(Block_Symbol((0, 0)), InfNat()),
-                    Tape.Repeated_Symbol(Block_Symbol((1, 0)), 1),
-                    Tape.Repeated_Symbol(Block_Symbol((1, 1)), 40),
-                    Tape.Repeated_Symbol(Block_Symbol((0, 0)), 30),
-                    Tape.Repeated_Symbol(Block_Symbol((1, 0)), 1),
-                    Tape.Repeated_Symbol(Block_Symbol((1, 1)), 20),
-                   ]
+    tape.tape[0] = [
+      Tape.Repeated_Symbol(Block_Symbol((0, 0)), InfNat()),
+    ]
+    tape.tape[1] = [
+      Tape.Repeated_Symbol(Block_Symbol((0, 0)), InfNat()),
+      Tape.Repeated_Symbol(Block_Symbol((1, 0)), 1),
+      Tape.Repeated_Symbol(Block_Symbol((1, 1)), 40),
+      Tape.Repeated_Symbol(Block_Symbol((0, 0)), 30),
+      Tape.Repeated_Symbol(Block_Symbol((1, 0)), 1),
+      Tape.Repeated_Symbol(Block_Symbol((1, 1)), 20),
+    ]
 
     full_config = (state_E, tape, None)
-    stripped_config = Proof_System.strip_config(
-      state_E, Turing_Machine.LEFT, tape.tape)
-    rule_d2 = prover.prove_rule(stripped_config, full_config, delta_loop = 10)
+    stripped_config = Proof_System.strip_config(state_E, Turing_Machine.LEFT, tape.tape)
+    rule_d2 = prover.prove_rule(stripped_config, full_config, delta_loop=10)
     self.assertIsNotNone(rule_d2)
     prover.add_rule(rule_d2, stripped_config)
     self.assertEqual(len(prover.rules), 2)
@@ -434,26 +450,26 @@ class ProofSystemTest(unittest.TestCase):
     self.assertEqual(result.condition, Proof_System.APPLY_RULE)
     self.assertEqual(str(result.new_tape), "00^inf <- 11^78 10^1 00^1 11^40 10^1 00^inf")
 
-
     # Linear Rule:
     #   $ <E 11^g 10 00 11^f 10 $ -> $ <E 11^2g+6 10 00 11^f-1 10 $
     tape = Tape.Chain_Tape()
     tape.init(0, 0, self.options)
     tape.dir = Turing_Machine.LEFT
-    tape.tape[0] = [Tape.Repeated_Symbol(Block_Symbol((0, 0)), InfNat()),
-                   ]
-    tape.tape[1] = [Tape.Repeated_Symbol(Block_Symbol((0, 0)), InfNat()),
-                    Tape.Repeated_Symbol(Block_Symbol((1, 0)), 1),
-                    Tape.Repeated_Symbol(Block_Symbol((1, 1)), 5),
-                    Tape.Repeated_Symbol(Block_Symbol((0, 0)), 1),
-                    Tape.Repeated_Symbol(Block_Symbol((1, 0)), 1),
-                    Tape.Repeated_Symbol(Block_Symbol((1, 1)), 20),
-                   ]
+    tape.tape[0] = [
+      Tape.Repeated_Symbol(Block_Symbol((0, 0)), InfNat()),
+    ]
+    tape.tape[1] = [
+      Tape.Repeated_Symbol(Block_Symbol((0, 0)), InfNat()),
+      Tape.Repeated_Symbol(Block_Symbol((1, 0)), 1),
+      Tape.Repeated_Symbol(Block_Symbol((1, 1)), 5),
+      Tape.Repeated_Symbol(Block_Symbol((0, 0)), 1),
+      Tape.Repeated_Symbol(Block_Symbol((1, 0)), 1),
+      Tape.Repeated_Symbol(Block_Symbol((1, 1)), 20),
+    ]
 
     full_config = (state_E, tape, None)
-    stripped_config = Proof_System.strip_config(
-      state_E, Turing_Machine.LEFT, tape.tape)
-    rule_linear = prover.prove_rule(stripped_config, full_config, delta_loop = 28)
+    stripped_config = Proof_System.strip_config(state_E, Turing_Machine.LEFT, tape.tape)
+    rule_linear = prover.prove_rule(stripped_config, full_config, delta_loop=28)
     self.assertIsNotNone(rule_linear)
     self.assertTrue(isinstance(rule_linear, Proof_System.Iterated_Rule))
     self.assertIn("Iterated Rule", repr(rule_linear))
@@ -467,28 +483,31 @@ class ProofSystemTest(unittest.TestCase):
     self.assertTrue(success)
     result, _ = rest
     self.assertEqual(result.condition, Proof_System.APPLY_RULE)
-    self.assertEqual(str(result.new_tape), f"00^inf <- 11^(-6 + 13 * 2^5) 10^1 00^1 11^1 10^1 00^inf")
-
+    self.assertEqual(
+      str(result.new_tape),
+      "00^inf <- 11^(-6 + 13 * 2^5) 10^1 00^1 11^1 10^1 00^inf",
+    )
 
     # Meta Rule:
     #   $ <E 11^h 10 00 11 10 $ -> $ <E 11^(-6 + 5 * 2^(2 h + 8)) 10 00 11 10 $
     tape = Tape.Chain_Tape()
     tape.init(0, 0, self.options)
     tape.dir = Turing_Machine.LEFT
-    tape.tape[0] = [Tape.Repeated_Symbol(Block_Symbol((0, 0)), InfNat()),
-                   ]
-    tape.tape[1] = [Tape.Repeated_Symbol(Block_Symbol((0, 0)), InfNat()),
-                    Tape.Repeated_Symbol(Block_Symbol((1, 0)), 1),
-                    Tape.Repeated_Symbol(Block_Symbol((1, 1)), 1),
-                    Tape.Repeated_Symbol(Block_Symbol((0, 0)), 1),
-                    Tape.Repeated_Symbol(Block_Symbol((1, 0)), 1),
-                    Tape.Repeated_Symbol(Block_Symbol((1, 1)), 10),
-                   ]
+    tape.tape[0] = [
+      Tape.Repeated_Symbol(Block_Symbol((0, 0)), InfNat()),
+    ]
+    tape.tape[1] = [
+      Tape.Repeated_Symbol(Block_Symbol((0, 0)), InfNat()),
+      Tape.Repeated_Symbol(Block_Symbol((1, 0)), 1),
+      Tape.Repeated_Symbol(Block_Symbol((1, 1)), 1),
+      Tape.Repeated_Symbol(Block_Symbol((0, 0)), 1),
+      Tape.Repeated_Symbol(Block_Symbol((1, 0)), 1),
+      Tape.Repeated_Symbol(Block_Symbol((1, 1)), 10),
+    ]
 
     full_config = (state_E, tape, None)
-    stripped_config = Proof_System.strip_config(
-      state_E, Turing_Machine.LEFT, tape.tape)
-    rule_meta = prover.prove_rule(stripped_config, full_config, delta_loop = 68)
+    stripped_config = Proof_System.strip_config(state_E, Turing_Machine.LEFT, tape.tape)
+    rule_meta = prover.prove_rule(stripped_config, full_config, delta_loop=68)
     # Check that rule was proven successfully
     self.assertIsNotNone(rule_meta)
     self.assertTrue(isinstance(rule_meta, Proof_System.Iterated_Rule))
@@ -513,8 +532,10 @@ class ProofSystemTest(unittest.TestCase):
     self.assertTrue(success)
     result, _ = rest
     self.assertEqual(result.condition, Proof_System.APPLY_RULE)
-    self.assertEqual(str(result.new_tape), f"00^inf <- 11^(-6 + 5 * 2^28) 10^1 00^1 11^1 10^1 00^inf")
-
+    self.assertEqual(
+      str(result.new_tape),
+      "00^inf <- 11^(-6 + 5 * 2^28) 10^1 00^1 11^1 10^1 00^inf",
+    )
 
   def test_apply_linear_rule_exp_disabled(self):
     """Test apply_linear_rule fallback to apply_general_rule when exp_linear_rules=False.
@@ -538,11 +559,13 @@ class ProofSystemTest(unittest.TestCase):
     tape.init(0, 0, self.options)
     tape.dir = Turing_Machine.LEFT
     tape.tape[0] = [Tape.Repeated_Symbol(Block_Symbol((0, 0)), InfNat())]
-    tape.tape[1] = [Tape.Repeated_Symbol(Block_Symbol((0, 0)), InfNat()),
-                    Tape.Repeated_Symbol(Block_Symbol((1, 0)), 1),
-                    Tape.Repeated_Symbol(Block_Symbol((0, 0)), 30),
-                    Tape.Repeated_Symbol(Block_Symbol((1, 0)), 1),
-                    Tape.Repeated_Symbol(Block_Symbol((1, 1)), 20)]
+    tape.tape[1] = [
+      Tape.Repeated_Symbol(Block_Symbol((0, 0)), InfNat()),
+      Tape.Repeated_Symbol(Block_Symbol((1, 0)), 1),
+      Tape.Repeated_Symbol(Block_Symbol((0, 0)), 30),
+      Tape.Repeated_Symbol(Block_Symbol((1, 0)), 1),
+      Tape.Repeated_Symbol(Block_Symbol((1, 1)), 20),
+    ]
     full_config = (state_E, tape, None)
     stripped_config = Proof_System.strip_config(state_E, Turing_Machine.LEFT, tape.tape)
     rule_d1 = prover.prove_rule(stripped_config, full_config, delta_loop=10)
@@ -554,12 +577,14 @@ class ProofSystemTest(unittest.TestCase):
     tape.init(0, 0, self.options)
     tape.dir = Turing_Machine.LEFT
     tape.tape[0] = [Tape.Repeated_Symbol(Block_Symbol((0, 0)), InfNat())]
-    tape.tape[1] = [Tape.Repeated_Symbol(Block_Symbol((0, 0)), InfNat()),
-                    Tape.Repeated_Symbol(Block_Symbol((1, 0)), 1),
-                    Tape.Repeated_Symbol(Block_Symbol((1, 1)), 40),
-                    Tape.Repeated_Symbol(Block_Symbol((0, 0)), 30),
-                    Tape.Repeated_Symbol(Block_Symbol((1, 0)), 1),
-                    Tape.Repeated_Symbol(Block_Symbol((1, 1)), 20)]
+    tape.tape[1] = [
+      Tape.Repeated_Symbol(Block_Symbol((0, 0)), InfNat()),
+      Tape.Repeated_Symbol(Block_Symbol((1, 0)), 1),
+      Tape.Repeated_Symbol(Block_Symbol((1, 1)), 40),
+      Tape.Repeated_Symbol(Block_Symbol((0, 0)), 30),
+      Tape.Repeated_Symbol(Block_Symbol((1, 0)), 1),
+      Tape.Repeated_Symbol(Block_Symbol((1, 1)), 20),
+    ]
     full_config = (state_E, tape, None)
     stripped_config = Proof_System.strip_config(state_E, Turing_Machine.LEFT, tape.tape)
     rule_d2 = prover.prove_rule(stripped_config, full_config, delta_loop=10)
@@ -571,12 +596,14 @@ class ProofSystemTest(unittest.TestCase):
     tape.init(0, 0, self.options)
     tape.dir = Turing_Machine.LEFT
     tape.tape[0] = [Tape.Repeated_Symbol(Block_Symbol((0, 0)), InfNat())]
-    tape.tape[1] = [Tape.Repeated_Symbol(Block_Symbol((0, 0)), InfNat()),
-                    Tape.Repeated_Symbol(Block_Symbol((1, 0)), 1),
-                    Tape.Repeated_Symbol(Block_Symbol((1, 1)), 5),
-                    Tape.Repeated_Symbol(Block_Symbol((0, 0)), 1),
-                    Tape.Repeated_Symbol(Block_Symbol((1, 0)), 1),
-                    Tape.Repeated_Symbol(Block_Symbol((1, 1)), 20)]
+    tape.tape[1] = [
+      Tape.Repeated_Symbol(Block_Symbol((0, 0)), InfNat()),
+      Tape.Repeated_Symbol(Block_Symbol((1, 0)), 1),
+      Tape.Repeated_Symbol(Block_Symbol((1, 1)), 5),
+      Tape.Repeated_Symbol(Block_Symbol((0, 0)), 1),
+      Tape.Repeated_Symbol(Block_Symbol((1, 0)), 1),
+      Tape.Repeated_Symbol(Block_Symbol((1, 1)), 20),
+    ]
     full_config = (state_E, tape, None)
     stripped_config = Proof_System.strip_config(state_E, Turing_Machine.LEFT, tape.tape)
     rule_linear = prover.prove_rule(stripped_config, full_config, delta_loop=28)
@@ -613,12 +640,14 @@ class ProofSystemTest(unittest.TestCase):
     bad_tape.init(0, 0, self.options)
     bad_tape.dir = Turing_Machine.LEFT
     bad_tape.tape[0] = [Tape.Repeated_Symbol(Block_Symbol((0, 0)), InfNat())]
-    bad_tape.tape[1] = [Tape.Repeated_Symbol(Block_Symbol((0, 0)), InfNat()),
-                        Tape.Repeated_Symbol(Block_Symbol((1, 0)), 1),
-                        Tape.Repeated_Symbol(Block_Symbol((1, 1)), 1),  # f=1, likely below min
-                        Tape.Repeated_Symbol(Block_Symbol((0, 0)), 1),
-                        Tape.Repeated_Symbol(Block_Symbol((1, 0)), 1),
-                        Tape.Repeated_Symbol(Block_Symbol((1, 1)), 20)]
+    bad_tape.tape[1] = [
+      Tape.Repeated_Symbol(Block_Symbol((0, 0)), InfNat()),
+      Tape.Repeated_Symbol(Block_Symbol((1, 0)), 1),
+      Tape.Repeated_Symbol(Block_Symbol((1, 1)), 1),  # f=1, likely below min
+      Tape.Repeated_Symbol(Block_Symbol((0, 0)), 1),
+      Tape.Repeated_Symbol(Block_Symbol((1, 0)), 1),
+      Tape.Repeated_Symbol(Block_Symbol((1, 1)), 20),
+    ]
     bad_config = (state_E, bad_tape, None)
     success_bad, _ = prover.apply_linear_rule(rule_linear, bad_config)
     self.assertFalse(success_bad)
@@ -632,14 +661,9 @@ class ProofSystemTest(unittest.TestCase):
     self.assertEqual(result_inf.condition, Proof_System.INF_REPEAT)
     rule_linear.gen_rule.infinite = False  # restore
 
-
   def test_verbose_mode(self):
     """Test that verbose_prover=True doesn't crash and covers verbose print paths."""
-    tm = IO.parse_tm("1RB------_"
-                     "0RB0LC1LD_"
-                     "0LC1RA---_"
-                     "1LD0LE---_"
-                     "1RA0LE---")
+    tm = IO.parse_tm("1RB------_0RB0LC1LD_0LC1RA---_1LD0LE---_1RA0LE---")
     self.options.recursive = True
     self.options.verbose_prover = True
     prover = Proof_System.Proof_System(tm, self.options, "")
@@ -651,12 +675,13 @@ class ProofSystemTest(unittest.TestCase):
     tape = Tape.Chain_Tape()
     tape.init(0, 0, self.options)
     tape.dir = Turing_Machine.RIGHT
-    tape.tape[0] = [Tape.Repeated_Symbol(0, InfNat()),
-                    Tape.Repeated_Symbol(1, 10)]
-    tape.tape[1] = [Tape.Repeated_Symbol(0, InfNat()),
-                    Tape.Repeated_Symbol(2, 40),
-                    Tape.Repeated_Symbol(1, 30),
-                    Tape.Repeated_Symbol(0, 20)]
+    tape.tape[0] = [Tape.Repeated_Symbol(0, InfNat()), Tape.Repeated_Symbol(1, 10)]
+    tape.tape[1] = [
+      Tape.Repeated_Symbol(0, InfNat()),
+      Tape.Repeated_Symbol(2, 40),
+      Tape.Repeated_Symbol(1, 30),
+      Tape.Repeated_Symbol(0, 20),
+    ]
     state_A = Turing_Machine.Simple_Machine_State(0)
     base_config = (state_A, tape, None)
     base_stripped = Proof_System.strip_config(state_A, Turing_Machine.RIGHT, tape.tape)
@@ -678,11 +703,12 @@ class ProofSystemTest(unittest.TestCase):
     tape2 = Tape.Chain_Tape()
     tape2.init(0, 0, self.options)
     tape2.dir = Turing_Machine.RIGHT
-    tape2.tape[0] = [Tape.Repeated_Symbol(0, InfNat()),
-                     Tape.Repeated_Symbol(1, 10)]
-    tape2.tape[1] = [Tape.Repeated_Symbol(0, InfNat()),
-                     Tape.Repeated_Symbol(2, 4),
-                     Tape.Repeated_Symbol(0, 20)]
+    tape2.tape[0] = [Tape.Repeated_Symbol(0, InfNat()), Tape.Repeated_Symbol(1, 10)]
+    tape2.tape[1] = [
+      Tape.Repeated_Symbol(0, InfNat()),
+      Tape.Repeated_Symbol(2, 4),
+      Tape.Repeated_Symbol(0, 20),
+    ]
     meta_config = (state_A, tape2, None)
     meta_stripped = Proof_System.strip_config(state_A, Turing_Machine.RIGHT, tape2.tape)
 
@@ -705,24 +731,36 @@ class ProofSystemTest(unittest.TestCase):
     inf_init.init(0, 0, self.options)
     inf_init.dir = Turing_Machine.RIGHT
     inf_init.tape[0] = [Tape.Repeated_Symbol(0, InfNat())]
-    inf_init.tape[1] = [Tape.Repeated_Symbol(0, InfNat()),
-                        Tape.Repeated_Symbol(1, a_expr)]
+    inf_init.tape[1] = [
+      Tape.Repeated_Symbol(0, InfNat()),
+      Tape.Repeated_Symbol(1, a_expr),
+    ]
     inf_diff = Tape.Chain_Tape()
     inf_diff.init(0, 0, self.options)
     inf_diff.dir = Turing_Machine.RIGHT
     inf_diff.tape[0] = [Tape.Repeated_Symbol(0, InfNat())]  # 0^inf unchanged
-    inf_diff.tape[1] = [Tape.Repeated_Symbol(0, InfNat()),
-                        Tape.Repeated_Symbol(1, 1)]           # diff = +1 (always grows)
+    inf_diff.tape[1] = [
+      Tape.Repeated_Symbol(0, InfNat()),
+      Tape.Repeated_Symbol(1, 1),
+    ]  # diff = +1 (always grows)
     inf_rule = Proof_System.Diff_Rule(
-        inf_init, inf_diff, state_A,
-        Algebraic_Expression.ConstantToExpression(1), 1, 99, 1,
-        states_last_seen={})
+      inf_init,
+      inf_diff,
+      state_A,
+      Algebraic_Expression.ConstantToExpression(1),
+      1,
+      99,
+      1,
+      states_last_seen={},
+    )
     inf_tape = Tape.Chain_Tape()
     inf_tape.init(0, 0, self.options)
     inf_tape.dir = Turing_Machine.RIGHT
     inf_tape.tape[0] = [Tape.Repeated_Symbol(0, InfNat())]
-    inf_tape.tape[1] = [Tape.Repeated_Symbol(0, InfNat()),
-                        Tape.Repeated_Symbol(1, 5)]
+    inf_tape.tape[1] = [
+      Tape.Repeated_Symbol(0, InfNat()),
+      Tape.Repeated_Symbol(1, 5),
+    ]
     inf_config = (state_A, inf_tape, None)
     with contextlib.redirect_stdout(dev_null):
       success3, rest3 = prover.apply_rule(inf_rule, inf_config)
@@ -731,5 +769,5 @@ class ProofSystemTest(unittest.TestCase):
     self.assertEqual(result3.condition, Proof_System.INF_REPEAT)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
   unittest.main()

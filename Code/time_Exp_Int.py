@@ -11,8 +11,9 @@ def time_exp_int(max_depth):
     start = time.time()
     k, _ = divmod(x, 3)
     end = time.time()
-    print(d, end-start)
+    print(d, end - start)
     x = (61 * exp_int(4, k) - 13) / 3
+
 
 time_exp_int(1000)
 

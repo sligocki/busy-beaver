@@ -19,9 +19,10 @@ from Macro.Turing_Machine import Symbol
 @dataclass(frozen=True)
 class SymbolOrBlank:
   """Symbol marked to indicate if it was written or was a "blank" (initialized on tape)."""
-  value : Symbol
+
+  value: Symbol
   # Blank means this is a symbol initialized on the tape, not written.
-  is_blank : bool
+  is_blank: bool
 
   def __str__(self) -> str:
     if self.is_blank:
@@ -29,8 +30,9 @@ class SymbolOrBlank:
     else:
       return str(self.value)
 
+
 class DirectTape:
-  def __init__(self, init_symbol : Symbol):
+  def __init__(self, init_symbol: Symbol):
     self.init_symbol = SymbolOrBlank(init_symbol, True)
 
     # Internal storage
@@ -47,11 +49,12 @@ class DirectTape:
   def pos_leftmost(self) -> int:
     """Furthest left position visited on the tape."""
     return self._index2pos(0)
+
   def pos_rightmost(self) -> int:
     """Furthest right position visited on the tape."""
     return self._index2pos(len(self.tape) - 1)
 
-  def read_or_blank(self, pos : int | None = None) -> SymbolOrBlank:
+  def read_or_blank(self, pos: int | None = None) -> SymbolOrBlank:
     if pos is None:
       pos = self.position
     index = self._pos2index(pos)
@@ -60,10 +63,10 @@ class DirectTape:
     else:
       return self.init_symbol
 
-  def read(self, pos : int | None = None) -> Symbol:
+  def read(self, pos: int | None = None) -> Symbol:
     return self.read_or_blank(pos).value
 
-  def write(self, symbol : Symbol, pos : int | None = None) -> None:
+  def write(self, symbol: Symbol, pos: int | None = None) -> None:
     if pos is None:
       pos = self.position
     self._expand_tape(pos)
@@ -85,17 +88,19 @@ class DirectTape:
     new_tape.position = self.position
     return new_tape
 
-  def _pos2index(self, pos : int) -> int:
+  def _pos2index(self, pos: int) -> int:
     return pos - self.position + self.index
-  def _index2pos(self, index : int) -> int:
+
+  def _index2pos(self, index: int) -> int:
     return index - self.index + self.position
-  def _index_default(self, pos : int | None = None) -> int:
+
+  def _index_default(self, pos: int | None = None) -> int:
     if pos == None:
       return self.index
     else:
       return self._pos2index(pos)
 
-  def _expand_tape(self, new_pos : int | None = None) -> None:
+  def _expand_tape(self, new_pos: int | None = None) -> None:
     """Expand the deque to include the given position (defaults to current pos)."""
     new_index = self._index_default(new_pos)
     if new_index < 0:
@@ -112,15 +117,15 @@ class DirectTape:
 
 
 class DirectSimulator:
-  def __init__(self, tm : TM, *, initialize : bool = True):
+  def __init__(self, tm: TM, *, initialize: bool = True):
     self.tm = tm
 
     if initialize:
       self.halted = False
-      self.state : State = tm.init_state
+      self.state: State = tm.init_state
 
       init_symbol = tm.init_symbol
-      self.tape = DirectTape(init_symbol = init_symbol)
+      self.tape = DirectTape(init_symbol=init_symbol)
 
       self.step_num = 0
 
@@ -153,7 +158,7 @@ class DirectSimulator:
 
       self.step_num += 1
 
-  def seek(self, target_step_num : int) -> None:
+  def seek(self, target_step_num: int) -> None:
     while not self.halted and self.step_num < target_step_num:
       self.step()
 
@@ -173,6 +178,7 @@ def main():
   print(f"Simulated {sim.step_num:_} steps in {time.time() - start_time:_.1f}s")
   if sim.halted:
     print(f"Halted with score {sim.halt_score:_} at step {sim.step_num:_}")
+
 
 if __name__ == "__main__":
   main()

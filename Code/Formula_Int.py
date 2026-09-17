@@ -9,28 +9,34 @@ from Math import carmichael
 
 type GenInt = FormulaInt | int
 
+
 def try_as_basic_int(n: GenInt) -> int | None:
   if isinstance(n, (int, Int)):
     return int(n)
   return None
 
+
 class FormulaInt:
   """Abstract Base Class for Formula Integers."""
+
   def __add__(self, other: GenInt) -> FormulaInt:
     return Sum.new([self, other])
+
   def __radd__(self, other: GenInt) -> FormulaInt:
     return self + other
 
   def __sub__(self, other: GenInt) -> FormulaInt:
     return self + (-other)
+
   def __rsub__(self, other: GenInt) -> FormulaInt:
     return (-self) + other
 
   def __mul__(self, other: GenInt) -> FormulaInt:
     return Mul(self, other)
+
   def __rmul__(self, other: GenInt) -> FormulaInt:
     return self * other
-  
+
   def __neg__(self) -> FormulaInt:
     return -1 * self
 
@@ -39,13 +45,13 @@ class FormulaInt:
 
   def __rpow__(self, base: int) -> FormulaInt:
     return Pow(base, self)
-  
+
   def __mod__(self, modulus: int) -> int:
     raise NotImplementedError(self)
-  
+
   def __divmod__(self, other: int) -> tuple[FormulaInt, int]:
     m = self % other
-    return (self - m)/other, m
+    return (self - m) / other, m
 
 
 @dataclass(frozen=True)
@@ -57,6 +63,7 @@ class Int(FormulaInt):
 
   def __mod__(self, modulus: int) -> int:
     return self.val % modulus
+
 
 @dataclass(frozen=True)
 class Sum(FormulaInt):
@@ -73,7 +80,7 @@ class Sum(FormulaInt):
       else:
         terms.append(val)
     return Sum(terms, const)
-  
+
   def __add__(self, other: GenInt) -> FormulaInt:
     terms = self.terms + [self.const]
     if isinstance(other, Sum):
@@ -85,6 +92,7 @@ class Sum(FormulaInt):
   def __mod__(self, modulus: int) -> int:
     return (sum(term % modulus for term in self.terms) + self.const) % modulus
 
+
 @dataclass(frozen=True)
 class Mul(FormulaInt):
   left: GenInt
@@ -92,6 +100,7 @@ class Mul(FormulaInt):
 
   def __mod__(self, modulus: int) -> int:
     return ((self.left % modulus) * (self.right % modulus)) % modulus
+
 
 @dataclass(frozen=True)
 class Div(FormulaInt):
@@ -115,6 +124,7 @@ def exp_mod(b: int, k, m: int) -> int:
   kn = (k - k0) % kp + k0
   # b^k = b^kn (mod m)
   return pow(b, kn, m)
+
 
 @dataclass(frozen=True)
 class Pow(FormulaInt):

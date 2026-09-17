@@ -1,30 +1,32 @@
 import threading
 
+
 class TimeLimit:
-    """Explicit timeout token. Created by Enumerate, propagated through the machine hierarchy."""
-    def __init__(self):
-        self._timed_out = False
-        self._timer = None
+  """Explicit timeout token. Created by Enumerate, propagated through the machine hierarchy."""
 
-    def start(self, seconds):
-        """Start a timer to expire this limit after `seconds`. No-op if seconds == 0.0."""
-        if seconds != 0.0:
-            self._timer = threading.Timer(seconds, self.expire)
-            self._timer.start()
+  def __init__(self):
+    self._timed_out = False
+    self._timer = None
 
-    def cancel(self):
-        """Cancel the timer if one was started."""
-        if self._timer is not None:
-            self._timer.cancel()
+  def start(self, seconds):
+    """Start a timer to expire this limit after `seconds`. No-op if seconds == 0.0."""
+    if seconds != 0.0:
+      self._timer = threading.Timer(seconds, self.expire)
+      self._timer.start()
 
-    def expire(self):
-        self._timed_out = True
+  def cancel(self):
+    """Cancel the timer if one was started."""
+    if self._timer is not None:
+      self._timer.cancel()
 
-    @property
-    def timed_out(self):
-        return self._timed_out
+  def expire(self):
+    self._timed_out = True
 
-    def __deepcopy__(self, memo):
-        # threading.Timer holds a contextvars.Context that can't be pickled in
-        # Python 3.14+. Child TMs get fresh time limits when they're simulated.
-        return TimeLimit()
+  @property
+  def timed_out(self):
+    return self._timed_out
+
+  def __deepcopy__(self, memo):
+    # threading.Timer holds a contextvars.Context that can't be pickled in
+    # Python 3.14+. Child TMs get fresh time limits when they're simulated.
+    return TimeLimit()

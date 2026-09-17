@@ -16,6 +16,7 @@ import io_pb2
 def in_range(tape, pos):
   return tape.pos_leftmost() <= pos <= tape.pos_rightmost()
 
+
 def are_half_tapes_equal(tape1, start_pos1, tape2, start_pos2, dir_offset):
   pos1 = start_pos1
   pos2 = start_pos2
@@ -27,6 +28,7 @@ def are_half_tapes_equal(tape1, start_pos1, tape2, start_pos2, dir_offset):
   # Entire half-tapes are equal!
   return True
 
+
 def are_sections_equal(start_tape, end_tape, most_left_pos, most_right_pos, offset):
   for start_pos in range(most_left_pos, most_right_pos + 1):
     end_pos = start_pos + offset
@@ -34,10 +36,13 @@ def are_sections_equal(start_tape, end_tape, most_left_pos, most_right_pos, offs
       return False
   return True
 
-def lin_detect_not_min(tm : Turing_Machine.Simple_Machine,
-                       max_steps : int,
-                       result : io_pb2.LinRecurFilterResult,
-                       bb_status : io_pb2.BBStatus) -> None:
+
+def lin_detect_not_min(
+  tm: Turing_Machine.Simple_Machine,
+  max_steps: int,
+  result: io_pb2.LinRecurFilterResult,
+  bb_status: io_pb2.BBStatus,
+) -> None:
   """Detect Lin Recurrence without knowing the period or start time.
   The result is a point at which it is in Lin Recurrence, not necessarily the
   time that it has started LR."""
@@ -67,11 +72,13 @@ def lin_detect_not_min(tm : Turing_Machine.Simple_Machine,
         # If a machine halts, it will never Lin Recur.
         result.success = False
         # NOTE: We do not currently evaluate `halt_score`
-        Halting_Lib.set_halting(bb_status,
-                                halt_steps = sim.step_num,
-                                halt_score = sim.halt_score,
-                                from_state = sim.halt_from_state,
-                                from_symbol = sim.halt_from_symbol)
+        Halting_Lib.set_halting(
+          bb_status,
+          halt_steps=sim.step_num,
+          halt_score=sim.halt_score,
+          from_state=sim.halt_from_state,
+          from_symbol=sim.halt_from_symbol,
+        )
         return
 
       most_left_pos = min(most_left_pos, sim.tape.position)
@@ -79,25 +86,32 @@ def lin_detect_not_min(tm : Turing_Machine.Simple_Machine,
       if sim.state == init_state:
         offset = sim.tape.position - init_pos
         if offset > 0:  # Right
-          if are_half_tapes_equal(init_tape, most_left_pos,
-                                  sim.tape, most_left_pos + offset, dir_offset=+1):
+          if are_half_tapes_equal(
+            init_tape,
+            most_left_pos,
+            sim.tape,
+            most_left_pos + offset,
+            dir_offset=+1,
+          ):
             result.success = True
         elif offset < 0:  # Left
-          if are_half_tapes_equal(init_tape, most_right_pos,
-                                  sim.tape, most_right_pos + offset, dir_offset=-1):
+          if are_half_tapes_equal(
+            init_tape,
+            most_right_pos,
+            sim.tape,
+            most_right_pos + offset,
+            dir_offset=-1,
+          ):
             result.success = True
         else:  # In place
-          if are_sections_equal(init_tape, sim.tape,
-                                most_left_pos, most_right_pos, offset):
+          if are_sections_equal(init_tape, sim.tape, most_left_pos, most_right_pos, offset):
             result.success = True
 
   if result.success:
     result.start_step = init_step_num
     result.period = sim.step_num - init_step_num
     result.offset = offset
-    Halting_Lib.set_inf_recur(bb_status,
-                              states_to_ignore = states_used,
-                              states_last_seen = states_last_seen)
+    Halting_Lib.set_inf_recur(bb_status, states_to_ignore=states_used, states_last_seen=states_last_seen)
     Halting_Lib.set_not_halting(bb_status, io_pb2.INF_LIN_RECUR)
     return
   else:
@@ -107,7 +121,7 @@ def lin_detect_not_min(tm : Turing_Machine.Simple_Machine,
     return
 
 
-def check_recur(tm : Turing_Machine.Simple_Machine, init_step, period):
+def check_recur(tm: Turing_Machine.Simple_Machine, init_step, period):
   sim = Direct_Simulator.DirectSimulator(tm)
   sim.seek(init_step)
 
@@ -126,29 +140,39 @@ def check_recur(tm : Turing_Machine.Simple_Machine, init_step, period):
   if sim.state == init_state:
     offset = sim.tape.position - init_pos
     if offset > 0:  # Right
-      if are_half_tapes_equal(init_tape, most_left_pos,
-                              sim.tape, most_left_pos + offset, dir_offset=+1):
+      if are_half_tapes_equal(
+        init_tape,
+        most_left_pos,
+        sim.tape,
+        most_left_pos + offset,
+        dir_offset=+1,
+      ):
         return True
     elif offset < 0:  # Left
-      if are_half_tapes_equal(init_tape, most_right_pos,
-                              sim.tape, most_right_pos + offset, dir_offset=-1):
+      if are_half_tapes_equal(
+        init_tape,
+        most_right_pos,
+        sim.tape,
+        most_right_pos + offset,
+        dir_offset=-1,
+      ):
         return True
     else:  # In place
-      if are_sections_equal(init_tape, sim.tape,
-                            most_left_pos, most_right_pos, offset):
+      if are_sections_equal(init_tape, sim.tape, most_left_pos, most_right_pos, offset):
         return True
 
   # Either states were not equal or "half-tape" was not equal, so recurrence
   # has not started yet.
   return False
 
+
 # TODO: There must be a more efficient way to do this!
 # For Machines/4x2-LR-158491-17620:
 #  * lin_detect_not_min() takes 0.5s
 #  * period_search() takes 4.5s!
-def period_search(tm : Turing_Machine.Simple_Machine, init_step, period):
+def period_search(tm: Turing_Machine.Simple_Machine, init_step, period):
   # Binary search on init_step for earliest time that recurrence began.
-  low = -1          # Largest unsuccessful start of recurrence
+  low = -1  # Largest unsuccessful start of recurrence
   high = init_step  # Smallest successful start of recurrence
   while high - low > 1:
     mid = (high + low) // 2
@@ -160,30 +184,34 @@ def period_search(tm : Turing_Machine.Simple_Machine, init_step, period):
   return high
 
 
-def filter(tm : Turing_Machine.Simple_Machine,
-           lr_info : io_pb2.LinRecurFilterInfo,
-           bb_status : io_pb2.BBStatus) -> None:
+def filter(
+  tm: Turing_Machine.Simple_Machine,
+  lr_info: io_pb2.LinRecurFilterInfo,
+  bb_status: io_pb2.BBStatus,
+) -> None:
   """Applies Lin Recur filter to `tm` using `params`.
   The results are stored in `result`."""
   with IO.Timer(lr_info.result):
-    lin_detect_not_min(tm, max_steps=lr_info.parameters.max_steps,
-                       result=lr_info.result, bb_status=bb_status)
+    lin_detect_not_min(
+      tm,
+      max_steps=lr_info.parameters.max_steps,
+      result=lr_info.result,
+      bb_status=bb_status,
+    )
     if lr_info.result.success and lr_info.parameters.find_min_start_step:
       # NOTE: lr_info.result.start_step is not necessarily the earliest time that
       # recurrence starts, it is simply a time after which recurrence is in effect.
 
       # Do a second search, now that we know the recurrence period to find the
       # earliest start time of the recurrence.
-      lr_info.result.start_step = period_search(tm, lr_info.result.start_step,
-                                                lr_info.result.period)
+      lr_info.result.start_step = period_search(tm, lr_info.result.start_step, lr_info.result.period)
 
 
 def main():
   parser = argparse.ArgumentParser()
   parser.add_argument("tm", help="Turing Machine or file or file:record_num (0-indexed).")
-  parser.add_argument("--max-steps", type=int, default = 0)
-  parser.add_argument("--no-min-start-step", action="store_false",
-                      dest="min_start_step")
+  parser.add_argument("--max-steps", type=int, default=0)
+  parser.add_argument("--no-min-start-step", action="store_false", dest="min_start_step")
   args = parser.parse_args()
 
   lr_info = io_pb2.LinRecurFilterInfo()
@@ -196,6 +224,7 @@ def main():
 
   print(lr_info)
   print(bb_status)
+
 
 if __name__ == "__main__":
   main()

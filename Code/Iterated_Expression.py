@@ -1,51 +1,54 @@
-import math
-
-from Algebraic_Expression import Expression, min_val, variables, substitute
+from Algebraic_Expression import min_val, variables, substitute
 from NatExpr import is_const
 
 from Exp_Int import uparrow_size_approx
+
 
 def get_depth(expr, var):
   """
   Returns the exponentiation depth of `var` within `expr`.
   Returns None if `var` is not found.
   """
-  if hasattr(expr, 'terms'):
+  if hasattr(expr, "terms"):
     depths = [get_depth(term, var) for term in expr.terms]
     valid_depths = [d for d in depths if d is not None]
     if valid_depths:
       return max(valid_depths)
     return None
-  elif hasattr(expr, 'var_power') and expr.var_power is not None:
+  elif hasattr(expr, "var_power") and expr.var_power is not None:
     return get_depth(expr.var_power, var)
-  elif hasattr(expr, 'var'):
+  elif hasattr(expr, "var"):
     v = expr.var
     if v == var:
       return 0
-    elif hasattr(v, 'exponent'):
+    elif hasattr(v, "exponent"):
       d = get_depth(v.exponent, var)
       if d is not None:
         return 1 + d
-  elif hasattr(expr, 'exponent'):
+  elif hasattr(expr, "exponent"):
     d = get_depth(expr.exponent, var)
     if d is not None:
       return 1 + d
-  elif type(expr).__name__ == 'Iterated_Math':
+  elif type(expr).__name__ == "Iterated_Math":
     return get_depth(expr.it_expr, var)
-  elif type(expr).__name__ == 'Iterated_Expression':
+  elif type(expr).__name__ == "Iterated_Expression":
     d_reps = get_depth(expr.num_reps, var)
     if d_reps is not None:
       D = get_depth(expr.step_expr, expr.var)
-      if D is None or D < 1: D = 1
+      if D is None or D < 1:
+        D = 1
       arr_f = D + 1
       arr_N = d_reps + 1
       return max(arr_f, arr_N) - 1
   return None
 
+
 from NatExpr import NatExpr
+
 
 class Iterated_Expression(NatExpr):
   """An expression representing `f^n(x)`."""
+
   def __init__(self, step_expr, var, start_val, num_reps):
     # step_expr is the function f(x)
     # var is the variable x in step_expr
@@ -62,6 +65,7 @@ class Iterated_Expression(NatExpr):
 
   def __repr__(self):
     return f"((λ{self.var} → {self.step_expr})^({self.num_reps}) ({self.start_val}))"
+
   __str__ = __repr__
 
   def try_eval(self):
@@ -88,7 +92,7 @@ class Iterated_Expression(NatExpr):
       self.step_expr,
       self.var,
       substitute(self.start_val, assignment),
-      substitute(self.num_reps, assignment)
+      substitute(self.num_reps, assignment),
     )
 
   def __add__(self, other):
@@ -109,7 +113,7 @@ class Iterated_Expression(NatExpr):
     raise NotImplementedError("Cannot mod Iterated_Expression by non-1 value")
 
   def __neg__(self):
-    return Iterated_Math(self, 0) * -1 # Not actually supported properly, but let's just do it
+    return Iterated_Math(self, 0) * -1  # Not actually supported properly, but let's just do it
     # Wait, we need to multiply.
     raise NotImplementedError("Cannot negate Iterated_Expression")
 
@@ -120,8 +124,8 @@ class Iterated_Expression(NatExpr):
   def uparrow_size_approx(self):
     depth = get_depth(self.step_expr, self.var)
     if depth is None or depth < 1:
-      depth = 1 # fallback
-      
+      depth = 1  # fallback
+
     val_start = uparrow_size_approx(self.start_val)
     top_start = val_start[-1]
     try:
@@ -132,26 +136,34 @@ class Iterated_Expression(NatExpr):
 
   def __lt__(self, other):
     other = NatExpr.wrap(other)
-    if other.is_inf: return True
-    if not isinstance(other, (Iterated_Expression, Iterated_Math)): return False
+    if other.is_inf:
+      return True
+    if not isinstance(other, (Iterated_Expression, Iterated_Math)):
+      return False
     return self.uparrow_size_approx < uparrow_size_approx(other)
-    
+
   def __gt__(self, other):
     other = NatExpr.wrap(other)
-    if other.is_inf: return False
-    if not isinstance(other, (Iterated_Expression, Iterated_Math)): return True
+    if other.is_inf:
+      return False
+    if not isinstance(other, (Iterated_Expression, Iterated_Math)):
+      return True
     return self.uparrow_size_approx > uparrow_size_approx(other)
 
   def __le__(self, other):
     other = NatExpr.wrap(other)
-    if other.is_inf: return True
-    if not isinstance(other, (Iterated_Expression, Iterated_Math)): return False
+    if other.is_inf:
+      return True
+    if not isinstance(other, (Iterated_Expression, Iterated_Math)):
+      return False
     return uparrow_size_approx(self) <= uparrow_size_approx(other)
 
   def __ge__(self, other):
     other = NatExpr.wrap(other)
-    if other.is_inf: return False
-    if not isinstance(other, (Iterated_Expression, Iterated_Math)): return True
+    if other.is_inf:
+      return False
+    if not isinstance(other, (Iterated_Expression, Iterated_Math)):
+      return True
     return uparrow_size_approx(self) >= uparrow_size_approx(other)
 
   def __mul__(self, other):
@@ -173,8 +185,10 @@ class Iterated_Expression(NatExpr):
   def __sub__(self, other):
     return Iterated_Math(self, -other, coef=1)
 
+
 class Iterated_Math(NatExpr):
   """A shifted iterated expression: `Iterated_Expression + const`"""
+
   def __init__(self, it_expr, const, coef=1):
     self.it_expr = it_expr
     self.const = const
@@ -193,6 +207,7 @@ class Iterated_Math(NatExpr):
       if self.const < 0:
         return f"({self.coef} * {self.it_expr} - {-self.const})"
       return f"({self.coef} * {self.it_expr} + {self.const})"
+
   __str__ = __repr__
 
   def try_eval(self):
@@ -212,12 +227,12 @@ class Iterated_Math(NatExpr):
     return Iterated_Math(
       substitute(self.it_expr, assignment),
       substitute(self.const, assignment),
-      self.coef
+      self.coef,
     )
 
   def __add__(self, other):
     return Iterated_Math(self.it_expr, self.const + other, self.coef)
-  
+
   def __radd__(self, other):
     return Iterated_Math(self.it_expr, self.const + other, self.coef)
 
@@ -251,26 +266,32 @@ class Iterated_Math(NatExpr):
 
   def __lt__(self, other):
     other = NatExpr.wrap(other)
-    if other.is_inf: return True
-    if not isinstance(other, (Iterated_Expression, Iterated_Math)): return False
+    if other.is_inf:
+      return True
+    if not isinstance(other, (Iterated_Expression, Iterated_Math)):
+      return False
     return uparrow_size_approx(self) < uparrow_size_approx(other)
-    
+
   def __gt__(self, other):
     other = NatExpr.wrap(other)
-    if other.is_inf: return False
-    if not isinstance(other, (Iterated_Expression, Iterated_Math)): return True
+    if other.is_inf:
+      return False
+    if not isinstance(other, (Iterated_Expression, Iterated_Math)):
+      return True
     return uparrow_size_approx(self) > uparrow_size_approx(other)
 
   def __le__(self, other):
     other = NatExpr.wrap(other)
-    if other.is_inf: return True
-    if not isinstance(other, (Iterated_Expression, Iterated_Math)): return False
+    if other.is_inf:
+      return True
+    if not isinstance(other, (Iterated_Expression, Iterated_Math)):
+      return False
     return uparrow_size_approx(self) <= uparrow_size_approx(other)
 
   def __ge__(self, other):
     other = NatExpr.wrap(other)
-    if other.is_inf: return False
-    if not isinstance(other, (Iterated_Expression, Iterated_Math)): return True
+    if other.is_inf:
+      return False
+    if not isinstance(other, (Iterated_Expression, Iterated_Math)):
+      return True
     return uparrow_size_approx(self) >= uparrow_size_approx(other)
-
-

@@ -11,11 +11,10 @@ from Macro import Turing_Machine
 
 
 STATES = string.ascii_uppercase
+
+
 class VisSim:
-  def __init__(self, stdscr,
-               tm : Turing_Machine.Simple_Machine,
-               buffer_size : int,
-               logfile):
+  def __init__(self, stdscr, tm: Turing_Machine.Simple_Machine, buffer_size: int, logfile):
     assert tm.num_symbols <= 7
     # Options
     self.buffer_size = buffer_size
@@ -63,8 +62,7 @@ class VisSim:
     # Set "background" (default cell) to have a space and white background.
     self.pad.bkgd(" ", curses.color_pair(1))
     self.pad.bkgdset(" ", curses.color_pair(1))
-    self.expand_pad(pad_height = self.buffer_size,
-                    pad_width = self.buffer_size)
+    self.expand_pad(pad_height=self.buffer_size, pad_width=self.buffer_size)
     self.cur_line = 0
     self.cur_pos = 0
     self.draw()
@@ -78,11 +76,17 @@ class VisSim:
     self.log(f"refresh({self.cur_line}, {left_col}, 0, 0, {curses.LINES - 1}, {curses.COLS - 1})")
     assert 0 <= self.cur_line <= self.pad_height()
     assert 0 <= left_col <= self.pad_width()
-    self.pad.refresh(self.cur_line, left_col,
-                     # Full screen
-                     0, 0, curses.LINES - 1, curses.COLS - 1)
+    self.pad.refresh(
+      self.cur_line,
+      left_col,
+      # Full screen
+      0,
+      0,
+      curses.LINES - 1,
+      curses.COLS - 1,
+    )
 
-  def expand_pad(self, pad_height : int, pad_width : int = None):
+  def expand_pad(self, pad_height: int, pad_width: int = None):
     """Expand pad to `limit_line_num` and draw results in."""
     self.log(f"expand_pad({pad_height}, {pad_width})")
     old_pad_height = self.pad_height()
@@ -97,12 +101,10 @@ class VisSim:
       self.pos_offset = pad_width // 2
 
     while not self.sim.halted and self.sim.step_num < pad_height:
-      self.write_tape(self.sim.step_num,
-                      self.sim.tape, self.sim.state)
+      self.write_tape(self.sim.step_num, self.sim.tape, self.sim.state)
       self.sim.step()
 
-  def write_tape(self, line_num : int,
-                 tape, state : int):
+  def write_tape(self, line_num: int, tape, state: int):
     pos_min = tape.position - tape.index
     pos_max = pos_min + len(tape.tape)
     col_min = max(pos_min + self.pos_offset, 0)
@@ -131,8 +133,10 @@ class VisSim:
 
   def move_hor(self, hor_offset):
     self.cur_pos += hor_offset
-    while (self.cur_pos + self.pos_offset - curses.COLS < 0 or
-           self.cur_pos + self.pos_offset + self.cur_pos > self.pad_width()):
+    while (
+      self.cur_pos + self.pos_offset - curses.COLS < 0
+      or self.cur_pos + self.pos_offset + self.cur_pos > self.pad_width()
+    ):
       self.expand_pad(self.pad_height(), self.pad_width() + self.buffer_size)
     self.draw()
 
@@ -175,6 +179,7 @@ class VisSim:
         # TODO: Notify user ...
         pass
 
+
 def sim(stdscr, tm, buffer_size, logfile):
   vis_sim = VisSim(stdscr, tm, buffer_size, logfile)
   # Display initial view
@@ -182,11 +187,16 @@ def sim(stdscr, tm, buffer_size, logfile):
   # Wait for user input and display results
   vis_sim.input_loop()
 
+
 def main():
   parser = argparse.ArgumentParser()
   parser.add_argument("tm", help="Turing Machine or file or file:record_num (0-indexed).")
-  parser.add_argument("--buffer-size", type=int, default=1000,
-                      help="Number of rows and columns to buffer out to incrementally.")
+  parser.add_argument(
+    "--buffer-size",
+    type=int,
+    default=1000,
+    help="Number of rows and columns to buffer out to incrementally.",
+  )
   parser.add_argument("--log-file", default="curses_log.txt")
   args = parser.parse_args()
 
@@ -194,5 +204,6 @@ def main():
 
   with open(args.log_file, "w") as logfile:
     curses.wrapper(sim, tm, args.buffer_size, logfile)
+
 
 main()

@@ -15,6 +15,7 @@ def sorting_func(tm_record):
   else:
     return val
 
+
 def sort(infilenames: list[Path], outfilename: Path) -> None:
   start_time = time.time()
   tm_records = []
@@ -28,7 +29,7 @@ def sort(infilenames: list[Path], outfilename: Path) -> None:
   print(f"Read {len(tm_records):_} records ({time.time() - start_time:_.2f}s)")
 
   start_time = time.time()
-  tm_records.sort(key = sorting_func, reverse = True)
+  tm_records.sort(key=sorting_func, reverse=True)
   print(f"Sorted records ({time.time() - start_time:_.2f}s)")
 
   start_time = time.time()
@@ -37,6 +38,7 @@ def sort(infilenames: list[Path], outfilename: Path) -> None:
       writer.write_record(tm_record)
   print(f"Wrote records ({time.time() - start_time:_.2f}s)")
 
+
 def main():
   parser = argparse.ArgumentParser()
   parser.add_argument("infiles", type=Path, nargs="+")
@@ -44,6 +46,7 @@ def main():
   args = parser.parse_args()
 
   sort(args.infiles, args.outfile)
+
 
 if __name__ == "__main__":
   main()

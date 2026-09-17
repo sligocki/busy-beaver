@@ -20,12 +20,10 @@ from __future__ import annotations
 import argparse
 import math
 import re
-import sys
 from typing import Optional
 
 from Direct_Simulator import DirectSimulator
 import IO
-from IO.Machine import Machine
 from Parse_Config import INF, ParsedConfig, parse_tape_config
 from NatExpr import NatExpr
 
@@ -58,8 +56,8 @@ def _build_side_regex(elements: list[tuple]) -> tuple[str, list[tuple[str, int]]
 
 
 def _match_side(
-    syms: list[int],
-    elements: list[tuple],
+  syms: list[int],
+  elements: list[tuple],
 ) -> Optional[dict[str, int]]:
   """Try to match a list of symbols against pattern elements.
 
@@ -77,8 +75,8 @@ def _match_side(
 
 
 def match_pattern(
-    sim: DirectSimulator,
-    parsed: ParsedConfig,
+  sim: DirectSimulator,
+  parsed: ParsedConfig,
 ) -> Optional[dict[str, int]]:
   """Check if sim's current config matches the parsed pattern.
 
@@ -88,8 +86,7 @@ def match_pattern(
     return None
 
   left_syms = [sim.tape.tape[i].value for i in range(sim.tape.index)]
-  right_syms = [sim.tape.tape[i].value
-                for i in range(sim.tape.index, len(sim.tape.tape))]
+  right_syms = [sim.tape.tape[i].value for i in range(sim.tape.index, len(sim.tape.tape))]
 
   if parsed.dir_left:
     # <C style: head symbol is last of left side
@@ -121,8 +118,7 @@ def format_match(bindings: dict[str, int], parsed: ParsedConfig) -> str:
   parts: list[str] = []
   for block, count in parsed.left:
     parts.append("".join(str(d) for d in block) + "^" + _count_str(count, bindings))
-  state_token = (f"<{parsed.state_name}" if parsed.dir_left
-                 else f"{parsed.state_name}>")
+  state_token = f"<{parsed.state_name}" if parsed.dir_left else f"{parsed.state_name}>"
   parts.append(state_token)
   for block, count in parsed.right:
     parts.append("".join(str(d) for d in block) + "^" + _count_str(count, bindings))
@@ -134,16 +130,22 @@ def format_match(bindings: dict[str, int], parsed: ParsedConfig) -> str:
 
 
 def main() -> None:
-  parser = argparse.ArgumentParser(
-    description="Print every DirectSim config matching a tape pattern.")
-  parser.add_argument("tm",
-                      help="TM string (e.g. 1RB0LA_1LB0RA), filename, or filename:record_num.")
-  parser.add_argument("pattern",
-                      help='Generalized tape config, e.g. "0^inf 1^a 10^b C> 1^c 0^inf".')
-  parser.add_argument("num_results", type=int, nargs="?", default=math.inf,
-                      help="Number of results to print")
-  parser.add_argument("--max-steps", type=int, default=1_000_000,
-                      help="Stop after this many steps (default: 1,000,000).")
+  parser = argparse.ArgumentParser(description="Print every DirectSim config matching a tape pattern.")
+  parser.add_argument("tm", help="TM string (e.g. 1RB0LA_1LB0RA), filename, or filename:record_num.")
+  parser.add_argument("pattern", help='Generalized tape config, e.g. "0^inf 1^a 10^b C> 1^c 0^inf".')
+  parser.add_argument(
+    "num_results",
+    type=int,
+    nargs="?",
+    default=math.inf,
+    help="Number of results to print",
+  )
+  parser.add_argument(
+    "--max-steps",
+    type=int,
+    default=1_000_000,
+    help="Stop after this many steps (default: 1,000,000).",
+  )
   args = parser.parse_args()
 
   tm = IO.get_tm(args.tm)

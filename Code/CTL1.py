@@ -8,21 +8,22 @@ Runs the trivial CTL (A*) on a machine to discover infinite behavior
 
 import sys
 import argparse
-import time
 
 import IO
 from Macro import Turing_Machine, Simulator
 
 DIR_NAME = {
-  Turing_Machine.LEFT:  "L",
+  Turing_Machine.LEFT: "L",
   Turing_Machine.RIGHT: "R",
 }
+
 
 class CTL_Table(dict):
   def __getitem__(self, key):
     if key not in self:
       self[key] = (set(), set())
     return dict.__getitem__(self, key)
+
 
 def CTL(machine, config, verbose=False):
   """Runs the CTL on a machine given an advaced tape config"""
@@ -46,7 +47,7 @@ def CTL(machine, config, verbose=False):
 
     if verbose:
       for term in new_table:
-        print(term,":",new_table[term])
+        print(term, ":", new_table[term])
       print()
 
     table, new_table = new_table, CTL_Table()
@@ -57,15 +58,23 @@ def CTL(machine, config, verbose=False):
         if trans.condition != Turing_Machine.RUNNING:
           return False, num_iters
         if verbose:
-          print("(", symb, state, DIR_NAME[dir], ") -> (",
-                trans.symbol_out, trans.state_out, DIR_NAME[trans.dir_out], ")")
+          print(
+            "(",
+            symb,
+            state,
+            DIR_NAME[dir],
+            ") -> (",
+            trans.symbol_out,
+            trans.state_out,
+            DIR_NAME[trans.dir_out],
+            ")",
+          )
 
         # Ex: (1|5)* A> 4 (1|4|5)* -> (1|5)* <B 2 (1|4|5)*
         # table[<B][0] = table[A>][0]; table[<B][1] = table[A>][1] + [2]
         for d in range(2):
           new_table[trans.state_out, trans.dir_out][d].update(table[state, dir][d])
-        new_table[trans.state_out, trans.dir_out][not trans.dir_out].add(
-          trans.symbol_out)
+        new_table[trans.state_out, trans.dir_out][not trans.dir_out].add(trans.symbol_out)
       # Or we could be looking at blank (i.e. 00...)
       symb = machine.init_symbol
       trans = machine.get_trans_object(symb, state, dir)
@@ -73,8 +82,7 @@ def CTL(machine, config, verbose=False):
         return False, num_iters
       # Ex: (1|5)* A> 0 -> (1|5)* <B 2
       new_table[trans.state_out, trans.dir_out][not dir].update(table[state, dir][not dir])
-      new_table[trans.state_out, trans.dir_out][not trans.dir_out].add(
-        trans.symbol_out)
+      new_table[trans.state_out, trans.dir_out][not trans.dir_out].add(trans.symbol_out)
     # Make new_table complete by unioning it with table
     for x in table:
       for d in range(2):
@@ -82,14 +90,16 @@ def CTL(machine, config, verbose=False):
     num_iters += 1
   return True, num_iters
 
+
 class GenContainer:
   """Generic Container class"""
+
   def __init__(self, **args):
     for atr in args:
       self.__dict__[atr] = args[atr]
 
-def test_CTL(base_tm, cutoff, block_size=1, offset=None, use_backsymbol=True,
-             verbose=False):
+
+def test_CTL(base_tm, cutoff, block_size=1, offset=None, use_backsymbol=True, verbose=False):
   if verbose:
     print(base_tm.ttable_str())
   m = base_tm
@@ -124,13 +134,19 @@ def main():
 
   tm = IO.get_tm(args.tm)
   success, num_iters = test_CTL(
-    tm, cutoff=args.cutoff, block_size=args.block_size, offset=args.offset,
-    use_backsymbol=(not args.no_backsymbol), verbose=True)
+    tm,
+    cutoff=args.cutoff,
+    block_size=args.block_size,
+    offset=args.offset,
+    use_backsymbol=(not args.no_backsymbol),
+    verbose=True,
+  )
   print()
   if success:
     print("Success :) in", num_iters, "iterations")
   else:
     print("Failure :( in", num_iters, "iterations")
+
 
 if __name__ == "__main__":
   main()

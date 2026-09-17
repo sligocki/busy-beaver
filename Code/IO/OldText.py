@@ -10,14 +10,11 @@ Format looks like:
 
 import io
 import string
-import sys
 
 from Common import Exit_Condition
 import Halting_Lib
-import IO
 from IO import TM_Record
 from Macro import Turing_Machine
-import TM_Enum
 
 import io_pb2
 
@@ -37,6 +34,8 @@ str2inf_reason = {s: inf_reason for (inf_reason, s) in inf_reason2str.items()}
 SYMBOLS_DISPLAY = string.digits
 DIRS_DISPLAY = "LR"
 STATES_DISPLAY = string.ascii_uppercase[:-1]  # Don't allow Z
+
+
 def display_ttable(tm):
   """Pretty print the TM transition table."""
   s = ""
@@ -53,15 +52,17 @@ def display_ttable(tm):
     s += " "
   return s.strip()
 
+
 class Record(object):
   """Structuring of information in a Turing machine result line."""
+
   def __init__(self):
     self.tm = None
-    self.log_number = None      # an int or None
-    self.category = None        # Halt, Infinite, Unknown, Undecided
-    self.category_reason = []   # a generic list of attributes
-    self.extended = None        # Halt, Infinite, Unknown, Undecided (extended)
-    self.extended_reason = []   # a generic list of attributes (extended)
+    self.log_number = None  # an int or None
+    self.category = None  # Halt, Infinite, Unknown, Undecided
+    self.category_reason = []  # a generic list of attributes
+    self.extended = None  # Halt, Infinite, Unknown, Undecided (extended)
+    self.extended_reason = []  # a generic list of attributes (extended)
 
   def __str__(self):
     return "[IO.Record: %s ]" % str(self.__dict__)
@@ -86,14 +87,16 @@ class Record(object):
     # Note: Don't pass in strings which begin with digits or have spaces
     # TODO(shawn): Perhaps the asserts are expensive?
     if isinstance(obj, str):
-      assert ' ' not in obj
+      assert " " not in obj
       # Note: Turned this off so that IO_Convert works. Old format reads
       # everything as strings.
-      #assert obj[0] not in string.digits
+      # assert obj[0] not in string.digits
       return obj
     else:
-      assert isinstance(obj, (int, float)), \
-          "Object %r is invalid type %s" % (obj, type(obj))
+      assert isinstance(obj, (int, float)), "Object %r is invalid type %s" % (
+        obj,
+        type(obj),
+      )
       return str(obj)
 
 
@@ -105,14 +108,15 @@ class ReaderWriter(object):
     log_number - optional log_number to mark results with when they have been
                  categorized as halting or infinite.
   """
+
   def __init__(self, input_file, output_file, log_number=None):
     assert input_file == None or isinstance(input_file, io.TextIOBase), type(input_file)
     assert output_file == None or isinstance(output_file, io.TextIOBase), type(output_file)
-    self.input_file  = input_file
+    self.input_file = input_file
     self.output_file = output_file
     self.log_number = log_number
 
-  def write_record(self, tm_record : TM_Record.TM_Record):
+  def write_record(self, tm_record: TM_Record.TM_Record):
     assert isinstance(tm_record, TM_Record.TM_Record), tm_record
 
     io_record = Record()
@@ -150,7 +154,8 @@ class ReaderWriter(object):
       io_record.category = Exit_Condition.HALT
       io_record.category_reason = (
         Halting_Lib.get_big_int(tm_record.proto.status.halt_status.halt_score),
-        Halting_Lib.get_big_int(tm_record.proto.status.halt_status.halt_steps))
+        Halting_Lib.get_big_int(tm_record.proto.status.halt_status.halt_steps),
+      )
 
     else:
       io_record.category = Exit_Condition.INFINITE
@@ -162,7 +167,8 @@ class ReaderWriter(object):
       elif tm_record.is_quasihalting():
         quasihalt_info = (
           tm_record.proto.status.quasihalt_status.quasihalt_state,
-          Halting_Lib.get_big_int(tm_record.proto.status.quasihalt_status.quasihalt_steps))
+          Halting_Lib.get_big_int(tm_record.proto.status.quasihalt_status.quasihalt_steps),
+        )
 
       else:
         quasihalt_info = ("No_Quasihalt", "N/A")
@@ -176,13 +182,13 @@ class ReaderWriter(object):
 
 
 class Writer:
-  def __init__(self, outfilename : str):
+  def __init__(self, outfilename: str):
     self.outfilename = outfilename
     self.outfile = None
 
   def __enter__(self):
     self.outfile = open(self.outfilename, "w")
-    self.rw = ReaderWriter(input_file = None, output_file = self.outfile)
+    self.rw = ReaderWriter(input_file=None, output_file=self.outfile)
     return self.rw
 
   def __exit__(self, *args):

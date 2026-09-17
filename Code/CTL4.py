@@ -8,16 +8,17 @@ Runs the CTL (A* B C) on a machine to discover infinite behavior
 
 import sys
 import argparse
-import time
 
 import IO
 from Macro import Turing_Machine, Simulator
+
 
 class CTL_Table(dict):
   def __getitem__(self, key):
     if key not in self:
       self[key] = ((set(), set(), set()), (set(), set(), set()))
     return dict.__getitem__(self, key)
+
 
 def CTL(machine, config, verbose=False):
   """Runs the CTL on a machine given an advaced tape config"""
@@ -38,7 +39,7 @@ def CTL(machine, config, verbose=False):
 
     if verbose:
       for term in new_table:
-        print(term,":",new_table[term])
+        print(term, ":", new_table[term])
       print()
     table, new_table = new_table, CTL_Table()
     # For each entry in the old table, generate the possible outcomes and add
@@ -68,14 +69,12 @@ def CTL(machine, config, verbose=False):
         if new_dir == dir:
           # Ex: (2) (3) (1|5)* A> (1) (4) -> (2) (3) (1|5)* 2 B> (4)
           new_table[new_state, new_dir][not new_dir][0].add(new_symb)
-          new_table[new_state, new_dir][new_dir][1].update(
-            table[state, dir][new_dir][2])
+          new_table[new_state, new_dir][new_dir][1].update(table[state, dir][new_dir][2])
           new_table[new_state, new_dir][new_dir][2].add(machine.init_symbol)
-        else: # new_dir != dir
+        else:  # new_dir != dir
           # Ex: (2) (3) (1|5)* A> (1) (4) -> (2) (3) (1|5)* <B 2 (4)
           new_table[new_state, new_dir][not new_dir][1].add(new_symb)
-          new_table[new_state, new_dir][not new_dir][2].update(
-            table[state, dir][not new_dir][2])
+          new_table[new_state, new_dir][not new_dir][2].update(table[state, dir][not new_dir][2])
     # Make new_table complete by unioning it with table
     for x in table:
       for d in range(2):
@@ -83,14 +82,16 @@ def CTL(machine, config, verbose=False):
           new_table[x][d][s].update(table[x][d][s])
   return True, num_iters
 
+
 class GenContainer:
   """Generic Container class"""
+
   def __init__(self, **args):
     for atr in args:
       self.__dict__[atr] = args[atr]
 
-def test_CTL(base_tm, cutoff, block_size=1, offset=None, use_backsymbol=True,
-             verbose=False):
+
+def test_CTL(base_tm, cutoff, block_size=1, offset=None, use_backsymbol=True, verbose=False):
   if verbose:
     print(base_tm.ttable_str())
   m = base_tm
@@ -116,8 +117,7 @@ def test_CTL(base_tm, cutoff, block_size=1, offset=None, use_backsymbol=True,
     # Set C to the last non-zero symbol
     # Set B to the second to last non-zero symbol
     # Add all other non-zero symbols to A
-    if  len(sim.tape.tape[d]) >= 3 or \
-       (len(sim.tape.tape[d]) == 2 and sim.tape.tape[d][1].num > 1):
+    if len(sim.tape.tape[d]) >= 3 or (len(sim.tape.tape[d]) == 2 and sim.tape.tape[d][1].num > 1):
       C = set([sim.tape.tape[d][1].symbol])
       if sim.tape.tape[d][1].num > 1:
         B = set([sim.tape.tape[d][1].symbol])
@@ -156,13 +156,19 @@ def main():
 
   tm = IO.get_tm(args.tm)
   success, num_iters = test_CTL(
-    tm, cutoff=args.cutoff, block_size=args.block_size, offset=args.offset,
-    use_backsymbol=(not args.no_backsymbol), verbose=True)
+    tm,
+    cutoff=args.cutoff,
+    block_size=args.block_size,
+    offset=args.offset,
+    use_backsymbol=(not args.no_backsymbol),
+    verbose=True,
+  )
   print()
   if success:
     print("Success :) in", num_iters, "iterations")
   else:
     print("Failure :( in", num_iters, "iterations")
+
 
 if __name__ == "__main__":
   main()

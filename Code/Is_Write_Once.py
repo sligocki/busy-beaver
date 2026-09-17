@@ -33,5 +33,6 @@ def main():
         if is_write_once(tm_record.tm()):
           writer.write_record(tm_record)
 
+
 if __name__ == "__main__":
   main()

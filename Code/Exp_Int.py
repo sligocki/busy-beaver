@@ -32,15 +32,16 @@ def exp_int(base: int, exponent: int | ExpInt | Expression) -> ExpInt:
   if exponent == 0:
     return 1
 
-  return ExpInt([ExpTerm(base = base, coef = 1, exponent = exponent)],
-                const = 0, denom = 1)
+  return ExpInt([ExpTerm(base=base, coef=1, exponent=exponent)], const=0, denom=1)
 
 
 class ExpIntException(Exception):
   pass
 
+
 class ExpIntGaveUp(ExpIntException):
   pass
+
 
 def tex_formula(x: ExpInt | ExpTerm | int) -> str:
   if isinstance(x, ExpInt):
@@ -63,37 +64,45 @@ def is_simple(value) -> bool:
   """Is `value` a "simple" numeric type (integer or Fraction)."""
   return isinstance(value, (int, Fraction, ConstInt))
 
+
 def try_eval(x: BigInt) -> int | None:
   """Return integer value (if it's small enough) or None (if too big)."""
-  if hasattr(x, 'try_eval'):
+  if hasattr(x, "try_eval"):
     return x.try_eval()
   elif isinstance(x, int):
     return x
   else:
     return None
 
+
 def try_simplify(x):
   """Return integer value (if it's small enough) or ExpInt (if too big)."""
-  if hasattr(x, 'try_simplify'):
+  if hasattr(x, "try_simplify"):
     return x.try_simplify()
   y = try_eval(x)
   if y is not None:
-    return ConstInt(y) if 'ConstInt' in globals() else y
+    return ConstInt(y) if "ConstInt" in globals() else y
   else:
     return x
+
 
 def struct_eq(a, b) -> bool:
   """Test for structural equality (not math equality)."""
   if is_simple(a) and is_simple(b):
     return a == b
   elif isinstance(a, ExpTerm) and isinstance(b, ExpTerm):
-    return (a.base == b.base and a.coef == b.coef and struct_eq(a.exponent, b.exponent))
+    return a.base == b.base and a.coef == b.coef and struct_eq(a.exponent, b.exponent)
   elif isinstance(a, ExpInt) and isinstance(b, ExpInt):
-    return (a.const == b.const and a.denom == b.denom and len(a.terms) == len(b.terms)
-            and all(struct_eq(ta, tb) for (ta, tb) in zip(a.terms, b.terms)))
+    return (
+      a.const == b.const
+      and a.denom == b.denom
+      and len(a.terms) == len(b.terms)
+      and all(struct_eq(ta, tb) for (ta, tb) in zip(a.terms, b.terms))
+    )
   else:
     # Cannot compare
     return False
+
 
 def fractional_height(x) -> float:
   val = uparrow_size_approx(x)
@@ -108,6 +117,7 @@ def fractional_height(x) -> float:
   #  10^^2.5 = 10^^2[^10^0.5] = 10^^3[^0.5]
   return height - 1 + top
 
+
 def uparrow_size_approx(x):
   """
   Return y such that x ≈ 10^^y. Uses definition for fractional tetration
@@ -118,11 +128,13 @@ def uparrow_size_approx(x):
   else:
     return (2, 0, abs(x))
 
+
 def sign(x) -> int:
   if isinstance(x, ExpInt):
     return x.sign
   else:
     return (x > 0) - (x < 0)
+
 
 def exp_int_depth(x) -> int:
   if isinstance(x, ExpInt):
@@ -135,15 +147,17 @@ def exp_int_depth(x) -> int:
 
 class ExpTerm:
   """An integer represented by a formula: `a b^n`"""
+
   def try_eval(self) -> int | None:
-    if not self.is_const: return None
+    if not self.is_const:
+      return None
     val = uparrow_size_approx(self)
     top = val[-1]
     if val[0] == 2 and val[1] == 0:
       return self.sign * top
     return None
 
-  def __init__(self, base : int, coef : int, exponent):
+  def __init__(self, base: int, coef: int, exponent):
     assert isinstance(base, int), base
     assert isinstance(coef, int), coef
     assert isinstance(exponent, (int, NatExpr)), exponent
@@ -181,7 +195,7 @@ class ExpTerm:
       exp_as_int = try_eval(self.exponent)
 
       if not exp_as_int:
-        assert hasattr(self.exponent, 'uparrow_size_approx'), self.exponent
+        assert hasattr(self.exponent, "uparrow_size_approx"), self.exponent
         # For large enough exponent, the coefficient and even base don't have much effect.
         val = self.exponent.uparrow_size_approx
         top = val[-1]
@@ -217,8 +231,10 @@ class ExpTerm:
 
   def min_val(self):
     return self.min_value
+
   def variables(self):
     return self.vars
+
   def substitute(self, assignment):
     if self.is_const:
       return self
@@ -226,16 +242,16 @@ class ExpTerm:
     new_exp = substitute(self.exponent, assignment)
     return new_coef * exp_int(self.base, new_exp)
 
-  def mod(self, m : int) -> int:
+  def mod(self, m: int) -> int:
     return (exp_mod(self.base, self.exponent, m) * self.coef) % m
 
-  def mul_int(self, n : int):
+  def mul_int(self, n: int):
     n = int(n)
     assert isinstance(n, int), n
     assert n != 0
     return ExpTerm(self.base, self.coef * n, self.exponent)
 
-  def div_int(self, n : int):
+  def div_int(self, n: int):
     assert isinstance(n, int), n
     assert n != 0
     (new_coef, r) = divmod(self.coef, n)
@@ -245,8 +261,8 @@ class ExpTerm:
   def mul_term(self, other):
     assert isinstance(other, ExpTerm), other
     assert self.base == other.base
-    return ExpTerm(self.base, self.coef * other.coef,
-                   self.exponent + other.exponent)
+    return ExpTerm(self.base, self.coef * other.coef, self.exponent + other.exponent)
+
 
 def normalize_terms(terms):
   """Simplify sum of ExpTerms by combining ones that we can."""
@@ -276,17 +292,18 @@ def normalize_terms(terms):
 
 
 class ExpInt(NatExpr):
-  """An integer represented by a formula: `(a1 b^n1 + a2 b^n2 + ... + c) / d` """
-  
+  """An integer represented by a formula: `(a1 b^n1 + a2 b^n2 + ... + c) / d`"""
 
   def try_eval(self) -> int | None:
-    if not self.is_const: return None
+    if not self.is_const:
+      return None
     val = uparrow_size_approx(self)
     top = val[-1]
     if val[0] == 2 and val[1] == 0:
       return self.sign * top
     return None
-  def __init__(self, terms: list[ExpTerm], const : int, denom : int):
+
+  def __init__(self, terms: list[ExpTerm], const: int, denom: int):
     assert terms
     const = int(const)
     assert isinstance(const, int), const
@@ -358,10 +375,14 @@ class ExpInt(NatExpr):
 
       else:
         # At least one term is too large to fit in an `int`.
-        max_pos_tower = max((term.uparrow_size_approx for term in self.terms
-                             if term.sign > 0), default = uparrow_size_approx(0))
-        max_neg_tower = max((term.uparrow_size_approx for term in self.terms
-                             if term.sign < 0), default = uparrow_size_approx(0))
+        max_pos_tower = max(
+          (term.uparrow_size_approx for term in self.terms if term.sign > 0),
+          default=uparrow_size_approx(0),
+        )
+        max_neg_tower = max(
+          (term.uparrow_size_approx for term in self.terms if term.sign < 0),
+          default=uparrow_size_approx(0),
+        )
         if max_pos_tower == max_neg_tower:
           raise ExpIntException(f"Cannot evaluate sign of ExpInt: {self}    ({max_pos_tower} == {max_neg_tower})")
         self.uparrow_size_approx = max(max_pos_tower, max_neg_tower)
@@ -389,9 +410,9 @@ class ExpInt(NatExpr):
         a = min_terms + min_val(self.const)
         b = self.denom
         if isinstance(a, int):
-            self.min_value = a // b
+          self.min_value = a // b
         else:
-            self.min_value = a / b
+          self.min_value = a / b
         assert isinstance(self.min_value, (ExpInt, int)), self
       self.vars = set(variables(self.const) | variables(self.denom))
       for term in self.terms:
@@ -400,8 +421,10 @@ class ExpInt(NatExpr):
 
   def min_val(self):
     return self.min_value
+
   def variables(self):
     return self.vars
+
   def substitute(self, assignment):
     if self.is_const:
       return self
@@ -414,9 +437,9 @@ class ExpInt(NatExpr):
 
   def __repr__(self):
     return self.formula_str
+
   def __str__(self):
     return self.formula_str
-
 
   # The ability to implement mod on this data structure efficiently is the
   # reason that this class works!
@@ -439,7 +462,6 @@ class ExpInt(NatExpr):
     assert rdr == 0, f"ExpInt is not an integer: {self}"
     return r % other_int
 
-
   def __divmod__(self, other):
     # if other == 1:
     #   return (self, 0)
@@ -452,12 +474,13 @@ class ExpInt(NatExpr):
     (div, _) = divmod(self, other)
     return div
 
-
   def __add__(self, other):
     if is_simple(other):
-      return ExpInt(terms = self.terms,
-                    const = self.const + other*self.denom,
-                    denom = self.denom)
+      return ExpInt(
+        terms=self.terms,
+        const=self.const + other * self.denom,
+        denom=self.denom,
+      )
 
     if isinstance(other, ExpInt):
       new_denom = lcm(self.denom, other.denom)
@@ -467,9 +490,11 @@ class ExpInt(NatExpr):
       terms_o = [term.mul_int(no) for term in other.terms]
       terms = normalize_terms(terms_s + terms_o)
       if terms:
-        return ExpInt(terms = terms,
-                      const = ns * self.const + no * other.const,
-                      denom = new_denom)
+        return ExpInt(
+          terms=terms,
+          const=ns * self.const + no * other.const,
+          denom=new_denom,
+        )
       else:
         # If all ExpTerms cancelled out, return int
         return (ns * self.const + no * other.const) // new_denom
@@ -486,9 +511,11 @@ class ExpInt(NatExpr):
       return 0
 
     if is_simple(other):
-      return ExpInt(terms = [term.mul_int(other) for term in self.terms],
-                    const = self.const * other,
-                    denom = self.denom)
+      return ExpInt(
+        terms=[term.mul_int(other) for term in self.terms],
+        const=self.const * other,
+        denom=self.denom,
+      )
 
     if isinstance(other, ExpInt):
       if self.base == other.base:
@@ -520,7 +547,6 @@ class ExpInt(NatExpr):
       return NotImplemented
 
     return ExpInt(self.terms, self.const, self.denom * other_int)
-
 
   # Basic comparison using tower notation.
   def __gt__(self, other):
@@ -554,13 +580,18 @@ class ExpInt(NatExpr):
   # Boilerplate
   def __neg__(self):
     return self * -1
+
   def __sub__(self, other):
     return self + (-other)
+
   def __rsub__(self, other):
     return (-self) + other
+
   def __lt__(self, other):
     return not (self >= other)
+
   def __le__(self, other):
     return not (self > other)
+
   __radd__ = __add__
   __rmul__ = __mul__

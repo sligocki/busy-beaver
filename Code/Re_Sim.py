@@ -37,10 +37,7 @@ def re_sim(tm_record):
     options.compute_steps = False
   sim_result.Clear()
   tm_record.proto.status.Clear()
-  Macro_Simulator.simulate_machine(tm, options,
-                                   tm_record.proto.filter.simulator,
-                                   tm_record.proto.status,
-                                   0.0)
+  Macro_Simulator.simulate_machine(tm, options, tm_record.proto.filter.simulator, tm_record.proto.status, 0.0)
   return tm_record
 
 
@@ -55,5 +52,6 @@ def main():
       for tm_record in reader:
         tm_record = re_sim(tm_record)
         writer.write_record(tm_record)
+
 
 main()

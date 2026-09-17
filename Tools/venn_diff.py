@@ -40,12 +40,15 @@ def main():
   parser.add_argument("out_ronly", type=Path)
   args = parser.parse_args()
 
-  with open(args.in_left, "r") as in_left, \
-       open(args.in_right, "r") as in_right, \
-       open(args.out_inter, "w") as out_inter, \
-       open(args.out_lonly, "w") as out_lonly, \
-       open(args.out_ronly, "w") as out_ronly:
+  with (
+    open(args.in_left, "r") as in_left,
+    open(args.in_right, "r") as in_right,
+    open(args.out_inter, "w") as out_inter,
+    open(args.out_lonly, "w") as out_lonly,
+    open(args.out_ronly, "w") as out_ronly,
+  ):
     venn_diff(in_left, in_right, out_inter, out_lonly, out_ronly)
+
 
 if __name__ == "__main__":
   main()

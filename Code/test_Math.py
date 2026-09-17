@@ -20,7 +20,7 @@ class MathTest(unittest.TestCase):
   def test_lcm(self):
     self.assertEqual(lcm(91, 169), 1183)
     self.assertEqual(lcm(169, 91), 1183)
-    self.assertEqual(lcm(91, 170), 91*170)
+    self.assertEqual(lcm(91, 170), 91 * 170)
     self.assertEqual(lcm(138, 138), 138)
     self.assertEqual(lcm(1, 813), 813)
 
@@ -56,7 +56,7 @@ class MathTest(unittest.TestCase):
           self.assertEqual(exp_mod(b, k, m), pow(b, k, m))
 
     for k in range(3, 20):
-      self.assertEqual(exp_mod(3, 2**(k-2) + 1, 2**k), 3)
+      self.assertEqual(exp_mod(3, 2 ** (k - 2) + 1, 2**k), 3)
 
   def test_prec_mult(self):
     self.assertEqual(prec_mult(10**10_000, 1.5), 15 * 10**9_999)
@@ -65,5 +65,5 @@ class MathTest(unittest.TestCase):
       10**10_000 * 1.5
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
   unittest.main()

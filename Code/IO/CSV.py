@@ -29,10 +29,11 @@ import TM_Enum
 
 parse_tm = TM_Record.parse_tm
 
+
 class Reader:
-  def __init__(self, dest : Path | str | TextIO):
-    self.infilename : Path | None
-    self.infile : TextIO | None
+  def __init__(self, dest: Path | str | TextIO):
+    self.infilename: Path | None
+    self.infile: TextIO | None
     if isinstance(dest, (Path, str)):
       self.infilename = Path(dest)
       self.infile = None
@@ -62,13 +63,17 @@ class Reader:
       if not tm_str:
         tm_str = row["machine"]
       tm = parse_tm(tm_str)
-      tm_enum = TM_Enum.TM_Enum(tm, allow_no_halt = False)
-      tm_record = TM_Record.TM_Record(tm_enum = tm_enum)
+      tm_enum = TM_Enum.TM_Enum(tm, allow_no_halt=False)
+      tm_record = TM_Record.TM_Record(tm_enum=tm_enum)
       match row["status"]:
         case "halt":
-          Halting_Lib.set_halting(tm_record.proto.status,
-                                  int(row["steps"]), int(row["sigma"]),
-                                  None, None)
+          Halting_Lib.set_halting(
+            tm_record.proto.status,
+            int(row["steps"]),
+            int(row["sigma"]),
+            None,
+            None,
+          )
         case "nonhalt":
           Halting_Lib.set_not_halting(tm_record.proto.status)
       return tm_record
@@ -89,7 +94,7 @@ class Reader:
       tm_record = self.read_record()
 
 
-def load_record(filename : Path, record_num : int) -> TM_Record:
+def load_record(filename: Path, record_num: int) -> TM_Record:
   """Load one record from a filename."""
   with Reader(filename) as reader:
     for _ in range(record_num):

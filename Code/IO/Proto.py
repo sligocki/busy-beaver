@@ -9,7 +9,6 @@ Protobuffers are written using custom length-delimed sequential format. See ex:
 """
 
 import gzip
-import io
 from pathlib import Path
 import struct
 
@@ -19,12 +18,14 @@ from IO.TM_Record import TM_Record
 import io_pb2
 
 
-class IO_Error(Exception): pass
+class IO_Error(Exception):
+  pass
 
 
 class Writer:
   """Class to manage writing TMRecords to a file."""
-  def __init__(self, outfilename : Path):
+
+  def __init__(self, outfilename: Path):
     self.outfilename = Path(outfilename)
     self.outfile = None
 
@@ -38,8 +39,7 @@ class Writer:
   def __exit__(self, *args):
     self.outfile.close()
 
-
-  def write_record(self, tm_record : TM_Record) -> None:
+  def write_record(self, tm_record: TM_Record) -> None:
     """Write TMRecord protobuf using length-delimited format."""
     # Serialize the protobuf into a bytes object
     pb_bytes = tm_record.proto.SerializeToString()
@@ -63,7 +63,8 @@ class Writer:
 
 class Reader:
   """Class to manage reading TMRecords from a file."""
-  def __init__(self, infilename : Path):
+
+  def __init__(self, infilename: Path):
     self.infilename = Path(infilename)
     self.infile = None
 
@@ -77,15 +78,12 @@ class Reader:
   def __exit__(self, *args):
     self.infile.close()
 
-
   def _read_message_len(self):
     len_bytes = self.infile.read(4)
     if len(len_bytes) > 0:
       if len(len_bytes) != 4:
-        raise IO_Error("Unexpected EOF while reading length block "
-                       f"(expected 4 bytes, got {len(len_bytes)}).")
+        raise IO_Error(f"Unexpected EOF while reading length block (expected 4 bytes, got {len(len_bytes)}).")
       return struct.unpack("<L", len_bytes)[0]
-
 
   def read_record(self) -> TM_Record:
     """Read TMRecord protobuf using length-delimited format (written by `Writer`)."""
@@ -94,13 +92,12 @@ class Reader:
       # Read protobuf bytes
       pb_bytes = self.infile.read(pb_len)
       if len(pb_bytes) != pb_len:
-        raise IO_Error("Unexpected EOF while reading data block "
-                       f"(expected {pb_len}, got {len(pb_bytes)})")
+        raise IO_Error(f"Unexpected EOF while reading data block (expected {pb_len}, got {len(pb_bytes)})")
 
       # Parse protobuf
       tm_proto = io_pb2.TMRecord()
       tm_proto.ParseFromString(pb_bytes)
-      tm_record = TM_Record(proto = tm_proto)
+      tm_record = TM_Record(proto=tm_proto)
       return tm_record
 
   def skip_record(self) -> bool:
@@ -127,7 +124,7 @@ class Reader:
       tm_record = self.read_record()
 
 
-def load_record(filename : Path, record_num : int) -> TM_Record:
+def load_record(filename: Path, record_num: int) -> TM_Record:
   """Load one record from a filename."""
   with Reader(filename) as reader:
     for _ in range(record_num):

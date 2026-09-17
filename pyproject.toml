@@ -16,3 +16,16 @@ dependencies = [
 [tool.pyright]
 venvPath = "."
 venv = ".venv"
+
+[dependency-groups]
+dev = [
+    "pre-commit>=4.6.2",
+    "ruff>=0.16.8",
+]
+
+[tool.ruff]
+indent-width = 2
+line-length = 120
+
+[tool.ruff.format]
+indent-style = "space"

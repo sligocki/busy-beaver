@@ -3,7 +3,6 @@
 import argparse
 from pathlib import Path
 
-import Halting_Lib
 import IO
 
 
@@ -61,12 +60,13 @@ def categorize(infilenames, outdir):
           if out.num_written % 1_000_000 == 0:
             print(f" ... categorized {out.num_written:_} records ...")
 
-  print(f"Done:")
+  print("Done:")
   print(f"      Categorized {out.num_unknown:_} unknown records.")
   print(f"      Categorized {out.num_halt:_} halt records.")
   print(f"      Categorized {out.num_qhalt:_} qhalt records.")
   print(f"      Categorized {out.num_infinite:_} infinite records.")
   print(f"      Categorized {out.num_written:_} records total.")
+
 
 def split_unknown(infilenames: list[Path], outdir: Path) -> None:
   out = {
@@ -90,19 +90,24 @@ def split_unknown(infilenames: list[Path], outdir: Path) -> None:
             print(f" ... categorized {num_written:_} records ...")
     print(f"Categorized {num_written:_} records total")
 
+
 def main():
   parser = argparse.ArgumentParser()
   parser.add_argument("infiles", nargs="*", type=Path)
   parser.add_argument("--outdir", type=Path, required=True)
 
-  parser.add_argument("--split-unknown", action="store_true",
-                      help="Split unknown TMs by reason (over tape, over time, etc.)")
+  parser.add_argument(
+    "--split-unknown",
+    action="store_true",
+    help="Split unknown TMs by reason (over tape, over time, etc.)",
+  )
   args = parser.parse_args()
 
   if args.split_unknown:
     split_unknown(args.infiles, args.outdir)
   else:
     categorize(args.infiles, args.outdir)
+
 
 if __name__ == "__main__":
   main()

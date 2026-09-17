@@ -55,5 +55,6 @@ def main():
 
   sample(args.infiles, args.outfile, args.sample_size)
 
+
 if __name__ == "__main__":
   main()

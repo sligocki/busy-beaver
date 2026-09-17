@@ -18,13 +18,14 @@ from Macro import Turing_Machine
 
 import io_pb2
 
+
 def get_stats(tm):
   """Finds all halt transitions and other statistical info"""
   halts = []
   # List of transitions to this state.
-  to_state =  [ [] for i in range(tm.num_states) ]
+  to_state = [[] for i in range(tm.num_states)]
   # List of transitions which write this symbol.
-  to_symbol = [ [] for i in range(tm.num_symbols) ]
+  to_symbol = [[] for i in range(tm.num_symbols)]
   for state in range(tm.num_states):
     for symbol in range(tm.num_symbols):
       trans = tm.get_trans_object(symbol, state)
@@ -36,12 +37,14 @@ def get_stats(tm):
         to_symbol[trans.symbol_out].append(((state, symbol), trans))
   return halts, to_state, to_symbol
 
+
 def cannot_reach_halt(halt_state, halt_symbol, to_state, to_symbol):
   """True means it is impossible to reach the halt state.
-     False is inconclusive."""
+  False is inconclusive."""
+
   def same_direction():
     """Test whether all transitions to halt_state are in the same direction as
-       all the transitions writing halt_symbol."""
+    all the transitions writing halt_symbol."""
     _, trans = to_state[halt_state][0]
     prehalt_dir = trans.dir_out
     for _, trans in to_state[halt_state]:
@@ -68,7 +71,8 @@ def cannot_reach_halt(halt_state, halt_symbol, to_state, to_symbol):
   # If none of the methods work, we cannot prove it will not halt.
   return False
 
-def is_infinite(tm : Turing_Machine.Simple_Machine) -> bool:
+
+def is_infinite(tm: Turing_Machine.Simple_Machine) -> bool:
   # Get initial stat info
   halts, to_state, to_symbol = get_stats(tm)
   # See if all halts cannot be reached
@@ -80,11 +84,11 @@ def is_infinite(tm : Turing_Machine.Simple_Machine) -> bool:
   # No halt transitions can be reached -> proven infinite!
   return True
 
+
 def filter(tm_record):
   if is_infinite(tm_record.tm()):
     tm_record.proto.filter.reverse_engineer.success = True
-    Halting_Lib.set_not_halting(tm_record.proto.status,
-                                io_pb2.INF_REVERSE_ENGINEER)
+    Halting_Lib.set_not_halting(tm_record.proto.status, io_pb2.INF_REVERSE_ENGINEER)
     # Note: quasihalting result is not computable when using Reverse_Engineer filter.
     tm_record.proto.status.quasihalt_status.is_decided = False
   else:
@@ -102,6 +106,7 @@ def main():
       for tm_record in reader:
         filter(tm_record)
         writer.write_record(tm_record)
+
 
 if __name__ == "__main__":
   main()

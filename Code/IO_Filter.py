@@ -4,12 +4,12 @@ import argparse
 from pathlib import Path
 import time
 
-import Halting_Lib
 import IO
 
 
 def matches(tm_record):
   return tm_record.filter.simulator.result.num_finite_linear_rules_proven > 0
+
 
 def filter(infilenames, outfilename):
   start_time = time.time()
@@ -36,6 +36,7 @@ def filter(infilenames, outfilename):
 
   print(f"Filtered {num_records_read:_d} -> {num_records_written:_d} ({time.time() - start_time:_.2f}s)")
 
+
 def main():
   parser = argparse.ArgumentParser()
   parser.add_argument("infiles", type=Path, nargs="+")
@@ -43,6 +44,7 @@ def main():
   args = parser.parse_args()
 
   filter(args.infiles, args.outfile)
+
 
 if __name__ == "__main__":
   main()

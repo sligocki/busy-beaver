@@ -11,7 +11,7 @@ from IO.TM_Record import parse_tm
 from Macro import Turing_Machine
 
 
-def guess_module(filename : Path | str):
+def guess_module(filename: Path | str):
   # Currently we depend upon filename suffixes to decide filetype.
   #
   # TODO-maybe: Look at first 4 bytes to make an educated guess perhaps.
@@ -22,7 +22,7 @@ def guess_module(filename : Path | str):
   filename = Path(filename)
   if ".pb" in filename.suffixes:
     return IO.Proto
-  
+
   if ".csv" in filename.suffixes:
     return IO.CSV
 
@@ -33,7 +33,7 @@ def guess_module(filename : Path | str):
     return IO.StdText
 
 
-def Reader(source : Path | str | TextIO):
+def Reader(source: Path | str | TextIO):
   if isinstance(source, (Path, str)):
     mod = guess_module(source)
   else:
@@ -41,7 +41,8 @@ def Reader(source : Path | str | TextIO):
     mod = IO.StdText
   return mod.Reader(source)
 
-def Writer(source : Path | str | TextIO):
+
+def Writer(source: Path | str | TextIO):
   if isinstance(source, (Path, str)):
     mod = guess_module(source)
   else:
@@ -49,11 +50,13 @@ def Writer(source : Path | str | TextIO):
     mod = IO.StdText
   return mod.Writer(source)
 
-def load_tm(filename : Path, record_num : int) -> Turing_Machine.Simple_Machine:
+
+def load_tm(filename: Path, record_num: int) -> Turing_Machine.Simple_Machine:
   record = guess_module(filename).load_record(filename, record_num)
   return record.tm()
 
-def get_tm(tm : str) -> Turing_Machine.Simple_Machine:
+
+def get_tm(tm: str) -> Turing_Machine.Simple_Machine:
   """Load TM from string. Supports TM directly in StdText format, filename or filename:record_num."""
   if re.fullmatch(r"([0-9][LR][A-Z]|---|_)+", tm):
     # Parse literal TM.
@@ -69,7 +72,8 @@ def get_tm(tm : str) -> Turing_Machine.Simple_Machine:
       record_num = 0
     return load_tm(filename, record_num)
 
-def iter_tms(tm : str) -> Iterator[Turing_Machine.Simple_Machine]:
+
+def iter_tms(tm: str) -> Iterator[Turing_Machine.Simple_Machine]:
   """Load all TMs from string. Supports TM directly in StdText format, filename or filename:record_num."""
   if re.fullmatch(r"([0-9][LR][A-Z]|---|_)+", tm):
     # Parse literal TM.

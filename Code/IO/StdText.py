@@ -37,10 +37,11 @@ inf_reason2str = {
 
 parse_tm = TM_Record.parse_tm
 
+
 class Writer:
-  def __init__(self, source : Path | str | TextIO, digits_cutoff : int = 100):
-    self.outfilename : Path | None
-    self.outfile : TextIO | None
+  def __init__(self, source: Path | str | TextIO, digits_cutoff: int = 100):
+    self.outfilename: Path | None
+    self.outfile: TextIO | None
     self.digits_cutoff = digits_cutoff
     if isinstance(source, (Path, str)):
       self.outfilename = Path(source)
@@ -61,23 +62,25 @@ class Writer:
     if self.outfilename:
       self.outfile.close()
 
-  def write_record(self, tm_record : TM_Record) -> None:
+  def write_record(self, tm_record: TM_Record) -> None:
     self.outfile.write(tm_record.tm().ttable_str())
     halt_status = tm_record.proto.status.halt_status
     if halt_status.is_halting:
       # Remove _ from int strings so that we can sort them with `sort`.
       steps_str = Halting_Lib.big_int_approx_str(
         Halting_Lib.get_big_int(halt_status.halt_steps),
-        digits_cutoff=self.digits_cutoff).replace("_", "")
+        digits_cutoff=self.digits_cutoff,
+      ).replace("_", "")
       score_str = Halting_Lib.big_int_approx_str(
         Halting_Lib.get_big_int(halt_status.halt_score),
-        digits_cutoff=self.digits_cutoff).replace("_", "")
+        digits_cutoff=self.digits_cutoff,
+      ).replace("_", "")
       self.outfile.write(f" Halt {steps_str} {score_str}")
     elif Halting_Lib.is_infinite(halt_status):
       self.outfile.write(f" Inf {inf_reason2str[halt_status.inf_reason]}")
     self.outfile.write("\n")
 
-  def write_tm(self, tm : Turing_Machine.Simple_Machine) -> None:
+  def write_tm(self, tm: Turing_Machine.Simple_Machine) -> None:
     """Convenience method to just write a TM directly without wrapping it in a record."""
     self.outfile.write(tm.ttable_str())
     self.outfile.write("\n")
@@ -87,9 +90,9 @@ class Writer:
 
 
 class Reader:
-  def __init__(self, dest : Path | str | TextIO):
-    self.infilename : Path | None
-    self.infile : TextIO | None
+  def __init__(self, dest: Path | str | TextIO):
+    self.infilename: Path | None
+    self.infile: TextIO | None
     if isinstance(dest, (Path, str)):
       self.infilename = Path(dest)
       self.infile = None
@@ -114,8 +117,8 @@ class Reader:
     line = line.strip()
     if line:
       tm = parse_tm(line.split()[0])
-      tm_enum = TM_Enum.TM_Enum(tm, allow_no_halt = False)
-      tm_record = TM_Record.TM_Record(tm_enum = tm_enum)
+      tm_enum = TM_Enum.TM_Enum(tm, allow_no_halt=False)
+      tm_record = TM_Record.TM_Record(tm_enum=tm_enum)
       return tm_record
 
   def skip_record(self) -> bool:
@@ -129,7 +132,7 @@ class Reader:
       tm_record = self.read_record()
 
 
-def load_record(filename : Path, record_num : int) -> TM_Record:
+def load_record(filename: Path, record_num: int) -> TM_Record:
   """Load one record from a filename."""
   with Reader(filename) as reader:
     for _ in range(record_num):

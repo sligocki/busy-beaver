@@ -23,15 +23,17 @@ def fact2(n, m):
   if n == m:
     return 1
   else:
-    return n*fact2(n-1, m)
+    return n * fact2(n - 1, m)
 
 
-def count(tm : Turing_Machine.Simple_Machine,
-          allow_no_halt : bool,
-          rado : bool = False,
-          ignore_sym_perms : bool = False) -> int:
+def count(
+  tm: Turing_Machine.Simple_Machine,
+  allow_no_halt: bool,
+  rado: bool = False,
+  ignore_sym_perms: bool = False,
+) -> int:
   """Count the number of TM's that are equivalent to this one.
-     With the restriction that A0->1RB and Halt=1RH (unless rado=True)."""
+  With the restriction that A0->1RB and Halt=1RH (unless rado=True)."""
   num_undefs = 0
   num_halts = 0
   max_symbol = 0
@@ -40,7 +42,7 @@ def count(tm : Turing_Machine.Simple_Machine,
   # and the max-symbol/states
   for state_in in range(tm.num_states):
     for symbol_in in range(tm.num_symbols):
-      trans = tm.get_trans_object(symbol_in = symbol_in, state_in = state_in)
+      trans = tm.get_trans_object(symbol_in=symbol_in, state_in=state_in)
       if trans.condition == Turing_Machine.UNDEFINED:
         num_undefs += 1
       elif trans.condition == Turing_Machine.HALT:
@@ -51,24 +53,24 @@ def count(tm : Turing_Machine.Simple_Machine,
         max_state = max(max_state, trans.state_out)
   num_symbols_used = max_symbol + 1
   num_states_used = max_state + 1
-  
+
   if rado:
     # Rado allows any A0 transition, so we permute all S-1 and Q-1 non-initial symbols/states.
     if ignore_sym_perms:
       sym_perms = 1
     else:
       sym_perms = fact2(tm.num_symbols - 1, tm.num_symbols - num_symbols_used)
-    num_tms = sym_perms * fact2(tm.num_states  - 1, tm.num_states  - num_states_used)
-    
+    num_tms = sym_perms * fact2(tm.num_states - 1, tm.num_states - num_states_used)
+
     # If there is at least one defined running transition, the L/R symmetry is fixed.
     # We multiply by 2 to account for the symmetric Rado TMs that would move L.
     if num_symbols_used > 1 or num_states_used > 1:
       num_tms *= 2
-      
+
     if num_halts > 0:
       # Each explicit halt represents 2S distinct halting configurations.
       num_tms *= (2 * tm.num_symbols) ** num_halts
-    
+
     # Each undefined transition can be any of the 2QS running or 2S halting transitions.
     num_tms *= (2 * (tm.num_states + 1) * tm.num_symbols) ** num_undefs
 
@@ -81,19 +83,19 @@ def count(tm : Turing_Machine.Simple_Machine,
         sym_perms = 1
       else:
         sym_perms = fact2(tm.num_symbols - 2, tm.num_symbols - num_symbols_used)
-      num_tms = sym_perms * fact2(tm.num_states  - 2, tm.num_states  - num_states_used)
+      num_tms = sym_perms * fact2(tm.num_states - 2, tm.num_states - num_states_used)
     if num_halts > 0:
       # All possible assignments of trans for each undefined transition.
       # num_dirs * num_states * num_symbols for each trans.
-      num_tms *= (2*tm.num_states*tm.num_symbols)**num_undefs
+      num_tms *= (2 * tm.num_states * tm.num_symbols) ** num_undefs
     else:
       this_mult = 0
       if num_undefs >= 1:
         # Count with 1 halt added.
-        this_mult += num_undefs * (2*tm.num_states*tm.num_symbols)**(num_undefs - 1)
+        this_mult += num_undefs * (2 * tm.num_states * tm.num_symbols) ** (num_undefs - 1)
       if allow_no_halt:
         # Count with 0 halts added.
-        this_mult += (2*tm.num_states*tm.num_symbols)**num_undefs
+        this_mult += (2 * tm.num_states * tm.num_symbols) ** num_undefs
       num_tms *= this_mult
   return num_tms
 
@@ -104,7 +106,11 @@ def main():
   parser.add_argument("--allow-no-halt", action="store_true")
   parser.add_argument("--rado", action="store_true", help="Calculate Rado count")
   parser.add_argument("--halt", action="store_true", help="Only count TMs with status halt")
-  parser.add_argument("--ignore-sym-perms", action="store_true", help="Ignore doing symbol permutations")
+  parser.add_argument(
+    "--ignore-sym-perms",
+    action="store_true",
+    help="Ignore doing symbol permutations",
+  )
   args = parser.parse_args()
 
   total = 0
@@ -117,6 +123,7 @@ def main():
         total += count(tm_record.tm(), args.allow_no_halt, args.rado, args.ignore_sym_perms)
 
   print(total)
+
 
 if __name__ == "__main__":
   main()

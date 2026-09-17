@@ -16,8 +16,16 @@ from Common import print_pb
 import Halting_Lib
 import IO
 from Macro import Turing_Machine
-from Macro.Turing_Machine import (LEFT, RIGHT, other_dir,
-                                  RUNNING, INF_REPEAT, HALT, UNDEFINED, OVER_STEPS_IN_MACRO)
+from Macro.Turing_Machine import (
+  LEFT,
+  RIGHT,
+  other_dir,
+  RUNNING,
+  INF_REPEAT,
+  HALT,
+  UNDEFINED,
+  OVER_STEPS_IN_MACRO,
+)
 
 import io_pb2
 
@@ -28,10 +36,12 @@ DIRS = (LEFT, RIGHT)
 def block_to_str(block) -> str:
   return "".join(str(symbol) for symbol in block)
 
+
 class Config:
   """A subset of a TM configuration. Includes TM state, dir,
   subset of tape (window) and pos on that window."""
-  def __init__(self, state, dir, window, block_size, pos = None):
+
+  def __init__(self, state, dir, window, block_size, pos=None):
     self.state = state
     self.dir = dir
     self.window = tuple(window)
@@ -56,32 +66,39 @@ class Config:
 
   def shift_front(self, new_front):
     if self.dir == LEFT:
-      new_window = new_front + self.window[:len(self.window) - self.block_size]
+      new_window = new_front + self.window[: len(self.window) - self.block_size]
     else:
-      new_window = self.window[self.block_size:] + new_front
+      new_window = self.window[self.block_size :] + new_front
     return Config(self.state, self.dir, new_window, self.block_size)
 
   def __str__(self):
     # TM is "looking" at self.pos so different TM directions need slight
     # tweaks for printing.
     if self.dir == LEFT:
-      return f"{block_to_str(self.window[:self.pos + 1])} <{self.state} {block_to_str(self.window[self.pos + 1:])}"
+      return f"{block_to_str(self.window[: self.pos + 1])} <{self.state} {block_to_str(self.window[self.pos + 1 :])}"
     else:
-      return f"{block_to_str(self.window[:self.pos])} {self.state}> {block_to_str(self.window[self.pos:])}"
+      return f"{block_to_str(self.window[: self.pos])} {self.state}> {block_to_str(self.window[self.pos :])}"
 
   # Needed to make these work in a set.
   def __hash__(self):
     return hash((self.state, self.dir, self.window, self.pos))
+
   def __eq__(self, other):
-    return (self.state == other.state and self.dir == other.dir and
-            self.window == other.window and self.pos == other.pos)
+    return self.state == other.state and self.dir == other.dir and self.window == other.window and self.pos == other.pos
 
 
 class CPSSim:
-  def __init__(self, tm : Turing_Machine.Turing_Machine,
-               block_size : int, window_size : int,
-               max_steps : int, max_iters : int, max_configs : int, max_edges : int,
-               result : io_pb2.CPSFilterResult):
+  def __init__(
+    self,
+    tm: Turing_Machine.Turing_Machine,
+    block_size: int,
+    window_size: int,
+    max_steps: int,
+    max_iters: int,
+    max_configs: int,
+    max_edges: int,
+    result: io_pb2.CPSFilterResult,
+  ):
     self.tm = tm
     self.block_size = block_size
     self.window_size = window_size
@@ -95,20 +112,17 @@ class CPSSim:
     blank_window = (tm.init_symbol,) * self.window_size
 
     # set of |Config|s to evaluate and add to |transitions|
-    self.todo_configs = {
-      Config(tm.init_state, RIGHT, blank_window, self.block_size): None
-    }
+    self.todo_configs = {Config(tm.init_state, RIGHT, blank_window, self.block_size): None}
     # Dict of Config -> PostConfig saving evaluation on window.
-    self.transitions : dict[Config, tuple[Turing_Machine.Transition, Optional[Config]]] = {}
+    self.transitions: dict[Config, tuple[Turing_Machine.Transition, Optional[Config]]] = {}
 
     # continuations[dir][block] = set of blocks that can appear directly after
     #   |block| in direction |dir|.
-    self.continuations : dict[int, dict[tuple, dict[tuple, None]]] = {}
+    self.continuations: dict[int, dict[tuple, dict[tuple, None]]] = {}
     # Initially, the only continuations are blank block -> blank block
     for dir in DIRS:
       self.continuations[dir] = defaultdict(dict)
       self.continuations[dir][blank_block][blank_block] = None
-
 
   def run(self):
     self.result.num_iters = 0
@@ -145,21 +159,28 @@ class CPSSim:
         self.result.success = True
         return
 
-      if (self.result.num_iters >= self.max_iters or
-          self.result.num_configs >= self.max_configs or
-          self.result.num_edges >= self.max_edges):
+      if (
+        self.result.num_iters >= self.max_iters
+        or self.result.num_configs >= self.max_configs
+        or self.result.num_edges >= self.max_edges
+      ):
         # Failure: Over one of the limits.
         self.result.success = False
         return
 
-  def sim_config(self, old_config : Config):
+  def sim_config(self, old_config: Config):
     """Simulate TM on |old_config| until it leaves the tape, halts, is
     detected infinite or runs too long."""
     max_steps = self.max_steps - self.result.num_steps
     # assert 0 <= old_config.pos < len(old_config.window), str(old_config)
     trans = Turing_Machine.sim_limited(
-      self.tm, old_config.state, old_config.window,
-      old_config.pos, old_config.dir, max_loops=max_steps)
+      self.tm,
+      old_config.state,
+      old_config.window,
+      old_config.pos,
+      old_config.dir,
+      max_loops=max_steps,
+    )
 
     if trans.condition == RUNNING:
       # new_pos is outside the window, because we ran off the edge of it.
@@ -168,8 +189,13 @@ class CPSSim:
       else:
         assert trans.dir_out == RIGHT
         new_pos = len(trans.symbol_out)
-      new_config = Config(trans.state_out, trans.dir_out, trans.symbol_out,
-                          self.block_size, new_pos)
+      new_config = Config(
+        trans.state_out,
+        trans.dir_out,
+        trans.symbol_out,
+        self.block_size,
+        new_pos,
+      )
     else:
       new_config = None
 
@@ -181,7 +207,7 @@ class CPSSim:
 
     return trans.condition
 
-  def update_set(self, old_config : Config) -> bool:
+  def update_set(self, old_config: Config) -> bool:
     """Evaluate TM on this Config until it leaves the limited tape.
     Returns True iff any edges or configs were added."""
     trans, new_config = self.transitions[old_config]
@@ -236,7 +262,7 @@ class CPSSim:
       return True
     return False
 
-  def trans_to_string(self, old_config : Config) -> str:
+  def trans_to_string(self, old_config: Config) -> str:
     trans, new_config = self.transitions[old_config]
     if trans.condition == RUNNING:
       return f"{old_config}  --({trans.num_base_steps:3d})-->  {new_config}"
@@ -283,21 +309,26 @@ class CPSSim:
           for dst in dsts:
             edges[dir].append((src, dst))
         edges[dir].sort()
-        edges_str[dir] = " ".join(f"{block_to_str(src)} {block_to_str(dst)}"
-                                  for src, dst in edges[dir])
-      configs = sorted(str(config).replace(" ", "")
-                       for config in self.transitions.keys())
+        edges_str[dir] = " ".join(f"{block_to_str(src)} {block_to_str(dst)}" for src, dst in edges[dir])
+      configs = sorted(str(config).replace(" ", "") for config in self.transitions.keys())
       configs_str = " ".join(configs)
 
       return f"Result {len(edges[LEFT])} {edges_str[LEFT]} {len(edges[RIGHT])} {edges_str[RIGHT]} {len(configs)} {configs_str}"
 
 
-def filter(base_tm : Turing_Machine.Simple_Machine,
-           block_size : int, window_size : int,
-           fixed_history : int, lru_history : bool,
-           max_steps : int, max_iters : int, max_configs : int, max_edges : int,
-           cg_result : io_pb2.CPSFilterResult,
-           bb_status : io_pb2.BBStatus):
+def filter(
+  base_tm: Turing_Machine.Simple_Machine,
+  block_size: int,
+  window_size: int,
+  fixed_history: int,
+  lru_history: bool,
+  max_steps: int,
+  max_iters: int,
+  max_configs: int,
+  max_edges: int,
+  cg_result: io_pb2.CPSFilterResult,
+  bb_status: io_pb2.BBStatus,
+):
   if fixed_history:
     tm = Turing_Machine.Fixed_History_MM(base_tm, fixed_history)
   elif lru_history:
@@ -306,9 +337,16 @@ def filter(base_tm : Turing_Machine.Simple_Machine,
     tm = base_tm
 
   cg_result.Clear()
-  graph_set = CPSSim(tm, block_size, window_size,
-                     max_steps, max_iters, max_configs, max_edges,
-                     cg_result)
+  graph_set = CPSSim(
+    tm,
+    block_size,
+    window_size,
+    max_steps,
+    max_iters,
+    max_configs,
+    max_edges,
+    cg_result,
+  )
   graph_set.run()
   cg_result.block_size = block_size
   cg_result.window_size = window_size
@@ -328,12 +366,22 @@ def cps_one(tm, args, block_size: int, window_size: int | None = None):
   cg_result = io_pb2.CPSFilterResult()
   bb_status = io_pb2.BBStatus()
 
-  graph_set = filter(tm, block_size, window_size,
-                     args.fixed_history, args.lru_history,
-                     args.max_steps, args.max_iters, args.max_configs, args.max_edges,
-                     cg_result, bb_status)
-  
+  graph_set = filter(
+    tm,
+    block_size,
+    window_size,
+    args.fixed_history,
+    args.lru_history,
+    args.max_steps,
+    args.max_iters,
+    args.max_configs,
+    args.max_edges,
+    cg_result,
+    bb_status,
+  )
+
   return graph_set, cg_result, bb_status
+
 
 def cps_many(tm, args):
   start_time = time.time()
@@ -343,6 +391,7 @@ def cps_many(tm, args):
     if cg_result.success:
       break
   return graph_set, cg_result, bb_status
+
 
 def main():
   parser = argparse.ArgumentParser()
@@ -358,22 +407,30 @@ def main():
   parser.add_argument("--max-configs", type=int, default=10_000)
   parser.add_argument("--max-edges", type=int, default=10_000)
 
-  parser.add_argument("--fixed-history", type=int,
-                      help="Keep track of fixed history of transitions for each cell.")
-  parser.add_argument("--lru-history", action="store_true",
-                      help="Keep track of all transitions used on each cell in lru order")
+  parser.add_argument(
+    "--fixed-history",
+    type=int,
+    help="Keep track of fixed history of transitions for each cell.",
+  )
+  parser.add_argument(
+    "--lru-history",
+    action="store_true",
+    help="Keep track of all transitions used on each cell in lru order",
+  )
 
   parser.add_argument("--verbose", "-v", action="store_true")
-  parser.add_argument("--savask-cert", action="store_true",
-                      help="Print proof certificate in @savask's format.")
+  parser.add_argument(
+    "--savask-cert",
+    action="store_true",
+    help="Print proof certificate in @savask's format.",
+  )
   args = parser.parse_args()
 
   tm = IO.get_tm(args.tm)
   print(tm.ttable_str())
 
   if args.block_size:
-    graph_set, cg_result, bb_status = cps_one(
-      tm, args, args.block_size, args.window_size)
+    graph_set, cg_result, bb_status = cps_one(tm, args, args.block_size, args.window_size)
   else:
     graph_set, cg_result, bb_status = cps_many(tm, args)
 

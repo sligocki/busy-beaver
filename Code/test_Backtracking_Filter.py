@@ -6,6 +6,7 @@ import unittest
 
 from IO import parse_tm
 
+
 class BacktrackingTest(unittest.TestCase):
   def test_1step(self):
     result = backtrack(parse_tm("1RB---_1LB1RB"), steps=5, max_width=10)
@@ -32,7 +33,11 @@ class BacktrackingTest(unittest.TestCase):
     self.assertEqual(result.max_steps, 2)
 
   def test_deep(self):
-    result = backtrack(parse_tm("1RB0RC_1LC1RB_0LE0RD_---1LC_1RF1LE_1LE1RG_1RA0RB"), steps=100, max_width=100)
+    result = backtrack(
+      parse_tm("1RB0RC_1LC1RB_0LE0RD_---1LC_1RF1LE_1LE1RG_1RA0RB"),
+      steps=100,
+      max_width=100,
+    )
     self.assertTrue(result.success)
     self.assertFalse(result.halted)
     self.assertEqual(result.max_steps, 66)
@@ -87,6 +92,7 @@ class BacktrackingTest(unittest.TestCase):
     self.assertFalse(result.success)
     # We cannot go deep enough to prove halting b/c tree grows too big.
     # self.assertTrue(result.halted)
+
 
 if __name__ == "__main__":
   unittest.main()

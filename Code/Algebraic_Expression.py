@@ -15,8 +15,10 @@ from NatExpr import NatExpr, is_const
 class BadOperation(Exception):
   """This operation cannot be performed on this Expression."""
 
+
 def is_expr(value):
   return isinstance(value, Expression)
+
 
 def simp_frac(val):
   """Simplify Fraction -> int if it is integral."""
@@ -25,12 +27,14 @@ def simp_frac(val):
   else:
     return val
 
+
 def div(a, b):
   """Return a / b as either int or Fraction."""
   if isinstance(a, (int, NatExpr)) and isinstance(b, (int, NatExpr)):
     return simp_frac(Fraction(int(a), int(b)))
   else:
     return a / b
+
 
 def as_const(x):
   assert is_const(x)
@@ -39,23 +43,28 @@ def as_const(x):
   else:
     return x
 
+
 def min_val(x):
   if is_const(x):
     return as_const(x)
   else:
     return x.min_val()
 
+
 def always_ge(a, b):
   return min_val(a - b) >= 0
 
+
 def always_gt(a, b):
   return min_val(a - b) > 0
+
 
 def variables(x):
   if is_const(x):
     return frozenset()
   else:
     return x.variables()
+
 
 def substitute(x, assignment):
   if is_const(x):
@@ -66,9 +75,10 @@ def substitute(x, assignment):
 
 class Variable:
   """A distinct variable in an algebraic expression"""
+
   num_vars = 0
 
-  def __init__(self, id = None):
+  def __init__(self, id=None):
     if id == None:
       self.id = Variable.num_vars
       Variable.num_vars += 1
@@ -78,7 +88,7 @@ class Variable:
   def __repr__(self):
     # Variables are initially printed as letters and thereafter as <x#>
     if self.id <= 25:
-      return "%c" % (self.id + ord('a'))
+      return "%c" % (self.id + ord("a"))
     else:
       return "<x%d>" % self.id
 
@@ -88,16 +98,19 @@ class Variable:
   def __hash__(self):
     return hash(self.id)
 
+
 def Variable_from_string(input):
-  if input[0] == '<' and input[1] == 'x':
+  if input[0] == "<" and input[1] == "x":
     return Variable(int(input[2:-1]))
   elif len(input) == 1 and input[0] in string.ascii_lowercase:
-    return Variable(ord(input[0]) - ord('a'))
+    return Variable(ord(input[0]) - ord("a"))
   else:
     raise ValueError("Unable to interpret '%s' as a Term" % (input,))
 
+
 class Var_Power:
   """A variable raised to some power (eg: a^3)"""
+
   def __init__(self, variable, power):
     self.var = variable
     self.pow = power
@@ -114,12 +127,13 @@ class Var_Power:
       if self.pow == 1:
         return subs[self.var]
       else:
-        return subs[self.var]**self.pow
+        return subs[self.var] ** self.pow
     else:
-      return VariableToExpression(self.var)**self.pow
+      return VariableToExpression(self.var) ** self.pow
+
 
 def Var_Power_from_string(input):
-  input = input.split('^')
+  input = input.split("^")
 
   vari = Variable_from_string(input[0])
 
@@ -128,12 +142,14 @@ def Var_Power_from_string(input):
   else:
     power = 1
 
-  return Var_Power(vari,power)
+  return Var_Power(vari, power)
+
 
 class Term:
   """A term in a (multi-variable) polynomial (eg: 4 x^3 y^2)"""
+
   def __init__(self, var_powers, coefficient):
-    self.vars = var_powers # Always assumed to be a non-empty tuple
+    self.vars = var_powers  # Always assumed to be a non-empty tuple
     self.coef = coefficient
 
   def __repr__(self):
@@ -141,13 +157,14 @@ class Term:
     if self.coef == 1:
       return r
     elif self.coef == -1:
-      return "-"+r
+      return "-" + r
     else:
-      return repr(self.coef)+" "+r
+      return repr(self.coef) + " " + r
 
   def substitute(self, subs):
     """Substitute values from dict 'subs' to get an int."""
     return reduce(operator.mul, [vp.substitute(subs) for vp in self.vars]) * self.coef
+
 
 def Term_from_string(input):
   input_split = input.split()
@@ -165,10 +182,12 @@ def Term_from_string(input):
 
   var_powers = tuple([Var_Power_from_string(var_power) for var_power in var_powers])
 
-  return Term(var_powers,coef)
+  return Term(var_powers, coef)
+
 
 class Expression(NatExpr):
   """A sum of Terms."""
+
   def __init__(self, terms, constant):
     self.terms = terms
     self.const = constant
@@ -178,9 +197,9 @@ class Expression(NatExpr):
       return repr(self.const)
     r = " + ".join([repr(t) for t in self.terms])
     if self.const == 0:
-      return "("+r+")"
+      return "(" + r + ")"
     else:
-      return "("+r+" + "+repr(self.const)+")"
+      return "(" + r + " + " + repr(self.const) + ")"
 
   def __add__(self, other):
     if is_expr(other):
@@ -188,15 +207,14 @@ class Expression(NatExpr):
     else:
       return Expression(self.terms, self.const + other)
 
-
   def __mul__(self, other):
     if is_expr(other):
       return expr_prod(self, other)
     elif other == 0:
       return Expression([], 0)
     else:
-      new_terms = tuple([Term(t.vars, t.coef*other) for t in self.terms])
-      return Expression(new_terms, self.const*other)
+      new_terms = tuple([Term(t.vars, t.coef * other) for t in self.terms])
+      return Expression(new_terms, self.const * other)
 
   def __pow__(self, power):
     """x^n == x * x^(n-1)"""
@@ -209,15 +227,19 @@ class Expression(NatExpr):
   def __neg__(self):
     """-x == -1*x"""
     return self.__mul__(-1)
+
   def __sub__(self, other):
     """x - y == x + -y"""
     return self.__add__(other.__neg__())
+
   def __radd__(self, other):
     """x+y == y+x"""
     return self.__add__(other)
+
   def __rmul__(self, other):
     """x*y == y*x"""
     return self.__mul__(other)
+
   def __rsub__(self, other):
     """x - y == -y + x"""
     return (self.__neg__()).__add__(other)
@@ -229,10 +251,10 @@ class Expression(NatExpr):
     if other == 1:
       return self
     return Expression(
-      terms = tuple(Term(var_powers = term.vars,
-                         coefficient = div(term.coef, other))
-                    for term in self.terms),
-      constant = div(self.const, other))
+      terms=tuple(Term(var_powers=term.vars, coefficient=div(term.coef, other)) for term in self.terms),
+      constant=div(self.const, other),
+    )
+
   # Needed various places where we do a // b knowing that b | a ...
   __floordiv__ = __truediv__
 
@@ -243,9 +265,10 @@ class Expression(NatExpr):
 
   def __mod__(self, other):
     raise NotImplementedError("Cannot mod Expression")
+
   def __lt__(self, other):
     raise TypeError("Cannot compare Expressions")
-  
+
   def try_eval(self):
     return self.const if self.is_const else None
 
@@ -262,7 +285,6 @@ class Expression(NatExpr):
     """Substitute values from dict 'subs' to get an int."""
     val = sum([t.substitute(subs) for t in self.terms]) + self.const
     return simp_frac(val)
-
 
   def min_val(self):
     """Minimum value over all non-negative variable assignment."""
@@ -290,13 +312,16 @@ class Expression(NatExpr):
 
   def is_var_plus_const(self):
     """Is this expression of the form x + 5 (var + const)."""
-    return (len(self.terms) == 1 and self.terms[0].coef == 1 and
-            len(self.terms[0].vars) == 1 and self.terms[0].vars[0].pow == 1)
+    return (
+      len(self.terms) == 1
+      and self.terms[0].coef == 1
+      and len(self.terms[0].vars) == 1
+      and self.terms[0].vars[0].pow == 1
+    )
 
   def as_strictly_linear(self):
     """Returns (var, slope, const) if this is a linear (non-constant) expression."""
-    if (len(self.terms) == 1 and len(self.terms[0].vars) == 1 and
-            self.terms[0].vars[0].pow == 1):
+    if len(self.terms) == 1 and len(self.terms[0].vars) == 1 and self.terms[0].vars[0].pow == 1:
       return (self.terms[0].vars[0].var, self.terms[0].coef, self.const)
 
   def variable_restricted(self):
@@ -326,22 +351,24 @@ class Expression(NatExpr):
     """Returns a list of all scalars (coefficients and constant)."""
     return [term.coef for term in self.terms] + [self.const]
 
+
 Algebraic_Expression = Expression
 
+
 def Expression_from_string(input):
-  if input[0] == '(':
+  if input[0] == "(":
     input = input[1:-1]
 
-  terms = input.split('+')
+  terms = input.split("+")
   terms = [term.strip() for term in terms]
 
-  last_terms = terms[-1].split('-')
+  last_terms = terms[-1].split("-")
   last_terms = [last_term.strip() for last_term in last_terms]
 
   if len(last_terms) == 2:
-    last_terms[1] = '-'+last_terms[1]
+    last_terms[1] = "-" + last_terms[1]
 
-  if last_terms[0] == '':
+  if last_terms[0] == "":
     last_terms = last_terms[1:]
 
   terms[-1:] = last_terms
@@ -354,7 +381,8 @@ def Expression_from_string(input):
 
   terms = tuple([Term_from_string(term) for term in terms])
 
-  return Expression(terms,coef)
+  return Expression(terms, coef)
+
 
 def term_sum(terms1, terms2):
   """Add 2 lists of terms"""
@@ -368,16 +396,17 @@ def term_sum(terms1, terms2):
         new_terms.append(Term(t1.vars, t1.coef + t2.coef))
       i += 1
       j += 1
-    elif c < 0: # if t1 < t2
+    elif c < 0:  # if t1 < t2
       new_terms.append(t1)
       i += 1
-    else:       # if t1 > t2
+    else:  # if t1 > t2
       new_terms.append(t2)
       j += 1
   # Append the rest of the terms in the only remaining list
   new_terms.extend(terms1[i:])
   new_terms.extend(terms2[j:])
   return new_terms
+
 
 def compare_terms(t1, t2):
   """Compare 2 Terms in an arbitrary, but consistent manner."""
@@ -407,17 +436,19 @@ def compare_terms(t1, t2):
   # Otherwise the two terms are completely identical
   return 0
 
-def expr_prod(e1 : Expression, e2 : Expression) -> Expression:
+
+def expr_prod(e1: Expression, e2: Expression) -> Expression:
   assert isinstance(e1, Expression), e1
   assert isinstance(e2, Expression), e2
   new_expr = Expression([], 0)
   for t1 in e1.terms:
     for t2 in e2.terms:
-      new_term = Term(vars_prod(t1.vars, t2.vars), t1.coef*t2.coef)
+      new_term = Term(vars_prod(t1.vars, t2.vars), t1.coef * t2.coef)
       new_expr += Expression([new_term], 0)
-    new_expr += Expression([t1], 0)*e2.const
-  new_expr += (e2*e1.const)
+    new_expr += Expression([t1], 0) * e2.const
+  new_expr += e2 * e1.const
   return new_expr
+
 
 def vars_prod(vars1, vars2):
   new_vars = []
@@ -438,9 +469,11 @@ def vars_prod(vars1, vars2):
   new_vars.extend(vars2[j:])
   return new_vars
 
+
 def NewVariableExpression():
   """Produce an expression containing only a new variable."""
   return VariableToExpression(Variable())
+
 
 def VariableToExpression(var):
   """Produce Algebraic Expression from a lone variable."""
@@ -449,9 +482,11 @@ def VariableToExpression(var):
   expr = Expression([term], 0)
   return expr
 
+
 def ConstantToExpression(const):
   """Produce an Algebraic Expression from a lone constant."""
   return Expression([], const)
+
 
 def VarPlusConstExpression(var, const):
   assert not is_expr(const), const

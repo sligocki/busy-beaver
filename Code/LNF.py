@@ -11,7 +11,7 @@ import TNF
 
 def permute(old_tm, state_order, symbol_order):
   # L < R
-  swap_dirs = (old_tm.trans_table[state_order[0]][0].dir_out == Turing_Machine.RIGHT)
+  swap_dirs = old_tm.trans_table[state_order[0]][0].dir_out == Turing_Machine.RIGHT
   perm_tm = TNF.permute_table(old_tm, state_order, symbol_order, swap_dirs)
 
   # Find new state number corresponding to start state (old 0) and symbol.
@@ -31,7 +31,7 @@ def iter_perms(xs):
     yield xs
   else:
     for i, x in enumerate(xs):
-      for sub in iter_perms(xs[:i] + xs[i+1:]):
+      for sub in iter_perms(xs[:i] + xs[i + 1 :]):
         yield [x] + sub
 
 
@@ -56,8 +56,7 @@ def brute_lnf(old_tm):
 
 def main():
   parser = argparse.ArgumentParser()
-  parser.add_argument("tm", nargs="?",
-                      help="Literal Turing Machine. If missing read from stdin.")
+  parser.add_argument("tm", nargs="?", help="Literal Turing Machine. If missing read from stdin.")
   args = parser.parse_args()
 
   with IO.StdText.Writer(sys.stdout) as writer:
@@ -70,6 +69,7 @@ def main():
         for tm_record in reader:
           new_tm = brute_lnf(tm_record.tm())
           writer.write_tm(new_tm)
+
 
 if __name__ == "__main__":
   main()

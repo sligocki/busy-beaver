@@ -1,21 +1,24 @@
 #! /usr/bin/env python3
 
-from Direct_Simulator import DirectTape, DirectSimulator, State, Symbol, SymbolOrBlank
+from Direct_Simulator import DirectTape, DirectSimulator, Symbol, SymbolOrBlank
 
 import unittest
 
 import IO
 
 
-def write_range(tape : DirectTape, start_pos : int, new_section : list[int]) -> None:
+def write_range(tape: DirectTape, start_pos: int, new_section: list[int]) -> None:
   for i, symb in enumerate(new_section):
     tape.write(symb, i + start_pos)
 
-def read_range(tape : DirectTape, start_pos : int, end_pos : int) -> list[Symbol]:
+
+def read_range(tape: DirectTape, start_pos: int, end_pos: int) -> list[Symbol]:
   return [tape.read(pos) for pos in range(start_pos, end_pos)]
 
-def read_tape(tape : DirectTape) -> list[Symbol]:
+
+def read_tape(tape: DirectTape) -> list[Symbol]:
   return read_range(tape, tape.pos_leftmost(), tape.pos_rightmost() + 1)
+
 
 class SystemTest(unittest.TestCase):
   def test_simple(self):
@@ -28,7 +31,7 @@ class SystemTest(unittest.TestCase):
     self.assertEqual(sim.tape.position, 0)
     self.assertEqual(sim.tape.pos_leftmost(), 0)
     self.assertEqual(sim.tape.pos_rightmost(), 0)
-    self.assertEqual(read_range(sim.tape, -10, 10), [0]*20)
+    self.assertEqual(read_range(sim.tape, -10, 10), [0] * 20)
 
     sim.step()
     self.assertFalse(sim.halted)
@@ -37,7 +40,7 @@ class SystemTest(unittest.TestCase):
     self.assertEqual(sim.tape.position, 1)
     self.assertEqual(sim.tape.pos_leftmost(), 0)
     self.assertEqual(sim.tape.pos_rightmost(), 1)
-    self.assertEqual(read_range(sim.tape, -10, 10), [0]*10 + [1] + [0]*9)
+    self.assertEqual(read_range(sim.tape, -10, 10), [0] * 10 + [1] + [0] * 9)
 
     sim.seek(100)
     self.assertFalse(sim.halted)
@@ -46,7 +49,7 @@ class SystemTest(unittest.TestCase):
     self.assertEqual(sim.tape.position, -20)
     self.assertEqual(sim.tape.pos_leftmost(), -20)
     self.assertEqual(sim.tape.pos_rightmost(), 2)
-    self.assertEqual(read_range(sim.tape, -20, 3), [0] + [1]*21 + [0])
+    self.assertEqual(read_range(sim.tape, -20, 3), [0] + [1] * 21 + [0])
 
   def test_halt(self):
     # BB4 champion
@@ -57,7 +60,7 @@ class SystemTest(unittest.TestCase):
     self.assertEqual(sim.step_num, 107)
     self.assertEqual(sim.halt_score, 13)
     self.assertEqual(sim.tape.read_or_blank(), SymbolOrBlank(0, False))
-    self.assertEqual(read_tape(sim.tape), [1, 0] + [1]*12)
+    self.assertEqual(read_tape(sim.tape), [1, 0] + [1] * 12)
 
   def test_example(self):
     # This is testing a specific TM that was broken by a change I was working on.
@@ -67,7 +70,12 @@ class SystemTest(unittest.TestCase):
     self.assertFalse(sim.halted)
     self.assertEqual(sim.state, 0)
     self.assertEqual(sim.tape.read_or_blank(), SymbolOrBlank(2, False))
-    self.assertEqual(read_tape(sim.tape), [1, 4, 1, 2, 2, 2, 3, 3, 2, 3, 2, 3, 3, 3] + [2]*9 + [3, 3, 2, 3, 2, 2, 3, 3, 3, 2, 3, 3, 3, 2, 2, 3, 3, 3, 2, 3])
+    self.assertEqual(
+      read_tape(sim.tape),
+      [1, 4, 1, 2, 2, 2, 3, 3, 2, 3, 2, 3, 3, 3]
+      + [2] * 9
+      + [3, 3, 2, 3, 2, 2, 3, 3, 3, 2, 3, 3, 3, 2, 2, 3, 3, 3, 2, 3],
+    )
 
   def test_expand_tape(self):
     tm = IO.parse_tm("1RB1LB_1LA0LC_1RZ1LD_1RD0RA")
@@ -88,8 +96,8 @@ class SystemTest(unittest.TestCase):
     self.assertEqual(read_range(sim.tape, start_pos, end_pos), tape_before)
 
     # Ensure that all new symbols are the blank symbol (0).
-    self.assertEqual(read_range(sim.tape, start_pos - 200, start_pos), [0]*200)
-    self.assertEqual(read_range(sim.tape, end_pos, end_pos + 1000), [0]*1000)
+    self.assertEqual(read_range(sim.tape, start_pos - 200, start_pos), [0] * 200)
+    self.assertEqual(read_range(sim.tape, end_pos, end_pos + 1000), [0] * 1000)
 
   def test_update_tape(self):
     tm = IO.parse_tm("1RB1LB_1LA0LC_1RZ1LD_1RD0RA")

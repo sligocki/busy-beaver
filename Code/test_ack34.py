@@ -4,11 +4,11 @@ from Macro import Simulator
 from Macro import Turing_Machine
 import optparse
 
-class TestAck34(unittest.TestCase):
 
+class TestAck34(unittest.TestCase):
   def test_sim_rules(self):
     tm = IO.parse_tm("1RB3LB1RZ2RA_2LC3RB1LC2RA_3RB1LB3LC2RC")
-    
+
     class Options(optparse.Values):
       def __init__(self):
         super().__init__()
@@ -32,14 +32,14 @@ class TestAck34(unittest.TestCase):
         self.max_prover_configs = 100000
 
     options = Options()
-    
+
     machine = Turing_Machine.Block_Macro_Machine(tm, options.block_size)
     machine = Turing_Machine.Backsymbol_Macro_Machine(machine, max_sim_steps_per_symbol=options.max_steps_in_backsymbol)
     sim = Simulator.Simulator(machine, options)
-    
+
     # Run for up to 10000 loops
     sim.loop_seek(10000)
-    
+
     # Verify that higher-level rules were proven
     print("\nRules proven by level:", sim.prover.num_rules_by_level)
     print("Total Rules:", sim.prover.num_rules)
@@ -47,5 +47,6 @@ class TestAck34(unittest.TestCase):
     print("General Rules:", sim.prover.num_gen_rules)
     self.assertGreaterEqual(sim.prover.num_rules_by_level.get(4, 0), 1)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
   unittest.main()

@@ -5,13 +5,11 @@
 Search for a good block size for the TM simulator.
 """
 
-
 import copy
 import math
 import optparse
 from optparse import OptionParser, OptionGroup
 import sys
-import time
 
 import IO
 from Macro.Simulator import Simulator
@@ -19,7 +17,8 @@ from Macro import Turing_Machine
 
 import io_pb2
 
-def add_option_group(parser : OptionParser):
+
+def add_option_group(parser: OptionParser):
   """Add Block_Finder options group to an OptParser parser object."""
   assert isinstance(parser, OptionParser)
 
@@ -27,30 +26,43 @@ def add_option_group(parser : OptionParser):
 
   group.add_option("--verbose-block-finder", action="store_true")
 
-  group.add_option("--max-block-size", type=int, default=0,
-                   help="Maximum block size to try when using Block Finder. "
-                   "Note: This is ignored if --block-size is set explicitly. "
-                   "[Default: %default]")
+  group.add_option(
+    "--max-block-size",
+    type=int,
+    default=0,
+    help="Maximum block size to try when using Block Finder. "
+    "Note: This is ignored if --block-size is set explicitly. "
+    "[Default: %default]",
+  )
 
-  group.add_option("--block-mult", type=int, default=0,
-                   help="Set fixed multiple of the block sized decided by block "
-                   "finder (often better than setting --block-size directly in "
-                   "order to avoid sizes that completely fail to compress the "
-                   "tape). "
-                   "[Default: %default]")
+  group.add_option(
+    "--block-mult",
+    type=int,
+    default=0,
+    help="Set fixed multiple of the block sized decided by block "
+    "finder (often better than setting --block-size directly in "
+    "order to avoid sizes that completely fail to compress the "
+    "tape). "
+    "[Default: %default]",
+  )
 
-  group.add_option("--max-block-mult", type=int, default=2, metavar="N",
-                   help="How far ahead to search in second half of the "
-                   "block finder. "
-                   "[Default: %default]")
+  group.add_option(
+    "--max-block-mult",
+    type=int,
+    default=2,
+    metavar="N",
+    help="How far ahead to search in second half of the block finder. [Default: %default]",
+  )
 
   parser.add_option_group(group)
 
 
-def block_finder(machine : Turing_Machine.Turing_Machine,
-                 options : optparse.Values,
-                 params : io_pb2.BlockFinderParams,
-                 result : io_pb2.BlockFinderResult) -> None:
+def block_finder(
+  machine: Turing_Machine.Turing_Machine,
+  options: optparse.Values,
+  params: io_pb2.BlockFinderParams,
+  result: io_pb2.BlockFinderResult,
+) -> None:
   """Tries to find the optimal block-size for macro machines using heuristics."""
   if params.max_block_size:
     max_block_size = params.max_block_size
@@ -100,9 +112,9 @@ def block_finder(machine : Turing_Machine.Turing_Machine,
         tape_str = "".join(str(symb) for symb in tape)
         print("BF: Least compressed tape at step", sim.step_num, ":", tape_str)
 
-      min_compr = len(tape) + 1 # Worse than no compression
+      min_compr = len(tape) + 1  # Worse than no compression
       opt_size = 1
-      for block_size in range(1, len(tape)//2):
+      for block_size in range(1, len(tape) // 2):
         compr_size = compression_efficiency(tape, block_size)
         if compr_size < min_compr:
           if block_size <= max_block_size:
@@ -115,8 +127,12 @@ def block_finder(machine : Turing_Machine.Turing_Machine,
       result.best_compression_tape_size = min_compr
 
       if options.verbose_block_finder:
-        print("BF: Optimal tape compression block size", opt_size,
-              "tape size", min_compr)
+        print(
+          "BF: Optimal tape compression block size",
+          opt_size,
+          "tape size",
+          min_compr,
+        )
 
     else:  # if not params.compression_search_loops
       opt_size = 1
@@ -140,9 +156,8 @@ def block_finder(machine : Turing_Machine.Turing_Machine,
     max_chain_factor = 0
     opt_mult = 1
     mult = 1
-    while (mult <= opt_mult + params.max_block_mult and
-           mult * opt_size <= max_block_size):
-      block_machine = Turing_Machine.Block_Macro_Machine(machine, mult*opt_size)
+    while mult <= opt_mult + params.max_block_mult and mult * opt_size <= max_block_size:
+      block_machine = Turing_Machine.Block_Macro_Machine(machine, mult * opt_size)
       back_machine = Turing_Machine.Backsymbol_Macro_Machine(block_machine)
       sim = Simulator(back_machine, new_options)
       sim.loop_seek(params.mult_sim_loops)
@@ -171,6 +186,7 @@ def block_finder(machine : Turing_Machine.Turing_Machine,
     print(result)
     sys.stdout.flush()
 
+
 def uncompress_tape(compr_tape):
   """Expand out repetition counts in tape."""
   tape_out = []
@@ -178,13 +194,14 @@ def uncompress_tape(compr_tape):
   right_tape = compr_tape[1][1:]
   right_tape.reverse()
   for seq in left_tape + right_tape:
-    tape_out += [seq.symbol]*seq.num
+    tape_out += [seq.symbol] * seq.num
   return tape_out
+
 
 def compression_efficiency(tape, k):
   """Find size of tape when compressed with blocks of size k."""
   compr_size = len(tape)
-  for i in range(0, len(tape) - 2*k, k):
-    if tape[i:i + k] == tape[i + k:i + 2*k]:
+  for i in range(0, len(tape) - 2 * k, k):
+    if tape[i : i + k] == tape[i + k : i + 2 * k]:
       compr_size -= k
   return compr_size

@@ -6,7 +6,8 @@
 Get a random sample from a very large set of machines.
 """
 
-import sys, random
+import sys
+import random
 
 try:
   infilename = sys.argv[1]
@@ -22,14 +23,14 @@ outfilename = infilename + ".sample"
 assert sample_size <= length // 2
 
 # Select random machines
-sample_nums = random.sample(range(1, length+1), sample_size)
+sample_nums = random.sample(range(1, length + 1), sample_size)
 sample_nums.sort()
 
 infile = open(infilename, "r")
 outfile = open(outfilename, "w")
 last = 0
 for num, i in zip(sample_nums, list(range(len(sample_nums)))):
-  #print num, i+1, "of", sample_size
+  # print num, i+1, "of", sample_size
   for j in range(num - last):
     line = infile.readline()
   outfile.write(line)

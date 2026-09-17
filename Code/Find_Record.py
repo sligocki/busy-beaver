@@ -12,12 +12,15 @@ def find(tm_std, infilename):
   ttable_bytes = _pack_tm(tm)
   with IO.Reader(infilename) as reader:
     for record_num, tm_record in enumerate(reader):
-      assert tm_record.proto.tm.WhichOneof("ttable") == "ttable_packed", f"Find_Record.py has not implemented finding records of this type: {tm_record.proto.tm}"
+      assert tm_record.proto.tm.WhichOneof("ttable") == "ttable_packed", (
+        f"Find_Record.py has not implemented finding records of this type: {tm_record.proto.tm}"
+      )
       if tm_record.proto.tm.ttable_packed == ttable_bytes:
         print(record_num)
         print(tm_record.proto)
         print("ttable:", tm_record.ttable_str())
         return
+
 
 def main():
   parser = argparse.ArgumentParser()
@@ -26,6 +29,7 @@ def main():
   args = parser.parse_args()
 
   find(args.tm_std, args.infile)
+
 
 if __name__ == "__main__":
   main()

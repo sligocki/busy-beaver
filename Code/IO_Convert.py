@@ -10,15 +10,25 @@ from pathlib import Path
 import IO
 
 
-FORMATS = ["auto", "text", "proto", "csv", "morphett", "text_old",
-           "bbc_db", "bbc_index", "bbc_index_text"]
+FORMATS = [
+  "auto",
+  "text",
+  "proto",
+  "csv",
+  "morphett",
+  "text_old",
+  "bbc_db",
+  "bbc_index",
+  "bbc_index_text",
+]
+
 
 def Detect_Format(path):
   # Currently, this detection is very primitive ... perhaps improve over time?
   if ".pb" in path.suffixes:
     # My custom Protobuf based format.
     return "proto"
-  
+
   elif ".csv" in path.suffixes:
     return "csv"
 
@@ -64,6 +74,7 @@ def get_reader(format, filename, args):
   else:
     raise Exception(f"Unexpected format {format}")
 
+
 def get_writer(format, filename, args):
   if format == "text":
     return IO.StdText.Writer(filename)
@@ -77,9 +88,9 @@ def get_writer(format, filename, args):
   elif format == "bbc_db":
     return IO.BBC.Writer(filename)
   elif format == "bbc_index":
-    return NotImplementedError(f"We do not support writing BBC index files.")
+    return NotImplementedError("We do not support writing BBC index files.")
   elif format == "bbc_index_text":
-    return NotImplementedError(f"We do not support writing BBC index files.")
+    return NotImplementedError("We do not support writing BBC index files.")
 
   else:
     raise Exception(f"Unexpected format {format}")
@@ -89,26 +100,39 @@ def main():
   parser = argparse.ArgumentParser()
   parser.add_argument("infile", type=Path)
   parser.add_argument("outfile", type=Path)
-  parser.add_argument("num_tms", type=int, default=math.inf, nargs="?",
-                      help="Number of TMs to convert [Default: all].")
+  parser.add_argument(
+    "num_tms",
+    type=int,
+    default=math.inf,
+    nargs="?",
+    help="Number of TMs to convert [Default: all].",
+  )
 
-  parser.add_argument("--informat", choices=FORMATS, default="auto",
-                      help="Manually set format of input file. "
-                      "Default is to auto detect based on filename extension.")
-  parser.add_argument("--outformat", choices=FORMATS, default="auto",
-                      help="Manually set format of output file. "
-                      "Default is to auto detect based on filename extension.")
+  parser.add_argument(
+    "--informat",
+    choices=FORMATS,
+    default="auto",
+    help="Manually set format of input file. Default is to auto detect based on filename extension.",
+  )
+  parser.add_argument(
+    "--outformat",
+    choices=FORMATS,
+    default="auto",
+    help="Manually set format of output file. Default is to auto detect based on filename extension.",
+  )
 
-  parser.add_argument("--bbc-seed-db", type=Path, default=Path("bbc/seed.db.zip"),
-                      help="Location of BBC seed DB (only needed to read BBC "
-                      "index files).")
+  parser.add_argument(
+    "--bbc-seed-db",
+    type=Path,
+    default=Path("bbc/seed.db.zip"),
+    help="Location of BBC seed DB (only needed to read BBC index files).",
+  )
   args = parser.parse_args()
 
   if args.informat == "auto":
     args.informat = Detect_Format(args.infile)
   if args.outformat == "auto":
     args.outformat = Detect_Format(args.outfile)
-
 
   print(f"Converting from {args.informat} to {args.outformat}")
   num_records = 0
@@ -121,6 +145,7 @@ def main():
           break
 
   print(f"Done: Converted {num_records:_} records")
+
 
 if __name__ == "__main__":
   main()

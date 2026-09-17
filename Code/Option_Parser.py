@@ -8,10 +8,10 @@ the use of the Python module "optparse".
 
 import getopt
 import os
-import string
 import sys
 
 from IO import IO
+
 
 def open_infile(infilename):
   """Create input file based on a filename."""
@@ -19,6 +19,7 @@ def open_infile(infilename):
     return sys.stdin
   else:
     return open(infilename, "r")
+
 
 def open_outfile(outfilename, force):
   """Create output file based on filename."""
@@ -31,22 +32,24 @@ def open_outfile(outfilename, force):
         return None
     return open(outfilename, "w")
 
-def Generator_Option_Parser(argv, extra_opt, ignore_infile = True):
+
+def Generator_Option_Parser(argv, extra_opt, ignore_infile=True):
   """
   extra_opt = list of (opt, type_func, default_val, is_required, has_val)
   """
-  opts = [("states"    , int, None , True , True),
-          ("symbols"   , int, None , True , True),
-          ("tape"      , int, 10000, False, True),
-          ("steps"     , int, 10000, False, True),
-          ("infile"    , str, None , False, True),
-          ("outfile"   , str, None , False, True),
-          ("log_number", int, None , False, True)] + extra_opt
+  opts = [
+    ("states", int, None, True, True),
+    ("symbols", int, None, True, True),
+    ("tape", int, 10000, False, True),
+    ("steps", int, 10000, False, True),
+    ("infile", str, None, False, True),
+    ("outfile", str, None, False, True),
+    ("log_number", int, None, False, True),
+  ] + extra_opt
   ignore_opts = []
   if ignore_infile:
     ignore_opts.append("infile")
-  opts, args = Option_Parser(argv, opts, help_flag = True, no_mult = True,
-                             ignore_opts = ignore_opts)
+  opts, args = Option_Parser(argv, opts, help_flag=True, no_mult=True, ignore_opts=ignore_opts)
 
   # The furthest that the machine can travel in n steps is n+1 away from the
   # origin.  It could travel in either direction so the tape need not be longer
@@ -68,30 +71,33 @@ def Generator_Option_Parser(argv, extra_opt, ignore_infile = True):
 
   return opts, args
 
+
 def Read_Attributes(input_file):
   temp_in = IO(input_file, None)
   line = temp_in.read_result()
   input_file.seek(0)
   if line == None:
-    return (0,0,0,0)
+    return (0, 0, 0, 0)
   else:
     return line[1:5]
 
-def Filter_Option_Parser(argv, extra_opt, ignore_outfile = False):
+
+def Filter_Option_Parser(argv, extra_opt, ignore_outfile=False):
   """
   extra_opt = list of (opt, type_func, default_val, is_required, has_val)
   """
-  opts = [("tape"      , int, None, False, True),
-          ("steps"     , int, None, False, True),
-          ("infile"    , str, None, True , True),
-          ("outfile"   , str, None, False, True),
-          ("force"     , bool, False, False, False),
-          ("log_number", int, None, False, True)] + extra_opt
+  opts = [
+    ("tape", int, None, False, True),
+    ("steps", int, None, False, True),
+    ("infile", str, None, True, True),
+    ("outfile", str, None, False, True),
+    ("force", bool, False, False, False),
+    ("log_number", int, None, False, True),
+  ] + extra_opt
   ignore_opts = []
   if ignore_outfile:
     ignore_opts.append("outfile")
-  opts, args = Option_Parser(argv, opts, help_flag = True, no_mult = True,
-                             ignore_opts = ignore_opts)
+  opts, args = Option_Parser(argv, opts, help_flag=True, no_mult=True, ignore_opts=ignore_opts)
 
   opts["infilename"] = opts["infile"]
   opts["infile"] = open_infile(opts["infilename"])
@@ -117,8 +123,8 @@ def Filter_Option_Parser(argv, extra_opt, ignore_outfile = False):
 
   return opts, args
 
-def Option_Parser(argv, opts, help_flag = True, no_mult = True,
-                  ignore_opts = []):
+
+def Option_Parser(argv, opts, help_flag=True, no_mult=True, ignore_opts=[]):
   """
   argv = list of command line options (sys.argv[1:])
   opts = list of expected options = (opt_name, type_func, default_val, is_required)
@@ -137,7 +143,7 @@ def Option_Parser(argv, opts, help_flag = True, no_mult = True,
   usage = usage.split("/")[-1]
   opts_format2 = []
   if help_flag:
-    usage +=  " [--help]"
+    usage += " [--help]"
     opts_format2.append("help")
 
   for opt, type_func, default_val, is_required, has_val in opts:

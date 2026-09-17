@@ -7,14 +7,31 @@ import CPS
 import IO
 
 
-def filter(tm_record, block_size : int, window_size : int,
-           fixed_history : int, lru_history : bool,
-           max_steps : int, max_iters : int, max_configs : int, max_edges : int) -> None:
-  CPS.filter(tm_record.tm(), block_size, window_size,
-             fixed_history, lru_history,
-             max_steps, max_iters, max_configs, max_edges,
-             tm_record.proto.filter.cps.result,
-             tm_record.proto.status)
+def filter(
+  tm_record,
+  block_size: int,
+  window_size: int,
+  fixed_history: int,
+  lru_history: bool,
+  max_steps: int,
+  max_iters: int,
+  max_configs: int,
+  max_edges: int,
+) -> None:
+  CPS.filter(
+    tm_record.tm(),
+    block_size,
+    window_size,
+    fixed_history,
+    lru_history,
+    max_steps,
+    max_iters,
+    max_configs,
+    max_edges,
+    tm_record.proto.filter.cps.result,
+    tm_record.proto.status,
+  )
+
 
 def filter_all(tm_record, args) -> None:
   info = tm_record.proto.filter.cps
@@ -35,9 +52,17 @@ def filter_all(tm_record, args) -> None:
       # Use "standard" 3*block_size window.
       for block_size in range(args.min_block_size, args.max_block_size + 1):
         window_size = 3 * block_size
-        filter(tm_record, block_size, window_size,
-               args.fixed_history, args.lru_history,
-               args.max_steps, args.max_iters, args.max_configs, args.max_edges)
+        filter(
+          tm_record,
+          block_size,
+          window_size,
+          args.fixed_history,
+          args.lru_history,
+          args.max_steps,
+          args.max_iters,
+          args.max_configs,
+          args.max_edges,
+        )
         if info.result.success:
           return
 
@@ -46,9 +71,17 @@ def filter_all(tm_record, args) -> None:
       for window_size in range(2, args.max_window_size + 1):
         max_block_size = window_size // 2
         for block_size in range(1, max_block_size + 1):
-          filter(tm_record, block_size, window_size,
-                 args.fixed_history, args.lru_history,
-                 args.max_steps, args.max_iters, args.max_configs, args.max_edges)
+          filter(
+            tm_record,
+            block_size,
+            window_size,
+            args.fixed_history,
+            args.lru_history,
+            args.max_steps,
+            args.max_iters,
+            args.max_configs,
+            args.max_edges,
+          )
           if info.result.success:
             return
 
@@ -59,36 +92,41 @@ def main():
   parser.add_argument("--outfile", type=Path, required=True)
 
   parser.add_argument("--block-size", type=int)
-  parser.add_argument("--min-block-size", type=int, default=1,
-                      help="[Default: 1]")
-  parser.add_argument("--max-block-size", type=int,
-                      help="If set, try all block sizes between "
-                      "--min-block-size and --max-block-size (inclusive).")
+  parser.add_argument("--min-block-size", type=int, default=1, help="[Default: 1]")
+  parser.add_argument(
+    "--max-block-size",
+    type=int,
+    help="If set, try all block sizes between --min-block-size and --max-block-size (inclusive).",
+  )
   parser.add_argument("--max-window-size", type=int)
 
-  parser.add_argument("--fixed-history", type=int,
-                      help="Keep track of fixed history of transitions for each cell.")
-  parser.add_argument("--lru-history", action="store_true",
-                      help="Keep track of all transitions used on each cell in lru order")
+  parser.add_argument(
+    "--fixed-history",
+    type=int,
+    help="Keep track of fixed history of transitions for each cell.",
+  )
+  parser.add_argument(
+    "--lru-history",
+    action="store_true",
+    help="Keep track of all transitions used on each cell in lru order",
+  )
 
   # The vast majority of TMs are decided within 1/10 of these parameters.
   # A few TMs are not decided (even with inf maxes) but take a looong time to
   # fail (30min+). So we restrict these to keep max time down.
-  parser.add_argument("--max-steps", type=int, default=1_000_000,
-                      help="[Default: 1_000_000]")
-  parser.add_argument("--max-iters", type=int, default=500,
-                      help="[Default: 500]")
-  parser.add_argument("--max-configs", type=int, default=10_000,
-                      help="[Default: 10_000]")
-  parser.add_argument("--max-edges", type=int, default=10_000,
-                      help="[Default: 10_000]")
+  parser.add_argument("--max-steps", type=int, default=1_000_000, help="[Default: 1_000_000]")
+  parser.add_argument("--max-iters", type=int, default=500, help="[Default: 500]")
+  parser.add_argument("--max-configs", type=int, default=10_000, help="[Default: 10_000]")
+  parser.add_argument("--max-edges", type=int, default=10_000, help="[Default: 10_000]")
   args = parser.parse_args()
 
   if args.block_size:
     assert not args.max_window_size
     args.min_block_size = args.block_size
     args.max_block_size = args.block_size
-  assert args.max_block_size or args.max_window_size, "Must specify either --block-size or --max-block-size or --max-window-size"
+  assert args.max_block_size or args.max_window_size, (
+    "Must specify either --block-size or --max-block-size or --max-window-size"
+  )
 
   with IO.Writer(args.outfile) as writer:
     with IO.Reader(args.infile) as reader:
@@ -96,6 +134,7 @@ def main():
         tm_record.clear_proto()
         filter_all(tm_record, args)
         writer.write_record(tm_record)
+
 
 if __name__ == "__main__":
   main()

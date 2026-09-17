@@ -28,18 +28,23 @@ import Work_Queue
 def long_to_eng_str(number, left, right):
   if number != 0:
     expo = int(math.log(abs(number), 10))
-    number_str = str(int(number / 10**(expo - right)))
+    number_str = str(int(number / 10 ** (expo - right)))
 
     if number < 0:
-      return "-%s.%se+%d" % (number_str[1     :1+left      ],
-                             number_str[1+left:1+left+right],
-                             expo)
+      return "-%s.%se+%d" % (
+        number_str[1 : 1 + left],
+        number_str[1 + left : 1 + left + right],
+        expo,
+      )
     else:
-      return "%s.%se+%d" % (number_str[0     :0+left      ],
-                            number_str[0+left:0+left+right],
-                            expo)
+      return "%s.%se+%d" % (
+        number_str[0 : 0 + left],
+        number_str[0 + left : 0 + left + right],
+        expo,
+      )
   else:
     return "0.%se+00" % ("0" * right)
+
 
 class Enumerator(object):
   def __init__(self, options, stack, writer, pout, pipeline=None):
@@ -126,12 +131,14 @@ class Enumerator(object):
 
     if self.pout:
       # Print out statistical data
-      self.pout.write(f"{self.tm_num:_} - "
-                      f"halt {self.num_halt:_} (qhalt {self.num_quasihalt:_}) "
-                      f"inf {self.num_infinite:_} (qunk {self.num_inf_quasi_unknown:_}) "
-                      f"unk {self.num_unknown:_} - "
-                      f"max {self.max_sim_time_s * 1000:_.0f}ms / "
-                      f"total {time.time() - self.start_time:_.2f}s\n")
+      self.pout.write(
+        f"{self.tm_num:_} - "
+        f"halt {self.num_halt:_} (qhalt {self.num_quasihalt:_}) "
+        f"inf {self.num_infinite:_} (qunk {self.num_inf_quasi_unknown:_}) "
+        f"unk {self.num_unknown:_} - "
+        f"max {self.max_sim_time_s * 1000:_.0f}ms / "
+        f"total {time.time() - self.start_time:_.2f}s\n"
+      )
       if self.pipeline:
         self.pipeline.print_stats(self.pout)
       self.pout.flush()
@@ -140,7 +147,7 @@ class Enumerator(object):
     self.start_time = time.time()
     self.max_sim_time_s = 0.0
 
-  def run(self, tm_record : TM_Record, time_limit=None) -> TM_Record:
+  def run(self, tm_record: TM_Record, time_limit=None) -> TM_Record:
     """Simulate TM"""
 
     try:
@@ -149,22 +156,24 @@ class Enumerator(object):
       else:
         Macro_Simulator.run_options(tm_record, self.options, time_limit)
 
-    except Exception as e:
-      print("ERROR: Exception raised while simulating TM:",
-            tm_record.ttable_str(), file=sys.stderr)
+    except Exception:
+      print(
+        "ERROR: Exception raised while simulating TM:",
+        tm_record.ttable_str(),
+        file=sys.stderr,
+      )
       traceback.print_exc(file=sys.stderr)
       tm_record.proto.filter.simulator.result.unknown_info.threw_exception = True
       # raise
 
     return tm_record
 
-  def expand_undefined_transition(self, old_tm_record : TM_Record) -> None:
+  def expand_undefined_transition(self, old_tm_record: TM_Record) -> None:
     """Push Turing Machines with each possible transition at this state and symbol"""
     assert old_tm_record.is_halting()
     state_in = old_tm_record.proto.status.halt_status.from_state
     symbol_in = old_tm_record.proto.status.halt_status.from_symbol
-    new_tms = [TM_Record(tm_enum = tm_enum) for tm_enum in
-               old_tm_record.tm_enum().enum_children(state_in, symbol_in)]
+    new_tms = [TM_Record(tm_enum=tm_enum) for tm_enum in old_tm_record.tm_enum().enum_children(state_in, symbol_in)]
 
     if new_tms:
       if self.randomize:
@@ -172,7 +181,7 @@ class Enumerator(object):
 
       self.stack.push_jobs(new_tms)
 
-  def add_result(self, tm_record : TM_Record) -> None:
+  def add_result(self, tm_record: TM_Record) -> None:
     # Update stats
     self.tm_num += 1
 
@@ -200,6 +209,7 @@ class Enumerator(object):
 
     self.writer.write_record(tm_record)
 
+
 def enum_initial_tms(options):
   if options.infilename:
     # Initialize with all machines from infile.
@@ -217,63 +227,111 @@ def enum_initial_tms(options):
   else:
     assert options.states and options.symbols, (options.states, options.symbols)
     # If no infile is specified, then default to the NxM blank TM.
-    blank_tm = TM_Enum.blank_tm_enum(options.states, options.symbols,
-                                     first_1rb = options.first_1rb,
-                                     max_transitions = options.max_transitions,
-                                     allow_no_halt = options.allow_no_halt,
-                                     only_reversible = options.only_reversible)
-    tm_record = TM_Record(tm_enum = blank_tm)
+    blank_tm = TM_Enum.blank_tm_enum(
+      options.states,
+      options.symbols,
+      first_1rb=options.first_1rb,
+      max_transitions=options.max_transitions,
+      allow_no_halt=options.allow_no_halt,
+      only_reversible=options.only_reversible,
+    )
+    tm_record = TM_Record(tm_enum=blank_tm)
     yield tm_record
+
 
 def get_options_parser():
   usage = "usage: %prog [options]"
   parser = OptionParser(usage=usage)
   enum_parser = OptionGroup(parser, "Enumeration Options")
-  enum_parser.add_option("--states",  type=int, help="Number of states")
+  enum_parser.add_option("--states", type=int, help="Number of states")
   enum_parser.add_option("--symbols", type=int, help="Number of symbols")
-  enum_parser.add_option("--breadth-first", action="store_true", default=False,
-                         help="Run search breadth first (only works in single "
-                         "process mode).")
-  enum_parser.add_option("--num-enum", type=int, metavar="NUM",
-                         help="Number of machines to enumerate all unfinished "
-                         "machines from queue are also output so that you can "
-                         "continue with --infile.")
-  enum_parser.add_option("--randomize", action="store_true", default=False,
-                         help="Randomize the order of enumeration.")
+  enum_parser.add_option(
+    "--breadth-first",
+    action="store_true",
+    default=False,
+    help="Run search breadth first (only works in single process mode).",
+  )
+  enum_parser.add_option(
+    "--num-enum",
+    type=int,
+    metavar="NUM",
+    help="Number of machines to enumerate all unfinished "
+    "machines from queue are also output so that you can "
+    "continue with --infile.",
+  )
+  enum_parser.add_option(
+    "--randomize",
+    action="store_true",
+    default=False,
+    help="Randomize the order of enumeration.",
+  )
   enum_parser.add_option("--seed", type=int, help="Seed to randomize with.")
-  enum_parser.add_option("--allow-no-halt", action="store_true", default=False,
-                         help="Search for Beep Busy Beaver (allow enumerating machines without halt states).")
-  enum_parser.add_option("--no-first-1rb", dest="first_1rb",
-                         action="store_false", default=True,
-                         help="Allow first transition to be anything (not just restricted to A1->1RB).")
-  enum_parser.add_option("--debug-print-current", dest="debug_print_current", action="store_true", default=False)
+  enum_parser.add_option(
+    "--allow-no-halt",
+    action="store_true",
+    default=False,
+    help="Search for Beep Busy Beaver (allow enumerating machines without halt states).",
+  )
+  enum_parser.add_option(
+    "--no-first-1rb",
+    dest="first_1rb",
+    action="store_false",
+    default=True,
+    help="Allow first transition to be anything (not just restricted to A1->1RB).",
+  )
+  enum_parser.add_option(
+    "--debug-print-current",
+    dest="debug_print_current",
+    action="store_true",
+    default=False,
+  )
 
   # TM model restrictions.
-  enum_parser.add_option("--max-transitions", type=int,
-                         help="Maximum number of defined transitions to allow. "
-                         "Defaults to unlimited.")
-  enum_parser.add_option("--only-reversible", action="store_true",
-                         help="Only enumerate reversible TMs.")
+  enum_parser.add_option(
+    "--max-transitions",
+    type=int,
+    help="Maximum number of defined transitions to allow. Defaults to unlimited.",
+  )
+  enum_parser.add_option("--only-reversible", action="store_true", help="Only enumerate reversible TMs.")
   parser.add_option_group(enum_parser)
 
   Macro_Simulator.add_option_group(parser)
 
   out_parser = OptionGroup(parser, "Output Options")
-  enum_parser.add_option("--no-output", action="store_true", default=False,
-                         help="Don't generate any output.")
-  out_parser.add_option("--outfile", dest="outfilename", metavar="OUTFILE",
-                        help="Output file name (required)")
-  out_parser.add_option("--infile", dest="infilename",
-                        help="If specified, enumeration is started from "
-                        "these input machines instead of the single empty "
-                        "Turing Machine.")
+  enum_parser.add_option(
+    "--no-output",
+    action="store_true",
+    default=False,
+    help="Don't generate any output.",
+  )
+  out_parser.add_option(
+    "--outfile",
+    dest="outfilename",
+    metavar="OUTFILE",
+    help="Output file name (required)",
+  )
+  out_parser.add_option(
+    "--infile",
+    dest="infilename",
+    help="If specified, enumeration is started from these input machines instead of the single empty Turing Machine.",
+  )
 
-  out_parser.add_option("--force", action="store_true", default=False,
-                        help="Force overwriting outfile (don't ask).")
-  out_parser.add_option("--save-freq", type=int, default=100_000, metavar="FREQ",
-                        help="Freq to save output and write stats [Default: %default]")
+  out_parser.add_option(
+    "--force",
+    action="store_true",
+    default=False,
+    help="Force overwriting outfile (don't ask).",
+  )
+  out_parser.add_option(
+    "--save-freq",
+    type=int,
+    default=100_000,
+    metavar="FREQ",
+    help="Freq to save output and write stats [Default: %default]",
+  )
   parser.add_option_group(out_parser)
   return parser
+
 
 def get_options(states, symbols, **kwargs):
   """Return an options object with default values, overriding with provided kwargs."""
@@ -282,16 +340,17 @@ def get_options(states, symbols, **kwargs):
   options.states = states
   options.symbols = symbols
   for key, value in kwargs.items():
-      setattr(options, key, value)
-      
+    setattr(options, key, value)
+
   ## Set complex defaults
   if options.randomize and not options.seed:
-    options.seed = int(1000*time.time())
+    options.seed = int(1000 * time.time())
 
   if not options.max_block_size:
     options.max_block_size = 5
-    
+
   return options
+
 
 def enumerate(states: int, symbols: int, pipeline: Pipeline, outfilename: Path, time=0.0, **kw):
   options = get_options(states, symbols, outfilename=outfilename, time=time, **kw)
@@ -302,13 +361,14 @@ def enumerate(states: int, symbols: int, pipeline: Pipeline, outfilename: Path, 
 
   with IO.Proto.Writer(options.outfilename) as writer:
     enumerator = Enumerator(options, stack, writer, pout, pipeline=pipeline)
-    
+
     # Push initial TMs
     for tm_record in enum_initial_tms(options):
       stack.push_job(tm_record)
-        
+
     enumerator.continue_enum()
     enumerator.save()
+
 
 def main(args, pipeline=None):
   ## Parse command line options.
@@ -322,7 +382,7 @@ def main(args, pipeline=None):
 
   ## Set complex defaults
   if options.randomize and not options.seed:
-    options.seed = int(1000*time.time())
+    options.seed = int(1000 * time.time())
 
   pout = None
   if not options.no_output:
@@ -353,6 +413,7 @@ def main(args, pipeline=None):
 
     # Done
     enumerator.save()
+
 
 if __name__ == "__main__":
   main(sys.argv[1:])

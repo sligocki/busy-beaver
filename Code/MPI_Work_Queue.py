@@ -1,4 +1,5 @@
-import sys, time
+import sys
+import time
 
 from mpi4py import MPI
 
@@ -9,9 +10,9 @@ rank = comm.Get_rank()
 num_proc = comm.Get_size()
 
 # MPI tags. Values are arbitrary, but must be distinct.
-PUSH_JOBS         = 1  # Workers pushing jobs back to master.
-WAITING_FOR_POP   = 2  # Message workers send to master when waiting for jobs.
-POP_JOBS          = 3  # Master pushes jobs back to workers.
+PUSH_JOBS = 1  # Workers pushing jobs back to master.
+WAITING_FOR_POP = 2  # Message workers send to master when waiting for jobs.
+POP_JOBS = 3  # Master pushes jobs back to workers.
 REPORT_QUEUE_SIZE = 4  # Message workers send to master to report queue size.
 UPDATE_MAX_QUEUE_SIZE = 5  # Master updating max queue size of workers.
 
@@ -21,15 +22,16 @@ UPDATE_MAX_QUEUE_SIZE = 5  # Master updating max queue size of workers.
 MIN_NUM_JOBS_PER_BATCH = 10
 MAX_NUM_JOBS_PER_BATCH = 25
 
-DEFAULT_MAX_LOCAL_JOBS    = 30
+DEFAULT_MAX_LOCAL_JOBS = 30
 DEFAULT_TARGET_LOCAL_JOBS = 25
+
 
 # Worker code
 class MPI_Worker_Work_Queue(Work_Queue.Work_Queue):
   """Work queue based on mpi4py MPI library. Allows maintaining a global work
   queue for many processes possibly distributed across many machines."""
 
-  def __init__(self, master_proc_num, pout = sys.stdout):
+  def __init__(self, master_proc_num, pout=sys.stdout):
     self.master = master_proc_num
     self.local_queue = []  # Used to buffer up jobs locally.
     self.pout = pout
@@ -47,15 +49,15 @@ class MPI_Worker_Work_Queue(Work_Queue.Work_Queue):
     # Time and interval used for reporting queue size.
     self.last_report_time = time.time()
     self.report_interval = 10
-    
+
     # Where we spend our time.
-    self.get_time     = 0.0
-    self.put_time     = 0.0
+    self.get_time = 0.0
+    self.put_time = 0.0
     self.report_queue_time = 0.0
     self.update_max_queue_size_time = 0.0
-    # Time waiting to get at the end, where we don't actually get 
+    # Time waiting to get at the end, where we don't actually get
     # anything, just waiting for all other workers to finish.
-    self.end_time     = 0.0
+    self.end_time = 0.0
     self.compute_time = 0.0  # Rest of the time.
 
     # Used for keeping track of stat times above.
@@ -116,21 +118,27 @@ class MPI_Worker_Work_Queue(Work_Queue.Work_Queue):
     self.pout.write("Get time             : %8.2f\n" % self.get_time)
     self.pout.write("Put time             : %8.2f\n" % self.put_time)
     self.pout.write("Report queue time    : %8.2f\n" % self.report_queue_time)
-    self.pout.write("Update max queue time: %8.2f\n" %
-                    self.update_max_queue_size_time)
+    self.pout.write("Update max queue time: %8.2f\n" % self.update_max_queue_size_time)
     self.pout.write("Compute time         : %8.2f\n" % self.compute_time)
     self.pout.write("End time             : %8.2f\n" % self.end_time)
-    self.pout.write("Total time           : %8.2f\n" % (
-        self.get_time + self.put_time + self.report_queue_time +
-        self.update_max_queue_size_time + self.compute_time + self.end_time))
+    self.pout.write(
+      "Total time           : %8.2f\n"
+      % (
+        self.get_time
+        + self.put_time
+        + self.report_queue_time
+        + self.update_max_queue_size_time
+        + self.compute_time
+        + self.end_time
+      )
+    )
 
     self.pout.flush()
 
   def _update_max_queue_size(self):
     self.compute_time += self.time_diff()
     while comm.Iprobe(source=self.master, tag=UPDATE_MAX_QUEUE_SIZE):
-      self.max_queue_size = comm.recv(source=self.master,
-                                      tag=UPDATE_MAX_QUEUE_SIZE)
+      self.max_queue_size = comm.recv(source=self.master, tag=UPDATE_MAX_QUEUE_SIZE)
       self.target_queue_size = self.max_queue_size * 3 // 4
     self.update_max_queue_size_time += self.time_diff()
 
@@ -139,8 +147,8 @@ class MPI_Worker_Work_Queue(Work_Queue.Work_Queue):
     if len(self.local_queue) > self.max_queue_size:
       self.compute_time += self.time_diff()
 
-      extra_jobs = self.local_queue[:-self.target_queue_size]
-      self.local_queue = self.local_queue[-self.target_queue_size:]
+      extra_jobs = self.local_queue[: -self.target_queue_size]
+      self.local_queue = self.local_queue[-self.target_queue_size :]
       comm.send(extra_jobs, dest=self.master, tag=PUSH_JOBS)
 
       self.put_time += self.time_diff()
@@ -159,7 +167,7 @@ class Master(object):
   Should refer to it. You can use push_job() to add initial jobs and then
   run_master() to run the select loop for listening for workers."""
 
-  def __init__(self, pout = sys.stdout):
+  def __init__(self, pout=sys.stdout):
     self.master_queue = []
     self.pout = pout
 
@@ -182,7 +190,7 @@ class Master(object):
     self.sending_jobs_time = 0.0
 
     # Used for keeping track of stat times above.
-    self.last_stat_time  = time.time()
+    self.last_stat_time = time.time()
 
     self.last_report_time = time.time()
     self.report_interval = 120
@@ -205,20 +213,22 @@ class Master(object):
     # Output timings
     self.pout.write("\n")
     self.pout.write("Waiting time               : %8.2f\n" % self.waiting_time)
-    self.pout.write("WAITING_FOR_POP time       : %8.2f\n" %
-                    self.receiving_waiting_for_pop_time)
-    self.pout.write("Receiving jobs time        : %8.2f\n" %
-                    self.receiving_jobs_time)
-    self.pout.write("Receiving queue size time  : %8.2f\n" %
-                    self.receiving_queue_size_time)
-    self.pout.write("Update max queue sizes time: %8.2f\n" %
-                    self.update_max_queue_sizes_time)
-    self.pout.write("Sending jobs time          : %8.2f\n" %
-                    self.sending_jobs_time)
-    self.pout.write("Total time                 : %8.2f\n" %
-                    (self.waiting_time + self.receiving_waiting_for_pop_time +
-                     self.receiving_jobs_time + self.receiving_queue_size_time +
-                     self.update_max_queue_sizes_time + self.sending_jobs_time))
+    self.pout.write("WAITING_FOR_POP time       : %8.2f\n" % self.receiving_waiting_for_pop_time)
+    self.pout.write("Receiving jobs time        : %8.2f\n" % self.receiving_jobs_time)
+    self.pout.write("Receiving queue size time  : %8.2f\n" % self.receiving_queue_size_time)
+    self.pout.write("Update max queue sizes time: %8.2f\n" % self.update_max_queue_sizes_time)
+    self.pout.write("Sending jobs time          : %8.2f\n" % self.sending_jobs_time)
+    self.pout.write(
+      "Total time                 : %8.2f\n"
+      % (
+        self.waiting_time
+        + self.receiving_waiting_for_pop_time
+        + self.receiving_jobs_time
+        + self.receiving_queue_size_time
+        + self.update_max_queue_sizes_time
+        + self.sending_jobs_time
+      )
+    )
 
     self.pout.flush()
 
@@ -251,24 +261,21 @@ class Master(object):
       # Collect reported queue sizes from workers.
       while comm.Iprobe(source=MPI.ANY_SOURCE, tag=REPORT_QUEUE_SIZE):
         status = MPI.Status()
-        size = comm.recv(source=MPI.ANY_SOURCE, tag=REPORT_QUEUE_SIZE,
-                         status=status)
+        size = comm.recv(source=MPI.ANY_SOURCE, tag=REPORT_QUEUE_SIZE, status=status)
         rank = status.Get_source()
         worker_queue_size[rank] = size
       self.receiving_queue_size_time += self.time_diff()
 
       # Push out max queue sizes to workers.
       worker_queue_size[0] = len(self.master_queue)
-      max_queue_size = max(sum(worker_queue_size) // len(worker_queue_size),
-                           MAX_NUM_JOBS_PER_BATCH)
+      max_queue_size = max(sum(worker_queue_size) // len(worker_queue_size), MAX_NUM_JOBS_PER_BATCH)
       target_queue_size = max_queue_size * 3 // 4
       if time.time() - self.last_update_time > self.update_interval:
         for rank in range(1, num_proc):
           if update_requests[rank]:
             update_requests[rank].Cancel()
             update_requests[rank].Wait()
-          update_requests[rank] = comm.isend(max_queue_size, dest=rank,
-                                             tag=UPDATE_MAX_QUEUE_SIZE)
+          update_requests[rank] = comm.isend(max_queue_size, dest=rank, tag=UPDATE_MAX_QUEUE_SIZE)
         self.last_update_time = time.time()
       self.update_max_queue_sizes_time += self.time_diff()
 
@@ -295,9 +302,10 @@ class Master(object):
         queue_length = len(self.master_queue)
 
         # Number of jobs to send to each worker.
-        num_jobs_per_batch = min(max(MIN_NUM_JOBS_PER_BATCH,
-                                      queue_length // num_waiting),
-                                  target_queue_size)
+        num_jobs_per_batch = min(
+          max(MIN_NUM_JOBS_PER_BATCH, queue_length // num_waiting),
+          target_queue_size,
+        )
 
         # When we get down to the end, we want to send all jobs out.
         # This is the process num after which to send +1 jobs to workers.
@@ -313,7 +321,7 @@ class Master(object):
           rank_waiting = worker_state.index(False)
           comm.send(jobs_block, dest=rank_waiting, tag=POP_JOBS)
           worker_queue_size[rank_waiting] += len(jobs_block)
-          
+
           worker_state[rank_waiting] = True
           count += 1
           if count == increase_count:

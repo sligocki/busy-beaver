@@ -8,7 +8,6 @@ from Macro import Turing_Machine
 import os
 import sys
 import unittest
-from Macro.Tape import INF
 import IO
 
 
@@ -30,9 +29,7 @@ class SystemTest(unittest.TestCase):
     macro_machine = Turing_Machine.Block_Macro_Machine(tm, block_size)
     macro_symbol = Turing_Machine.Block_Symbol((0, 1) + (0,) * (block_size - 2))
 
-    trans = macro_machine.get_trans_object(macro_symbol,
-                                           macro_machine.init_state,
-                                           Turing_Machine.RIGHT)
+    trans = macro_machine.get_trans_object(macro_symbol, macro_machine.init_state, Turing_Machine.RIGHT)
 
     self.assertEqual(trans.condition, Turing_Machine.INF_REPEAT)
 
@@ -45,16 +42,16 @@ class SystemTest(unittest.TestCase):
 
     back_symbol = Turing_Machine.Block_Symbol((0,) * block_size)
     front_symbol = Turing_Machine.Block_Symbol((1,) * block_size)
-    state = Turing_Machine.Backsymbol_Macro_Machine_State(tm.init_state,
-                                                          back_symbol)
+    state = Turing_Machine.Backsymbol_Macro_Machine_State(tm.init_state, back_symbol)
 
     trans = macro_machine.get_trans_object(front_symbol, state, Turing_Machine.RIGHT)
 
     self.assertEqual(trans.condition, Turing_Machine.INF_REPEAT)
 
   def test_machine_ttable_to_str(self):
-    self.assertEqual(Turing_Machine.machine_ttable_to_str(self.load_tm("2x2-6-4")),
-                     """
+    self.assertEqual(
+      Turing_Machine.machine_ttable_to_str(self.load_tm("2x2-6-4")),
+      """
 Transition table:
 
        +-----+-----+
@@ -65,11 +62,13 @@ Transition table:
    | B | 1LA | 1RZ |
    +---+-----+-----+
 
-""")
+""",
+    )
 
     # Test machine with >2 states and symbols
-    self.assertEqual(Turing_Machine.machine_ttable_to_str(self.load_tm("3x3-e17")),
-                     """
+    self.assertEqual(
+      Turing_Machine.machine_ttable_to_str(self.load_tm("3x3-e17")),
+      """
 Transition table:
 
        +-----+-----+-----+
@@ -82,11 +81,13 @@ Transition table:
    | C | 1RZ | 1RA | 1RC |
    +---+-----+-----+-----+
 
-""")
+""",
+    )
 
     # Test machine with Unused transition (---)
-    self.assertEqual(Turing_Machine.machine_ttable_to_str(self.load_tm("Lafitte.Papazian.complex")),
-                     """
+    self.assertEqual(
+      Turing_Machine.machine_ttable_to_str(self.load_tm("Lafitte.Papazian.complex")),
+      """
 Transition table:
 
        +-----+-----+-----+-----+
@@ -97,7 +98,9 @@ Transition table:
    | B | 2LA | 3RB | --- | 0RA |
    +---+-----+-----+-----+-----+
 
-""")
+""",
+    )
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
   unittest.main()

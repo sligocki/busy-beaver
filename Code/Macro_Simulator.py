@@ -17,7 +17,6 @@ from Macro import Turing_Machine, Simulator, Block_Finder
 import Reverse_Engineer_Filter
 
 import io_pb2
-import Exp_Int
 
 
 def add_option_group(parser):
@@ -26,34 +25,64 @@ def add_option_group(parser):
 
   group = OptionGroup(parser, "Macro Simulator options")
 
-  group.add_option("--max-loops", type=int, default=1000,
-                   help="Max simulator loops to run each simulation (0 for infinite). "
-                   "[Default: %default]")
-  group.add_option("--time", type=float, default=15.0,
-                   help="Max seconds to run each simulation. "
-                   "[Default: %default]")
-  group.add_option("--tape-limit", type=int, default=50,
-                   help="Max tape size to allow. "
-                   "[Default: %default]")
-  group.add_option("--max-steps-per-macro", type=int, default=10_000,
-                   help="Maximum base TM steps within one Macro step before giving up. "
-                   "[Default: %default]")
-  group.add_option("--lin-steps", type=int, default=127,
-                   help="Number of steps to run Lin_Recur detection (0 means skip). "
-                   "[Default: %default]")
+  group.add_option(
+    "--max-loops",
+    type=int,
+    default=1000,
+    help="Max simulator loops to run each simulation (0 for infinite). [Default: %default]",
+  )
+  group.add_option(
+    "--time",
+    type=float,
+    default=15.0,
+    help="Max seconds to run each simulation. [Default: %default]",
+  )
+  group.add_option(
+    "--tape-limit",
+    type=int,
+    default=50,
+    help="Max tape size to allow. [Default: %default]",
+  )
+  group.add_option(
+    "--max-steps-per-macro",
+    type=int,
+    default=10_000,
+    help="Maximum base TM steps within one Macro step before giving up. [Default: %default]",
+  )
+  group.add_option(
+    "--lin-steps",
+    type=int,
+    default=127,
+    help="Number of steps to run Lin_Recur detection (0 means skip). [Default: %default]",
+  )
   group.add_option("--lin-min", action="store_true", default=False)
-  group.add_option("--no-reverse-engineer", dest="reverse_engineer",
-                   action="store_false", default=True,
-                   help="Don't try Reverse_Engineer_Filter.")
-  group.add_option("--no-ctl", dest="ctl", action="store_false", default=True,
-                   help="Don't try CTL optimization.")
-  group.add_option("--no-sim", dest="run_sim", action="store_false", default=True,
-                   help="Don't even run Macro/Simulator (ex: only run Lin_Recur).")
+  group.add_option(
+    "--no-reverse-engineer",
+    dest="reverse_engineer",
+    action="store_false",
+    default=True,
+    help="Don't try Reverse_Engineer_Filter.",
+  )
+  group.add_option(
+    "--no-ctl",
+    dest="ctl",
+    action="store_false",
+    default=True,
+    help="Don't try CTL optimization.",
+  )
+  group.add_option(
+    "--no-sim",
+    dest="run_sim",
+    action="store_false",
+    default=True,
+    help="Don't even run Macro/Simulator (ex: only run Lin_Recur).",
+  )
 
   parser.add_option_group(group)
 
   Simulator.add_option_group(parser)
   Block_Finder.add_option_group(parser)
+
 
 def setup_macromachine(base_tm, options, tm_record):
   """Finds block size (if needed) and wraps the TM in Macro Machine(s)."""
@@ -71,23 +100,22 @@ def setup_macromachine(base_tm, options, tm_record):
     bf_info.parameters.max_block_mult = options.max_block_mult
     bf_info.parameters.block_mult = options.block_mult
     bf_info.parameters.max_block_size = options.max_block_size
-    Block_Finder.block_finder(base_tm, options,
-                              bf_info.parameters, bf_info.result)
+    Block_Finder.block_finder(base_tm, options, bf_info.parameters, bf_info.result)
     block_size = bf_info.result.best_block_size
 
   machine = base_tm
   # Do not create a 1-Block Macro-Machine (just use base machine)
   if block_size != 1:
     machine = Turing_Machine.Block_Macro_Machine(
-      machine, block_size, max_sim_steps_per_symbol=options.max_steps_per_macro)
+      machine, block_size, max_sim_steps_per_symbol=options.max_steps_per_macro
+    )
   if getattr(options, "backsymbol", True):
-    machine = Turing_Machine.Backsymbol_Macro_Machine(
-      machine, max_sim_steps_per_symbol=options.max_steps_per_macro)
-      
+    machine = Turing_Machine.Backsymbol_Macro_Machine(machine, max_sim_steps_per_symbol=options.max_steps_per_macro)
+
   return machine, block_size
 
-def run_options(tm_record : TM_Record,
-                options, time_limit=None) -> None:
+
+def run_options(tm_record: TM_Record, options, time_limit=None) -> None:
   """Run the Accelerated Turing Machine Simulator, running a few simple filters
   first and using intelligent blockfinding."""
   base_tm = tm_record.tm()
@@ -127,8 +155,14 @@ def run_options(tm_record : TM_Record,
         else:
           ctl_init_step = 1000
 
-        if CTL_Filter.filter(tm_record, "CTL2", block_size, offset=0,
-                             cutoff=ctl_init_step, use_backsymbol=True):
+        if CTL_Filter.filter(
+          tm_record,
+          "CTL2",
+          block_size,
+          offset=0,
+          cutoff=ctl_init_step,
+          use_backsymbol=True,
+        ):
           return
 
       # Finally: Do the actual Macro Machine / Chain simulation.
@@ -137,10 +171,13 @@ def run_options(tm_record : TM_Record,
       sim_info.parameters.has_blocksymbol_macro = options.backsymbol
       simulate_machine(machine, options, sim_info, tm_record.proto.status)
 
-def simulate_machine(machine : Turing_Machine.Turing_Machine,
-                     options,
-                     sim_info : io_pb2.SimulatorInfo,
-                     bb_status : io_pb2.BBStatus) -> None:
+
+def simulate_machine(
+  machine: Turing_Machine.Turing_Machine,
+  options,
+  sim_info: io_pb2.SimulatorInfo,
+  bb_status: io_pb2.BBStatus,
+) -> None:
   """Simulate a TM using the Macro Machine / Chain Simulator.
   Save the results into `sim_info`."""
   with IO.Timer(sim_info.result):
@@ -161,10 +198,11 @@ def simulate_machine(machine : Turing_Machine.Turing_Machine,
       start_time = time.time()
       timeout = False
 
-      while ((sim_info.parameters.max_loops == 0 or
-              sim.num_loops < sim_info.parameters.max_loops) and
-             sim.op_state == Turing_Machine.RUNNING and
-             sim.tape.compressed_size() <= sim_info.parameters.max_tape_blocks):
+      while (
+        (sim_info.parameters.max_loops == 0 or sim.num_loops < sim_info.parameters.max_loops)
+        and sim.op_state == Turing_Machine.RUNNING
+        and sim.tape.compressed_size() <= sim_info.parameters.max_tape_blocks
+      ):
         sim.step()
         if machine.time_limit.timed_out:
           timeout = True
@@ -178,7 +216,11 @@ def simulate_machine(machine : Turing_Machine.Turing_Machine,
       sim_info.result.num_rule_moves = sim.num_rule_moves
 
       if sim.step_num > 0:
-        if type(sim.step_num).__name__ in ('ExpInt', 'Iterated_Expression', 'Iterated_Math'):
+        if type(sim.step_num).__name__ in (
+          "ExpInt",
+          "Iterated_Expression",
+          "Iterated_Math",
+        ):
           assert not options.compute_steps, "Cannot exactly compute steps for complex formula-based numbers."
         else:
           sim_info.result.log10_num_steps = int(math.log10(int(sim.step_num)))
@@ -206,7 +248,7 @@ def simulate_machine(machine : Turing_Machine.Turing_Machine,
       over_steps_in_macro_info = sim_info.result.unknown_info.over_steps_in_macro
       over_steps_in_macro_info.macro_symbol = str(sim.tape.get_top_symbol())
       over_steps_in_macro_info.macro_state = str(sim.state)
-      over_steps_in_macro_info.macro_dir_is_right = (sim.dir == Turing_Machine.RIGHT)
+      over_steps_in_macro_info.macro_dir_is_right = sim.dir == Turing_Machine.RIGHT
 
     elif sim.op_state == Turing_Machine.INF_REPEAT:
       Halting_Lib.set_not_halting(bb_status, sim.inf_reason)
@@ -214,19 +256,21 @@ def simulate_machine(machine : Turing_Machine.Turing_Machine,
       if sim.states_last_seen is None:
         bb_status.quasihalt_status.is_decided = False
       else:
-        Halting_Lib.set_inf_recur(bb_status,
-                                  states_to_ignore=sim.inf_recur_states,
-                                  states_last_seen=sim.states_last_seen)
+        Halting_Lib.set_inf_recur(
+          bb_status,
+          states_to_ignore=sim.inf_recur_states,
+          states_last_seen=sim.states_last_seen,
+        )
 
       inf_info = sim_info.result.infinite_info
       if sim.inf_reason == io_pb2.INF_MACRO_STEP:
         inf_info.macro_repeat.macro_symbol = str(sim.tape.get_top_symbol())
         inf_info.macro_repeat.macro_state = str(sim.state)
-        inf_info.macro_repeat.macro_dir_is_right = (sim.dir == Turing_Machine.RIGHT)
+        inf_info.macro_repeat.macro_dir_is_right = sim.dir == Turing_Machine.RIGHT
 
       elif sim.inf_reason == io_pb2.INF_CHAIN_STEP:
         inf_info.chain_move.macro_state = str(sim.state)
-        inf_info.chain_move.dir_is_right = (sim.dir == Turing_Machine.RIGHT)
+        inf_info.chain_move.dir_is_right = sim.dir == Turing_Machine.RIGHT
 
       elif sim.inf_reason == io_pb2.INF_PROOF_SYSTEM:
         # TODO(shawn): Actually list rule here somehow.
@@ -241,11 +285,13 @@ def simulate_machine(machine : Turing_Machine.Turing_Machine,
       # will always hit the UNDEFINED case, but then treat it like a halt.
       from_symbol, from_state = sim.op_details[0][:2]
       halt_info = sim_info.result.halt_info.is_halting = True
-      Halting_Lib.set_halting(bb_status,
-                              halt_steps = sim.step_num,
-                              halt_score = sim.get_nonzeros(),
-                              from_state = from_state,
-                              from_symbol = from_symbol)
+      Halting_Lib.set_halting(
+        bb_status,
+        halt_steps=sim.step_num,
+        halt_score=sim.get_nonzeros(),
+        from_state=from_state,
+        from_symbol=from_symbol,
+      )
 
     else:
       raise Exception(sim.op_state, tm.ttable_str(), sim)

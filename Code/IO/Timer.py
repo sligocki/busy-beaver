@@ -8,6 +8,7 @@ class Timer:
     ...
   print("Elapsed time in µs:", foo.elapsed_time_us)
   """
+
   def __init__(self, message):
     self.message = message
 

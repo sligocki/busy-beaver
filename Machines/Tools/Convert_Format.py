@@ -7,7 +7,8 @@ Convert various TM formats.  Currently this only reads "Marxen2" format and
 outputs in our current format.
 """
 
-import sys, string
+import sys
+import string
 
 for infilename in sys.argv[1:]:
   infile = open(infilename, "r")
@@ -31,7 +32,7 @@ for infilename in sys.argv[1:]:
     while line:
       temp = []
       for rule in line.split()[1:]:
-        assert len(rule) is 3
+        assert len(rule) == 3
         if rule[0] == "Z":
           state = -1
         else:

@@ -6,14 +6,11 @@ Turing Machine Simulator with considerable acceleration due to tape
 compression, chain moves and a proof system.
 """
 
-import math
 import optparse
 from optparse import OptionParser, OptionGroup
-import sys
 import time
 
 from Algebraic_Expression import Algebraic_Expression
-from Exp_Int import ExpInt
 from Halting_Lib import big_int_approx_str, big_int_approx_and_full_str
 from Macro import Proof_System
 from Macro import Tape
@@ -21,7 +18,7 @@ from Macro import Turing_Machine
 import io_pb2
 
 
-def add_option_group(parser : OptionParser):
+def add_option_group(parser: OptionParser):
   """Add Simulator options group to an OptParser parser object."""
   assert isinstance(parser, OptionParser)
 
@@ -31,19 +28,30 @@ def add_option_group(parser : OptionParser):
   group = OptionGroup(parser, "Simulator options")
 
   group.add_option("--verbose-simulator", action="store_true")
-  group.add_option("--no-steps", dest="compute_steps",
-                    action="store_false", default=True,
-                    help="Don't keep track of base step count (can be "
-                   "expensive to calculate especially with recursive proofs).")
-  group.add_option("-p", "--no-prover", dest="prover",
-                   action="store_false", default=True,
-                   help="Turn OFF proof system.")
-  group.add_option("--html-format", action="store_true",
-                   help="Print tape in an HTML format.")
-  group.add_option("--full-reps", action="store_true",
-                   help="Print full rep counts on tape even for very large reps.")
+  group.add_option(
+    "--no-steps",
+    dest="compute_steps",
+    action="store_false",
+    default=True,
+    help="Don't keep track of base step count (can be expensive to calculate especially with recursive proofs).",
+  )
+  group.add_option(
+    "-p",
+    "--no-prover",
+    dest="prover",
+    action="store_false",
+    default=True,
+    help="Turn OFF proof system.",
+  )
+  group.add_option("--html-format", action="store_true", help="Print tape in an HTML format.")
+  group.add_option(
+    "--full-reps",
+    action="store_true",
+    help="Print full rep counts on tape even for very large reps.",
+  )
 
   parser.add_option_group(group)
+
 
 def create_default_options() -> OptionParser:
   """Returns a set of default options."""
@@ -52,14 +60,18 @@ def create_default_options() -> OptionParser:
   options, args = parser.parse_args([])
   return options
 
+
 class Simulator(object):
   """Turing machine simulator using chain-tape optimization."""
-  def __init__(self,
-               machine : Turing_Machine.Turing_Machine,
-               options : optparse.Values,
-               verbose_prefix : str = "",
-               init_tape : bool = True,
-               is_base_simulator : bool = True):
+
+  def __init__(
+    self,
+    machine: Turing_Machine.Turing_Machine,
+    options: optparse.Values,
+    verbose_prefix: str = "",
+    init_tape: bool = True,
+    is_base_simulator: bool = True,
+  ):
     assert isinstance(options, optparse.Values)
 
     self.machine = machine
@@ -80,9 +92,11 @@ class Simulator(object):
       self.tape = Tape.Chain_Tape()
       self.tape.init(self.machine.init_symbol, self.machine.init_dir, options)
     if options.prover:
-      self.prover = Proof_System.Proof_System(machine=self.machine,
-                                              options=options,
-                                              verbose_prefix=self.verbose_prefix + "  ")
+      self.prover = Proof_System.Proof_System(
+        machine=self.machine,
+        options=options,
+        verbose_prefix=self.verbose_prefix + "  ",
+      )
     else:
       self.prover = None  # We will run the simulation without a proof system.
 
@@ -138,8 +152,7 @@ class Simulator(object):
     self.num_loops += 1
     if self.prover:
       # Log the configuration in the prover and apply rule if possible.
-      prover_result = self.prover.log_and_apply(
-        self.tape, self.state, self.num_loops-1)
+      prover_result = self.prover.log_and_apply(self.tape, self.state, self.num_loops - 1)
 
       # Proof system says that machine will repeat forever
       if prover_result.condition == Proof_System.INF_REPEAT:
@@ -154,7 +167,10 @@ class Simulator(object):
       # Proof system says that we can apply a rule
       elif prover_result.condition == Proof_System.APPLY_RULE:
         if self.is_base_simulator and prover_result.states_last_seen:
-          assert not isinstance(list(prover_result.states_last_seen.values())[0], Algebraic_Expression), prover_result.states_last_seen
+          assert not isinstance(
+            list(prover_result.states_last_seen.values())[0],
+            Algebraic_Expression,
+          ), prover_result.states_last_seen
 
         self.tape = prover_result.new_tape
         self.num_rule_moves += 1
@@ -162,9 +178,11 @@ class Simulator(object):
           self.compute_steps = False
         if self.compute_steps:
           if self.states_last_seen is not None and prover_result.states_last_seen:
-            for state, prover_last_seen in prover_result.states_last_seen.items():
-              self.states_last_seen[state] = (
-                self.step_num + prover_last_seen)
+            for (
+              state,
+              prover_last_seen,
+            ) in prover_result.states_last_seen.items():
+              self.states_last_seen[state] = self.step_num + prover_last_seen
           else:
             # Cancel self.states_last_seen if we hit a rule that doesn't support it.
             self.states_last_seen = None
@@ -184,8 +202,7 @@ class Simulator(object):
       # TODO(shawn): This is not 100% accurate. We should only ignore states involved in the repeat-in-place, but trans.states_last_seen could include some states before the repeat.
       self.inf_recur_states = list(trans.states_last_seen.keys())
     # Chain move
-    elif trans.state_out == self.state and trans.dir_out == self.dir and \
-       self.op_state == Turing_Machine.RUNNING:
+    elif trans.state_out == self.state and trans.dir_out == self.dir and self.op_state == Turing_Machine.RUNNING:
       num_reps = self.tape.apply_chain_move(trans.symbol_out)
       if num_reps.is_inf:
         self.op_state = Turing_Machine.INF_REPEAT
@@ -199,8 +216,8 @@ class Simulator(object):
           for state, trans_last_seen in trans.states_last_seen.items():
             self.states_last_seen[state] = (
               # Within the last iteration of the chain step.
-              self.step_num + trans.num_base_steps * (num_reps - 1)
-              + trans_last_seen)
+              self.step_num + trans.num_base_steps * (num_reps - 1) + trans_last_seen
+            )
         self.step_num += trans.num_base_steps * num_reps
         self.steps_from_chain += trans.num_base_steps * num_reps
     # Simple move
@@ -220,8 +237,7 @@ class Simulator(object):
 
   def get_nonzeros(self):
     """Get Busy Beaver score, number of non-zero symbols on tape."""
-    return self.tape.get_nonzeros(self.machine.eval_symbol,
-                                  self.machine.eval_state(self.state))
+    return self.tape.get_nonzeros(self.machine.eval_symbol, self.machine.eval_state(self.state))
 
   def print_self(self):
     self.print_steps()
@@ -251,14 +267,29 @@ class Simulator(object):
   def verbose_print(self):
     if self.verbose:
       if self.options.html_format:
-        print("%s %10s: %s<br>" % (self.verbose_prefix, self.step_num,
-                                  self.tape.print_with_state(self.state)))
+        print(
+          "%s %10s: %s<br>"
+          % (
+            self.verbose_prefix,
+            self.step_num,
+            self.tape.print_with_state(self.state),
+          )
+        )
       else:
-        print("%s %6d  %s" % (self.verbose_prefix, self.num_loops, self.tape.print_with_state(self.state)), end=' ')
+        print(
+          "%s %6d  %s"
+          % (
+            self.verbose_prefix,
+            self.num_loops,
+            self.tape.print_with_state(self.state),
+          ),
+          end=" ",
+        )
         if self.compute_steps:
           print("(%s, %s)" % (self.step_num - self.old_step_num, self.step_num))
         else:
           print("")
+
 
 def template(title, steps, loops):
   """Pretty print row of the steps table."""

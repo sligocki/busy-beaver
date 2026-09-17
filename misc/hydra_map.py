@@ -12,24 +12,29 @@ import psutil
 
 
 # Direct computation of t steps of hydra
-def direct(n,t):
-  for _ in range(t): n += n>>1
+def direct(n, t):
+  for _ in range(t):
+    n += n >> 1
   return n
+
 
 @lru_cache
 def pow_mem(b, p) -> mpz:
-  return mpz(b)**p
+  return mpz(b) ** p
+
 
 # Accelerated computation of 2**e steps of hydra
-def accel_pow(n,e):
-  if e<8: return direct(n,1<<e)
-  t = 1<<(e-1)
+def accel_pow(n, e):
+  if e < 8:
+    return direct(n, 1 << e)
+  t = 1 << (e - 1)
   p3t = pow_mem(3, t)
   m = bit_mask(t)
-  n = p3t*(n>>t) + accel_pow(n&m,e-1)
-  return p3t*(n>>t) + accel_pow(n&m,e-1)
+  n = p3t * (n >> t) + accel_pow(n & m, e - 1)
+  return p3t * (n >> t) + accel_pow(n & m, e - 1)
 
-def hydra(n,t):
+
+def hydra(n, t):
   """H^t(n)"""
   n = mpz(n)
   while t > 0:
@@ -43,21 +48,26 @@ def process_memory() -> int:
   """Return process memory in Bytes."""
   return psutil.Process(os.getpid()).memory_info().rss
 
+
 def shahash(n: mpz) -> str:
   hasher = hashlib.sha256()
-  num_bytes = (n.bit_length() + 7)//8
+  num_bytes = (n.bit_length() + 7) // 8
   hasher.update(n.to_bytes(num_bytes))
   return hasher.hexdigest()
 
+
 def print_info(n, t, res):
   # print(f"H^{t:_}({n:_}): ~2^{res.bit_length():_} ≡ {res % (1<<128)} (mod 2^128) hash: {shahash(res)}  ({time.process_time():_.0f}s)")
-  print(f"H^{t:_}({n:_}): ~2^{res.bit_length():_} ≡ {res % (1<<128)} (mod 2^128)  ({process_memory() // 10**6:_}MB {time.process_time():_.0f}s)")
+  print(
+    f"H^{t:_}({n:_}): ~2^{res.bit_length():_} ≡ {res % (1 << 128)} (mod 2^128)  ({process_memory() // 10**6:_}MB {time.process_time():_.0f}s)"
+  )
+
 
 def sim_forever(start_n: int, start_e: int = 0) -> None:
   e = start_e
   n = accel_pow(mpz(start_n), e)
   while True:
-    print_info(start_n, 1<<e, n)
+    print_info(start_n, 1 << e, n)
     n = accel_pow(n, e)
     e += 1
 
@@ -74,11 +84,12 @@ def main():
     for i in range(args.num_iters):
       print_info(args.start_value, i, n)
       n = direct(n, 1)
-    print_info(args.start_value, i+1, n)
+    print_info(args.start_value, i + 1, n)
   elif args.num_iters:
     res = hydra(args.start_value, args.num_iters)
     print_info(args.start_value, args.num_iters, res)
   else:
     sim_forever(args.start_value)
+
 
 main()

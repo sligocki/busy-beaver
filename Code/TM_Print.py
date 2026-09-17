@@ -4,13 +4,12 @@ Command line tool to print TM in different formats.
 """
 
 import argparse
-from pathlib import Path
 
 import IO
 from Macro import Turing_Machine
 
 
-def tm_to_markdown(tm : Turing_Machine.Simple_Machine) -> str:
+def tm_to_markdown(tm: Turing_Machine.Simple_Machine) -> str:
   """
   Write TM transition table to a Markdown table for use in, say, blog posts.
 
@@ -36,21 +35,24 @@ def tm_to_markdown(tm : Turing_Machine.Simple_Machine) -> str:
     # Row name
     result += "|  %c  |" % Turing_Machine.STATES[state_in]
     for symbol_in in range(tm.num_symbols):
-      trans = tm.get_trans_object(state_in = state_in, symbol_in = symbol_in)
+      trans = tm.get_trans_object(state_in=state_in, symbol_in=symbol_in)
       if trans.condition == Turing_Machine.UNDEFINED:
         result += " --- |"  # Undefined transition
       else:
-        result += " %c%c%c |" % (Turing_Machine.SYMBOLS[trans.symbol_out],
-                                 Turing_Machine.DIRS[trans.dir_out],
-                                 Turing_Machine.STATES[trans.state_out])
+        result += " %c%c%c |" % (
+          Turing_Machine.SYMBOLS[trans.symbol_out],
+          Turing_Machine.DIRS[trans.dir_out],
+          Turing_Machine.STATES[trans.state_out],
+        )
     result += "\n"
 
   return result
 
+
 def main():
   parser = argparse.ArgumentParser()
   parser.add_argument("tm", help="Turing Machine or file or file:record_num (0-indexed).")
-  parser.add_argument("--format", choices = ["markdown"], default="markdown")  # TODO: text, HTML?
+  parser.add_argument("--format", choices=["markdown"], default="markdown")  # TODO: text, HTML?
   args = parser.parse_args()
 
   tm = IO.get_tm(args.tm)
@@ -59,6 +61,7 @@ def main():
     print(tm_to_markdown(tm))
   else:
     raise Exception("Unexpected value for --format: %s" % (args.format,))
+
 
 if __name__ == "__main__":
   main()

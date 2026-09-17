@@ -14,9 +14,12 @@ import IO
 from Macro import Turing_Machine
 
 
-def permute_table(old_tm : Turing_Machine.Simple_Machine,
-                  state_order, symbol_order,
-                  swap_dirs : bool = False) -> Turing_Machine.Simple_Machine:
+def permute_table(
+  old_tm: Turing_Machine.Simple_Machine,
+  state_order,
+  symbol_order,
+  swap_dirs: bool = False,
+) -> Turing_Machine.Simple_Machine:
   state_old2new = {old: new for (new, old) in enumerate(state_order)}
   symbol_old2new = {old: new for (new, old) in enumerate(symbol_order)}
   new_tm = copy.deepcopy(old_tm)
@@ -31,36 +34,41 @@ def permute_table(old_tm : Turing_Machine.Simple_Machine,
           new_dir = old_trans.dir_out
 
         new_tm.trans_table[new_state][new_symbol] = Turing_Machine.Transition(
-          symbol_out = symbol_old2new[old_trans.symbol_out],
-          dir_out = new_dir,
-          state_out = state_old2new[old_trans.state_out],
+          symbol_out=symbol_old2new[old_trans.symbol_out],
+          dir_out=new_dir,
+          state_out=state_old2new[old_trans.state_out],
           # Rest is copied from old_trans
-          condition = old_trans.condition,
-          condition_details = old_trans.condition_details,
-          num_base_steps = old_trans.num_base_steps,
+          condition=old_trans.condition,
+          condition_details=old_trans.condition_details,
+          num_base_steps=old_trans.num_base_steps,
           # We don't need/use this field.
-          states_last_seen = None
+          states_last_seen=None,
         )
       else:
-        assert old_trans.condition in [Turing_Machine.HALT, Turing_Machine.UNDEFINED]
+        assert old_trans.condition in [
+          Turing_Machine.HALT,
+          Turing_Machine.UNDEFINED,
+        ]
         new_tm.trans_table[new_state][new_symbol] = Turing_Machine.Transition(
-          condition = old_trans.condition,
-          symbol_out = 1, dir_out = Turing_Machine.RIGHT,
-          state_out = Turing_Machine.Simple_Machine_State(-1),  # Halt
-          num_base_steps = 1,
+          condition=old_trans.condition,
+          symbol_out=1,
+          dir_out=Turing_Machine.RIGHT,
+          state_out=Turing_Machine.Simple_Machine_State(-1),  # Halt
+          num_base_steps=1,
           # We don't need/use this field.
-          states_last_seen = None
+          states_last_seen=None,
         )
   return new_tm
 
-def sim_skip_zeros(sim : Direct_Simulator.DirectSimulator, max_steps : int) -> None:
+
+def sim_skip_zeros(sim: Direct_Simulator.DirectSimulator, max_steps: int) -> None:
   while sim.step_num <= max_steps and not sim.halted:
     if sim.tm.get_trans_object(sim.cur_symbol(), sim.state).symbol_out != sim.tm.init_symbol:
       return
     sim.step()
 
-def to_TNF(tm : Turing_Machine.Simple_Machine,
-           skip_zeros : bool, max_steps : int) -> Turing_Machine.Simple_Machine | None:
+
+def to_TNF(tm: Turing_Machine.Simple_Machine, skip_zeros: bool, max_steps: int) -> Turing_Machine.Simple_Machine | None:
   sim = Direct_Simulator.DirectSimulator(tm)
 
   if skip_zeros:
@@ -72,8 +80,7 @@ def to_TNF(tm : Turing_Machine.Simple_Machine,
   unordered_symbols = set(range(tm.num_symbols)) - set(symbol_order)
 
   # If first trans is to the LEFT, swap dirs.
-  swap_dirs = (tm.get_trans_object(sim.cur_symbol(), sim.state).dir_out
-               == Turing_Machine.LEFT)
+  swap_dirs = tm.get_trans_object(sim.cur_symbol(), sim.state).dir_out == Turing_Machine.LEFT
 
   while unordered_states or unordered_symbols:
     if sim.step_num > max_steps or sim.halted:
@@ -99,10 +106,13 @@ def to_TNF(tm : Turing_Machine.Simple_Machine,
 
 def main():
   parser = argparse.ArgumentParser()
-  parser.add_argument("tm", nargs="?",
-                      help="Literal Turing Machine. If missing read from stdin.")
-  parser.add_argument("--skip-0s", "--1rb", action="store_true",
-                      help="Change start state to be first state which writes a 1 (TNF-1RB).")
+  parser.add_argument("tm", nargs="?", help="Literal Turing Machine. If missing read from stdin.")
+  parser.add_argument(
+    "--skip-0s",
+    "--1rb",
+    action="store_true",
+    help="Change start state to be first state which writes a 1 (TNF-1RB).",
+  )
   parser.add_argument("--max-steps", type=int, default=1_000)
   args = parser.parse_args()
 
@@ -122,6 +132,7 @@ def main():
             writer.write_tm(new_tm)
           else:
             print(f"Failed to find TNF for {tm_record.tm().ttable_str()}")
+
 
 if __name__ == "__main__":
   main()

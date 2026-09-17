@@ -5,7 +5,6 @@ Combined with the k-block macro machine, this is very powerful compression.
 Combined with an automated prover, this can prove Xmas Trees.
 """
 
-import math
 import sys
 
 sys.path.append("..")
@@ -13,7 +12,9 @@ from Halting_Lib import big_int_approx_or_full_str
 
 # Serves as numerical infinity
 from NatExpr import InfNat
+
 INF = InfNat()
+
 
 # Useful Tool
 def reverse(in_list):
@@ -21,20 +22,25 @@ def reverse(in_list):
   reversed_in_list.reverse()
   return reversed_in_list
 
+
 from NatExpr import NatExpr
+
 
 class Repeated_Symbol(object):
   """Slice of tape with repetitions."""
-  def __init__(self, symbol, number_of_repetitions, id = None):
+
+  def __init__(self, symbol, number_of_repetitions, id=None):
     self.symbol = symbol
     self.num = NatExpr.wrap(number_of_repetitions)
     self.id = id
 
   def __eq__(self, other):
-    return (isinstance(other, self.__class__) and
-            other.symbol   == self.symbol     and
-            other.num      == self.num        and
-            other.id       == self.id)
+    return (
+      isinstance(other, self.__class__)
+      and other.symbol == self.symbol
+      and other.num == self.num
+      and other.id == self.id
+    )
 
   def __hash__(self):
     return hash((self.symbol, self.num))
@@ -42,11 +48,11 @@ class Repeated_Symbol(object):
   def to_string(self, html_format, full_reps):
     if hasattr(self.symbol, "is_embedded"):
       return str(self.symbol)
-      
+
     num_str = big_int_approx_or_full_str(self.num)
     if num_str.startswith("~"):
       num_str = f"({num_str})"
-      
+
     if html_format:
       return "%s<sup>%s</sup>" % (str(self.symbol), num_str)
     else:
@@ -58,10 +64,13 @@ class Repeated_Symbol(object):
   def copy(self):
     return Repeated_Symbol(self.symbol, self.num, self.id)
 
+
 class Chain_Tape(object):
   """Stores the turing machine tape with repetition compression."""
+
   # Total number of times tapes are copied. Copies are expensive.
   num_copies = 0
+
   def init(self, init_symbol, init_dir, options):
     self.dir = init_dir
     self.tape = [[], []]
@@ -74,20 +83,16 @@ class Chain_Tape(object):
     return len(self.tape[0]) + len(self.tape[1])
 
   def __eq__(self, other):
-    return (isinstance(other, self.__class__) and
-            other.dir      == self.dir        and
-            other.tape     == self.tape)
+    return isinstance(other, self.__class__) and other.dir == self.dir and other.tape == self.tape
 
   def __repr__(self):
     return self.print_with_state(None)
 
   def print_with_state(self, state):
-    left_tape = " ".join(sym.to_string(self.options.html_format,
-                                       self.options.full_reps)
-                         for sym in self.tape[0])
-    right_tape = " ".join(sym.to_string(self.options.html_format,
-                                        self.options.full_reps)
-                          for sym in reverse(self.tape[1]))
+    left_tape = " ".join(sym.to_string(self.options.html_format, self.options.full_reps) for sym in self.tape[0])
+    right_tape = " ".join(
+      sym.to_string(self.options.html_format, self.options.full_reps) for sym in reverse(self.tape[1])
+    )
 
     if state is None:
       state_str = "-"
@@ -107,7 +112,6 @@ class Chain_Tape(object):
 
     return left_tape + " " + dir_str + " " + right_tape
 
-
   def copy(self):
     Chain_Tape.num_copies += 1
     new = Chain_Tape()
@@ -124,7 +128,7 @@ class Chain_Tape(object):
     for dir in range(2):
       for block in self.tape[dir]:
         if block.num is not INF:
-          n += eval_symbol(block.symbol)*block.num
+          n += eval_symbol(block.symbol) * block.num
     return n
 
   def get_top_block(self):

@@ -6,6 +6,7 @@ import sys
 
 import pandas as pd
 
+
 def log(*messages):
   print(f"{datetime.datetime.now().isoformat()} ", *messages, file=sys.stderr)
   sys.stderr.flush()
@@ -14,10 +15,13 @@ def log(*messages):
 def merge(verified_enum_filename, halt_results_filename, outfilename):
   log("Starting")
 
-  halt = pd.read_csv(halt_results_filename, sep=" ",
+  halt = pd.read_csv(
+    halt_results_filename,
+    sep=" ",
     names=["machine_with_halt_transition", "status2", "steps", "sigma", "space"],
     usecols=["machine_with_halt_transition", "steps", "sigma", "space"],
-    dtype={"steps": "Int64", "sigma": "Int64", "space": "Int64"})
+    dtype={"steps": "Int64", "sigma": "Int64", "space": "Int64"},
+  )
   log(f"Loaded halt annotations: {len(halt):_} rows")
 
   enum = pd.read_csv(verified_enum_filename)
@@ -34,11 +38,22 @@ def merge(verified_enum_filename, halt_results_filename, outfilename):
   # Check all halting TMs are annotated
   assert not enum[enum["status"] == "halt"].isnull().values.any()
 
-  enum.to_csv(outfilename,
-              columns=["machine", "status", "decider",
-                       "sigma", "space", "steps", "machine_with_halt_transition"],
-              index=False, lineterminator="\n")
+  enum.to_csv(
+    outfilename,
+    columns=[
+      "machine",
+      "status",
+      "decider",
+      "sigma",
+      "space",
+      "steps",
+      "machine_with_halt_transition",
+    ],
+    index=False,
+    lineterminator="\n",
+  )
   log(f"Wrote {len(enum):_} rows")
+
 
 def main():
   parser = argparse.ArgumentParser()
@@ -48,5 +63,6 @@ def main():
   args = parser.parse_args()
 
   merge(args.verified_enum, args.halt_results, args.out_csv)
+
 
 main()

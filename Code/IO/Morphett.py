@@ -15,7 +15,8 @@ DIRS = "lr"
 
 class Writer:
   """Class to manage writing TMRecords to a file."""
-  def __init__(self, outfilename : Path):
+
+  def __init__(self, outfilename: Path):
     self.outfilename = Path(outfilename)
     self.outfile = None
 
@@ -29,8 +30,7 @@ class Writer:
   def __exit__(self, *args):
     self.outfile.close()
 
-
-  def write_record(self, tm_record : TM_Record) -> None:
+  def write_record(self, tm_record: TM_Record) -> None:
     tm = tm_record.tm()
     # Morphett uses _ for blank symbol.
     tm.symbols[0] = "_"
@@ -43,9 +43,14 @@ class Writer:
           else:
             state_out = tm.states[trans.state_out]
           # Write out one quintuple per line.
-          print(tm.states[state_in], tm.symbols[symbol_in],
-                tm.symbols[trans.symbol_out], DIRS[trans.dir_out], state_out,
-                file=self.outfile)
+          print(
+            tm.states[state_in],
+            tm.symbols[symbol_in],
+            tm.symbols[trans.symbol_out],
+            DIRS[trans.dir_out],
+            state_out,
+            file=self.outfile,
+          )
 
   def flush(self):
     self.outfile.flush()
@@ -53,7 +58,8 @@ class Writer:
 
 class Reader:
   """Class to manage reading TMRecords from a file."""
-  def __init__(self, infilename : Path):
+
+  def __init__(self, infilename: Path):
     self.infilename = Path(infilename)
     self.infile = None
 
@@ -88,15 +94,15 @@ class Reader:
         if symbol_in not in symbols:
           symbols.append(symbol_in)
     tm = Turing_Machine.tm_from_quintuples(quints, states, symbols)
-    tm_enum = TM_Enum.TM_Enum(tm, allow_no_halt = False)
-    tm_record = TM_Record.TM_Record(tm_enum = tm_enum)
+    tm_enum = TM_Enum.TM_Enum(tm, allow_no_halt=False)
+    tm_record = TM_Record.TM_Record(tm_enum=tm_enum)
     return tm_record
 
   def __iter__(self):
     yield self.read_record()
 
 
-def load_record(filename : str, record_num : int) -> TM_Record:
+def load_record(filename: str, record_num: int) -> TM_Record:
   assert record_num == 0
   with Reader(filename) as reader:
     return reader.read_record()

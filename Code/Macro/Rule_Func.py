@@ -10,27 +10,31 @@ from Iterated_Expression import Iterated_Expression
 
 
 def ceil_div(a, b):
-  return ((a-1) // b) + 1
+  return ((a - 1) // b) + 1
+
 
 class Func:
   """Abstract base class for various classes of functions."""
+
   def apply_rep(self, start, num_reps):
     raise NotImplementedError
 
 
 class Iterated_Func(Func):
   """Represents a fallback function like: `x -> expr` applied N times."""
+
   def __init__(self, var, min_val, step_expr):
     self.var = var
     self.min = min_val
     self.step_expr = step_expr
     self.is_decreasing = False
-    
+
     expr_vars = variables(step_expr)
     assert expr_vars.issubset({var}), f"step_expr {step_expr} contains other variables: {expr_vars}"
 
   def __repr__(self):
     return f"{self.step_expr}"
+
   __str__ = __repr__
 
   def apply_rep(self, start, num_reps):
@@ -39,16 +43,18 @@ class Iterated_Func(Func):
 
 class Subtract_Func(Func):
   """Represents a function like: `x -> x - c`"""
+
   def __init__(self, var, min, const):
     assert const > 0, const
     self.var = var
     self.min = min
     self.const = const
     self.is_decreasing = True
-    self.has_collatz_decrease = (self.const > 1)
+    self.has_collatz_decrease = self.const > 1
 
   def __repr__(self):
     return f"{self.var} - {self.const}"
+
   __str__ = __repr__
 
   def max_reps(self, start):
@@ -64,6 +70,7 @@ class Subtract_Func(Func):
 
 class Add_Func(Func):
   """Represents a function like: `x -> x + c`"""
+
   def __init__(self, var, min, const):
     assert const >= 0, const
     self.var = var
@@ -73,6 +80,7 @@ class Add_Func(Func):
 
   def __repr__(self):
     return f"{self.var} + {self.const}"
+
   __str__ = __repr__
 
   def apply_rep(self, start, num_reps):
@@ -81,6 +89,7 @@ class Add_Func(Func):
 
 class Mult_Func(Func):
   """Represents a function like: `x -> m x + b`"""
+
   def __init__(self, var, min, coef, const):
     assert coef > 0, coef
     self.var = var
@@ -92,6 +101,7 @@ class Mult_Func(Func):
 
   def __repr__(self):
     return f"{self.expr}"
+
   __str__ = __repr__
 
   def compute_min(self, min):
@@ -109,14 +119,15 @@ class Mult_Func(Func):
     a = start
     # We use a custom integer class for this since `num_reps` can
     # be very large!
-    m_n = exp_int(base = self.coef, exponent = num_reps)
-    numer = ((a*m + self.const) * m_n - self.const)
+    m_n = exp_int(base=self.coef, exponent=num_reps)
+    numer = (a * m + self.const) * m_n - self.const
     assert isinstance(numer, (ExpInt, Expression)), numer
     return numer / m
 
 
 class Pow_Func(Func):
   """Represents a function like: `x -> (a b^{u x + v} + c)/d`"""
+
   def __init__(self, var, min, base, coef_base, const_base, denom, coef_exp, const_exp):
     assert base > 1, base
     assert coef_base > 0, coef_base
@@ -136,6 +147,7 @@ class Pow_Func(Func):
 
   def __repr__(self):
     return f"{self.expr}"
+
   __str__ = __repr__
 
   def compute_min(self, min):

@@ -41,13 +41,13 @@ class PrintFilter:
 
   def should_print(self, sim: DirectSimulator) -> bool:
     return self.should_print_state(sim) and self.should_print_loc(sim)
-  
+
   def should_print_state(self, sim: DirectSimulator) -> bool:
     if not self.states:
       return True
     else:
       return sim.state in self.states
-  
+
   def should_print_loc(self, sim: DirectSimulator) -> bool:
     if not self.extreme:
       return True
@@ -58,12 +58,12 @@ class PrintFilter:
     return False
 
 
-def print_tape(sim : DirectSimulator, args) -> None:
+def print_tape(sim: DirectSimulator, args) -> None:
   half_width = args.print_width // 2 - 10
   if args.relative:
     print_range = range(sim.tape.position - half_width, sim.tape.position + half_width + 1)
   else:
-    print_range = range(-half_width, half_width+1)
+    print_range = range(-half_width, half_width + 1)
 
   sys.stdout.write("\033[0m%10d: " % sim.step_num)
 
@@ -77,8 +77,7 @@ def print_tape(sim : DirectSimulator, args) -> None:
 
   state_str = sim.tm.states[sim.state] if not sim.halted else "HALT"
   sys.stdout.write(f"\033[0m{state_str:4}")
-  sys.stdout.write(" \033[%dm%2d\033[0m\n" % (
-    COLOR[sim.tape.read()], sim.tape.read()))
+  sys.stdout.write(" \033[%dm%2d\033[0m\n" % (COLOR[sim.tape.read()], sim.tape.read()))
 
   sys.stdout.flush()
 
@@ -115,22 +114,36 @@ def main():
   parser = argparse.ArgumentParser()
   parser.add_argument("tm", help="Turing Machine or file or file:record_num (0-indexed).")
 
-  parser.add_argument("start_config", nargs="?",
-                      help="Start at non-blank tape configuration. "
-                      "Ex: 1 23^8 21 <B 0^6 12^7 1")
+  parser.add_argument(
+    "start_config",
+    nargs="?",
+    help="Start at non-blank tape configuration. Ex: 1 23^8 21 <B 0^6 12^7 1",
+  )
 
-  parser.add_argument("--print-width", "-w", type=int, default=term_width,
-                      help="Width to print to terminal.")
-  parser.add_argument("--no-ttable", action="store_true",
-                      help="Don't print transition table.")
+  parser.add_argument(
+    "--print-width",
+    "-w",
+    type=int,
+    default=term_width,
+    help="Width to print to terminal.",
+  )
+  parser.add_argument("--no-ttable", action="store_true", help="Don't print transition table.")
 
   # Print options
-  parser.add_argument("--relative", "-r", action="store_true",
-                      help="Print so that TM head always at the same column.")
-  parser.add_argument("--print-filter", "-p", default="",
-                      help="When to print tape: l: leftmost, r: rightmost. "
-                      "Uppercase letters may be used for states as well. "
-                      "May be combined, ex: lrBC")
+  parser.add_argument(
+    "--relative",
+    "-r",
+    action="store_true",
+    help="Print so that TM head always at the same column.",
+  )
+  parser.add_argument(
+    "--print-filter",
+    "-p",
+    default="",
+    help="When to print tape: l: leftmost, r: rightmost. "
+    "Uppercase letters may be used for states as well. "
+    "May be combined, ex: lrBC",
+  )
 
   args = parser.parse_args()
 
@@ -152,7 +165,7 @@ def main():
   sim.state = Turing_Machine.Simple_Machine_State(state)
   for i, symb in enumerate(left):
     # Write left half of tape so that the rightmost symbol is at location -1.
-    sim.tape.write(symb, i-len(left))
+    sim.tape.write(symb, i - len(left))
   for i, symb in enumerate(right):
     # Write right half of tape so that the leftmost symbol is at location 0.
     sim.tape.write(symb, i)
@@ -161,6 +174,7 @@ def main():
 
   run_visual(sim, filter, args=args)
   sys.stdout.flush()
+
 
 if __name__ == "__main__":
   main()

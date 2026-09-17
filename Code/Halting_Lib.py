@@ -14,7 +14,7 @@ import io_pb2
 def big_int_approx_str(value, digits_cutoff: int = 10):
   if value is None:
     return "N/A"
-  
+
   if isinstance(value, NatExpr):
     if value.is_inf:
       return "inf"
@@ -22,7 +22,7 @@ def big_int_approx_str(value, digits_cutoff: int = 10):
       return str(value)
   elif isinstance(value, Variable):
     return str(value)
-    
+
   cutoff = 10**digits_cutoff
   if is_const(value):
     try:
@@ -40,7 +40,7 @@ def big_int_approx_str(value, digits_cutoff: int = 10):
 
   assert val[0] == 2, val
   height, top = val[1], val[2]
-  
+
   if not is_const(value) or not isinstance(height, (int, float)):
     if height == 0:
       return f"{top}"
@@ -67,6 +67,7 @@ def big_int_approx_str(value, digits_cutoff: int = 10):
     assert height > 1, height
     return f"~ 10 ↑↑ {fractional_height(value):_.1f}"
 
+
 def big_int_approx_and_full_str(value):
   if value is None:
     return "N/A"
@@ -80,6 +81,7 @@ def big_int_approx_and_full_str(value):
   else:
     return f"{approx_str} ({full_str})"
 
+
 def big_int_approx_or_full_str(value):
   if value is None:
     return "N/A"
@@ -91,18 +93,20 @@ def big_int_approx_or_full_str(value):
       return str(value)
     if not value.is_const:
       return str(value)
-    
+
   try:
     if value < 10**9:
       return f"{value:_}"
   except:
     pass
-    
+
   return big_int_approx_str(value)
 
 
 _BIG_INT_MAX = 2**63 - 1
-def set_big_int(field : io_pb2.BigInt, value):
+
+
+def set_big_int(field: io_pb2.BigInt, value):
   if isinstance(value, ConstInt):
     value = value.val
   field.Clear()
@@ -121,7 +125,8 @@ def set_big_int(field : io_pb2.BigInt, value):
   else:
     raise TypeError(f"Unexpected type {type(value)}")
 
-def get_big_int(field : io_pb2.BigInt):
+
+def get_big_int(field: io_pb2.BigInt):
   type = field.WhichOneof("big_int")
   if type == "int":
     return field.int
@@ -140,18 +145,20 @@ def get_big_int(field : io_pb2.BigInt):
 
 
 # Protobuf serialization and parsing
-def serialize_exp_int(exp_int : ExpInt, field : io_pb2.ExpInt):
+def serialize_exp_int(exp_int: ExpInt, field: io_pb2.ExpInt):
   set_big_int(field.const, exp_int.const)
   field.denom = exp_int.denom
   for term in exp_int.terms:
     serialize_exp_term(term, field.terms.add())
 
-def serialize_exp_term(term : ExpTerm, field : io_pb2.ExpTerm):
+
+def serialize_exp_term(term: ExpTerm, field: io_pb2.ExpTerm):
   field.base = term.base
   set_big_int(field.coef, term.coef)
   set_big_int(field.exponent, term.exponent)
 
-def parse_exp_int(field : io_pb2.ExpInt) -> ExpInt:
+
+def parse_exp_int(field: io_pb2.ExpInt) -> ExpInt:
   if field.HasField("const"):
     const = get_big_int(field.const)
   else:
@@ -160,7 +167,8 @@ def parse_exp_int(field : io_pb2.ExpInt) -> ExpInt:
   terms = [parse_exp_term(term) for term in field.terms]
   return ExpInt(terms, const, field.denom)
 
-def parse_exp_term(field : io_pb2.ExpTerm) -> ExpTerm:
+
+def parse_exp_term(field: io_pb2.ExpTerm) -> ExpTerm:
   if field.HasField("coef"):
     coef = get_big_int(field.coef)
   else:
@@ -170,15 +178,18 @@ def parse_exp_term(field : io_pb2.ExpTerm) -> ExpTerm:
   return ExpTerm(field.base, coef, exp)
 
 
-def is_infinite(halt_status : io_pb2.HaltStatus) -> bool:
+def is_infinite(halt_status: io_pb2.HaltStatus) -> bool:
   # Only infinite if it is decided and not halting.
   return halt_status.is_decided and not halt_status.is_halting
 
-def set_halting(tm_status  : io_pb2.BBStatus,
-                halt_steps : int,
-                halt_score : Optional[int],
-                from_state  : Optional[int] = None,
-                from_symbol : Optional[int] = None):
+
+def set_halting(
+  tm_status: io_pb2.BBStatus,
+  halt_steps: int,
+  halt_score: Optional[int],
+  from_state: Optional[int] = None,
+  from_symbol: Optional[int] = None,
+):
   """Specify that we know that this machine halts."""
   tm_status.halt_status.is_decided = True
   tm_status.halt_status.is_halting = True
@@ -194,22 +205,21 @@ def set_halting(tm_status  : io_pb2.BBStatus,
   # Technically, Aaronson's definition calls Halting machines Quasihalting also.
   set_not_quasihalting(tm_status)
 
-def set_not_halting(tm_status  : io_pb2.BBStatus,
-                    inf_reason : io_pb2.InfReason = io_pb2.INF_UNSPECIFIED):
+
+def set_not_halting(tm_status: io_pb2.BBStatus, inf_reason: io_pb2.InfReason = io_pb2.INF_UNSPECIFIED):
   """Specify that we know that this machine does not halt."""
   tm_status.halt_status.is_decided = True
   tm_status.halt_status.is_halting = False
   tm_status.halt_status.inf_reason = inf_reason
 
-def set_not_quasihalting(tm_status : io_pb2.BBStatus):
+
+def set_not_quasihalting(tm_status: io_pb2.BBStatus):
   """Specify that we know that this machine does not quasihalt."""
   tm_status.quasihalt_status.is_decided = True
   tm_status.quasihalt_status.is_quasihalting = False
 
 
-def set_inf_recur(tm_status : io_pb2.BBStatus,
-                  states_to_ignore,
-                  states_last_seen):
+def set_inf_recur(tm_status: io_pb2.BBStatus, states_to_ignore, states_last_seen):
   """Call for a TM that has some form of infinite recurrence.
   This detects if it has quasihalted (or if it will visit all states for all
   time) and sets the quasihalt_status (as well as halt_status since we know

@@ -48,8 +48,7 @@ class SystemTest(unittest.TestCase):
     self.assertFalse(bb_status.halt_status.is_halting)
     self.assertTrue(bb_status.quasihalt_status.is_decided)
     self.assertTrue(bb_status.quasihalt_status.is_quasihalting)
-    self.assertEqual(Halting_Lib.get_big_int(bb_status.quasihalt_status.quasihalt_steps),
-                     1)
+    self.assertEqual(Halting_Lib.get_big_int(bb_status.quasihalt_status.quasihalt_steps), 1)
     self.assertEqual(bb_status.quasihalt_status.quasihalt_state, 0)  # A
 
   def test_complex(self):
@@ -64,8 +63,8 @@ class SystemTest(unittest.TestCase):
 
     self.assertTrue(lr_info.result.success)
     self.assertEqual(lr_info.result.start_step, 7_170)
-    self.assertEqual(lr_info.result.period,    29_117)
-    self.assertEqual(lr_info.result.offset,      +525)
+    self.assertEqual(lr_info.result.period, 29_117)
+    self.assertEqual(lr_info.result.offset, +525)
 
     self.assertTrue(bb_status.halt_status.is_decided)
     self.assertFalse(bb_status.halt_status.is_halting)
@@ -85,8 +84,8 @@ class SystemTest(unittest.TestCase):
 
     self.assertTrue(lr_info.result.success)
     self.assertGreaterEqual(lr_info.result.start_step, 7_170)
-    self.assertEqual(lr_info.result.period,    29_117)
-    self.assertEqual(lr_info.result.offset,      +525)
+    self.assertEqual(lr_info.result.period, 29_117)
+    self.assertEqual(lr_info.result.offset, +525)
 
     self.assertTrue(bb_status.halt_status.is_decided)
     self.assertFalse(bb_status.halt_status.is_halting)
@@ -108,8 +107,7 @@ class SystemTest(unittest.TestCase):
 
     self.assertTrue(bb_status.quasihalt_status.is_decided)
     self.assertTrue(bb_status.quasihalt_status.is_quasihalting)
-    self.assertEqual(Halting_Lib.get_big_int(bb_status.quasihalt_status.quasihalt_steps),
-                     61)
+    self.assertEqual(Halting_Lib.get_big_int(bb_status.quasihalt_status.quasihalt_steps), 61)
     self.assertEqual(bb_status.quasihalt_status.quasihalt_state, 3)  # D
 
   def test_halt(self):
@@ -124,13 +122,11 @@ class SystemTest(unittest.TestCase):
 
     self.assertTrue(bb_status.halt_status.is_decided)
     self.assertTrue(bb_status.halt_status.is_halting)
-    self.assertEqual(Halting_Lib.get_big_int(bb_status.halt_status.halt_steps),
-                     107)
+    self.assertEqual(Halting_Lib.get_big_int(bb_status.halt_status.halt_steps), 107)
     # We do not currently calculate halting score in LR. But if we do in the
     # future, this will automatically test it.
     if bb_status.halt_status.HasField("halt_score"):
-      self.assertEqual(Halting_Lib.get_big_int(bb_status.halt_status.halt_score),
-                       13)
+      self.assertEqual(Halting_Lib.get_big_int(bb_status.halt_status.halt_score), 13)
 
     self.assertTrue(bb_status.quasihalt_status.is_decided)
     self.assertFalse(bb_status.quasihalt_status.is_quasihalting)

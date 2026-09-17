@@ -9,16 +9,17 @@ Prints out all TMs with more than one halt state and lists the number of TMs
 that have each number of halts.
 """
 
-
 import math
 import sys
 
 from IO import IO
 
+
 def get_ttable(string):
   start = string.find("[[")
   end = string.rfind("]]") + len("]]")
   return eval(string[start:end])
+
 
 def count_halts(ttable):
   halts = 0
@@ -27,6 +28,7 @@ def count_halts(ttable):
       if cell[2] == -1:
         halts += 1
   return halts
+
 
 # Main
 infile = open(sys.argv[1], "r")
@@ -46,7 +48,9 @@ width = int(math.log(total_count, 10)) + 2
 
 print()
 for n in range(1, max(count.keys()) + 1):
-  print(("%"+repr(width)+"d machines with %d halts (%.1f%%)") % (
-    count.get(n, 0), n, count.get(n, 0) * 100 / total_count))
+  print(
+    ("%" + repr(width) + "d machines with %d halts (%.1f%%)")
+    % (count.get(n, 0), n, count.get(n, 0) * 100 / total_count)
+  )
 print()
-print(("%"+repr(width)+"d total machines") % total_count)
+print(("%" + repr(width) + "d total machines") % total_count)

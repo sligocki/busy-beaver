@@ -20,34 +20,45 @@ def add_option_group(parser):
 
   group = OptionGroup(parser, "Macro Machine options")
 
-  group.add_option("-n", "--block-size", type=int, metavar="SIZE",
-                   help="Block size to use in macro machine simulator "
-                   "(default is to guess with the block_finder algorithm).")
-  group.add_option("-b", "--no-backsymbol", dest="backsymbol",
-                   action="store_false", default=True,
-                   help="Turn OFF backsymbol macro machine.")
+  group.add_option(
+    "-n",
+    "--block-size",
+    type=int,
+    metavar="SIZE",
+    help="Block size to use in macro machine simulator (default is to guess with the block_finder algorithm).",
+  )
+  group.add_option(
+    "-b",
+    "--no-backsymbol",
+    dest="backsymbol",
+    action="store_false",
+    default=True,
+    help="Turn OFF backsymbol macro machine.",
+  )
 
   parser.add_option_group(group)
+
 
 # Some type aliases
 Symbol = int
 Dir = int
 Run_Condition = str
 
-LEFT : Dir = 0
-RIGHT : Dir = 1
-STAY : Dir = 2
+LEFT: Dir = 0
+RIGHT: Dir = 1
+STAY: Dir = 2
 
 # Return Conditions:
-RUNNING    = "Running"    # Machine still running normally
-HALT       = "Halt"       # Machine halts in or directly after move
-INF_REPEAT = "Inf_Repeat" # Machine proven not to halt within move
-UNDEFINED  = "Undefined"  # Machine encountered undefined transition
-TIME_OUT   = "Time_Out"   # Machine ran over time limit
+RUNNING = "Running"  # Machine still running normally
+HALT = "Halt"  # Machine halts in or directly after move
+INF_REPEAT = "Inf_Repeat"  # Machine proven not to halt within move
+UNDEFINED = "Undefined"  # Machine encountered undefined transition
+TIME_OUT = "Time_Out"  # Machine ran over time limit
 # TODO: Called "Gave_Up" for historical reasons
-OVER_STEPS_IN_MACRO = "Gave_Up" # Machine took too many base steps in a single macro step
+OVER_STEPS_IN_MACRO = "Gave_Up"  # Machine took too many base steps in a single macro step
 
-def other_dir(dir : Dir) -> Dir:
+
+def other_dir(dir: Dir) -> Dir:
   if dir == LEFT:
     return RIGHT
   else:
@@ -58,13 +69,14 @@ def other_dir(dir : Dir) -> Dir:
 @dataclass(frozen=True)
 class Transition:
   """Class representing the result of a transition."""
-  condition : Run_Condition
-  symbol_out : Any
-  state_out : Any
-  dir_out : Dir
-  num_base_steps : int
-  states_last_seen : dict
-  condition_details : tuple = tuple()
+
+  condition: Run_Condition
+  symbol_out: Any
+  state_out: Any
+  dir_out: Dir
+  num_base_steps: int
+  states_last_seen: dict
+  condition_details: tuple = tuple()
 
   def replace(self, **kws) -> Transition:
     """Return copy of object with some fields updated."""
@@ -73,9 +85,11 @@ class Transition:
   # TODO: Deprecate
   def to_legacy_tuple(self) -> tuple[tuple, tuple, int]:
     """Return legacy tuple-form of transition."""
-    return ((self.condition,) + self.condition_details,
-            (self.symbol_out, self.state_out, self.dir_out),
-            self.num_base_steps)
+    return (
+      (self.condition,) + self.condition_details,
+      (self.symbol_out, self.state_out, self.dir_out),
+      self.num_base_steps,
+    )
 
   def to_ttable_str(self) -> str:
     if self.condition == UNDEFINED:
@@ -92,14 +106,15 @@ class Transition:
   def equals(self, other):
     # Note: We ignore metadata fields (num_base_steps, etc). This probably only
     # makes sense for use with Simple_Machines where those are trivial.
-    return (self.condition == other.condition and
-            self.symbol_out == other.symbol_out and
-            self.state_out == other.state_out and
-            self.dir_out == other.dir_out)
+    return (
+      self.condition == other.condition
+      and self.symbol_out == other.symbol_out
+      and self.state_out == other.state_out
+      and self.dir_out == other.dir_out
+    )
 
 
-def sim_limited(tm, state, start_tape, pos : int, dir : Dir,
-                max_loops : int) -> Transition:
+def sim_limited(tm, state, start_tape, pos: int, dir: Dir, max_loops: int) -> Transition:
   """Simulate TM on a limited tape segment.
   Can detect HALT and INF_REPEAT. Used by Macro Machines."""
   # num_base_steps in the bottom level Simple_Machine.
@@ -169,12 +184,17 @@ def sim_limited(tm, state, start_tape, pos : int, dir : Dir,
     condition_details = tuple()
 
   return Transition(
-    condition=condition, condition_details=condition_details,
+    condition=condition,
+    condition_details=condition_details,
     # NOTE: We return the tape as `symbol_out` which is roughly right for
     # Block_Macro_Machine, but Backsymbol_Macro_Machine will need to modify
     # this and state_out.
-    symbol_out=tape, state_out=state, dir_out=dir,
-    num_base_steps=num_base_steps, states_last_seen=states_last_seen)
+    symbol_out=tape,
+    state_out=state,
+    dir_out=dir,
+    num_base_steps=num_base_steps,
+    states_last_seen=states_last_seen,
+  )
 
 
 class Turing_Machine(object):
@@ -203,6 +223,7 @@ class Turing_Machine(object):
 STATES = string.ascii_uppercase + string.ascii_lowercase + string.digits + "!@#$%^&*" + "Z"
 SYMBOLS = string.digits + "-"
 DIRS = "LRS-"
+
 
 def machine_ttable_to_str(machine):
   """
@@ -242,9 +263,9 @@ def machine_ttable_to_str(machine):
       if trans_table[i][j].condition == UNDEFINED:
         result += "--- "
       else:
-        result += "%c"   % SYMBOLS[trans_table[i][j].symbol_out]
-        result += "%c"   % DIRS[trans_table[i][j].dir_out]
-        result += "%c "  % STATES[trans_table[i][j].state_out]
+        result += "%c" % SYMBOLS[trans_table[i][j].symbol_out]
+        result += "%c" % DIRS[trans_table[i][j].dir_out]
+        result += "%c " % STATES[trans_table[i][j].state_out]
     result += "|\n"
 
     result += "   +---"
@@ -259,6 +280,7 @@ def machine_ttable_to_str(machine):
 
 class Simple_Machine_State(int):
   """Wrapper provides a pretty-printer for a Turing machine's integer state."""
+
   def print_with_dir(self, dir):
     return self.__str__()
 
@@ -268,8 +290,10 @@ class Simple_Machine_State(int):
   def __repr__(self):
     return STATES[self]
 
+
 class Simple_Machine(Turing_Machine):
   """The most general Turing Machine based off of a transition table"""
+
   def __init__(self, ttable, states, symbols) -> None:
     self.trans_table = ttable
     self.states = states
@@ -283,7 +307,7 @@ class Simple_Machine(Turing_Machine):
     self.init_state = Simple_Machine_State(0)
     self.time_limit = TimeLimit()
 
-  def get_trans_object(self, symbol_in, state_in, dir_in = None) -> Transition:
+  def get_trans_object(self, symbol_in, state_in, dir_in=None) -> Transition:
     # Note: Simple_Machine ignores dir_in.
     return self.trans_table[state_in][symbol_in]
 
@@ -291,8 +315,7 @@ class Simple_Machine(Turing_Machine):
     if self.num_states < 25 and self.num_symbols < 10:
       row_strs = []
       for row in self.trans_table:
-        row_strs.append("".join(trans.to_ttable_str()
-                                 for trans in row))
+        row_strs.append("".join(trans.to_ttable_str() for trans in row))
       return "_".join(row_strs)
     else:
       return ""
@@ -309,10 +332,11 @@ class Simple_Machine(Turing_Machine):
   def list_base_states(self):
     return list(range(self.num_states))
 
+
 def tm_from_quintuples(quints, states, symbols) -> Simple_Machine:
   # Set all defined transitions.
   ttable = [[None for _ in symbols] for _ in states]
-  for (state_in, symbol_in, symbol_out, dir_out, state_out) in quints:
+  for state_in, symbol_in, symbol_out, dir_out, state_out in quints:
     if symbol_out != None:
       # Convert all into integers
       state_in = states.index(state_in)
@@ -328,64 +352,81 @@ def tm_from_quintuples(quints, states, symbols) -> Simple_Machine:
         state_out = states.index(state_out)
 
       ttable[state_in][symbol_in] = Transition(
-        condition=condition, condition_details=condition_details,
+        condition=condition,
+        condition_details=condition_details,
         symbol_out=symbol_out,
         state_out=Simple_Machine_State(state_out),
         dir_out=dir_out,
         # For base TMs, single trans is always 1 step and only uses one state.
-        num_base_steps=1, states_last_seen={state_in: 0})
+        num_base_steps=1,
+        states_last_seen={state_in: 0},
+      )
 
   # Define "undefined" transitions (with metadata).
   for state_in in range(len(states)):
     for symbol_in in range(len(symbols)):
       if not ttable[state_in][symbol_in]:
         ttable[state_in][symbol_in] = Transition(
-          condition = UNDEFINED,
-          condition_details = ((symbol_in, state_in),),
+          condition=UNDEFINED,
+          condition_details=((symbol_in, state_in),),
           # Make all undefined transitions act like the default halt trans: 1RH
-          symbol_out = 1,
-          state_out = Simple_Machine_State(-1),
-          dir_out = RIGHT,
+          symbol_out=1,
+          state_out=Simple_Machine_State(-1),
+          dir_out=RIGHT,
           # For base TMs, single trans is always 1 step and only uses one state.
-          num_base_steps=1, states_last_seen={state_in: 0})
+          num_base_steps=1,
+          states_last_seen={state_in: 0},
+        )
 
   return Simple_Machine(ttable, states, symbols)
 
 
-class Macro_Machine(Turing_Machine): pass
+class Macro_Machine(Turing_Machine):
+  pass
+
 
 class Block_Symbol(tuple):
   """Wrapper for block symbols that defines a concise-printer."""
+
   def __repr__(self):
     # TODO: this assumes single digit sub-symbols
     return "".join((str(x) for x in self))
+
 
 class OffsetStartState:
   """
   Dummy initial state for running block size with an offset (starting in
   the middle of a symbol).
   """
+
   def __init__(self, state, offset):
     self.state = state
     self.offset = offset
 
+
 class Tape_Head_Symbol(object):
   """Wrapper for block symbols where the head is embedded inside."""
+
   is_embedded = True
+
   def __init__(self, tup, state, dir, pos):
     self.tup = tup
     self.state = state
     self.dir = dir
     self.pos = pos
+
   def __iter__(self):
     return iter(self.tup)
+
   def __len__(self):
     return len(self.tup)
+
   def __getitem__(self, i):
     return self.tup[i]
+
   def to_string(self):
-    left = "".join((str(x) for x in self.tup[:self.pos]))
-    right = "".join((str(x) for x in self.tup[self.pos:]))
+    left = "".join((str(x) for x in self.tup[: self.pos]))
+    right = "".join((str(x) for x in self.tup[self.pos :]))
     if hasattr(self.state, "print_with_dir"):
       state_str = self.state.print_with_dir(self.dir)
     else:
@@ -397,33 +438,41 @@ class Tape_Head_Symbol(object):
       return " ".join(filter(None, [left, "%s>" % state_str, right]))
     else:
       return " ".join(filter(None, [left, "<%s" % state_str, right]))
+
   def __repr__(self):
     return self.to_string()
+
   def __eq__(self, other):
-    return (type(self) == type(other) and
-            self.tup == other.tup and
-            self.state == other.state and
-            self.dir == other.dir and
-            self.pos == other.pos)
+    return (
+      type(self) == type(other)
+      and self.tup == other.tup
+      and self.state == other.state
+      and self.dir == other.dir
+      and self.pos == other.pos
+    )
+
   def __hash__(self):
     return hash((self.tup, self.state, self.dir, self.pos))
 
+
 class Hidden_State:
   is_embedded_in_tape = True
+
   def print_with_dir(self, dir):
     return ""
 
+
 class Block_Macro_Machine(Macro_Machine):
   """A derivative Turing Machine which simulates another machine clumping k-symbols together into a block-symbol"""
+
   MAX_TTABLE_CELLS = 100000
 
-  def __init__(self, base_machine, block_size, offset=None,
-               max_sim_steps_per_symbol=10_000):
+  def __init__(self, base_machine, block_size, offset=None, max_sim_steps_per_symbol=10_000):
     assert block_size > 0
     self.block_size = block_size
     self.base_machine = base_machine
     self.num_states = base_machine.num_states
-    self.num_symbols = base_machine.num_symbols ** block_size
+    self.num_symbols = base_machine.num_symbols**block_size
     # A lazy evaluation hashed macro transition table
     self.trans_table = {}
     self.init_dir = base_machine.init_dir
@@ -471,26 +520,30 @@ class Block_Macro_Machine(Macro_Machine):
       assert macro_dir_in == LEFT, macro_dir_in
       pos = self.block_size - 1
 
-    trans = sim_limited(self.base_machine,
-                        state=macro_state_in, dir=macro_dir_in,
-                        start_tape=macro_symbol_in, pos=pos,
-                        max_loops=self.max_sim_steps_per_symbol)
+    trans = sim_limited(
+      self.base_machine,
+      state=macro_state_in,
+      dir=macro_dir_in,
+      start_tape=macro_symbol_in,
+      pos=pos,
+      max_loops=self.max_sim_steps_per_symbol,
+    )
 
     # Convert symbol into the correct format.
     if trans.condition != RUNNING:
       pos = trans.condition_details[-1]
       symbol_out = Tape_Head_Symbol(trans.symbol_out, trans.state_out, trans.dir_out, pos)
       state_out = Hidden_State()
-      return trans.replace(symbol_out = symbol_out, state_out = state_out)
+      return trans.replace(symbol_out=symbol_out, state_out=state_out)
     else:
-      return trans.replace(symbol_out = Block_Symbol(trans.symbol_out))
+      return trans.replace(symbol_out=Block_Symbol(trans.symbol_out))
 
 
 @total_ordering
 class Backsymbol_Macro_Machine_State:
   def __init__(self, base_state, back_symbol):
     assert isinstance(base_state, (Simple_Machine_State, OffsetStartState, Hidden_State)), base_state
-    self.base_state  = base_state
+    self.base_state = base_state
     self.back_symbol = back_symbol
 
   @property
@@ -505,37 +558,40 @@ class Backsymbol_Macro_Machine_State:
       return str(self.back_symbol)
 
     if dir == LEFT:
-      return "%s (%s)" % (self.base_state.print_with_dir(dir),self.back_symbol)
+      return "%s (%s)" % (self.base_state.print_with_dir(dir), self.back_symbol)
     else:
-      return "(%s) %s" % (self.back_symbol,self.base_state.print_with_dir(dir))
+      return "(%s) %s" % (self.back_symbol, self.base_state.print_with_dir(dir))
 
   def __repr__(self):
-    return "(%s,%s)" % (self.base_state,self.back_symbol)
+    return "(%s,%s)" % (self.base_state, self.back_symbol)
 
   # These must be defined so that we can check that two states are equal,
   # not equal, or use them as keys into a dictionary.
   def __eq__(self, other):
-    return (self.base_state == other.base_state and
-            self.back_symbol == other.back_symbol)
+    return self.base_state == other.base_state and self.back_symbol == other.back_symbol
 
   # Define __lt__ so that we can sort backstates.
   def __lt__(self, other):
-    return (self.base_state, self.back_symbol) < (other.base_state, other.back_symbol)
+    return (self.base_state, self.back_symbol) < (
+      other.base_state,
+      other.back_symbol,
+    )
 
   def __hash__(self):
     return hash((self.base_state, self.back_symbol))
 
+
 class Backsymbol_Macro_Machine(Macro_Machine):
   MAX_TTABLE_CELLS = 100000
-  def __init__(self, base_machine, max_sim_steps_per_symbol = 1_000):
+
+  def __init__(self, base_machine, max_sim_steps_per_symbol=1_000):
     self.base_machine = base_machine
     self.num_states = base_machine.num_states
     self.num_symbols = base_machine.num_symbols
     # A lazy evaluation hashed macro transition table
     self.trans_table = {}
     # States of macro machine are old states and symbol behind state
-    self.init_state = Backsymbol_Macro_Machine_State(base_machine.init_state,
-                                                     base_machine.init_symbol)
+    self.init_state = Backsymbol_Macro_Machine_State(base_machine.init_state, base_machine.init_symbol)
     self.init_dir = base_machine.init_dir
     self.init_symbol = base_machine.init_symbol
     # Maximum number of base-steps per macro-step evaluation w/o repeat
@@ -549,7 +605,9 @@ class Backsymbol_Macro_Machine(Macro_Machine):
     return self.base_machine.eval_symbol(symbol)
 
   def eval_state(self, backsymbol_macro_machine_state):
-    return self.base_machine.eval_state(backsymbol_macro_machine_state.base_state) + self.base_machine.eval_symbol(backsymbol_macro_machine_state.back_symbol)
+    return self.base_machine.eval_state(backsymbol_macro_machine_state.base_state) + self.base_machine.eval_symbol(
+      backsymbol_macro_machine_state.back_symbol
+    )
 
   def list_base_states(self):
     return self.base_machine.list_base_states()
@@ -570,10 +628,14 @@ class Backsymbol_Macro_Machine(Macro_Machine):
       tape = [macro_symbol_in, macro_state_in.back_symbol]
       pos = 0
 
-    trans = sim_limited(self.base_machine,
-                        state=macro_state_in.base_state, dir=macro_dir_in,
-                        start_tape=tape, pos=pos,
-                        max_loops=self.max_sim_steps_per_symbol)
+    trans = sim_limited(
+      self.base_machine,
+      state=macro_state_in.base_state,
+      dir=macro_dir_in,
+      start_tape=tape,
+      pos=pos,
+      max_loops=self.max_sim_steps_per_symbol,
+    )
 
     # sim_limited just leaves the final tape in `trans.symbol_out`, we
     # need to split out the backsymbol and printed_symbol ourselves.
@@ -589,14 +651,15 @@ class Backsymbol_Macro_Machine(Macro_Machine):
 
     # Update symbol_out and state_out to be backsymbol-style.
     state_out = Backsymbol_Macro_Machine_State(trans.state_out, backsymbol)
-    return trans.replace(symbol_out = symbol_out, state_out = state_out)
+    return trans.replace(symbol_out=symbol_out, state_out=state_out)
 
 
 @dataclass(frozen=True, order=True)
 class History_Symbol:
   """Symbol with history (previous transitions)."""
-  base_symbol : Any      # Symbol
-  history : tuple   # frozen list of transition (State, Symbol) pairs
+
+  base_symbol: Any  # Symbol
+  history: tuple  # frozen list of transition (State, Symbol) pairs
 
   def __post_init__(self):
     assert not isinstance(self.base_symbol, History_Symbol), self.base_symbol
@@ -607,12 +670,13 @@ class History_Symbol:
 
 
 # Two strategies for keeping track of history:
-def update_history_fixed(hs : History_Symbol, new_symb, trans, max_hist : int) -> History_Symbol:
+def update_history_fixed(hs: History_Symbol, new_symb, trans, max_hist: int) -> History_Symbol:
   """Keep track of last `max_size` transitions allowing duplicates."""
-  new_hist = (trans,) + hs.history[:max_hist-1]
+  new_hist = (trans,) + hs.history[: max_hist - 1]
   return History_Symbol(base_symbol=new_symb, history=new_hist)
 
-def update_history_lru(hs : History_Symbol, new_symb, trans) -> History_Symbol:
+
+def update_history_lru(hs: History_Symbol, new_symb, trans) -> History_Symbol:
   """Keep track of all previous transitions, ordered by last use. No max size."""
   new_hist = (trans,) + tuple(tr for tr in hs.history if tr != trans)
   return History_Symbol(base_symbol=new_symb, history=new_hist)
@@ -627,7 +691,7 @@ class Fixed_History_MM(Macro_Machine):
   in different ways for deciders like CTL and CPS.
   """
 
-  def __init__(self, base_tm : Turing_Machine, max_hist : int) -> None:
+  def __init__(self, base_tm: Turing_Machine, max_hist: int) -> None:
     self.base_tm = base_tm
     self.max_hist = max_hist
 
@@ -639,18 +703,19 @@ class Fixed_History_MM(Macro_Machine):
     self.num_states = base_tm.num_states
     self.time_limit = base_tm.time_limit
 
-  def get_trans_object(self, hist_symbol_in : History_Symbol, state_in, dir_in) -> Transition:
-    trans = self.base_tm.get_trans_object(hist_symbol_in.base_symbol,
-                                          state_in, dir_in)
+  def get_trans_object(self, hist_symbol_in: History_Symbol, state_in, dir_in) -> Transition:
+    trans = self.base_tm.get_trans_object(hist_symbol_in.base_symbol, state_in, dir_in)
     trans_pair = (trans.state_out, trans.symbol_out)
     # Update to a History_Symbol
     hist_symbol_out = update_history_lru(hist_symbol_in, trans.symbol_out, trans_pair)
-    return trans.replace(symbol_out = hist_symbol_out)
-  
-  def eval_symbol(self, hist_symbol : History_Symbol) -> int:
+    return trans.replace(symbol_out=hist_symbol_out)
+
+  def eval_symbol(self, hist_symbol: History_Symbol) -> int:
     return self.base_tm.eval_symbol(hist_symbol.base_symbol)
+
   def eval_state(self, state) -> int:
     return self.base_tm.eval_state(state)
+
 
 class LRU_History_MM(Macro_Machine):
   """
@@ -661,7 +726,7 @@ class LRU_History_MM(Macro_Machine):
   in different ways for deciders like CTL and CPS.
   """
 
-  def __init__(self, base_tm : Turing_Machine) -> None:
+  def __init__(self, base_tm: Turing_Machine) -> None:
     self.base_tm = base_tm
 
     self.init_symbol = History_Symbol(base_tm.init_symbol, tuple())  # Empty history
@@ -672,16 +737,17 @@ class LRU_History_MM(Macro_Machine):
     self.num_states = base_tm.num_states
     self.time_limit = base_tm.time_limit
 
-  def get_trans_object(self, hist_symbol_in : History_Symbol, state_in, dir_in) -> Transition:
+  def get_trans_object(self, hist_symbol_in: History_Symbol, state_in, dir_in) -> Transition:
     base_symbol = hist_symbol_in.base_symbol
     assert not isinstance(base_symbol, History_Symbol), hist_symbol_in
     trans = self.base_tm.get_trans_object(base_symbol, state_in, dir_in)
     trans_pair = (trans.state_out, trans.symbol_out)
     # Update to a History_Symbol
     hist_symbol_out = update_history_lru(hist_symbol_in, trans.symbol_out, trans_pair)
-    return trans.replace(symbol_out = hist_symbol_out)
-  
-  def eval_symbol(self, hist_symbol : History_Symbol) -> int:
+    return trans.replace(symbol_out=hist_symbol_out)
+
+  def eval_symbol(self, hist_symbol: History_Symbol) -> int:
     return self.base_tm.eval_symbol(hist_symbol.base_symbol)
+
   def eval_state(self, state) -> int:
     return self.base_tm.eval_state(state)

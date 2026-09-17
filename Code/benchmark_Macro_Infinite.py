@@ -14,9 +14,7 @@ for block_size in range(2, 21):
 
   print("Starting", block_size)
   start_time = time.time()
-  trans = macro_machine.get_trans_object(macro_symbol,
-                                         macro_machine.init_state,
-                                         Turing_Machine.RIGHT)
+  trans = macro_machine.get_trans_object(macro_symbol, macro_machine.init_state, Turing_Machine.RIGHT)
   end_time = time.time()
   print("Finished", block_size, end_time - start_time)
 

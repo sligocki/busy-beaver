@@ -9,8 +9,8 @@ import unittest
 from Halting_Lib import set_big_int, get_big_int
 import io_pb2
 
-class ExpIntTest(unittest.TestCase):
 
+class ExpIntTest(unittest.TestCase):
   def test_sign(self):
     self.assertEqual(sign(138), 1)
     self.assertEqual(sign(-127), -1)
@@ -26,12 +26,12 @@ class ExpIntTest(unittest.TestCase):
 
   def test_eval(self):
     self.assertEqual(try_eval(exp_int(2, 13)), 2**13)
-    self.assertEqual(try_eval((47 * exp_int(3, 21) + 20 * exp_int(3, 11) - 5) / 2),
-                     (47 * 3**21 + 20 * 3**11 - 5) / 2)
-    self.assertEqual(try_eval(exp_int(2, exp_int(2, exp_int(2, 2)))),
-                     2**(2**(2**2)))
-    self.assertEqual(try_eval(-exp_int(7, 7) + 3),
-                     3 - 7**7)
+    self.assertEqual(
+      try_eval((47 * exp_int(3, 21) + 20 * exp_int(3, 11) - 5) / 2),
+      (47 * 3**21 + 20 * 3**11 - 5) / 2,
+    )
+    self.assertEqual(try_eval(exp_int(2, exp_int(2, exp_int(2, 2)))), 2 ** (2 ** (2**2)))
+    self.assertEqual(try_eval(-exp_int(7, 7) + 3), 3 - 7**7)
 
   def test_compare_close_ratios(self):
     mid = exp_int(7, exp_int(7, 7))
@@ -55,7 +55,7 @@ class ExpIntTest(unittest.TestCase):
   def test_compare_close(self):
     x = exp_int(7, 7)
     a = (7**10 + 1) * exp_int(7, x)
-    b = exp_int(7, x+10)
+    b = exp_int(7, x + 10)
     self.assertGreater(a, b)
     self.assertLess(-a, -b)
     self.assertEqual(sign(a - b), 1)
@@ -64,7 +64,7 @@ class ExpIntTest(unittest.TestCase):
   def todo_test_compare_closer(self):
     x = exp_int(7, exp_int(7, 7))
     a = (7**10 + 1) * exp_int(7, x)
-    b = exp_int(7, x+10)
+    b = exp_int(7, x + 10)
     self.assertGreater(a, b)
     self.assertLess(-a, -b)
     self.assertEqual(sign(a - b), 1)
@@ -94,19 +94,19 @@ class ExpIntTest(unittest.TestCase):
   def test_mod_6x2_t15(self):
     # From https://www.sligocki.com/2022/06/21/bb-6-2-t15.html
     k2 = 22143
-    A3 = (exp_int(3, k2+3) - 11) / 2
+    A3 = (exp_int(3, k2 + 3) - 11) / 2
     (k3, r3) = divmod(A3, 4)
     self.assertEqual(r3, 3)
 
-    A4 = (exp_int(3, k3+3) + 1) / 2
+    A4 = (exp_int(3, k3 + 3) + 1) / 2
     (k4, r4) = divmod(A4, 4)
     self.assertEqual(r4, 1)
 
-    A5 = (exp_int(3, k4+3) - 11) / 2
+    A5 = (exp_int(3, k4 + 3) - 11) / 2
     (k5, r5) = divmod(A5, 4)
     self.assertEqual(r5, 3)
 
-    A6 = (exp_int(3, k5+3) + 1) / 2
+    A6 = (exp_int(3, k5 + 3) + 1) / 2
     (k6, r6) = divmod(A6, 4)
     self.assertEqual(r6, 2)
 
@@ -123,19 +123,17 @@ class ExpIntTest(unittest.TestCase):
     x_pb_reparsed.ParseFromString(x_pb_bytes)
     self.assertTrue(Exp_Int.struct_eq(get_big_int(x_pb_reparsed), x))
 
-
   def todo_test_bug_normalize(self):
     # Simplified version of issue
-    x = (exp_int(7,     exp_int(7, exp_int(7, 7))) +
-         exp_int(7, 1 + exp_int(7, exp_int(7, 7))))
+    x = exp_int(7, exp_int(7, exp_int(7, 7))) + exp_int(7, 1 + exp_int(7, exp_int(7, 7)))
     self.assertEqual(sign(x - x), 0)
 
     # Came up while simulating 1RB1LC_1LC1LB_0LE0LD_0LC1LB_1RF0RA_0RE---
-    a =  5 * exp_int(2,  81 + 25 * exp_int(2, 5 * exp_int(2, 95)))
-    b =      exp_int(2, -12 + 25 * exp_int(2, 5 * exp_int(2, 95)))
+    a = 5 * exp_int(2, 81 + 25 * exp_int(2, 5 * exp_int(2, 95)))
+    b = exp_int(2, -12 + 25 * exp_int(2, 5 * exp_int(2, 95)))
     x = a + b
     self.assertEqual(sign(x + (-x)), 0)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
   unittest.main()

@@ -16,7 +16,6 @@ one is prepended; likewise a 0^inf is appended to the right if absent.
 
 from __future__ import annotations
 
-import math
 import re
 import string
 from dataclasses import dataclass
@@ -26,24 +25,25 @@ from dataclasses import dataclass
 STATES = string.ascii_uppercase + string.ascii_lowercase + "!"
 
 from NatExpr import InfNat
+
 INF = InfNat()
 
 # Token patterns
 _STATE_RE = re.compile(r"^(<)([A-Za-z]+)$|^([A-Za-z]+)(>)$")
-_BLOCK_RE  = re.compile(r"^(\d+)(?:\^(\w+))?$")
+_BLOCK_RE = re.compile(r"^(\d+)(?:\^(\w+))?$")
 
 
 @dataclass
 class ParsedConfig:
-  state_name: str        # e.g. "C"
-  state: int             # index into STATES
-  dir_left: bool         # True if written as <C, False if C>
+  state_name: str  # e.g. "C"
+  state: int  # index into STATES
+  dir_left: bool  # True if written as <C, False if C>
   # Each element is (block, count) where:
   #   block: list[int]  — symbol sequence for one repetition
   #   count: int | float | str  — int=fixed, inf=infinite, str=variable name
   left: list[tuple]
   right: list[tuple]
-  variables: list[str]   # variable names in first-appearance order
+  variables: list[str]  # variable names in first-appearance order
 
 
 def parse_tape_config(config_str: str) -> ParsedConfig:
@@ -56,11 +56,11 @@ def parse_tape_config(config_str: str) -> ParsedConfig:
   variables: list[str] = []
 
   for token in config_str.split():
-    if (m := _STATE_RE.fullmatch(token)):
+    if m := _STATE_RE.fullmatch(token):
       if m.group(1):  # <C form
         dir_left = True
         state_name = m.group(2)
-      else:           # C> form
+      else:  # C> form
         dir_left = False
         state_name = m.group(3)
       in_left = False
@@ -118,6 +118,7 @@ def expand_config(parsed: ParsedConfig) -> tuple[int, list[int], list[int]]:
   Raises ValueError if any variable or inf count is present (use for
   Visual_Simulator-style start configs).
   """
+
   def expand_side(elements: list[tuple], side_name: str) -> list[int]:
     syms: list[int] = []
     for block, count in elements:
@@ -125,8 +126,7 @@ def expand_config(parsed: ParsedConfig) -> tuple[int, list[int], list[int]]:
         continue  # skip implicit inf edges
       if isinstance(count, str):
         raise ValueError(
-          f"Variable exponent {count!r} not allowed in start config "
-          f"(got {side_name} element {block}^{count})"
+          f"Variable exponent {count!r} not allowed in start config (got {side_name} element {block}^{count})"
         )
       syms.extend(block * count)
     return syms

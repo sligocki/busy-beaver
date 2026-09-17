@@ -6,7 +6,6 @@ https://www.sligocki.com/2024/06/12/tm-transcripts.html
 See also: Lin_Recur_Detect.py for the traditional algorithm.
 """
 
-
 import argparse
 from dataclasses import dataclass
 import math
@@ -22,9 +21,10 @@ class TCResult:
   start_step: int
   period: int
 
+
 def has_blank(ts: Transcript, start: int, delta: int) -> bool:
   """Does the sequence ts.history[start:start+delta] have any "blank" (not written) symbols?"""
-  for step in range(start, start+delta):
+  for step in range(start, start + delta):
     if ts.history[step].symbol.is_blank:
       return True
   return False
@@ -45,21 +45,22 @@ def find_cycle_not_min(tm: TM, max_steps: int, verbose: bool = False) -> TCResul
 
     # Search for a delta such that
     #   ts.history[ref_step:ref_step+delta] == ts.history[ref_step+delta:ref_step+delta*2]
-    match_deltas : list[int] = []
+    match_deltas: list[int] = []
     for step in range(ref_step + 1, ref_step * 2):
-      new_deltas : list[int] = []
+      new_deltas: list[int] = []
       # Keep checking all matching deltas
       for delta in match_deltas + [step - ref_step]:
         if ts.history[step] == ts.history[step - delta]:
           if step - ref_step >= delta * 2:
             if has_blank(ts, ref_step, delta):
-              # Success, we found a repeat including 
+              # Success, we found a repeat including
               return TCResult(True, ref_step, delta)
           else:
             new_deltas.append(delta)
       match_deltas = new_deltas
 
   return TCResult(False, 0, 0)
+
 
 def minimize_cycle(tm: TM, result: TCResult) -> TCResult:
   """Take result from find_cycle_not_min() and minimize the start_step."""
@@ -89,6 +90,7 @@ def minimize_cycle(tm: TM, result: TCResult) -> TCResult:
 
   raise ValueError("TM did not cycle")
 
+
 def find_min_cycle(tm: TM, max_steps: int, verbose: bool) -> TCResult:
   result = find_cycle_not_min(tm, max_steps, verbose)
   result = minimize_cycle(tm, result)
@@ -98,13 +100,14 @@ def find_min_cycle(tm: TM, max_steps: int, verbose: bool) -> TCResult:
 def main():
   parser = argparse.ArgumentParser()
   parser.add_argument("tm", help="Turing Machine or file or file:record_num (0-indexed).")
-  parser.add_argument("--max-steps", type=int, default = math.inf)
+  parser.add_argument("--max-steps", type=int, default=math.inf)
   args = parser.parse_args()
 
   tm = IO.get_tm(args.tm)
   result = find_min_cycle(tm, args.max_steps, verbose=True)
 
   print(result)
+
 
 if __name__ == "__main__":
   main()

@@ -14,22 +14,23 @@ from pathlib import Path
 
 import Direct_Simulator
 import IO
-from Macro import Turing_Machine
 
 
-def extract_window(sim, window_size : int):
+def extract_window(sim, window_size: int):
   # window is centered on TM head.
   start = sim.tape.position - (window_size // 2)
   end = start + window_size
   tape_window = tuple(sim.tape.read(pos) for pos in range(start, end))
   return (sim.state, tape_window)
 
+
 def entropy(counts) -> float:
   total = sum(counts.values())
   freqs = [count / total for count in counts.values()]
   return sum(-p * math.log2(p) for p in freqs)
 
-def window_entropy(tm, window_size : int, num_samples : int):
+
+def window_entropy(tm, window_size: int, num_samples: int):
   sim = Direct_Simulator.DirectSimulator(tm)
   # Skip ahead to avoid startup behavior which is often different from later
   # common runtime behavior.
@@ -63,11 +64,11 @@ def main():
 
   with IO.Reader(args.infile) as reader:
     for tm_record in reader:
-      trans_h, window_h = window_entropy(tm_record.tm(),
-                                         args.window_size, args.num_samples)
+      trans_h, window_h = window_entropy(tm_record.tm(), args.window_size, args.num_samples)
       # The average increase in entropy from each additional symbol added.
       h_per_symbol = (window_h - trans_h) / (args.window_size - 1)
       print(f"{tm_record.ttable_str()}  {h_per_symbol:10.6f} {trans_h:10.6f} {window_h:10.6f}")
+
 
 if __name__ == "__main__":
   main()

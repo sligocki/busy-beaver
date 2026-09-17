@@ -5,8 +5,6 @@ Unit test for "Numbers/Algebraic_Expression.py"
 
 import Algebraic_Expression
 
-import os
-import sys
 import unittest
 
 
@@ -31,38 +29,27 @@ class SystemTest(unittest.TestCase):
 
   def test_always_cmp(self):
     # Always: 2x >= x
-    self.assertTrue(Algebraic_Expression.always_ge(
-      expr("2 x"), expr("x")))
+    self.assertTrue(Algebraic_Expression.always_ge(expr("2 x"), expr("x")))
     # Not always 2x > x  (could be == if x = 0)
-    self.assertFalse(Algebraic_Expression.always_gt(
-      expr("2 x"), expr("x")))
+    self.assertFalse(Algebraic_Expression.always_gt(expr("2 x"), expr("x")))
 
-    self.assertTrue(Algebraic_Expression.always_ge(
-      expr("x + 1"), expr("1")))
-    self.assertTrue(Algebraic_Expression.always_ge(
-      expr("x + 1"), expr("0 x + 1")))
-    self.assertTrue(Algebraic_Expression.always_ge(
-      expr("2 x + 1"), expr("x + 1")))
-    self.assertTrue(Algebraic_Expression.always_gt(
-      expr("x + 2"), expr("x + 1")))
-    self.assertTrue(Algebraic_Expression.always_gt(
-      expr("x + 2"), expr("1")))
-    self.assertTrue(Algebraic_Expression.always_gt(
-      expr("x + 1"), expr("x + 0")))
-    self.assertTrue(Algebraic_Expression.always_ge(
-      expr("x + 2 y + 1"), expr("x + y + 1")))
-    self.assertTrue(Algebraic_Expression.always_ge(
-      expr("2 x + 2 y + 1"), expr("x + 2 y + 1")))
-    self.assertTrue(Algebraic_Expression.always_gt(
-      expr("3 x + 2 y + 2"), expr("x + y + 1")))
+    self.assertTrue(Algebraic_Expression.always_ge(expr("x + 1"), expr("1")))
+    self.assertTrue(Algebraic_Expression.always_ge(expr("x + 1"), expr("0 x + 1")))
+    self.assertTrue(Algebraic_Expression.always_ge(expr("2 x + 1"), expr("x + 1")))
+    self.assertTrue(Algebraic_Expression.always_gt(expr("x + 2"), expr("x + 1")))
+    self.assertTrue(Algebraic_Expression.always_gt(expr("x + 2"), expr("1")))
+    self.assertTrue(Algebraic_Expression.always_gt(expr("x + 1"), expr("x + 0")))
+    self.assertTrue(Algebraic_Expression.always_ge(expr("x + 2 y + 1"), expr("x + y + 1")))
+    self.assertTrue(Algebraic_Expression.always_ge(expr("2 x + 2 y + 1"), expr("x + 2 y + 1")))
+    self.assertTrue(Algebraic_Expression.always_gt(expr("3 x + 2 y + 2"), expr("x + y + 1")))
 
   def test_divide(self):
     n = expr("n")
-    sum_n = n * (n+1) / 2
+    sum_n = n * (n + 1) / 2
     n_var = n.variable()
 
-    self.assertEqual(sum_n.substitute({n_var : 10}), 55)
-    self.assertEqual(sum_n.substitute({n_var : 13}), 91)
+    self.assertEqual(sum_n.substitute({n_var: 10}), 55)
+    self.assertEqual(sum_n.substitute({n_var: 13}), 91)
 
   def test_as_strictly_linear(self):
     n = expr("n")
@@ -78,9 +65,9 @@ class SystemTest(unittest.TestCase):
     # Negative cases
     # Constants don't count as "strictly" linear.
     self.assertEqual(expr("813").as_strictly_linear(), None)
-    self.assertEqual((n*n).as_strictly_linear(), None)
-    self.assertEqual((n*expr("m")).as_strictly_linear(), None)
+    self.assertEqual((n * n).as_strictly_linear(), None)
+    self.assertEqual((n * expr("m")).as_strictly_linear(), None)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
   unittest.main()

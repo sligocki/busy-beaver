@@ -3,7 +3,6 @@
 Run one of the CTL algorithms - CTL1, CTL2, CTL3, CTL4.
 """
 
-import sys
 import argparse
 from pathlib import Path
 
@@ -13,8 +12,6 @@ import CTL2
 import CTL3
 import CTL4
 import Halting_Lib
-from Macro import Simulator, Turing_Machine
-import Macro_Simulator
 
 import io_pb2
 
@@ -29,6 +26,7 @@ def get_module(type):
   if type == "CTL4":
     return CTL4
   raise Exception(type)
+
 
 def get_proto(type, tm_record):
   if type == "CTL1":
@@ -47,8 +45,12 @@ def filter(tm_record, type, block_size, offset, cutoff, use_backsymbol):
   with IO.Timer(info.result):
     module = get_module(type)
     success, num_iters = module.test_CTL(
-      tm_record.tm(), cutoff=cutoff, block_size=block_size, offset=offset,
-      use_backsymbol=use_backsymbol)
+      tm_record.tm(),
+      cutoff=cutoff,
+      block_size=block_size,
+      offset=offset,
+      use_backsymbol=use_backsymbol,
+    )
     if success:
       info.parameters.block_size = block_size
       info.parameters.offset = offset
@@ -61,19 +63,31 @@ def filter(tm_record, type, block_size, offset, cutoff, use_backsymbol):
       return True
   return False
 
+
 def filter_block_size(tm_record, block_size, args):
   if args.all_offsets:
     for offset in range(block_size):
-      if filter(tm_record, args.type,
-                block_size=block_size, offset=offset, cutoff=args.cutoff,
-                use_backsymbol=(not args.no_backsymbol)):
+      if filter(
+        tm_record,
+        args.type,
+        block_size=block_size,
+        offset=offset,
+        cutoff=args.cutoff,
+        use_backsymbol=(not args.no_backsymbol),
+      ):
         return True
     return False
 
   else:
-    return filter(tm_record, args.type,
-                  block_size=block_size, offset=args.offset, cutoff=args.cutoff,
-                  use_backsymbol=(not args.no_backsymbol))
+    return filter(
+      tm_record,
+      args.type,
+      block_size=block_size,
+      offset=args.offset,
+      cutoff=args.cutoff,
+      use_backsymbol=(not args.no_backsymbol),
+    )
+
 
 def filter_all(tm_record, args):
   if args.max_block_size:
@@ -95,15 +109,21 @@ def main():
   parser.add_argument("--block-size", type=int, default=1)
   parser.add_argument("--offset", type=int, default=0)
   parser.add_argument("--no-backsymbol", action="store_true")
-  parser.add_argument("--cutoff", type=int, default=200,
-                      help="Number of loops to run before starting CTL algorithm.")
+  parser.add_argument(
+    "--cutoff",
+    type=int,
+    default=200,
+    help="Number of loops to run before starting CTL algorithm.",
+  )
 
   parser.add_argument("--min-block-size", type=int, default=1)
   parser.add_argument("--max-block-size", type=int)
-  parser.add_argument("--all-offsets", action="store_true",
-                      help="Try all offsets for a given block size.")
-  parser.add_argument("--time", type=float, default=0.0,
-                      help="Maximum time to run CTL")
+  parser.add_argument(
+    "--all-offsets",
+    action="store_true",
+    help="Try all offsets for a given block size.",
+  )
+  parser.add_argument("--time", type=float, default=0.0, help="Maximum time to run CTL")
 
   args = parser.parse_args()
 
@@ -112,6 +132,7 @@ def main():
       for tm_record in reader:
         filter_all(tm_record, args)
         writer.write_record(tm_record)
+
 
 if __name__ == "__main__":
   main()

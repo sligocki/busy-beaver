@@ -24,7 +24,7 @@ if __name__ == "__main__":
       sys.exit(1)
   else:
     queue = MPI_Work_Queue.MPI_Worker_Work_Queue(master_proc_num=0)
-    file = open("test_MPI_Work_Queue_%d" % (MPI_Work_Queue.rank,),"w")
+    file = open("test_MPI_Work_Queue_%d" % (MPI_Work_Queue.rank,), "w")
     while True:
       job = queue.pop_job()
       if job == None:
