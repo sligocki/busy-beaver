@@ -12,13 +12,6 @@ sys.set_int_max_str_digits(0)
 sys.setrecursionlimit(10_000)
 
 
-def is_const(value):
-  try:
-    return value.is_const
-  except AttributeError:
-    # Any type not implementing is_const is assumed to be constant (int, Fraction, ...)
-    return True
-  
 
 def print_pb(pb):
   pb_str = MessageToJson(pb, always_print_fields_with_no_presence=True)

@@ -1,7 +1,8 @@
 import math
 
 from Algebraic_Expression import Expression, min_val, variables, substitute
-from Common import is_const
+from NatExpr import is_const
+
 from Exp_Int import uparrow_size_approx
 
 def get_depth(expr, var):

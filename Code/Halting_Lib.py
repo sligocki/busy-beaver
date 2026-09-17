@@ -4,9 +4,9 @@ import math
 import pickle
 from typing import Optional
 
-from NatExpr import NatExpr, ConstInt
+from NatExpr import NatExpr, ConstInt, is_const
 from Algebraic_Expression import Expression
-from Common import is_const
+
 from Exp_Int import ExpInt, ExpTerm, uparrow_size_approx, fractional_height, try_eval
 import io_pb2
 
@@ -14,7 +14,7 @@ import io_pb2
 def big_int_approx_str(value, digits_cutoff : int = 10):
   if value is None:
     return "N/A"
-  if value == math.inf:
+  if NatExpr.wrap(value).is_inf:
     return "inf"
   if type(value).__name__ in ('Expression', 'Variable'):
     return str(value)
@@ -87,7 +87,7 @@ def big_int_approx_or_full_str(value):
   if type(value).__name__ in ('ExpInt', 'Expression'):
     return str(value)
     
-  if value == math.inf:
+  if NatExpr.wrap(value).is_inf:
     return str(value)
     
   try:

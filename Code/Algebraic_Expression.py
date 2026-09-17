@@ -9,10 +9,7 @@ import math
 import operator
 import string
 
-from typing import Optional
-from NatExpr import NatExpr
-
-from Common import is_const
+from NatExpr import NatExpr, is_const
 
 
 class BadOperation(Exception):
@@ -172,8 +169,6 @@ def Term_from_string(input):
 
   return Term(var_powers,coef)
 
-from NatExpr import NatExpr
-
 class Expression(NatExpr):
   """A sum of Terms."""
   def __init__(self, terms, constant):
@@ -279,7 +274,8 @@ class Expression(NatExpr):
     return min_val(self.const)
 
   def __eq__(self, other):
-    if other == math.inf:
+    other = NatExpr.wrap(other)
+    if other.is_inf:
       return False
 
     diff = self - other

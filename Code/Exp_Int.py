@@ -8,9 +8,8 @@ from __future__ import annotations
 from fractions import Fraction
 import math
 
-from NatExpr import NatExpr, ConstInt
 from Algebraic_Expression import Expression, min_val, variables, substitute
-from Common import is_const
+from NatExpr import NatExpr, ConstInt, is_const
 from Math import gcd, lcm, int_pow, exp_mod, prec_mult, prec_add
 
 
@@ -525,11 +524,10 @@ class ExpInt(NatExpr):
 
   # Basic comparison using tower notation.
   def __gt__(self, other):
-    assert is_const(self), self
-    if other == math.inf:
+    assert self.is_const, self
+    other = NatExpr.wrap(other)
+    if other.is_inf:
       return False
-    if other == -math.inf:
-      return True
 
     if self.sign < 0:
       return not (-self >= -other)
@@ -540,11 +538,10 @@ class ExpInt(NatExpr):
     return self.uparrow_size_approx > uparrow_size_approx(other)
 
   def __ge__(self, other):
-    assert is_const(self), self
-    if other == math.inf:
+    assert self.is_const, self
+    other = NatExpr.wrap(other)
+    if other.is_inf:
       return False
-    if other == -math.inf:
-      return True
 
     if self.sign < 0:
       return not (-self > -other)

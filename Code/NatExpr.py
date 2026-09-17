@@ -1,5 +1,16 @@
 import abc
+import fractions
 import math
+
+
+def is_scalar(value) -> bool:
+  return isinstance(value, (int, float, fractions.Fraction))
+
+def is_const(value) -> bool:
+  if is_scalar(value):
+    return True
+  return value.is_const
+
 
 class NatExpr(abc.ABC):
     """Abstract base class for all symbolic counts and expressions."""
@@ -28,9 +39,6 @@ class NatExpr(abc.ABC):
     @property
     def is_inf(self) -> bool:
         return False
-
-
-
 
 
 class ConstInt(NatExpr):

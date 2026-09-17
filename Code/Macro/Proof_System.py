@@ -12,8 +12,8 @@ from optparse import OptionParser, OptionGroup
 import sys
 
 import Algebraic_Expression as ae
-from NatExpr import NatExpr, ConstInt
-from Algebraic_Expression import Expression, Variable, min_val, ConstantToExpression, VariableToExpression, VarPlusConstExpression, Term, always_ge, is_const, variables, substitute, NewVariableExpression
+from NatExpr import NatExpr, ConstInt, is_const
+from Algebraic_Expression import Expression, Variable, min_val, ConstantToExpression, VariableToExpression, VarPlusConstExpression, Term, always_ge,  variables, substitute, NewVariableExpression
 import Exp_Int
 from Exp_Int import ExpInt
 import Halting_Lib
