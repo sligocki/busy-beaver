@@ -1,5 +1,3 @@
-from NatExpr import NatExpr
-
 """
 Turing Machine tape which compresses repeating symbols.
 
@@ -11,10 +9,10 @@ import sys
 
 sys.path.append("..")
 from Halting_Lib import big_int_approx_or_full_str
+from NatExpr import NatExpr, InfNat
+
 
 # Serves as numerical infinity
-from NatExpr import InfNat
-
 INF = InfNat()
 
 
