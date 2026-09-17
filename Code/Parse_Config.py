@@ -25,7 +25,8 @@ from dataclasses import dataclass
 # "!" is HALT (appended after all regular states).
 STATES = string.ascii_uppercase + string.ascii_lowercase + "!"
 
-INF = math.inf
+from NatExpr import InfNat
+INF = InfNat()
 
 # Token patterns
 _STATE_RE = re.compile(r"^(<)([A-Za-z]+)$|^([A-Za-z]+)(>)$")

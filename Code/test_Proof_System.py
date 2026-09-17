@@ -6,6 +6,8 @@ Unit test for "Macro/Proof_System.py".
 from Macro import Proof_System
 
 import math
+from NatExpr import InfNat
+
 from optparse import OptionParser
 import os
 import sys
@@ -107,12 +109,12 @@ class ProofSystemTest(unittest.TestCase):
     tape.init(0, 0, self.options)
     tape.dir = Turing_Machine.RIGHT
     tape.tape[0] = [
-      Tape.Repeated_Symbol(0,math.inf),
+      Tape.Repeated_Symbol(0,InfNat()),
       Tape.Repeated_Symbol(3, 1),
       Tape.Repeated_Symbol(4, 1),
     ]
     tape.tape[1] = [
-      Tape.Repeated_Symbol(0,math.inf),
+      Tape.Repeated_Symbol(0,InfNat()),
       Tape.Repeated_Symbol(2, 10),
     ]
 
@@ -131,13 +133,13 @@ class ProofSystemTest(unittest.TestCase):
     bad_tape.init(0, 0, self.options)
     bad_tape.dir = Turing_Machine.RIGHT
     bad_tape.tape[0] = [
-      Tape.Repeated_Symbol(0,math.inf),
+      Tape.Repeated_Symbol(0,InfNat()),
       Tape.Repeated_Symbol(1, 10),  # Note: This 1 is the key to the bug.
       Tape.Repeated_Symbol(3, 1),
       Tape.Repeated_Symbol(4, 1),
     ]
     bad_tape.tape[1] = [
-      Tape.Repeated_Symbol(0,math.inf),
+      Tape.Repeated_Symbol(0,InfNat()),
       Tape.Repeated_Symbol(2, 10),
     ]
     bad_full_config = (state_A, bad_tape, None)
@@ -166,12 +168,12 @@ class ProofSystemTest(unittest.TestCase):
 
     current_tape = Tape.Chain_Tape()
     current_tape.init(0,0,self.options)
-    current_tape.tape[0] = [Tape.Repeated_Symbol(0,math.inf),
+    current_tape.tape[0] = [Tape.Repeated_Symbol(0,InfNat()),
                             Tape.Repeated_Symbol(1,10),
                             Tape.Repeated_Symbol(2,10),
                             Tape.Repeated_Symbol(0,10),
                            ]
-    current_tape.tape[1] = [Tape.Repeated_Symbol(0,math.inf),
+    current_tape.tape[1] = [Tape.Repeated_Symbol(0,InfNat()),
                             Tape.Repeated_Symbol(2,10),
                             Tape.Repeated_Symbol(1,15),
                             Tape.Repeated_Symbol(0,15),
@@ -222,12 +224,12 @@ class ProofSystemTest(unittest.TestCase):
 
     expected_tape = Tape.Chain_Tape()
     expected_tape.init(0,0,self.options)
-    expected_tape.tape[0] = [Tape.Repeated_Symbol(0,math.inf),
+    expected_tape.tape[0] = [Tape.Repeated_Symbol(0,InfNat()),
                              Tape.Repeated_Symbol(1,10),
                              Tape.Repeated_Symbol(2,10),
                              Tape.Repeated_Symbol(0, 2),
                             ]
-    expected_tape.tape[1] = [Tape.Repeated_Symbol(0,math.inf),
+    expected_tape.tape[1] = [Tape.Repeated_Symbol(0,InfNat()),
                              Tape.Repeated_Symbol(2,10),
                              Tape.Repeated_Symbol(1,11),
                              Tape.Repeated_Symbol(0,19),
@@ -258,10 +260,10 @@ class ProofSystemTest(unittest.TestCase):
     tape = Tape.Chain_Tape()
     tape.init(0, 0, self.options)
     tape.dir = Turing_Machine.RIGHT
-    tape.tape[0] = [Tape.Repeated_Symbol(0, math.inf),
+    tape.tape[0] = [Tape.Repeated_Symbol(0, InfNat()),
                     Tape.Repeated_Symbol(1, 10),
                    ]
-    tape.tape[1] = [Tape.Repeated_Symbol(0, math.inf),
+    tape.tape[1] = [Tape.Repeated_Symbol(0, InfNat()),
                     Tape.Repeated_Symbol(2, 40),
                     Tape.Repeated_Symbol(1, 30),
                     Tape.Repeated_Symbol(0, 20),
@@ -296,10 +298,10 @@ class ProofSystemTest(unittest.TestCase):
     tape = Tape.Chain_Tape()
     tape.init(0, 0, self.options)
     tape.dir = Turing_Machine.RIGHT
-    tape.tape[0] = [Tape.Repeated_Symbol(0, math.inf),
+    tape.tape[0] = [Tape.Repeated_Symbol(0, InfNat()),
                     Tape.Repeated_Symbol(1, 10),
                    ]
-    tape.tape[1] = [Tape.Repeated_Symbol(0, math.inf),
+    tape.tape[1] = [Tape.Repeated_Symbol(0, InfNat()),
                     Tape.Repeated_Symbol(2, 4),
                     Tape.Repeated_Symbol(0, 20),
                    ]
@@ -329,10 +331,10 @@ class ProofSystemTest(unittest.TestCase):
     tape = Tape.Chain_Tape()
     tape.init(0, 0, self.options)
     tape.dir = Turing_Machine.RIGHT
-    tape.tape[0] = [Tape.Repeated_Symbol(0, math.inf),
+    tape.tape[0] = [Tape.Repeated_Symbol(0, InfNat()),
                     Tape.Repeated_Symbol(1, 10),
                    ]
-    tape.tape[1] = [Tape.Repeated_Symbol(0, math.inf),
+    tape.tape[1] = [Tape.Repeated_Symbol(0, InfNat()),
                     Tape.Repeated_Symbol(2, 40),
                     Tape.Repeated_Symbol(0, 20),
                    ]
@@ -376,9 +378,9 @@ class ProofSystemTest(unittest.TestCase):
     tape = Tape.Chain_Tape()
     tape.init(0, 0, self.options)
     tape.dir = Turing_Machine.LEFT
-    tape.tape[0] = [Tape.Repeated_Symbol(Block_Symbol((0, 0)), math.inf),
+    tape.tape[0] = [Tape.Repeated_Symbol(Block_Symbol((0, 0)), InfNat()),
                    ]
-    tape.tape[1] = [Tape.Repeated_Symbol(Block_Symbol((0, 0)), math.inf),
+    tape.tape[1] = [Tape.Repeated_Symbol(Block_Symbol((0, 0)), InfNat()),
                     Tape.Repeated_Symbol(Block_Symbol((1, 0)), 1),
                     Tape.Repeated_Symbol(Block_Symbol((0, 0)), 30),
                     Tape.Repeated_Symbol(Block_Symbol((1, 0)), 1),
@@ -407,9 +409,9 @@ class ProofSystemTest(unittest.TestCase):
     tape = Tape.Chain_Tape()
     tape.init(0, 0, self.options)
     tape.dir = Turing_Machine.LEFT
-    tape.tape[0] = [Tape.Repeated_Symbol(Block_Symbol((0, 0)), math.inf),
+    tape.tape[0] = [Tape.Repeated_Symbol(Block_Symbol((0, 0)), InfNat()),
                    ]
-    tape.tape[1] = [Tape.Repeated_Symbol(Block_Symbol((0, 0)), math.inf),
+    tape.tape[1] = [Tape.Repeated_Symbol(Block_Symbol((0, 0)), InfNat()),
                     Tape.Repeated_Symbol(Block_Symbol((1, 0)), 1),
                     Tape.Repeated_Symbol(Block_Symbol((1, 1)), 40),
                     Tape.Repeated_Symbol(Block_Symbol((0, 0)), 30),
@@ -438,9 +440,9 @@ class ProofSystemTest(unittest.TestCase):
     tape = Tape.Chain_Tape()
     tape.init(0, 0, self.options)
     tape.dir = Turing_Machine.LEFT
-    tape.tape[0] = [Tape.Repeated_Symbol(Block_Symbol((0, 0)), math.inf),
+    tape.tape[0] = [Tape.Repeated_Symbol(Block_Symbol((0, 0)), InfNat()),
                    ]
-    tape.tape[1] = [Tape.Repeated_Symbol(Block_Symbol((0, 0)), math.inf),
+    tape.tape[1] = [Tape.Repeated_Symbol(Block_Symbol((0, 0)), InfNat()),
                     Tape.Repeated_Symbol(Block_Symbol((1, 0)), 1),
                     Tape.Repeated_Symbol(Block_Symbol((1, 1)), 5),
                     Tape.Repeated_Symbol(Block_Symbol((0, 0)), 1),
@@ -473,9 +475,9 @@ class ProofSystemTest(unittest.TestCase):
     tape = Tape.Chain_Tape()
     tape.init(0, 0, self.options)
     tape.dir = Turing_Machine.LEFT
-    tape.tape[0] = [Tape.Repeated_Symbol(Block_Symbol((0, 0)), math.inf),
+    tape.tape[0] = [Tape.Repeated_Symbol(Block_Symbol((0, 0)), InfNat()),
                    ]
-    tape.tape[1] = [Tape.Repeated_Symbol(Block_Symbol((0, 0)), math.inf),
+    tape.tape[1] = [Tape.Repeated_Symbol(Block_Symbol((0, 0)), InfNat()),
                     Tape.Repeated_Symbol(Block_Symbol((1, 0)), 1),
                     Tape.Repeated_Symbol(Block_Symbol((1, 1)), 1),
                     Tape.Repeated_Symbol(Block_Symbol((0, 0)), 1),
@@ -535,8 +537,8 @@ class ProofSystemTest(unittest.TestCase):
     tape = Tape.Chain_Tape()
     tape.init(0, 0, self.options)
     tape.dir = Turing_Machine.LEFT
-    tape.tape[0] = [Tape.Repeated_Symbol(Block_Symbol((0, 0)), math.inf)]
-    tape.tape[1] = [Tape.Repeated_Symbol(Block_Symbol((0, 0)), math.inf),
+    tape.tape[0] = [Tape.Repeated_Symbol(Block_Symbol((0, 0)), InfNat())]
+    tape.tape[1] = [Tape.Repeated_Symbol(Block_Symbol((0, 0)), InfNat()),
                     Tape.Repeated_Symbol(Block_Symbol((1, 0)), 1),
                     Tape.Repeated_Symbol(Block_Symbol((0, 0)), 30),
                     Tape.Repeated_Symbol(Block_Symbol((1, 0)), 1),
@@ -551,8 +553,8 @@ class ProofSystemTest(unittest.TestCase):
     tape = Tape.Chain_Tape()
     tape.init(0, 0, self.options)
     tape.dir = Turing_Machine.LEFT
-    tape.tape[0] = [Tape.Repeated_Symbol(Block_Symbol((0, 0)), math.inf)]
-    tape.tape[1] = [Tape.Repeated_Symbol(Block_Symbol((0, 0)), math.inf),
+    tape.tape[0] = [Tape.Repeated_Symbol(Block_Symbol((0, 0)), InfNat())]
+    tape.tape[1] = [Tape.Repeated_Symbol(Block_Symbol((0, 0)), InfNat()),
                     Tape.Repeated_Symbol(Block_Symbol((1, 0)), 1),
                     Tape.Repeated_Symbol(Block_Symbol((1, 1)), 40),
                     Tape.Repeated_Symbol(Block_Symbol((0, 0)), 30),
@@ -568,8 +570,8 @@ class ProofSystemTest(unittest.TestCase):
     tape = Tape.Chain_Tape()
     tape.init(0, 0, self.options)
     tape.dir = Turing_Machine.LEFT
-    tape.tape[0] = [Tape.Repeated_Symbol(Block_Symbol((0, 0)), math.inf)]
-    tape.tape[1] = [Tape.Repeated_Symbol(Block_Symbol((0, 0)), math.inf),
+    tape.tape[0] = [Tape.Repeated_Symbol(Block_Symbol((0, 0)), InfNat())]
+    tape.tape[1] = [Tape.Repeated_Symbol(Block_Symbol((0, 0)), InfNat()),
                     Tape.Repeated_Symbol(Block_Symbol((1, 0)), 1),
                     Tape.Repeated_Symbol(Block_Symbol((1, 1)), 5),
                     Tape.Repeated_Symbol(Block_Symbol((0, 0)), 1),
@@ -610,8 +612,8 @@ class ProofSystemTest(unittest.TestCase):
     bad_tape = Tape.Chain_Tape()
     bad_tape.init(0, 0, self.options)
     bad_tape.dir = Turing_Machine.LEFT
-    bad_tape.tape[0] = [Tape.Repeated_Symbol(Block_Symbol((0, 0)), math.inf)]
-    bad_tape.tape[1] = [Tape.Repeated_Symbol(Block_Symbol((0, 0)), math.inf),
+    bad_tape.tape[0] = [Tape.Repeated_Symbol(Block_Symbol((0, 0)), InfNat())]
+    bad_tape.tape[1] = [Tape.Repeated_Symbol(Block_Symbol((0, 0)), InfNat()),
                         Tape.Repeated_Symbol(Block_Symbol((1, 0)), 1),
                         Tape.Repeated_Symbol(Block_Symbol((1, 1)), 1),  # f=1, likely below min
                         Tape.Repeated_Symbol(Block_Symbol((0, 0)), 1),
@@ -649,9 +651,9 @@ class ProofSystemTest(unittest.TestCase):
     tape = Tape.Chain_Tape()
     tape.init(0, 0, self.options)
     tape.dir = Turing_Machine.RIGHT
-    tape.tape[0] = [Tape.Repeated_Symbol(0, math.inf),
+    tape.tape[0] = [Tape.Repeated_Symbol(0, InfNat()),
                     Tape.Repeated_Symbol(1, 10)]
-    tape.tape[1] = [Tape.Repeated_Symbol(0, math.inf),
+    tape.tape[1] = [Tape.Repeated_Symbol(0, InfNat()),
                     Tape.Repeated_Symbol(2, 40),
                     Tape.Repeated_Symbol(1, 30),
                     Tape.Repeated_Symbol(0, 20)]
@@ -676,9 +678,9 @@ class ProofSystemTest(unittest.TestCase):
     tape2 = Tape.Chain_Tape()
     tape2.init(0, 0, self.options)
     tape2.dir = Turing_Machine.RIGHT
-    tape2.tape[0] = [Tape.Repeated_Symbol(0, math.inf),
+    tape2.tape[0] = [Tape.Repeated_Symbol(0, InfNat()),
                      Tape.Repeated_Symbol(1, 10)]
-    tape2.tape[1] = [Tape.Repeated_Symbol(0, math.inf),
+    tape2.tape[1] = [Tape.Repeated_Symbol(0, InfNat()),
                      Tape.Repeated_Symbol(2, 4),
                      Tape.Repeated_Symbol(0, 20)]
     meta_config = (state_A, tape2, None)
@@ -702,14 +704,14 @@ class ProofSystemTest(unittest.TestCase):
     inf_init = Tape.Chain_Tape()
     inf_init.init(0, 0, self.options)
     inf_init.dir = Turing_Machine.RIGHT
-    inf_init.tape[0] = [Tape.Repeated_Symbol(0, math.inf)]
-    inf_init.tape[1] = [Tape.Repeated_Symbol(0, math.inf),
+    inf_init.tape[0] = [Tape.Repeated_Symbol(0, InfNat())]
+    inf_init.tape[1] = [Tape.Repeated_Symbol(0, InfNat()),
                         Tape.Repeated_Symbol(1, a_expr)]
     inf_diff = Tape.Chain_Tape()
     inf_diff.init(0, 0, self.options)
     inf_diff.dir = Turing_Machine.RIGHT
-    inf_diff.tape[0] = [Tape.Repeated_Symbol(0, math.inf)]  # 0^inf unchanged
-    inf_diff.tape[1] = [Tape.Repeated_Symbol(0, math.inf),
+    inf_diff.tape[0] = [Tape.Repeated_Symbol(0, InfNat())]  # 0^inf unchanged
+    inf_diff.tape[1] = [Tape.Repeated_Symbol(0, InfNat()),
                         Tape.Repeated_Symbol(1, 1)]           # diff = +1 (always grows)
     inf_rule = Proof_System.Diff_Rule(
         inf_init, inf_diff, state_A,
@@ -718,8 +720,8 @@ class ProofSystemTest(unittest.TestCase):
     inf_tape = Tape.Chain_Tape()
     inf_tape.init(0, 0, self.options)
     inf_tape.dir = Turing_Machine.RIGHT
-    inf_tape.tape[0] = [Tape.Repeated_Symbol(0, math.inf)]
-    inf_tape.tape[1] = [Tape.Repeated_Symbol(0, math.inf),
+    inf_tape.tape[0] = [Tape.Repeated_Symbol(0, InfNat())]
+    inf_tape.tape[1] = [Tape.Repeated_Symbol(0, InfNat()),
                         Tape.Repeated_Symbol(1, 5)]
     inf_config = (state_A, inf_tape, None)
     with contextlib.redirect_stdout(dev_null):

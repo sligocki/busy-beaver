@@ -12,7 +12,8 @@ sys.path.append("..")
 from Halting_Lib import big_int_approx_or_full_str
 
 # Serves as numerical infinity
-INF = math.inf
+from NatExpr import InfNat
+INF = InfNat()
 
 # Useful Tool
 def reverse(in_list):
