@@ -24,8 +24,7 @@ class NatExpr(abc.ABC):
       return val
     if isinstance(val, int):
       return ConstInt(val)
-
-    if isinstance(val, float) and math.isinf(val):
+    if math.isinf(val):
       return InfNat()
     raise TypeError(f"Cannot wrap {type(val)} as NatExpr")
 
