@@ -12,10 +12,6 @@ from Halting_Lib import big_int_approx_or_full_str
 from NatExpr import NatExpr, InfNat
 
 
-# Serves as numerical infinity
-INF = InfNat()
-
-
 # Useful Tool
 def reverse(in_list):
   reversed_in_list = list(in_list)
@@ -71,8 +67,8 @@ class Chain_Tape:
   def init(self, init_symbol, init_dir, options):
     self.dir = init_dir
     self.tape = [[], []]
-    self.tape[0].append(Repeated_Symbol(init_symbol, INF))
-    self.tape[1].append(Repeated_Symbol(init_symbol, INF))
+    self.tape[0].append(Repeated_Symbol(init_symbol, InfNat()))
+    self.tape[1].append(Repeated_Symbol(init_symbol, InfNat()))
     self.options = options
 
   def compressed_size(self):
@@ -124,8 +120,8 @@ class Chain_Tape:
     n = state_value
     for dir in range(2):
       for block in self.tape[dir]:
-        if block.num is not INF:
-          n += eval_symbol(block.symbol) * block.num
+        if val := eval_symbol(block.symbol):
+          n += val * block.num
     return n
 
   def get_top_block(self):
@@ -140,19 +136,17 @@ class Chain_Tape:
     ## Delete old symbol
     half_tape = self.tape[self.dir]
     top = half_tape[-1]
-    if top.num is not INF:  # Don't decrement infinity
-      # If not infinity, decrement (delete one symbol)
-      top.num -= 1
-      # If there are none left, remove from the tape
-      if top.num == 0:
-        half_tape.pop()
+    # If not infinity, decrement (delete one symbol)
+    top.num -= 1
+    # If there are none left, remove from the tape
+    if top.num == 0:
+      half_tape.pop()
     ## Push new symbol
     half_tape = self.tape[not new_dir]
     top = half_tape[-1]
     # If it is identical to the top symbol, combine them.
     if top.symbol == new_symbol:
-      if top.num is not INF:
-        top.num += 1
+      top.num += 1
     # Otherwise, just add it separately.
     else:
       half_tape.append(Repeated_Symbol(new_symbol, 1))
@@ -165,15 +159,14 @@ class Chain_Tape:
     # Pop off old sequence
     num = self.tape[self.dir][-1].num
     # Can't pop off infinite symbols, TM will never halt
-    if num is INF:
-      return INF
+    if num.is_inf:
+      return num
     self.tape[self.dir].pop()
     # Push on new one behind us
     half_tape = self.tape[not self.dir]
     top = half_tape[-1]
     if top.symbol == new_symbol:
-      if top.num is not INF:
-        top.num += num
+      top.num += num
     else:
       half_tape.append(Repeated_Symbol(new_symbol, num))
     return num
