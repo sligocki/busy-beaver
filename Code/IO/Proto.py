@@ -104,7 +104,7 @@ class Reader:
     pb_len = self._read_message_len()
     if pb_len is not None:
       # Skip ahead pb_len bytes.
-      pb_bytes = self.infile.seek(pb_len, 1)
+      self.infile.seek(pb_len, 1)
       return True
     return False
 

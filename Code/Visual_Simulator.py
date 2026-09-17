@@ -107,7 +107,7 @@ def main():
     # know why you would do that since this program doesn't read stdin.
     fd = 0
     term_height, term_width = struct.unpack("hh", fcntl.ioctl(fd, termios.TIOCGWINSZ, "1234"))
-  except:
+  except Exception:
     term_width = 80
 
   parser = argparse.ArgumentParser()

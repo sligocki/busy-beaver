@@ -9,13 +9,12 @@ Simple code to restart TM enumeration started be "Enumerate.py".
 import pickle
 import sys
 
-from Enumerate import *
 from IO import IO
 
 try:
   checkpoint_fn = sys.argv[1]
   output_fn = sys.argv[2]
-except:
+except Exception:
   print("Usage: Restart_Enumerate.py checkpoint_filename output_filename")
   sys.exit(1)
 

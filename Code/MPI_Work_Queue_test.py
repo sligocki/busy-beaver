@@ -5,9 +5,9 @@ To test, run:
 $ mpirun -np 8 python Code/test_MPI_Work_Queue.py
 """
 
+import sys
 import time
 
-import sys
 import MPI_Work_Queue
 
 if __name__ == "__main__":

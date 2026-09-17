@@ -34,7 +34,7 @@ class ProofSystemTest(unittest.TestCase):
     # Setup default options.
     parser = OptionParser()
     Proof_System.add_option_group(parser)
-    self.options, args = parser.parse_args([])
+    self.options, _ = parser.parse_args([])
 
     self.options.compute_steps = True
     self.options.verbose_prover = False
@@ -232,7 +232,7 @@ class ProofSystemTest(unittest.TestCase):
     self.assertIn("Limited Diff Rule", repr(rule))
     self.assertIn("Level: 1", repr(rule))
 
-    success, (prover_result, large_delta) = proof.apply_rule(rule, current_config)
+    success, (prover_result, _) = proof.apply_rule(rule, current_config)
 
     expected_tape = Tape.Chain_Tape()
     expected_tape.init(0, 0, self.options)

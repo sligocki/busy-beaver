@@ -1,3 +1,5 @@
+from NatExpr import NatExpr
+
 """
 Turing Machine tape which compresses repeating symbols.
 
@@ -21,9 +23,6 @@ def reverse(in_list):
   reversed_in_list = list(in_list)
   reversed_in_list.reverse()
   return reversed_in_list
-
-
-from NatExpr import NatExpr
 
 
 class Repeated_Symbol:

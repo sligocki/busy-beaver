@@ -32,9 +32,11 @@ line-length = 120
 indent-style = "space"
 
 [tool.ruff.lint]
+select = ["E", "F"]
 ignore = [
   "E501", # Line too long
-  "E701", # Multiple statements on one line
+  "E701",
+  "E402", # Multiple statements on one line
   "N999", # Invalid module name (for Capitalized filenames)
   "UP031", # Percent formatting
 ]

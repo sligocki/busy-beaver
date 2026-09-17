@@ -13,7 +13,7 @@ try:
   infilename = sys.argv[1]
   length = int(sys.argv[2])
   sample_size = int(sys.argv[3])
-except:
+except Exception:
   print("Random_Sample.py filename in_lines out_lines")
   sys.exit(1)
 outfilename = infilename + ".sample"

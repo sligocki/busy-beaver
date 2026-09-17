@@ -1,3 +1,4 @@
+from NatExpr import NatExpr
 from Algebraic_Expression import min_val, substitute, variables
 from Exp_Int import uparrow_size_approx
 from NatExpr import is_const
@@ -40,9 +41,6 @@ def get_depth(expr, var):
       arr_N = d_reps + 1
       return max(arr_f, arr_N) - 1
   return None
-
-
-from NatExpr import NatExpr
 
 
 class Iterated_Expression(NatExpr):
@@ -94,15 +92,6 @@ class Iterated_Expression(NatExpr):
       substitute(self.num_reps, assignment),
     )
 
-  def __add__(self, other):
-    return Iterated_Math(self, other)
-
-  def __radd__(self, other):
-    return Iterated_Math(self, other)
-
-  def __sub__(self, other):
-    return Iterated_Math(self, -other)
-
   def __rsub__(self, other):
     return Iterated_Math(other, -self)
 
@@ -130,7 +119,7 @@ class Iterated_Expression(NatExpr):
     try:
       n_val = int(self.num_reps)
       return (val_start[0], val_start[1] + n_val * depth, *val_start[2:])
-    except:
+    except Exception:
       return (depth + 1, self.num_reps, top_start)
 
   def __lt__(self, other):

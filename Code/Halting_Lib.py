@@ -26,7 +26,7 @@ def big_int_approx_str(value, digits_cutoff: int = 10):
     try:
       if value < cutoff:
         return f"{try_eval(value):_}"
-    except:
+    except Exception:
       pass
 
   val = uparrow_size_approx(value)
@@ -95,7 +95,7 @@ def big_int_approx_or_full_str(value):
   try:
     if value < 10**9:
       return f"{value:_}"
-  except:
+  except Exception:
     pass
 
   return big_int_approx_str(value)

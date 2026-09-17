@@ -88,7 +88,6 @@ class VisSim:
   def expand_pad(self, pad_height: int, pad_width: int = None):
     """Expand pad to `limit_line_num` and draw results in."""
     self.log(f"expand_pad({pad_height}, {pad_width})")
-    old_pad_height = self.pad_height()
     old_pad_width = self.pad_width()
     if not pad_width:
       pad_width = old_pad_width

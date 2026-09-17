@@ -2,8 +2,8 @@ import ctypes
 import string
 import sys
 
-import io_pb2
 import IO
+import io_pb2
 import TM_Enum
 from Macro import Turing_Machine
 

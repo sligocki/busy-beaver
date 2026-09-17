@@ -23,7 +23,7 @@ def filter(infilenames, outfilename):
             num_records_read += 1
             # try:
             #   score = Halting_Lib.get_big_int(tm_record.proto.status.halt_status.halt_score)
-            # except:
+            # except Exception:
             #   score = None
             if matches(tm_record.proto):
               writer.write_record(tm_record)

@@ -13,9 +13,9 @@ import pickle as pickle
 import random
 import sys
 import time
-from pathlib import Path
 import traceback
 from optparse import OptionGroup, OptionParser
+from pathlib import Path
 
 import IO
 import Macro_Simulator

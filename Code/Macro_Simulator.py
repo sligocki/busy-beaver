@@ -283,7 +283,7 @@ def simulate_machine(
       # For enumeration, TMs never have halt transition when run, so we
       # will always hit the UNDEFINED case, but then treat it like a halt.
       from_symbol, from_state = sim.op_details[0][:2]
-      halt_info = sim_info.result.halt_info.is_halting = True
+      sim_info.result.halt_info.is_halting = True
       Halting_Lib.set_halting(
         bb_status,
         halt_steps=sim.step_num,
@@ -293,4 +293,4 @@ def simulate_machine(
       )
 
     else:
-      raise Exception(sim.op_state, base_tm.ttable_str(), sim)
+      raise Exception(sim.op_state, machine.ttable_str(), sim)

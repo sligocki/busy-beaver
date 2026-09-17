@@ -250,7 +250,7 @@ def exp_mod(b: int, k, m: int) -> int:
     return pow(b, int(kn), int(m))
 
 
-def prec_mult(n: int | float, x: float):
+def prec_mult(n: float, x: float):
   """Approximate n * x even if result is too large to fit in float."""
   if isinstance(n, float):
     return n * x
@@ -264,7 +264,7 @@ def prec_mult(n: int | float, x: float):
     return (n * x) >> 64
 
 
-def prec_add(n: int | float, x: float):
+def prec_add(n: float, x: float):
   """Approximate n + x even if result is too large to fit in float."""
   if isinstance(n, float):
     return n + x

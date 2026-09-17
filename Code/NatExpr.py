@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import abc
 import fractions
 import math
@@ -106,14 +108,6 @@ class ConstInt(NatExpr):
   def __rmul__(self, other):
     if type(other) is int:
       return ConstInt(other * self.val)
-    return NotImplemented
-
-  def __truediv__(self, other):
-    other_val = NatExpr.wrap(other).try_eval()
-    if other_val is not None:
-      # Requires exact division
-      assert self.val % other_val == 0
-      return ConstInt(self.val // other_val)
     return NotImplemented
 
   def __floordiv__(self, other):

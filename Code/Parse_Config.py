@@ -15,6 +15,7 @@ one is prepended; likewise a 0^inf is appended to the right if absent.
 """
 
 from __future__ import annotations
+from NatExpr import InfNat
 
 import re
 import string
@@ -24,7 +25,6 @@ from dataclasses import dataclass
 # "!" is HALT (appended after all regular states).
 STATES = string.ascii_uppercase + string.ascii_lowercase + "!"
 
-from NatExpr import InfNat
 
 INF = InfNat()
 

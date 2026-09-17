@@ -129,7 +129,6 @@ def tm_crn(tm_str: str) -> CRN:
   """Convert TM into CRN."""
   ttable = [list(itertools.batched(row, 3)) for row in tm_str.split("_")]
   num_states = len(ttable)
-  num_symbols = len(ttable[0])
   # states_used = {trans[1:] for row in ttable for trans in row}
   # symbols_used = {trans[:2] for row in ttable for trans in row}
 
