@@ -5,20 +5,22 @@ import pickle
 from typing import Optional
 
 from NatExpr import NatExpr, ConstInt, is_const
-from Algebraic_Expression import Expression
+from Algebraic_Expression import Expression, Variable
 
 from Exp_Int import ExpInt, ExpTerm, uparrow_size_approx, fractional_height, try_eval
 import io_pb2
 
 
-def big_int_approx_str(value, digits_cutoff : int = 10):
+def big_int_approx_str(value, digits_cutoff: int = 10):
   if value is None:
     return "N/A"
-  if NatExpr.wrap(value).is_inf:
-    return "inf"
-  if type(value).__name__ in ('Expression', 'Variable'):
-    return str(value)
-  if type(value).__name__ == 'ExpInt' and not is_const(value):
+  
+  if isinstance(value, NatExpr):
+    if value.is_inf:
+      return "inf"
+    if not value.is_const:
+      return str(value)
+  elif isinstance(value, Variable):
     return str(value)
     
   cutoff = 10**digits_cutoff
@@ -82,13 +84,13 @@ def big_int_approx_or_full_str(value):
   if value is None:
     return "N/A"
 
-  if type(value).__name__ in ('Iterated_Expression', 'Iterated_Math', 'InfNat'):
-    return big_int_approx_str(value)
-  if type(value).__name__ in ('ExpInt', 'Expression'):
-    return str(value)
-    
-  if NatExpr.wrap(value).is_inf:
-    return str(value)
+  if isinstance(value, NatExpr):
+    if value.is_inf:
+      return str(value)
+    if isinstance(value, (ExpInt, Expression)):
+      return str(value)
+    if not value.is_const:
+      return str(value)
     
   try:
     if value < 10**9:
@@ -101,7 +103,8 @@ def big_int_approx_or_full_str(value):
 
 _BIG_INT_MAX = 2**63 - 1
 def set_big_int(field : io_pb2.BigInt, value):
-  if type(value) is ConstInt: value = value.val
+  if isinstance(value, ConstInt):
+    value = value.val
   field.Clear()
   if value < 0:
     raise ValueError("set_big_int only supports non-negative values")

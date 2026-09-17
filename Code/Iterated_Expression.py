@@ -131,22 +131,27 @@ class Iterated_Expression(NatExpr):
       return (depth + 1, self.num_reps, top_start)
 
   def __lt__(self, other):
-    if isinstance(other, (int, NatExpr)):
-      # Assume Iterated_Expressions are huge
-      return False
+    other = NatExpr.wrap(other)
+    if other.is_inf: return True
+    if not isinstance(other, (Iterated_Expression, Iterated_Math)): return False
     return self.uparrow_size_approx < uparrow_size_approx(other)
     
   def __gt__(self, other):
-    if isinstance(other, (int, NatExpr)):
-      return True
+    other = NatExpr.wrap(other)
+    if other.is_inf: return False
+    if not isinstance(other, (Iterated_Expression, Iterated_Math)): return True
     return self.uparrow_size_approx > uparrow_size_approx(other)
 
   def __le__(self, other):
-    if isinstance(other, (int, NatExpr)): return False
+    other = NatExpr.wrap(other)
+    if other.is_inf: return True
+    if not isinstance(other, (Iterated_Expression, Iterated_Math)): return False
     return uparrow_size_approx(self) <= uparrow_size_approx(other)
 
   def __ge__(self, other):
-    if isinstance(other, (int, NatExpr)): return True
+    other = NatExpr.wrap(other)
+    if other.is_inf: return False
+    if not isinstance(other, (Iterated_Expression, Iterated_Math)): return True
     return uparrow_size_approx(self) >= uparrow_size_approx(other)
 
   def __mul__(self, other):
@@ -245,21 +250,27 @@ class Iterated_Math(NatExpr):
     return self.it_expr.uparrow_size_approx
 
   def __lt__(self, other):
-    if isinstance(other, (int, NatExpr)):
-      return False
+    other = NatExpr.wrap(other)
+    if other.is_inf: return True
+    if not isinstance(other, (Iterated_Expression, Iterated_Math)): return False
     return uparrow_size_approx(self) < uparrow_size_approx(other)
     
   def __gt__(self, other):
-    if isinstance(other, (int, NatExpr)):
-      return True
+    other = NatExpr.wrap(other)
+    if other.is_inf: return False
+    if not isinstance(other, (Iterated_Expression, Iterated_Math)): return True
     return uparrow_size_approx(self) > uparrow_size_approx(other)
 
   def __le__(self, other):
-    if isinstance(other, (int, NatExpr)): return False
+    other = NatExpr.wrap(other)
+    if other.is_inf: return True
+    if not isinstance(other, (Iterated_Expression, Iterated_Math)): return False
     return uparrow_size_approx(self) <= uparrow_size_approx(other)
 
   def __ge__(self, other):
-    if isinstance(other, (int, NatExpr)): return True
+    other = NatExpr.wrap(other)
+    if other.is_inf: return False
+    if not isinstance(other, (Iterated_Expression, Iterated_Math)): return True
     return uparrow_size_approx(self) >= uparrow_size_approx(other)
 
 
