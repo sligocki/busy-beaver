@@ -41,11 +41,13 @@ def main():
             non_zr_writer.write_record(tm_record)
         if num_total % 100_000 == 0:
           print(
-            f" ... {num_zero_reflexive:_} / {num_total:_} = {num_zero_reflexive / num_total:.2%} ({time.time() - start_time:_.0f}s)"
+            f" ... {num_zero_reflexive:_} / {num_total:_} = {num_zero_reflexive / num_total:.2%} "
+            f"({time.time() - start_time:_.0f}s)"
           )
 
     print(
-      f"# Zero Reflexive TMs: {num_zero_reflexive:_} / {num_total:_} = {num_zero_reflexive / num_total:.2%} ({time.time() - start_time:_.0f}s)"
+      f"# Zero Reflexive TMs: {num_zero_reflexive:_} / {num_total:_} = {num_zero_reflexive / num_total:.2%} "
+      f"({time.time() - start_time:_.0f}s)"
     )
 
 

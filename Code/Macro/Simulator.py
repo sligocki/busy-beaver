@@ -197,7 +197,8 @@ class Simulator:
     # Apply transition
     if self.op_state == Turing_Machine.INF_REPEAT:
       self.inf_reason = io_pb2.INF_MACRO_STEP
-      # TODO(shawn): This is not 100% accurate. We should only ignore states involved in the repeat-in-place, but trans.states_last_seen could include some states before the repeat.
+      # TODO(shawn): This is not 100% accurate. We should only ignore states involved\
+      # in the repeat-in-place, but trans.states_last_seen could include some states before the repeat.
       self.inf_recur_states = list(trans.states_last_seen.keys())
     # Chain move
     elif trans.state_out == self.state and trans.dir_out == self.dir and self.op_state == Turing_Machine.RUNNING:

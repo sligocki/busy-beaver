@@ -310,7 +310,10 @@ class CPSSim:
       configs = sorted(str(config).replace(" ", "") for config in self.transitions.keys())
       configs_str = " ".join(configs)
 
-      return f"Result {len(edges[LEFT])} {edges_str[LEFT]} {len(edges[RIGHT])} {edges_str[RIGHT]} {len(configs)} {configs_str}"
+      return (
+        f"Result {len(edges[LEFT])} {edges_str[LEFT]} "
+        f"{len(edges[RIGHT])} {edges_str[RIGHT]} {len(configs)} {configs_str}"
+      )
 
 
 def filter(

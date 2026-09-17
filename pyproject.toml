@@ -34,8 +34,5 @@ indent-style = "space"
 [tool.ruff.lint]
 select = ["E", "F"]
 ignore = [
-  "E501", # Line too long
-  "E701",
   "N999", # Invalid module name (for Capitalized filenames)
-  "UP031", # Percent formatting
 ]

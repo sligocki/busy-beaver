@@ -1,5 +1,6 @@
 """
-TM format used on http://morphett.info/turing/turing.html and commonly used in Googology posts. Convenient when >26 states or >10 symbols so StdText doesn't work.
+TM format used on http://morphett.info/turing/turing.html and commonly used in Googology posts.
+Convenient when >26 states or >10 symbols so StdText doesn't work.
 """
 
 import gzip

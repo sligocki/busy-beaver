@@ -226,7 +226,10 @@ class Iterated_Rule(Rule):
           # Don't allow rules like: x -> 7 or x -> 3y+2
           return (
             None,
-            f"Variable mismatch for block {i}: expected {{{var_list[i]}}}, got {variables(result_block.num)} from {result_block.num}",
+            (
+              f"Variable mismatch for block {i}: expected {{{var_list[i]}}}, "
+              f"got {variables(result_block.num)} from {result_block.num}"
+            ),
           )
         res = None
         if hasattr(result_block.num, "as_strictly_linear"):
@@ -379,7 +382,10 @@ class Exponential_Rule(Rule):
           # Don't allow rules like: x -> 7 or x -> 3y+2
           return (
             None,
-            f"Variable mismatch for block {i}: expected {{{var_list[i]}}}, got {variables(result_block.num)} from {result_block.num}",
+            (
+              f"Variable mismatch for block {i}: expected {{{var_list[i]}}}, "
+              f"got {variables(result_block.num)} from {result_block.num}"
+            ),
           )
 
         if isinstance(result_block.num, ExpInt):
@@ -1490,7 +1496,8 @@ class Proof_System:
               return_block.num += num_reps * diff_block.num
             except TypeError:
               print(
-                f"CRASH: return_block.num={type(return_block.num)} ({return_block.num}), num_reps={type(num_reps)} ({num_reps}) diff_block.num={type(diff_block.num)} ({diff_block.num})"
+                f"CRASH: return_block.num={type(return_block.num)} ({return_block.num}), "
+                f"num_reps={type(num_reps)} ({num_reps}) diff_block.num={type(diff_block.num)} ({diff_block.num})"
               )
               raise
           if isinstance(return_block.num, Algebraic_Expression) and return_block.num.is_const:

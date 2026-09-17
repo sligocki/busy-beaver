@@ -241,90 +241,105 @@ class TMStats:
         # self.print_hist(self.sim_num_loops.log_hist)
         # print()
         print(
-          f"  - log10(num_steps)      : Mean {self.sim_log10_num_steps.mean():9_.0f}  Max {self.sim_log10_num_steps.max_value:9_.0f}  Min {self.sim_log10_num_steps.min_value:9_.0f}"
+          f"  - log10(num_steps)      : Mean {self.sim_log10_num_steps.mean():9_.0f}"
+          f"  Max {self.sim_log10_num_steps.max_value:9_.0f}  Min {self.sim_log10_num_steps.min_value:9_.0f}"
         )
         print(
-          f"  - num_rules_proven      : Mean {self.sim_num_rules_proven.mean():9_.0f}  Max {self.sim_num_rules_proven.max_value:9_d}  (Set in {self.sim_num_rules_proven.count / self.count:7.2%})"
+          f"  - num_rules_proven      : Mean {self.sim_num_rules_proven.mean():9_.0f}"
+          f"  Max {self.sim_num_rules_proven.max_value:9_d}"
+          f"  (Set in {self.sim_num_rules_proven.count / self.count:7.2%})"
         )
         print(
-          f"  - num_linear_rules      : Mean {self.sim_num_finite_linear_rules_proven.mean():9_.0f}  Max {self.sim_num_finite_linear_rules_proven.max_value:9_d}  (Set in {self.sim_num_finite_linear_rules_proven.count / self.count:7.2%})"
+          f"  - num_linear_rules      : Mean {self.sim_num_finite_linear_rules_proven.mean():9_.0f}"
+          f"  Max {self.sim_num_finite_linear_rules_proven.max_value:9_d}"
+          f"  (Set in {self.sim_num_finite_linear_rules_proven.count / self.count:7.2%})"
         )
         print(
-          f"  - num_exponential_rules : Mean {self.sim_num_exponential_rules_proven.mean():9_.0f}  Max {self.sim_num_exponential_rules_proven.max_value:9_d}  (Set in {self.sim_num_exponential_rules_proven.count / self.count:7.2%})"
+          f"  - num_exponential_rules : Mean {self.sim_num_exponential_rules_proven.mean():9_.0f}"
+          f"  Max {self.sim_num_exponential_rules_proven.max_value:9_d}"
+          f"  (Set in {self.sim_num_exponential_rules_proven.count / self.count:7.2%})"
         )
         print(
-          f"  - num_gen_rules         : Mean {self.sim_num_gen_rules_proven.mean():9_.0f}  Max {self.sim_num_gen_rules_proven.max_value:9_d}  (Set in {self.sim_num_gen_rules_proven.count / self.count:7.2%})"
+          f"  - num_gen_rules         : Mean {self.sim_num_gen_rules_proven.mean():9_.0f}"
+          f"  Max {self.sim_num_gen_rules_proven.max_value:9_d}"
+          f"  (Set in {self.sim_num_gen_rules_proven.count / self.count:7.2%})"
         )
         print(
-          f"  - num_collatz_rules     : Mean {self.sim_num_collatz_rules.mean():9_.0f}  Max {self.sim_num_collatz_rules.max_value:9_d}  (Set in {self.sim_num_collatz_rules.count / self.count:7.2%})"
+          f"  - num_collatz_rules     : Mean {self.sim_num_collatz_rules.mean():9_.0f}"
+          f"  Max {self.sim_num_collatz_rules.max_value:9_d}"
+          f"  (Set in {self.sim_num_collatz_rules.count / self.count:7.2%})"
         )
         print(
-          f"  - num_proofs_failed     : Mean {self.sim_num_proofs_failed.mean():9_.0f}  Max {self.sim_num_proofs_failed.max_value:9_d}  (Set in {self.sim_num_proofs_failed.count / self.count:7.2%})"
+          f"  - num_proofs_failed     : Mean {self.sim_num_proofs_failed.mean():9_.0f}"
+          f"  Max {self.sim_num_proofs_failed.max_value:9_d}"
+          f"  (Set in {self.sim_num_proofs_failed.count / self.count:7.2%})"
         )
         print(
-          f"  - num_rule_moves        : Mean {self.sim_num_rule_moves.mean():9_.0f}  Max {self.sim_num_rule_moves.max_value:9_d}  (Set in {self.sim_num_rule_moves.count / self.count:7.2%})"
+          f"  - num_rule_moves        : Mean {self.sim_num_rule_moves.mean():9_.0f}"
+          f"  Max {self.sim_num_rule_moves.max_value:9_d}"
+          f"  (Set in {self.sim_num_rule_moves.count / self.count:7.2%})"
         )
         print()
 
       if self.lr_period.count:
         print("Lin Recur:")
         print(
-          f"  - start_step  : Mean {self.lr_start_step.mean():_.0f}  "
-          f"Max {self.lr_start_step.max_value:_}  "
-          f"(Set in {self.lr_start_step.count / self.count:4.0%})"
+          f"  - start_step  : Mean {self.lr_start_step.mean():_.0f}"
+          f"  Max {self.lr_start_step.max_value:_}"
+          f"  (Set in {self.lr_start_step.count / self.count:4.0%})"
         )
         print(
-          f"  - period      : Mean {self.lr_period.mean():_.0f}  "
-          f"Max {self.lr_period.max_value:_}  "
-          f"(Set in {self.lr_period.count / self.count:4.0%})"
+          f"  - period      : Mean {self.lr_period.mean():_.0f}"
+          f"  Max {self.lr_period.max_value:_}"
+          f"  (Set in {self.lr_period.count / self.count:4.0%})"
         )
         print(
-          f"  - abs(offset) : Mean {self.lr_abs_offset.mean():_.0f}  "
-          f"Max {self.lr_abs_offset.max_value:_}  "
-          f"(Set in {self.lr_abs_offset.count / self.count:4.0%})"
+          f"  - abs(offset) : Mean {self.lr_abs_offset.mean():_.0f}"
+          f"  Max {self.lr_abs_offset.max_value:_}"
+          f"  (Set in {self.lr_abs_offset.count / self.count:4.0%})"
         )
         print()
 
       if self.bt_max_steps.count:
         print("Backtrack:")
         print(
-          f"  - max_steps  : Mean {self.bt_max_steps.mean():_.2f}  "
-          f"Max {self.bt_max_steps.max_value:_}  "
-          f"(Set in {self.bt_max_steps.count / self.count:4.0%})"
+          f"  - max_steps  : Mean {self.bt_max_steps.mean():_.2f}"
+          f"  Max {self.bt_max_steps.max_value:_}"
+          f"  (Set in {self.bt_max_steps.count / self.count:4.0%})"
         )
         print(
-          f"  - max_width  : Mean {self.bt_max_width.mean():_.2f}  "
-          f"Max {self.bt_max_width.max_value:_}  "
-          f"(Set in {self.bt_max_width.count / self.count:4.0%})"
+          f"  - max_width  : Mean {self.bt_max_width.mean():_.2f}"
+          f"  Max {self.bt_max_width.max_value:_}"
+          f"  (Set in {self.bt_max_width.count / self.count:4.0%})"
         )
         print()
 
       if self.cg_num_configs.count:
         print("CPS:")
         print(
-          f"  - block_size     : Mean {self.cg_block_size.mean():11_.2f}  "
-          f"StdDev {self.cg_block_size.std_dev():11_.2f}  "
-          f"Max {self.cg_block_size.max_value:11_}"
+          f"  - block_size     : Mean {self.cg_block_size.mean():11_.2f}"
+          f"  StdDev {self.cg_block_size.std_dev():11_.2f}"
+          f"  Max {self.cg_block_size.max_value:11_}"
         )
         print(
-          f"  - num_steps      : Mean {self.cg_num_steps.mean():11_.0f}  "
-          f"StdDev {self.cg_num_steps.std_dev():11_.0f}  "
-          f"Max {self.cg_num_steps.max_value:11_}"
+          f"  - num_steps      : Mean {self.cg_num_steps.mean():11_.0f}"
+          f"  StdDev {self.cg_num_steps.std_dev():11_.0f}"
+          f"  Max {self.cg_num_steps.max_value:11_}"
         )
         print(
-          f"  - num_configs    : Mean {self.cg_num_configs.mean():11_.2f}  "
-          f"StdDev {self.cg_num_configs.std_dev():11_.2f}  "
-          f"Max {self.cg_num_configs.max_value:11_}"
+          f"  - num_configs    : Mean {self.cg_num_configs.mean():11_.2f}"
+          f"  StdDev {self.cg_num_configs.std_dev():11_.2f}"
+          f"  Max {self.cg_num_configs.max_value:11_}"
         )
         print(
-          f"  - num_edges      : Mean {self.cg_num_edges.mean():11_.2f}  "
-          f"StdDev {self.cg_num_edges.std_dev():11_.2f}  "
-          f"Max {self.cg_num_edges.max_value:11_}"
+          f"  - num_edges      : Mean {self.cg_num_edges.mean():11_.2f}"
+          f"  StdDev {self.cg_num_edges.std_dev():11_.2f}"
+          f"  Max {self.cg_num_edges.max_value:11_}"
         )
         print(
-          f"  - num_iters      : Mean {self.cg_num_iters.mean():11_.2f}  "
-          f"StdDev {self.cg_num_iters.std_dev():11_.2f}  "
-          f"Max {self.cg_num_iters.max_value:11_}"
+          f"  - num_iters      : Mean {self.cg_num_iters.mean():11_.2f}"
+          f"  StdDev {self.cg_num_iters.std_dev():11_.2f}"
+          f"  Max {self.cg_num_iters.max_value:11_}"
         )
         print(
           f"  - found_inf_loop : {self.cg_found_inf_loop.count:_d} ({self.cg_found_inf_loop.count / self.count:8.4%})"
@@ -340,10 +355,10 @@ class TMStats:
       )
       for mean_time_s, filter in mean_timings_s:
         print(
-          f"  - {filter:16s} : Mean(all) {mean_time_s * 1000:7_.3f} ms  "
-          f"Mean(run) {self.timings_s[filter].mean() * 1000:7_.3f} ms  "
-          f"Max {self.timings_s[filter].max_value * 1000:7_.3f} ms  "
-          f"(Set in {self.timings_s[filter].count / self.count:4.0%})"
+          f"  - {filter:16s} : Mean(all) {mean_time_s * 1000:7_.3f} ms"
+          f"  Mean(run) {self.timings_s[filter].mean() * 1000:7_.3f} ms"
+          f"  Max {self.timings_s[filter].max_value * 1000:7_.3f} ms"
+          f"  (Set in {self.timings_s[filter].count / self.count:4.0%})"
         )
       print()
 
@@ -358,10 +373,10 @@ class TMStats:
       for mean_size_bytes, message in mean_sizes:
         # TODO: Add Percentages
         print(
-          f"  - {message:16s} : Mean(all) {mean_size_bytes:7_.1f} B   "
-          f"Mean(set) {self.sizes[message].mean():7_.1f} B   "
-          f"Max {self.sizes[message].max_value:7_.1f} B   "
-          f"(Set in {self.sizes[message].count / self.count:4.0%})"
+          f"  - {message:16s} : Mean(all) {mean_size_bytes:7_.1f} B "
+          f"  Mean(set) {self.sizes[message].mean():7_.1f} B "
+          f"  Max {self.sizes[message].max_value:7_.1f} B "
+          f"  (Set in {self.sizes[message].count / self.count:4.0%})"
         )
       print()
 
@@ -374,13 +389,15 @@ class TMStats:
       val = hist[n]
       cum_total += val
       print(
-        f"     {10**n:9_} - {10 ** (n + 1) - 1:9_} : {val:9_} ({val / total:4.0%})  Cumulative: {cum_total:9_} ({cum_total / total:4.0%})"
+        f"     {10**n:9_} - {10 ** (n + 1) - 1:9_} : {val:9_} ({val / total:4.0%})"
+        f"  Cumulative: {cum_total:9_} ({cum_total / total:4.0%})"
       )
     if cum_total < total:
       val = total - cum_total
       cum_total += val
       print(
-        f"     > {10 ** (max_n + 1):<20_}: {val:9_} ({val / total:4.0%})  Cumulative: {cum_total:9_} ({cum_total / total:4.0%})"
+        f"     > {10 ** (max_n + 1):<20_}: {val:9_} ({val / total:4.0%})"
+        f"  Cumulative: {cum_total:9_} ({cum_total / total:4.0%})"
       )
 
 
