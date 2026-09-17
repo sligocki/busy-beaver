@@ -15,6 +15,42 @@ def is_const(value) -> bool:
   return value.is_const
 
 
+def approx_str(value) -> str:
+  if value is None:
+    return "N/A"
+  if type(value).__name__ == "Variable":
+    return str(value)
+  return NatExpr.wrap(value).approx_str()
+
+
+def approx_and_full_str(value) -> str:
+  if value is None:
+    return "N/A"
+  if type(value).__name__ == "Variable":
+    return str(value)
+  approx = approx_str(value)
+  full = str(value)
+  if approx == full:
+    return approx
+  elif len(full) > 100:
+    return f"{approx} (_{len(full)} chars_)"
+  else:
+    return f"{approx} ({full})"
+
+
+def approx_or_full_str(value) -> str:
+  if value is None:
+    return "N/A"
+  if type(value).__name__ == "Variable":
+    return str(value)
+  approx = approx_str(value)
+  full = str(value)
+  if len(full) <= 100:
+    return full
+  else:
+    return approx
+
+
 class NatExpr(abc.ABC):
   """Abstract base class for all symbolic counts and expressions."""
 
@@ -28,6 +64,20 @@ class NatExpr(abc.ABC):
       return InfNat()
     raise TypeError(f"Cannot wrap {type(val)} as NatExpr")
 
+  @property
+  def is_inf(self) -> bool:
+    return False
+
+  @property
+  @abc.abstractmethod
+  def is_const(self) -> bool:
+    pass
+
+  @property
+  @abc.abstractmethod
+  def uparrow_size_approx(self) -> tuple:
+    pass
+
   @abc.abstractmethod
   def try_eval(self) -> int | None:
     pass
@@ -38,9 +88,43 @@ class NatExpr(abc.ABC):
       return ConstInt(val)
     return self
 
-  @property
-  def is_inf(self) -> bool:
-    return False
+  def approx_str(self) -> str:
+    if not self.is_const:
+      return str(self)
+
+    val = self.uparrow_size_approx
+    if val[0] >= 4:
+      return f"~ 10 ↑^{val[0]} {val[1]}"
+    elif val[0] > 2:
+      arrows = "↑" * val[0]
+      return f"~ 10 {arrows} {val[1]}"
+
+    assert val[0] == 2, val
+    height, top = val[1], val[2]
+
+    if not isinstance(height, (int, float)):
+      if height == 0:
+        return f"{top}"
+      elif height == 1:
+        return f"~ 10^{top}"
+      else:
+        height = approx_str(height)
+        return f"~ 10^^{height}"
+
+    # Compute "factional heights"
+    assert top > 0, val
+    while top >= 1:
+      top = math.log10(top)
+      height += 1
+    height = height - 1 + top
+
+    if height < 1:
+      val_int = self.try_eval()
+      return f"{val_int:_}" if val_int is not None else str(self)
+    elif height < 2:
+      return f"~ 10^{height - 1:_.1f}"
+    else:
+      return f"~ 10^^{height:_.1f}"
 
 
 class ConstInt(NatExpr):
@@ -58,6 +142,10 @@ class ConstInt(NatExpr):
   def is_const(self) -> bool:
     return True
 
+  @property
+  def uparrow_size_approx(self) -> tuple:
+    return (2, 0, abs(self.val))
+
   def min_val(self):
     return self
 
@@ -67,9 +155,10 @@ class ConstInt(NatExpr):
   def substitute(self, assignment: dict):
     return self
 
-  @property
-  def uparrow_size_approx(self) -> tuple:
-    return (2, 0, abs(self.val))
+  def approx_str(self) -> str:
+    if self.val < 10**10:
+      return f"{self.val:_}"
+    return super().approx_str()
 
   # Standard Magic Methods
   def __add__(self, other):
@@ -245,6 +334,9 @@ class InfNat(NatExpr):
   @property
   def uparrow_size_approx(self) -> tuple:
     return (math.inf, math.inf, math.inf)
+
+  def approx_str(self) -> str:
+    return "inf"
 
   def _is_valid_type(self, other):
     return isinstance(other, (NatExpr, int))

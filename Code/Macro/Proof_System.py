@@ -2,6 +2,7 @@
 Proof System which observes and attempts to prove patterns in computation.
 """
 
+from NatExpr import approx_str
 import copy
 import math
 import optparse
@@ -10,7 +11,6 @@ from optparse import OptionGroup, OptionParser
 
 import Algebraic_Expression as ae
 import Exp_Int
-import Halting_Lib
 from Algebraic_Expression import (
   ConstantToExpression,
   Expression,
@@ -1507,7 +1507,7 @@ class Proof_System:
     ## Return the pertinent info
     if self.verbose:
       self.print_this("++ Rule successfully applied ++")
-      self.print_this("Times applied:", Halting_Lib.big_int_approx_str(num_reps))
+      self.print_this("Times applied:", approx_str(num_reps))
       self.print_this("Diff steps:", diff_steps)
       self.print_this("Resulting tape:", return_tape.print_with_state(new_state))
       print()

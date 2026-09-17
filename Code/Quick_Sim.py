@@ -11,7 +11,7 @@ import Exp_Int
 import Halting_Lib
 import IO
 import io_pb2
-from Halting_Lib import big_int_approx_and_full_str
+from NatExpr import approx_and_full_str
 from Macro import Block_Finder, Simulator, Turing_Machine
 
 
@@ -83,8 +83,8 @@ def run(machine, block_size, back, prover, recursive, options):
       print("Symbol:", sim.op_details[0][0])
     print()
     if options.compute_steps:
-      print("Steps:   ", big_int_approx_and_full_str(sim.step_num))
-    print("Nonzeros:", big_int_approx_and_full_str(sim.get_nonzeros()))
+      print("Steps:   ", approx_and_full_str(sim.step_num))
+    print("Nonzeros:", approx_and_full_str(sim.get_nonzeros()))
     if options.latex:
       print()
       print(Exp_Int.tex_formula(sim.get_nonzeros()))

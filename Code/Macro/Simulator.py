@@ -12,7 +12,7 @@ from optparse import OptionGroup, OptionParser
 
 import io_pb2
 from Algebraic_Expression import Algebraic_Expression
-from Halting_Lib import big_int_approx_and_full_str, big_int_approx_str
+from NatExpr import approx_and_full_str, approx_str
 from Macro import Proof_System, Tape, Turing_Machine
 
 
@@ -242,7 +242,7 @@ class Simulator:
     self.print_steps()
     print("Elapsed time:", time.time() - self.start_time)
     print(self.tape.print_with_state(self.state))
-    print("Num Nonzeros:", big_int_approx_and_full_str(self.get_nonzeros()))
+    print("Num Nonzeros:", approx_and_full_str(self.get_nonzeros()))
 
   def print_steps(self):
     print()
@@ -293,7 +293,7 @@ class Simulator:
 def template(title, steps, loops):
   """Pretty print row of the steps table."""
   if steps is not None:
-    steps_str = big_int_approx_str(steps)
+    steps_str = approx_str(steps)
   else:
     steps_str = "N/A"
   return "%-8s %-20s %20d" % (title, steps_str, loops)

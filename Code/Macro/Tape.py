@@ -8,8 +8,7 @@ Combined with an automated prover, this can prove Xmas Trees.
 import sys
 
 sys.path.append("..")
-from Halting_Lib import big_int_approx_or_full_str
-from NatExpr import NatExpr, InfNat
+from NatExpr import NatExpr, InfNat, approx_or_full_str
 
 
 # Useful Tool
@@ -42,7 +41,7 @@ class Repeated_Symbol:
     if hasattr(self.symbol, "is_embedded"):
       return str(self.symbol)
 
-    num_str = big_int_approx_or_full_str(self.num)
+    num_str = approx_or_full_str(self.num)
     if num_str.startswith("~"):
       num_str = f"({num_str})"
 

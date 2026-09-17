@@ -9,6 +9,7 @@ Format looks like:
 1RB2LA1RA1RA_1LB1LA3RB1RZ
 """
 
+from NatExpr import approx_str
 import gzip
 from pathlib import Path
 from typing import TextIO
@@ -65,11 +66,11 @@ class Writer:
     halt_status = tm_record.proto.status.halt_status
     if halt_status.is_halting:
       # Remove _ from int strings so that we can sort them with `sort`.
-      steps_str = Halting_Lib.big_int_approx_str(
+      steps_str = approx_str(
         Halting_Lib.get_big_int(halt_status.halt_steps),
         digits_cutoff=self.digits_cutoff,
       ).replace("_", "")
-      score_str = Halting_Lib.big_int_approx_str(
+      score_str = approx_str(
         Halting_Lib.get_big_int(halt_status.halt_score),
         digits_cutoff=self.digits_cutoff,
       ).replace("_", "")

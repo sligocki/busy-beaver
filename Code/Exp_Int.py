@@ -148,6 +148,10 @@ def exp_int_depth(x) -> int:
 class ExpTerm:
   """An integer represented by a formula: `a b^n`"""
 
+  @property
+  def uparrow_size_approx(self) -> tuple:
+    return self._uparrow_size_approx
+
   def try_eval(self) -> int | None:
     if not self.is_const:
       return None
@@ -202,22 +206,22 @@ class ExpTerm:
         assert top >= 0, top
         if val[0] == 2:
           # self = b^(10^^height[^top]) ~= 10^^(height+1)[^top]
-          self.uparrow_size_approx = (2, val[1] + 1, val[2])
+          self._uparrow_size_approx = (2, val[1] + 1, val[2])
         else:
           # For pentation or higher, adding 1 to the base of the tower is negligible
-          self.uparrow_size_approx = val
+          self._uparrow_size_approx = val
 
       else:
         assert isinstance(exp_as_int, int)
         if exp_as_int < EXP_THRESHOLD:
           # self = value = 10^^0[^value]
-          self.uparrow_size_approx = uparrow_size_approx(self.coef * self.base**exp_as_int)
+          self._uparrow_size_approx = uparrow_size_approx(self.coef * self.base**exp_as_int)
 
         else:
           top = prec_mult(exp_as_int, math.log10(self.base))
           top = prec_add(top, math.log10(abs(self.coef)))
           # self = 10^top = 10^^1[^top]
-          self.uparrow_size_approx = (2, 1, abs(top))
+          self._uparrow_size_approx = (2, 1, abs(top))
 
     else:  # not self.is_const
       min_coef = min_val(self.coef)
@@ -370,7 +374,7 @@ class ExpInt(NatExpr):
         # All terms are small enough to fit in `int`s. We can represent the sum
         # precisely here.
         value = (sum(term_values) + self.const) // self.denom
-        self.uparrow_size_approx = uparrow_size_approx(value)
+        self._uparrow_size_approx = uparrow_size_approx(value)
         self.sign = sign(value)
 
       else:
@@ -385,7 +389,7 @@ class ExpInt(NatExpr):
         )
         if max_pos_tower == max_neg_tower:
           raise ExpIntException(f"Cannot evaluate sign of ExpInt: {self}    ({max_pos_tower} == {max_neg_tower})")
-        self.uparrow_size_approx = max(max_pos_tower, max_neg_tower)
+        self._uparrow_size_approx = max(max_pos_tower, max_neg_tower)
         if max_neg_tower > max_pos_tower:
           self.sign = -1
         else:
@@ -398,7 +402,7 @@ class ExpInt(NatExpr):
             assert val[1] >= 1, self
             if val[1] == 1:
               top = prec_add(val[2], -math.log10(self.denom))
-              self.uparrow_size_approx = (2, 1, top)
+              self._uparrow_size_approx = (2, 1, top)
 
     else:  # not self.is_const
       assert is_const(self.denom), self
@@ -443,6 +447,11 @@ class ExpInt(NatExpr):
 
   # The ability to implement mod on this data structure efficiently is the
   # reason that this class works!
+
+  @property
+  def uparrow_size_approx(self) -> tuple:
+    return self._uparrow_size_approx
+
   def __mod__(self, other):
     other_int = try_eval(other)
     if not other_int:

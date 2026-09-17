@@ -1,104 +1,10 @@
 # Library for setting various halting conditions (especially into the protobufs).
 
-import math
 import pickle
 
 import io_pb2
-from Algebraic_Expression import Expression, Variable
-from Exp_Int import ExpInt, ExpTerm, fractional_height, try_eval, uparrow_size_approx
-from NatExpr import ConstInt, NatExpr, is_const
-
-
-def big_int_approx_str(value, digits_cutoff: int = 10):
-  if value is None:
-    return "N/A"
-
-  if isinstance(value, NatExpr):
-    if value.is_inf:
-      return "inf"
-    if not value.is_const:
-      return str(value)
-  elif isinstance(value, Variable):
-    return str(value)
-
-  cutoff = 10**digits_cutoff
-  if is_const(value):
-    try:
-      if value < cutoff:
-        return f"{try_eval(value):_}"
-    except Exception:
-      pass
-
-  val = uparrow_size_approx(value)
-  if val[0] >= 4:
-    return f"~ 10 ↑^{val[0]} {val[1]}"
-  elif val[0] > 2:
-    arrows = "↑" * val[0]
-    return f"~ 10 {arrows} {val[1]}"
-
-  assert val[0] == 2, val
-  height, top = val[1], val[2]
-
-  if not is_const(value) or not isinstance(height, (int, float)):
-    if height == 0:
-      return f"{top}"
-    elif height == 1:
-      return f"~ 10^{top}"
-    else:
-      height_str = big_int_approx_str(height, digits_cutoff) if not isinstance(height, (int, float)) else height
-      return f"~ 10 ↑↑ {height_str}"
-
-  while top > cutoff:
-    height += 1
-    top = math.log10(top)
-
-  if height == 0:
-    # value = top is small enough to be an integer
-    if top <= 0:
-      return str(top)
-    else:
-      return f"~ 10^{math.log10(top):_.1f}"
-  elif height == 1:
-    # value = 10^top
-    return f"~ 10^{top:_.1f}"
-  else:
-    assert height > 1, height
-    return f"~ 10 ↑↑ {fractional_height(value):_.1f}"
-
-
-def big_int_approx_and_full_str(value):
-  if value is None:
-    return "N/A"
-
-  approx_str = big_int_approx_str(value)
-  full_str = str(value)
-  if approx_str == full_str:
-    return approx_str
-  elif len(full_str) > 100:
-    return f"{approx_str} (_{len(full_str)} chars_)"
-  else:
-    return f"{approx_str} ({full_str})"
-
-
-def big_int_approx_or_full_str(value):
-  if value is None:
-    return "N/A"
-
-  if isinstance(value, NatExpr):
-    if value.is_inf:
-      return str(value)
-    if isinstance(value, (ExpInt, Expression)):
-      return str(value)
-    if not value.is_const:
-      return str(value)
-
-  try:
-    if value < 10**9:
-      return f"{value:_}"
-  except Exception:
-    pass
-
-  return big_int_approx_str(value)
+from Exp_Int import ExpInt, ExpTerm
+from NatExpr import ConstInt
 
 
 _BIG_INT_MAX = 2**63 - 1

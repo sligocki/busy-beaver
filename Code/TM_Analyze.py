@@ -1,6 +1,7 @@
 #! /usr/bin/env python3
 """Analyze all TMRecords in a file and print various statistics."""
 
+from NatExpr import approx_and_full_str
 import argparse
 import collections
 import math
@@ -62,7 +63,7 @@ class BigIntStat:
         self.best_tm = tm
 
   def max_str(self):
-    return Halting_Lib.big_int_approx_and_full_str(self.max_value) + "   " + self.best_tm
+    return approx_and_full_str(self.max_value) + "   " + self.best_tm
 
 
 class TMStats:
