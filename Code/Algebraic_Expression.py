@@ -30,9 +30,9 @@ def simp_frac(val):
 
 def div(a, b):
   """Return a / b as either int or Fraction."""
-  if isinstance(a, (int, NatExpr)) and isinstance(b, (int, NatExpr)):
+  try:
     return simp_frac(Fraction(int(a), int(b)))
-  else:
+  except (ValueError, TypeError, OverflowError):
     return a / b
 
 
