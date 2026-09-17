@@ -33,6 +33,3 @@ indent-style = "space"
 
 [tool.ruff.lint]
 select = ["E", "F"]
-ignore = [
-  "N999", # Invalid module name (for Capitalized filenames)
-]
