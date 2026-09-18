@@ -126,6 +126,9 @@ class NatExpr(abc.ABC):
     else:
       return f"~ 10^^{height:_.1f}"
 
+  def to_BigInterval(self):
+    raise NotImplementedError(f"to_BigInterval not implemented for {type(self)}")
+
 
 class ConstInt(NatExpr):
   """Wraps a standard Python integer."""
@@ -159,6 +162,11 @@ class ConstInt(NatExpr):
     if self.val < 10**10:
       return f"{self.val:_}"
     return super().approx_str()
+
+  def to_BigInterval(self):
+    from Big_Interval import BigInterval
+
+    return BigInterval(self.val)
 
   # Standard Magic Methods
   def __add__(self, other):

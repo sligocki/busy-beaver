@@ -161,6 +161,15 @@ class ExpTerm:
       return self.sign * top
     return None
 
+  def to_BigInterval(self):
+    from Big_Interval import BigInterval
+    from NatExpr import NatExpr
+
+    b = BigInterval(self.base)
+    n = self.exponent.to_BigInterval() if isinstance(self.exponent, NatExpr) else BigInterval(self.exponent)
+    c = BigInterval(self.coef)
+    return (b**n) * c
+
   def __init__(self, base: int, coef: int, exponent):
     assert isinstance(base, int), base
     assert isinstance(coef, int), coef
@@ -306,6 +315,14 @@ class ExpInt(NatExpr):
     if val[0] == 2 and val[1] == 0:
       return self.sign * top
     return None
+
+  def to_BigInterval(self):
+    from Big_Interval import BigInterval
+
+    res = BigInterval(0)
+    for term in self.terms:
+      res = res + term.to_BigInterval()
+    return (res + BigInterval(self.const)) / BigInterval(self.denom)
 
   def __init__(self, terms: list[ExpTerm], const: int, denom: int):
     assert terms
