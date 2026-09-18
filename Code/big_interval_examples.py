@@ -6,31 +6,19 @@ User runnable script to easily add and evaluate new TMs.
 
 from optparse import OptionParser
 
-import Macro_Simulator
-from IO import TM_Record
-import TM_Enum
-import IO
 import Halting_Lib
+import IO
+import Macro_Simulator
 import NatExpr
+import TM_Enum
+from IO import TM_Record
 
 
-def evaluate_tm(name: str, tm_str: str = None, filename: str = None, force_block_size: int = None):
-  print("========================================")
-  print(f"TM Name: {name}")
-  if tm_str:
-    print(f"TM Code: {tm_str}")
-  elif filename:
-    print(f"TM File: {filename}")
-  print("========================================")
+def evaluate_tm(name: str, tm_str: str, force_block_size: int = None):
+  print(f"{name}: {tm_str}")
 
   # 1. Setup machine and simulator options
-  if tm_str:
-    tm = IO.parse_tm(tm_str)
-  elif filename:
-    tm = IO.load_tm(filename, 0)
-  else:
-    raise ValueError("Must provide tm_str or filename")
-
+  tm = IO.parse_tm(tm_str)
   tm_enum = TM_Enum.TM_Enum(tm, allow_no_halt=False)
   tm_record = TM_Record.TM_Record(tm_enum=tm_enum)
 
@@ -56,28 +44,25 @@ def evaluate_tm(name: str, tm_str: str = None, filename: str = None, force_block
     print()
     return
 
+  # 3. Extract scores and steps
   score = NatExpr.NatExpr.wrap(Halting_Lib.get_big_int(status.halt_score))
 
   # 4. Print Exact Formulas
-  print("\n--- Exact Formulas (ExpInt) ---")
   print(f"Sigma Score Formula: {score.formula_str if hasattr(score, 'formula_str') else score}")
   if hasattr(score, "approx_str"):
     print(f"Sigma Score Approx : {score.approx_str()}")
-
-  # 5. Compute and print BigInterval bounds
-  print("\n--- BigInterval Bounds ---")
-
   score_interval = score.to_BigInterval()
   print(f"Sigma Score Bound  : {score_interval}")
+  print(f"Sigma Score Approx : {score_interval.approx_str()}")
 
-  print("\n\n")
+  print()
 
 
 def main():
   examples = [
-    {"name": "Pavel's 2022 BB(6) champion (t15)", "tm_str": "1RB0LD_1RC0RF_1LC1LA_0LE1RZ_1LF0RB_0RC0RE"},
-    {"name": "Shawn's 2022 BB(6) t5", "filename": "../Machines/6x2-t5"},
-    {"name": "t70 (requires block size 2)", "filename": "../Machines/2x6-t70", "force_block_size": 2},
+    {"name": "6x2 t5", "tm_str": "1RB0LA_1LC1LF_0LD0LC_0LE0LB_1RE0RA_1RZ1LD"},
+    {"name": "6x2 t15", "tm_str": "1RB0LD_1RC0RF_1LC1LA_0LE1RZ_1LF0RB_0RC0RE"},
+    {"name": "2x6 t70", "tm_str": "1RB2LA1RA4LA5RA0LB_1LA3RA2RB1RZ3RB4LA", "force_block_size": 2},
   ]
 
   for ex in examples:

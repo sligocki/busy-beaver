@@ -116,6 +116,53 @@ class Knuth10:
   def __repr__(self):
     return f"Knuth10{self.args}"
 
+  def __str__(self):
+    s = str(self.args[0])
+    for i in range(1, len(self.args)):
+      ak = self.args[i]
+      if ak == 0:
+        continue
+      arrows = "↑" * i
+      if ak == 1:
+        s = f"10{arrows} {s}"
+      else:
+        s = f"(10{arrows})^{ak} {s}"
+    return s
+
+  def approx_str(self, is_lower=True):
+    s = ""
+    for i in range(len(self.args) - 1, 0, -1):
+      ak = self.args[i]
+      if ak == 0:
+        continue
+      arrows = "↑" * i
+      if i == 1:
+        height = ak + 1 if is_lower else ak + 2
+        s += f"10↑↑{height}"
+        break
+      else:
+        if ak == 1:
+          s += f"10{arrows} "
+        elif ak == 2:
+          s += f"10{arrows} 10{arrows} "
+        else:
+          s += f"(10{arrows})^{ak} "
+
+    if s == "":
+      a0 = self.args[0]
+      if a0 < 10**6:
+        s = str(a0)
+      else:
+        s = f"10^{len(str(a0)) - 1 if is_lower else len(str(a0))}"
+    elif s.endswith(" ") or s.endswith("↑"):
+      a0 = self.args[0]
+      if a0 < 10**6:
+        s += str(a0)
+      else:
+        s += f"10^{len(str(a0)) - 1 if is_lower else len(str(a0))}"
+
+    return s.strip()
+
   def try_eval(self, limit=10**1000):
     if len(self.args) == 1:
       return self.args[0]
@@ -145,6 +192,14 @@ class BigInterval:
     if self.lower == self.upper:
       return f"BigInterval({self.lower})"
     return f"BigInterval({self.lower}, {self.upper})"
+
+  def __str__(self):
+    if self.lower == self.upper:
+      return f"[{self.lower}]"
+    return f"[{self.lower}, {self.upper}]"
+
+  def approx_str(self):
+    return f"[{self.lower.approx_str(is_lower=True)}, {self.upper.approx_str(is_lower=False)}]"
 
   def __add__(self, other):
     if not isinstance(other, BigInterval):
