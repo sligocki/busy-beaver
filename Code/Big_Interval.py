@@ -1,8 +1,12 @@
 # See @big_interval.md for mathematical background.
 
+import sys
+
+sys.set_int_max_str_digits(0)
+
 
 class Knuth10:
-  C = 10
+  C = 1000
   MAX_A = C - 2
 
   def __init__(self, *args):
@@ -137,7 +141,19 @@ class Knuth10:
         continue
       arrows = "↑" * i
       if i == 1:
-        height = ak + 1 if is_lower else ak + 2
+        # H is the additional height needed to be added to a1 based on a0 (which we will ignore)
+        a0 = self.args[0]
+        if a0 < 10:
+          H = 0
+        elif a0 < 10**10:
+          H = 1
+        else:
+          assert self.C < 10**10, self.C
+          H = 2
+        if not is_lower:
+          # For upper bounds, we must go one step higher to ensure it is an upper-bound
+          H += 1
+        height = ak + H
         s += f"10↑↑{height}"
         break
       else:
