@@ -9,6 +9,7 @@ test-small:
 	uv run python3 -m unittest \
 		./test_Algebraic_Expression.py \
 		./test_Backtracking_Filter.py \
+		./test_big_interval.py \
 		./test_Direct_Simulator.py \
 		./test_Exp_Int.py \
 		./test_Halting_Lib.py \

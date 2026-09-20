@@ -8,8 +8,10 @@ from __future__ import annotations
 
 import math
 from fractions import Fraction
+from functools import lru_cache
 
 from Algebraic_Expression import Expression, min_val, substitute, variables
+from Big_Interval import BigInterval
 from Math import exp_mod, gcd, int_pow, lcm, prec_add, prec_mult
 from NatExpr import ConstInt, NatExpr, is_const
 
@@ -162,9 +164,6 @@ class ExpTerm:
     return None
 
   def to_BigInterval(self):
-    from Big_Interval import BigInterval
-    from NatExpr import NatExpr
-
     b = BigInterval(self.base)
     n = self.exponent.to_BigInterval() if isinstance(self.exponent, NatExpr) else BigInterval(self.exponent)
     c = BigInterval(self.coef)
@@ -317,12 +316,15 @@ class ExpInt(NatExpr):
     return None
 
   def to_BigInterval(self):
-    from Big_Interval import BigInterval
+    return self._to_big_interval()
 
+  @lru_cache
+  def _to_big_interval(self):
     res = BigInterval(0)
     for term in self.terms:
       res = res + term.to_BigInterval()
-    return (res + BigInterval(self.const)) / BigInterval(self.denom)
+    res = (res + BigInterval(self.const)) / BigInterval(self.denom)
+    return res
 
   def __init__(self, terms: list[ExpTerm], const: int, denom: int):
     assert terms
@@ -588,6 +590,7 @@ class ExpInt(NatExpr):
       return True
 
     return self.uparrow_size_approx > uparrow_size_approx(other)
+    # TODO: return self.to_BigInterval().cmp(other.to_BigInterval()) > 0
 
   def __ge__(self, other):
     assert self.is_const, self
@@ -602,6 +605,7 @@ class ExpInt(NatExpr):
       return True
 
     return self.uparrow_size_approx >= uparrow_size_approx(other)
+    # TODO: return self.to_BigInterval().cmp(other.to_BigInterval()) >= 0
 
   # Boilerplate
   def __neg__(self):

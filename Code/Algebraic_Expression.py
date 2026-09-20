@@ -9,6 +9,7 @@ import string
 from fractions import Fraction
 from functools import reduce
 
+from Big_Interval import BigInterval
 from NatExpr import NatExpr, is_const
 
 
@@ -275,6 +276,10 @@ class Expression(NatExpr):
   @property
   def is_const(self):
     return len(self.terms) == 0
+
+  def to_BigInterval(self):
+    assert self.is_const, self
+    return BigInterval(self.const)
 
   @property
   def uparrow_size_approx(self):
