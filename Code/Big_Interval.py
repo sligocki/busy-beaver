@@ -19,7 +19,7 @@ class Knuth10:
   C = 1000
   MAX_A0 = BASE**C
   # ai in [0, C-2)
-  MAX_A = C - 2
+  MAX_A = C - 3
 
   def __init__(self, *args):
     self.args = list(args)
