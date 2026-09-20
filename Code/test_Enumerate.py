@@ -7,8 +7,10 @@ Unit test for "Enumerate.py".
 """
 
 import os
+import shutil
 import subprocess
 import sys
+import tempfile
 import unittest
 
 import Enumerate
@@ -21,15 +23,14 @@ class GoldTest(unittest.TestCase):
   # Note
   def setUp(self):
     # Get busy-beaver root directory.
-    test_dir = os.path.dirname(sys.argv[0])
+    test_dir = os.path.dirname(__file__)
     self.root_dir = os.path.join(test_dir, os.pardir)
     self.root_dir = os.path.normpath(self.root_dir)
 
   def test_goldfiles(self):
     # Clear out test directory to start fresh.
-    test_dir = "/tmp/test_Enumerate/"
-    subprocess.call(["rm", "-rf", test_dir])
-    os.makedirs(test_dir)
+    test_dir = tempfile.mkdtemp()
+    test_dir_source = os.path.dirname(__file__)
     for states, symbols in [(2, 2), (2, 3), (3, 2)]:
       outfile_pb = os.path.join(test_dir, "out.pb")
       outfile_txt = os.path.join(test_dir, "out.txt")
@@ -49,7 +50,7 @@ class GoldTest(unittest.TestCase):
       subprocess.call(
         [
           "python3",
-          "IO_Convert.py",
+          os.path.join(test_dir_source, "IO_Convert.py"),
           outfile_pb,
           outfile_txt,
           "--outformat=text_old",
@@ -61,7 +62,7 @@ class GoldTest(unittest.TestCase):
         proc = subprocess.run(["diff", goldfile, outfile_txt])
         self.assertEqual(0, proc.returncode)
     # Clean up after ourselves.
-    subprocess.call(["rm", "-rf", test_dir])
+    shutil.rmtree(test_dir)
 
 
 if __name__ == "__main__":

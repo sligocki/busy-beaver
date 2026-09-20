@@ -4,7 +4,6 @@ Unit test for "Macro/Turing_Machine.py"
 """
 
 import os
-import sys
 import unittest
 
 import IO
@@ -14,7 +13,7 @@ from Macro import Turing_Machine
 class SystemTest(unittest.TestCase):
   def setUp(self):
     # Get busy-beaver root directory.
-    test_dir = os.path.dirname(sys.argv[0])
+    test_dir = os.path.dirname(__file__)
     self.root_dir = os.path.join(test_dir, os.pardir)
     self.root_dir = os.path.normpath(self.root_dir)
 
