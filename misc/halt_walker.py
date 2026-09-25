@@ -21,8 +21,12 @@ def process_memory() -> int:
   return psutil.Process(os.getpid()).memory_info().rss
 
 
-class Halt(Exception):
-  pass
+class HaltTransition(Exception):
+  """Raised by sim_step to indicate the machine halts at this step."""
+
+  def __init__(self, time_delta: int, config: list[int]):
+    self.time_delta = time_delta
+    self.config = config
 
 
 def print_info(i, start_h, w, max_w, h, t=0):
@@ -54,6 +58,7 @@ class Sim(ABC):
     """Single simulation step: one application of high level function.
     Must be implement by subclass.
     Returns (new_h, new_w, delta_time)
+    Raises HaltTransition on halt
     """
 
   def __init__(self, start_h: mpz, start_w: int):
@@ -96,12 +101,15 @@ class Sim(ABC):
 
   def try_run_pow(self, e: int) -> bool:
     """Attempt to run for 2^e sim_steps.
-    If it ever moved walk < 0, do nothing and return False.
+    If it hits a HaltTransition or went negative, do nothing and return False.
     Otherwise, apply sim_steps and return True.
     """
-    h, w, t, lw, hw = self.accel_pow(self.h, self.w, e)
+    try:
+      h, w, t, lw, hw = self.accel_pow(self.h, self.w, e)
+    except HaltTransition:
+      return False
 
-    if w < 0:
+    if lw < 0:
       # Went negative while running. Don't apply
       return False
     else:
@@ -132,12 +140,20 @@ class Sim(ABC):
     for e in range(e - 1, -1, -1):
       if self.try_run_pow(e):
         self.print_info()
-    self.h, self.w, _ = self.sim_step(self.h, self.w)
-    self.num_sim_steps += 1
-    self.print_info()
-    assert self.w == -1
 
-    print(f"Halted after exactly {self.num_sim_steps:_} iterations")
+    try:
+      self.h, self.w, dt = self.sim_step(self.h, self.w)
+      self.num_sim_steps += 1
+      self.runtime += dt
+      self.print_info()
+      assert self.w == -1
+      print(f"Halted (by walk < 0) after exactly {self.num_sim_steps:_} iterations")
+    except HaltTransition as halt_info:
+      self.num_sim_steps += 1
+      self.runtime += halt_info.time_delta
+      self.is_halted = True
+      self.print_info()
+      print("Halted via HaltTransition")
 
   def sim_direct(self):
     h, w = self.h, self.w
@@ -146,14 +162,21 @@ class Sim(ABC):
     max_w = w
     t = 0
     while w >= 0:
-      h, w, dt = self.sim_step(h, w)
+      try:
+        h, w, dt = self.sim_step(h, w)
+      except HaltTransition as halt_info:
+        i += 1
+        t += halt_info.time_delta
+        print("Halted via HaltTransition")
+        break
       max_w = max(max_w, w)
       i += 1
       t += dt
       if i == next_i:
         print_info(i, self.start_h, w, max_w, h, t)
         next_i *= 2
-    print("Halted")
+    if w < 0:
+      print("Halted via w < 0")
     print_info(i, self.start_h, w, max_w, h, t)
 
   def print_info(self) -> None:
@@ -184,7 +207,7 @@ class MBB1(Sim):
     k, r = divmod(h, 3)
     if r == 0:
       if w == 0:
-        return (True, 5 * k + 3, 2 * k + 1)
+        raise HaltTransition(time_delta=5 * k + 3, config=[0, 2 * k + 1, 0])
       else:
         return (4 * k + 2, w - 1, 11 * k + 7)
     elif r == 1:
@@ -195,14 +218,8 @@ class MBB1(Sim):
 
 def main():
   parser = argparse.ArgumentParser()
-  parser.add_argument("start_value", type=int, nargs="?", default=8)
-  parser.add_argument(
-    "start_offset",
-    type=int,
-    nargs="?",
-    default=0,
-    help="Starting walk offset, Antihydra starts at 0.",
-  )
+  parser.add_argument("start_value", type=int, nargs="?", default=1)
+  parser.add_argument("start_offset", type=int, nargs="?", default=1)
   args = parser.parse_args()
 
   sim = MBB1(args.start_value, args.start_offset)
@@ -211,4 +228,5 @@ def main():
   # sim_direct(args.start_value, args.start_offset)
 
 
-main()
+if __name__ == "__main__":
+  main()
