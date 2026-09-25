@@ -11,11 +11,12 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 import argparse
 from dataclasses import dataclass, replace
+import hashlib
 import os
 import time
 
 import psutil
-from gmpy2 import mpz
+from gmpy2 import mpz, log10
 
 
 def process_memory() -> int:
@@ -23,13 +24,46 @@ def process_memory() -> int:
   return psutil.Process(os.getpid()).memory_info().rss
 
 
-def approx_str(n: int | None) -> str:
-  if n is None:
-    return ""
+def approx_str(n: mpz) -> str:
+  """Small and fast approximation for giant numbers"""
   if n < 10**10:
     return f"={n:_}"
   else:
     return f"≈2^{n.bit_length():_}"
+
+
+def shahash(n: mpz) -> str:
+  hasher = hashlib.sha256()
+  num_bytes = (n.bit_length() + 7) // 8
+  hasher.update(n.to_bytes(num_bytes))
+  return hasher.hexdigest()
+
+
+def summarize_bignum(n: mpz) -> str:
+  """Summarize a giant number in various ways."""
+  if n == 0:
+    return "0"
+
+  l10 = float(log10(n))
+  s = str(n)
+
+  num_digits = len(s)
+  num_bits = n.bit_length()
+
+  if num_digits <= 40:
+    val_str = s
+  else:
+    val_str = f"{s[:20]}...{s[-20:]}"
+
+  sha256 = shahash(n)
+
+  return (
+    f"    Scientific:     10^{l10:_.6f}\n"
+    f"    Decimal digits: {num_digits:_}\n"
+    f"    Bits:           {num_bits:_}\n"
+    f"    Value:          {val_str}\n"
+    f"    SHA-256 (dec):  {sha256}"
+  )
 
 
 @dataclass
@@ -191,8 +225,11 @@ class Sim(ABC):
     self.result.delta_runtime += dt
     self.result.delta_sim_steps += 1
 
-    # TODO: print more about final config
-    self.print_info()
+    # Print verbose info about final parameter
+    print("Runtime:")
+    print(summarize_bignum(self.result.delta_runtime))
+    print("Sigma:")
+    print(summarize_bignum(sum(halt_config)))
 
   # TODO
   # def sim_direct(self):
