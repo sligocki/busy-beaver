@@ -57,13 +57,11 @@ def summarize_bignum(n: mpz) -> str:
 
   sha256 = shahash(n)
 
-  return (
-    f"    Scientific:     10^{l10:_.6f}\n"
-    f"    Decimal digits: {num_digits:_}\n"
-    f"    Bits:           {num_bits:_}\n"
-    f"    Value:          {val_str}\n"
-    f"    SHA-256 (dec):  {sha256}"
-  )
+  return f"""\
+    Scientific: 10^{l10:_.6f}
+    Bits:       {num_bits:_}
+    Value:      {val_str}
+    SHA-256:    {sha256}"""
 
 
 @dataclass
