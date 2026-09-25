@@ -8,7 +8,6 @@
 
 from abc import ABC, abstractmethod
 import argparse
-import itertools
 import os
 import time
 
@@ -99,61 +98,30 @@ class Sim(ABC):
     h2 += p4t * k1
     return (h2, w2, t1 + t2, min(lw1, lw2), max(hw1, hw2))
 
-  def try_run_pow(self, e: int) -> bool:
-    """Attempt to run for 2^e sim_steps.
-    If it hits a HaltTransition or went negative, do nothing and return False.
-    Otherwise, apply sim_steps and return True.
-    """
+  def run_pow(self, e: int) -> None:
+    """Run for 2^e sim_steps (or until halt if sooner). Updating self."""
     try:
       h, w, t, lw, hw = self.accel_pow(self.h, self.w, e)
-    except HaltTransition:
-      return False
-
-    if lw < 0:
-      # Went negative while running. Don't apply
-      return False
-    else:
-      # Apply sim_steps
       self.h = h
       self.w = w
       self.max_w = max(self.max_w, hw)
       self.num_sim_steps += 2**e
       self.runtime += t
-      return True
+    except HaltTransition as halt_info:
+      self.is_halted = True
+      self.runtime += halt_info.time_delta
 
   def sim_forever(self, start_e: int = 0):
     """Simulate until halt (or memory failure)"""
-    print("Exponential increase:")
+    # Run forever. Print results at exponentially increasing checkpoints.
     self.print_info()
-    self.try_run_pow(start_e)
-    self.print_info()
-    # Start by exponentially increasing sim_step run
-    for e in itertools.count(start_e):
-      if self.try_run_pow(e):
-        self.print_info()
-      else:
-        # Halted
-        break
-
-    # Once it halts, use binary search to find exact halting step
-    print("Halt detected. Binary searching exact halt steps:")
-    for e in range(e - 1, -1, -1):
-      if self.try_run_pow(e):
-        self.print_info()
-
-    try:
-      self.h, self.w, dt = self.sim_step(self.h, self.w)
-      self.num_sim_steps += 1
-      self.runtime += dt
+    self.run_pow(start_e)
+    e = start_e
+    while not self.is_halted:
       self.print_info()
-      assert self.w == -1
-      print(f"Halted (by walk < 0) after exactly {self.num_sim_steps:_} iterations")
-    except HaltTransition as halt_info:
-      self.num_sim_steps += 1
-      self.runtime += halt_info.time_delta
-      self.is_halted = True
-      self.print_info()
-      print("Halted via HaltTransition")
+      self.run_pow(e)
+      e += 1
+    print("Halt detected.")
 
   def sim_direct(self):
     h, w = self.h, self.w
