@@ -34,27 +34,12 @@ def approx_str(n: int | None) -> str:
 
 @dataclass
 class Config:
-  is_halt: bool
-  h: mpz | None = None
-  w: int | None = None
-  halt_config: list[int] | None = None
-
-  @staticmethod
-  def running(h: mpz, w: int) -> Config:
-    return Config(is_halt=False, h=h, w=w)
-
-  @staticmethod
-  def halt(config: list[int]) -> Config:
-    # TODO: Make halt_config accurate
-    return Config(is_halt=True)  # , halt_config=config)
+  h: mpz
+  w: int
 
   def __str__(self):
-    if self.is_halt:
-      # TODO: Add something about halt config
-      return "Halt"
-    else:
-      h_str = approx_str(self.h)
-      return f"w={self.w:_} h{h_str}"
+    h_str = approx_str(self.h)
+    return f"w={self.w:_} h{h_str}"
 
 
 @dataclass
@@ -70,6 +55,8 @@ class RunResult:
   """Result of taking one or more sim steps."""
 
   config: Config
+  # Is this config 1 step before halting?
+  is_halt: bool
   delta_sim_steps: int
   delta_runtime: mpz
   min_w: int
@@ -79,6 +66,7 @@ class RunResult:
     """Merge two consecutive results"""
     return RunResult(
       config=second.config,
+      is_halt=second.is_halt,
       delta_sim_steps=self.delta_sim_steps + second.delta_sim_steps,
       delta_runtime=self.delta_runtime + second.delta_runtime,
       min_w=min(self.min_w, second.min_w),
@@ -97,12 +85,18 @@ class Sim(ABC):
   #   mod_time: mpz
 
   @abstractmethod
-  def sim_step(self, h: mpz, w: int) -> StepResult:
-    """Single simulation step: one application of high level function."""
+  def try_sim_step(self, h: mpz, w: int) -> StepResult | None:
+    """Apply one step if result will remain running. If result would halt, return None"""
+
+  @abstractmethod
+  def apply_halt_step(self, h: mpz) -> tuple[list[mpz], mpz]:
+    """Apply final halting step. Prereq: try_sim_step(h, w) == None. Returns (halt_config, delta_runtime)"""
 
   def __init__(self, config: Config, init_runtime: mpz):
+    assert self.mod_out != self.mod_in
     self.result = RunResult(
       config=config,
+      is_halt=False,
       delta_sim_steps=0,
       delta_runtime=init_runtime,
       min_w=config.w,
@@ -112,49 +106,54 @@ class Sim(ABC):
     self.start_config = replace(config)
 
   def direct(self, config: Config, max_sim_steps: int) -> RunResult:
-    """Directly simulate for multiple steps (or until halt)"""
+    """Directly simulate for multiple steps (or until halt, returns config 1 step before halt)"""
     min_w: int = config.w
     max_w: int = config.w
     sim_steps = 0
     time = 0
-    while not config.is_halt and sim_steps < max_sim_steps:
-      # Update min/max before step since config.w is None after halt
-      min_w = min(min_w, config.w)
-      max_w = max(max_w, config.w)
-
-      res = self.sim_step(config.h, config.w)
+    is_halt = False
+    while sim_steps < max_sim_steps:
+      res = self.try_sim_step(config.h, config.w)
+      if not res:
+        is_halt = True
+        break
 
       sim_steps += 1
       time += res.delta_runtime
       config = res.config
+      min_w = min(min_w, config.w)
+      max_w = max(max_w, config.w)
 
-    return RunResult(config=config, delta_sim_steps=sim_steps, delta_runtime=time, min_w=min_w, max_w=max_w)
+    return RunResult(
+      config=config, is_halt=is_halt, delta_sim_steps=sim_steps, delta_runtime=time, min_w=min_w, max_w=max_w
+    )
 
   def accel_pow(self, config: Config, e: int) -> RunResult:
     """Accelerated sim of 2**e sim_steps. Uses divide-and-conquer.
     Takes advantage of this identity:
       f^n(x mod_in^n + r) = x mod_out^n + f^n(r)
     """
-    assert not config.is_halt
     if e <= 6:
       return self.direct(config, 2**e)
 
     def sim_expand(config: Config, e: int) -> RunResult:
       max_sim_steps = 2**e
       k, r = divmod(config.h, self.mod_in**max_sim_steps)
-      res = self.accel_pow(Config.running(r, config.w), e)
+      res = self.accel_pow(Config(r, config.w), e)
 
       # Update h and runtime to account for extra (k) not accounted for in res
       # Note: We only update for the actual number of sim steps executed (not max_sim_steps)
-      # TODO: How do we update halt config?
-      if res.config.h:
-        res.config.h += k * self.mod_out**res.delta_sim_steps
-      res.delta_runtime += k * self.mod_time**res.delta_sim_steps
+      res.config.h += k * self.mod_out**res.delta_sim_steps
+
+      # Update runtime as well, this is computed via a geometric progression
+      time_mult = (self.mod_out**res.delta_sim_steps - self.mod_in**res.delta_sim_steps) // (self.mod_out - self.mod_in)
+      res.delta_runtime += k * self.mod_time * time_mult
+
       return res
 
     # First half
     res1 = sim_expand(config, e - 1)
-    if res1.config.is_halt:
+    if res1.is_halt:
       return res1
 
     # Second half
@@ -172,11 +171,19 @@ class Sim(ABC):
     self.print_info()
     self.run_pow(start_e)
     e = start_e
-    while not self.result.config.is_halt:
+    while not self.result.is_halt:
       self.print_info()
       self.run_pow(e)
       e += 1
-    print("Halt detected.")
+    print("Halted")
+    self.print_info()
+
+    # Apply final halting step
+    halt_config, dt = self.apply_halt_step(self.result.config.h)
+    self.result.delta_runtime += dt
+    self.result.delta_sim_steps += 1
+
+    # TODO: print more about final config
     self.print_info()
 
   # TODO
@@ -228,17 +235,21 @@ class MBB1(Sim):
   mod_out = mpz(4)
   mod_time = mpz(11)
 
-  def sim_step(self, h: mpz, w: int) -> StepResult:
+  def try_sim_step(self, h: mpz, w: int) -> StepResult | None:
     k, r = divmod(h, 3)
     if r == 0:
       if w == 0:
-        return StepResult(Config.halt([0, 2 * k + 1, 0]), 5 * k + 3)
+        return None
       else:
-        return StepResult(Config.running(4 * k + 2, w - 1), 11 * k + 7)
+        return StepResult(Config(4 * k + 2, w - 1), 11 * k + 7)
     elif r == 1:
-      return StepResult(Config.running(4 * k + 3, w + 1), 11 * k + 9)
+      return StepResult(Config(4 * k + 3, w + 1), 11 * k + 9)
     else:
-      return StepResult(Config.running(4 * k + 3, w), 11 * k + 9)
+      return StepResult(Config(4 * k + 3, w), 11 * k + 9)
+
+  def apply_halt_step(self, h: mpz) -> tuple[list[mpz], mpz]:
+    k = h // 3
+    return ([0, 2 * k + 1, 0], 5 * k + 3)
 
 
 def main():
@@ -248,7 +259,7 @@ def main():
   parser.add_argument("init_runtime", type=int, nargs="?", default=3, help="TM steps until start config")
   args = parser.parse_args()
 
-  start_config = Config.running(args.start_value, args.start_offset)
+  start_config = Config(args.start_value, args.start_offset)
 
   sim = MBB1(start_config, args.init_runtime)
   sim.sim_forever()
