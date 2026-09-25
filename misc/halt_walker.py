@@ -137,17 +137,25 @@ class Sim(ABC):
       return self.direct(config, 2**e)
 
     def sim_expand(config: Config, e: int) -> RunResult:
+      """Simulate 2**e steps (or until halt) using modular arithmetic shortcut:
+      f^n(x mod_in^n + r) = x mod_out^n + f^n(r)
+      """
       max_sim_steps = 2**e
       k, r = divmod(config.h, self.mod_in**max_sim_steps)
       res = self.accel_pow(Config(r, config.w), e)
 
-      # Update h and runtime to account for extra (k) not accounted for in res
-      # Note: We only update for the actual number of sim steps executed (not max_sim_steps)
-      res.config.h += k * self.mod_out**res.delta_sim_steps
+      # If we simulted max_sim_steps, then x is k. Otherwise, we must expand it back.
+      n = res.delta_sim_steps
+      x = k * self.mod_in ** (max_sim_steps - n)
+
+      # Update h and runtime to account for extra (x) not accounted for in res
+      # Note: We only update for the actual number of sim steps executed (n)
+      #   f^n(x mod_in^n + r) = x mod_out^n + f^n(r)
+      res.config.h += x * self.mod_out**n
 
       # Update runtime as well, this is computed via a geometric progression
-      time_mult = (self.mod_out**res.delta_sim_steps - self.mod_in**res.delta_sim_steps) // (self.mod_out - self.mod_in)
-      res.delta_runtime += k * self.mod_time * time_mult
+      time_mult = (self.mod_out**n - self.mod_in**n) // (self.mod_out - self.mod_in)
+      res.delta_runtime += x * self.mod_time * time_mult
 
       return res
 
