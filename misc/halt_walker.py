@@ -15,6 +15,8 @@ import hashlib
 import os
 import time
 
+import matplotlib.pyplot as plt
+
 import psutil
 from gmpy2 import mpz, log10
 
@@ -229,6 +231,28 @@ class Sim(ABC):
     print("Sigma:")
     print(summarize_bignum(sum(halt_config)))
 
+  def plot_walk(self, step_pow: int, filename: str = "walk_plot.png"):
+    """Simulate until halt, recording w every 2**step_pow steps, and plot the result."""
+    xs = [self.result.delta_sim_steps]
+    ys = [self.result.config.w]
+
+    print(f"Generating plot data (resolution = 2^{step_pow})...")
+    while not self.result.is_halt:
+      self.run_pow(step_pow)
+      xs.append(self.result.delta_sim_steps)
+      ys.append(self.result.config.w)
+
+    print(f"Data collected ({len(xs):_} points). Saving plot to {filename}...")
+    plt.figure(figsize=(10, 6))
+    plt.plot(xs, ys, marker=".", linestyle="-", markersize=2, alpha=0.5)
+    plt.xlabel("Simulation Steps")
+    plt.ylabel("Walk Parameter (w)")
+    plt.title(f"Walk Parameter over Time (resolution=2^{step_pow})")
+    plt.grid(True)
+    plt.tight_layout()
+    plt.savefig(filename, dpi=300)
+    print("Plot saved successfully.")
+
   # TODO
   # def sim_direct(self):
   #   h, w = self.h, self.w
@@ -300,12 +324,18 @@ def main():
   parser.add_argument("start_value", type=int, nargs="?", default=1)
   parser.add_argument("start_offset", type=int, nargs="?", default=1)
   parser.add_argument("init_runtime", type=int, nargs="?", default=3, help="TM steps until start config")
+  parser.add_argument(
+    "--plot", type=int, metavar="STEP_POW", help="Generate a plot of w over time with resolution 2**STEP_POW"
+  )
   args = parser.parse_args()
 
   start_config = Config(args.start_value, args.start_offset)
 
   sim = MBB1(start_config, args.init_runtime)
-  sim.sim_forever()
+  if args.plot is not None:
+    sim.plot_walk(step_pow=args.plot)
+  else:
+    sim.sim_forever()
   # print()
   # sim_direct(args.start_value, args.start_offset)
 
