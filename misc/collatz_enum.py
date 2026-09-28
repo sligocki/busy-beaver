@@ -6,6 +6,10 @@ import itertools
 import math
 
 
+class SimOversteps(Exception):
+  """Simulation did not complete by max steps"""
+
+
 @dataclass
 class ConstCollatz:
   mod_in: int
@@ -37,7 +41,7 @@ class ConstCollatz:
         return None
       seen.add(val)
     # Never halted after max_steps steps
-    raise Exception(self, start, val)
+    raise SimOversteps(self, start, val)
 
   def seq(self, start: int) -> list[int]:
     val = start
@@ -76,6 +80,54 @@ class ConstCollatz:
     return seq
 
 
+def gen_tuples(length: int, target_sum: int):
+  if length == 0:
+    if target_sum == 0:
+      yield ()
+    return
+  for abs_val in range(target_sum + 1):
+    if abs_val == 0:
+      for rest in gen_tuples(length - 1, target_sum):
+        yield (0,) + rest
+    else:
+      for rest in gen_tuples(length - 1, target_sum - abs_val):
+        yield (abs_val,) + rest
+        yield (-abs_val,) + rest
+
+
+def enum_trajectories_by_size(max_size: int):
+  for size in range(2, max_size + 1):
+    for mod_in in range(1, size):
+      for mod_out in range(mod_in + 1, size - mod_in + 1):
+        rem_size = size - mod_in - mod_out
+        for abs_start in range(rem_size + 1):
+          starts = [0] if abs_start == 0 else [abs_start, -abs_start]
+          target_sum_b = rem_size - abs_start
+          for none_pos in range(mod_in):
+            for b_tuple in gen_tuples(mod_in - 1, target_sum_b):
+              bs = list(b_tuple)
+              bs.insert(none_pos, None)
+              f = ConstCollatz(mod_in, mod_out, bs)
+              for start in starts:
+                yield size, f, start
+
+
+def search_by_size(max_size: int, max_steps: int):
+  best_for_size = {}
+  for size, f, start in enum_trajectories_by_size(max_size):
+    try:
+      stopping_time = f.run(start, max_steps)
+    except SimOversteps:
+      continue
+    if stopping_time is not None:
+      if size not in best_for_size or stopping_time > best_for_size[size][0]:
+        best_for_size[size] = (stopping_time, f, start)
+
+  for size in sorted(best_for_size.keys()):
+    st, f, st_val = best_for_size[size]
+    print(f"Size {size:2d}: max steps {st:4d}  start {st_val:4d}  {f}")
+
+
 def enum_maps(mod_in: int, mod_out: int, max_b: int):
   # Translation normalize so that:
   #   1. undefined transition is first
@@ -93,13 +145,23 @@ def enum_maps(mod_in: int, mod_out: int, max_b: int):
 
 def main():
   parser = argparse.ArgumentParser()
-  parser.add_argument("mod_in", type=int)
-  parser.add_argument("mod_out", type=int)
+  parser.add_argument("mod_in", type=int, nargs="?")
+  parser.add_argument("mod_out", type=int, nargs="?")
 
   parser.add_argument("--max-b", type=int, default=20)
   parser.add_argument("--max-start", type=int, default=20)
   parser.add_argument("--max-steps", type=int, default=1000)
+  parser.add_argument(
+    "--by-size", type=int, help="Enumerate up to this max size and list longest stopping time for each size."
+  )
   args = parser.parse_args()
+
+  if args.by_size is not None:
+    search_by_size(args.by_size, args.max_steps)
+    return
+
+  if args.mod_in is None or args.mod_out is None:
+    parser.error("mod_in and mod_out are required unless --by-size is provided")
 
   results = []
   for f in enum_maps(args.mod_in, args.mod_out, args.max_b):
