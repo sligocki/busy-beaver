@@ -27,19 +27,20 @@ class ConstCollatz:
       return None
     return self.mod_out * k + b
 
-  def run(self, start: int, max_steps: int) -> int | None:
-    """Return stopping time if it stops. Return None if it cycles. Raise Exception if neither."""
+  def run(self, start: int, max_steps: int) -> tuple[int, int] | None:
+    """Return (stopping time, final val) if it stops. Return None if it cycles. Raise SimOversteps if neither."""
     val = start
     seen = {val}
     for n in range(max_steps):
-      val = self.step(val)
-      if val is None:
+      next_val = self.step(val)
+      if next_val is None:
         # Halted after n steps
-        return n
-      if val in seen:
+        return (n, val)
+      if next_val in seen:
         # Cycle detected
         return None
-      seen.add(val)
+      seen.add(next_val)
+      val = next_val
     # Never halted after max_steps steps
     raise SimOversteps(self, start, val)
 
@@ -118,20 +119,22 @@ def enum_trajectories_by_size(max_size: int):
               yield size, f, start
 
 
-def search_by_size(max_size: int, max_steps: int):
+def search_by_size(max_size: int, max_steps: int, sort_by_final_val: bool):
   best_for_size = {}
   for size, f, start in enum_trajectories_by_size(max_size):
     try:
-      stopping_time = f.run(start, max_steps)
+      res = f.run(start, max_steps)
     except SimOversteps:
       continue
-    if stopping_time is not None:
-      if size not in best_for_size or stopping_time > best_for_size[size][0]:
-        best_for_size[size] = (stopping_time, f, start)
+    if res is not None:
+      stopping_time, final_val = res
+      score = final_val if sort_by_final_val else stopping_time
+      if size not in best_for_size or score > best_for_size[size][0]:
+        best_for_size[size] = (score, stopping_time, final_val, f, start)
 
   for size in sorted(best_for_size.keys()):
-    st, f, st_val = best_for_size[size]
-    print(f"Size {size:2d}: max steps {st:4d}  start {st_val:4d}  {f}")
+    score, st, fv, f, st_val = best_for_size[size]
+    print(f"Size {size:2d}: max steps {st:4d}  final val {fv:6d}  start {st_val:4d}  {f}")
 
 
 def enum_maps(mod_in: int, mod_out: int, max_b: int):
@@ -160,10 +163,13 @@ def main():
   parser.add_argument(
     "--by-size", type=int, help="Enumerate up to this max size and list longest stopping time for each size."
   )
+  parser.add_argument(
+    "--sort-by", choices=["steps", "final_val"], default="steps", help="Order results by stopping time or final value"
+  )
   args = parser.parse_args()
 
   if args.by_size is not None:
-    search_by_size(args.by_size, args.max_steps)
+    search_by_size(args.by_size, args.max_steps, args.sort_by == "final_val")
     return
 
   if args.mod_in is None or args.mod_out is None:
@@ -172,14 +178,21 @@ def main():
   results = []
   for f in enum_maps(args.mod_in, args.mod_out, args.max_b):
     for start in range(args.max_start + 1):
-      stopping_time = f.run(start, args.max_steps)
-      if stopping_time:
-        results.append((f, start, stopping_time))
+      res = f.run(start, args.max_steps)
+      if res:
+        stopping_time, final_val = res
+        results.append((f, start, stopping_time, final_val))
 
-  # Sort first by stopping_time (desc) then by start (asc)
-  results.sort(key=lambda x: (-x[2], x[0].num_lanes(), x[1]))
-  for f, start, stopping_time in results[:20]:
-    print(f"{stopping_time:4d}  {start:4d}  {f.num_lanes():4d}  {f}  {f.lane_seq(start)}")
+  if args.sort_by == "final_val":
+    results.sort(key=lambda x: (-x[3], x[0].num_lanes(), x[1]))
+  else:
+    results.sort(key=lambda x: (-x[2], x[0].num_lanes(), x[1]))
+
+  for f, start, stopping_time, final_val in results[:20]:
+    if args.sort_by == "final_val":
+      print(f"{final_val:6d}  {stopping_time:4d}  {start:4d}  {f.num_lanes():4d}  {f}  {f.lane_seq(start)}")
+    else:
+      print(f"{stopping_time:4d}  {start:4d}  {f.num_lanes():4d}  {f}  {f.lane_seq(start)}")
 
 
 main()
