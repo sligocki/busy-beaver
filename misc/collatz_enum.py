@@ -80,36 +80,42 @@ class ConstCollatz:
     return seq
 
 
-def gen_tuples(length: int, target_sum: int):
+def gen_c_tuples(length: int, target_sum: int):
   if length == 0:
     if target_sum == 0:
       yield ()
     return
-  for abs_val in range(target_sum + 1):
-    if abs_val == 0:
-      for rest in gen_tuples(length - 1, target_sum):
-        yield (0,) + rest
-    else:
-      for rest in gen_tuples(length - 1, target_sum - abs_val):
-        yield (abs_val,) + rest
-        yield (-abs_val,) + rest
+  if target_sum < length:
+    return
+  if length == 1:
+    yield (target_sum,)
+    return
+  for val in range(1, target_sum - length + 2):
+    for rest in gen_c_tuples(length - 1, target_sum - val):
+      yield (val,) + rest
 
 
 def enum_trajectories_by_size(max_size: int):
   for size in range(2, max_size + 1):
-    for mod_in in range(1, size):
+    for mod_in in range(2, size):
       for mod_out in range(mod_in + 1, size - mod_in + 1):
         rem_size = size - mod_in - mod_out
-        for abs_start in range(rem_size + 1):
-          starts = [0] if abs_start == 0 else [abs_start, -abs_start]
-          target_sum_b = rem_size - abs_start
+        for start in range(rem_size + 1):
+          target_sum_c = rem_size - start
+          if target_sum_c < mod_in - 1:
+            continue
           for none_pos in range(mod_in):
-            for b_tuple in gen_tuples(mod_in - 1, target_sum_b):
-              bs = list(b_tuple)
-              bs.insert(none_pos, None)
+            for c_tuple in gen_c_tuples(mod_in - 1, target_sum_c):
+              bs = []
+              c_idx = 0
+              for r in range(mod_in):
+                if r == none_pos:
+                  bs.append(None)
+                else:
+                  bs.append(c_tuple[c_idx] + r)
+                  c_idx += 1
               f = ConstCollatz(mod_in, mod_out, bs)
-              for start in starts:
-                yield size, f, start
+              yield size, f, start
 
 
 def search_by_size(max_size: int, max_steps: int):
