@@ -2,6 +2,7 @@
 
 import argparse
 from dataclasses import dataclass
+import itertools
 import math
 
 
@@ -79,12 +80,15 @@ def enum_maps(mod_in: int, mod_out: int, max_b: int):
   # Translation normalize so that:
   #   1. undefined transition is first
   #   2. b_1 in [2, |mod_out-mod_in|+2)
+  assert mod_in >= 2
+  assert mod_out != mod_in
 
-  # TODO: Generalize to other mod_in values
-  assert mod_in == 3, mod_in
-  for b1 in range(2, abs(mod_out - mod_in) + 2):
-    for b2 in range(3, max_b + 1):
-      yield ConstCollatz(mod_in, mod_out, [None, b1, b2])
+  b1_range = range(2, abs(mod_out - mod_in) + 2)
+  other_b_range = range(0, max_b + 1)
+
+  for b1 in b1_range:
+    for other_bs in itertools.product(other_b_range, repeat=mod_in - 2):
+      yield ConstCollatz(mod_in, mod_out, [None, b1] + list(other_bs))
 
 
 def main():
