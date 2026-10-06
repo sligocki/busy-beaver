@@ -15,6 +15,7 @@ test-small:
 		./test_Halting_Lib.py \
 		./test_Math.py \
 		./test_Proof_System.py \
+		./test_IO.py \
 		./test_TM_Enum.py \
 		./test_TNF.py \
 		./test_Turing_Machine.py

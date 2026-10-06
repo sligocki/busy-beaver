@@ -38,10 +38,9 @@ parse_tm = TM_Record.parse_tm
 
 
 class Writer:
-  def __init__(self, source: Path | str | TextIO, digits_cutoff: int = 100):
+  def __init__(self, source: Path | str | TextIO):
     self.outfilename: Path | None
     self.outfile: TextIO | None
-    self.digits_cutoff = digits_cutoff
     if isinstance(source, (Path, str)):
       self.outfilename = Path(source)
       self.outfile = None
@@ -66,14 +65,8 @@ class Writer:
     halt_status = tm_record.proto.status.halt_status
     if halt_status.is_halting:
       # Remove _ from int strings so that we can sort them with `sort`.
-      steps_str = approx_str(
-        Halting_Lib.get_big_int(halt_status.halt_steps),
-        digits_cutoff=self.digits_cutoff,
-      ).replace("_", "")
-      score_str = approx_str(
-        Halting_Lib.get_big_int(halt_status.halt_score),
-        digits_cutoff=self.digits_cutoff,
-      ).replace("_", "")
+      steps_str = approx_str(Halting_Lib.get_big_int(halt_status.halt_steps)).replace("_", "")
+      score_str = approx_str(Halting_Lib.get_big_int(halt_status.halt_score)).replace("_", "")
       self.outfile.write(f" Halt {steps_str} {score_str}")
     elif Halting_Lib.is_infinite(halt_status):
       self.outfile.write(f" Inf {inf_reason2str[halt_status.inf_reason]}")
