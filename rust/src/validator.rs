@@ -3895,4 +3895,190 @@ mod tests {
             panic!("{}", err);
         }
     }
+
+    #[test]
+    fn test_weak_collatz_14() {
+        // TM halts iff weak collatz is false (exists non-trivial cycle)
+        //   https://github.com/calr3/tinycryptids/tree/weakcollatz-14/weakcollatz
+        // Iterate through M = 1,2,...
+        // For each, set v=M, iterate v -> T(v) until:
+        //      v = 1 -> Advance M -> M+1
+        //      v > M -> Advance M -> M+1
+        //      v = M -> Halt (Found non-trivial cycle)
+        // C(v, M) = 0^inf A> 1^v-1 0 1^M-v 0^inf
+        //      C(1, M) -> C(M+1, M+1)
+        //      C(2k, M) -> C(k, M)
+        //      C(2k+1, M) -> C(3k+2, M)  if M > 3k+2
+        //      C(M, M) ?
+
+        let rule_set = RuleSet {
+            tm: TM::from_str("1LM0RB_1LC1RB_0LM0LD_1RE1LD_0RF0RB_0LN0LG_1LH1LG_0RK0RI_1RJ1RI_0LN1RF_0RL1RK_0RZ1LC_0RA1LM_1LM1LN").unwrap(),
+            rules: vec![
+                chain_rule("B> 1^n", "1^n B>", 1), // 0
+                chain_rule("1^n <D", "<D 1^n", 1), // 1
+                chain_rule("1^n <M", "<M 1^n", 1), // 2
+                // 3: 0 B> 1^2n+r 0  -->  1^n 0 B> 1^r 0 1^n
+                Rule {
+                    init_config: Config::from_str("0 B> 1^2n+r 0").unwrap(),
+                    final_config: Config::from_str("1^n 0 B> 1^r 0 1^n").unwrap(),
+                    proof: Proof::Inductive {
+                        proof_base: vec![],
+                        proof_inductive: vec![
+                            // 0 B> 1^2n+r+2 0
+                            chain_step(0, "2n+r+2"),
+                            base_step(2),
+                            // 0 1^2n+r+1 <D 01
+                            chain_step(1, "2n+r+1"),
+                            base_step(2),
+                            // 10 B> 1^2n+r 01
+                            induction_step(&[("r", "r")]),
+                        ],
+                    },
+                },
+                // C(2k+2, m) -> C(k+1, m)
+                // 4: 0^inf A> 1^2k+1 0 1^b 0^inf  -->  0^inf A> 1^k 0 1^b+k+1 0^inf
+                Rule {
+                    init_config: Config::from_str("0^inf A> 1^2k+1 0 1^b 0^inf").unwrap(),
+                    final_config: Config::from_str("0^inf A> 1^k 0 1^b+k+1 0^inf").unwrap(),
+                    proof: Proof::Simple(vec![
+                        base_step(1),
+                        // 0 B> 1^2k 0 ...
+                        rule_step(3, &[("n", "k"), ("r", "0")]),
+                        // 1^k 0 B> 0 1^k
+                        base_step(2),
+                        // 1^k <M 0 1^k+1
+                        chain_step(2, "k"),
+                        base_step(1),
+                    ]),
+                },
+                chain_rule("I> 1^n", "1^n I>", 1), // 5
+                chain_rule("1^n <G", "<G 1^n", 1), // 6
+                // 7: 1^n <H 1^a 0 1^2n -> <H 1^3n+a 0
+                Rule {
+                    init_config: Config::from_str("1^n <H 1^a 0 1^2n").unwrap(),
+                    final_config: Config::from_str("<H 1^3n+a 0").unwrap(),
+                    proof: Proof::Inductive {
+                        proof_base: vec![],
+                        proof_inductive: vec![
+                            base_step(1),
+                            // 1^n 0 I> 1^a 0 1^2n+2
+                            chain_step(5, "a"),
+                            base_step(3),
+                            // 1^n 0 1^a+2 <G 0 1^2n
+                            chain_step(6, "a+2"),
+                            base_step(1),
+                            // 1^n <H 1^a+3 0 1^2n
+                            induction_step(&[("a", "a+3")]),
+                        ],
+                    },
+                },
+                chain_rule("K> 1^n", "1^n K>", 1), // 8
+                // if m > 3k+5: C(2k+3, m) -> C(3k+5, m)
+                // 9:
+                Rule {
+                    init_config: Config::from_str("0^inf A> 1^2k+2 0 1^b+k+3 0^inf").unwrap(),
+                    final_config: Config::from_str("0^inf A> 1^3k+4 0 1^b+1 0^inf").unwrap(),
+                    proof: Proof::Simple(vec![
+                        base_step(1),
+                        // 0 B> 1^2k+1 0 ...
+                        rule_step(3, &[("n", "k"), ("r", "1")]),
+                        // 1^k 0 B> 1 0 1^k
+                        base_step(7),
+                        // 1^k+1 <H 1 0 1^k+1
+                        rule_step(7, &[("n", "k+1"), ("a", "1")]),
+                        // <H 1^3k+4 0 1^*
+                        base_step(1),
+                        chain_step(8, "3k+4"),
+                        base_step(3),
+                        // 1^3k+4 <M 0 1^*
+                        chain_step(2, "3k+4"),
+                        base_step(1),
+                    ]),
+                },
+                // if m = 3k+5: C(2k+3, m) -> Halt
+                // 10:
+                Rule {
+                    init_config: Config::from_str("0^inf A> 1^2k+2 0 1^k+2 0^inf").unwrap(),
+                    final_config: Config::from_str("0^inf 1^3k+4 0^2 Z> 0^inf").unwrap(),
+                    proof: Proof::Simple(vec![
+                        base_step(1),
+                        // 0 B> 1^2k+1 0 ...
+                        rule_step(3, &[("n", "k"), ("r", "1")]),
+                        // 1^k 0 B> 1 0 1^k
+                        base_step(7),
+                        // 1^k+1 <H 1 0 1^k+1
+                        rule_step(7, &[("n", "k+1"), ("a", "1")]),
+                        // <H 1^3k+4 0^inf
+                        base_step(1),
+                        chain_step(8, "3k+4"),
+                        base_step(2),
+                    ]),
+                },
+                chain_rule("1^n <N", "<N 1^n", 1), // 11
+                // if m < 3k+5: C(2k+3, m) -> C(m+1, m+1)
+                // 12:
+                Rule {
+                    init_config: Config::from_str("0^inf A> 1^2k+4a+2 0 1^k+1 0^inf").unwrap(),
+                    final_config: Config::from_str("0^inf A> 1^3k+4a+4 0 0^inf").unwrap(),
+                    proof: Proof::Simple(vec![
+                        base_step(1),
+                        // 0 B> 1^2k+4a+1 0 1^k+1
+                        rule_step(3, &[("n", "k+2a"), ("r", "1")]),
+                        // 1^k+2a 0 B> 1 0 1^2k+2a+1
+                        base_step(7),
+                        // 1^k+2a+1 <H 1 0 1^2k+2a+1
+                        rule_step(7, &[("n", "k+a"), ("a", "1")]),
+                        // 1^a+1 <H 1^3k+3a+4 0 1^1 0^inf
+                        base_step(1),
+                        chain_step(5, "3k+3a+1"),
+                        base_step(3),
+                        // 1^a 0 1^1^3k+3a+6 <N
+                        chain_step(11, "3k+3a+3"),
+                        base_step(1),
+                        chain_step(2, "a"),
+                        base_step(1),
+                    ]),
+                },
+                // 13:
+                Rule {
+                    init_config: Config::from_str("0^inf A> 1^2k+4a+4 0 1^k+1 0^inf").unwrap(),
+                    final_config: Config::from_str("0^inf A> 1^3k+4a+6 0 0^inf").unwrap(),
+                    proof: Proof::Simple(vec![
+                        base_step(1),
+                        // 0 B> 1^2k+4a+1 0 1^k+1
+                        rule_step(3, &[("n", "k+2a+1"), ("r", "1")]),
+                        // 1^k+2a+1 0 B> 1 0 1^2k+2a+2
+                        base_step(7),
+                        // 1^k+2a+2 <H 1 0 1^2k+2a+2
+                        rule_step(7, &[("n", "k+a+1"), ("a", "1")]),
+                        // 1^a+1 <H 1^3k+3a+4 0 0^inf
+                        base_step(1),
+                        chain_step(5, "3k+3a+4"),
+                        base_step(2),
+                        // 1^a 0 1^1^3k+3a+5 <N
+                        chain_step(11, "3k+3a+5"),
+                        base_step(1),
+                        chain_step(2, "a"),
+                        base_step(1),
+                    ]),
+                },
+                // C(1, m) -> C(m+1, m+1)
+                // 14: 0^inf A> 0 1^m-1 0^inf -> 0^inf A> 1^m 0 0^inf
+                Rule {
+                    init_config: Config::from_str("0^inf A> 1^0 0 1^b 0^inf").unwrap(),
+                    final_config: Config::from_str("0^inf A> 1^b+1 0 1^0 0^inf").unwrap(),
+                    proof: Proof::Simple(vec![base_step(2)]),
+                },
+                // 14: Start -> C(3, 3)
+                Rule {
+                    init_config: Config::from_str("0^inf A> 0^inf").unwrap(),
+                    final_config: Config::from_str("0^inf A> 1^2 0 1^0 0^inf").unwrap(),
+                    proof: Proof::Simple(vec![base_step(8)]),
+                },
+            ],
+        };
+        if let Err(err) = validate_rule_set(&rule_set) {
+            panic!("{}", err);
+        }
+    }
 }
