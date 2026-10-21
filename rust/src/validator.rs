@@ -3908,8 +3908,9 @@ mod tests {
         // C(v, M) = 0^inf A> 1^v-1 0 1^M-v 0^inf
         //      C(1, M) -> C(M+1, M+1)
         //      C(2k, M) -> C(k, M)
-        //      C(2k+1, M) -> C(3k+2, M)  if M > 3k+2
-        //      C(M, M) ?
+        //      if M > 3k+2: C(2k+1, M) -> C(3k+2, M)
+        //      if M = 3k+2: C(2k+1, M) -> Halt
+        //      if M < 3k+2: C(2k+1, M) -> C(M+1, M+1)
 
         let rule_set = RuleSet {
             tm: TM::from_str("1LM0RB_1LC1RB_0LM0LD_1RE1LD_0RF0RB_0LN0LG_1LH1LG_0RK0RI_1RJ1RI_0LN1RF_0RL1RK_0RZ1LC_0RA1LM_1LM1LN").unwrap(),
