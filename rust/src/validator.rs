@@ -3900,7 +3900,7 @@ mod tests {
     fn test_weak_collatz_14() {
         // TM halts iff weak collatz is false (exists non-trivial cycle)
         //   https://github.com/calr3/tinycryptids/tree/weakcollatz-14/weakcollatz
-        // Iterate through M = 1,2,...
+        // Iterate through M = 3,4,...
         // For each, set v=M, iterate v -> T(v) until:
         //      v = 1 -> Advance M -> M+1
         //      v > M -> Advance M -> M+1
