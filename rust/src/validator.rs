@@ -2970,6 +2970,171 @@ mod tests {
     }
 
     #[test]
+    fn test_72_a19_jeff() {
+        // BB(7) champion candidate:
+        //   1RB0RG_1RC1RB_0RD1RZ_0LE0LD_0LF1LE_1RA1LF_1LC0RB (champ_232)
+        // Discovered by Argon; analysed/proved by jeff87654.
+        // Scores σ = 2 * W(20, 5) + 7 > 3 ↑^20 3.
+        //
+        // Ackermann-like recursion on digit list counters:
+        //   U_0(x) = 3x + 9
+        //   U_{k+1}(x) = U_k^{x+2-k}(W_k(3))
+        //   W_0(B) = B,  W_{k+1}(B) = U_k(W_k(B))
+        //
+        // In our representation:
+        //   f(k, n, b) = (U_k)^n(b)
+        // so that f(k, 1, b) = U_k(b).
+        fn f(k: CountType, x: CountExpr, y: CountExpr) -> CountExpr {
+            match k {
+                0 => CountExpr::RecursiveExpr(RecursiveExpr {
+                    func: Box::new(Function {
+                        bound_var: "z".parse().unwrap(),
+                        expr: "3z+9".parse().unwrap(),
+                    }),
+                    num_repeats: Box::new(x),
+                    base: Box::new(y),
+                }),
+                k => CountExpr::RecursiveExpr(RecursiveExpr {
+                    func: Box::new(Function {
+                        bound_var: "z".parse().unwrap(),
+                        expr: f(k - 1, "z+2".parse().unwrap(), 3.into()),
+                    }),
+                    num_repeats: Box::new(x),
+                    base: Box::new(y),
+                }),
+            }
+        }
+
+        fn rule_step_expr(rule_num: RuleIdType, var_assign: &[(Variable, CountExpr)]) -> ProofStep {
+            let mut var_subst = VarSubst::default();
+            for (var, expr) in var_assign {
+                var_subst.insert(var.clone(), expr.clone());
+            }
+            ProofStep::RuleStep {
+                rule_id: rule_num,
+                var_assignment: var_subst,
+            }
+        }
+
+        fn rule_level(k: CountType) -> Rule {
+            let tail_reps = 19 - k;
+            let tail_str = if tail_reps > 0 {
+                format!(" 1100^{}", tail_reps)
+            } else {
+                "".to_string()
+            };
+            let zeros_init = 2 * k + 4;
+            let zeros_final = 2 * k + 6;
+            Rule {
+                init_config: Config::from_str(&format!(
+                    "0^inf <E 1^2b+1 0^{} 11^n 0^2{} 1 0^inf",
+                    zeros_init, tail_str
+                ))
+                .unwrap(),
+                final_config: Config::from_str(&format!(
+                    "0^inf <E 1^2x+1 0^{}{} 1 0^inf",
+                    zeros_final, tail_str
+                ))
+                .unwrap()
+                .subst(&VarSubst::single(
+                    "x".parse().unwrap(),
+                    f(k, "n".parse().unwrap(), "b".parse().unwrap()),
+                ))
+                .unwrap(),
+                proof: Proof::Inductive {
+                    proof_base: vec![],
+                    proof_inductive: vec![ProofStep::Admit],
+                },
+            }
+        }
+
+        let mut b_vals: Vec<CountExpr> = Vec::new();
+        let mut curr_b: CountExpr = 5.into();
+        b_vals.push(curr_b.clone());
+        for k in 0..20 {
+            curr_b = f(k, 1.into(), curr_b);
+            b_vals.push(curr_b.clone());
+        }
+
+        let mut rules: Vec<Rule> = vec![
+            chain_rule("B> 1^n", "1^n B>", 1), // 0: crB
+            chain_rule("1^n <E", "<E 1^n", 1), // 1: crE
+            chain_rule("1^n <F", "<F 1^n", 1), // 2: crF
+            // 3: MC (mini-cycle)
+            Rule {
+                init_config: Config::from_str("0^inf <E 1^p 0 0 1").unwrap(),
+                final_config: Config::from_str("0^inf <E 1^p+3 0 0").unwrap(),
+                proof: Proof::Simple(vec![
+                    base_step(3),
+                    chain_step(0, "p"),
+                    base_step(5),
+                    chain_step(1, "p+2"),
+                ]),
+            },
+            // 4: MCS (repeated mini-cycles)
+            Rule {
+                init_config: Config::from_str("0^inf <E 1^p 0 0 1^n").unwrap(),
+                final_config: Config::from_str("0^inf <E 1^p+3n 0 0").unwrap(),
+                proof: Proof::Inductive {
+                    proof_base: vec![],
+                    proof_inductive: vec![
+                        rule_step(3, &[("p", "p")]),
+                        induction_step(&[("p", "p+3")]),
+                    ],
+                },
+            },
+        ];
+
+        // Rules 5..24: 20 levels of Ackermann rules (clearing digits 0 to 19)
+        for k in 0..20 {
+            rules.push(rule_level(k));
+        }
+
+        // Rule 25: Full Run from blank tape to the 20-digit cleared state
+        let mut proof_steps = vec![
+            base_step(3775),
+            rule_step(4, &[("p", "5"), ("n", "2")]),
+        ];
+        for k in 0..20 {
+            proof_steps.push(rule_step_expr(
+                5 + k as usize,
+                &[
+                    ("b".parse().unwrap(), b_vals[k as usize].clone()),
+                    ("n".parse().unwrap(), 1.into()),
+                ],
+            ));
+        }
+
+        let final_b = b_vals[20].clone();
+        rules.push(Rule {
+            init_config: Config::new(),
+            final_config: Config::from_str("0^inf <E 1^2x+1 0^44 1 0^inf")
+                .unwrap()
+                .subst(&VarSubst::single("x".parse().unwrap(), final_b.clone()))
+                .unwrap(),
+            proof: Proof::Simple(proof_steps),
+        });
+
+        // Rule 26: Halt Proof
+        rules.push(Rule {
+            init_config: Config::new(),
+            final_config: Config::from_str("0^inf 0101^20 1 0 0 1 1 Z> 1 0 0 1100^y 1 0^inf")
+                .unwrap()
+                .subst(&VarSubst::single("y".parse().unwrap(), final_b.clone()))
+                .unwrap(),
+            proof: Proof::Simple(vec![ProofStep::Admit]),
+        });
+
+        let rule_set = RuleSet {
+            tm: TM::from_str("1RB0RG_1RC1RB_0RD1RZ_0LE0LD_0LF1LE_1RA1LF_1LC0RB").unwrap(),
+            rules,
+        };
+        if let Err(err) = validate_rule_set(&rule_set) {
+            panic!("{}", err);
+        }
+    }
+
+    #[test]
     fn test_34_a14_uni() {
         // https://www.sligocki.com/2024/05/22/bb-3-4-a14.html
         //   1RB3LB1RZ2RA_2LC3RB1LC2RA_3RB1LB3LC2RC
