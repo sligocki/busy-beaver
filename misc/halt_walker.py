@@ -29,7 +29,7 @@ def process_memory() -> int:
 def approx_str(n: mpz) -> str:
   """Small and fast approximation for giant numbers"""
   if n < 10**10:
-    return f"={n:_}"
+    return f"={int(n):_}"
   else:
     return f"≈2^{n.bit_length():_}"
 
@@ -297,7 +297,7 @@ class Sim(ABC):
 # f(3k)   = 4k+2
 # f(3k+1) = 4k+3
 # f(3k+2) = 4k+3
-class MBB1(Sim):
+class MBB10(Sim):
   mod_in = mpz(3)
   mod_out = mpz(4)
   mod_time = mpz(11)
@@ -319,10 +319,37 @@ class MBB1(Sim):
     return ([0, 2 * k + 1, 0], 5 * k + 3)
 
 
+# [2/15, 1/6, 441/2, 11/3, 25/7, 6/11]
+# Let A(x, y) = [0, 0, 0, 2x, y]
+# START: A(1, 2) (step 3)
+# A(x, 0) --(x)--> [0, 0, 2x, 0, 0]
+# A(3k, y + 1) --(30k + 2)--> A(8k, y)
+# A(3k + 1, y + 1) --(30k + 13)--> A(8k + 3, y + 1)
+# A(3k + 2, y + 1) --(30k + 24)--> A(8k + 6, y + 2)
+class Fract24(Sim):
+  mod_in = mpz(3)
+  mod_out = mpz(8)
+  mod_time = 0
+
+  def try_sim_step(self, h: mpz, w: int) -> StepResult | None:
+    k, r = divmod(h, 3)
+    if w == 0:
+      return None
+    if r == 0:
+      return StepResult(Config(8 * k, w - 1), 30 * k + 2)
+    elif r == 1:
+      return StepResult(Config(8 * k + 3, w), 30 * k + 13)
+    else:
+      return StepResult(Config(8 * k + 6, w + 1), 30 * k + 24)
+
+  def apply_halt_step(self, h: mpz) -> tuple[list[mpz], mpz]:
+    return ([0, 0, 2 * h, 0, 0], h)
+
+
 def main():
   parser = argparse.ArgumentParser()
   parser.add_argument("start_value", type=int, nargs="?", default=1)
-  parser.add_argument("start_offset", type=int, nargs="?", default=1)
+  parser.add_argument("start_offset", type=int, nargs="?", default=2)
   parser.add_argument("init_runtime", type=int, nargs="?", default=3, help="TM steps until start config")
   parser.add_argument(
     "--plot", type=int, metavar="STEP_POW", help="Generate a plot of w over time with resolution 2**STEP_POW"
@@ -331,7 +358,7 @@ def main():
 
   start_config = Config(args.start_value, args.start_offset)
 
-  sim = MBB1(start_config, args.init_runtime)
+  sim = Fract24(start_config, args.init_runtime)
   if args.plot is not None:
     sim.plot_walk(step_pow=args.plot)
   else:
