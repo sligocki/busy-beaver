@@ -6,6 +6,7 @@ import re
 from collections.abc import Iterator
 from pathlib import Path
 from typing import TextIO
+import zipfile
 
 import IO
 from IO.TM_Record import parse_tm
@@ -29,6 +30,21 @@ def guess_module(filename: Path | str):
 
   elif ".morphett" in filename.suffixes:
     return IO.Morphett
+
+  elif ".zip" in filename.suffixes and filename.is_file():
+    try:
+      with zipfile.ZipFile(filename, "r") as zf:
+        member = IO.Common.get_zip_member(zf, filename)
+        member_suffixes = Path(member).suffixes
+        if ".pb" in member_suffixes:
+          return IO.Proto
+        if ".csv" in member_suffixes:
+          return IO.CSV
+        if ".morphett" in member_suffixes:
+          return IO.Morphett
+    except Exception:
+      pass
+    return IO.StdText
 
   else:
     return IO.StdText

@@ -8,12 +8,11 @@ Protobuffers are written using custom length-delimed sequential format. See ex:
   https://seb-nyberg.medium.com/length-delimited-protobuf-streams-a39ebc4a4565
 """
 
-import gzip
 import struct
 from pathlib import Path
 
 import io_pb2
-from IO.Common import RecordLocateError
+from IO.Common import RecordLocateError, open_file
 from IO.TM_Record import TM_Record
 
 
@@ -29,10 +28,7 @@ class Writer:
     self.outfile = None
 
   def __enter__(self):
-    if ".gz" in self.outfilename.suffixes:
-      self.outfile = gzip.open(self.outfilename, "wb")
-    else:
-      self.outfile = open(self.outfilename, "wb")
+    self.outfile = open_file(self.outfilename, "wb")
     return self
 
   def __exit__(self, *args):
@@ -68,10 +64,7 @@ class Reader:
     self.infile = None
 
   def __enter__(self):
-    if ".gz" in self.infilename.suffixes:
-      self.infile = gzip.open(self.infilename, "rb")
-    else:
-      self.infile = open(self.infilename, "rb")
+    self.infile = open_file(self.infilename, "rb")
     return self
 
   def __exit__(self, *args):

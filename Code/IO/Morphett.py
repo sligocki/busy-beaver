@@ -3,11 +3,11 @@ TM format used on http://morphett.info/turing/turing.html and commonly used in G
 Convenient when >26 states or >10 symbols so StdText doesn't work.
 """
 
-import gzip
 from pathlib import Path
 
 import TM_Enum
 from IO import TM_Record
+from IO.Common import open_file
 from Macro import Turing_Machine
 
 DIRS = "lr"
@@ -21,10 +21,7 @@ class Writer:
     self.outfile = None
 
   def __enter__(self):
-    if ".gz" in self.outfilename.suffixes:
-      self.outfile = gzip.open(self.outfilename, "w")
-    else:
-      self.outfile = open(self.outfilename, "w")
+    self.outfile = open_file(self.outfilename, "wt")
     return self
 
   def __exit__(self, *args):
@@ -64,10 +61,7 @@ class Reader:
     self.infile = None
 
   def __enter__(self):
-    if ".gz" in self.infilename.suffixes:
-      self.infile = gzip.open(self.infilename, "r")
-    else:
-      self.infile = open(self.infilename, "r")
+    self.infile = open_file(self.infilename, "rt")
     return self
 
   def __exit__(self, *args):

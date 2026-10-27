@@ -4,10 +4,12 @@ Reader for converting from bbchallenge.org zip'd binary format into our format.
 See: https://bbchallenge.org/method#format
 """
 
+from pathlib import Path
 import struct
 import zipfile
 
 import TM_Enum
+from IO.Common import get_zip_member
 from IO.TM_Record import TM_Record
 from Macro import Turing_Machine
 
@@ -79,9 +81,8 @@ class Reader:
 
   def __enter__(self):
     self.zipfile = zipfile.ZipFile(self.infilename, "r")
-    names = self.zipfile.namelist()
-    assert len(names) == 1, names
-    self.infile = self.zipfile.open(names[0])
+    member = get_zip_member(self.zipfile, Path(self.infilename))
+    self.infile = self.zipfile.open(member)
 
     self._read_header()
     return self

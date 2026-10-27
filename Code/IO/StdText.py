@@ -10,7 +10,6 @@ Format looks like:
 """
 
 from NatExpr import approx_str
-import gzip
 from pathlib import Path
 from typing import TextIO
 
@@ -18,7 +17,7 @@ import Halting_Lib
 import io_pb2
 import TM_Enum
 from IO import TM_Record
-from IO.Common import RecordLocateError
+from IO.Common import RecordLocateError, open_file
 from Macro import Turing_Machine
 
 inf_reason2str = {
@@ -50,10 +49,7 @@ class Writer:
 
   def __enter__(self):
     if self.outfilename:
-      if ".gz" in self.outfilename.suffixes:
-        self.outfile = gzip.open(self.outfilename, "wt")
-      else:
-        self.outfile = open(self.outfilename, "w")
+      self.outfile = open_file(self.outfilename, "wt")
     return self
 
   def __exit__(self, *args):
@@ -94,10 +90,7 @@ class Reader:
 
   def __enter__(self):
     if self.infilename:
-      if ".gz" in self.infilename.suffixes:
-        self.infile = gzip.open(self.infilename, "rt")
-      else:
-        self.infile = open(self.infilename, "r")
+      self.infile = open_file(self.infilename, "rt")
     return self
 
   def __exit__(self, *args):

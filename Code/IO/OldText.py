@@ -15,6 +15,7 @@ import Halting_Lib
 import io_pb2
 from Common import Exit_Condition
 from IO import TM_Record
+from IO.Common import open_file
 from Macro import Turing_Machine
 
 inf_reason2str = {
@@ -185,7 +186,7 @@ class Writer:
     self.outfile = None
 
   def __enter__(self):
-    self.outfile = open(self.outfilename, "w")
+    self.outfile = open_file(self.outfilename, "wt")
     self.rw = ReaderWriter(input_file=None, output_file=self.outfile)
     return self.rw
 

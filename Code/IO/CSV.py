@@ -17,14 +17,13 @@ machine,status,decider,sigma,space,steps,machine_with_halt_transition
 """
 
 import csv
-import gzip
 from pathlib import Path
 from typing import TextIO
 
 import Halting_Lib
 import TM_Enum
 from IO import TM_Record
-from IO.Common import RecordLocateError
+from IO.Common import RecordLocateError, open_file
 
 parse_tm = TM_Record.parse_tm
 
@@ -44,10 +43,7 @@ class Reader:
 
   def __enter__(self):
     if self.infilename:
-      if ".gz" in self.infilename.suffixes:
-        self.infile = gzip.open(self.infilename, "rt")
-      else:
-        self.infile = open(self.infilename, "r")
+      self.infile = open_file(self.infilename, "rt")
       self.reader = csv.DictReader(self.infile)
     return self
 
