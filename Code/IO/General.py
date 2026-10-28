@@ -75,7 +75,7 @@ def load_tm(filename: Path, record_num: int) -> Turing_Machine.Simple_Machine:
 
 def get_tm(tm: str) -> Turing_Machine.Simple_Machine:
   """Load TM from string. Supports TM directly in StdText format, filename or filename:record_num."""
-  if re.fullmatch(r"([0-9][LR][A-Z]|---|_)+", tm):
+  if re.fullmatch(r"([0-9]+[LRS][A-Z]+|---|_)+", tm):
     # Parse literal TM.
     return parse_tm(tm)
   else:
@@ -92,7 +92,7 @@ def get_tm(tm: str) -> Turing_Machine.Simple_Machine:
 
 def iter_tms(tm: str) -> Iterator[Turing_Machine.Simple_Machine]:
   """Load all TMs from string. Supports TM directly in StdText format, filename or filename:record_num."""
-  if re.fullmatch(r"([0-9][LR][A-Z]|---|_)+", tm):
+  if re.fullmatch(r"([0-9]+[LRS][A-Z]+|---|_)+", tm):
     # Parse literal TM.
     yield parse_tm(tm)
   elif ":" in tm:

@@ -66,6 +66,34 @@ def other_dir(dir: Dir) -> Dir:
     return LEFT
 
 
+def state_to_str(state: int) -> str:
+  """Convert 0-indexed state integer to bijective base-26 string (A..Z, AA..ZZ, etc.)."""
+  assert state >= 0, state
+  n = state + 1
+  chars = []
+  while n > 0:
+    n -= 1
+    chars.append(chr(ord("A") + (n % 26)))
+    n //= 26
+  return "".join(reversed(chars))
+
+
+def str_to_state(s: str) -> int:
+  """Convert bijective base-26 string (A..Z, AA..ZZ, etc.) to 0-indexed integer."""
+  n = 0
+  for ch in s:
+    n = n * 26 + (ord(ch) - ord("A") + 1)
+  return n - 1
+
+
+def halt_state_str(num_states: int) -> str:
+  """Shortest string of 'Z's representing a halt state (value >= num_states)."""
+  k = 1
+  while str_to_state("Z" * k) < num_states:
+    k += 1
+  return "Z" * k
+
+
 @dataclass(frozen=True)
 class Transition:
   """Class representing the result of a transition."""
@@ -91,17 +119,17 @@ class Transition:
       self.num_base_steps,
     )
 
-  def to_ttable_str(self) -> str:
+  def to_ttable_str(self, num_states: int | None = None) -> str:
     if self.condition == UNDEFINED:
       return "---"
     else:
-      symbol = string.digits[self.symbol_out]
+      symbol = str(self.symbol_out)
       dir = "LRS"[self.dir_out]
       if self.condition == HALT:
-        state = "Z"
+        state = halt_state_str(num_states if num_states is not None else 0)
       else:
-        state = string.ascii_uppercase[self.state_out]
-      return "%c%c%c" % (symbol, dir, state)
+        state = state_to_str(self.state_out)
+      return f"{symbol}{dir}{state}"
 
   def equals(self, other):
     # Note: We ignore metadata fields (num_base_steps, etc). This probably only
@@ -285,10 +313,12 @@ class Simple_Machine_State(int):
     return self.__str__()
 
   def __str__(self):
-    return STATES[self]
+    if self < 0:
+      return "Z"
+    return state_to_str(self)
 
   def __repr__(self):
-    return STATES[self]
+    return self.__str__()
 
 
 class Simple_Machine(Turing_Machine):
@@ -312,13 +342,10 @@ class Simple_Machine(Turing_Machine):
     return self.trans_table[state_in][symbol_in]
 
   def ttable_str(self) -> str:
-    if self.num_states < 25 and self.num_symbols < 10:
-      row_strs = []
-      for row in self.trans_table:
-        row_strs.append("".join(trans.to_ttable_str() for trans in row))
-      return "_".join(row_strs)
-    else:
-      return ""
+    row_strs = []
+    for row in self.trans_table:
+      row_strs.append("".join(trans.to_ttable_str(self.num_states) for trans in row))
+    return "_".join(row_strs)
 
   def eval_symbol(self, symbol):
     if symbol != self.init_symbol:

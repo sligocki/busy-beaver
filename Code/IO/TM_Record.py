@@ -1,11 +1,12 @@
 import ctypes
-import string
+import re
 import sys
 
 import IO
 import io_pb2
 import TM_Enum
 from Macro import Turing_Machine
+from Macro.Turing_Machine import str_to_state
 
 # Workaround to protobuf bug
 _NONE_REFCNT_ADDR = id(None)
@@ -15,9 +16,8 @@ _NONE_IMMORTAL_REFCNT = sys.getrefcount(None)
 
 
 # Parse TMs in standard text format.
-SYMBOLS_DISPLAY = string.digits
-DIRS_DISPLAY = "LR"
-STATES_DISPLAY = string.ascii_uppercase
+DIRS_DISPLAY = "LRS"
+TRANS_RE = re.compile(r"([0-9]+)([LRS])([A-Z]+)|(---)")
 
 
 def parse_tm(line: str) -> Turing_Machine.Simple_Machine:
@@ -28,19 +28,19 @@ def parse_tm(line: str) -> Turing_Machine.Simple_Machine:
   num_states = len(rows)
   max_symbol = 0
   for state_in, row in enumerate(rows):
-    for symbol_in, i in enumerate(range(0, len(row), 3)):
+    matches = list(TRANS_RE.finditer(row))
+    assert "".join(m.group(0) for m in matches) == row, f"Invalid row syntax: '{row}' - {line}"
+    for symbol_in, match in enumerate(matches):
       max_symbol = max(max_symbol, symbol_in)
-      trans_str = row[i : i + 3]
-      assert len(trans_str) == 3, f"'{trans_str}' - {line}"
-      if trans_str != "---":
-        symbol_out = SYMBOLS_DISPLAY.find(trans_str[0])
-        dir_out = DIRS_DISPLAY.find(trans_str[1])
-        state_out = STATES_DISPLAY.find(trans_str[2])
+      if match.group(4) != "---":
+        symbol_out = int(match.group(1))
+        dir_out = DIRS_DISPLAY.find(match.group(2))
+        state_out = str_to_state(match.group(3))
         if state_out >= num_states:
           state_out = -1
-        assert symbol_out >= 0, f"'{trans_str}' - {line}"
-        assert dir_out in [0, 1], f"'{trans_str}' - {line}"
-        assert state_out >= -1, f"'{trans_str}' - {line}"
+        assert symbol_out >= 0, f"'{match.group(0)}' - {line}"
+        assert dir_out in [0, 1, 2], f"'{match.group(0)}' - {line}"
+        assert state_out >= -1, f"'{match.group(0)}' - {line}"
         quints.append((state_in, symbol_in, symbol_out, dir_out, state_out))
   return Turing_Machine.tm_from_quintuples(quints, states=list(range(num_states)), symbols=list(range(max_symbol + 1)))
 

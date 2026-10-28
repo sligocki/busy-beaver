@@ -1,24 +1,28 @@
 import argparse
 import math
+import re
 from collections import defaultdict
+
+from Macro.Turing_Machine import state_to_str
+
+TRANS_RE = re.compile(r"([0-9]+)([LRS])([A-Z]+)|(---)")
 
 
 def parse_tm(tm_str):
   states = tm_str.split("_")
   transitions = {}
   for i, state_str in enumerate(states):
-    state_name = chr(ord("A") + i)
+    state_name = state_to_str(i)
     transitions[state_name] = {}
-    # Assuming 3 chars per symbol transition
-    num_symbols = len(state_str) // 3
-    for symbol in range(num_symbols):
-      trans = state_str[symbol * 3 : (symbol + 1) * 3]
-      if trans == "---":
+    matches = list(TRANS_RE.finditer(state_str))
+    assert "".join(m.group(0) for m in matches) == state_str, f"Invalid state string: {state_str}"
+    for symbol, match in enumerate(matches):
+      if match.group(4) == "---":
         transitions[state_name][symbol] = None
       else:
-        write_sym = int(trans[0])
-        dir_char = trans[1]
-        next_state = trans[2]
+        write_sym = int(match.group(1))
+        dir_char = match.group(2)
+        next_state = match.group(3)
         transitions[state_name][symbol] = (write_sym, dir_char, next_state)
   return transitions
 

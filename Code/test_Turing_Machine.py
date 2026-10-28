@@ -100,6 +100,27 @@ Transition table:
 """,
     )
 
+  def test_state_str_conversions(self):
+    self.assertEqual(Turing_Machine.state_to_str(0), "A")
+    self.assertEqual(Turing_Machine.state_to_str(25), "Z")
+    self.assertEqual(Turing_Machine.state_to_str(26), "AA")
+    self.assertEqual(Turing_Machine.state_to_str(27), "AB")
+    self.assertEqual(Turing_Machine.state_to_str(51), "AZ")
+    self.assertEqual(Turing_Machine.state_to_str(52), "BA")
+    self.assertEqual(Turing_Machine.state_to_str(701), "ZZ")
+    self.assertEqual(Turing_Machine.state_to_str(702), "AAA")
+
+    for i in range(2000):
+      s = Turing_Machine.state_to_str(i)
+      self.assertEqual(Turing_Machine.str_to_state(s), i)
+
+  def test_halt_state_str(self):
+    self.assertEqual(Turing_Machine.halt_state_str(2), "Z")
+    self.assertEqual(Turing_Machine.halt_state_str(25), "Z")
+    self.assertEqual(Turing_Machine.halt_state_str(26), "ZZ")
+    self.assertEqual(Turing_Machine.halt_state_str(701), "ZZ")
+    self.assertEqual(Turing_Machine.halt_state_str(702), "ZZZ")
+
 
 if __name__ == "__main__":
   unittest.main()

@@ -1,5 +1,6 @@
 from pathlib import Path
 import subprocess
+import sys
 import tempfile
 import unittest
 
@@ -79,14 +80,15 @@ class DiffTest(unittest.TestCase):
           f.write(f"{ch}\n")
 
       # file_a vs file_b should be identical modulo expansion (exit code 0)
-      cmd_match = ["./Code/Count.py", str(file_a), "--diff", str(file_b), "--quiet"]
+      diff_script = str(Path(__file__).resolve().parent / "Diff.py")
+      cmd_match = [sys.executable, diff_script, str(file_a), "--diff", str(file_b), "--quiet"]
       res = subprocess.run(cmd_match, capture_output=True, text=True)
       self.assertEqual(res.returncode, 0)
       self.assertIn("In A but not B: 0", res.stdout)
       self.assertIn("In B but not A: 0", res.stdout)
 
       # file_a vs file_c has 1 difference (exit code 1)
-      cmd_diff = ["./Code/Count.py", str(file_a), "--diff", str(file_c), "--quiet"]
+      cmd_diff = [sys.executable, diff_script, str(file_a), "--diff", str(file_c), "--quiet"]
       res = subprocess.run(cmd_diff, capture_output=True, text=True)
       self.assertEqual(res.returncode, 1)
       self.assertIn("In A but not B: 1", res.stdout)
