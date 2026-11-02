@@ -1085,11 +1085,10 @@ class Proof_System:
       for diff_block, initial_block in zip(diff_tape.tape[dir], initial_tape.tape[dir]):
         if not diff_block.num.is_inf:
           diff_block.num -= initial_block.num
-          if isinstance(diff_block.num, Algebraic_Expression):
-            if diff_block.num.is_const:
-              diff_block.num = diff_block.num.const
-            else:
-              is_diff_rule = False
+          if isinstance(diff_block.num, Algebraic_Expression) and diff_block.num.is_const:
+            diff_block.num = diff_block.num.const
+          elif not is_const(diff_block.num):
+            is_diff_rule = False
 
     if not is_diff_rule:
       # TODO: Don't do all the work above if we're not going to use it

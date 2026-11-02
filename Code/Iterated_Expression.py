@@ -220,16 +220,17 @@ class Iterated_Math(NatExpr):
     self.coef = coef
 
   def __repr__(self):
+    is_neg_const = isinstance(self.const, int) and self.const < 0
     if self.coef == 1 and self.const == 0:
       return f"{self.it_expr}"
     elif self.coef == 1:
-      if self.const < 0:
+      if is_neg_const:
         return f"({self.it_expr} - {-self.const})"
       return f"({self.it_expr} + {self.const})"
     elif self.const == 0:
       return f"({self.coef} * {self.it_expr})"
     else:
-      if self.const < 0:
+      if is_neg_const:
         return f"({self.coef} * {self.it_expr} - {-self.const})"
       return f"({self.coef} * {self.it_expr} + {self.const})"
 
@@ -240,19 +241,19 @@ class Iterated_Math(NatExpr):
 
   @property
   def is_const(self):
-    return is_const(self.it_expr)
+    return is_const(self.it_expr) and is_const(self.const) and is_const(self.coef)
 
   def min_val(self):
     return self.coef * min_val(self.it_expr) + min_val(self.const)
 
   def variables(self):
-    return variables(self.it_expr) | variables(self.const)
+    return variables(self.it_expr) | variables(self.const) | variables(self.coef)
 
   def substitute(self, assignment):
     return Iterated_Math(
       substitute(self.it_expr, assignment),
       substitute(self.const, assignment),
-      self.coef,
+      substitute(self.coef, assignment),
     )
 
   def __add__(self, other):
