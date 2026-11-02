@@ -94,10 +94,10 @@ class NatExpr(abc.ABC):
 
     val = self.uparrow_size_approx
     if val[0] >= 4:
-      return f"~ 10 ↑^{val[0]} {val[1]}"
+      return f"~ 10 ↑^{val[0]} {approx_str(val[1])}"
     elif val[0] > 2:
       arrows = "↑" * val[0]
-      return f"~ 10 {arrows} {val[1]}"
+      return f"~ 10 {arrows} {approx_str(val[1])}"
 
     assert val[0] == 2, val
     height, top = val[1], val[2]
@@ -111,20 +111,23 @@ class NatExpr(abc.ABC):
         height = approx_str(height)
         return f"~ 10^^{height}"
 
-    # Compute "factional heights"
+    # Compute "fractional heights"
     assert top > 0, val
+    if height == 0 and top < 10**10:
+      val_int = self.try_eval()
+      return f"{val_int:_}" if val_int is not None else str(self)
+    while top >= 10**10:
+      top = math.log10(top)
+      height += 1
+    if height <= 1:
+      exp = math.log10(top) if height == 0 else top
+      return f"~ 10^{exp:_.1f}"
+
     while top >= 1:
       top = math.log10(top)
       height += 1
     height = height - 1 + top
-
-    if height < 1:
-      val_int = self.try_eval()
-      return f"{val_int:_}" if val_int is not None else str(self)
-    elif height < 2:
-      return f"~ 10^{height - 1:_.1f}"
-    else:
-      return f"~ 10^^{height:_.1f}"
+    return f"~ 10^^{height:_.1f}"
 
   def to_BigInterval(self):
     raise NotImplementedError(f"to_BigInterval not implemented for {type(self)}")

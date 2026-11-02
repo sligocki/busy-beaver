@@ -4,43 +4,66 @@ from Exp_Int import uparrow_size_approx
 from NatExpr import is_const
 
 
+def get_step_growth(expr, var):
+  """
+  Returns `(arrows, count)` describing how `expr(var)` grows per application:
+  `(arrows, count)` means `expr(var) ≈ (10 ↑^arrows)^count (var)`.
+  Returns `None` if `var` is not found in `expr`.
+  """
+  if hasattr(expr, "terms"):
+    growths = [get_step_growth(term, var) for term in expr.terms]
+    if hasattr(expr, "const") and not isinstance(expr.const, int) and expr.const is not expr:
+      growths.append(get_step_growth(expr.const, var))
+    valid = [g for g in growths if g is not None]
+    if valid:
+      return max(valid)
+    return None
+  elif hasattr(expr, "vars") and isinstance(expr.vars, (list, tuple)):
+    growths = [get_step_growth(vp, var) for vp in expr.vars]
+    if hasattr(expr, "coef") and not isinstance(expr.coef, int):
+      growths.append(get_step_growth(expr.coef, var))
+    valid = [g for g in growths if g is not None]
+    if valid:
+      return max(valid)
+    return None
+  elif hasattr(expr, "var") and not hasattr(expr, "step_expr"):
+    v = expr.var
+    if v == var:
+      return (1, 0)
+    elif hasattr(v, "exponent"):
+      g = get_step_growth(v.exponent, var)
+      if g is not None:
+        return (1, g[1] + 1) if g[0] == 1 else g
+  elif hasattr(expr, "exponent"):
+    g = get_step_growth(expr.exponent, var)
+    if g is not None:
+      return (1, g[1] + 1) if g[0] == 1 else g
+  elif type(expr).__name__ == "Iterated_Math":
+    return get_step_growth(expr.it_expr, var)
+  elif type(expr).__name__ == "Iterated_Expression":
+    g_reps = get_step_growth(expr.num_reps, var)
+    if g_reps is not None:
+      g_step = get_step_growth(expr.step_expr, expr.var) or (1, 1)
+      arr_f = g_step[0] + 1
+      arr_N, count_N = g_reps
+      if arr_f > arr_N:
+        return (arr_f, 1)
+      elif arr_f == arr_N:
+        return (arr_N, count_N + 1)
+      else:
+        return g_reps
+  return None
+
+
 def get_depth(expr, var):
   """
   Returns the exponentiation depth of `var` within `expr`.
   Returns None if `var` is not found.
   """
-  if hasattr(expr, "terms"):
-    depths = [get_depth(term, var) for term in expr.terms]
-    valid_depths = [d for d in depths if d is not None]
-    if valid_depths:
-      return max(valid_depths)
+  g = get_step_growth(expr, var)
+  if g is None:
     return None
-  elif hasattr(expr, "var_power") and expr.var_power is not None:
-    return get_depth(expr.var_power, var)
-  elif hasattr(expr, "var"):
-    v = expr.var
-    if v == var:
-      return 0
-    elif hasattr(v, "exponent"):
-      d = get_depth(v.exponent, var)
-      if d is not None:
-        return 1 + d
-  elif hasattr(expr, "exponent"):
-    d = get_depth(expr.exponent, var)
-    if d is not None:
-      return 1 + d
-  elif type(expr).__name__ == "Iterated_Math":
-    return get_depth(expr.it_expr, var)
-  elif type(expr).__name__ == "Iterated_Expression":
-    d_reps = get_depth(expr.num_reps, var)
-    if d_reps is not None:
-      D = get_depth(expr.step_expr, expr.var)
-      if D is None or D < 1:
-        D = 1
-      arr_f = D + 1
-      arr_N = d_reps + 1
-      return max(arr_f, arr_N) - 1
-  return None
+  return g[1] if g[0] == 1 else g[0]
 
 
 class Iterated_Expression(NatExpr):
@@ -110,17 +133,31 @@ class Iterated_Expression(NatExpr):
 
   @property
   def uparrow_size_approx(self):
-    depth = get_depth(self.step_expr, self.var)
-    if depth is None or depth < 1:
-      depth = 1  # fallback
+    g_step = get_step_growth(self.step_expr, self.var)
+    if g_step is None or g_step == (1, 0):
+      g_step = (1, 1)
+    step_arrows, step_count = g_step
 
     val_start = uparrow_size_approx(self.start_val)
     top_start = val_start[-1]
+    arr = step_arrows + 1
     try:
       n_val = int(self.num_reps)
-      return (val_start[0], val_start[1] + n_val * depth, *val_start[2:])
+      if val_start[0] == arr and isinstance(val_start[1], (int, float)):
+        return (arr, val_start[1] + n_val * step_count, *val_start[2:])
     except Exception:
-      return (depth + 1, self.num_reps, top_start)
+      pass
+
+    val_reps = uparrow_size_approx(self.num_reps)
+    if val_reps[0] > arr:
+      # Iterating an arr-level operation N times when N is at a higher up-arrow
+      # level is dominated by N itself (analogous to ExpTerm when val[0] > 2).
+      return val_reps
+
+    total_reps = self.num_reps * step_count if step_count > 1 else self.num_reps
+    if val_start[0] == arr:
+      return (arr, val_start[1] + total_reps, *val_start[2:])
+    return (arr, total_reps, top_start)
 
   def __lt__(self, other):
     other = NatExpr.wrap(other)
