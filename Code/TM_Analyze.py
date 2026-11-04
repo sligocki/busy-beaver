@@ -88,6 +88,7 @@ class TMStats:
     self.sim_num_loops = Stat()
     self.sim_log10_num_steps = Stat()
     self.sim_num_rules_proven = Stat()
+    self.sim_num_rules_by_level = collections.defaultdict(Stat)
     self.sim_num_finite_linear_rules_proven = Stat()
     self.sim_num_exponential_rules_proven = Stat()
     self.sim_num_gen_rules_proven = Stat()
@@ -150,6 +151,8 @@ class TMStats:
       sim_log10_num_steps = proto.filter.simulator.result.log10_num_steps
       self.sim_log10_num_steps.add(sim_log10_num_steps)
       self.sim_num_rules_proven.add(proto.filter.simulator.result.num_rules_proven)
+      for level, num_rules in enumerate(proto.filter.simulator.result.num_rules_by_level, start=1):
+        self.sim_num_rules_by_level[level].add(num_rules)
       self.sim_num_finite_linear_rules_proven.add(proto.filter.simulator.result.num_finite_linear_rules_proven)
       self.sim_num_exponential_rules_proven.add(proto.filter.simulator.result.num_exponential_rules_proven)
       self.sim_num_gen_rules_proven.add(proto.filter.simulator.result.num_gen_rules_proven)
@@ -250,6 +253,14 @@ class TMStats:
           f"  Max {self.sim_num_rules_proven.max_value:9_d}"
           f"  (Set in {self.sim_num_rules_proven.count / self.count:7.2%})"
         )
+        for level in sorted(self.sim_num_rules_by_level):
+          stat = self.sim_num_rules_by_level[level]
+          if stat.count:
+            print(
+              f"    - level {level:<13d} : Mean {stat.mean():9_.0f}"
+              f"  Max {stat.max_value:9_d}"
+              f"  (Set in {stat.count / self.count:7.2%})"
+            )
         print(
           f"  - num_linear_rules      : Mean {self.sim_num_finite_linear_rules_proven.mean():9_.0f}"
           f"  Max {self.sim_num_finite_linear_rules_proven.max_value:9_d}"

@@ -865,6 +865,7 @@ class SimulatorResult(google.protobuf.message.Message):
   NUM_GEN_RULES_PROVEN_FIELD_NUMBER: builtins.int
   NUM_COLLATZ_RULES_FIELD_NUMBER: builtins.int
   NUM_PROOFS_FAILED_FIELD_NUMBER: builtins.int
+  NUM_RULES_BY_LEVEL_FIELD_NUMBER: builtins.int
   elapsed_time_us: builtins.int
   """Stats"""
   num_loops: builtins.int
@@ -890,6 +891,14 @@ class SimulatorResult(google.protobuf.message.Message):
     exponents decreases by more than 1.
     """
   num_proofs_failed: builtins.int
+  @property
+  def num_rules_by_level(
+    self,
+  ) -> google.protobuf.internal.containers.RepeatedScalarFieldContainer[builtins.int]:
+    """Number of rules proven at each level (index 0 = level 1, index 1 = level 2, ...).
+    The length of this list is the maximum rule level proven.
+    """
+
   @property
   def halt_info(self) -> global___HaltInfo: ...
   @property
@@ -918,6 +927,7 @@ class SimulatorResult(google.protobuf.message.Message):
     num_gen_rules_proven: builtins.int = ...,
     num_collatz_rules: builtins.int = ...,
     num_proofs_failed: builtins.int = ...,
+    num_rules_by_level: collections.abc.Iterable[builtins.int] | None = ...,
   ) -> None: ...
   def HasField(
     self,
@@ -967,6 +977,8 @@ class SimulatorResult(google.protobuf.message.Message):
       b"num_proofs_failed",
       "num_rule_moves",
       b"num_rule_moves",
+      "num_rules_by_level",
+      b"num_rules_by_level",
       "num_rules_proven",
       b"num_rules_proven",
       "unknown_info",

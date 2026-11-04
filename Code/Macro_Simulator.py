@@ -232,6 +232,12 @@ def simulate_machine(
       sim_info.result.num_gen_rules_proven = sim.prover.num_gen_rules
       sim_info.result.num_collatz_rules = sim.prover.num_collatz_rules
       sim_info.result.num_proofs_failed = sim.prover.num_failed_proofs
+      del sim_info.result.num_rules_by_level[:]
+      if sim.prover.num_rules_by_level:
+        max_level = max(sim.prover.num_rules_by_level)
+        sim_info.result.num_rules_by_level.extend(
+          sim.prover.num_rules_by_level[level] for level in range(1, max_level + 1)
+        )
 
     # Various Unknown conditions
     if timeout:

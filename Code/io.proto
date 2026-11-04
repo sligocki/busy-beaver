@@ -255,8 +255,11 @@ message SimulatorResult {
   // exponents decreases by more than 1.
   uint64 num_collatz_rules = 15;
   uint64 num_proofs_failed = 9;
+  // Number of rules proven at each level (index 0 = level 1, index 1 = level 2, ...).
+  // The length of this list is the maximum rule level proven.
+  repeated uint64 num_rules_by_level = 18;
 
-  // next id: 17
+  // next id: 19
 }
 
 message SimulatorInfo {
