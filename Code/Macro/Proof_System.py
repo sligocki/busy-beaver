@@ -1384,7 +1384,7 @@ class Proof_System:
             if delta_value[x] != -1:
               large_delta = True
             if num_reps is None:
-              if isinstance(init_value[x], Algebraic_Expression) and delta_value[x] != -1:
+              if not is_const(init_value[x]) and delta_value[x] != -1:
                 if self.verbose:
                   self.print_this("++ Collatz diff ++")
                   self.print_this("From: num_reps = (%r // %r)  + 1" % (init_value[x], -delta_value[x]))
@@ -1409,7 +1409,7 @@ class Proof_System:
                 limit_index = i
                 limit_final = this_final
             else:
-              if not isinstance(init_value[x], Algebraic_Expression) and not isinstance(num_reps, Algebraic_Expression):
+              if is_const(init_value[x]) and is_const(num_reps):
                 this_reps, this_final = Rule_Func.Subtract_Func(
                   var=x,
                   min=init_block.num.const,
@@ -1564,18 +1564,27 @@ class Proof_System:
     limit_final = None
     for i, (cur, func) in enumerate(zip(current_list, rule.func_list)):
       if func and func.is_decreasing:
+        if not is_const(cur) and func.has_collatz_decrease:
+          if self.verbose:
+            self.print_this("++ Collatz diff ++")
+          return False, None
         this_reps, this_final = func.max_reps(cur)
-        if isinstance(this_reps, Algebraic_Expression) and isinstance(num_reps, Algebraic_Expression):
-          # There are two different decreasing exponents in the rule and both
-          # are attempting to be applied to Algebraic_Expressions.
+        if num_reps is None:
+          num_reps = this_reps
+          limit_index = i
+          limit_final = this_final
+        elif is_const(this_reps) and is_const(num_reps):
+          if this_reps < num_reps:
+            num_reps = this_reps
+            limit_index = i
+            limit_final = this_final
+        else:
+          # There are two different decreasing exponents in the rule and at
+          # least one is a non-constant expression.
           # We cannot know which one will run out first, so just give up.
           if self.verbose:
             self.print_this("++ Multiple decreasing exponents for expressions ++")
           return False, None
-        elif not num_reps or this_reps < num_reps:
-          num_reps = this_reps
-          limit_index = i
-          limit_final = this_final
 
     assert always_ge(num_reps, 0), num_reps
     # Apply rule a finite number of times.

@@ -763,6 +763,59 @@ class ProofSystemTest(unittest.TestCase):
     result3, _ = rest3
     self.assertEqual(result3.condition, Proof_System.INF_REPEAT)
 
+  def test_apply_diff_rule_non_const_exp_int(self):
+    """Test apply_diff_rule with multiple negative diffs where one block is a non-const ExpInt."""
+    from Exp_Int import exp_int
+
+    tm = IO.parse_tm("1RB1RA_0LC1RF_1LE1LD_0LB1LC_0RA---_0RD0LF")
+    prover = Proof_System.Proof_System(tm, self.options, "")
+    state_A = Turing_Machine.Simple_Machine_State(0)
+
+    a_expr = Algebraic_Expression.Expression_from_string("(a+1)")
+    b_expr = Algebraic_Expression.Expression_from_string("(b+1)")
+    init_tape = Tape.Chain_Tape()
+    init_tape.init(0, 0, self.options)
+    init_tape.dir = Turing_Machine.RIGHT
+    init_tape.tape[0] = [Tape.Repeated_Symbol(0, InfNat())]
+    init_tape.tape[1] = [
+      Tape.Repeated_Symbol(0, InfNat()),
+      Tape.Repeated_Symbol(1, a_expr),
+      Tape.Repeated_Symbol(2, b_expr),
+    ]
+    diff_tape = Tape.Chain_Tape()
+    diff_tape.init(0, 0, self.options)
+    diff_tape.dir = Turing_Machine.RIGHT
+    diff_tape.tape[0] = [Tape.Repeated_Symbol(0, InfNat())]
+    diff_tape.tape[1] = [
+      Tape.Repeated_Symbol(0, InfNat()),
+      Tape.Repeated_Symbol(1, -1),
+      Tape.Repeated_Symbol(2, -1),
+    ]
+    rule = Proof_System.Diff_Rule(
+      init_tape,
+      diff_tape,
+      state_A,
+      Algebraic_Expression.ConstantToExpression(1),
+      1,
+      100,
+      1,
+      states_last_seen={},
+    )
+
+    x_expr = Algebraic_Expression.Expression_from_string("(x+5)")
+    symbolic_exp = exp_int(3, x_expr)
+    cur_tape = Tape.Chain_Tape()
+    cur_tape.init(0, 0, self.options)
+    cur_tape.dir = Turing_Machine.RIGHT
+    cur_tape.tape[0] = [Tape.Repeated_Symbol(0, InfNat())]
+    cur_tape.tape[1] = [
+      Tape.Repeated_Symbol(0, InfNat()),
+      Tape.Repeated_Symbol(1, 5),
+      Tape.Repeated_Symbol(2, symbolic_exp),
+    ]
+    success, _ = prover.apply_rule(rule, (state_A, cur_tape, None))
+    self.assertFalse(success)
+
 
 if __name__ == "__main__":
   unittest.main()

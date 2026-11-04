@@ -160,6 +160,7 @@ class Iterated_Expression(NatExpr):
     return (arr, total_reps, top_start)
 
   def __lt__(self, other):
+    assert self.is_const, self
     other = NatExpr.wrap(other)
     if other.is_inf:
       return True
@@ -168,6 +169,7 @@ class Iterated_Expression(NatExpr):
     return self.uparrow_size_approx < uparrow_size_approx(other)
 
   def __gt__(self, other):
+    assert self.is_const, self
     other = NatExpr.wrap(other)
     if other.is_inf:
       return False
@@ -176,6 +178,7 @@ class Iterated_Expression(NatExpr):
     return self.uparrow_size_approx > uparrow_size_approx(other)
 
   def __le__(self, other):
+    assert self.is_const, self
     other = NatExpr.wrap(other)
     if other.is_inf:
       return True
@@ -184,6 +187,7 @@ class Iterated_Expression(NatExpr):
     return uparrow_size_approx(self) <= uparrow_size_approx(other)
 
   def __ge__(self, other):
+    assert self.is_const, self
     other = NatExpr.wrap(other)
     if other.is_inf:
       return False
@@ -291,6 +295,7 @@ class Iterated_Math(NatExpr):
     return self.it_expr.uparrow_size_approx
 
   def __lt__(self, other):
+    assert self.is_const, self
     other = NatExpr.wrap(other)
     if other.is_inf:
       return True
@@ -299,6 +304,7 @@ class Iterated_Math(NatExpr):
     return uparrow_size_approx(self) < uparrow_size_approx(other)
 
   def __gt__(self, other):
+    assert self.is_const, self
     other = NatExpr.wrap(other)
     if other.is_inf:
       return False
@@ -307,6 +313,7 @@ class Iterated_Math(NatExpr):
     return uparrow_size_approx(self) > uparrow_size_approx(other)
 
   def __le__(self, other):
+    assert self.is_const, self
     other = NatExpr.wrap(other)
     if other.is_inf:
       return True
@@ -315,6 +322,7 @@ class Iterated_Math(NatExpr):
     return uparrow_size_approx(self) <= uparrow_size_approx(other)
 
   def __ge__(self, other):
+    assert self.is_const, self
     other = NatExpr.wrap(other)
     if other.is_inf:
       return False
