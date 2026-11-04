@@ -282,10 +282,24 @@ class Iterated_Math(NatExpr):
       return 0
     return Iterated_Math(self.it_expr, self.const * other, self.coef * other)
 
+  def __mod__(self, other):
+    if other == 1:
+      return 0
+    other = int(other)
+    if self.coef % other == 0:
+      return self.const % other
+    # TODO: Support general case when coef % other != 0 (by evaluating it_expr % other).
+    raise NotImplementedError(f"Cannot mod Iterated_Math by {other}: {self}")
+
   def __divmod__(self, other):
     if other == 1:
       return (self, 0)
-    raise NotImplementedError(f"Cannot mod Iterated_Math by non-1 value: {other}")
+    other = int(other)
+    if self.coef % other == 0:
+      q, r = divmod(self.const, other)
+      return (Iterated_Math(self.it_expr, q, self.coef // other), r)
+    # TODO: Support general case when coef % other != 0.
+    raise NotImplementedError(f"Cannot divmod Iterated_Math by {other}: {self}")
 
   def __abs__(self):
     return self

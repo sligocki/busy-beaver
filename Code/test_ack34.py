@@ -82,6 +82,40 @@ class TestAck34(unittest.TestCase):
     self.assertGreaterEqual(sim.prover.num_rules_by_level.get(4, 0), 1)
     self.assertEqual(sim.get_nonzeros().approx_str(), "~ 10 ↑↑↑ ~ 10^15.3")
 
+  def test_iterated_math_mod(self):
+    tm = IO.parse_tm("1RB3RB5RA1LB5LA2LB_2LA2RA4RB1RZ3LB2LA")
+
+    class Options(optparse.Values):
+      def __init__(self):
+        super().__init__()
+        self.block_size = 2
+        self.backsymbol = True
+        self.prover = True
+        self.recursive = True
+        self.compute_steps = False
+        self.verbose_prover = False
+        self.verbose_simulator = False
+        self.verbose_prover_run = False
+        self.exp_linear_rules = True
+        self.exp_meta_linear_rules = True
+        self.print_loops = 0
+        self.max_loops = 10000
+        self.verbose_prefix = ""
+        self.max_steps_in_backsymbol = 1000
+        self.max_num_reps = 10
+        self.limited_rules = False
+        self.allow_collatz = False
+        self.max_prover_configs = 100000
+
+    options = Options()
+    machine = Turing_Machine.Block_Macro_Machine(tm, options.block_size)
+    machine = Turing_Machine.Backsymbol_Macro_Machine(machine, max_sim_steps_per_symbol=options.max_steps_in_backsymbol)
+    sim = Simulator.Simulator(machine, options)
+    sim.loop_seek(options.max_loops)
+    self.assertEqual(sim.op_state, Turing_Machine.HALT)
+    self.assertGreaterEqual(sim.prover.num_rules_by_level.get(3, 0), 2)
+    self.assertEqual(sim.get_nonzeros().approx_str(), "~ 10^^~ 10^^~ 10^^3.3")
+
 
 if __name__ == "__main__":
   unittest.main()
