@@ -9,7 +9,7 @@ Format looks like:
 1RB2LA1RA1RA_1LB1LA3RB1RZ
 """
 
-from NatExpr import approx_str
+from NatExpr import approx_or_full_str
 from pathlib import Path
 from typing import TextIO
 
@@ -61,8 +61,8 @@ class Writer:
     halt_status = tm_record.proto.status.halt_status
     if halt_status.is_halting:
       # Remove _ from int strings so that we can sort them with `sort`.
-      steps_str = approx_str(Halting_Lib.get_big_int(halt_status.halt_steps)).replace("_", "")
-      score_str = approx_str(Halting_Lib.get_big_int(halt_status.halt_score)).replace("_", "")
+      steps_str = approx_or_full_str(Halting_Lib.get_big_int(halt_status.halt_steps)).replace("_", "")
+      score_str = approx_or_full_str(Halting_Lib.get_big_int(halt_status.halt_score)).replace("_", "")
       self.outfile.write(f" Halt {steps_str} {score_str}")
     elif Halting_Lib.is_infinite(halt_status):
       self.outfile.write(f" Inf {inf_reason2str[halt_status.inf_reason]}")
