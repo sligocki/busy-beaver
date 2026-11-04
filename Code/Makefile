@@ -16,6 +16,7 @@ test-small:
 		./test_Math.py \
 		./test_Proof_System.py \
 		./test_Diff.py \
+		./test_Expand.py \
 		./test_IO.py \
 		./test_TM_Enum.py \
 		./test_TNF.py \
