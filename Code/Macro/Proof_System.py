@@ -1491,14 +1491,15 @@ class Proof_System:
           if dir == limit_dir and i == limit_index:
             return_block.num = limit_final
           else:
-            try:
-              return_block.num += num_reps * diff_block.num
-            except TypeError:
-              print(
-                f"CRASH: return_block.num={type(return_block.num)} ({return_block.num}), "
-                f"num_reps={type(num_reps)} ({num_reps}) diff_block.num={type(diff_block.num)} ({diff_block.num})"
-              )
-              raise
+            if diff_block.num != 0:
+              try:
+                return_block.num += num_reps * diff_block.num
+              except TypeError:
+                print(
+                  f"CRASH: return_block.num={type(return_block.num)} ({return_block.num}), "
+                  f"num_reps={type(num_reps)} ({num_reps}) diff_block.num={type(diff_block.num)} ({diff_block.num})"
+                )
+                raise
           if isinstance(return_block.num, Algebraic_Expression) and return_block.num.is_const:
             return_block.num = return_block.num.const
       return_tape.tape[dir] = [x for x in return_tape.tape[dir] if x.num != 0]

@@ -164,7 +164,7 @@ class Term:
 
   def substitute(self, subs):
     """Substitute values from dict 'subs' to get an int."""
-    return reduce(operator.mul, [vp.substitute(subs) for vp in self.vars]) * self.coef
+    return reduce(operator.mul, [vp.substitute(subs) for vp in self.vars]) * substitute(self.coef, subs)
 
 
 def Term_from_string(input):
@@ -271,24 +271,32 @@ class Expression(NatExpr):
     raise TypeError("Cannot compare Expressions")
 
   def try_eval(self):
-    return self.const if self.is_const else None
+    if not self.is_const:
+      return None
+    if isinstance(self.const, NatExpr):
+      return self.const.try_eval()
+    return self.const
 
   @property
   def is_const(self):
-    return len(self.terms) == 0
+    return len(self.terms) == 0 and is_const(self.const)
 
   def to_BigInterval(self):
     assert self.is_const, self
+    if isinstance(self.const, NatExpr):
+      return self.const.to_BigInterval()
     return BigInterval(self.const)
 
   @property
   def uparrow_size_approx(self):
     assert self.is_const, self
+    if isinstance(self.const, NatExpr):
+      return self.const.uparrow_size_approx
     return (2, 0, abs(self.const))
 
   def substitute(self, subs):
     """Substitute values from dict 'subs' to get an int."""
-    val = sum([t.substitute(subs) for t in self.terms]) + self.const
+    val = sum([t.substitute(subs) for t in self.terms]) + substitute(self.const, subs)
     return simp_frac(val)
 
   def min_val(self):

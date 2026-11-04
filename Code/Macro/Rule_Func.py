@@ -84,6 +84,8 @@ class Add_Func(Func):
   __str__ = __repr__
 
   def apply_rep(self, start, num_reps):
+    if self.const == 0:
+      return start
     return start + num_reps * self.const
 
 

@@ -68,6 +68,20 @@ class SystemTest(unittest.TestCase):
     self.assertEqual((n * n).as_strictly_linear(), None)
     self.assertEqual((n * expr("m")).as_strictly_linear(), None)
 
+  def test_non_const_scalar(self):
+    from Exp_Int import exp_int
+
+    x = expr("x")
+    x_var = x.variable()
+    symbolic_exp = exp_int(2, x + 5)
+    wrapped = Algebraic_Expression.ConstantToExpression(symbolic_exp)
+
+    self.assertFalse(wrapped.is_const)
+    self.assertEqual(wrapped.variables(), {x_var})
+    self.assertEqual(int(Algebraic_Expression.min_val(wrapped)), 32)
+    subbed = Algebraic_Expression.substitute(wrapped, {x_var: 1})
+    self.assertEqual(int(subbed), 64)
+
 
 if __name__ == "__main__":
   unittest.main()
