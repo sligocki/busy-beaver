@@ -83,8 +83,8 @@ def run(machine, block_size, back, prover, recursive, options):
       print("Symbol:", sim.op_details[0][0])
     print()
     if options.compute_steps:
-      print("Steps:   ", approx_and_full_str(sim.step_num))
-    print("Nonzeros:", approx_and_full_str(sim.get_nonzeros()))
+      print("Steps:   ", approx_and_full_str(sim.step_num, max_chars=options.max_print_chars))
+    print("Nonzeros:", approx_and_full_str(sim.get_nonzeros(), max_chars=options.max_print_chars))
     if options.latex:
       print()
       print(Exp_Int.tex_formula(sim.get_nonzeros()))
@@ -226,6 +226,19 @@ if __name__ == "__main__":
     help="Print update every SECONDS [Default %default].",
   )
   parser.add_option("--print-macro-ttable", action="store_true")
+  parser.add_option(
+    "--max-print-chars",
+    type=int,
+    default=10_000,
+    help="Maximum characters to print for final Steps/Nonzeros formulas (0 for unlimited) [Default: %default].",
+  )
+  parser.add_option(
+    "--print-full-result",
+    action="store_const",
+    const=0,
+    dest="max_print_chars",
+    help="Print the full final Steps/Nonzeros formulas regardless of length.",
+  )
   parser.add_option("--latex", action="store_true", help="Print score in LaTeX math format")
 
   parser.add_option(

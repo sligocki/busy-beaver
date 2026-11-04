@@ -23,7 +23,7 @@ def approx_str(value) -> str:
   return NatExpr.wrap(value).approx_str()
 
 
-def approx_and_full_str(value) -> str:
+def approx_and_full_str(value, max_chars: int = 100) -> str:
   if value is None:
     return "N/A"
   if type(value).__name__ == "Variable":
@@ -32,20 +32,20 @@ def approx_and_full_str(value) -> str:
   full = str(value)
   if approx == full:
     return approx
-  elif len(full) > 100:
+  elif max_chars and len(full) > max_chars:
     return f"{approx} (_{len(full)} chars_)"
   else:
     return f"{approx} ({full})"
 
 
-def approx_or_full_str(value) -> str:
+def approx_or_full_str(value, max_chars: int = 100) -> str:
   if value is None:
     return "N/A"
   if type(value).__name__ == "Variable":
     return str(value)
   approx = approx_str(value)
   full = str(value)
-  if len(full) <= 100:
+  if not max_chars or len(full) <= max_chars:
     return full
   else:
     return approx

@@ -41,7 +41,7 @@ class Repeated_Symbol:
     if hasattr(self.symbol, "is_embedded"):
       return str(self.symbol)
 
-    num_str = approx_or_full_str(self.num)
+    num_str = approx_or_full_str(self.num, max_chars=0 if full_reps else 100)
     if num_str.startswith("~"):
       num_str = f"({num_str})"
 
