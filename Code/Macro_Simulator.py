@@ -89,7 +89,7 @@ def setup_macromachine(base_tm, options, tm_record):
   block_size = getattr(options, "block_size", None)
   if not block_size:
     if getattr(options, "max_loops", None):
-      bf_loops = options.max_loops // 100
+      bf_loops = max(100, min(options.max_loops // 100, 10_000))
     else:
       bf_loops = 100
 

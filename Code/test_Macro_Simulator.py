@@ -278,6 +278,24 @@ class MacroSimulatorTest(unittest.TestCase):
     self.assertFalse(tm_record.is_halting())
     self.assertEqual(tm_record.proto.status.halt_status.inf_reason, io_pb2.INF_CTL)
 
+  def test_setup_macromachine_bf_loops_bounds(self):
+    tm = IO.parse_tm("1RB---_0RC1LA_1LD1LB")
+    for max_loops, expected_bf_loops in [
+      (0, 100),
+      (50, 100),
+      (1000, 100),
+      (500_000, 5_000),
+      (10_000_000, 10_000),
+      (100_000_000, 10_000),
+    ]:
+      self.options.max_loops = max_loops
+      tm_enum = TM_Enum.TM_Enum(tm, allow_no_halt=False)
+      tm_record = TM_Record.TM_Record(tm_enum=tm_enum)
+      Macro_Simulator.setup_macromachine(tm, self.options, tm_record)
+      bf_params = tm_record.proto.filter.block_finder.parameters
+      self.assertEqual(bf_params.compression_search_loops, expected_bf_loops)
+      self.assertEqual(bf_params.mult_sim_loops, expected_bf_loops)
+
 
 if __name__ == "__main__":
   unittest.main()
