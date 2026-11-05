@@ -122,6 +122,22 @@ class ExpIntTest(unittest.TestCase):
     x_pb_reparsed.ParseFromString(x_pb_bytes)
     self.assertTrue(Exp_Int.struct_eq(get_big_int(x_pb_reparsed), x))
 
+  def test_legacy_unpickle_eval(self):
+    import pickle
+
+    x = exp_int(2, 500)
+    del x._uparrow_size_approx
+    x.terms[0].__dict__.pop("_uparrow_size_approx", None)
+    # Simulate legacy object having tower_value in __dict__ and no _uparrow_size_approx
+    x.__dict__["tower_value"] = (1, 150.5)
+    x.terms[0].__dict__["tower_value"] = (1, 150.5)
+
+    data = pickle.dumps(x)
+    loaded = pickle.loads(data)
+
+    self.assertTrue(hasattr(loaded, "_uparrow_size_approx"))
+    self.assertTrue(loaded > 100)
+
   def todo_test_bug_normalize(self):
     # Simplified version of issue
     x = exp_int(7, exp_int(7, exp_int(7, 7))) + exp_int(7, 1 + exp_int(7, exp_int(7, 7)))

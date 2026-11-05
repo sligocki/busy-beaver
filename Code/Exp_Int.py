@@ -150,8 +150,14 @@ def exp_int_depth(x) -> int:
 class ExpTerm:
   """An integer represented by a formula: `a b^n`"""
 
+  def __setstate__(self, state):
+    self.__dict__.update(state)
+    self.eval()
+
   @property
   def uparrow_size_approx(self) -> tuple:
+    if "_uparrow_size_approx" not in self.__dict__:
+      self.eval()
     return self._uparrow_size_approx
 
   def try_eval(self) -> int | None:
@@ -467,8 +473,14 @@ class ExpInt(NatExpr):
   # The ability to implement mod on this data structure efficiently is the
   # reason that this class works!
 
+  def __setstate__(self, state):
+    self.__dict__.update(state)
+    self.eval()
+
   @property
   def uparrow_size_approx(self) -> tuple:
+    if "_uparrow_size_approx" not in self.__dict__:
+      self.eval()
     return self._uparrow_size_approx
 
   def __mod__(self, other):
