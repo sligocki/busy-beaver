@@ -1,7 +1,6 @@
-from NatExpr import NatExpr
-from Algebraic_Expression import min_val, substitute, variables
-from Exp_Int import uparrow_size_approx
-from NatExpr import is_const
+from NatExpr import NatExpr, is_const
+from Algebraic_Expression import Expression, min_val, substitute, variables
+from Exp_Int import ExpInt, is_simple, sign, struct_eq, uparrow_size_approx
 
 
 def get_step_growth(expr, var):
@@ -10,7 +9,17 @@ def get_step_growth(expr, var):
   `(arrows, count)` means `expr(var) ≈ (10 ↑^arrows)^count (var)`.
   Returns `None` if `var` is not found in `expr`.
   """
-  if hasattr(expr, "terms"):
+  if type(expr).__name__ == "Iterated_Math":
+    growths = [get_step_growth(term.it_expr, var) for term in expr.terms]
+    if hasattr(expr, "const") and not isinstance(expr.const, int) and expr.const is not expr:
+      growths.append(get_step_growth(expr.const, var))
+    valid = [g for g in growths if g is not None]
+    if valid:
+      return max(valid)
+    return None
+  elif type(expr).__name__ == "Iterated_Term":
+    return get_step_growth(expr.it_expr, var)
+  elif hasattr(expr, "terms"):
     growths = [get_step_growth(term, var) for term in expr.terms]
     if hasattr(expr, "const") and not isinstance(expr.const, int) and expr.const is not expr:
       growths.append(get_step_growth(expr.const, var))
@@ -39,7 +48,13 @@ def get_step_growth(expr, var):
     if g is not None:
       return (1, g[1] + 1) if g[0] == 1 else g
   elif type(expr).__name__ == "Iterated_Math":
-    return get_step_growth(expr.it_expr, var)
+    growths = [get_step_growth(term.it_expr, var) for term in expr.terms]
+    if hasattr(expr, "const") and not isinstance(expr.const, int) and expr.const is not expr:
+      growths.append(get_step_growth(expr.const, var))
+    valid = [g for g in growths if g is not None]
+    if valid:
+      return max(valid)
+    return None
   elif type(expr).__name__ == "Iterated_Expression":
     g_reps = get_step_growth(expr.num_reps, var)
     if g_reps is not None:
@@ -88,6 +103,16 @@ class Iterated_Expression(NatExpr):
 
   __str__ = __repr__
 
+  def __eq__(self, other):
+    if not isinstance(other, Iterated_Expression):
+      return False
+    return (
+      self.step_expr == other.step_expr
+      and self.var == other.var
+      and struct_eq(self.start_val, other.start_val)
+      and struct_eq(self.num_reps, other.num_reps)
+    )
+
   def try_eval(self):
     return None
 
@@ -115,18 +140,13 @@ class Iterated_Expression(NatExpr):
       substitute(self.num_reps, assignment),
     )
 
-  def __rsub__(self, other):
-    return Iterated_Math(other, -self)
-
   def __divmod__(self, other):
     if other == 1:
       return (self, 0)
     raise NotImplementedError("Cannot mod Iterated_Expression by non-1 value")
 
   def __neg__(self):
-    return Iterated_Math(self, 0) * -1  # Not actually supported properly, but let's just do it
-    # Wait, we need to multiply.
-    raise NotImplementedError("Cannot negate Iterated_Expression")
+    return Iterated_Math([Iterated_Term(self, -1)], 0)
 
   def __abs__(self):
     return self
@@ -164,8 +184,6 @@ class Iterated_Expression(NatExpr):
     other = NatExpr.wrap(other)
     if other.is_inf:
       return True
-    if not isinstance(other, (Iterated_Expression, Iterated_Math)):
-      return False
     return self.uparrow_size_approx < uparrow_size_approx(other)
 
   def __gt__(self, other):
@@ -173,8 +191,6 @@ class Iterated_Expression(NatExpr):
     other = NatExpr.wrap(other)
     if other.is_inf:
       return False
-    if not isinstance(other, (Iterated_Expression, Iterated_Math)):
-      return True
     return self.uparrow_size_approx > uparrow_size_approx(other)
 
   def __le__(self, other):
@@ -182,111 +198,253 @@ class Iterated_Expression(NatExpr):
     other = NatExpr.wrap(other)
     if other.is_inf:
       return True
-    if not isinstance(other, (Iterated_Expression, Iterated_Math)):
-      return False
-    return uparrow_size_approx(self) <= uparrow_size_approx(other)
+    return self.uparrow_size_approx <= uparrow_size_approx(other)
 
   def __ge__(self, other):
     assert self.is_const, self
     other = NatExpr.wrap(other)
     if other.is_inf:
       return False
-    if not isinstance(other, (Iterated_Expression, Iterated_Math)):
-      return True
-    return uparrow_size_approx(self) >= uparrow_size_approx(other)
+    return self.uparrow_size_approx >= uparrow_size_approx(other)
 
   def __mul__(self, other):
     if other == 0:
       return 0
-    return Iterated_Math(self, 0, coef=other)
+    return Iterated_Math([Iterated_Term(self, other)], 0)
 
   def __rmul__(self, other):
-    if other == 0:
-      return 0
-    return Iterated_Math(self, 0, coef=other)
+    return self.__mul__(other)
 
   def __add__(self, other):
-    return Iterated_Math(self, other, coef=1)
+    if isinstance(other, Iterated_Math):
+      return other + self
+    if isinstance(other, Iterated_Expression):
+      return Iterated_Math([Iterated_Term(self, 1), Iterated_Term(other, 1)], 0)
+    return Iterated_Math([Iterated_Term(self, 1)], other)
 
   def __radd__(self, other):
-    return Iterated_Math(self, other, coef=1)
+    return self.__add__(other)
 
   def __sub__(self, other):
-    return Iterated_Math(self, -other, coef=1)
+    if isinstance(other, Iterated_Math):
+      return (-other) + self
+    if isinstance(other, Iterated_Expression):
+      return Iterated_Math([Iterated_Term(self, 1), Iterated_Term(other, -1)], 0)
+    return Iterated_Math([Iterated_Term(self, 1)], -other)
+
+  def __rsub__(self, other):
+    return (-self) + other
+
+
+class Iterated_Term:
+  """A term in an Iterated_Math expression: `coef * it_expr`"""
+
+  def __init__(self, it_expr: Iterated_Expression, coef=1):
+    self.it_expr = it_expr
+    self.coef = coef
+
+  def copy(self):
+    return Iterated_Term(self.it_expr, self.coef)
+
+  def __eq__(self, other):
+    return isinstance(other, Iterated_Term) and self.coef == other.coef and self.it_expr == other.it_expr
+
+  def __repr__(self):
+    if self.coef == 1:
+      return f"{self.it_expr}"
+    return f"{self.coef} * {self.it_expr}"
+
+  __str__ = __repr__
+
+
+def normalize_terms(terms: list[Iterated_Term]) -> list[Iterated_Term]:
+  combined: list[Iterated_Term] = []
+  for term in terms:
+    if term.coef == 0:
+      continue
+    found = False
+    for c in combined:
+      if c.it_expr == term.it_expr:
+        c.coef += term.coef
+        found = True
+        break
+    if not found:
+      combined.append(term.copy())
+  combined = [t for t in combined if t.coef != 0]
+  try:
+    combined.sort(key=lambda t: uparrow_size_approx(t.it_expr), reverse=True)
+  except Exception:
+    pass
+  return combined
 
 
 class Iterated_Math(NatExpr):
-  """A shifted iterated expression: `Iterated_Expression + const`"""
+  """A linear combination of Iterated_Expressions + const:
+  `coef_1 * it_expr_1 + coef_2 * it_expr_2 + ... + const`
+  """
 
-  def __init__(self, it_expr, const, coef=1):
-    self.it_expr = it_expr
-    self.const = const
-    self.coef = coef
+  def __init__(self, it_expr_or_terms, const=0, coef=1):
+    terms = []
+    actual_const = const
+    if isinstance(it_expr_or_terms, (list, tuple)):
+      terms = [t.copy() if hasattr(t, "copy") else t for t in it_expr_or_terms]
+    elif it_expr_or_terms is not None:
+      terms = [Iterated_Term(it_expr_or_terms, coef)]
+
+    # If const happens to be an Iterated_Expression or Iterated_Math, flatten it into terms!
+    if isinstance(actual_const, Iterated_Expression):
+      terms.append(Iterated_Term(actual_const, 1))
+      actual_const = 0
+    elif isinstance(actual_const, Iterated_Math):
+      terms.extend([t.copy() for t in actual_const.terms])
+      actual_const = actual_const.const
+
+    self.terms = normalize_terms(terms)
+    self.const = actual_const
+
+  @property
+  def it_expr(self):
+    """Backwards compatibility property returning single or dominant Iterated_Expression."""
+    if len(self.terms) == 1:
+      return self.terms[0].it_expr
+    elif len(self.terms) == 0:
+      return None
+    try:
+      return max(self.terms, key=lambda t: uparrow_size_approx(t.it_expr)).it_expr
+    except Exception:
+      return self.terms[0].it_expr
+
+  @property
+  def coef(self):
+    """Backwards compatibility property returning coefficient."""
+    if len(self.terms) == 1:
+      return self.terms[0].coef
+    elif len(self.terms) == 0:
+      return 0
+    return 1
+
+  def _copy_terms(self):
+    return [t.copy() for t in self.terms]
 
   def __repr__(self):
-    is_neg_const = isinstance(self.const, int) and self.const < 0
-    if self.coef == 1 and self.const == 0:
-      return f"{self.it_expr}"
-    elif self.coef == 1:
+    parts = []
+    for term in self.terms:
+      if term.coef == 1:
+        parts.append(f"{term.it_expr}")
+      elif term.coef == -1:
+        parts.append(f"-{term.it_expr}")
+      else:
+        parts.append(f"{term.coef} * {term.it_expr}")
+
+    if not parts:
+      return repr(self.const)
+
+    s = " + ".join(parts)
+    if self.const != 0:
+      is_neg_const = (isinstance(self.const, int) and self.const < 0) or getattr(self.const, "sign", 1) < 0
       if is_neg_const:
-        return f"({self.it_expr} - {-self.const})"
-      return f"({self.it_expr} + {self.const})"
-    elif self.const == 0:
-      return f"({self.coef} * {self.it_expr})"
-    else:
-      if is_neg_const:
-        return f"({self.coef} * {self.it_expr} - {-self.const})"
-      return f"({self.coef} * {self.it_expr} + {self.const})"
+        s = f"({s} - {-self.const})"
+      else:
+        s = f"({s} + {self.const})"
+    elif len(self.terms) > 1 or (len(self.terms) == 1 and self.terms[0].coef != 1):
+      s = f"({s})"
+    return s
 
   __str__ = __repr__
+
+  def __eq__(self, other):
+    if not isinstance(other, Iterated_Math):
+      return False
+    if len(self.terms) != len(other.terms):
+      return False
+    if not struct_eq(self.const, other.const):
+      return False
+    return all(t1 == t2 for t1, t2 in zip(self.terms, other.terms))
 
   def try_eval(self):
     return None
 
   @property
   def is_const(self):
-    return is_const(self.it_expr) and is_const(self.const) and is_const(self.coef)
+    return all(is_const(t.it_expr) and is_const(t.coef) for t in self.terms) and is_const(self.const)
 
   def min_val(self):
-    return self.coef * min_val(self.it_expr) + min_val(self.const)
+    res = min_val(self.const) if hasattr(self.const, "min_val") else self.const
+    for term in self.terms:
+      res = res + term.coef * min_val(term.it_expr)
+    return res
 
   def variables(self):
-    return variables(self.it_expr) | variables(self.const) | variables(self.coef)
+    vars_set = set()
+    for term in self.terms:
+      vars_set.update(variables(term.it_expr))
+    if hasattr(self.const, "variables"):
+      vars_set.update(self.const.variables())
+    elif hasattr(self.const, "vars"):
+      vars_set.update(self.const.vars)
+    return vars_set
 
   def substitute(self, assignment):
-    return Iterated_Math(
-      substitute(self.it_expr, assignment),
-      substitute(self.const, assignment),
-      substitute(self.coef, assignment),
-    )
+    new_terms = [Iterated_Term(substitute(t.it_expr, assignment), substitute(t.coef, assignment)) for t in self.terms]
+    return Iterated_Math(new_terms, substitute(self.const, assignment))
 
   def __add__(self, other):
-    return Iterated_Math(self.it_expr, self.const + other, self.coef)
+    if is_simple(other) or isinstance(other, (ExpInt, Expression)):
+      return Iterated_Math(self._copy_terms(), self.const + other)
+
+    if isinstance(other, Iterated_Expression):
+      new_terms = self._copy_terms()
+      new_terms.append(Iterated_Term(other, 1))
+      return Iterated_Math(new_terms, self.const)
+
+    if isinstance(other, Iterated_Math):
+      new_terms = self._copy_terms() + other._copy_terms()
+      return Iterated_Math(new_terms, self.const + other.const)
+
+    return NotImplemented
 
   def __radd__(self, other):
-    return Iterated_Math(self.it_expr, self.const + other, self.coef)
+    return self.__add__(other)
 
   def __sub__(self, other):
-    return Iterated_Math(self.it_expr, self.const - other, self.coef)
+    if is_simple(other) or isinstance(other, (ExpInt, Expression)):
+      return Iterated_Math(self._copy_terms(), self.const - other)
+
+    if isinstance(other, Iterated_Expression):
+      new_terms = self._copy_terms()
+      new_terms.append(Iterated_Term(other, -1))
+      return Iterated_Math(new_terms, self.const)
+
+    if isinstance(other, Iterated_Math):
+      neg_other_terms = [Iterated_Term(t.it_expr, -t.coef) for t in other.terms]
+      new_terms = self._copy_terms() + neg_other_terms
+      return Iterated_Math(new_terms, self.const - other.const)
+
+    return NotImplemented
 
   def __rsub__(self, other):
-    raise NotImplementedError("Cannot rsub Iterated_Math")
+    return (-self) + other
+
+  def __neg__(self):
+    neg_terms = [Iterated_Term(t.it_expr, -t.coef) for t in self.terms]
+    return Iterated_Math(neg_terms, -self.const)
 
   def __mul__(self, other):
     if other == 0:
       return 0
-    return Iterated_Math(self.it_expr, self.const * other, self.coef * other)
+    if is_simple(other):
+      new_terms = [Iterated_Term(t.it_expr, t.coef * other) for t in self.terms]
+      return Iterated_Math(new_terms, self.const * other)
+    return NotImplemented
 
   def __rmul__(self, other):
-    if other == 0:
-      return 0
-    return Iterated_Math(self.it_expr, self.const * other, self.coef * other)
+    return self.__mul__(other)
 
   def __mod__(self, other):
     if other == 1:
       return 0
     other = int(other)
-    if self.coef % other == 0:
+    if all(t.coef % other == 0 for t in self.terms):
       return self.const % other
     # TODO: Support general case when coef % other != 0 (by evaluating it_expr % other).
     raise NotImplementedError(f"Cannot mod Iterated_Math by {other}: {self}")
@@ -295,9 +453,10 @@ class Iterated_Math(NatExpr):
     if other == 1:
       return (self, 0)
     other = int(other)
-    if self.coef % other == 0:
+    if all(t.coef % other == 0 for t in self.terms):
       q, r = divmod(self.const, other)
-      return (Iterated_Math(self.it_expr, q, self.coef // other), r)
+      new_terms = [Iterated_Term(t.it_expr, t.coef // other) for t in self.terms]
+      return (Iterated_Math(new_terms, q), r)
     # TODO: Support general case when coef % other != 0.
     raise NotImplementedError(f"Cannot divmod Iterated_Math by {other}: {self}")
 
@@ -306,15 +465,22 @@ class Iterated_Math(NatExpr):
 
   @property
   def uparrow_size_approx(self):
-    return self.it_expr.uparrow_size_approx
+    sizes = [t.it_expr.uparrow_size_approx for t in self.terms]
+    if self.const:
+      try:
+        if sign(self.const) > 0:
+          sizes.append(uparrow_size_approx(self.const))
+      except Exception:
+        pass
+    if sizes:
+      return max(sizes)
+    return uparrow_size_approx(self.const)
 
   def __lt__(self, other):
     assert self.is_const, self
     other = NatExpr.wrap(other)
     if other.is_inf:
       return True
-    if not isinstance(other, (Iterated_Expression, Iterated_Math)):
-      return False
     return uparrow_size_approx(self) < uparrow_size_approx(other)
 
   def __gt__(self, other):
@@ -322,8 +488,6 @@ class Iterated_Math(NatExpr):
     other = NatExpr.wrap(other)
     if other.is_inf:
       return False
-    if not isinstance(other, (Iterated_Expression, Iterated_Math)):
-      return True
     return uparrow_size_approx(self) > uparrow_size_approx(other)
 
   def __le__(self, other):
@@ -331,8 +495,6 @@ class Iterated_Math(NatExpr):
     other = NatExpr.wrap(other)
     if other.is_inf:
       return True
-    if not isinstance(other, (Iterated_Expression, Iterated_Math)):
-      return False
     return uparrow_size_approx(self) <= uparrow_size_approx(other)
 
   def __ge__(self, other):
@@ -340,6 +502,4 @@ class Iterated_Math(NatExpr):
     other = NatExpr.wrap(other)
     if other.is_inf:
       return False
-    if not isinstance(other, (Iterated_Expression, Iterated_Math)):
-      return True
     return uparrow_size_approx(self) >= uparrow_size_approx(other)

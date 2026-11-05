@@ -13,6 +13,7 @@ test-small:
 		./test_Direct_Simulator.py \
 		./test_Exp_Int.py \
 		./test_Halting_Lib.py \
+		./test_Iterated_Math.py \
 		./test_Math.py \
 		./test_Proof_System.py \
 		./test_Diff.py \
