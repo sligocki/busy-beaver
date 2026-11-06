@@ -68,6 +68,13 @@ class SystemTest(unittest.TestCase):
     self.assertEqual((n * n).as_strictly_linear(), None)
     self.assertEqual((n * expr("m")).as_strictly_linear(), None)
 
+    # Non-constant offset
+    from Exp_Int import exp_int
+
+    symbolic_exp = exp_int(3, n + 5)
+    self.assertEqual((n + symbolic_exp).as_strictly_linear(), None)
+    self.assertFalse((n + symbolic_exp).is_var_plus_const())
+
   def test_non_const_scalar(self):
     from Exp_Int import exp_int
 

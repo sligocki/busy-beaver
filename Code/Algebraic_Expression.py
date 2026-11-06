@@ -330,11 +330,18 @@ class Expression(NatExpr):
       and self.terms[0].coef == 1
       and len(self.terms[0].vars) == 1
       and self.terms[0].vars[0].pow == 1
+      and is_const(self.const)
     )
 
   def as_strictly_linear(self):
     """Returns (var, slope, const) if this is a linear (non-constant) expression."""
-    if len(self.terms) == 1 and len(self.terms[0].vars) == 1 and self.terms[0].vars[0].pow == 1:
+    if (
+      len(self.terms) == 1
+      and is_const(self.terms[0].coef)
+      and len(self.terms[0].vars) == 1
+      and self.terms[0].vars[0].pow == 1
+      and is_const(self.const)
+    ):
       return (self.terms[0].vars[0].var, self.terms[0].coef, self.const)
 
   def variable_restricted(self):
