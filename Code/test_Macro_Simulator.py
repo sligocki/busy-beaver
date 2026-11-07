@@ -296,6 +296,18 @@ class MacroSimulatorTest(unittest.TestCase):
       self.assertEqual(bf_params.compression_search_loops, expected_bf_loops)
       self.assertEqual(bf_params.mult_sim_loops, expected_bf_loops)
 
+  def test_bug_exp_linear_rules_tape_int_is_inf(self):
+    # This machine failed with AttributeError: 'int' object has no attribute 'is_inf'
+    # when an exponent became an int instead of NatExpr ConstInt after apply_linear_rule.
+    self.options.recursive = True
+    self.options.exp_linear_rules = True
+    self.options.max_loops = 3000
+    self.options.block_size = 1
+    tm = IO.parse_tm("1RB0LB5LA4LA5LB---_2LA3RB3RA1LB3RB2RB")
+    tm_enum = TM_Enum.TM_Enum(tm, allow_no_halt=False)
+    tm_record = TM_Record.TM_Record(tm_enum=tm_enum)
+    Macro_Simulator.run_options(tm_record, self.options)
+
 
 if __name__ == "__main__":
   unittest.main()

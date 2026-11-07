@@ -23,8 +23,16 @@ class Repeated_Symbol:
 
   def __init__(self, symbol, number_of_repetitions, id=None):
     self.symbol = symbol
-    self.num = NatExpr.wrap(number_of_repetitions)
+    self.num = number_of_repetitions
     self.id = id
+
+  @property
+  def num(self):
+    return self._num
+
+  @num.setter
+  def num(self, number_of_repetitions):
+    self._num = NatExpr.wrap(number_of_repetitions)
 
   def __eq__(self, other):
     return (
