@@ -1480,7 +1480,7 @@ class Proof_System:
         states_last_seen[state] = substitute(diff_steps - last_seen_ago, last_value)
 
     else:
-      diff_steps = 0  # TODO: Make it None instead of a lie
+      diff_steps = None
       states_last_seen = None
 
     ## Alter the tape to account for applying rule.
@@ -1671,7 +1671,7 @@ class Proof_System:
     # constants because, then we know how many time we can apply the rule.
     success = False  # If we fail before doing anything, return false.
     num_reps = 0
-    diff_steps = 0
+    diff_steps = 0 if self.compute_steps else None
     # Get variable assignments for this case and check minimums.
     assignment = {}
     while config_fits_min(rule.var_list, rule.min_list, current_list, assignment) and num_reps < self.max_num_reps:

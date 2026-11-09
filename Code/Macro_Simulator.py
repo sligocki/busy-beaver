@@ -214,7 +214,7 @@ def simulate_machine(
       sim_info.result.num_chain_moves = sim.num_chain_moves
       sim_info.result.num_rule_moves = sim.num_rule_moves
 
-      if sim.step_num > 0:
+      if sim.step_num and sim.step_num > 0:
         if type(sim.step_num).__name__ in (
           "ExpInt",
           "Iterated_Expression",
@@ -292,7 +292,7 @@ def simulate_machine(
       sim_info.result.halt_info.is_halting = True
       Halting_Lib.set_halting(
         bb_status,
-        halt_steps=sim.step_num,
+        halt_steps=sim.step_num or 0,
         halt_score=sim.get_nonzeros(),
         from_state=from_state,
         from_symbol=from_symbol,

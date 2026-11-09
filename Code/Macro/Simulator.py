@@ -82,8 +82,6 @@ class Simulator:
 
     self.state = machine.init_state
     self.dir = machine.init_dir
-    self.old_step_num = 0
-    self.step_num = 0
 
     # Init tape and prover (if needed).
     if init_tape:
@@ -109,22 +107,34 @@ class Simulator:
     self.num_chain_moves = 0
     self.num_rule_moves = 0
     if self.compute_steps:
+      self.step_num = 0
+      self.old_step_num = 0
       self.steps_from_macro = 0
       self.steps_from_chain = 0
       self.steps_from_rule = 0
       # Last step that we visited each state.
       self.states_last_seen = {}
     else:
-      self.steps_from_macro = None
-      self.steps_from_chain = None
-      self.steps_from_rule = None
-      self.states_last_seen = None
+      self.cancel_step_counting()
+
+  def cancel_step_counting(self):
+    self.compute_steps = False
+    self.options.compute_steps = False
+    self.step_num = None
+    self.old_step_num = None
+    self.steps_from_macro = None
+    self.steps_from_chain = None
+    self.steps_from_rule = None
+    self.states_last_seen = None
+    if self.prover:
+      self.prover.compute_steps = False
 
   def run(self, steps):
     self.seek(self.step_num + steps)
 
   def seek(self, cutoff):
     """Run until we've reached (exceeded) step n."""
+    assert self.compute_steps, "Cannot seek by steps if compute_steps is False"
     while self.step_num < cutoff and self.op_state == Turing_Machine.RUNNING:
       self.step()
 
@@ -173,9 +183,7 @@ class Simulator:
         self.tape = prover_result.new_tape
         self.num_rule_moves += 1
         if prover_result.num_base_steps is None:
-          self.compute_steps = False
-          if self.prover:
-            self.prover.compute_steps = False
+          self.cancel_step_counting()
         if self.compute_steps:
           if self.states_last_seen is not None and prover_result.states_last_seen:
             for (

@@ -82,7 +82,7 @@ def run(machine, block_size, back, prover, recursive, options):
       print("State: ", sim.op_details[0][1])
       print("Symbol:", sim.op_details[0][0])
     print()
-    if options.compute_steps:
+    if sim.compute_steps:
       print("Steps:   ", approx_and_full_str(sim.step_num, max_chars=options.max_print_chars))
     print("Nonzeros:", approx_and_full_str(sim.get_nonzeros(), max_chars=options.max_print_chars))
     if options.latex:
