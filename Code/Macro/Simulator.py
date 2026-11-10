@@ -248,11 +248,16 @@ class Simulator:
     """Get Busy Beaver score, number of non-zero symbols on tape."""
     return self.tape.get_nonzeros(self.machine.eval_symbol, self.machine.eval_state(self.state))
 
+  def get_span(self):
+    """Get number of symbols from the first non-zero to the last."""
+    return self.tape.get_span(self.machine, self.state)
+
   def print_self(self):
     self.print_steps()
     print("Elapsed time:", time.time() - self.start_time)
     print(self.tape.print_with_state(self.state))
     print("Num Nonzeros:", approx_and_full_str(self.get_nonzeros()))
+    print("Span:", approx_and_full_str(self.get_span()))
 
   def print_steps(self):
     print()

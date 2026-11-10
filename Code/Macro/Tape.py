@@ -9,6 +9,7 @@ import sys
 
 sys.path.append("..")
 from NatExpr import NatExpr, InfNat, approx_or_full_str
+from Macro.Turing_Machine import block_size
 
 
 # Useful Tool
@@ -130,6 +131,15 @@ class Chain_Tape:
         if val := eval_symbol(block.symbol):
           n += val * block.num
     return n
+
+  def get_span(self, machine, state):
+    """Return the number of base symbols from the first non-zero to the last."""
+    # TODO: Tweak this by not counting leading 0s or trailing 0s
+    total = sum(block_size(block.symbol) * block.num for block in self.tape[0][1:])
+    total += sum(block_size(block.symbol) * block.num for block in self.tape[1][1:])
+    if state and hasattr(state, "back_symbol"):
+      total += block_size(state.back_symbol)
+    return total
 
   def get_top_block(self):
     return self.tape[self.dir][-1]

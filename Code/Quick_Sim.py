@@ -85,6 +85,7 @@ def run(machine, block_size, back, prover, recursive, options):
     if sim.compute_steps:
       print("Steps:   ", approx_and_full_str(sim.step_num, max_chars=options.max_print_chars))
     print("Nonzeros:", approx_and_full_str(sim.get_nonzeros(), max_chars=options.max_print_chars))
+    print("Span:    ", approx_and_full_str(sim.get_span(), max_chars=options.max_print_chars))
     if options.latex:
       print()
       print(Exp_Int.tex_formula(sim.get_nonzeros()))

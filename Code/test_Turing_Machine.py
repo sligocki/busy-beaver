@@ -121,6 +121,50 @@ Transition table:
     self.assertEqual(Turing_Machine.halt_state_str(701), "ZZ")
     self.assertEqual(Turing_Machine.halt_state_str(702), "ZZZ")
 
+  def test_tape_span(self):
+    from Macro import Tape
+
+    tm = IO.parse_tm("1RB1LB_1LA1RZ")
+    b_tm = Turing_Machine.Block_Macro_Machine(tm, 2)
+    bs_tm = Turing_Machine.Backsymbol_Macro_Machine(b_tm)
+
+    # Empty tape
+    t = Tape.Chain_Tape()
+    t.init(b_tm.init_symbol, 0, None)
+    self.assertEqual(t.get_span(b_tm, None), 0)
+
+    # TODO: Update these spans to correct values once we implement that code
+    # Single block, single nonzero: 01^1 (span 1)
+    t.tape[0].append(Tape.Repeated_Symbol(Turing_Machine.Block_Symbol((0, 1)), 1))
+    self.assertEqual(t.get_span(b_tm, None), 2)
+
+    # Single block, multiple repetitions: 01^3 (span 5: 1 0 1 0 1)
+    t = Tape.Chain_Tape()
+    t.init(b_tm.init_symbol, 0, None)
+    t.tape[0].append(Tape.Repeated_Symbol(Turing_Machine.Block_Symbol((0, 1)), 3))
+    self.assertEqual(t.get_span(b_tm, None), 6)
+
+    # Multiple blocks with intermediate zeros: 01^1 00^10 10^1 (span 1 + 20 + 1 = 22)
+    t = Tape.Chain_Tape()
+    t.init(b_tm.init_symbol, 0, None)
+    t.tape[0].append(Tape.Repeated_Symbol(Turing_Machine.Block_Symbol((0, 1)), 1))
+    t.tape[0].append(Tape.Repeated_Symbol(Turing_Machine.Block_Symbol((0, 0)), 10))
+    t.tape[1].append(Tape.Repeated_Symbol(Turing_Machine.Block_Symbol((1, 0)), 1))
+    self.assertEqual(t.get_span(b_tm, None), 24)
+
+    # Backsymbol non-zero
+    state = Turing_Machine.Backsymbol_Macro_Machine_State(tm.init_state, Turing_Machine.Block_Symbol((1, 1)))
+    t = Tape.Chain_Tape()
+    t.init(b_tm.init_symbol, 0, None)
+    self.assertEqual(t.get_span(bs_tm, state), 2)
+
+    # Block size 3 with both leading and trailing zeros: (0, 1, 0)^2 (span 4: 1 0 1)
+    b3_tm = Turing_Machine.Block_Macro_Machine(tm, 3)
+    t = Tape.Chain_Tape()
+    t.init(b3_tm.init_symbol, 0, None)
+    t.tape[0].append(Tape.Repeated_Symbol(Turing_Machine.Block_Symbol((0, 1, 0)), 2))
+    self.assertEqual(t.get_span(b3_tm, None), 6)
+
 
 if __name__ == "__main__":
   unittest.main()

@@ -94,6 +94,12 @@ def halt_state_str(num_states: int) -> str:
   return "Z" * k
 
 
+def block_size(symbol) -> int:
+  if isinstance(symbol, Symbol):
+    return 1
+  return symbol.block_size()
+
+
 @dataclass(frozen=True)
 class Transition:
   """Class representing the result of a transition."""
@@ -415,6 +421,9 @@ class Macro_Machine(Turing_Machine):
 class Block_Symbol(tuple):
   """Wrapper for block symbols that defines a concise-printer."""
 
+  def block_size(self) -> int:
+    return sum(block_size(x) for x in self)
+
   def __repr__(self):
     # TODO: this assumes single digit sub-symbols
     return "".join(str(x) for x in self)
@@ -441,6 +450,9 @@ class Tape_Head_Symbol:
     self.state = state
     self.dir = dir
     self.pos = pos
+
+  def block_size(self) -> int:
+    return sum(block_size(x) for x in self.tup)
 
   def __iter__(self):
     return iter(self.tup)
@@ -694,6 +706,9 @@ class History_Symbol:
   def __repr__(self) -> str:
     hist_str = ",".join(str(trans) for trans in self.history)
     return f"{self.base_symbol}[{hist_str}]"
+
+  def block_size(self) -> int:
+    return block_size(self.base_symbol)
 
 
 # Two strategies for keeping track of history:
