@@ -36,12 +36,7 @@ class Repeated_Symbol:
     self._num = NatExpr.wrap(number_of_repetitions)
 
   def __eq__(self, other):
-    return (
-      isinstance(other, self.__class__)
-      and other.symbol == self.symbol
-      and other.num == self.num
-      and other.id == self.id
-    )
+    return isinstance(other, self.__class__) and other.symbol == self.symbol and other.num == self.num
 
   def __hash__(self):
     return hash((self.symbol, self.num))

@@ -24,7 +24,7 @@ from Algebraic_Expression import (
   variables,
 )
 from Exp_Int import ExpInt
-from Macro import Rule_Func, Simulator, Tape, Turing_Machine
+from Macro import Rule_Func, Simulator, Turing_Machine
 from Macro.Turing_Machine import LEFT, RIGHT
 from NatExpr import ConstInt, NatExpr, is_const
 
@@ -608,6 +608,20 @@ Level: {self.level}"""
 
 
 # TODO: Try out some other stripped_configs
+def _slice_tape_tail(seq, dist):
+  """Return the last `dist` elements of `seq` (handling dist == 0 safely)."""
+  if dist == 0:
+    return seq[:0]
+  return seq[-dist:]
+
+
+def _slice_tape_head(seq, dist):
+  """Return all but the last `dist` elements of `seq` (handling dist == 0 safely)."""
+  if dist == 0:
+    return seq[:]
+  return seq[:-dist]
+
+
 def stripped_info(block):
   """Get an abstraction of a tape block. We try to prove rules between
   configuration which have the same abstraction.
@@ -740,44 +754,32 @@ class Proof_System:
     print()
 
   def print_rules(self, args=None):
-    if self.options.limited_rules:
-      rules = list(set([(rule.name, rule) for key in list(self.rules.keys()) for rule in self.rules[key]]))
-      sorted_rules = sorted(rules)
-      found_rule = False
-      for _, rule in sorted_rules:
-        if args:
-          if rule.name != args:
-            continue
-        found_rule = True
-        print()
-        self.print_this("Rule", rule.name)
+    all_rules = {}
+    for val in self.rules.values():
+      if isinstance(val, list):
+        for rule in val:
+          all_rules[rule.name] = rule
+      else:
+        all_rules[val.name] = val
+
+    found_rule = False
+    for _, rule in sorted(all_rules.items(), key=lambda item: int(item[0]) if item[0].isdigit() else item[0]):
+      if args and rule.name != args:
+        continue
+      found_rule = True
+      print()
+      self.print_this("Rule", rule.name)
+      if hasattr(rule, "initial_state"):
         state = rule.initial_state
         self.print_this("Initial:", rule.initial_tape.print_with_state(state))
         self.print_this("Diff:", rule.diff_tape)
-        self.print_this("Loops:", rule.num_loops, "Steps:", rule.num_steps)
-        self.print_this("Num uses:", rule.num_uses)
+      else:
+        self.print_this(str(rule).replace("\n", "\n " + self.verbose_prefix))
+      self.print_this("Loops:", rule.num_loops, "Steps:", rule.num_steps)
+      self.print_this("Num uses:", rule.num_uses)
 
-      if found_rule:
-        print()
-    else:
-      sorted_keys = sorted([[self.rules[key].name, key] for key in list(self.rules.keys())])
-      found_rule = False
-      for rule_name, key in sorted_keys:
-        rule = self.rules[key]
-        if args:
-          if rule.name != args:
-            continue
-        found_rule = True
-        print()
-        self.print_this("Rule", rule.name)
-        state = rule.initial_state
-        self.print_this("Initial:", rule.initial_tape.print_with_state(state))
-        self.print_this("Diff:", rule.diff_tape)
-        self.print_this("Loops:", rule.num_loops, "Steps:", rule.num_steps)
-        self.print_this("Num uses:", rule.num_uses)
-
-      if found_rule:
-        print()
+    if found_rule:
+      print()
 
   def log_and_apply(self, tape, state, loop_num):
     """
@@ -824,36 +826,39 @@ class Proof_System:
 
   def try_apply_a_rule(self, stripped_config, full_config):
     if self.options.limited_rules:
-      return self.try_apply_a_limited_rule(stripped_config, full_config)
-    else:
-      if stripped_config in self.rules:
-        rule = self.rules[stripped_config]
-        is_good, res = self.apply_rule(rule, full_config)
-        if is_good:
-          result, large_delta = res
-          self.max_rule_level_used = max(self.max_rule_level_used, rule.level)
-          # Optimization: If we apply a rule and we are not trying to perform
-          # recursive proofs, clear past configuration memory.
-          if not self.recursive or large_delta:
-            if self.past_configs is not None:
-              self.past_configs.clear()
-          rule.num_uses += 1
-          assert isinstance(result, ProverResult), result
-          return result
-        if res != UNPROVEN_PARITY:
-          return ProverResult(NOTHING_TO_DO)
+      result = self.try_apply_a_limited_rule(stripped_config, full_config)
+      if result:
+        return result
+    if stripped_config in self.rules:
+      rule = self.rules[stripped_config]
+      is_good, res = self.apply_rule(rule, full_config)
+      if is_good:
+        result, large_delta = res
+        self.max_rule_level_used = max(self.max_rule_level_used, rule.level)
+        # Optimization: If we apply a rule and we are not trying to perform
+        # recursive proofs, clear past configuration memory.
+        if not self.recursive or large_delta:
+          if self.past_configs is not None:
+            self.past_configs.clear()
+        rule.num_uses += 1
+        assert isinstance(result, ProverResult), result
+        return result
+      if res != UNPROVEN_PARITY:
+        return ProverResult(NOTHING_TO_DO)
 
   def try_apply_a_limited_rule(self, stripped_config, full_config):
     (state, dir, stripped_tape_left, stripped_tape_right) = stripped_config
 
-    stripped_tape_left = (Tape.Repeated_Symbol(0, -1),) + stripped_tape_left
-    stripped_configs_left = [(0, state, dir, stripped_tape_left[-i:], i) for i in range(1, len(stripped_tape_left) + 1)]
+    stripped_tape_left = ((None, -1),) + stripped_tape_left
+    stripped_configs_left = [
+      (0, state, dir, _slice_tape_tail(stripped_tape_left, i), i) for i in range(0, len(stripped_tape_left) + 1)
+    ]
 
     list_left = [rule for config in stripped_configs_left if config in self.rules for rule in self.rules[config]]
 
-    stripped_tape_right = (Tape.Repeated_Symbol(0, -1),) + stripped_tape_right
+    stripped_tape_right = ((None, -1),) + stripped_tape_right
     stripped_configs_right = [
-      (1, state, dir, stripped_tape_right[-i:], i) for i in range(1, len(stripped_tape_right) + 1)
+      (1, state, dir, _slice_tape_tail(stripped_tape_right, i), i) for i in range(0, len(stripped_tape_right) + 1)
     ]
 
     list_right = [rule for config in stripped_configs_right if config in self.rules for rule in self.rules[config]]
@@ -882,21 +887,21 @@ class Proof_System:
     # Remember rule.
     if isinstance(rule, Limited_Diff_Rule):
       (state, dir, stripped_tape_left, stripped_tape_right) = stripped_config
-      stripped_tape_left = (Tape.Repeated_Symbol(0, -1),) + stripped_tape_left
+      stripped_tape_left = ((None, -1),) + stripped_tape_left
       stripped_config_left = (
         0,
         state,
         dir,
-        stripped_tape_left[-rule.left_dist :],
+        _slice_tape_tail(stripped_tape_left, rule.left_dist),
         rule.left_dist,
       )
 
-      stripped_tape_right = (Tape.Repeated_Symbol(0, -1),) + stripped_tape_right
+      stripped_tape_right = ((None, -1),) + stripped_tape_right
       stripped_config_right = (
         1,
         state,
         dir,
-        stripped_tape_right[-rule.right_dist :],
+        _slice_tape_tail(stripped_tape_right, rule.right_dist),
         rule.right_dist,
       )
 
@@ -1247,11 +1252,11 @@ class Proof_System:
         left_dist = max_offset_touched[LEFT]
         right_dist = max_offset_touched[RIGHT]
 
-        initial_tape.tape[0] = initial_tape.tape[0][-left_dist:]
-        initial_tape.tape[1] = initial_tape.tape[1][-right_dist:]
+        initial_tape.tape[0] = _slice_tape_tail(initial_tape.tape[0], left_dist)
+        initial_tape.tape[1] = _slice_tape_tail(initial_tape.tape[1], right_dist)
 
-        diff_tape.tape[0] = diff_tape.tape[0][-left_dist:]
-        diff_tape.tape[1] = diff_tape.tape[1][-right_dist:]
+        diff_tape.tape[0] = _slice_tape_tail(diff_tape.tape[0], left_dist)
+        diff_tape.tape[1] = _slice_tape_tail(diff_tape.tape[1], right_dist)
 
         rule = Limited_Diff_Rule(
           initial_tape,
@@ -1311,11 +1316,11 @@ class Proof_System:
 
       limited_start_tape = start_tape.copy()
 
-      save_left = limited_start_tape.tape[0][: -rule.left_dist]
-      save_right = limited_start_tape.tape[1][: -rule.right_dist]
+      save_left = _slice_tape_head(limited_start_tape.tape[0], rule.left_dist)
+      save_right = _slice_tape_head(limited_start_tape.tape[1], rule.right_dist)
 
-      limited_start_tape.tape[0] = limited_start_tape.tape[0][-rule.left_dist :]
-      limited_start_tape.tape[1] = limited_start_tape.tape[1][-rule.right_dist :]
+      limited_start_tape.tape[0] = _slice_tape_tail(limited_start_tape.tape[0], rule.left_dist)
+      limited_start_tape.tape[1] = _slice_tape_tail(limited_start_tape.tape[1], rule.right_dist)
 
       limited_start_config = (start_state, limited_start_tape, start_loop_num)
 
