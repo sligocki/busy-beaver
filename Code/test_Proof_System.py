@@ -11,7 +11,7 @@ from optparse import OptionParser
 
 import Algebraic_Expression
 import IO
-from Macro import Proof_System, Tape, Turing_Machine
+from Macro import Proof_System, Simulator, Tape, Turing_Machine
 from Macro.Turing_Machine import Block_Symbol
 from NatExpr import InfNat
 
@@ -32,7 +32,7 @@ class ProofSystemTest(unittest.TestCase):
 
     # Setup default options.
     parser = OptionParser()
-    Proof_System.add_option_group(parser)
+    Simulator.add_option_group(parser)
     self.options, _ = parser.parse_args([])
 
     self.options.compute_steps = True
@@ -216,19 +216,19 @@ class ProofSystemTest(unittest.TestCase):
 
     rule_num = 1
 
-    rule = Proof_System.Limited_Diff_Rule(
+    rule = Proof_System.Diff_Rule(
       initial_tape,
-      left_dist,
-      right_dist,
       diff_tape,
       initial_state,
       num_steps,
       num_loops,
       rule_num,
-      states_last_seen={},
       level=1,
+      states_last_seen={},
+      left_dist=left_dist,
+      right_dist=right_dist,
     )
-    self.assertIn("Limited Diff Rule", repr(rule))
+    self.assertIn("Diff Rule", repr(rule))
     self.assertIn("Level: 1", repr(rule))
 
     success, (prover_result, _) = proof.apply_rule(rule, current_config)
@@ -843,17 +843,17 @@ class ProofSystemTest(unittest.TestCase):
       Tape.Repeated_Symbol(0, 2),
     ]
 
-    rule = Proof_System.Limited_Diff_Rule(
+    rule = Proof_System.Diff_Rule(
       initial_tape,
-      left_dist=0,
-      right_dist=2,
       diff_tape=diff_tape,
       initial_state=state_A,
       num_steps=Algebraic_Expression.ConstantToExpression(3),
       num_loops=2,
       rule_num=0,
-      states_last_seen={},
       level=1,
+      states_last_seen={},
+      left_dist=0,
+      right_dist=2,
     )
 
     # Full tape has untouched blocks on the left (and extra untouched blocks on the right).
@@ -895,9 +895,10 @@ class ProofSystemTest(unittest.TestCase):
     # 1^6 -> 1^1 (5 reps), 0^3 -> 0^(3 + 5*2) = 0^13, and left side 0^inf 3^42 is preserved!
     self.assertEqual(str(res.new_tape), "0^inf 3^42 -> 0^13 1^1 0^inf")
 
-  def test_limited_rules_fallback_to_non_limited_and_print_rules(self):
-    """Test that non-limited rules (e.g. Iterated_Rule, meta Diff_Rule) can be looked up and
-    printed when limited_rules=True."""
+  def test_limited_rules_iterated_and_print_rules(self):
+    """Test that Iterated_Rule is proven as a limited rule when limited_rules=True,
+    can be applied to tapes with different untouched outer blocks, and prints cleanly.
+    """
     tm = IO.parse_tm("1RB1RA_0LC1RF_1LE1LD_0LB1LC_0RA---_0RD0LF")
     tm = Turing_Machine.Block_Macro_Machine(tm, 2)
     self.options.recursive = True
@@ -909,7 +910,7 @@ class ProofSystemTest(unittest.TestCase):
 
     state_E = Turing_Machine.Simple_Machine_State(4)
 
-    # Prove Level 1 Limited_Diff_Rule:
+    # Prove Level 1 limited Diff_Rule:
     #   $ <E 11^a 10 00^b 10 $ -> $ <E 11^a+2 10 00^b-1 10 $
     tape = Tape.Chain_Tape()
     tape.init(0, 0, self.options)
@@ -926,9 +927,12 @@ class ProofSystemTest(unittest.TestCase):
     stripped_config = Proof_System.strip_config(state_E, Turing_Machine.LEFT, tape.tape)
     rule_d1 = prover.prove_rule(stripped_config, full_config, delta_loop=10)
     self.assertIsNotNone(rule_d1)
+    self.assertTrue(rule_d1.is_limited)
+    self.assertEqual(rule_d1.left_dist, 1)
+    self.assertEqual(rule_d1.right_dist, 3)
     prover.add_rule(rule_d1, stripped_config)
 
-    # Prove Level 2 Iterated_Rule (which uses rule_d1 even when extra blocks are on the right!):
+    # Prove Level 2 limited Iterated_Rule (which uses rule_d1 even when extra blocks are on the right!):
     tape_lin = Tape.Chain_Tape()
     tape_lin.init(0, 0, self.options)
     tape_lin.dir = Turing_Machine.LEFT
@@ -947,25 +951,55 @@ class ProofSystemTest(unittest.TestCase):
     self.assertIsNotNone(rule_linear)
     self.assertIsInstance(rule_linear, Proof_System.Iterated_Rule)
     self.assertEqual(rule_linear.level, 2)
+    self.assertTrue(rule_linear.is_limited)
+    self.assertEqual(rule_linear.left_dist, 1)
+    self.assertEqual(rule_linear.right_dist, 4)
+    self.assertIn("Iterated Rule", repr(rule_linear))
     prover.add_rule(rule_linear, stripped_config_lin)
 
-    # Verify that try_apply_a_rule finds and applies the Level 2 Iterated_Rule when limited_rules=True!
-    res = prover.try_apply_a_rule(stripped_config_lin, full_config_lin)
+    # Verify that try_apply_a_rule finds and applies the Level 2 limited Iterated_Rule
+    # even on a tape with extra untouched blocks on the right!
+    tape_lin_extra = Tape.Chain_Tape()
+    tape_lin_extra.init(0, 0, self.options)
+    tape_lin_extra.dir = Turing_Machine.LEFT
+    tape_lin_extra.tape[0] = [Tape.Repeated_Symbol(Block_Symbol((0, 0)), InfNat())]
+    tape_lin_extra.tape[1] = [
+      Tape.Repeated_Symbol(Block_Symbol((0, 0)), InfNat()),
+      Tape.Repeated_Symbol(Block_Symbol((0, 1)), 42),
+      Tape.Repeated_Symbol(Block_Symbol((1, 0)), 7),
+      Tape.Repeated_Symbol(Block_Symbol((1, 1)), 5),
+      Tape.Repeated_Symbol(Block_Symbol((0, 0)), 1),
+      Tape.Repeated_Symbol(Block_Symbol((1, 0)), 1),
+      Tape.Repeated_Symbol(Block_Symbol((1, 1)), 20),
+    ]
+    stripped_lin_extra = Proof_System.strip_config(state_E, Turing_Machine.LEFT, tape_lin_extra.tape)
+    res = prover.try_apply_a_rule(stripped_lin_extra, (state_E, tape_lin_extra, 200))
     self.assertIsNotNone(res)
     self.assertEqual(res.condition, Proof_System.APPLY_RULE)
+    self.assertEqual(res.left_dist, 1)
+    self.assertEqual(res.right_dist, 4)
     self.assertEqual(
       str(res.new_tape),
-      "00^inf <- 11^(-6 + 13 * 2^5) 10^1 00^1 11^1 10^1 00^inf",
+      "00^inf <- 11^(-6 + 13 * 2^5) 10^1 00^1 11^1 10^7 01^42 00^inf",
     )
 
-    # Verify that print_rules does not crash when limited_rules=True and rules contain both
-    # limited and non-limited rules.
+    # Also test fallback to apply_general_rule on the limited Iterated_Rule when exp_linear_rules=False
+    prover.exp_linear_rules = False
+    res_gen = prover.try_apply_a_rule(stripped_lin_extra, (state_E, tape_lin_extra, 300))
+    self.assertIsNotNone(res_gen)
+    self.assertEqual(res_gen.condition, Proof_System.APPLY_RULE)
+    self.assertEqual(
+      str(res_gen.new_tape),
+      "00^inf <- 11^410 10^1 00^1 11^1 10^7 01^42 00^inf",
+    )
+
+    # Verify that print_rules outputs both limited rules cleanly.
     buf = io.StringIO()
     with contextlib.redirect_stdout(buf):
       prover.print_rules()
     output = buf.getvalue()
     self.assertIn("Rule 0", output)
-    self.assertIn("Rule 1", output)
+    self.assertIn("Iterated Rule 1", output)
 
   def test_compositional_context_tracking_meta_limited_diff_rule(self):
     """Test that proving a Level 2 meta Diff_Rule with limited_rules=True accurately tracks
@@ -1051,6 +1085,27 @@ class ProofSystemTest(unittest.TestCase):
     self.assertIsNotNone(res3)
     self.assertEqual(res3.condition, Proof_System.APPLY_RULE)
     self.assertEqual(str(res3.new_tape), "0^inf 1^48 -> 0^58 2^2 1^77 2^99 0^inf")
+
+  def test_10x2_green_limited_rules_no_rule_inflation(self):
+    """Test that 10x2-Green with limited_rules=True proves only 1 rule per level (3 total)
+    and halts with the exact expected tape.
+    """
+    tm = IO.parse_tm("1LB1RZ_0LC1LC_0LD0LC_1LE1RA_0LF0LE_1LG1RD_0LH0LG_1LI1RF_0LJ0LI_1RJ1RH")
+    tm = Turing_Machine.Block_Macro_Machine(tm, 2)
+    self.options.recursive = True
+    self.options.limited_rules = True
+    self.options.exp_linear_rules = True
+    self.options.exp_meta_linear_rules = True
+    self.options.compute_steps = False
+
+    sim = Simulator.Simulator(tm, self.options)
+    while sim.op_state == Turing_Machine.RUNNING:
+      sim.step()
+
+    self.assertEqual(sim.op_state, Turing_Machine.HALT)
+    self.assertEqual(sim.prover.num_rules, 3)
+    self.assertEqual(dict(sim.prover.num_rules_by_level), {1: 1, 2: 1, 3: 1})
+    self.assertEqual(sim.get_nonzeros().approx_str(), "~ 10^^~ 10^^3.1")
 
 
 if __name__ == "__main__":

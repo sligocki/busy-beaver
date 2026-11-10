@@ -93,6 +93,16 @@ UNPROVEN_PARITY = "Unproven parity"
 class Rule:
   """Base type for Proof_System rules."""
 
+  is_limited: bool = False
+  left_dist: int | None = None
+  right_dist: int | None = None
+
+  def make_limited(self, left_dist: int, right_dist: int):
+    self.is_limited = True
+    self.left_dist = left_dist
+    self.right_dist = right_dist
+    return self
+
 
 class Diff_Rule(Rule):
   """A rule where all exponents change like `x -> x + c` for some constant `c`."""
@@ -107,6 +117,8 @@ class Diff_Rule(Rule):
     rule_num,
     level: int,
     states_last_seen,
+    left_dist: int | None = None,
+    right_dist: int | None = None,
   ):
     # TODO: Use basic lists instead of tapes, we never use the symbols.
     # TODO: Have a variable list and a min list instead of packing both
@@ -123,6 +135,8 @@ class Diff_Rule(Rule):
     self.name = str(rule_num)  # Unique identifier.
     self.level = level
     self.states_last_seen = states_last_seen
+    if left_dist is not None and right_dist is not None:
+      self.make_limited(left_dist, right_dist)
 
     self.num_uses = 0  # Number of times this rule has been applied.
 
@@ -554,59 +568,6 @@ Steps {self.num_steps} Loops {self.num_loops}
 Level: {self.level}"""
 
 
-class Limited_Diff_Rule(Rule):
-  """A Diff_Rule that only refers to a sub-section of the tape."""
-
-  def __init__(
-    self,
-    initial_tape,
-    left_dist,
-    right_dist,
-    diff_tape,
-    initial_state,
-    num_steps,
-    num_loops,
-    rule_num,
-    states_last_seen,
-    level: int,
-  ):
-    # TODO: Use basic lists instead of tapes, we never use the symbols.
-    # TODO: Have a variable list and a min list instead of packing both
-    # into init_tape.
-    # TODO: Or maybe we don't even need variables, we could just have the
-    # things that depend on variables index directly into the tapes?
-    # TODO: Actually, variables only appear in num_steps, so we don't even
-    # need them if we are not computing steps.
-    self.initial_tape = initial_tape
-    self.left_dist = left_dist
-    self.right_dist = right_dist
-    self.rule_len = left_dist + right_dist
-    self.diff_tape = diff_tape
-    self.num_steps = num_steps
-    self.initial_state = initial_state
-    self.num_loops = num_loops
-    self.name = str(rule_num)  # Unique identifier.
-    self.states_last_seen = states_last_seen
-    self.level = level
-
-    self.num_uses = 0  # Number of times this rule has been applied.
-
-    # Figure out if any exponents decrease by > 1. If so, these can lead to
-    # branching (Collatz) behavior, so it's good to know about!
-    self.has_collatz_decrease = False
-    for htape in self.diff_tape.tape:
-      for block in htape:
-        if block.num < -1:
-          self.has_collatz_decrease = True
-
-  def __repr__(self):
-    return f"""Limited Diff Rule {self.name}
-Initial Config: {self.initial_tape.print_with_state(self.initial_state)} ({self.left_dist},{self.right_dist})
-Diff Config:    {self.diff_tape.print_with_state(self.initial_state)}
-Steps: {self.num_steps}, Loops: {self.num_loops}
-Level: {self.level}"""
-
-
 # TODO: Try out some other stripped_configs
 def _slice_tape_tail(seq, dist):
   """Return the last `dist` elements of `seq` (handling dist == 0 safely)."""
@@ -896,7 +857,7 @@ class Proof_System:
   def add_rule(self, rule, stripped_config):
     """Add a proven rule"""
     # Remember rule.
-    if isinstance(rule, Limited_Diff_Rule):
+    if rule.is_limited:
       (state, dir, stripped_tape_left, stripped_tape_right) = stripped_config
       stripped_tape_left = ((None, -1),) + stripped_tape_left
       stripped_config_left = (
@@ -916,8 +877,7 @@ class Proof_System:
         rule.right_dist,
       )
 
-      # Note: Every Limited_Diff_Rule actually becomes two values
-      # in `self.rules`
+      # Note: Every limited rule actually becomes two values in `self.rules`
       if stripped_config_left in self.rules:
         self.rules[stripped_config_left].append(rule)
       else:
@@ -1093,6 +1053,12 @@ class Proof_System:
     left_dist = initial_len[LEFT] - gen_sim.min_untouched_prefix[LEFT]
     right_dist = initial_len[RIGHT] - gen_sim.min_untouched_prefix[RIGHT]
 
+    if self.options.limited_rules:
+      initial_tape.tape[0] = _slice_tape_tail(initial_tape.tape[0], left_dist)
+      initial_tape.tape[1] = _slice_tape_tail(initial_tape.tape[1], right_dist)
+      gen_sim.tape.tape[0] = _slice_tape_tail(gen_sim.tape.tape[0], left_dist)
+      gen_sim.tape.tape[1] = _slice_tape_tail(gen_sim.tape.tape[1], right_dist)
+
     # If machine has run delta_steps without error, it is a general rule.
     # Compute the diff_tape and figure out if it's a Diff_Rule.
     is_diff_rule = True
@@ -1153,6 +1119,8 @@ class Proof_System:
         rule_level,
       )
       if rule:
+        if self.options.limited_rules:
+          rule.make_limited(left_dist, right_dist)
         self.num_linear_rules += 1
         if not rule.infinite:
           self.num_finite_linear_rules += 1
@@ -1180,6 +1148,8 @@ class Proof_System:
           rule_level,
         )
         if rule:
+          if self.options.limited_rules:
+            rule.make_limited(left_dist, right_dist)
           self.num_exponential_rules += 1
           if rule.has_collatz_decrease:
             self.num_collatz_rules += 1
@@ -1209,6 +1179,8 @@ class Proof_System:
           states_last_seen=states_last_seen,
           level=rule_level,
         )
+        if self.options.limited_rules:
+          rule.make_limited(left_dist, right_dist)
         self.num_gen_rules += 1
 
         if self.verbose:
@@ -1258,36 +1230,18 @@ class Proof_System:
       if not isinstance(num_steps, Algebraic_Expression):
         num_steps = ConstantToExpression(num_steps)
 
-      if self.options.limited_rules:
-        initial_tape.tape[0] = _slice_tape_tail(initial_tape.tape[0], left_dist)
-        initial_tape.tape[1] = _slice_tape_tail(initial_tape.tape[1], right_dist)
-
-        diff_tape.tape[0] = _slice_tape_tail(diff_tape.tape[0], left_dist)
-        diff_tape.tape[1] = _slice_tape_tail(diff_tape.tape[1], right_dist)
-
-        rule = Limited_Diff_Rule(
-          initial_tape,
-          left_dist,
-          right_dist,
-          diff_tape,
-          new_state,
-          num_steps,
-          gen_sim.num_loops,
-          self.num_rules,
-          states_last_seen=states_last_seen,
-          level=rule_level,
-        )
-      else:
-        rule = Diff_Rule(
-          initial_tape,
-          diff_tape,
-          new_state,
-          num_steps,
-          gen_sim.num_loops,
-          self.num_rules,
-          rule_level,
-          states_last_seen=states_last_seen,
-        )
+      rule = Diff_Rule(
+        initial_tape,
+        diff_tape,
+        new_state,
+        num_steps,
+        gen_sim.num_loops,
+        self.num_rules,
+        rule_level,
+        states_last_seen=states_last_seen,
+        left_dist=left_dist if self.options.limited_rules else None,
+        right_dist=right_dist if self.options.limited_rules else None,
+      )
 
       if rule.has_collatz_decrease:
         self.num_collatz_rules += 1
@@ -1310,45 +1264,38 @@ class Proof_System:
       self.print_this("Rule:", str(rule).replace("\n", "\n" + self.verbose_prefix + "       "))
       self.print_this("Config:", start_tape.print_with_state(start_state))
 
-    if isinstance(rule, Diff_Rule):
-      return self.apply_diff_rule(rule, start_config)
-    elif isinstance(rule, Iterated_Rule):
-      return self.apply_linear_rule(rule, start_config)
-    elif isinstance(rule, Exponential_Rule):
-      return self.apply_exponential_rule(rule, start_config)
-    elif isinstance(rule, General_Rule):
-      return self.apply_general_rule(rule, start_config)
-    elif isinstance(rule, Limited_Diff_Rule):
+    if rule.is_limited:
       start_state, start_tape, start_loop_num = start_config
-
       limited_start_tape = start_tape.copy()
-
       save_left = _slice_tape_head(limited_start_tape.tape[0], rule.left_dist)
       save_right = _slice_tape_head(limited_start_tape.tape[1], rule.right_dist)
-
       limited_start_tape.tape[0] = _slice_tape_tail(limited_start_tape.tape[0], rule.left_dist)
       limited_start_tape.tape[1] = _slice_tape_tail(limited_start_tape.tape[1], rule.right_dist)
+      start_config = (start_state, limited_start_tape, start_loop_num)
 
-      limited_start_config = (start_state, limited_start_tape, start_loop_num)
-
-      success, other = self.apply_diff_rule(rule, limited_start_config)
-
-      if success:
-        prover_result, large_delta = other
-
-        if prover_result.condition == APPLY_RULE:
-          # If we are applying this rule, add back on the saved part of the
-          # tape that was not part of this limited rule.
-          prover_result.new_tape.tape[0] = save_left + prover_result.new_tape.tape[0]
-          prover_result.new_tape.tape[1] = save_right + prover_result.new_tape.tape[1]
-          prover_result.left_dist = rule.left_dist
-          prover_result.right_dist = rule.right_dist
-
-        return success, (prover_result, large_delta)
-      return success, other
-
+    if isinstance(rule, Diff_Rule):
+      success, other = self.apply_diff_rule(rule, start_config)
+    elif isinstance(rule, Iterated_Rule):
+      success, other = self.apply_linear_rule(rule, start_config)
+    elif isinstance(rule, Exponential_Rule):
+      success, other = self.apply_exponential_rule(rule, start_config)
+    elif isinstance(rule, General_Rule):
+      success, other = self.apply_general_rule(rule, start_config)
     else:
       raise NotImplementedError(f"Cannot apply rule of type {type(rule)}")
+
+    if rule.is_limited and success:
+      prover_result, large_delta = other
+      if prover_result.condition == APPLY_RULE:
+        # If we are applying this rule, add back on the saved part of the
+        # tape that was not part of this limited rule.
+        prover_result.new_tape.tape[0] = save_left + prover_result.new_tape.tape[0]
+        prover_result.new_tape.tape[1] = save_right + prover_result.new_tape.tape[1]
+        prover_result.left_dist = rule.left_dist
+        prover_result.right_dist = rule.right_dist
+      return success, (prover_result, large_delta)
+
+    return success, other
 
   def apply_diff_rule(self, rule, start_config):
     ## Unpack input
