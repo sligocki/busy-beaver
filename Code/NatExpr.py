@@ -68,10 +68,7 @@ class NatExpr(abc.ABC):
   def is_inf(self) -> bool:
     return False
 
-  @property
-  @abc.abstractmethod
-  def is_const(self) -> bool:
-    pass
+  is_const: bool = False
 
   @property
   @abc.abstractmethod
@@ -144,9 +141,7 @@ class ConstInt(NatExpr):
   def try_eval(self) -> int:
     return self.val
 
-  @property
-  def is_const(self) -> bool:
-    return True
+  is_const: bool = True
 
   @property
   def uparrow_size_approx(self) -> tuple:
@@ -329,9 +324,7 @@ class InfNat(NatExpr):
   def is_inf(self) -> bool:
     return True
 
-  @property
-  def is_const(self) -> bool:
-    return True
+  is_const: bool = True
 
   def min_val(self):
     return self

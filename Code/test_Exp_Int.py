@@ -122,6 +122,48 @@ class ExpIntTest(unittest.TestCase):
     x_pb_reparsed.ParseFromString(x_pb_bytes)
     self.assertTrue(Exp_Int.struct_eq(get_big_int(x_pb_reparsed), x))
 
+  def test_tex_formula(self):
+    self.assertEqual(Exp_Int.tex_formula(42), "42")
+
+    t1 = Exp_Int.ExpTerm(2, 1, 5)
+    self.assertEqual(Exp_Int.tex_formula(t1), "2^{ 5 }")
+
+    t2 = Exp_Int.ExpTerm(2, 3, 5)
+    self.assertEqual(Exp_Int.tex_formula(t2), r"3 \cdot 2^{ 5 }")
+
+    e1 = exp_int(2, 5)
+    self.assertEqual(Exp_Int.tex_formula(e1), "2^{ 5 }")
+    self.assertEqual(e1.tex_formula(), "2^{ 5 }")
+
+    e2 = exp_int(2, 5) + 3
+    self.assertEqual(Exp_Int.tex_formula(e2), "3 + 2^{ 5 }")
+
+    e3 = (exp_int(2, 5) + 3) / 7
+    self.assertEqual(Exp_Int.tex_formula(e3), r"\frac{ 3 + 2^{ 5 } }{ 7 }")
+
+    e4 = Exp_Int.ExpInt([Exp_Int.ExpTerm(2, 3, 5), Exp_Int.ExpTerm(2, 1, 4)], const=1, denom=5)
+    self.assertEqual(Exp_Int.tex_formula(e4), r"\frac{ 1 + 3 \cdot 2^{ 5 } + 2^{ 4 } }{ 5 }")
+
+    e5 = exp_int(3, exp_int(2, 5))
+    self.assertEqual(Exp_Int.tex_formula(e5), "3^{ 2^{ 5 } }")
+
+  def test_deep_tower(self):
+    # Tests that deep towers (depth > standard recursion limit 1000) do not cause
+    # RecursionError for is_const, struct_eq, and tex_formula.
+    old_limit = sys.getrecursionlimit()
+    try:
+      sys.setrecursionlimit(500)
+      x = 2
+      for _ in range(600):
+        x = exp_int(2, x)
+      self.assertEqual(x.depth, 600)
+      self.assertTrue(x.is_const)
+      self.assertTrue(Exp_Int.struct_eq(x, x))
+      latex = Exp_Int.tex_formula(x)
+      self.assertTrue(len(latex) > 1000)
+    finally:
+      sys.setrecursionlimit(old_limit)
+
   def test_legacy_unpickle_eval(self):
     import pickle
 

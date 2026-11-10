@@ -45,21 +45,34 @@ class ExpIntGaveUp(ExpIntException):
   pass
 
 
-def tex_formula(x: ExpInt | ExpTerm | int) -> str:
-  if isinstance(x, ExpInt):
-    s = " + ".join(tex_formula(term) for term in x.terms)
-    if x.const != 0:
-      s = rf"{x.const} + {s}"
-    if x.denom != 1:
-      s = rf"\frac{{ {s} }}{{ {x.denom} }}"
-    return s
-  elif isinstance(x, ExpTerm):
-    s = rf"{x.base}^{{ {tex_formula(x.exponent)} }}"
-    if x.coef != 1:
-      s = rf"{x.coef} \cdot {s}"
-    return s
-  else:
-    return str(x)
+def tex_formula(root: ExpInt | ExpTerm | int) -> str:
+  root_res = []
+  stack = [(root, False, root_res, [])]
+  while stack:
+    node, visited, parent_res, my_res = stack.pop()
+    if visited:
+      if isinstance(node, ExpInt):
+        s = " + ".join(my_res)
+        if node.const != 0:
+          s = rf"{node.const} + {s}"
+        if node.denom != 1:
+          s = rf"\frac{{ {s} }}{{ {node.denom} }}"
+        parent_res.append(s)
+      elif isinstance(node, ExpTerm):
+        res = rf"{node.base}^{{ {my_res[0]} }}"
+        if node.coef != 1:
+          res = rf"{node.coef} \cdot {res}"
+        parent_res.append(res)
+      else:
+        parent_res.append(str(node))
+    else:
+      stack.append((node, True, parent_res, my_res))
+      if isinstance(node, ExpInt):
+        for term in reversed(node.terms):
+          stack.append((term, False, my_res, []))
+      elif isinstance(node, ExpTerm):
+        stack.append((node.exponent, False, my_res, []))
+  return root_res[0] if root_res else str(root)
 
 
 def is_simple(value) -> bool:
@@ -90,20 +103,26 @@ def try_simplify(x):
 
 def struct_eq(a, b) -> bool:
   """Test for structural equality (not math equality)."""
-  if is_simple(a) and is_simple(b):
-    return a == b
-  elif isinstance(a, ExpTerm) and isinstance(b, ExpTerm):
-    return a.base == b.base and a.coef == b.coef and struct_eq(a.exponent, b.exponent)
-  elif isinstance(a, ExpInt) and isinstance(b, ExpInt):
-    return (
-      a.const == b.const
-      and a.denom == b.denom
-      and len(a.terms) == len(b.terms)
-      and all(struct_eq(ta, tb) for (ta, tb) in zip(a.terms, b.terms))
-    )
-  else:
-    # Cannot compare
-    return False
+  stack = [(a, b)]
+  while stack:
+    x, y = stack.pop()
+    if x is y:
+      continue
+    if is_simple(x) and is_simple(y):
+      if x != y:
+        return False
+    elif isinstance(x, ExpTerm) and isinstance(y, ExpTerm):
+      if x.base != y.base or x.coef != y.coef:
+        return False
+      stack.append((x.exponent, y.exponent))
+    elif isinstance(x, ExpInt) and isinstance(y, ExpInt):
+      if x.const != y.const or x.denom != y.denom or len(x.terms) != len(y.terms):
+        return False
+      for tx, ty in zip(x.terms, y.terms):
+        stack.append((tx, ty))
+    else:
+      return False
+  return True
 
 
 def fractional_height(x) -> float:
@@ -203,11 +222,8 @@ class ExpTerm:
       self.coef //= self.base
       self.exponent += 1
 
-  @property
-  def is_const(self):
-    return is_const(self.exponent)
-
   def eval(self):
+    self.is_const = is_const(self.exponent)
     # Is this a constant? Or an expression?
     if self.is_const:
       exp_as_int = try_eval(self.exponent)
@@ -388,11 +404,8 @@ class ExpInt(NatExpr):
       raise ValueError("Attempt to convert large ExpInt -> int")
     return val
 
-  @property
-  def is_const(self):
-    return all(term.is_const for term in self.terms)
-
   def eval(self):
+    self.is_const = all(term.is_const for term in self.terms)
     if self.is_const:
       term_values = [try_eval(term) for term in self.terms]
       if all(term_values):

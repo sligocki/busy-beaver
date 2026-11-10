@@ -93,6 +93,7 @@ class Iterated_Expression(NatExpr):
     self.var = var
     self.start_val = start_val
     self.num_reps = num_reps
+    self.is_const = is_const(self.start_val) and is_const(self.num_reps)
 
     # Ensure step_expr only depends on var
     expr_vars = variables(self.step_expr)
@@ -115,10 +116,6 @@ class Iterated_Expression(NatExpr):
 
   def try_eval(self):
     return None
-
-  @property
-  def is_const(self):
-    return is_const(self.start_val) and is_const(self.num_reps)
 
   @property
   def const(self):
@@ -301,6 +298,7 @@ class Iterated_Math(NatExpr):
 
     self.terms = normalize_terms(terms)
     self.const = actual_const
+    self.is_const = all(is_const(t.it_expr) and is_const(t.coef) for t in self.terms) and is_const(self.const)
 
   @property
   def it_expr(self):
@@ -363,10 +361,6 @@ class Iterated_Math(NatExpr):
 
   def try_eval(self):
     return None
-
-  @property
-  def is_const(self):
-    return all(is_const(t.it_expr) and is_const(t.coef) for t in self.terms) and is_const(self.const)
 
   def min_val(self):
     res = min_val(self.const) if hasattr(self.const, "min_val") else self.const

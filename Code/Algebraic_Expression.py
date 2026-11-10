@@ -192,6 +192,7 @@ class Expression(NatExpr):
   def __init__(self, terms, constant):
     self.terms = terms
     self.const = constant
+    self.is_const = len(self.terms) == 0 and is_const(self.const)
 
   def __repr__(self):
     if len(self.terms) == 0:
@@ -276,10 +277,6 @@ class Expression(NatExpr):
     if isinstance(self.const, NatExpr):
       return self.const.try_eval()
     return self.const
-
-  @property
-  def is_const(self):
-    return len(self.terms) == 0 and is_const(self.const)
 
   def to_BigInterval(self):
     assert self.is_const, self
