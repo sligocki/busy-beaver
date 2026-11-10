@@ -14,6 +14,7 @@ import io_pb2
 from Algebraic_Expression import Algebraic_Expression
 from NatExpr import approx_and_full_str, approx_str
 from Macro import Proof_System, Tape, Turing_Machine
+from Macro.Turing_Machine import LEFT, RIGHT
 
 
 def add_option_group(parser: OptionParser):
@@ -100,6 +101,10 @@ class Simulator:
     self.op_state = Turing_Machine.RUNNING
     self.op_details = ()
 
+    # Optional tracking of untouched prefix lengths on each side of the tape
+    # (used by Proof_System.prove_rule).
+    self.min_untouched_prefix = None
+
     # Stats
     self.start_time = time.time()
     self.num_loops = 0
@@ -148,6 +153,13 @@ class Simulator:
 
   # TODO: true_loop_run which captures cost of prover, etc. also.
 
+  def init_touch_tracking(self):
+    """Initialize tracking of the untouched tape prefix on each side."""
+    self.min_untouched_prefix = {
+      LEFT: len(self.tape.tape[LEFT]),
+      RIGHT: len(self.tape.tape[RIGHT]),
+    }
+
   def step(self):
     """Perform an atomic transition or chain step."""
     if self.op_state != Turing_Machine.RUNNING:
@@ -179,6 +191,20 @@ class Simulator:
             list(prover_result.states_last_seen.values())[0],
             Algebraic_Expression,
           ), prover_result.states_last_seen
+
+        if self.min_untouched_prefix is not None:
+          if prover_result.left_dist is None or prover_result.right_dist is None:
+            self.min_untouched_prefix[LEFT] = 0
+            self.min_untouched_prefix[RIGHT] = 0
+          else:
+            self.min_untouched_prefix[LEFT] = min(
+              self.min_untouched_prefix[LEFT],
+              len(self.tape.tape[LEFT]) - prover_result.left_dist,
+            )
+            self.min_untouched_prefix[RIGHT] = min(
+              self.min_untouched_prefix[RIGHT],
+              len(self.tape.tape[RIGHT]) - prover_result.right_dist,
+            )
 
         self.tape = prover_result.new_tape
         self.num_rule_moves += 1
@@ -212,12 +238,23 @@ class Simulator:
       self.inf_recur_states = list(trans.states_last_seen.keys())
     # Chain move
     elif trans.state_out == self.state and trans.dir_out == self.dir and self.op_state == Turing_Machine.RUNNING:
+      if self.min_untouched_prefix is not None:
+        self.min_untouched_prefix[self.dir] = min(
+          self.min_untouched_prefix[self.dir],
+          len(self.tape.tape[self.dir]) - 1,
+        )
       num_reps = self.tape.apply_chain_move(trans.symbol_out)
       if num_reps.is_inf:
         self.op_state = Turing_Machine.INF_REPEAT
         self.inf_reason = io_pb2.INF_CHAIN_STEP
         self.inf_recur_states = list(trans.states_last_seen.keys())
         return
+      if self.min_untouched_prefix is not None:
+        back_dir = Turing_Machine.other_dir(self.dir)
+        self.min_untouched_prefix[back_dir] = min(
+          self.min_untouched_prefix[back_dir],
+          len(self.tape.tape[back_dir]) - 1,
+        )
       # Don't need to change state or direction
       self.num_chain_moves += 1
       if self.compute_steps:
@@ -231,9 +268,20 @@ class Simulator:
         self.steps_from_chain += trans.num_base_steps * num_reps
     # Simple move
     elif self.op_state != Turing_Machine.OVER_STEPS_IN_MACRO:
+      if self.min_untouched_prefix is not None:
+        self.min_untouched_prefix[self.dir] = min(
+          self.min_untouched_prefix[self.dir],
+          len(self.tape.tape[self.dir]) - 1,
+        )
       self.tape.apply_single_move(trans.symbol_out, trans.dir_out)
       self.state = trans.state_out
       self.dir = trans.dir_out
+      if self.min_untouched_prefix is not None:
+        back_dir = Turing_Machine.other_dir(self.dir)
+        self.min_untouched_prefix[back_dir] = min(
+          self.min_untouched_prefix[back_dir],
+          len(self.tape.tape[back_dir]) - 1,
+        )
       self.num_macro_moves += 1
       if self.compute_steps:
         if self.states_last_seen is not None:

@@ -967,14 +967,90 @@ class ProofSystemTest(unittest.TestCase):
     self.assertIn("Rule 0", output)
     self.assertIn("Rule 1", output)
 
-  def test_repeated_symbol_eq_ignores_id(self):
-    """Test that Repeated_Symbol equality does not depend on the transient block.id attribute."""
-    b1 = Tape.Repeated_Symbol(1, 5, id=1)
-    b2 = Tape.Repeated_Symbol(1, 5, id=None)
-    b3 = Tape.Repeated_Symbol(1, 5, id=2)
-    self.assertEqual(b1, b2)
-    self.assertEqual(b1, b3)
-    self.assertEqual(hash(b1), hash(b2))
+  def test_compositional_context_tracking_meta_limited_diff_rule(self):
+    """Test that proving a Level 2 meta Diff_Rule with limited_rules=True accurately tracks
+    the context (left_dist, right_dist) touched by both its direct steps and its Level 1 sub-rule,
+    leaving untouched outer blocks out of the limited rule.
+    """
+    tm = IO.parse_tm("1RB------_0RB0LC1LD_0LC1RA---_1LD0LE---_1RA0LE---")
+    self.options.recursive = True
+    self.options.limited_rules = True
+    prover = Proof_System.Proof_System(tm, self.options, "")
+
+    state_A = Turing_Machine.Simple_Machine_State(0)
+
+    # Prove Level 1 base rule with extra untouched blocks on both sides:
+    #   [0^inf 2^50] 1^a A> 0^b 1^c [2^40 0^inf] -> [0^inf 2^50] 1^(a+1) A> 0^b 1^(c-1) [2^40 0^inf]
+    tape = Tape.Chain_Tape()
+    tape.init(0, 0, self.options)
+    tape.dir = Turing_Machine.RIGHT
+    tape.tape[0] = [
+      Tape.Repeated_Symbol(0, InfNat()),
+      Tape.Repeated_Symbol(2, 50),
+      Tape.Repeated_Symbol(1, 10),
+    ]
+    tape.tape[1] = [
+      Tape.Repeated_Symbol(0, InfNat()),
+      Tape.Repeated_Symbol(2, 40),
+      Tape.Repeated_Symbol(1, 30),
+      Tape.Repeated_Symbol(0, 20),
+    ]
+    full_config = (state_A, tape, 0)
+    stripped_config = Proof_System.strip_config(state_A, Turing_Machine.RIGHT, tape.tape)
+    base_rule = prover.prove_rule(stripped_config, full_config, delta_loop=5)
+    self.assertIsNotNone(base_rule)
+    self.assertEqual(base_rule.level, 1)
+    self.assertEqual(base_rule.left_dist, 1)
+    self.assertEqual(base_rule.right_dist, 2)
+    prover.add_rule(base_rule, stripped_config)
+
+    # Now prove Level 2 meta Diff_Rule with extra untouched blocks on the right:
+    #   0^inf 1^a A> 0^b 2^d [1^88 0^inf]
+    # Note: the meta rule touches `0^inf` and `1^a` on the left (left_dist=2) and `0^b` and `2^d`
+    # on the right (right_dist=2), while applying `base_rule` inside `gen_sim`, leaving `1^88 0^inf`
+    # on the right completely untouched!
+    tape2 = Tape.Chain_Tape()
+    tape2.init(0, 0, self.options)
+    tape2.dir = Turing_Machine.RIGHT
+    tape2.tape[0] = [
+      Tape.Repeated_Symbol(0, InfNat()),
+      Tape.Repeated_Symbol(1, 10),
+    ]
+    tape2.tape[1] = [
+      Tape.Repeated_Symbol(0, InfNat()),
+      Tape.Repeated_Symbol(1, 88),
+      Tape.Repeated_Symbol(2, 4),
+      Tape.Repeated_Symbol(0, 20),
+    ]
+    full_config2 = (state_A, tape2, 10)
+    stripped_config2 = Proof_System.strip_config(state_A, Turing_Machine.RIGHT, tape2.tape)
+    meta_rule = prover.prove_rule(stripped_config2, full_config2, delta_loop=36)
+    self.assertIsNotNone(meta_rule)
+    self.assertEqual(meta_rule.level, 2)
+    self.assertEqual(meta_rule.left_dist, 2)
+    self.assertEqual(meta_rule.right_dist, 2)
+    prover.add_rule(meta_rule, stripped_config2)
+
+    # Apply the Level 2 Limited_Diff_Rule to a tape with completely different right-hand outer blocks!
+    tape3 = Tape.Chain_Tape()
+    tape3.init(0, 0, self.options)
+    tape3.dir = Turing_Machine.RIGHT
+    tape3.tape[0] = [
+      Tape.Repeated_Symbol(0, InfNat()),
+      Tape.Repeated_Symbol(1, 10),
+    ]
+    tape3.tape[1] = [
+      Tape.Repeated_Symbol(0, InfNat()),
+      Tape.Repeated_Symbol(2, 99),
+      Tape.Repeated_Symbol(1, 77),
+      Tape.Repeated_Symbol(2, 40),
+      Tape.Repeated_Symbol(0, 20),
+    ]
+    stripped_config3 = Proof_System.strip_config(state_A, Turing_Machine.RIGHT, tape3.tape)
+    res3 = prover.try_apply_a_rule(stripped_config3, (state_A, tape3, 20))
+    self.assertIsNotNone(res3)
+    self.assertEqual(res3.condition, Proof_System.APPLY_RULE)
+    self.assertEqual(str(res3.new_tape), "0^inf 1^48 -> 0^58 2^2 1^77 2^99 0^inf")
 
 
 if __name__ == "__main__":

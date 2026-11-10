@@ -694,11 +694,22 @@ INF_REPEAT = "Inf_Repeat"  # Rule applies infinitely.
 
 
 class ProverResult:
-  def __init__(self, condition, *, new_tape=None, num_base_steps=None, states_last_seen=None):
+  def __init__(
+    self,
+    condition,
+    *,
+    new_tape=None,
+    num_base_steps=None,
+    states_last_seen=None,
+    left_dist=None,
+    right_dist=None,
+  ):
     self.condition = condition
     self.new_tape = new_tape
     self.num_base_steps = num_base_steps
     self.states_last_seen = states_last_seen
+    self.left_dist = left_dist
+    self.right_dist = right_dist
 
 
 class Proof_System:
@@ -981,13 +992,7 @@ class Proof_System:
     gen_sim.tape = new_tape.copy()
     min_val = {}  # Notes the minimum value exponents with each unknown take.
     for direction in range(2):
-      offset = len(gen_sim.tape.tape[direction])
       for block in gen_sim.tape.tape[direction]:
-        # Mark all starting blocks with IDs to indicate their offset from the
-        # starting TM head. If we allow Limited_Diff_Rules, then we will use
-        # this to detect which blocks were touched.
-        block.id = offset
-        offset -= 1
         # Generalize, eg. (abc)^5 -> (abc)^(n+5)
         # Blocks with one rep are not generalized, eg. (abc)^1 -> (abc)^1
         if not block.num.is_inf and block.num != 1:
@@ -1003,8 +1008,12 @@ class Proof_System:
           min_val[x] = block.num.const
     initial_tape = gen_sim.tape.copy()
     gen_sim.dir = gen_sim.tape.dir
+    gen_sim.init_touch_tracking()
 
-    max_offset_touched = {LEFT: 0, RIGHT: 0}
+    initial_len = {
+      LEFT: len(initial_tape.tape[LEFT]),
+      RIGHT: len(initial_tape.tape[RIGHT]),
+    }
     # Run the simulator
     gen_sim.verbose_print()
     while gen_sim.num_loops < delta_loop:
@@ -1026,17 +1035,7 @@ class Proof_System:
           print()
         return False
 
-      # Before step: Record the block we are looking at (about to read).
-      cur_dir = gen_sim.tape.dir
-      facing_offset = gen_sim.tape.get_top_block().id
-      if facing_offset:
-        max_offset_touched[cur_dir] = max(max_offset_touched[cur_dir], facing_offset)
       gen_sim.step()
-      # After step: Record the block behind us (which we just wrote to).
-      back_dir = Turing_Machine.other_dir(gen_sim.tape.dir)
-      wrote_offset = gen_sim.tape.tape[back_dir][-1].id
-      if wrote_offset:
-        max_offset_touched[back_dir] = max(max_offset_touched[back_dir], wrote_offset)
       self.num_loops += 1
 
       if gen_sim.op_state is not Turing_Machine.RUNNING:
@@ -1080,6 +1079,19 @@ class Proof_System:
       rule_level = gen_sim.prover.max_rule_level_used + 1
     else:
       rule_level = 1
+
+    # Compute the number of initial blocks touched on each side of the tape.
+    for dir in range(2):
+      prefix = gen_sim.min_untouched_prefix[dir]
+      assert prefix >= 0, prefix
+      assert gen_sim.tape.tape[dir][:prefix] == initial_tape.tape[dir][:prefix], (
+        dir,
+        prefix,
+        gen_sim.tape.tape[dir],
+        initial_tape.tape[dir],
+      )
+    left_dist = initial_len[LEFT] - gen_sim.min_untouched_prefix[LEFT]
+    right_dist = initial_len[RIGHT] - gen_sim.min_untouched_prefix[RIGHT]
 
     # If machine has run delta_steps without error, it is a general rule.
     # Compute the diff_tape and figure out if it's a Diff_Rule.
@@ -1246,12 +1258,7 @@ class Proof_System:
       if not isinstance(num_steps, Algebraic_Expression):
         num_steps = ConstantToExpression(num_steps)
 
-      # NOTE: We do not prove limited rules for meta (recursive) rules because
-      # are not correctly accounting for the context that was seen.
-      if self.options.limited_rules and rule_level == 1:
-        left_dist = max_offset_touched[LEFT]
-        right_dist = max_offset_touched[RIGHT]
-
+      if self.options.limited_rules:
         initial_tape.tape[0] = _slice_tape_tail(initial_tape.tape[0], left_dist)
         initial_tape.tape[1] = _slice_tape_tail(initial_tape.tape[1], right_dist)
 
@@ -1334,6 +1341,8 @@ class Proof_System:
           # tape that was not part of this limited rule.
           prover_result.new_tape.tape[0] = save_left + prover_result.new_tape.tape[0]
           prover_result.new_tape.tape[1] = save_right + prover_result.new_tape.tape[1]
+          prover_result.left_dist = rule.left_dist
+          prover_result.right_dist = rule.right_dist
 
         return success, (prover_result, large_delta)
       return success, other

@@ -22,10 +22,9 @@ def reverse(in_list):
 class Repeated_Symbol:
   """Slice of tape with repetitions."""
 
-  def __init__(self, symbol, number_of_repetitions, id=None):
+  def __init__(self, symbol, number_of_repetitions):
     self.symbol = symbol
     self.num = number_of_repetitions
-    self.id = id
 
   @property
   def num(self):
@@ -58,7 +57,7 @@ class Repeated_Symbol:
     return self.to_string(html_format=False, full_reps=False)
 
   def copy(self):
-    return Repeated_Symbol(self.symbol, self.num, self.id)
+    return Repeated_Symbol(self.symbol, self.num)
 
 
 class Chain_Tape:
