@@ -588,24 +588,21 @@ def stripped_info(block):
   """Get an abstraction of a tape block. We try to prove rules between
   configuration which have the same abstraction.
   """
-  if block.num == 1:
+  if getattr(block.num, "is_inf", False):
+    return block.symbol, -1
+  elif block.num == 1:
     return block.symbol, 1
   else:
     return block.symbol
 
 
 def strip_config(state, dir, tape):
-  """ "Return a generalized configuration removing the non-1 repetition counts from the tape."""
-  # Optimization: Strip off Infinity blocks before we run the map (see tape[x][1:]).
-  # Turns out Infinity.__cmp__ is expensive when run millions of times.
-  # It used to spend up to 25% of time here.
-  # TODO: Revisit now that we are using math.inf rather than a custom class.
-  # TODO: This map is expensive upwards of 10% of time is spend here.
+  """Return a generalized configuration removing the non-1 repetition counts from the tape."""
   return (
     state,
     dir,
-    tuple(map(stripped_info, tape[0][1:])),
-    tuple(map(stripped_info, tape[1][1:])),
+    tuple(map(stripped_info, tape[0])),
+    tuple(map(stripped_info, tape[1])),
   )
 
 
@@ -832,16 +829,14 @@ class Proof_System:
     if not by_dist:
       return None
 
-    tape_l = ((None, -1),) + stripped_tape_left
-    tape_r = ((None, -1),) + stripped_tape_right
-    len_l = len(tape_l)
-    len_r = len(tape_r)
+    len_l = len(stripped_tape_left)
+    len_r = len(stripped_tape_right)
     matching_rules = []
 
     for (ld, rd), sub_table in by_dist.items():
       if len_l >= ld and len_r >= rd:
-        sub_left = _slice_tape_tail(tape_l, ld)
-        sub_right = _slice_tape_tail(tape_r, rd)
+        sub_left = _slice_tape_tail(stripped_tape_left, ld)
+        sub_right = _slice_tape_tail(stripped_tape_right, rd)
         rules = sub_table.get((sub_left, sub_right))
         if rules:
           matching_rules.extend(rules)
@@ -875,10 +870,8 @@ class Proof_System:
     # Remember rule.
     if rule.is_limited:
       (state, dir, stripped_tape_left, stripped_tape_right) = stripped_config
-      tape_l = ((None, -1),) + stripped_tape_left
-      tape_r = ((None, -1),) + stripped_tape_right
-      sub_left = _slice_tape_tail(tape_l, rule.left_dist)
-      sub_right = _slice_tape_tail(tape_r, rule.right_dist)
+      sub_left = _slice_tape_tail(stripped_tape_left, rule.left_dist)
+      sub_right = _slice_tape_tail(stripped_tape_right, rule.right_dist)
       dist_key = (rule.left_dist, rule.right_dist)
 
       by_dist = self.limited_rules.setdefault((state, dir), {})
