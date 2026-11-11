@@ -1107,6 +1107,97 @@ class ProofSystemTest(unittest.TestCase):
     self.assertEqual(dict(sim.prover.num_rules_by_level), {1: 1, 2: 1, 3: 1})
     self.assertEqual(sim.get_nonzeros().approx_str(), "~ 10^^~ 10^^3.1")
 
+  def test_limited_rules_priority(self):
+    """Test that try_apply_a_limited_rule prioritizes higher level rules first,
+    and among same level, later proven rules first.
+    """
+    tm = IO.parse_tm("1RB3RB3LB0RB0LA_2LB3RA3RB4RA2LA")
+    self.options.recursive = True
+    self.options.limited_rules = True
+    prover = Proof_System.Proof_System(tm, self.options, "")
+
+    state_A = Turing_Machine.Simple_Machine_State(0)
+    tape = Tape.Chain_Tape()
+    tape.init(0, 0, self.options)
+    tape.dir = Turing_Machine.RIGHT
+    tape.tape[0] = [Tape.Repeated_Symbol(0, InfNat()), Tape.Repeated_Symbol(1, 10)]
+    tape.tape[1] = [Tape.Repeated_Symbol(0, InfNat()), Tape.Repeated_Symbol(2, 10)]
+    full_config = (state_A, tape, 0)
+    stripped_config = Proof_System.strip_config(state_A, Turing_Machine.RIGHT, tape.tape)
+
+    # Create dummy diff tapes for testing
+    diff_tape1 = tape.copy()
+    diff_tape1.tape[0] = [Tape.Repeated_Symbol(1, 1)]
+    diff_tape1.tape[1] = [Tape.Repeated_Symbol(2, -1)]
+
+    diff_tape2 = tape.copy()
+    diff_tape2.tape[0] = [Tape.Repeated_Symbol(1, 2)]
+    diff_tape2.tape[1] = [Tape.Repeated_Symbol(2, -2)]
+
+    diff_tape3 = tape.copy()
+    diff_tape3.tape[0] = [Tape.Repeated_Symbol(1, 3)]
+    diff_tape3.tape[1] = [Tape.Repeated_Symbol(2, -3)]
+
+    # Rule 1: Level 1, rule_num 1
+    init_tape = tape.copy()
+    init_tape.tape[0] = [Tape.Repeated_Symbol(1, 1)]
+    init_tape.tape[1] = [Tape.Repeated_Symbol(2, 1)]
+    r1 = Proof_System.Diff_Rule(
+      init_tape.copy(),
+      diff_tape1,
+      state_A,
+      num_steps=1,
+      num_loops=1,
+      rule_num=1,
+      level=1,
+      states_last_seen={},
+      left_dist=1,
+      right_dist=1,
+    )
+    # Rule 2: Level 1, rule_num 2 (later proven)
+    r2 = Proof_System.Diff_Rule(
+      init_tape.copy(),
+      diff_tape2,
+      state_A,
+      num_steps=2,
+      num_loops=2,
+      rule_num=2,
+      level=1,
+      states_last_seen={},
+      left_dist=1,
+      right_dist=1,
+    )
+    # Rule 3: Level 2, rule_num 0 (lower rule_num, but higher level)
+    r3 = Proof_System.Diff_Rule(
+      init_tape.copy(),
+      diff_tape3,
+      state_A,
+      num_steps=3,
+      num_loops=3,
+      rule_num=0,
+      level=2,
+      states_last_seen={},
+      left_dist=1,
+      right_dist=1,
+    )
+
+    # 1. Add r1 and r2 (both Level 1). r2 (later proven) should have priority over r1.
+    prover.add_rule(r1, stripped_config)
+    prover.add_rule(r2, stripped_config)
+
+    res = prover.try_apply_a_limited_rule(stripped_config, full_config)
+    self.assertIsNotNone(res)
+    self.assertEqual(r2.num_uses, 1)
+    self.assertEqual(r1.num_uses, 0)
+
+    # 2. Add r3 (Level 2). r3 should now have priority over both r1 and r2 even though its rule_num is 0.
+    prover.add_rule(r3, stripped_config)
+    res = prover.try_apply_a_limited_rule(stripped_config, full_config)
+    self.assertIsNotNone(res)
+    self.assertEqual(r3.num_uses, 1)
+    self.assertEqual(r2.num_uses, 1)
+    self.assertEqual(r1.num_uses, 0)
+
 
 if __name__ == "__main__":
   unittest.main()

@@ -93,6 +93,7 @@ UNPROVEN_PARITY = "Unproven parity"
 class Rule:
   """Base type for Proof_System rules."""
 
+  num: int | None = None
   is_limited: bool = False
   left_dist: int | None = None
   right_dist: int | None = None
@@ -132,7 +133,7 @@ class Diff_Rule(Rule):
     self.num_steps = num_steps
     self.initial_state = initial_state
     self.num_loops = num_loops
-    self.name = str(rule_num)  # Unique identifier.
+    self.num = rule_num  # Unique identifier.
     self.level = level
     self.states_last_seen = states_last_seen
     if left_dist is not None and right_dist is not None:
@@ -149,7 +150,7 @@ class Diff_Rule(Rule):
           self.has_collatz_decrease = True
 
   def __repr__(self):
-    return f"""Diff Rule {self.name}
+    return f"""Diff Rule {self.num}
 Initial Config: {self.initial_tape.print_with_state(self.initial_state)}
 Diff Config:    {self.diff_tape.print_with_state(self.initial_state)}
 Steps: {self.num_steps}, Loops: {self.num_loops}
@@ -179,7 +180,7 @@ class Iterated_Rule(Rule):
     self.left_size = len(result_tape.tape[0])
     self.num_steps = num_steps
     self.num_loops = num_loops
-    self.name = str(rule_num)
+    self.num = rule_num
     self.states_last_seen = states_last_seen
 
     # Update minimums
@@ -309,7 +310,7 @@ class Iterated_Rule(Rule):
     right_end_str = " ".join(reversed([end_block(i) for i in range(self.left_size, len(self.block_list))]))
 
     # TODO: Replace `<>` with state/dir, like `<A`
-    return f"""Iterated Rule {self.name}
+    return f"""Iterated Rule {self.num}
 Start Tape: {left_start_str} <> {right_start_str}
 End Tape: {left_end_str} <> {right_end_str}
 Steps {self.num_steps} Loops {self.num_loops}
@@ -336,7 +337,7 @@ class Exponential_Rule(Rule):
     self.left_size = len(result_tape.tape[0])
     self.num_steps = num_steps
     self.num_loops = num_loops
-    self.name = str(rule_num)
+    self.num = rule_num
     self.states_last_seen = states_last_seen
 
     self.var_list = [(func.var if func else None) for func in self.func_list]
@@ -491,7 +492,7 @@ class Exponential_Rule(Rule):
     right_end_str = " ".join(reversed([end_block(i) for i in range(self.left_size, len(self.block_list))]))
 
     # TODO: Replace `<>` with state/dir, like `<A`
-    return f"""Exponential Rule {self.name}
+    return f"""Exponential Rule {self.num}
 Start Tape: {left_start_str} <> {right_start_str}
 End Tape: {left_end_str} <> {right_end_str}
 Steps {self.num_steps} Loops {self.num_loops}
@@ -522,7 +523,7 @@ class General_Rule(Rule):
     self.left_size = len(result_tape.tape[0])
     self.num_steps = num_steps
     self.num_loops = num_loops
-    self.name = str(rule_num)
+    self.num = rule_num
     self.states_last_seen = states_last_seen
     self.level = level
 
@@ -561,7 +562,7 @@ class General_Rule(Rule):
     right_end_str = " ".join(reversed([end_block(i) for i in range(self.left_size, len(self.block_list))]))
 
     # TODO: Replace `<>` with state/dir, like `<A`
-    return f"""General Rule {self.name}
+    return f"""General Rule {self.num}
 Start Tape: {left_start_str} <> {right_start_str}
 End Tape: {left_end_str} <> {right_end_str}
 Steps {self.num_steps} Loops {self.num_loops}
@@ -697,6 +698,9 @@ class Proof_System:
     self.past_configs = defaultdict(Past_Config)
     # Collection of proven rules indexed by stripped configurations.
     self.rules = {}
+    # Distance-indexed dictionary for limited rules:
+    # (state, dir) -> {(left_dist, right_dist): {(sub_left, sub_right): [rules]}}
+    self.limited_rules = {}
 
     self.max_num_reps = options.max_num_reps
 
@@ -730,17 +734,17 @@ class Proof_System:
     for val in self.rules.values():
       if isinstance(val, list):
         for rule in val:
-          all_rules[rule.name] = rule
+          all_rules[rule.num] = rule
       else:
-        all_rules[val.name] = val
+        all_rules[val.num] = val
 
     found_rule = False
-    for _, rule in sorted(all_rules.items(), key=lambda item: int(item[0]) if item[0].isdigit() else item[0]):
-      if args and rule.name != args:
+    for _, rule in sorted(all_rules.items()):
+      if args is not None and str(rule.num) != str(args):
         continue
       found_rule = True
       print()
-      self.print_this("Rule", rule.name)
+      self.print_this("Rule", rule.num)
       if hasattr(rule, "initial_state"):
         state = rule.initial_state
         self.print_this("Initial:", rule.initial_tape.print_with_state(state))
@@ -818,26 +822,38 @@ class Proof_System:
       if res != UNPROVEN_PARITY:
         return ProverResult(NOTHING_TO_DO)
 
+  @staticmethod
+  def _rule_priority(rule):
+    return (rule.level, rule.num)
+
   def try_apply_a_limited_rule(self, stripped_config, full_config):
     (state, dir, stripped_tape_left, stripped_tape_right) = stripped_config
+    by_dist = self.limited_rules.get((state, dir))
+    if not by_dist:
+      return None
 
-    stripped_tape_left = ((None, -1),) + stripped_tape_left
-    stripped_configs_left = [
-      (0, state, dir, _slice_tape_tail(stripped_tape_left, i), i) for i in range(0, len(stripped_tape_left) + 1)
-    ]
+    tape_l = ((None, -1),) + stripped_tape_left
+    tape_r = ((None, -1),) + stripped_tape_right
+    len_l = len(tape_l)
+    len_r = len(tape_r)
+    matching_rules = []
 
-    list_left = [rule for config in stripped_configs_left if config in self.rules for rule in self.rules[config]]
+    for (ld, rd), sub_table in by_dist.items():
+      if len_l >= ld and len_r >= rd:
+        sub_left = _slice_tape_tail(tape_l, ld)
+        sub_right = _slice_tape_tail(tape_r, rd)
+        rules = sub_table.get((sub_left, sub_right))
+        if rules:
+          matching_rules.extend(rules)
 
-    stripped_tape_right = ((None, -1),) + stripped_tape_right
-    stripped_configs_right = [
-      (1, state, dir, _slice_tape_tail(stripped_tape_right, i), i) for i in range(0, len(stripped_tape_right) + 1)
-    ]
+    if not matching_rules:
+      return None
 
-    list_right = [rule for config in stripped_configs_right if config in self.rules for rule in self.rules[config]]
+    # Prioritize higher level rules first, then later proven rules first.
+    if len(matching_rules) > 1:
+      matching_rules.sort(key=self._rule_priority, reverse=True)
 
-    rules = list(set(list_left) & set(list_right))
-
-    for rule in rules:
+    for rule in matching_rules:
       is_good, res = self.apply_rule(rule, full_config)
       if is_good:
         result, large_delta = res
@@ -859,38 +875,19 @@ class Proof_System:
     # Remember rule.
     if rule.is_limited:
       (state, dir, stripped_tape_left, stripped_tape_right) = stripped_config
-      stripped_tape_left = ((None, -1),) + stripped_tape_left
-      stripped_config_left = (
-        0,
-        state,
-        dir,
-        _slice_tape_tail(stripped_tape_left, rule.left_dist),
-        rule.left_dist,
-      )
+      tape_l = ((None, -1),) + stripped_tape_left
+      tape_r = ((None, -1),) + stripped_tape_right
+      sub_left = _slice_tape_tail(tape_l, rule.left_dist)
+      sub_right = _slice_tape_tail(tape_r, rule.right_dist)
+      dist_key = (rule.left_dist, rule.right_dist)
 
-      stripped_tape_right = ((None, -1),) + stripped_tape_right
-      stripped_config_right = (
-        1,
-        state,
-        dir,
-        _slice_tape_tail(stripped_tape_right, rule.right_dist),
-        rule.right_dist,
-      )
+      by_dist = self.limited_rules.setdefault((state, dir), {})
+      by_sub = by_dist.setdefault(dist_key, {})
+      rule_list = by_sub.setdefault((sub_left, sub_right), [])
+      rule_list.append(rule)
+      rule_list.sort(key=self._rule_priority, reverse=True)
 
-      # Note: Every limited rule actually becomes two values in `self.rules`
-      if stripped_config_left in self.rules:
-        self.rules[stripped_config_left].append(rule)
-      else:
-        self.rules[stripped_config_left] = [
-          rule,
-        ]
-
-      if stripped_config_right in self.rules:
-        self.rules[stripped_config_right].append(rule)
-      else:
-        self.rules[stripped_config_right] = [
-          rule,
-        ]
+      self.rules[rule.num] = rule
     else:
       self.rules[stripped_config] = rule
 
@@ -1260,7 +1257,7 @@ class Proof_System:
       start_state, start_tape, start_loop_num = start_config
       print()
       self.print_this("++ Applying Rule ++")
-      self.print_this("Loop:", start_loop_num, "Rule ID:", rule.name)
+      self.print_this("Loop:", start_loop_num, "Rule ID:", rule.num)
       self.print_this("Rule:", str(rule).replace("\n", "\n" + self.verbose_prefix + "       "))
       self.print_this("Config:", start_tape.print_with_state(start_state))
 
