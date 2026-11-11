@@ -1,4 +1,5 @@
 import optparse
+import os
 import unittest
 
 import IO
@@ -6,6 +7,10 @@ from Macro import Simulator, Turing_Machine
 
 
 class TestAck34(unittest.TestCase):
+  def setUp(self):
+    test_dir = os.path.dirname(__file__)
+    self.root_dir = os.path.normpath(os.path.join(test_dir, os.pardir))
+
   def test_sim_rules(self):
     tm = IO.parse_tm("1RB3LB1RZ2RA_2LC3RB1LC2RA_3RB1LB3LC2RC")
 
@@ -49,7 +54,7 @@ class TestAck34(unittest.TestCase):
     self.assertEqual(sim.get_nonzeros().approx_str(), "~ 10 ↑↑↑ ~ 10^^65_533.6")
 
   def test_11x2_green(self):
-    tm = IO.get_tm("Machines/11x2-Green")
+    tm = IO.get_tm(os.path.join(self.root_dir, "Machines/11x2-Green"))
 
     class Options(optparse.Values):
       def __init__(self):
