@@ -47,10 +47,11 @@ def add_option_group(parser):
     help="Allow meta/recursive rules. Rules that use other rules in their proofs.",
   )
   group.add_option(
-    "--limited-rules",
-    action="store_true",
-    default=False,
-    help="Rules are saved and applied based on the maximum they effect the tape to the left and right. [Experimental]",
+    "--no-limited-rules",
+    dest="limited_rules",
+    action="store_false",
+    default=True,
+    help="Force all rules to be full-tape rules.",
   )
   group.add_option(
     "--exp-linear-rules",
