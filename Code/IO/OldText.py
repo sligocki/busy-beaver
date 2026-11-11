@@ -144,6 +144,9 @@ class ReaderWriter:
       elif unk_reason == "over_steps_in_macro":
         reason = Exit_Condition.OVER_STEPS_IN_MACRO
         args = ()
+      elif unk_reason == "over_expression_too_complex":
+        reason = Exit_Condition.EXPRESSION_TOO_COMPLEX
+        args = (unknown_info.over_expression_too_complex.detail,)
       else:
         raise Exception(unknown_info)
 

@@ -111,8 +111,7 @@ class ExpIntTest(unittest.TestCase):
 
   def test_protobuf(self):
     x = 138
-    sys.setrecursionlimit(10_000)
-    for n in range(1000):
+    for n in range(100):
       x = 13 * exp_int(5, x) - 1
 
     x_proto = io_pb2.BigInt()
@@ -148,21 +147,28 @@ class ExpIntTest(unittest.TestCase):
     self.assertEqual(Exp_Int.tex_formula(e5), "3^{ 2^{ 5 } }")
 
   def test_deep_tower(self):
-    # Tests that deep towers (depth > standard recursion limit 1000) do not cause
+    # Tests that deep towers (depth > recursion limit) do not cause
     # RecursionError for is_const, struct_eq, and tex_formula.
     old_limit = sys.getrecursionlimit()
     try:
-      sys.setrecursionlimit(500)
+      sys.setrecursionlimit(200)
       x = 2
-      for _ in range(600):
+      for _ in range(300):
         x = exp_int(2, x)
-      self.assertEqual(x.depth, 600)
+      self.assertEqual(x.depth, 300)
       self.assertTrue(x.is_const)
       self.assertTrue(Exp_Int.struct_eq(x, x))
       latex = Exp_Int.tex_formula(x)
       self.assertTrue(len(latex) > 1000)
     finally:
       sys.setrecursionlimit(old_limit)
+
+  def test_max_depth_exceeded(self):
+    x = 2
+    for _ in range(Exp_Int.MAX_DEPTH):
+      x = exp_int(2, x)
+    with self.assertRaises(Exp_Int.ExpIntGaveUp):
+      exp_int(2, x)
 
   def test_legacy_unpickle_eval(self):
     import pickle

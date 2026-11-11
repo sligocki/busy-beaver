@@ -19,7 +19,7 @@ from NatExpr import ConstInt, NatExpr, is_const
 # if x > 10^EXP_THRESHOLD, only consider as formula
 EXP_THRESHOLD = 1000
 # Fail if we have too many layers of ExpInt
-MAX_DEPTH = 10_000
+MAX_DEPTH = 500
 # Maximum (recursive) number of ExpTerms in a single ExpInt
 MAX_TERMS = 1_000_000
 

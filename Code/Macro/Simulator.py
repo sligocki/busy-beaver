@@ -12,6 +12,7 @@ from optparse import OptionGroup, OptionParser
 
 import io_pb2
 from Algebraic_Expression import Algebraic_Expression
+from Exp_Int import ExpIntGaveUp
 from NatExpr import approx_and_full_str, approx_str
 from Macro import Proof_System, Tape, Turing_Machine
 from Macro.Turing_Machine import LEFT, RIGHT
@@ -165,6 +166,14 @@ class Simulator:
     if self.op_state != Turing_Machine.RUNNING:
       return
 
+    try:
+      self._step()
+    except ExpIntGaveUp as e:
+      self.op_state = Turing_Machine.EXPRESSION_TOO_COMPLEX
+      self.op_details = (str(e),)
+      self.verbose_print()
+
+  def _step(self):
     if self.compute_steps:
       self.old_step_num = self.step_num
     # Note: We increment the number of loops early to take care of all the

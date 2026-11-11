@@ -124,8 +124,9 @@ class Exit_Condition:
   TIME_OUT = 5
   NOT_RUN = 7
   OVER_STEPS_IN_MACRO = 8
+  EXPRESSION_TOO_COMPLEX = 9
   # Set of all unknown conditions
-  UNKNOWN_SET = (UNKNOWN, OVER_TAPE, MAX_STEPS, TIME_OUT, NOT_RUN)
+  UNKNOWN_SET = (UNKNOWN, OVER_TAPE, MAX_STEPS, TIME_OUT, NOT_RUN, OVER_STEPS_IN_MACRO, EXPRESSION_TOO_COMPLEX)
 
   names = {
     ERROR: "Error",
@@ -139,6 +140,7 @@ class Exit_Condition:
     TIME_OUT: "Time_Out",
     NOT_RUN: "Not_Run",
     OVER_STEPS_IN_MACRO: "Macro_Over_Steps",
+    EXPRESSION_TOO_COMPLEX: "Expression_Too_Complex",
   }
   condition_from_name = {name: cond for (cond, name) in names.items()}
 

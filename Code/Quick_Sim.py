@@ -105,6 +105,10 @@ def run(machine, block_size, back, prover, recursive, options):
     print()
     print("Over base steps in a single Macro step")
     print("Info:", sim.op_details)
+  elif sim.op_state == Turing_Machine.EXPRESSION_TOO_COMPLEX:
+    print()
+    print("Expression too complex")
+    print("Info:", sim.op_details[0] if sim.op_details else "")
   elif total_loops >= options.max_loops:
     print()
     if total_loops == options.max_loops:

@@ -308,6 +308,32 @@ class MacroSimulatorTest(unittest.TestCase):
     tm_record = TM_Record.TM_Record(tm_enum=tm_enum)
     Macro_Simulator.run_options(tm_record, self.options)
 
+  def test_expression_too_complex(self):
+    orig_max_depth = Exp_Int.MAX_DEPTH
+    try:
+      Exp_Int.MAX_DEPTH = 5
+      self.options.recursive = True
+      self.options.exp_linear_rules = True
+      self.options.exp_meta_linear_rules = True
+      self.options.block_size = 4
+      self.options.max_loops = 50_000
+      tm = IO.parse_tm("1RB0LE_0RC1RA_1RD1RB_0LD1LE_0LF1LA_1RG1LF_---0LC")
+      tm_enum = TM_Enum.TM_Enum(tm, allow_no_halt=False)
+      tm_record = TM_Record.TM_Record(tm_enum=tm_enum)
+      Macro_Simulator.run_options(tm_record, self.options)
+      sim_info = tm_record.proto.filter.simulator
+      self.assertEqual(sim_info.result.WhichOneof("exit_condition"), "unknown_info")
+      self.assertEqual(
+        sim_info.result.unknown_info.WhichOneof("reason"),
+        "over_expression_too_complex",
+      )
+      self.assertIn(
+        "Too many layers of ExpInt",
+        sim_info.result.unknown_info.over_expression_too_complex.detail,
+      )
+    finally:
+      Exp_Int.MAX_DEPTH = orig_max_depth
+
 
 if __name__ == "__main__":
   unittest.main()

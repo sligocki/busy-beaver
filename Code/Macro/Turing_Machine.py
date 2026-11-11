@@ -56,6 +56,7 @@ UNDEFINED = "Undefined"  # Machine encountered undefined transition
 TIME_OUT = "Time_Out"  # Machine ran over time limit
 # TODO: Called "Gave_Up" for historical reasons
 OVER_STEPS_IN_MACRO = "Gave_Up"  # Machine took too many base steps in a single macro step
+EXPRESSION_TOO_COMPLEX = "Expression_Too_Complex"  # Machine expression became too complex (e.g. ExpInt too deep)
 
 
 def other_dir(dir: Dir) -> Dir:

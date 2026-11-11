@@ -10,40 +10,37 @@ for new stats is trivial and backwards/forwards compatible. It also
 has the potential to be more efficient for data storage ...
 """
 
-import builtins
-import collections.abc
-import google.protobuf.descriptor
-import google.protobuf.internal.containers
-import google.protobuf.internal.enum_type_wrapper
-import google.protobuf.message
+from collections import abc as _abc
+from google.protobuf import descriptor as _descriptor
+from google.protobuf import message as _message
+from google.protobuf.internal import containers as _containers
+from google.protobuf.internal import enum_type_wrapper as _enum_type_wrapper
+import builtins as _builtins
 import sys
-import typing
+import typing as _typing
 
-if sys.version_info >= (3, 10):
-  import typing as typing_extensions
+if sys.version_info >= (3, 11):
+    from typing import TypeAlias as _TypeAlias, Never as _Never
 else:
-  import typing_extensions
+    from typing_extensions import TypeAlias as _TypeAlias, Never as _Never
 
-DESCRIPTOR: google.protobuf.descriptor.FileDescriptor
+DESCRIPTOR: _descriptor.FileDescriptor
 
 class _InfReason:
-  ValueType = typing.NewType("ValueType", builtins.int)
-  V: typing_extensions.TypeAlias = ValueType
+    ValueType = _typing.NewType("ValueType", _builtins.int)
+    V: _TypeAlias = ValueType  # noqa: Y015
 
-class _InfReasonEnumTypeWrapper(
-  google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[_InfReason.ValueType],
-  builtins.type,
-):
-  DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
-  INF_UNSPECIFIED: _InfReason.ValueType  # 0
-  INF_MACRO_STEP: _InfReason.ValueType  # 1
-  INF_CHAIN_STEP: _InfReason.ValueType  # 2
-  INF_PROOF_SYSTEM: _InfReason.ValueType  # 3
-  INF_REVERSE_ENGINEER: _InfReason.ValueType  # 4
-  INF_LIN_RECUR: _InfReason.ValueType  # 5
-  INF_CTL: _InfReason.ValueType  # 6
-  INF_BACKTRACK: _InfReason.ValueType  # 7
-  INF_CPS: _InfReason.ValueType  # 8
+class _InfReasonEnumTypeWrapper(_enum_type_wrapper._EnumTypeWrapper[_InfReason.ValueType], _builtins.type):
+    DESCRIPTOR: _descriptor.EnumDescriptor
+    INF_UNSPECIFIED: _InfReason.ValueType  # 0
+    INF_MACRO_STEP: _InfReason.ValueType  # 1
+    INF_CHAIN_STEP: _InfReason.ValueType  # 2
+    INF_PROOF_SYSTEM: _InfReason.ValueType  # 3
+    INF_REVERSE_ENGINEER: _InfReason.ValueType  # 4
+    INF_LIN_RECUR: _InfReason.ValueType  # 5
+    INF_CTL: _InfReason.ValueType  # 6
+    INF_BACKTRACK: _InfReason.ValueType  # 7
+    INF_CPS: _InfReason.ValueType  # 8
 
 class InfReason(_InfReason, metaclass=_InfReasonEnumTypeWrapper): ...
 
@@ -56,1792 +53,1393 @@ INF_LIN_RECUR: InfReason.ValueType  # 5
 INF_CTL: InfReason.ValueType  # 6
 INF_BACKTRACK: InfReason.ValueType  # 7
 INF_CPS: InfReason.ValueType  # 8
-global___InfReason = InfReason
+Global___InfReason: _TypeAlias = InfReason  # noqa: Y015
 
-@typing.final
-class ExpTerm(google.protobuf.message.Message):
-  DESCRIPTOR: google.protobuf.descriptor.Descriptor
+@_typing.final
+class ExpTerm(_message.Message):
+    DESCRIPTOR: _descriptor.Descriptor
 
-  BASE_FIELD_NUMBER: builtins.int
-  COEF_FIELD_NUMBER: builtins.int
-  EXPONENT_FIELD_NUMBER: builtins.int
-  COEF_OLD_FIELD_NUMBER: builtins.int
-  base: builtins.int
-  coef_old: builtins.int
-  """Deprecated"""
-  @property
-  def coef(self) -> global___BigInt:
-    """coef may be larger than 2^63-1"""
+    BASE_FIELD_NUMBER: _builtins.int
+    COEF_FIELD_NUMBER: _builtins.int
+    EXPONENT_FIELD_NUMBER: _builtins.int
+    COEF_OLD_FIELD_NUMBER: _builtins.int
+    base: _builtins.int
+    coef_old: _builtins.int
+    """Deprecated"""
+    @_builtins.property
+    def coef(self) -> Global___BigInt:
+        """coef may be larger than 2^63-1"""
 
-  @property
-  def exponent(self) -> global___BigInt:
-    """Exponent may be plain integer or another ExpInt"""
+    @_builtins.property
+    def exponent(self) -> Global___BigInt:
+        """Exponent may be plain integer or another ExpInt"""
 
-  def __init__(
-    self,
-    *,
-    base: builtins.int = ...,
-    coef: global___BigInt | None = ...,
-    exponent: global___BigInt | None = ...,
-    coef_old: builtins.int = ...,
-  ) -> None: ...
-  def HasField(self, field_name: typing.Literal["coef", b"coef", "exponent", b"exponent"]) -> builtins.bool: ...
-  def ClearField(
-    self,
-    field_name: typing.Literal[
-      "base",
-      b"base",
-      "coef",
-      b"coef",
-      "coef_old",
-      b"coef_old",
-      "exponent",
-      b"exponent",
-    ],
-  ) -> None: ...
+    def __init__(
+        self,
+        *,
+        base: _builtins.int = ...,
+        coef: Global___BigInt | None = ...,
+        exponent: Global___BigInt | None = ...,
+        coef_old: _builtins.int = ...,
+    ) -> None: ...
+    _HasFieldArgType: _TypeAlias = _typing.Literal["coef", b"coef", "exponent", b"exponent"]  # noqa: Y015
+    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
+    _ClearFieldArgType: _TypeAlias = _typing.Literal["base", b"base", "coef", b"coef", "coef_old", b"coef_old", "exponent", b"exponent"]  # noqa: Y015
+    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
+    def WhichOneof(self, oneof_group: _Never) -> None: ...
 
-global___ExpTerm = ExpTerm
+Global___ExpTerm: _TypeAlias = ExpTerm  # noqa: Y015
 
-@typing.final
-class ExpInt(google.protobuf.message.Message):
-  """protobuf version of type Exp_Int.ExpInt"""
+@_typing.final
+class ExpInt(_message.Message):
+    """protobuf version of type Exp_Int.ExpInt"""
 
-  DESCRIPTOR: google.protobuf.descriptor.Descriptor
+    DESCRIPTOR: _descriptor.Descriptor
 
-  TERMS_FIELD_NUMBER: builtins.int
-  CONST_FIELD_NUMBER: builtins.int
-  DENOM_FIELD_NUMBER: builtins.int
-  CONST_OLD_FIELD_NUMBER: builtins.int
-  denom: builtins.int
-  const_old: builtins.int
-  """Deprecated"""
-  @property
-  def terms(
-    self,
-  ) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___ExpTerm]: ...
-  @property
-  def const(self) -> global___BigInt:
-    """const may be larger than 2^63-1"""
+    TERMS_FIELD_NUMBER: _builtins.int
+    CONST_FIELD_NUMBER: _builtins.int
+    DENOM_FIELD_NUMBER: _builtins.int
+    CONST_OLD_FIELD_NUMBER: _builtins.int
+    denom: _builtins.int
+    const_old: _builtins.int
+    """Deprecated"""
+    @_builtins.property
+    def terms(self) -> _containers.RepeatedCompositeFieldContainer[Global___ExpTerm]: ...
+    @_builtins.property
+    def const(self) -> Global___BigInt:
+        """const may be larger than 2^63-1"""
 
-  def __init__(
-    self,
-    *,
-    terms: collections.abc.Iterable[global___ExpTerm] | None = ...,
-    const: global___BigInt | None = ...,
-    denom: builtins.int = ...,
-    const_old: builtins.int = ...,
-  ) -> None: ...
-  def HasField(self, field_name: typing.Literal["const", b"const"]) -> builtins.bool: ...
-  def ClearField(
-    self,
-    field_name: typing.Literal[
-      "const",
-      b"const",
-      "const_old",
-      b"const_old",
-      "denom",
-      b"denom",
-      "terms",
-      b"terms",
-    ],
-  ) -> None: ...
+    def __init__(
+        self,
+        *,
+        terms: _abc.Iterable[Global___ExpTerm] | None = ...,
+        const: Global___BigInt | None = ...,
+        denom: _builtins.int = ...,
+        const_old: _builtins.int = ...,
+    ) -> None: ...
+    _HasFieldArgType: _TypeAlias = _typing.Literal["const", b"const"]  # noqa: Y015
+    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
+    _ClearFieldArgType: _TypeAlias = _typing.Literal["const", b"const", "const_old", b"const_old", "denom", b"denom", "terms", b"terms"]  # noqa: Y015
+    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
+    def WhichOneof(self, oneof_group: _Never) -> None: ...
 
-global___ExpInt = ExpInt
+Global___ExpInt: _TypeAlias = ExpInt  # noqa: Y015
 
-@typing.final
-class BigInt(google.protobuf.message.Message):
-  """A "potentially" big positive integer."""
+@_typing.final
+class BigInt(_message.Message):
+    """A "potentially" big positive integer."""
 
-  DESCRIPTOR: google.protobuf.descriptor.Descriptor
+    DESCRIPTOR: _descriptor.Descriptor
 
-  INT_FIELD_NUMBER: builtins.int
-  HEX_STR_FIELD_NUMBER: builtins.int
-  EXP_INT_FIELD_NUMBER: builtins.int
-  EXP_INT_PICKLE_FIELD_NUMBER: builtins.int
-  EXP_INT_STR_FIELD_NUMBER: builtins.int
-  UINT_OLD_FIELD_NUMBER: builtins.int
-  int: builtins.int
-  """Small int: 0 to 2^63 - 1. Store directly."""
-  hex_str: builtins.str
-  """Medium int: 2^63 to ~2^1000 or so. Serialize in hex."""
-  exp_int_pickle: builtins.bytes
-  exp_int_str: builtins.str
-  """DEPRECATED base 10 version: string str = 2;
+    INT_FIELD_NUMBER: _builtins.int
+    HEX_STR_FIELD_NUMBER: _builtins.int
+    EXP_INT_FIELD_NUMBER: _builtins.int
+    EXP_INT_PICKLE_FIELD_NUMBER: _builtins.int
+    EXP_INT_STR_FIELD_NUMBER: _builtins.int
+    UINT_OLD_FIELD_NUMBER: _builtins.int
+    int: _builtins.int
+    """Small int: 0 to 2^63 - 1. Store directly."""
+    hex_str: _builtins.str
+    """Medium int: 2^63 to ~2^1000 or so. Serialize in hex."""
+    exp_int_pickle: _builtins.bytes
+    exp_int_str: _builtins.str
+    """DEPRECATED base 10 version: string str = 2;
     DEPRECATED
     """
-  uint_old: builtins.int
-  """DEPRECATED old format: ExpInt exp_int = 5;
+    uint_old: _builtins.int
+    """DEPRECATED old format: ExpInt exp_int = 5;
     Deprecated
     """
-  @property
-  def exp_int(self) -> global___ExpInt:
-    """Giant int: ~10^^15. Represented using a formula."""
+    @_builtins.property
+    def exp_int(self) -> Global___ExpInt:
+        """Giant int: ~10^^15. Represented using a formula."""
 
-  def __init__(
-    self,
-    *,
-    int: builtins.int = ...,
-    hex_str: builtins.str = ...,
-    exp_int: global___ExpInt | None = ...,
-    exp_int_pickle: builtins.bytes = ...,
-    exp_int_str: builtins.str = ...,
-    uint_old: builtins.int = ...,
-  ) -> None: ...
-  def HasField(
-    self,
-    field_name: typing.Literal[
-      "big_int",
-      b"big_int",
-      "exp_int",
-      b"exp_int",
-      "exp_int_pickle",
-      b"exp_int_pickle",
-      "exp_int_str",
-      b"exp_int_str",
-      "hex_str",
-      b"hex_str",
-      "int",
-      b"int",
-      "uint_old",
-      b"uint_old",
-    ],
-  ) -> builtins.bool: ...
-  def ClearField(
-    self,
-    field_name: typing.Literal[
-      "big_int",
-      b"big_int",
-      "exp_int",
-      b"exp_int",
-      "exp_int_pickle",
-      b"exp_int_pickle",
-      "exp_int_str",
-      b"exp_int_str",
-      "hex_str",
-      b"hex_str",
-      "int",
-      b"int",
-      "uint_old",
-      b"uint_old",
-    ],
-  ) -> None: ...
-  def WhichOneof(
-    self, oneof_group: typing.Literal["big_int", b"big_int"]
-  ) -> typing.Literal["int", "hex_str", "exp_int", "exp_int_pickle", "exp_int_str", "uint_old"] | None: ...
+    def __init__(
+        self,
+        *,
+        int: _builtins.int = ...,
+        hex_str: _builtins.str = ...,
+        exp_int: Global___ExpInt | None = ...,
+        exp_int_pickle: _builtins.bytes = ...,
+        exp_int_str: _builtins.str = ...,
+        uint_old: _builtins.int = ...,
+    ) -> None: ...
+    _HasFieldArgType: _TypeAlias = _typing.Literal["big_int", b"big_int", "exp_int", b"exp_int", "exp_int_pickle", b"exp_int_pickle", "exp_int_str", b"exp_int_str", "hex_str", b"hex_str", "int", b"int", "uint_old", b"uint_old"]  # noqa: Y015
+    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
+    _ClearFieldArgType: _TypeAlias = _typing.Literal["big_int", b"big_int", "exp_int", b"exp_int", "exp_int_pickle", b"exp_int_pickle", "exp_int_str", b"exp_int_str", "hex_str", b"hex_str", "int", b"int", "uint_old", b"uint_old"]  # noqa: Y015
+    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
+    _WhichOneofReturnType_big_int: _TypeAlias = _typing.Literal["int", "hex_str", "exp_int", "exp_int_pickle", "exp_int_str", "uint_old"]  # noqa: Y015
+    _WhichOneofArgType_big_int: _TypeAlias = _typing.Literal["big_int", b"big_int"]  # noqa: Y015
+    def WhichOneof(self, oneof_group: _WhichOneofArgType_big_int) -> _WhichOneofReturnType_big_int | None: ...
 
-global___BigInt = BigInt
+Global___BigInt: _TypeAlias = BigInt  # noqa: Y015
 
-@typing.final
-class TMList(google.protobuf.message.Message):
-  DESCRIPTOR: google.protobuf.descriptor.Descriptor
+@_typing.final
+class TMList(_message.Message):
+    DESCRIPTOR: _descriptor.Descriptor
 
-  NUM_STATES_FIELD_NUMBER: builtins.int
-  NUM_SYMBOLS_FIELD_NUMBER: builtins.int
-  TTABLE_LIST_FIELD_NUMBER: builtins.int
-  num_states: builtins.int
-  num_symbols: builtins.int
-  @property
-  def ttable_list(
-    self,
-  ) -> google.protobuf.internal.containers.RepeatedScalarFieldContainer[builtins.int]: ...
-  def __init__(
-    self,
-    *,
-    num_states: builtins.int = ...,
-    num_symbols: builtins.int = ...,
-    ttable_list: collections.abc.Iterable[builtins.int] | None = ...,
-  ) -> None: ...
-  def ClearField(
-    self,
-    field_name: typing.Literal[
-      "num_states",
-      b"num_states",
-      "num_symbols",
-      b"num_symbols",
-      "ttable_list",
-      b"ttable_list",
-    ],
-  ) -> None: ...
+    NUM_STATES_FIELD_NUMBER: _builtins.int
+    NUM_SYMBOLS_FIELD_NUMBER: _builtins.int
+    TTABLE_LIST_FIELD_NUMBER: _builtins.int
+    num_states: _builtins.int
+    num_symbols: _builtins.int
+    @_builtins.property
+    def ttable_list(self) -> _containers.RepeatedScalarFieldContainer[_builtins.int]: ...
+    def __init__(
+        self,
+        *,
+        num_states: _builtins.int = ...,
+        num_symbols: _builtins.int = ...,
+        ttable_list: _abc.Iterable[_builtins.int] | None = ...,
+    ) -> None: ...
+    _HasFieldArgType: _TypeAlias = _Never  # noqa: Y015
+    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
+    _ClearFieldArgType: _TypeAlias = _typing.Literal["num_states", b"num_states", "num_symbols", b"num_symbols", "ttable_list", b"ttable_list"]  # noqa: Y015
+    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
+    def WhichOneof(self, oneof_group: _Never) -> None: ...
 
-global___TMList = TMList
+Global___TMList: _TypeAlias = TMList  # noqa: Y015
 
-@typing.final
-class TuringMachine(google.protobuf.message.Message):
-  DESCRIPTOR: google.protobuf.descriptor.Descriptor
+@_typing.final
+class TuringMachine(_message.Message):
+    DESCRIPTOR: _descriptor.Descriptor
 
-  TTABLE_PACKED_FIELD_NUMBER: builtins.int
-  TTABLE_LIST_FIELD_NUMBER: builtins.int
-  TTABLE_STR_FIELD_NUMBER: builtins.int
-  ALLOW_NO_HALT_FIELD_NUMBER: builtins.int
-  ttable_packed: builtins.bytes
-  """High density, bit-packed version of ttable.
+    TTABLE_PACKED_FIELD_NUMBER: _builtins.int
+    TTABLE_LIST_FIELD_NUMBER: _builtins.int
+    TTABLE_STR_FIELD_NUMBER: _builtins.int
+    ALLOW_NO_HALT_FIELD_NUMBER: _builtins.int
+    ttable_packed: _builtins.bytes
+    """High density, bit-packed version of ttable.
     Each transition is represented by one byte from least significant to most:
       * 3 bits for (symbol + 1)  [symbol == -1 means undefined cell]
       * 3 bits for (state + 1)   [state == -1 means halt]
       * 1 bit for dir
       * 1 bit for is_newrow  [indicates where to add row breaks to matrix]
     """
-  ttable_str: builtins.str
-  """Deprecated"""
-  allow_no_halt: builtins.bool
-  """Enumeration options"""
-  @property
-  def ttable_list(self) -> global___TMList:
-    """Simple low density format. 12B / transition.
-    Almost unbounded (up to 2^31 - 1 states and symbols).
-    """
+    ttable_str: _builtins.str
+    """Deprecated"""
+    allow_no_halt: _builtins.bool
+    """Enumeration options"""
+    @_builtins.property
+    def ttable_list(self) -> Global___TMList:
+        """Simple low density format. 12B / transition.
+        Almost unbounded (up to 2^31 - 1 states and symbols).
+        """
 
-  def __init__(
-    self,
-    *,
-    ttable_packed: builtins.bytes = ...,
-    ttable_list: global___TMList | None = ...,
-    ttable_str: builtins.str = ...,
-    allow_no_halt: builtins.bool = ...,
-  ) -> None: ...
-  def HasField(
-    self,
-    field_name: typing.Literal[
-      "ttable",
-      b"ttable",
-      "ttable_list",
-      b"ttable_list",
-      "ttable_packed",
-      b"ttable_packed",
-      "ttable_str",
-      b"ttable_str",
-    ],
-  ) -> builtins.bool: ...
-  def ClearField(
-    self,
-    field_name: typing.Literal[
-      "allow_no_halt",
-      b"allow_no_halt",
-      "ttable",
-      b"ttable",
-      "ttable_list",
-      b"ttable_list",
-      "ttable_packed",
-      b"ttable_packed",
-      "ttable_str",
-      b"ttable_str",
-    ],
-  ) -> None: ...
-  def WhichOneof(
-    self, oneof_group: typing.Literal["ttable", b"ttable"]
-  ) -> typing.Literal["ttable_packed", "ttable_list", "ttable_str"] | None: ...
+    def __init__(
+        self,
+        *,
+        ttable_packed: _builtins.bytes = ...,
+        ttable_list: Global___TMList | None = ...,
+        ttable_str: _builtins.str = ...,
+        allow_no_halt: _builtins.bool = ...,
+    ) -> None: ...
+    _HasFieldArgType: _TypeAlias = _typing.Literal["ttable", b"ttable", "ttable_list", b"ttable_list", "ttable_packed", b"ttable_packed", "ttable_str", b"ttable_str"]  # noqa: Y015
+    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
+    _ClearFieldArgType: _TypeAlias = _typing.Literal["allow_no_halt", b"allow_no_halt", "ttable", b"ttable", "ttable_list", b"ttable_list", "ttable_packed", b"ttable_packed", "ttable_str", b"ttable_str"]  # noqa: Y015
+    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
+    _WhichOneofReturnType_ttable: _TypeAlias = _typing.Literal["ttable_packed", "ttable_list", "ttable_str"]  # noqa: Y015
+    _WhichOneofArgType_ttable: _TypeAlias = _typing.Literal["ttable", b"ttable"]  # noqa: Y015
+    def WhichOneof(self, oneof_group: _WhichOneofArgType_ttable) -> _WhichOneofReturnType_ttable | None: ...
 
-global___TuringMachine = TuringMachine
+Global___TuringMachine: _TypeAlias = TuringMachine  # noqa: Y015
 
-@typing.final
-class HaltStatus(google.protobuf.message.Message):
-  """Statuses for various searches (BB, BBB, ...)"""
+@_typing.final
+class HaltStatus(_message.Message):
+    """Statuses for various searches (BB, BBB, ...)"""
 
-  DESCRIPTOR: google.protobuf.descriptor.Descriptor
+    DESCRIPTOR: _descriptor.Descriptor
 
-  IS_DECIDED_FIELD_NUMBER: builtins.int
-  IS_HALTING_FIELD_NUMBER: builtins.int
-  HALT_STEPS_FIELD_NUMBER: builtins.int
-  HALT_SCORE_FIELD_NUMBER: builtins.int
-  FROM_STATE_FIELD_NUMBER: builtins.int
-  FROM_SYMBOL_FIELD_NUMBER: builtins.int
-  INF_REASON_FIELD_NUMBER: builtins.int
-  is_decided: builtins.bool
-  """Have we made a halting decision?"""
-  is_halting: builtins.bool
-  """Does this machine halt? (Only meaningful if is_decided = True)"""
-  from_state: builtins.int
-  """Which transition led to halt (important for enumerating in TNF)."""
-  from_symbol: builtins.int
-  inf_reason: global___InfReason.ValueType
-  """Only meaningful if is_halting = False."""
-  @property
-  def halt_steps(self) -> global___BigInt:
-    """Only meaningful if is_halting = True."""
+    IS_DECIDED_FIELD_NUMBER: _builtins.int
+    IS_HALTING_FIELD_NUMBER: _builtins.int
+    HALT_STEPS_FIELD_NUMBER: _builtins.int
+    HALT_SCORE_FIELD_NUMBER: _builtins.int
+    FROM_STATE_FIELD_NUMBER: _builtins.int
+    FROM_SYMBOL_FIELD_NUMBER: _builtins.int
+    INF_REASON_FIELD_NUMBER: _builtins.int
+    is_decided: _builtins.bool
+    """Have we made a halting decision?"""
+    is_halting: _builtins.bool
+    """Does this machine halt? (Only meaningful if is_decided = True)"""
+    from_state: _builtins.int
+    """Which transition led to halt (important for enumerating in TNF)."""
+    from_symbol: _builtins.int
+    inf_reason: Global___InfReason.ValueType
+    """Only meaningful if is_halting = False."""
+    @_builtins.property
+    def halt_steps(self) -> Global___BigInt:
+        """Only meaningful if is_halting = True."""
 
-  @property
-  def halt_score(self) -> global___BigInt: ...
-  def __init__(
-    self,
-    *,
-    is_decided: builtins.bool = ...,
-    is_halting: builtins.bool = ...,
-    halt_steps: global___BigInt | None = ...,
-    halt_score: global___BigInt | None = ...,
-    from_state: builtins.int = ...,
-    from_symbol: builtins.int = ...,
-    inf_reason: global___InfReason.ValueType = ...,
-  ) -> None: ...
-  def HasField(
-    self,
-    field_name: typing.Literal["halt_score", b"halt_score", "halt_steps", b"halt_steps"],
-  ) -> builtins.bool: ...
-  def ClearField(
-    self,
-    field_name: typing.Literal[
-      "from_state",
-      b"from_state",
-      "from_symbol",
-      b"from_symbol",
-      "halt_score",
-      b"halt_score",
-      "halt_steps",
-      b"halt_steps",
-      "inf_reason",
-      b"inf_reason",
-      "is_decided",
-      b"is_decided",
-      "is_halting",
-      b"is_halting",
-    ],
-  ) -> None: ...
+    @_builtins.property
+    def halt_score(self) -> Global___BigInt: ...
+    def __init__(
+        self,
+        *,
+        is_decided: _builtins.bool = ...,
+        is_halting: _builtins.bool = ...,
+        halt_steps: Global___BigInt | None = ...,
+        halt_score: Global___BigInt | None = ...,
+        from_state: _builtins.int = ...,
+        from_symbol: _builtins.int = ...,
+        inf_reason: Global___InfReason.ValueType = ...,
+    ) -> None: ...
+    _HasFieldArgType: _TypeAlias = _typing.Literal["halt_score", b"halt_score", "halt_steps", b"halt_steps"]  # noqa: Y015
+    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
+    _ClearFieldArgType: _TypeAlias = _typing.Literal["from_state", b"from_state", "from_symbol", b"from_symbol", "halt_score", b"halt_score", "halt_steps", b"halt_steps", "inf_reason", b"inf_reason", "is_decided", b"is_decided", "is_halting", b"is_halting"]  # noqa: Y015
+    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
+    def WhichOneof(self, oneof_group: _Never) -> None: ...
 
-global___HaltStatus = HaltStatus
+Global___HaltStatus: _TypeAlias = HaltStatus  # noqa: Y015
 
-@typing.final
-class QuasihaltStatus(google.protobuf.message.Message):
-  DESCRIPTOR: google.protobuf.descriptor.Descriptor
+@_typing.final
+class QuasihaltStatus(_message.Message):
+    DESCRIPTOR: _descriptor.Descriptor
 
-  IS_DECIDED_FIELD_NUMBER: builtins.int
-  IS_QUASIHALTING_FIELD_NUMBER: builtins.int
-  QUASIHALT_STEPS_FIELD_NUMBER: builtins.int
-  QUASIHALT_STATE_FIELD_NUMBER: builtins.int
-  is_decided: builtins.bool
-  """Have we made a quasihalting decision?"""
-  is_quasihalting: builtins.bool
-  """Does this machine quasihalt? (Only meaningful if is_decided = True)"""
-  quasihalt_state: builtins.int
-  @property
-  def quasihalt_steps(self) -> global___BigInt: ...
-  def __init__(
-    self,
-    *,
-    is_decided: builtins.bool = ...,
-    is_quasihalting: builtins.bool = ...,
-    quasihalt_steps: global___BigInt | None = ...,
-    quasihalt_state: builtins.int = ...,
-  ) -> None: ...
-  def HasField(self, field_name: typing.Literal["quasihalt_steps", b"quasihalt_steps"]) -> builtins.bool: ...
-  def ClearField(
-    self,
-    field_name: typing.Literal[
-      "is_decided",
-      b"is_decided",
-      "is_quasihalting",
-      b"is_quasihalting",
-      "quasihalt_state",
-      b"quasihalt_state",
-      "quasihalt_steps",
-      b"quasihalt_steps",
-    ],
-  ) -> None: ...
+    IS_DECIDED_FIELD_NUMBER: _builtins.int
+    IS_QUASIHALTING_FIELD_NUMBER: _builtins.int
+    QUASIHALT_STEPS_FIELD_NUMBER: _builtins.int
+    QUASIHALT_STATE_FIELD_NUMBER: _builtins.int
+    is_decided: _builtins.bool
+    """Have we made a quasihalting decision?"""
+    is_quasihalting: _builtins.bool
+    """Does this machine quasihalt? (Only meaningful if is_decided = True)"""
+    quasihalt_state: _builtins.int
+    @_builtins.property
+    def quasihalt_steps(self) -> Global___BigInt: ...
+    def __init__(
+        self,
+        *,
+        is_decided: _builtins.bool = ...,
+        is_quasihalting: _builtins.bool = ...,
+        quasihalt_steps: Global___BigInt | None = ...,
+        quasihalt_state: _builtins.int = ...,
+    ) -> None: ...
+    _HasFieldArgType: _TypeAlias = _typing.Literal["quasihalt_steps", b"quasihalt_steps"]  # noqa: Y015
+    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
+    _ClearFieldArgType: _TypeAlias = _typing.Literal["is_decided", b"is_decided", "is_quasihalting", b"is_quasihalting", "quasihalt_state", b"quasihalt_state", "quasihalt_steps", b"quasihalt_steps"]  # noqa: Y015
+    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
+    def WhichOneof(self, oneof_group: _Never) -> None: ...
 
-global___QuasihaltStatus = QuasihaltStatus
+Global___QuasihaltStatus: _TypeAlias = QuasihaltStatus  # noqa: Y015
 
-@typing.final
-class BBStatus(google.protobuf.message.Message):
-  DESCRIPTOR: google.protobuf.descriptor.Descriptor
+@_typing.final
+class BBStatus(_message.Message):
+    DESCRIPTOR: _descriptor.Descriptor
 
-  HALT_STATUS_FIELD_NUMBER: builtins.int
-  QUASIHALT_STATUS_FIELD_NUMBER: builtins.int
-  @property
-  def halt_status(self) -> global___HaltStatus: ...
-  @property
-  def quasihalt_status(self) -> global___QuasihaltStatus:
-    """TODO: Add more, like lin_recur_status and blanking_status?"""
+    HALT_STATUS_FIELD_NUMBER: _builtins.int
+    QUASIHALT_STATUS_FIELD_NUMBER: _builtins.int
+    @_builtins.property
+    def halt_status(self) -> Global___HaltStatus: ...
+    @_builtins.property
+    def quasihalt_status(self) -> Global___QuasihaltStatus:
+        """TODO: Add more, like lin_recur_status and blanking_status?"""
 
-  def __init__(
-    self,
-    *,
-    halt_status: global___HaltStatus | None = ...,
-    quasihalt_status: global___QuasihaltStatus | None = ...,
-  ) -> None: ...
-  def HasField(
-    self,
-    field_name: typing.Literal["halt_status", b"halt_status", "quasihalt_status", b"quasihalt_status"],
-  ) -> builtins.bool: ...
-  def ClearField(
-    self,
-    field_name: typing.Literal["halt_status", b"halt_status", "quasihalt_status", b"quasihalt_status"],
-  ) -> None: ...
+    def __init__(
+        self,
+        *,
+        halt_status: Global___HaltStatus | None = ...,
+        quasihalt_status: Global___QuasihaltStatus | None = ...,
+    ) -> None: ...
+    _HasFieldArgType: _TypeAlias = _typing.Literal["halt_status", b"halt_status", "quasihalt_status", b"quasihalt_status"]  # noqa: Y015
+    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
+    _ClearFieldArgType: _TypeAlias = _typing.Literal["halt_status", b"halt_status", "quasihalt_status", b"quasihalt_status"]  # noqa: Y015
+    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
+    def WhichOneof(self, oneof_group: _Never) -> None: ...
 
-global___BBStatus = BBStatus
+Global___BBStatus: _TypeAlias = BBStatus  # noqa: Y015
 
-@typing.final
-class SimulatorParams(google.protobuf.message.Message):
-  DESCRIPTOR: google.protobuf.descriptor.Descriptor
+@_typing.final
+class SimulatorParams(_message.Message):
+    DESCRIPTOR: _descriptor.Descriptor
 
-  BLOCK_SIZE_FIELD_NUMBER: builtins.int
-  HAS_BLOCKSYMBOL_MACRO_FIELD_NUMBER: builtins.int
-  MAX_LOOPS_FIELD_NUMBER: builtins.int
-  MAX_TIME_SEC_FIELD_NUMBER: builtins.int
-  MAX_TAPE_BLOCKS_FIELD_NUMBER: builtins.int
-  USE_PROVER_FIELD_NUMBER: builtins.int
-  ONLY_LOG_CONFIGS_AT_EDGE_FIELD_NUMBER: builtins.int
-  USE_LIMITED_RULES_FIELD_NUMBER: builtins.int
-  USE_RECURSIVE_RULES_FIELD_NUMBER: builtins.int
-  block_size: builtins.int
-  """Macro machine configuration."""
-  has_blocksymbol_macro: builtins.bool
-  max_loops: builtins.int
-  """Maximum number of simulator "loops" to run for."""
-  max_time_sec: builtins.float
-  """Maximum wall time to run the simulator for."""
-  max_tape_blocks: builtins.int
-  """Maximum size of compressed tape before we give up."""
-  use_prover: builtins.bool
-  """Prover Params"""
-  only_log_configs_at_edge: builtins.bool
-  """Instead of logging stripped configuration at all steps in order to try and
+    BLOCK_SIZE_FIELD_NUMBER: _builtins.int
+    HAS_BLOCKSYMBOL_MACRO_FIELD_NUMBER: _builtins.int
+    MAX_LOOPS_FIELD_NUMBER: _builtins.int
+    MAX_TIME_SEC_FIELD_NUMBER: _builtins.int
+    MAX_TAPE_BLOCKS_FIELD_NUMBER: _builtins.int
+    USE_PROVER_FIELD_NUMBER: _builtins.int
+    ONLY_LOG_CONFIGS_AT_EDGE_FIELD_NUMBER: _builtins.int
+    USE_LIMITED_RULES_FIELD_NUMBER: _builtins.int
+    USE_RECURSIVE_RULES_FIELD_NUMBER: _builtins.int
+    block_size: _builtins.int
+    """Macro machine configuration."""
+    has_blocksymbol_macro: _builtins.bool
+    max_loops: _builtins.int
+    """Maximum number of simulator "loops" to run for."""
+    max_time_sec: _builtins.float
+    """Maximum wall time to run the simulator for."""
+    max_tape_blocks: _builtins.int
+    """Maximum size of compressed tape before we give up."""
+    use_prover: _builtins.bool
+    """Prover Params"""
+    only_log_configs_at_edge: _builtins.bool
+    """Instead of logging stripped configuration at all steps in order to try and
     prove rules, only do it when the TM is at the edge of the tape. Any rule
     that expands the written part of the tape will (by definition) have to go
     to the edge, so this "shouldn't" hurt much.
     """
-  use_limited_rules: builtins.bool
-  use_recursive_rules: builtins.bool
-  def __init__(
-    self,
-    *,
-    block_size: builtins.int = ...,
-    has_blocksymbol_macro: builtins.bool = ...,
-    max_loops: builtins.int = ...,
-    max_time_sec: builtins.float = ...,
-    max_tape_blocks: builtins.int = ...,
-    use_prover: builtins.bool = ...,
-    only_log_configs_at_edge: builtins.bool = ...,
-    use_limited_rules: builtins.bool = ...,
-    use_recursive_rules: builtins.bool = ...,
-  ) -> None: ...
-  def ClearField(
-    self,
-    field_name: typing.Literal[
-      "block_size",
-      b"block_size",
-      "has_blocksymbol_macro",
-      b"has_blocksymbol_macro",
-      "max_loops",
-      b"max_loops",
-      "max_tape_blocks",
-      b"max_tape_blocks",
-      "max_time_sec",
-      b"max_time_sec",
-      "only_log_configs_at_edge",
-      b"only_log_configs_at_edge",
-      "use_limited_rules",
-      b"use_limited_rules",
-      "use_prover",
-      b"use_prover",
-      "use_recursive_rules",
-      b"use_recursive_rules",
-    ],
-  ) -> None: ...
+    use_limited_rules: _builtins.bool
+    use_recursive_rules: _builtins.bool
+    def __init__(
+        self,
+        *,
+        block_size: _builtins.int = ...,
+        has_blocksymbol_macro: _builtins.bool = ...,
+        max_loops: _builtins.int = ...,
+        max_time_sec: _builtins.float = ...,
+        max_tape_blocks: _builtins.int = ...,
+        use_prover: _builtins.bool = ...,
+        only_log_configs_at_edge: _builtins.bool = ...,
+        use_limited_rules: _builtins.bool = ...,
+        use_recursive_rules: _builtins.bool = ...,
+    ) -> None: ...
+    _HasFieldArgType: _TypeAlias = _Never  # noqa: Y015
+    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
+    _ClearFieldArgType: _TypeAlias = _typing.Literal["block_size", b"block_size", "has_blocksymbol_macro", b"has_blocksymbol_macro", "max_loops", b"max_loops", "max_tape_blocks", b"max_tape_blocks", "max_time_sec", b"max_time_sec", "only_log_configs_at_edge", b"only_log_configs_at_edge", "use_limited_rules", b"use_limited_rules", "use_prover", b"use_prover", "use_recursive_rules", b"use_recursive_rules"]  # noqa: Y015
+    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
+    def WhichOneof(self, oneof_group: _Never) -> None: ...
 
-global___SimulatorParams = SimulatorParams
+Global___SimulatorParams: _TypeAlias = SimulatorParams  # noqa: Y015
 
-@typing.final
-class HaltInfo(google.protobuf.message.Message):
-  DESCRIPTOR: google.protobuf.descriptor.Descriptor
+@_typing.final
+class HaltInfo(_message.Message):
+    DESCRIPTOR: _descriptor.Descriptor
 
-  IS_HALTING_FIELD_NUMBER: builtins.int
-  is_halting: builtins.bool
-  def __init__(
-    self,
-    *,
-    is_halting: builtins.bool = ...,
-  ) -> None: ...
-  def ClearField(self, field_name: typing.Literal["is_halting", b"is_halting"]) -> None: ...
+    IS_HALTING_FIELD_NUMBER: _builtins.int
+    is_halting: _builtins.bool
+    def __init__(
+        self,
+        *,
+        is_halting: _builtins.bool = ...,
+    ) -> None: ...
+    _HasFieldArgType: _TypeAlias = _Never  # noqa: Y015
+    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
+    _ClearFieldArgType: _TypeAlias = _typing.Literal["is_halting", b"is_halting"]  # noqa: Y015
+    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
+    def WhichOneof(self, oneof_group: _Never) -> None: ...
 
-global___HaltInfo = HaltInfo
+Global___HaltInfo: _TypeAlias = HaltInfo  # noqa: Y015
 
-@typing.final
-class InfMacroRepeatInfo(google.protobuf.message.Message):
-  """TM repeats infinitely in place while evaluating a macro transition."""
+@_typing.final
+class InfMacroRepeatInfo(_message.Message):
+    """TM repeats infinitely in place while evaluating a macro transition."""
 
-  DESCRIPTOR: google.protobuf.descriptor.Descriptor
+    DESCRIPTOR: _descriptor.Descriptor
 
-  MACRO_SYMBOL_FIELD_NUMBER: builtins.int
-  MACRO_STATE_FIELD_NUMBER: builtins.int
-  MACRO_DIR_IS_RIGHT_FIELD_NUMBER: builtins.int
-  macro_symbol: builtins.str
-  """The macro symbol and macro state immediately preceding the repeat."""
-  macro_state: builtins.str
-  macro_dir_is_right: builtins.bool
-  def __init__(
-    self,
-    *,
-    macro_symbol: builtins.str = ...,
-    macro_state: builtins.str = ...,
-    macro_dir_is_right: builtins.bool = ...,
-  ) -> None: ...
-  def ClearField(
-    self,
-    field_name: typing.Literal[
-      "macro_dir_is_right",
-      b"macro_dir_is_right",
-      "macro_state",
-      b"macro_state",
-      "macro_symbol",
-      b"macro_symbol",
-    ],
-  ) -> None: ...
+    MACRO_SYMBOL_FIELD_NUMBER: _builtins.int
+    MACRO_STATE_FIELD_NUMBER: _builtins.int
+    MACRO_DIR_IS_RIGHT_FIELD_NUMBER: _builtins.int
+    macro_symbol: _builtins.str
+    """The macro symbol and macro state immediately preceding the repeat."""
+    macro_state: _builtins.str
+    macro_dir_is_right: _builtins.bool
+    def __init__(
+        self,
+        *,
+        macro_symbol: _builtins.str = ...,
+        macro_state: _builtins.str = ...,
+        macro_dir_is_right: _builtins.bool = ...,
+    ) -> None: ...
+    _HasFieldArgType: _TypeAlias = _Never  # noqa: Y015
+    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
+    _ClearFieldArgType: _TypeAlias = _typing.Literal["macro_dir_is_right", b"macro_dir_is_right", "macro_state", b"macro_state", "macro_symbol", b"macro_symbol"]  # noqa: Y015
+    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
+    def WhichOneof(self, oneof_group: _Never) -> None: ...
 
-global___InfMacroRepeatInfo = InfMacroRepeatInfo
+Global___InfMacroRepeatInfo: _TypeAlias = InfMacroRepeatInfo  # noqa: Y015
 
-@typing.final
-class InfChainMoveInfo(google.protobuf.message.Message):
-  """Simulator attempted to apply a chain move to the infinite block of 0s
-  thus demonstrating that this TM will move infinitely in one state across
-  those 0s (Chain Recurrence). It has "Spun out".
-  """
+@_typing.final
+class InfChainMoveInfo(_message.Message):
+    """Simulator attempted to apply a chain move to the infinite block of 0s
+    thus demonstrating that this TM will move infinitely in one state across
+    those 0s (Chain Recurrence). It has "Spun out".
+    """
 
-  DESCRIPTOR: google.protobuf.descriptor.Descriptor
+    DESCRIPTOR: _descriptor.Descriptor
 
-  MACRO_STATE_FIELD_NUMBER: builtins.int
-  DIR_IS_RIGHT_FIELD_NUMBER: builtins.int
-  macro_state: builtins.str
-  dir_is_right: builtins.bool
-  """Is this Chain Recurrence to the right?"""
-  def __init__(
-    self,
-    *,
-    macro_state: builtins.str = ...,
-    dir_is_right: builtins.bool = ...,
-  ) -> None: ...
-  def ClearField(
-    self,
-    field_name: typing.Literal["dir_is_right", b"dir_is_right", "macro_state", b"macro_state"],
-  ) -> None: ...
+    MACRO_STATE_FIELD_NUMBER: _builtins.int
+    DIR_IS_RIGHT_FIELD_NUMBER: _builtins.int
+    macro_state: _builtins.str
+    dir_is_right: _builtins.bool
+    """Is this Chain Recurrence to the right?"""
+    def __init__(
+        self,
+        *,
+        macro_state: _builtins.str = ...,
+        dir_is_right: _builtins.bool = ...,
+    ) -> None: ...
+    _HasFieldArgType: _TypeAlias = _Never  # noqa: Y015
+    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
+    _ClearFieldArgType: _TypeAlias = _typing.Literal["dir_is_right", b"dir_is_right", "macro_state", b"macro_state"]  # noqa: Y015
+    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
+    def WhichOneof(self, oneof_group: _Never) -> None: ...
 
-global___InfChainMoveInfo = InfChainMoveInfo
+Global___InfChainMoveInfo: _TypeAlias = InfChainMoveInfo  # noqa: Y015
 
-@typing.final
-class InfProofSystemInfo(google.protobuf.message.Message):
-  """Simulator proved a PA-CTR rule that has all positive exponent changes, thus
-  it will apply forever.
-  """
+@_typing.final
+class InfProofSystemInfo(_message.Message):
+    """Simulator proved a PA-CTR rule that has all positive exponent changes, thus
+    it will apply forever.
+    """
 
-  DESCRIPTOR: google.protobuf.descriptor.Descriptor
+    DESCRIPTOR: _descriptor.Descriptor
 
-  RULE_FIELD_NUMBER: builtins.int
-  rule: builtins.str
-  """Human readable summary of the rule itself."""
-  def __init__(
-    self,
-    *,
-    rule: builtins.str = ...,
-  ) -> None: ...
-  def ClearField(self, field_name: typing.Literal["rule", b"rule"]) -> None: ...
+    RULE_FIELD_NUMBER: _builtins.int
+    rule: _builtins.str
+    """Human readable summary of the rule itself."""
+    def __init__(
+        self,
+        *,
+        rule: _builtins.str = ...,
+    ) -> None: ...
+    _HasFieldArgType: _TypeAlias = _Never  # noqa: Y015
+    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
+    _ClearFieldArgType: _TypeAlias = _typing.Literal["rule", b"rule"]  # noqa: Y015
+    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
+    def WhichOneof(self, oneof_group: _Never) -> None: ...
 
-global___InfProofSystemInfo = InfProofSystemInfo
+Global___InfProofSystemInfo: _TypeAlias = InfProofSystemInfo  # noqa: Y015
 
-@typing.final
-class InfiniteInfo(google.protobuf.message.Message):
-  DESCRIPTOR: google.protobuf.descriptor.Descriptor
+@_typing.final
+class InfiniteInfo(_message.Message):
+    DESCRIPTOR: _descriptor.Descriptor
 
-  MACRO_REPEAT_FIELD_NUMBER: builtins.int
-  CHAIN_MOVE_FIELD_NUMBER: builtins.int
-  PROOF_SYSTEM_FIELD_NUMBER: builtins.int
-  @property
-  def macro_repeat(self) -> global___InfMacroRepeatInfo: ...
-  @property
-  def chain_move(self) -> global___InfChainMoveInfo: ...
-  @property
-  def proof_system(self) -> global___InfProofSystemInfo:
-    """TODO: ..."""
+    MACRO_REPEAT_FIELD_NUMBER: _builtins.int
+    CHAIN_MOVE_FIELD_NUMBER: _builtins.int
+    PROOF_SYSTEM_FIELD_NUMBER: _builtins.int
+    @_builtins.property
+    def macro_repeat(self) -> Global___InfMacroRepeatInfo: ...
+    @_builtins.property
+    def chain_move(self) -> Global___InfChainMoveInfo: ...
+    @_builtins.property
+    def proof_system(self) -> Global___InfProofSystemInfo:
+        """TODO: ..."""
 
-  def __init__(
-    self,
-    *,
-    macro_repeat: global___InfMacroRepeatInfo | None = ...,
-    chain_move: global___InfChainMoveInfo | None = ...,
-    proof_system: global___InfProofSystemInfo | None = ...,
-  ) -> None: ...
-  def HasField(
-    self,
-    field_name: typing.Literal[
-      "chain_move",
-      b"chain_move",
-      "macro_repeat",
-      b"macro_repeat",
-      "proof_system",
-      b"proof_system",
-      "reason",
-      b"reason",
-    ],
-  ) -> builtins.bool: ...
-  def ClearField(
-    self,
-    field_name: typing.Literal[
-      "chain_move",
-      b"chain_move",
-      "macro_repeat",
-      b"macro_repeat",
-      "proof_system",
-      b"proof_system",
-      "reason",
-      b"reason",
-    ],
-  ) -> None: ...
-  def WhichOneof(
-    self, oneof_group: typing.Literal["reason", b"reason"]
-  ) -> typing.Literal["macro_repeat", "chain_move", "proof_system"] | None: ...
+    def __init__(
+        self,
+        *,
+        macro_repeat: Global___InfMacroRepeatInfo | None = ...,
+        chain_move: Global___InfChainMoveInfo | None = ...,
+        proof_system: Global___InfProofSystemInfo | None = ...,
+    ) -> None: ...
+    _HasFieldArgType: _TypeAlias = _typing.Literal["chain_move", b"chain_move", "macro_repeat", b"macro_repeat", "proof_system", b"proof_system", "reason", b"reason"]  # noqa: Y015
+    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
+    _ClearFieldArgType: _TypeAlias = _typing.Literal["chain_move", b"chain_move", "macro_repeat", b"macro_repeat", "proof_system", b"proof_system", "reason", b"reason"]  # noqa: Y015
+    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
+    _WhichOneofReturnType_reason: _TypeAlias = _typing.Literal["macro_repeat", "chain_move", "proof_system"]  # noqa: Y015
+    _WhichOneofArgType_reason: _TypeAlias = _typing.Literal["reason", b"reason"]  # noqa: Y015
+    def WhichOneof(self, oneof_group: _WhichOneofArgType_reason) -> _WhichOneofReturnType_reason | None: ...
 
-global___InfiniteInfo = InfiniteInfo
+Global___InfiniteInfo: _TypeAlias = InfiniteInfo  # noqa: Y015
 
-@typing.final
-class OverLoopsInfo(google.protobuf.message.Message):
-  DESCRIPTOR: google.protobuf.descriptor.Descriptor
+@_typing.final
+class OverLoopsInfo(_message.Message):
+    DESCRIPTOR: _descriptor.Descriptor
 
-  NUM_LOOPS_FIELD_NUMBER: builtins.int
-  num_loops: builtins.int
-  def __init__(
-    self,
-    *,
-    num_loops: builtins.int = ...,
-  ) -> None: ...
-  def ClearField(self, field_name: typing.Literal["num_loops", b"num_loops"]) -> None: ...
+    NUM_LOOPS_FIELD_NUMBER: _builtins.int
+    num_loops: _builtins.int
+    def __init__(
+        self,
+        *,
+        num_loops: _builtins.int = ...,
+    ) -> None: ...
+    _HasFieldArgType: _TypeAlias = _Never  # noqa: Y015
+    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
+    _ClearFieldArgType: _TypeAlias = _typing.Literal["num_loops", b"num_loops"]  # noqa: Y015
+    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
+    def WhichOneof(self, oneof_group: _Never) -> None: ...
 
-global___OverLoopsInfo = OverLoopsInfo
+Global___OverLoopsInfo: _TypeAlias = OverLoopsInfo  # noqa: Y015
 
-@typing.final
-class OverTapeInfo(google.protobuf.message.Message):
-  DESCRIPTOR: google.protobuf.descriptor.Descriptor
+@_typing.final
+class OverTapeInfo(_message.Message):
+    DESCRIPTOR: _descriptor.Descriptor
 
-  COMPRESSED_TAPE_SIZE_FIELD_NUMBER: builtins.int
-  compressed_tape_size: builtins.int
-  def __init__(
-    self,
-    *,
-    compressed_tape_size: builtins.int = ...,
-  ) -> None: ...
-  def ClearField(
-    self,
-    field_name: typing.Literal["compressed_tape_size", b"compressed_tape_size"],
-  ) -> None: ...
+    COMPRESSED_TAPE_SIZE_FIELD_NUMBER: _builtins.int
+    compressed_tape_size: _builtins.int
+    def __init__(
+        self,
+        *,
+        compressed_tape_size: _builtins.int = ...,
+    ) -> None: ...
+    _HasFieldArgType: _TypeAlias = _Never  # noqa: Y015
+    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
+    _ClearFieldArgType: _TypeAlias = _typing.Literal["compressed_tape_size", b"compressed_tape_size"]  # noqa: Y015
+    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
+    def WhichOneof(self, oneof_group: _Never) -> None: ...
 
-global___OverTapeInfo = OverTapeInfo
+Global___OverTapeInfo: _TypeAlias = OverTapeInfo  # noqa: Y015
 
-@typing.final
-class OverTimeInfo(google.protobuf.message.Message):
-  DESCRIPTOR: google.protobuf.descriptor.Descriptor
+@_typing.final
+class OverTimeInfo(_message.Message):
+    DESCRIPTOR: _descriptor.Descriptor
 
-  ELAPSED_TIME_SEC_FIELD_NUMBER: builtins.int
-  elapsed_time_sec: builtins.float
-  def __init__(
-    self,
-    *,
-    elapsed_time_sec: builtins.float = ...,
-  ) -> None: ...
-  def ClearField(self, field_name: typing.Literal["elapsed_time_sec", b"elapsed_time_sec"]) -> None: ...
+    ELAPSED_TIME_SEC_FIELD_NUMBER: _builtins.int
+    elapsed_time_sec: _builtins.float
+    def __init__(
+        self,
+        *,
+        elapsed_time_sec: _builtins.float = ...,
+    ) -> None: ...
+    _HasFieldArgType: _TypeAlias = _Never  # noqa: Y015
+    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
+    _ClearFieldArgType: _TypeAlias = _typing.Literal["elapsed_time_sec", b"elapsed_time_sec"]  # noqa: Y015
+    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
+    def WhichOneof(self, oneof_group: _Never) -> None: ...
 
-global___OverTimeInfo = OverTimeInfo
+Global___OverTimeInfo: _TypeAlias = OverTimeInfo  # noqa: Y015
 
-@typing.final
-class OverStepsInMacroInfo(google.protobuf.message.Message):
-  DESCRIPTOR: google.protobuf.descriptor.Descriptor
+@_typing.final
+class OverStepsInMacroInfo(_message.Message):
+    DESCRIPTOR: _descriptor.Descriptor
 
-  MACRO_SYMBOL_FIELD_NUMBER: builtins.int
-  MACRO_STATE_FIELD_NUMBER: builtins.int
-  MACRO_DIR_IS_RIGHT_FIELD_NUMBER: builtins.int
-  macro_symbol: builtins.str
-  """The macro symbol and macro state which took to long to simulate."""
-  macro_state: builtins.str
-  macro_dir_is_right: builtins.bool
-  def __init__(
-    self,
-    *,
-    macro_symbol: builtins.str = ...,
-    macro_state: builtins.str = ...,
-    macro_dir_is_right: builtins.bool = ...,
-  ) -> None: ...
-  def ClearField(
-    self,
-    field_name: typing.Literal[
-      "macro_dir_is_right",
-      b"macro_dir_is_right",
-      "macro_state",
-      b"macro_state",
-      "macro_symbol",
-      b"macro_symbol",
-    ],
-  ) -> None: ...
+    MACRO_SYMBOL_FIELD_NUMBER: _builtins.int
+    MACRO_STATE_FIELD_NUMBER: _builtins.int
+    MACRO_DIR_IS_RIGHT_FIELD_NUMBER: _builtins.int
+    macro_symbol: _builtins.str
+    """The macro symbol and macro state which took to long to simulate."""
+    macro_state: _builtins.str
+    macro_dir_is_right: _builtins.bool
+    def __init__(
+        self,
+        *,
+        macro_symbol: _builtins.str = ...,
+        macro_state: _builtins.str = ...,
+        macro_dir_is_right: _builtins.bool = ...,
+    ) -> None: ...
+    _HasFieldArgType: _TypeAlias = _Never  # noqa: Y015
+    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
+    _ClearFieldArgType: _TypeAlias = _typing.Literal["macro_dir_is_right", b"macro_dir_is_right", "macro_state", b"macro_state", "macro_symbol", b"macro_symbol"]  # noqa: Y015
+    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
+    def WhichOneof(self, oneof_group: _Never) -> None: ...
 
-global___OverStepsInMacroInfo = OverStepsInMacroInfo
+Global___OverStepsInMacroInfo: _TypeAlias = OverStepsInMacroInfo  # noqa: Y015
 
-@typing.final
-class UnknownInfo(google.protobuf.message.Message):
-  DESCRIPTOR: google.protobuf.descriptor.Descriptor
+@_typing.final
+class ExpressionTooComplexInfo(_message.Message):
+    DESCRIPTOR: _descriptor.Descriptor
 
-  OVER_LOOPS_FIELD_NUMBER: builtins.int
-  OVER_TAPE_FIELD_NUMBER: builtins.int
-  OVER_TIME_FIELD_NUMBER: builtins.int
-  OVER_STEPS_IN_MACRO_FIELD_NUMBER: builtins.int
-  THREW_EXCEPTION_FIELD_NUMBER: builtins.int
-  threw_exception: builtins.bool
-  @property
-  def over_loops(self) -> global___OverLoopsInfo: ...
-  @property
-  def over_tape(self) -> global___OverTapeInfo: ...
-  @property
-  def over_time(self) -> global___OverTimeInfo: ...
-  @property
-  def over_steps_in_macro(self) -> global___OverStepsInMacroInfo: ...
-  def __init__(
-    self,
-    *,
-    over_loops: global___OverLoopsInfo | None = ...,
-    over_tape: global___OverTapeInfo | None = ...,
-    over_time: global___OverTimeInfo | None = ...,
-    over_steps_in_macro: global___OverStepsInMacroInfo | None = ...,
-    threw_exception: builtins.bool = ...,
-  ) -> None: ...
-  def HasField(
-    self,
-    field_name: typing.Literal[
-      "over_loops",
-      b"over_loops",
-      "over_steps_in_macro",
-      b"over_steps_in_macro",
-      "over_tape",
-      b"over_tape",
-      "over_time",
-      b"over_time",
-      "reason",
-      b"reason",
-      "threw_exception",
-      b"threw_exception",
-    ],
-  ) -> builtins.bool: ...
-  def ClearField(
-    self,
-    field_name: typing.Literal[
-      "over_loops",
-      b"over_loops",
-      "over_steps_in_macro",
-      b"over_steps_in_macro",
-      "over_tape",
-      b"over_tape",
-      "over_time",
-      b"over_time",
-      "reason",
-      b"reason",
-      "threw_exception",
-      b"threw_exception",
-    ],
-  ) -> None: ...
-  def WhichOneof(
-    self, oneof_group: typing.Literal["reason", b"reason"]
-  ) -> (
-    typing.Literal[
-      "over_loops",
-      "over_tape",
-      "over_time",
-      "over_steps_in_macro",
-      "threw_exception",
-    ]
-    | None
-  ): ...
+    DETAIL_FIELD_NUMBER: _builtins.int
+    detail: _builtins.str
+    def __init__(
+        self,
+        *,
+        detail: _builtins.str = ...,
+    ) -> None: ...
+    _HasFieldArgType: _TypeAlias = _Never  # noqa: Y015
+    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
+    _ClearFieldArgType: _TypeAlias = _typing.Literal["detail", b"detail"]  # noqa: Y015
+    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
+    def WhichOneof(self, oneof_group: _Never) -> None: ...
 
-global___UnknownInfo = UnknownInfo
+Global___ExpressionTooComplexInfo: _TypeAlias = ExpressionTooComplexInfo  # noqa: Y015
 
-@typing.final
-class SimulatorResult(google.protobuf.message.Message):
-  DESCRIPTOR: google.protobuf.descriptor.Descriptor
+@_typing.final
+class UnknownInfo(_message.Message):
+    DESCRIPTOR: _descriptor.Descriptor
 
-  HALT_INFO_FIELD_NUMBER: builtins.int
-  INFINITE_INFO_FIELD_NUMBER: builtins.int
-  UNKNOWN_INFO_FIELD_NUMBER: builtins.int
-  ELAPSED_TIME_US_FIELD_NUMBER: builtins.int
-  NUM_LOOPS_FIELD_NUMBER: builtins.int
-  NUM_MACRO_MOVES_FIELD_NUMBER: builtins.int
-  NUM_CHAIN_MOVES_FIELD_NUMBER: builtins.int
-  NUM_RULE_MOVES_FIELD_NUMBER: builtins.int
-  LOG10_NUM_STEPS_FIELD_NUMBER: builtins.int
-  NUM_RULES_PROVEN_FIELD_NUMBER: builtins.int
-  NUM_META_DIFF_RULES_PROVEN_FIELD_NUMBER: builtins.int
-  NUM_LINEAR_RULES_PROVEN_FIELD_NUMBER: builtins.int
-  NUM_FINITE_LINEAR_RULES_PROVEN_FIELD_NUMBER: builtins.int
-  NUM_EXPONENTIAL_RULES_PROVEN_FIELD_NUMBER: builtins.int
-  NUM_GEN_RULES_PROVEN_FIELD_NUMBER: builtins.int
-  NUM_COLLATZ_RULES_FIELD_NUMBER: builtins.int
-  NUM_PROOFS_FAILED_FIELD_NUMBER: builtins.int
-  NUM_RULES_BY_LEVEL_FIELD_NUMBER: builtins.int
-  elapsed_time_us: builtins.int
-  """Stats"""
-  num_loops: builtins.int
-  """Number of simulator steps (or loops). One simulator step is either a
+    OVER_LOOPS_FIELD_NUMBER: _builtins.int
+    OVER_TAPE_FIELD_NUMBER: _builtins.int
+    OVER_TIME_FIELD_NUMBER: _builtins.int
+    OVER_STEPS_IN_MACRO_FIELD_NUMBER: _builtins.int
+    THREW_EXCEPTION_FIELD_NUMBER: _builtins.int
+    OVER_EXPRESSION_TOO_COMPLEX_FIELD_NUMBER: _builtins.int
+    threw_exception: _builtins.bool
+    @_builtins.property
+    def over_loops(self) -> Global___OverLoopsInfo: ...
+    @_builtins.property
+    def over_tape(self) -> Global___OverTapeInfo: ...
+    @_builtins.property
+    def over_time(self) -> Global___OverTimeInfo: ...
+    @_builtins.property
+    def over_steps_in_macro(self) -> Global___OverStepsInMacroInfo: ...
+    @_builtins.property
+    def over_expression_too_complex(self) -> Global___ExpressionTooComplexInfo: ...
+    def __init__(
+        self,
+        *,
+        over_loops: Global___OverLoopsInfo | None = ...,
+        over_tape: Global___OverTapeInfo | None = ...,
+        over_time: Global___OverTimeInfo | None = ...,
+        over_steps_in_macro: Global___OverStepsInMacroInfo | None = ...,
+        threw_exception: _builtins.bool = ...,
+        over_expression_too_complex: Global___ExpressionTooComplexInfo | None = ...,
+    ) -> None: ...
+    _HasFieldArgType: _TypeAlias = _typing.Literal["over_expression_too_complex", b"over_expression_too_complex", "over_loops", b"over_loops", "over_steps_in_macro", b"over_steps_in_macro", "over_tape", b"over_tape", "over_time", b"over_time", "reason", b"reason", "threw_exception", b"threw_exception"]  # noqa: Y015
+    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
+    _ClearFieldArgType: _TypeAlias = _typing.Literal["over_expression_too_complex", b"over_expression_too_complex", "over_loops", b"over_loops", "over_steps_in_macro", b"over_steps_in_macro", "over_tape", b"over_tape", "over_time", b"over_time", "reason", b"reason", "threw_exception", b"threw_exception"]  # noqa: Y015
+    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
+    _WhichOneofReturnType_reason: _TypeAlias = _typing.Literal["over_loops", "over_tape", "over_time", "over_steps_in_macro", "threw_exception", "over_expression_too_complex"]  # noqa: Y015
+    _WhichOneofArgType_reason: _TypeAlias = _typing.Literal["reason", b"reason"]  # noqa: Y015
+    def WhichOneof(self, oneof_group: _WhichOneofArgType_reason) -> _WhichOneofReturnType_reason | None: ...
+
+Global___UnknownInfo: _TypeAlias = UnknownInfo  # noqa: Y015
+
+@_typing.final
+class SimulatorResult(_message.Message):
+    DESCRIPTOR: _descriptor.Descriptor
+
+    HALT_INFO_FIELD_NUMBER: _builtins.int
+    INFINITE_INFO_FIELD_NUMBER: _builtins.int
+    UNKNOWN_INFO_FIELD_NUMBER: _builtins.int
+    ELAPSED_TIME_US_FIELD_NUMBER: _builtins.int
+    NUM_LOOPS_FIELD_NUMBER: _builtins.int
+    NUM_MACRO_MOVES_FIELD_NUMBER: _builtins.int
+    NUM_CHAIN_MOVES_FIELD_NUMBER: _builtins.int
+    NUM_RULE_MOVES_FIELD_NUMBER: _builtins.int
+    LOG10_NUM_STEPS_FIELD_NUMBER: _builtins.int
+    NUM_RULES_PROVEN_FIELD_NUMBER: _builtins.int
+    NUM_META_DIFF_RULES_PROVEN_FIELD_NUMBER: _builtins.int
+    NUM_LINEAR_RULES_PROVEN_FIELD_NUMBER: _builtins.int
+    NUM_FINITE_LINEAR_RULES_PROVEN_FIELD_NUMBER: _builtins.int
+    NUM_EXPONENTIAL_RULES_PROVEN_FIELD_NUMBER: _builtins.int
+    NUM_GEN_RULES_PROVEN_FIELD_NUMBER: _builtins.int
+    NUM_COLLATZ_RULES_FIELD_NUMBER: _builtins.int
+    NUM_PROOFS_FAILED_FIELD_NUMBER: _builtins.int
+    NUM_RULES_BY_LEVEL_FIELD_NUMBER: _builtins.int
+    elapsed_time_us: _builtins.int
+    """Stats"""
+    num_loops: _builtins.int
+    """Number of simulator steps (or loops). One simulator step is either a
     basic Macro Machine step, a Chain Step or a Rule Step.
     """
-  num_macro_moves: builtins.int
-  num_chain_moves: builtins.int
-  num_rule_moves: builtins.int
-  log10_num_steps: builtins.int
-  """Number of base TM steps that this TM was simulated up to. We don't need
+    num_macro_moves: _builtins.int
+    num_chain_moves: _builtins.int
+    num_rule_moves: _builtins.int
+    log10_num_steps: _builtins.int
+    """Number of base TM steps that this TM was simulated up to. We don't need
     to know the precise num_steps, just want ballpark (order of magnitude).
     """
-  num_rules_proven: builtins.int
-  num_meta_diff_rules_proven: builtins.int
-  num_linear_rules_proven: builtins.int
-  num_finite_linear_rules_proven: builtins.int
-  """Only count non-infinite rules (rules with at least one exponent reducing)."""
-  num_exponential_rules_proven: builtins.int
-  num_gen_rules_proven: builtins.int
-  num_collatz_rules: builtins.int
-  """Note: These are rules from above that have the property that one of the
+    num_rules_proven: _builtins.int
+    num_meta_diff_rules_proven: _builtins.int
+    num_linear_rules_proven: _builtins.int
+    num_finite_linear_rules_proven: _builtins.int
+    """Only count non-infinite rules (rules with at least one exponent reducing)."""
+    num_exponential_rules_proven: _builtins.int
+    num_gen_rules_proven: _builtins.int
+    num_collatz_rules: _builtins.int
+    """Note: These are rules from above that have the property that one of the
     exponents decreases by more than 1.
     """
-  num_proofs_failed: builtins.int
-  @property
-  def num_rules_by_level(
-    self,
-  ) -> google.protobuf.internal.containers.RepeatedScalarFieldContainer[builtins.int]:
-    """Number of rules proven at each level (index 0 = level 1, index 1 = level 2, ...).
-    The length of this list is the maximum rule level proven.
-    """
+    num_proofs_failed: _builtins.int
+    @_builtins.property
+    def halt_info(self) -> Global___HaltInfo: ...
+    @_builtins.property
+    def infinite_info(self) -> Global___InfiniteInfo: ...
+    @_builtins.property
+    def unknown_info(self) -> Global___UnknownInfo:
+        """We could not decide if this machine halted or will never halt."""
 
-  @property
-  def halt_info(self) -> global___HaltInfo: ...
-  @property
-  def infinite_info(self) -> global___InfiniteInfo: ...
-  @property
-  def unknown_info(self) -> global___UnknownInfo:
-    """We could not decide if this machine halted or will never halt."""
+    @_builtins.property
+    def num_rules_by_level(self) -> _containers.RepeatedScalarFieldContainer[_builtins.int]:
+        """Number of rules proven at each level (index 0 = level 1, index 1 = level 2, ...).
+        The length of this list is the maximum rule level proven.
+        """
 
-  def __init__(
-    self,
-    *,
-    halt_info: global___HaltInfo | None = ...,
-    infinite_info: global___InfiniteInfo | None = ...,
-    unknown_info: global___UnknownInfo | None = ...,
-    elapsed_time_us: builtins.int = ...,
-    num_loops: builtins.int = ...,
-    num_macro_moves: builtins.int = ...,
-    num_chain_moves: builtins.int = ...,
-    num_rule_moves: builtins.int = ...,
-    log10_num_steps: builtins.int = ...,
-    num_rules_proven: builtins.int = ...,
-    num_meta_diff_rules_proven: builtins.int = ...,
-    num_linear_rules_proven: builtins.int = ...,
-    num_finite_linear_rules_proven: builtins.int = ...,
-    num_exponential_rules_proven: builtins.int = ...,
-    num_gen_rules_proven: builtins.int = ...,
-    num_collatz_rules: builtins.int = ...,
-    num_proofs_failed: builtins.int = ...,
-    num_rules_by_level: collections.abc.Iterable[builtins.int] | None = ...,
-  ) -> None: ...
-  def HasField(
-    self,
-    field_name: typing.Literal[
-      "exit_condition",
-      b"exit_condition",
-      "halt_info",
-      b"halt_info",
-      "infinite_info",
-      b"infinite_info",
-      "unknown_info",
-      b"unknown_info",
-    ],
-  ) -> builtins.bool: ...
-  def ClearField(
-    self,
-    field_name: typing.Literal[
-      "elapsed_time_us",
-      b"elapsed_time_us",
-      "exit_condition",
-      b"exit_condition",
-      "halt_info",
-      b"halt_info",
-      "infinite_info",
-      b"infinite_info",
-      "log10_num_steps",
-      b"log10_num_steps",
-      "num_chain_moves",
-      b"num_chain_moves",
-      "num_collatz_rules",
-      b"num_collatz_rules",
-      "num_exponential_rules_proven",
-      b"num_exponential_rules_proven",
-      "num_finite_linear_rules_proven",
-      b"num_finite_linear_rules_proven",
-      "num_gen_rules_proven",
-      b"num_gen_rules_proven",
-      "num_linear_rules_proven",
-      b"num_linear_rules_proven",
-      "num_loops",
-      b"num_loops",
-      "num_macro_moves",
-      b"num_macro_moves",
-      "num_meta_diff_rules_proven",
-      b"num_meta_diff_rules_proven",
-      "num_proofs_failed",
-      b"num_proofs_failed",
-      "num_rule_moves",
-      b"num_rule_moves",
-      "num_rules_by_level",
-      b"num_rules_by_level",
-      "num_rules_proven",
-      b"num_rules_proven",
-      "unknown_info",
-      b"unknown_info",
-    ],
-  ) -> None: ...
-  def WhichOneof(
-    self, oneof_group: typing.Literal["exit_condition", b"exit_condition"]
-  ) -> typing.Literal["halt_info", "infinite_info", "unknown_info"] | None: ...
+    def __init__(
+        self,
+        *,
+        halt_info: Global___HaltInfo | None = ...,
+        infinite_info: Global___InfiniteInfo | None = ...,
+        unknown_info: Global___UnknownInfo | None = ...,
+        elapsed_time_us: _builtins.int = ...,
+        num_loops: _builtins.int = ...,
+        num_macro_moves: _builtins.int = ...,
+        num_chain_moves: _builtins.int = ...,
+        num_rule_moves: _builtins.int = ...,
+        log10_num_steps: _builtins.int = ...,
+        num_rules_proven: _builtins.int = ...,
+        num_meta_diff_rules_proven: _builtins.int = ...,
+        num_linear_rules_proven: _builtins.int = ...,
+        num_finite_linear_rules_proven: _builtins.int = ...,
+        num_exponential_rules_proven: _builtins.int = ...,
+        num_gen_rules_proven: _builtins.int = ...,
+        num_collatz_rules: _builtins.int = ...,
+        num_proofs_failed: _builtins.int = ...,
+        num_rules_by_level: _abc.Iterable[_builtins.int] | None = ...,
+    ) -> None: ...
+    _HasFieldArgType: _TypeAlias = _typing.Literal["exit_condition", b"exit_condition", "halt_info", b"halt_info", "infinite_info", b"infinite_info", "unknown_info", b"unknown_info"]  # noqa: Y015
+    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
+    _ClearFieldArgType: _TypeAlias = _typing.Literal["elapsed_time_us", b"elapsed_time_us", "exit_condition", b"exit_condition", "halt_info", b"halt_info", "infinite_info", b"infinite_info", "log10_num_steps", b"log10_num_steps", "num_chain_moves", b"num_chain_moves", "num_collatz_rules", b"num_collatz_rules", "num_exponential_rules_proven", b"num_exponential_rules_proven", "num_finite_linear_rules_proven", b"num_finite_linear_rules_proven", "num_gen_rules_proven", b"num_gen_rules_proven", "num_linear_rules_proven", b"num_linear_rules_proven", "num_loops", b"num_loops", "num_macro_moves", b"num_macro_moves", "num_meta_diff_rules_proven", b"num_meta_diff_rules_proven", "num_proofs_failed", b"num_proofs_failed", "num_rule_moves", b"num_rule_moves", "num_rules_by_level", b"num_rules_by_level", "num_rules_proven", b"num_rules_proven", "unknown_info", b"unknown_info"]  # noqa: Y015
+    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
+    _WhichOneofReturnType_exit_condition: _TypeAlias = _typing.Literal["halt_info", "infinite_info", "unknown_info"]  # noqa: Y015
+    _WhichOneofArgType_exit_condition: _TypeAlias = _typing.Literal["exit_condition", b"exit_condition"]  # noqa: Y015
+    def WhichOneof(self, oneof_group: _WhichOneofArgType_exit_condition) -> _WhichOneofReturnType_exit_condition | None: ...
 
-global___SimulatorResult = SimulatorResult
+Global___SimulatorResult: _TypeAlias = SimulatorResult  # noqa: Y015
 
-@typing.final
-class SimulatorInfo(google.protobuf.message.Message):
-  DESCRIPTOR: google.protobuf.descriptor.Descriptor
+@_typing.final
+class SimulatorInfo(_message.Message):
+    DESCRIPTOR: _descriptor.Descriptor
 
-  PARAMETERS_FIELD_NUMBER: builtins.int
-  RESULT_FIELD_NUMBER: builtins.int
-  @property
-  def parameters(self) -> global___SimulatorParams: ...
-  @property
-  def result(self) -> global___SimulatorResult: ...
-  def __init__(
-    self,
-    *,
-    parameters: global___SimulatorParams | None = ...,
-    result: global___SimulatorResult | None = ...,
-  ) -> None: ...
-  def HasField(
-    self,
-    field_name: typing.Literal["parameters", b"parameters", "result", b"result"],
-  ) -> builtins.bool: ...
-  def ClearField(
-    self,
-    field_name: typing.Literal["parameters", b"parameters", "result", b"result"],
-  ) -> None: ...
+    PARAMETERS_FIELD_NUMBER: _builtins.int
+    RESULT_FIELD_NUMBER: _builtins.int
+    @_builtins.property
+    def parameters(self) -> Global___SimulatorParams: ...
+    @_builtins.property
+    def result(self) -> Global___SimulatorResult: ...
+    def __init__(
+        self,
+        *,
+        parameters: Global___SimulatorParams | None = ...,
+        result: Global___SimulatorResult | None = ...,
+    ) -> None: ...
+    _HasFieldArgType: _TypeAlias = _typing.Literal["parameters", b"parameters", "result", b"result"]  # noqa: Y015
+    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
+    _ClearFieldArgType: _TypeAlias = _typing.Literal["parameters", b"parameters", "result", b"result"]  # noqa: Y015
+    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
+    def WhichOneof(self, oneof_group: _Never) -> None: ...
 
-global___SimulatorInfo = SimulatorInfo
+Global___SimulatorInfo: _TypeAlias = SimulatorInfo  # noqa: Y015
 
-@typing.final
-class BlockFinderParams(google.protobuf.message.Message):
-  DESCRIPTOR: google.protobuf.descriptor.Descriptor
+@_typing.final
+class BlockFinderParams(_message.Message):
+    DESCRIPTOR: _descriptor.Descriptor
 
-  COMPRESSION_SEARCH_LOOPS_FIELD_NUMBER: builtins.int
-  MULT_SIM_LOOPS_FIELD_NUMBER: builtins.int
-  MAX_BLOCK_MULT_FIELD_NUMBER: builtins.int
-  MAX_BLOCK_SIZE_FIELD_NUMBER: builtins.int
-  BLOCK_MULT_FIELD_NUMBER: builtins.int
-  compression_search_loops: builtins.int
-  """# loops to run Sim searching for least-compressed tape."""
-  mult_sim_loops: builtins.int
-  """# loops to run sim for each multiple of optimal compression size."""
-  max_block_mult: builtins.int
-  """While searching for optimal multiple: How far should we look beyond
+    COMPRESSION_SEARCH_LOOPS_FIELD_NUMBER: _builtins.int
+    MULT_SIM_LOOPS_FIELD_NUMBER: _builtins.int
+    MAX_BLOCK_MULT_FIELD_NUMBER: _builtins.int
+    MAX_BLOCK_SIZE_FIELD_NUMBER: _builtins.int
+    BLOCK_MULT_FIELD_NUMBER: _builtins.int
+    compression_search_loops: _builtins.int
+    """# loops to run Sim searching for least-compressed tape."""
+    mult_sim_loops: _builtins.int
+    """# loops to run sim for each multiple of optimal compression size."""
+    max_block_mult: _builtins.int
+    """While searching for optimal multiple: How far should we look beyond
     current best mult?
     """
-  max_block_size: builtins.int
-  block_mult: builtins.int
-  """If non-zero, fixed block mult."""
-  def __init__(
-    self,
-    *,
-    compression_search_loops: builtins.int = ...,
-    mult_sim_loops: builtins.int = ...,
-    max_block_mult: builtins.int = ...,
-    max_block_size: builtins.int = ...,
-    block_mult: builtins.int = ...,
-  ) -> None: ...
-  def ClearField(
-    self,
-    field_name: typing.Literal[
-      "block_mult",
-      b"block_mult",
-      "compression_search_loops",
-      b"compression_search_loops",
-      "max_block_mult",
-      b"max_block_mult",
-      "max_block_size",
-      b"max_block_size",
-      "mult_sim_loops",
-      b"mult_sim_loops",
-    ],
-  ) -> None: ...
+    max_block_size: _builtins.int
+    block_mult: _builtins.int
+    """If non-zero, fixed block mult."""
+    def __init__(
+        self,
+        *,
+        compression_search_loops: _builtins.int = ...,
+        mult_sim_loops: _builtins.int = ...,
+        max_block_mult: _builtins.int = ...,
+        max_block_size: _builtins.int = ...,
+        block_mult: _builtins.int = ...,
+    ) -> None: ...
+    _HasFieldArgType: _TypeAlias = _Never  # noqa: Y015
+    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
+    _ClearFieldArgType: _TypeAlias = _typing.Literal["block_mult", b"block_mult", "compression_search_loops", b"compression_search_loops", "max_block_mult", b"max_block_mult", "max_block_size", b"max_block_size", "mult_sim_loops", b"mult_sim_loops"]  # noqa: Y015
+    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
+    def WhichOneof(self, oneof_group: _Never) -> None: ...
 
-global___BlockFinderParams = BlockFinderParams
+Global___BlockFinderParams: _TypeAlias = BlockFinderParams  # noqa: Y015
 
-@typing.final
-class BlockFinderResult(google.protobuf.message.Message):
-  DESCRIPTOR: google.protobuf.descriptor.Descriptor
+@_typing.final
+class BlockFinderResult(_message.Message):
+    DESCRIPTOR: _descriptor.Descriptor
 
-  BEST_BLOCK_SIZE_FIELD_NUMBER: builtins.int
-  ELAPSED_TIME_US_FIELD_NUMBER: builtins.int
-  LEAST_COMPRESSED_LOOP_FIELD_NUMBER: builtins.int
-  LEAST_COMPRESSED_TAPE_SIZE_CHAIN_FIELD_NUMBER: builtins.int
-  LEAST_COMPRESSED_TAPE_SIZE_RAW_FIELD_NUMBER: builtins.int
-  BEST_COMPRESSION_BLOCK_SIZE_FIELD_NUMBER: builtins.int
-  BEST_COMPRESSION_TAPE_SIZE_FIELD_NUMBER: builtins.int
-  BEST_MULT_FIELD_NUMBER: builtins.int
-  BEST_CHAIN_FACTOR_FIELD_NUMBER: builtins.int
-  best_block_size: builtins.int
-  """Results
+    BEST_BLOCK_SIZE_FIELD_NUMBER: _builtins.int
+    ELAPSED_TIME_US_FIELD_NUMBER: _builtins.int
+    LEAST_COMPRESSED_LOOP_FIELD_NUMBER: _builtins.int
+    LEAST_COMPRESSED_TAPE_SIZE_CHAIN_FIELD_NUMBER: _builtins.int
+    LEAST_COMPRESSED_TAPE_SIZE_RAW_FIELD_NUMBER: _builtins.int
+    BEST_COMPRESSION_BLOCK_SIZE_FIELD_NUMBER: _builtins.int
+    BEST_COMPRESSION_TAPE_SIZE_FIELD_NUMBER: _builtins.int
+    BEST_MULT_FIELD_NUMBER: _builtins.int
+    BEST_CHAIN_FACTOR_FIELD_NUMBER: _builtins.int
+    best_block_size: _builtins.int
+    """Results
     Overall heuristically decided best block size.
     """
-  elapsed_time_us: builtins.int
-  """Stats"""
-  least_compressed_loop: builtins.int
-  """Chain Sim loop (with block size 1) where compressed tape was largest
+    elapsed_time_us: _builtins.int
+    """Stats"""
+    least_compressed_loop: _builtins.int
+    """Chain Sim loop (with block size 1) where compressed tape was largest
     (least effectively compressed).
     """
-  least_compressed_tape_size_chain: builtins.int
-  """# Blocks (with compression) on this least compressed tape."""
-  least_compressed_tape_size_raw: builtins.int
-  """Total # symbols (no compression) on this least compressed tape."""
-  best_compression_block_size: builtins.int
-  """Best block size for compression on this least compressed tape."""
-  best_compression_tape_size: builtins.int
-  """# Blocks (with compression) using best_compression_block_size on this
+    least_compressed_tape_size_chain: _builtins.int
+    """# Blocks (with compression) on this least compressed tape."""
+    least_compressed_tape_size_raw: _builtins.int
+    """Total # symbols (no compression) on this least compressed tape."""
+    best_compression_block_size: _builtins.int
+    """Best block size for compression on this least compressed tape."""
+    best_compression_tape_size: _builtins.int
+    """# Blocks (with compression) using best_compression_block_size on this
     least compressed tape.
     """
-  best_mult: builtins.int
-  """Best multiple of best_compression_block_size found."""
-  best_chain_factor: builtins.float
-  """"Chain factor" (steps_from_chain / steps_from_macro) at best_mult."""
-  def __init__(
-    self,
-    *,
-    best_block_size: builtins.int = ...,
-    elapsed_time_us: builtins.int = ...,
-    least_compressed_loop: builtins.int = ...,
-    least_compressed_tape_size_chain: builtins.int = ...,
-    least_compressed_tape_size_raw: builtins.int = ...,
-    best_compression_block_size: builtins.int = ...,
-    best_compression_tape_size: builtins.int = ...,
-    best_mult: builtins.int = ...,
-    best_chain_factor: builtins.float = ...,
-  ) -> None: ...
-  def ClearField(
-    self,
-    field_name: typing.Literal[
-      "best_block_size",
-      b"best_block_size",
-      "best_chain_factor",
-      b"best_chain_factor",
-      "best_compression_block_size",
-      b"best_compression_block_size",
-      "best_compression_tape_size",
-      b"best_compression_tape_size",
-      "best_mult",
-      b"best_mult",
-      "elapsed_time_us",
-      b"elapsed_time_us",
-      "least_compressed_loop",
-      b"least_compressed_loop",
-      "least_compressed_tape_size_chain",
-      b"least_compressed_tape_size_chain",
-      "least_compressed_tape_size_raw",
-      b"least_compressed_tape_size_raw",
-    ],
-  ) -> None: ...
+    best_mult: _builtins.int
+    """Best multiple of best_compression_block_size found."""
+    best_chain_factor: _builtins.float
+    """"Chain factor" (steps_from_chain / steps_from_macro) at best_mult."""
+    def __init__(
+        self,
+        *,
+        best_block_size: _builtins.int = ...,
+        elapsed_time_us: _builtins.int = ...,
+        least_compressed_loop: _builtins.int = ...,
+        least_compressed_tape_size_chain: _builtins.int = ...,
+        least_compressed_tape_size_raw: _builtins.int = ...,
+        best_compression_block_size: _builtins.int = ...,
+        best_compression_tape_size: _builtins.int = ...,
+        best_mult: _builtins.int = ...,
+        best_chain_factor: _builtins.float = ...,
+    ) -> None: ...
+    _HasFieldArgType: _TypeAlias = _Never  # noqa: Y015
+    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
+    _ClearFieldArgType: _TypeAlias = _typing.Literal["best_block_size", b"best_block_size", "best_chain_factor", b"best_chain_factor", "best_compression_block_size", b"best_compression_block_size", "best_compression_tape_size", b"best_compression_tape_size", "best_mult", b"best_mult", "elapsed_time_us", b"elapsed_time_us", "least_compressed_loop", b"least_compressed_loop", "least_compressed_tape_size_chain", b"least_compressed_tape_size_chain", "least_compressed_tape_size_raw", b"least_compressed_tape_size_raw"]  # noqa: Y015
+    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
+    def WhichOneof(self, oneof_group: _Never) -> None: ...
 
-global___BlockFinderResult = BlockFinderResult
+Global___BlockFinderResult: _TypeAlias = BlockFinderResult  # noqa: Y015
 
-@typing.final
-class BlockFinderInfo(google.protobuf.message.Message):
-  DESCRIPTOR: google.protobuf.descriptor.Descriptor
+@_typing.final
+class BlockFinderInfo(_message.Message):
+    DESCRIPTOR: _descriptor.Descriptor
 
-  PARAMETERS_FIELD_NUMBER: builtins.int
-  RESULT_FIELD_NUMBER: builtins.int
-  @property
-  def parameters(self) -> global___BlockFinderParams: ...
-  @property
-  def result(self) -> global___BlockFinderResult: ...
-  def __init__(
-    self,
-    *,
-    parameters: global___BlockFinderParams | None = ...,
-    result: global___BlockFinderResult | None = ...,
-  ) -> None: ...
-  def HasField(
-    self,
-    field_name: typing.Literal["parameters", b"parameters", "result", b"result"],
-  ) -> builtins.bool: ...
-  def ClearField(
-    self,
-    field_name: typing.Literal["parameters", b"parameters", "result", b"result"],
-  ) -> None: ...
+    PARAMETERS_FIELD_NUMBER: _builtins.int
+    RESULT_FIELD_NUMBER: _builtins.int
+    @_builtins.property
+    def parameters(self) -> Global___BlockFinderParams: ...
+    @_builtins.property
+    def result(self) -> Global___BlockFinderResult: ...
+    def __init__(
+        self,
+        *,
+        parameters: Global___BlockFinderParams | None = ...,
+        result: Global___BlockFinderResult | None = ...,
+    ) -> None: ...
+    _HasFieldArgType: _TypeAlias = _typing.Literal["parameters", b"parameters", "result", b"result"]  # noqa: Y015
+    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
+    _ClearFieldArgType: _TypeAlias = _typing.Literal["parameters", b"parameters", "result", b"result"]  # noqa: Y015
+    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
+    def WhichOneof(self, oneof_group: _Never) -> None: ...
 
-global___BlockFinderInfo = BlockFinderInfo
+Global___BlockFinderInfo: _TypeAlias = BlockFinderInfo  # noqa: Y015
 
-@typing.final
-class FilterInfo(google.protobuf.message.Message):
-  DESCRIPTOR: google.protobuf.descriptor.Descriptor
+@_typing.final
+class FilterInfo(_message.Message):
+    DESCRIPTOR: _descriptor.Descriptor
 
-  TESTED_FIELD_NUMBER: builtins.int
-  SUCCESS_FIELD_NUMBER: builtins.int
-  ELAPSED_TIME_US_FIELD_NUMBER: builtins.int
-  tested: builtins.bool
-  success: builtins.bool
-  elapsed_time_us: builtins.int
-  """Stats"""
-  def __init__(
-    self,
-    *,
-    tested: builtins.bool = ...,
-    success: builtins.bool = ...,
-    elapsed_time_us: builtins.int = ...,
-  ) -> None: ...
-  def ClearField(
-    self,
-    field_name: typing.Literal[
-      "elapsed_time_us",
-      b"elapsed_time_us",
-      "success",
-      b"success",
-      "tested",
-      b"tested",
-    ],
-  ) -> None: ...
+    TESTED_FIELD_NUMBER: _builtins.int
+    SUCCESS_FIELD_NUMBER: _builtins.int
+    ELAPSED_TIME_US_FIELD_NUMBER: _builtins.int
+    tested: _builtins.bool
+    success: _builtins.bool
+    elapsed_time_us: _builtins.int
+    """Stats"""
+    def __init__(
+        self,
+        *,
+        tested: _builtins.bool = ...,
+        success: _builtins.bool = ...,
+        elapsed_time_us: _builtins.int = ...,
+    ) -> None: ...
+    _HasFieldArgType: _TypeAlias = _Never  # noqa: Y015
+    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
+    _ClearFieldArgType: _TypeAlias = _typing.Literal["elapsed_time_us", b"elapsed_time_us", "success", b"success", "tested", b"tested"]  # noqa: Y015
+    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
+    def WhichOneof(self, oneof_group: _Never) -> None: ...
 
-global___FilterInfo = FilterInfo
+Global___FilterInfo: _TypeAlias = FilterInfo  # noqa: Y015
 
-@typing.final
-class LinRecurFilterParams(google.protobuf.message.Message):
-  DESCRIPTOR: google.protobuf.descriptor.Descriptor
+@_typing.final
+class LinRecurFilterParams(_message.Message):
+    DESCRIPTOR: _descriptor.Descriptor
 
-  MAX_STEPS_FIELD_NUMBER: builtins.int
-  FIND_MIN_START_STEP_FIELD_NUMBER: builtins.int
-  max_steps: builtins.int
-  """Parameters"""
-  find_min_start_step: builtins.bool
-  """Is start_step the min start time of LR?
+    MAX_STEPS_FIELD_NUMBER: _builtins.int
+    FIND_MIN_START_STEP_FIELD_NUMBER: _builtins.int
+    max_steps: _builtins.int
+    """Parameters"""
+    find_min_start_step: _builtins.bool
+    """Is start_step the min start time of LR?
     Or just a time at which it had started by?
     """
-  def __init__(
-    self,
-    *,
-    max_steps: builtins.int = ...,
-    find_min_start_step: builtins.bool = ...,
-  ) -> None: ...
-  def ClearField(
-    self,
-    field_name: typing.Literal["find_min_start_step", b"find_min_start_step", "max_steps", b"max_steps"],
-  ) -> None: ...
+    def __init__(
+        self,
+        *,
+        max_steps: _builtins.int = ...,
+        find_min_start_step: _builtins.bool = ...,
+    ) -> None: ...
+    _HasFieldArgType: _TypeAlias = _Never  # noqa: Y015
+    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
+    _ClearFieldArgType: _TypeAlias = _typing.Literal["find_min_start_step", b"find_min_start_step", "max_steps", b"max_steps"]  # noqa: Y015
+    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
+    def WhichOneof(self, oneof_group: _Never) -> None: ...
 
-global___LinRecurFilterParams = LinRecurFilterParams
+Global___LinRecurFilterParams: _TypeAlias = LinRecurFilterParams  # noqa: Y015
 
-@typing.final
-class LinRecurFilterResult(google.protobuf.message.Message):
-  DESCRIPTOR: google.protobuf.descriptor.Descriptor
+@_typing.final
+class LinRecurFilterResult(_message.Message):
+    DESCRIPTOR: _descriptor.Descriptor
 
-  SUCCESS_FIELD_NUMBER: builtins.int
-  START_STEP_FIELD_NUMBER: builtins.int
-  PERIOD_FIELD_NUMBER: builtins.int
-  OFFSET_FIELD_NUMBER: builtins.int
-  ELAPSED_TIME_US_FIELD_NUMBER: builtins.int
-  success: builtins.bool
-  """Results
+    SUCCESS_FIELD_NUMBER: _builtins.int
+    START_STEP_FIELD_NUMBER: _builtins.int
+    PERIOD_FIELD_NUMBER: _builtins.int
+    OFFSET_FIELD_NUMBER: _builtins.int
+    ELAPSED_TIME_US_FIELD_NUMBER: _builtins.int
+    success: _builtins.bool
+    """Results
     Did the filter classify this machine as LR?
     """
-  start_step: builtins.int
-  """A step at which the machine is in Lin Recurrence.
+    start_step: _builtins.int
+    """A step at which the machine is in Lin Recurrence.
     If is_start_step_min=True, this is the smallest such step (i.e. the
     step that Lin Recurrence began).
     """
-  period: builtins.int
-  """Period of LR cycle."""
-  offset: builtins.int
-  """Tape offset distance from one cycle to the next
+    period: _builtins.int
+    """Period of LR cycle."""
+    offset: _builtins.int
+    """Tape offset distance from one cycle to the next
     (+ means right, - means left, 0 means it repeats in place).
     """
-  elapsed_time_us: builtins.int
-  """Stats"""
-  def __init__(
-    self,
-    *,
-    success: builtins.bool = ...,
-    start_step: builtins.int = ...,
-    period: builtins.int = ...,
-    offset: builtins.int = ...,
-    elapsed_time_us: builtins.int = ...,
-  ) -> None: ...
-  def ClearField(
-    self,
-    field_name: typing.Literal[
-      "elapsed_time_us",
-      b"elapsed_time_us",
-      "offset",
-      b"offset",
-      "period",
-      b"period",
-      "start_step",
-      b"start_step",
-      "success",
-      b"success",
-    ],
-  ) -> None: ...
+    elapsed_time_us: _builtins.int
+    """Stats"""
+    def __init__(
+        self,
+        *,
+        success: _builtins.bool = ...,
+        start_step: _builtins.int = ...,
+        period: _builtins.int = ...,
+        offset: _builtins.int = ...,
+        elapsed_time_us: _builtins.int = ...,
+    ) -> None: ...
+    _HasFieldArgType: _TypeAlias = _Never  # noqa: Y015
+    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
+    _ClearFieldArgType: _TypeAlias = _typing.Literal["elapsed_time_us", b"elapsed_time_us", "offset", b"offset", "period", b"period", "start_step", b"start_step", "success", b"success"]  # noqa: Y015
+    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
+    def WhichOneof(self, oneof_group: _Never) -> None: ...
 
-global___LinRecurFilterResult = LinRecurFilterResult
+Global___LinRecurFilterResult: _TypeAlias = LinRecurFilterResult  # noqa: Y015
 
-@typing.final
-class LinRecurFilterInfo(google.protobuf.message.Message):
-  DESCRIPTOR: google.protobuf.descriptor.Descriptor
+@_typing.final
+class LinRecurFilterInfo(_message.Message):
+    DESCRIPTOR: _descriptor.Descriptor
 
-  PARAMETERS_FIELD_NUMBER: builtins.int
-  RESULT_FIELD_NUMBER: builtins.int
-  @property
-  def parameters(self) -> global___LinRecurFilterParams: ...
-  @property
-  def result(self) -> global___LinRecurFilterResult: ...
-  def __init__(
-    self,
-    *,
-    parameters: global___LinRecurFilterParams | None = ...,
-    result: global___LinRecurFilterResult | None = ...,
-  ) -> None: ...
-  def HasField(
-    self,
-    field_name: typing.Literal["parameters", b"parameters", "result", b"result"],
-  ) -> builtins.bool: ...
-  def ClearField(
-    self,
-    field_name: typing.Literal["parameters", b"parameters", "result", b"result"],
-  ) -> None: ...
+    PARAMETERS_FIELD_NUMBER: _builtins.int
+    RESULT_FIELD_NUMBER: _builtins.int
+    @_builtins.property
+    def parameters(self) -> Global___LinRecurFilterParams: ...
+    @_builtins.property
+    def result(self) -> Global___LinRecurFilterResult: ...
+    def __init__(
+        self,
+        *,
+        parameters: Global___LinRecurFilterParams | None = ...,
+        result: Global___LinRecurFilterResult | None = ...,
+    ) -> None: ...
+    _HasFieldArgType: _TypeAlias = _typing.Literal["parameters", b"parameters", "result", b"result"]  # noqa: Y015
+    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
+    _ClearFieldArgType: _TypeAlias = _typing.Literal["parameters", b"parameters", "result", b"result"]  # noqa: Y015
+    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
+    def WhichOneof(self, oneof_group: _Never) -> None: ...
 
-global___LinRecurFilterInfo = LinRecurFilterInfo
+Global___LinRecurFilterInfo: _TypeAlias = LinRecurFilterInfo  # noqa: Y015
 
-@typing.final
-class CTLParams(google.protobuf.message.Message):
-  DESCRIPTOR: google.protobuf.descriptor.Descriptor
+@_typing.final
+class CTLParams(_message.Message):
+    DESCRIPTOR: _descriptor.Descriptor
 
-  BLOCK_SIZE_FIELD_NUMBER: builtins.int
-  OFFSET_FIELD_NUMBER: builtins.int
-  CUTOFF_FIELD_NUMBER: builtins.int
-  block_size: builtins.int
-  """Parameters"""
-  offset: builtins.int
-  cutoff: builtins.int
-  def __init__(
-    self,
-    *,
-    block_size: builtins.int = ...,
-    offset: builtins.int = ...,
-    cutoff: builtins.int = ...,
-  ) -> None: ...
-  def ClearField(
-    self,
-    field_name: typing.Literal["block_size", b"block_size", "cutoff", b"cutoff", "offset", b"offset"],
-  ) -> None: ...
+    BLOCK_SIZE_FIELD_NUMBER: _builtins.int
+    OFFSET_FIELD_NUMBER: _builtins.int
+    CUTOFF_FIELD_NUMBER: _builtins.int
+    block_size: _builtins.int
+    """Parameters"""
+    offset: _builtins.int
+    cutoff: _builtins.int
+    def __init__(
+        self,
+        *,
+        block_size: _builtins.int = ...,
+        offset: _builtins.int = ...,
+        cutoff: _builtins.int = ...,
+    ) -> None: ...
+    _HasFieldArgType: _TypeAlias = _Never  # noqa: Y015
+    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
+    _ClearFieldArgType: _TypeAlias = _typing.Literal["block_size", b"block_size", "cutoff", b"cutoff", "offset", b"offset"]  # noqa: Y015
+    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
+    def WhichOneof(self, oneof_group: _Never) -> None: ...
 
-global___CTLParams = CTLParams
+Global___CTLParams: _TypeAlias = CTLParams  # noqa: Y015
 
-@typing.final
-class CTLResult(google.protobuf.message.Message):
-  DESCRIPTOR: google.protobuf.descriptor.Descriptor
+@_typing.final
+class CTLResult(_message.Message):
+    DESCRIPTOR: _descriptor.Descriptor
 
-  SUCCESS_FIELD_NUMBER: builtins.int
-  NUM_ITERS_FIELD_NUMBER: builtins.int
-  ELAPSED_TIME_US_FIELD_NUMBER: builtins.int
-  success: builtins.bool
-  """Results"""
-  num_iters: builtins.int
-  """Stats"""
-  elapsed_time_us: builtins.int
-  def __init__(
-    self,
-    *,
-    success: builtins.bool = ...,
-    num_iters: builtins.int = ...,
-    elapsed_time_us: builtins.int = ...,
-  ) -> None: ...
-  def ClearField(
-    self,
-    field_name: typing.Literal[
-      "elapsed_time_us",
-      b"elapsed_time_us",
-      "num_iters",
-      b"num_iters",
-      "success",
-      b"success",
-    ],
-  ) -> None: ...
+    SUCCESS_FIELD_NUMBER: _builtins.int
+    NUM_ITERS_FIELD_NUMBER: _builtins.int
+    ELAPSED_TIME_US_FIELD_NUMBER: _builtins.int
+    success: _builtins.bool
+    """Results"""
+    num_iters: _builtins.int
+    """Stats"""
+    elapsed_time_us: _builtins.int
+    def __init__(
+        self,
+        *,
+        success: _builtins.bool = ...,
+        num_iters: _builtins.int = ...,
+        elapsed_time_us: _builtins.int = ...,
+    ) -> None: ...
+    _HasFieldArgType: _TypeAlias = _Never  # noqa: Y015
+    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
+    _ClearFieldArgType: _TypeAlias = _typing.Literal["elapsed_time_us", b"elapsed_time_us", "num_iters", b"num_iters", "success", b"success"]  # noqa: Y015
+    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
+    def WhichOneof(self, oneof_group: _Never) -> None: ...
 
-global___CTLResult = CTLResult
+Global___CTLResult: _TypeAlias = CTLResult  # noqa: Y015
 
-@typing.final
-class CTLInfo(google.protobuf.message.Message):
-  DESCRIPTOR: google.protobuf.descriptor.Descriptor
+@_typing.final
+class CTLInfo(_message.Message):
+    DESCRIPTOR: _descriptor.Descriptor
 
-  PARAMETERS_FIELD_NUMBER: builtins.int
-  RESULT_FIELD_NUMBER: builtins.int
-  @property
-  def parameters(self) -> global___CTLParams: ...
-  @property
-  def result(self) -> global___CTLResult: ...
-  def __init__(
-    self,
-    *,
-    parameters: global___CTLParams | None = ...,
-    result: global___CTLResult | None = ...,
-  ) -> None: ...
-  def HasField(
-    self,
-    field_name: typing.Literal["parameters", b"parameters", "result", b"result"],
-  ) -> builtins.bool: ...
-  def ClearField(
-    self,
-    field_name: typing.Literal["parameters", b"parameters", "result", b"result"],
-  ) -> None: ...
+    PARAMETERS_FIELD_NUMBER: _builtins.int
+    RESULT_FIELD_NUMBER: _builtins.int
+    @_builtins.property
+    def parameters(self) -> Global___CTLParams: ...
+    @_builtins.property
+    def result(self) -> Global___CTLResult: ...
+    def __init__(
+        self,
+        *,
+        parameters: Global___CTLParams | None = ...,
+        result: Global___CTLResult | None = ...,
+    ) -> None: ...
+    _HasFieldArgType: _TypeAlias = _typing.Literal["parameters", b"parameters", "result", b"result"]  # noqa: Y015
+    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
+    _ClearFieldArgType: _TypeAlias = _typing.Literal["parameters", b"parameters", "result", b"result"]  # noqa: Y015
+    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
+    def WhichOneof(self, oneof_group: _Never) -> None: ...
 
-global___CTLInfo = CTLInfo
+Global___CTLInfo: _TypeAlias = CTLInfo  # noqa: Y015
 
-@typing.final
-class CTLFilterInfo(google.protobuf.message.Message):
-  DESCRIPTOR: google.protobuf.descriptor.Descriptor
+@_typing.final
+class CTLFilterInfo(_message.Message):
+    DESCRIPTOR: _descriptor.Descriptor
 
-  CTL_AS_FIELD_NUMBER: builtins.int
-  CTL_AS_B_FIELD_NUMBER: builtins.int
-  CTL_A_BS_FIELD_NUMBER: builtins.int
-  CTL_AS_B_C_FIELD_NUMBER: builtins.int
-  @property
-  def ctl_as(self) -> global___CTLInfo:
-    """CTL1: CTL_A*"""
+    CTL_AS_FIELD_NUMBER: _builtins.int
+    CTL_AS_B_FIELD_NUMBER: _builtins.int
+    CTL_A_BS_FIELD_NUMBER: _builtins.int
+    CTL_AS_B_C_FIELD_NUMBER: _builtins.int
+    @_builtins.property
+    def ctl_as(self) -> Global___CTLInfo:
+        """CTL1: CTL_A*"""
 
-  @property
-  def ctl_as_b(self) -> global___CTLInfo:
-    """CTL2: CTL_A*_B"""
+    @_builtins.property
+    def ctl_as_b(self) -> Global___CTLInfo:
+        """CTL2: CTL_A*_B"""
 
-  @property
-  def ctl_a_bs(self) -> global___CTLInfo:
-    """CTL3: CTL_A_B*"""
+    @_builtins.property
+    def ctl_a_bs(self) -> Global___CTLInfo:
+        """CTL3: CTL_A_B*"""
 
-  @property
-  def ctl_as_b_c(self) -> global___CTLInfo:
-    """CTL4: CTL_A*_B_C"""
+    @_builtins.property
+    def ctl_as_b_c(self) -> Global___CTLInfo:
+        """CTL4: CTL_A*_B_C"""
 
-  def __init__(
-    self,
-    *,
-    ctl_as: global___CTLInfo | None = ...,
-    ctl_as_b: global___CTLInfo | None = ...,
-    ctl_a_bs: global___CTLInfo | None = ...,
-    ctl_as_b_c: global___CTLInfo | None = ...,
-  ) -> None: ...
-  def HasField(
-    self,
-    field_name: typing.Literal[
-      "ctl_a_bs",
-      b"ctl_a_bs",
-      "ctl_as",
-      b"ctl_as",
-      "ctl_as_b",
-      b"ctl_as_b",
-      "ctl_as_b_c",
-      b"ctl_as_b_c",
-    ],
-  ) -> builtins.bool: ...
-  def ClearField(
-    self,
-    field_name: typing.Literal[
-      "ctl_a_bs",
-      b"ctl_a_bs",
-      "ctl_as",
-      b"ctl_as",
-      "ctl_as_b",
-      b"ctl_as_b",
-      "ctl_as_b_c",
-      b"ctl_as_b_c",
-    ],
-  ) -> None: ...
+    def __init__(
+        self,
+        *,
+        ctl_as: Global___CTLInfo | None = ...,
+        ctl_as_b: Global___CTLInfo | None = ...,
+        ctl_a_bs: Global___CTLInfo | None = ...,
+        ctl_as_b_c: Global___CTLInfo | None = ...,
+    ) -> None: ...
+    _HasFieldArgType: _TypeAlias = _typing.Literal["ctl_a_bs", b"ctl_a_bs", "ctl_as", b"ctl_as", "ctl_as_b", b"ctl_as_b", "ctl_as_b_c", b"ctl_as_b_c"]  # noqa: Y015
+    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
+    _ClearFieldArgType: _TypeAlias = _typing.Literal["ctl_a_bs", b"ctl_a_bs", "ctl_as", b"ctl_as", "ctl_as_b", b"ctl_as_b", "ctl_as_b_c", b"ctl_as_b_c"]  # noqa: Y015
+    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
+    def WhichOneof(self, oneof_group: _Never) -> None: ...
 
-global___CTLFilterInfo = CTLFilterInfo
+Global___CTLFilterInfo: _TypeAlias = CTLFilterInfo  # noqa: Y015
 
-@typing.final
-class BacktrackFilterParams(google.protobuf.message.Message):
-  DESCRIPTOR: google.protobuf.descriptor.Descriptor
+@_typing.final
+class BacktrackFilterParams(_message.Message):
+    DESCRIPTOR: _descriptor.Descriptor
 
-  NUM_STEPS_FIELD_NUMBER: builtins.int
-  MAX_WIDTH_FIELD_NUMBER: builtins.int
-  num_steps: builtins.int
-  """Maximum depth of BFS search tree to try before giving up."""
-  max_width: builtins.int
-  """Maximum width of BFS search tree to try before giving up."""
-  def __init__(
-    self,
-    *,
-    num_steps: builtins.int = ...,
-    max_width: builtins.int = ...,
-  ) -> None: ...
-  def ClearField(
-    self,
-    field_name: typing.Literal["max_width", b"max_width", "num_steps", b"num_steps"],
-  ) -> None: ...
+    NUM_STEPS_FIELD_NUMBER: _builtins.int
+    MAX_WIDTH_FIELD_NUMBER: _builtins.int
+    num_steps: _builtins.int
+    """Maximum depth of BFS search tree to try before giving up."""
+    max_width: _builtins.int
+    """Maximum width of BFS search tree to try before giving up."""
+    def __init__(
+        self,
+        *,
+        num_steps: _builtins.int = ...,
+        max_width: _builtins.int = ...,
+    ) -> None: ...
+    _HasFieldArgType: _TypeAlias = _Never  # noqa: Y015
+    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
+    _ClearFieldArgType: _TypeAlias = _typing.Literal["max_width", b"max_width", "num_steps", b"num_steps"]  # noqa: Y015
+    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
+    def WhichOneof(self, oneof_group: _Never) -> None: ...
 
-global___BacktrackFilterParams = BacktrackFilterParams
+Global___BacktrackFilterParams: _TypeAlias = BacktrackFilterParams  # noqa: Y015
 
-@typing.final
-class BacktrackFilterResult(google.protobuf.message.Message):
-  DESCRIPTOR: google.protobuf.descriptor.Descriptor
+@_typing.final
+class BacktrackFilterResult(_message.Message):
+    DESCRIPTOR: _descriptor.Descriptor
 
-  SUCCESS_FIELD_NUMBER: builtins.int
-  MAX_STEPS_FIELD_NUMBER: builtins.int
-  MAX_WIDTH_FIELD_NUMBER: builtins.int
-  NUM_NODES_FIELD_NUMBER: builtins.int
-  ELAPSED_TIME_US_FIELD_NUMBER: builtins.int
-  success: builtins.bool
-  max_steps: builtins.int
-  """Maximum depth of BFS search tree reached."""
-  max_width: builtins.int
-  """Maximum width of BFS search tree reached."""
-  num_nodes: builtins.int
-  """Number of nodes in BFS search tree."""
-  elapsed_time_us: builtins.int
-  """Stats"""
-  def __init__(
-    self,
-    *,
-    success: builtins.bool = ...,
-    max_steps: builtins.int = ...,
-    max_width: builtins.int = ...,
-    num_nodes: builtins.int = ...,
-    elapsed_time_us: builtins.int = ...,
-  ) -> None: ...
-  def ClearField(
-    self,
-    field_name: typing.Literal[
-      "elapsed_time_us",
-      b"elapsed_time_us",
-      "max_steps",
-      b"max_steps",
-      "max_width",
-      b"max_width",
-      "num_nodes",
-      b"num_nodes",
-      "success",
-      b"success",
-    ],
-  ) -> None: ...
+    SUCCESS_FIELD_NUMBER: _builtins.int
+    MAX_STEPS_FIELD_NUMBER: _builtins.int
+    MAX_WIDTH_FIELD_NUMBER: _builtins.int
+    NUM_NODES_FIELD_NUMBER: _builtins.int
+    ELAPSED_TIME_US_FIELD_NUMBER: _builtins.int
+    success: _builtins.bool
+    max_steps: _builtins.int
+    """Maximum depth of BFS search tree reached."""
+    max_width: _builtins.int
+    """Maximum width of BFS search tree reached."""
+    num_nodes: _builtins.int
+    """Number of nodes in BFS search tree."""
+    elapsed_time_us: _builtins.int
+    """Stats"""
+    def __init__(
+        self,
+        *,
+        success: _builtins.bool = ...,
+        max_steps: _builtins.int = ...,
+        max_width: _builtins.int = ...,
+        num_nodes: _builtins.int = ...,
+        elapsed_time_us: _builtins.int = ...,
+    ) -> None: ...
+    _HasFieldArgType: _TypeAlias = _Never  # noqa: Y015
+    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
+    _ClearFieldArgType: _TypeAlias = _typing.Literal["elapsed_time_us", b"elapsed_time_us", "max_steps", b"max_steps", "max_width", b"max_width", "num_nodes", b"num_nodes", "success", b"success"]  # noqa: Y015
+    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
+    def WhichOneof(self, oneof_group: _Never) -> None: ...
 
-global___BacktrackFilterResult = BacktrackFilterResult
+Global___BacktrackFilterResult: _TypeAlias = BacktrackFilterResult  # noqa: Y015
 
-@typing.final
-class BacktrackFilterInfo(google.protobuf.message.Message):
-  DESCRIPTOR: google.protobuf.descriptor.Descriptor
+@_typing.final
+class BacktrackFilterInfo(_message.Message):
+    DESCRIPTOR: _descriptor.Descriptor
 
-  PARAMETERS_FIELD_NUMBER: builtins.int
-  RESULT_FIELD_NUMBER: builtins.int
-  @property
-  def parameters(self) -> global___BacktrackFilterParams: ...
-  @property
-  def result(self) -> global___BacktrackFilterResult: ...
-  def __init__(
-    self,
-    *,
-    parameters: global___BacktrackFilterParams | None = ...,
-    result: global___BacktrackFilterResult | None = ...,
-  ) -> None: ...
-  def HasField(
-    self,
-    field_name: typing.Literal["parameters", b"parameters", "result", b"result"],
-  ) -> builtins.bool: ...
-  def ClearField(
-    self,
-    field_name: typing.Literal["parameters", b"parameters", "result", b"result"],
-  ) -> None: ...
+    PARAMETERS_FIELD_NUMBER: _builtins.int
+    RESULT_FIELD_NUMBER: _builtins.int
+    @_builtins.property
+    def parameters(self) -> Global___BacktrackFilterParams: ...
+    @_builtins.property
+    def result(self) -> Global___BacktrackFilterResult: ...
+    def __init__(
+        self,
+        *,
+        parameters: Global___BacktrackFilterParams | None = ...,
+        result: Global___BacktrackFilterResult | None = ...,
+    ) -> None: ...
+    _HasFieldArgType: _TypeAlias = _typing.Literal["parameters", b"parameters", "result", b"result"]  # noqa: Y015
+    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
+    _ClearFieldArgType: _TypeAlias = _typing.Literal["parameters", b"parameters", "result", b"result"]  # noqa: Y015
+    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
+    def WhichOneof(self, oneof_group: _Never) -> None: ...
 
-global___BacktrackFilterInfo = BacktrackFilterInfo
+Global___BacktrackFilterInfo: _TypeAlias = BacktrackFilterInfo  # noqa: Y015
 
-@typing.final
-class CPSFilterParams(google.protobuf.message.Message):
-  DESCRIPTOR: google.protobuf.descriptor.Descriptor
+@_typing.final
+class CPSFilterParams(_message.Message):
+    DESCRIPTOR: _descriptor.Descriptor
 
-  MIN_BLOCK_SIZE_FIELD_NUMBER: builtins.int
-  MAX_BLOCK_SIZE_FIELD_NUMBER: builtins.int
-  SEARCH_ALL_WINDOWS_FIELD_NUMBER: builtins.int
-  LRU_HISTORY_FIELD_NUMBER: builtins.int
-  FIXED_HISTORY_FIELD_NUMBER: builtins.int
-  MAX_STEPS_FIELD_NUMBER: builtins.int
-  MAX_ITERS_FIELD_NUMBER: builtins.int
-  MAX_CONFIGS_FIELD_NUMBER: builtins.int
-  MAX_EDGES_FIELD_NUMBER: builtins.int
-  min_block_size: builtins.int
-  """Parameters"""
-  max_block_size: builtins.int
-  search_all_windows: builtins.bool
-  lru_history: builtins.bool
-  fixed_history: builtins.int
-  max_steps: builtins.int
-  max_iters: builtins.int
-  max_configs: builtins.int
-  max_edges: builtins.int
-  def __init__(
-    self,
-    *,
-    min_block_size: builtins.int = ...,
-    max_block_size: builtins.int = ...,
-    search_all_windows: builtins.bool = ...,
-    lru_history: builtins.bool = ...,
-    fixed_history: builtins.int = ...,
-    max_steps: builtins.int = ...,
-    max_iters: builtins.int = ...,
-    max_configs: builtins.int = ...,
-    max_edges: builtins.int = ...,
-  ) -> None: ...
-  def ClearField(
-    self,
-    field_name: typing.Literal[
-      "fixed_history",
-      b"fixed_history",
-      "lru_history",
-      b"lru_history",
-      "max_block_size",
-      b"max_block_size",
-      "max_configs",
-      b"max_configs",
-      "max_edges",
-      b"max_edges",
-      "max_iters",
-      b"max_iters",
-      "max_steps",
-      b"max_steps",
-      "min_block_size",
-      b"min_block_size",
-      "search_all_windows",
-      b"search_all_windows",
-    ],
-  ) -> None: ...
+    MIN_BLOCK_SIZE_FIELD_NUMBER: _builtins.int
+    MAX_BLOCK_SIZE_FIELD_NUMBER: _builtins.int
+    SEARCH_ALL_WINDOWS_FIELD_NUMBER: _builtins.int
+    LRU_HISTORY_FIELD_NUMBER: _builtins.int
+    FIXED_HISTORY_FIELD_NUMBER: _builtins.int
+    MAX_STEPS_FIELD_NUMBER: _builtins.int
+    MAX_ITERS_FIELD_NUMBER: _builtins.int
+    MAX_CONFIGS_FIELD_NUMBER: _builtins.int
+    MAX_EDGES_FIELD_NUMBER: _builtins.int
+    min_block_size: _builtins.int
+    """Parameters"""
+    max_block_size: _builtins.int
+    search_all_windows: _builtins.bool
+    lru_history: _builtins.bool
+    fixed_history: _builtins.int
+    max_steps: _builtins.int
+    max_iters: _builtins.int
+    max_configs: _builtins.int
+    max_edges: _builtins.int
+    def __init__(
+        self,
+        *,
+        min_block_size: _builtins.int = ...,
+        max_block_size: _builtins.int = ...,
+        search_all_windows: _builtins.bool = ...,
+        lru_history: _builtins.bool = ...,
+        fixed_history: _builtins.int = ...,
+        max_steps: _builtins.int = ...,
+        max_iters: _builtins.int = ...,
+        max_configs: _builtins.int = ...,
+        max_edges: _builtins.int = ...,
+    ) -> None: ...
+    _HasFieldArgType: _TypeAlias = _Never  # noqa: Y015
+    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
+    _ClearFieldArgType: _TypeAlias = _typing.Literal["fixed_history", b"fixed_history", "lru_history", b"lru_history", "max_block_size", b"max_block_size", "max_configs", b"max_configs", "max_edges", b"max_edges", "max_iters", b"max_iters", "max_steps", b"max_steps", "min_block_size", b"min_block_size", "search_all_windows", b"search_all_windows"]  # noqa: Y015
+    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
+    def WhichOneof(self, oneof_group: _Never) -> None: ...
 
-global___CPSFilterParams = CPSFilterParams
+Global___CPSFilterParams: _TypeAlias = CPSFilterParams  # noqa: Y015
 
-@typing.final
-class CPSFilterResult(google.protobuf.message.Message):
-  DESCRIPTOR: google.protobuf.descriptor.Descriptor
+@_typing.final
+class CPSFilterResult(_message.Message):
+    DESCRIPTOR: _descriptor.Descriptor
 
-  SUCCESS_FIELD_NUMBER: builtins.int
-  BLOCK_SIZE_FIELD_NUMBER: builtins.int
-  WINDOW_SIZE_FIELD_NUMBER: builtins.int
-  NUM_STEPS_FIELD_NUMBER: builtins.int
-  NUM_CONFIGS_FIELD_NUMBER: builtins.int
-  NUM_EDGES_FIELD_NUMBER: builtins.int
-  NUM_ITERS_FIELD_NUMBER: builtins.int
-  FOUND_INF_LOOP_FIELD_NUMBER: builtins.int
-  ELAPSED_TIME_US_FIELD_NUMBER: builtins.int
-  success: builtins.bool
-  """Results"""
-  block_size: builtins.int
-  """Which parameters worked?"""
-  window_size: builtins.int
-  """TODO: Implement with offset?"""
-  num_steps: builtins.int
-  """Stats"""
-  num_configs: builtins.int
-  num_edges: builtins.int
-  num_iters: builtins.int
-  found_inf_loop: builtins.bool
-  elapsed_time_us: builtins.int
-  def __init__(
-    self,
-    *,
-    success: builtins.bool = ...,
-    block_size: builtins.int = ...,
-    window_size: builtins.int = ...,
-    num_steps: builtins.int = ...,
-    num_configs: builtins.int = ...,
-    num_edges: builtins.int = ...,
-    num_iters: builtins.int = ...,
-    found_inf_loop: builtins.bool = ...,
-    elapsed_time_us: builtins.int = ...,
-  ) -> None: ...
-  def ClearField(
-    self,
-    field_name: typing.Literal[
-      "block_size",
-      b"block_size",
-      "elapsed_time_us",
-      b"elapsed_time_us",
-      "found_inf_loop",
-      b"found_inf_loop",
-      "num_configs",
-      b"num_configs",
-      "num_edges",
-      b"num_edges",
-      "num_iters",
-      b"num_iters",
-      "num_steps",
-      b"num_steps",
-      "success",
-      b"success",
-      "window_size",
-      b"window_size",
-    ],
-  ) -> None: ...
+    SUCCESS_FIELD_NUMBER: _builtins.int
+    BLOCK_SIZE_FIELD_NUMBER: _builtins.int
+    WINDOW_SIZE_FIELD_NUMBER: _builtins.int
+    NUM_STEPS_FIELD_NUMBER: _builtins.int
+    NUM_CONFIGS_FIELD_NUMBER: _builtins.int
+    NUM_EDGES_FIELD_NUMBER: _builtins.int
+    NUM_ITERS_FIELD_NUMBER: _builtins.int
+    FOUND_INF_LOOP_FIELD_NUMBER: _builtins.int
+    ELAPSED_TIME_US_FIELD_NUMBER: _builtins.int
+    success: _builtins.bool
+    """Results"""
+    block_size: _builtins.int
+    """Which parameters worked?"""
+    window_size: _builtins.int
+    """TODO: Implement with offset?"""
+    num_steps: _builtins.int
+    """Stats"""
+    num_configs: _builtins.int
+    num_edges: _builtins.int
+    num_iters: _builtins.int
+    found_inf_loop: _builtins.bool
+    elapsed_time_us: _builtins.int
+    def __init__(
+        self,
+        *,
+        success: _builtins.bool = ...,
+        block_size: _builtins.int = ...,
+        window_size: _builtins.int = ...,
+        num_steps: _builtins.int = ...,
+        num_configs: _builtins.int = ...,
+        num_edges: _builtins.int = ...,
+        num_iters: _builtins.int = ...,
+        found_inf_loop: _builtins.bool = ...,
+        elapsed_time_us: _builtins.int = ...,
+    ) -> None: ...
+    _HasFieldArgType: _TypeAlias = _Never  # noqa: Y015
+    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
+    _ClearFieldArgType: _TypeAlias = _typing.Literal["block_size", b"block_size", "elapsed_time_us", b"elapsed_time_us", "found_inf_loop", b"found_inf_loop", "num_configs", b"num_configs", "num_edges", b"num_edges", "num_iters", b"num_iters", "num_steps", b"num_steps", "success", b"success", "window_size", b"window_size"]  # noqa: Y015
+    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
+    def WhichOneof(self, oneof_group: _Never) -> None: ...
 
-global___CPSFilterResult = CPSFilterResult
+Global___CPSFilterResult: _TypeAlias = CPSFilterResult  # noqa: Y015
 
-@typing.final
-class CPSFilterInfo(google.protobuf.message.Message):
-  DESCRIPTOR: google.protobuf.descriptor.Descriptor
+@_typing.final
+class CPSFilterInfo(_message.Message):
+    DESCRIPTOR: _descriptor.Descriptor
 
-  PARAMETERS_FIELD_NUMBER: builtins.int
-  RESULT_FIELD_NUMBER: builtins.int
-  @property
-  def parameters(self) -> global___CPSFilterParams: ...
-  @property
-  def result(self) -> global___CPSFilterResult: ...
-  def __init__(
-    self,
-    *,
-    parameters: global___CPSFilterParams | None = ...,
-    result: global___CPSFilterResult | None = ...,
-  ) -> None: ...
-  def HasField(
-    self,
-    field_name: typing.Literal["parameters", b"parameters", "result", b"result"],
-  ) -> builtins.bool: ...
-  def ClearField(
-    self,
-    field_name: typing.Literal["parameters", b"parameters", "result", b"result"],
-  ) -> None: ...
+    PARAMETERS_FIELD_NUMBER: _builtins.int
+    RESULT_FIELD_NUMBER: _builtins.int
+    @_builtins.property
+    def parameters(self) -> Global___CPSFilterParams: ...
+    @_builtins.property
+    def result(self) -> Global___CPSFilterResult: ...
+    def __init__(
+        self,
+        *,
+        parameters: Global___CPSFilterParams | None = ...,
+        result: Global___CPSFilterResult | None = ...,
+    ) -> None: ...
+    _HasFieldArgType: _TypeAlias = _typing.Literal["parameters", b"parameters", "result", b"result"]  # noqa: Y015
+    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
+    _ClearFieldArgType: _TypeAlias = _typing.Literal["parameters", b"parameters", "result", b"result"]  # noqa: Y015
+    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
+    def WhichOneof(self, oneof_group: _Never) -> None: ...
 
-global___CPSFilterInfo = CPSFilterInfo
+Global___CPSFilterInfo: _TypeAlias = CPSFilterInfo  # noqa: Y015
 
-@typing.final
-class FilterResults(google.protobuf.message.Message):
-  DESCRIPTOR: google.protobuf.descriptor.Descriptor
+@_typing.final
+class FilterResults(_message.Message):
+    DESCRIPTOR: _descriptor.Descriptor
 
-  SIMULATOR_FIELD_NUMBER: builtins.int
-  BLOCK_FINDER_FIELD_NUMBER: builtins.int
-  REVERSE_ENGINEER_FIELD_NUMBER: builtins.int
-  LIN_RECUR_FIELD_NUMBER: builtins.int
-  CTL_FIELD_NUMBER: builtins.int
-  BACKTRACK_FIELD_NUMBER: builtins.int
-  CPS_FIELD_NUMBER: builtins.int
-  @property
-  def simulator(self) -> global___SimulatorInfo:
-    """parameters, results and stats from various filters."""
+    SIMULATOR_FIELD_NUMBER: _builtins.int
+    BLOCK_FINDER_FIELD_NUMBER: _builtins.int
+    REVERSE_ENGINEER_FIELD_NUMBER: _builtins.int
+    LIN_RECUR_FIELD_NUMBER: _builtins.int
+    CTL_FIELD_NUMBER: _builtins.int
+    BACKTRACK_FIELD_NUMBER: _builtins.int
+    CPS_FIELD_NUMBER: _builtins.int
+    @_builtins.property
+    def simulator(self) -> Global___SimulatorInfo:
+        """parameters, results and stats from various filters."""
 
-  @property
-  def block_finder(self) -> global___BlockFinderInfo: ...
-  @property
-  def reverse_engineer(self) -> global___FilterInfo: ...
-  @property
-  def lin_recur(self) -> global___LinRecurFilterInfo: ...
-  @property
-  def ctl(self) -> global___CTLFilterInfo: ...
-  @property
-  def backtrack(self) -> global___BacktrackFilterInfo: ...
-  @property
-  def cps(self) -> global___CPSFilterInfo: ...
-  def __init__(
-    self,
-    *,
-    simulator: global___SimulatorInfo | None = ...,
-    block_finder: global___BlockFinderInfo | None = ...,
-    reverse_engineer: global___FilterInfo | None = ...,
-    lin_recur: global___LinRecurFilterInfo | None = ...,
-    ctl: global___CTLFilterInfo | None = ...,
-    backtrack: global___BacktrackFilterInfo | None = ...,
-    cps: global___CPSFilterInfo | None = ...,
-  ) -> None: ...
-  def HasField(
-    self,
-    field_name: typing.Literal[
-      "backtrack",
-      b"backtrack",
-      "block_finder",
-      b"block_finder",
-      "cps",
-      b"cps",
-      "ctl",
-      b"ctl",
-      "lin_recur",
-      b"lin_recur",
-      "reverse_engineer",
-      b"reverse_engineer",
-      "simulator",
-      b"simulator",
-    ],
-  ) -> builtins.bool: ...
-  def ClearField(
-    self,
-    field_name: typing.Literal[
-      "backtrack",
-      b"backtrack",
-      "block_finder",
-      b"block_finder",
-      "cps",
-      b"cps",
-      "ctl",
-      b"ctl",
-      "lin_recur",
-      b"lin_recur",
-      "reverse_engineer",
-      b"reverse_engineer",
-      "simulator",
-      b"simulator",
-    ],
-  ) -> None: ...
+    @_builtins.property
+    def block_finder(self) -> Global___BlockFinderInfo: ...
+    @_builtins.property
+    def reverse_engineer(self) -> Global___FilterInfo: ...
+    @_builtins.property
+    def lin_recur(self) -> Global___LinRecurFilterInfo: ...
+    @_builtins.property
+    def ctl(self) -> Global___CTLFilterInfo: ...
+    @_builtins.property
+    def backtrack(self) -> Global___BacktrackFilterInfo: ...
+    @_builtins.property
+    def cps(self) -> Global___CPSFilterInfo: ...
+    def __init__(
+        self,
+        *,
+        simulator: Global___SimulatorInfo | None = ...,
+        block_finder: Global___BlockFinderInfo | None = ...,
+        reverse_engineer: Global___FilterInfo | None = ...,
+        lin_recur: Global___LinRecurFilterInfo | None = ...,
+        ctl: Global___CTLFilterInfo | None = ...,
+        backtrack: Global___BacktrackFilterInfo | None = ...,
+        cps: Global___CPSFilterInfo | None = ...,
+    ) -> None: ...
+    _HasFieldArgType: _TypeAlias = _typing.Literal["backtrack", b"backtrack", "block_finder", b"block_finder", "cps", b"cps", "ctl", b"ctl", "lin_recur", b"lin_recur", "reverse_engineer", b"reverse_engineer", "simulator", b"simulator"]  # noqa: Y015
+    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
+    _ClearFieldArgType: _TypeAlias = _typing.Literal["backtrack", b"backtrack", "block_finder", b"block_finder", "cps", b"cps", "ctl", b"ctl", "lin_recur", b"lin_recur", "reverse_engineer", b"reverse_engineer", "simulator", b"simulator"]  # noqa: Y015
+    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
+    def WhichOneof(self, oneof_group: _Never) -> None: ...
 
-global___FilterResults = FilterResults
+Global___FilterResults: _TypeAlias = FilterResults  # noqa: Y015
 
-@typing.final
-class TMRecord(google.protobuf.message.Message):
-  """The top level message for a TM. It contains:
-  * TM specification (ttable)
-  * Results for all simulations and filters that have been run
-  * Concluded "Statuses" for Halting, etc. conditions
-  """
+@_typing.final
+class TMRecord(_message.Message):
+    """The top level message for a TM. It contains:
+     * TM specification (ttable)
+     * Results for all simulations and filters that have been run
+     * Concluded "Statuses" for Halting, etc. conditions
+    """
 
-  DESCRIPTOR: google.protobuf.descriptor.Descriptor
+    DESCRIPTOR: _descriptor.Descriptor
 
-  SPEC_VERSION_FIELD_NUMBER: builtins.int
-  TM_FIELD_NUMBER: builtins.int
-  STATUS_FIELD_NUMBER: builtins.int
-  FILTER_FIELD_NUMBER: builtins.int
-  ELAPSED_TIME_US_FIELD_NUMBER: builtins.int
-  spec_version: builtins.int
-  """Version of the specification this Protobuf was written for.
+    SPEC_VERSION_FIELD_NUMBER: _builtins.int
+    TM_FIELD_NUMBER: _builtins.int
+    STATUS_FIELD_NUMBER: _builtins.int
+    FILTER_FIELD_NUMBER: _builtins.int
+    ELAPSED_TIME_US_FIELD_NUMBER: _builtins.int
+    spec_version: _builtins.int
+    """Version of the specification this Protobuf was written for.
     Version only needs to change in case non-backwards/forwards compatible
     changes are made to the specification (changing message hierarchy or
     tag numbers).
     """
-  elapsed_time_us: builtins.int
-  """Total time spent on this TM (across all filters).
+    elapsed_time_us: _builtins.int
+    """Total time spent on this TM (across all filters).
     TODO: For now it will be reset each time we run a filter, change this to
     add each time.
     """
-  @property
-  def tm(self) -> global___TuringMachine: ...
-  @property
-  def status(self) -> global___BBStatus:
-    """Status of this machine with respect to BB, BBB, etc. criteria."""
+    @_builtins.property
+    def tm(self) -> Global___TuringMachine: ...
+    @_builtins.property
+    def status(self) -> Global___BBStatus:
+        """Status of this machine with respect to BB, BBB, etc. criteria."""
 
-  @property
-  def filter(self) -> global___FilterResults:
-    """Detailed results and stats for all filters run."""
+    @_builtins.property
+    def filter(self) -> Global___FilterResults:
+        """Detailed results and stats for all filters run."""
 
-  def __init__(
-    self,
-    *,
-    spec_version: builtins.int = ...,
-    tm: global___TuringMachine | None = ...,
-    status: global___BBStatus | None = ...,
-    filter: global___FilterResults | None = ...,
-    elapsed_time_us: builtins.int = ...,
-  ) -> None: ...
-  def HasField(
-    self,
-    field_name: typing.Literal["filter", b"filter", "status", b"status", "tm", b"tm"],
-  ) -> builtins.bool: ...
-  def ClearField(
-    self,
-    field_name: typing.Literal[
-      "elapsed_time_us",
-      b"elapsed_time_us",
-      "filter",
-      b"filter",
-      "spec_version",
-      b"spec_version",
-      "status",
-      b"status",
-      "tm",
-      b"tm",
-    ],
-  ) -> None: ...
+    def __init__(
+        self,
+        *,
+        spec_version: _builtins.int = ...,
+        tm: Global___TuringMachine | None = ...,
+        status: Global___BBStatus | None = ...,
+        filter: Global___FilterResults | None = ...,
+        elapsed_time_us: _builtins.int = ...,
+    ) -> None: ...
+    _HasFieldArgType: _TypeAlias = _typing.Literal["filter", b"filter", "status", b"status", "tm", b"tm"]  # noqa: Y015
+    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
+    _ClearFieldArgType: _TypeAlias = _typing.Literal["elapsed_time_us", b"elapsed_time_us", "filter", b"filter", "spec_version", b"spec_version", "status", b"status", "tm", b"tm"]  # noqa: Y015
+    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
+    def WhichOneof(self, oneof_group: _Never) -> None: ...
 
-global___TMRecord = TMRecord
+Global___TMRecord: _TypeAlias = TMRecord  # noqa: Y015

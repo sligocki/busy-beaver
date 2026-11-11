@@ -255,6 +255,10 @@ def simulate_machine(
       over_steps_in_macro_info.macro_state = str(sim.state)
       over_steps_in_macro_info.macro_dir_is_right = sim.dir == Turing_Machine.RIGHT
 
+    elif sim.op_state == Turing_Machine.EXPRESSION_TOO_COMPLEX:
+      over_expr_info = sim_info.result.unknown_info.over_expression_too_complex
+      over_expr_info.detail = str(sim.op_details[0]) if sim.op_details else ""
+
     elif sim.op_state == Turing_Machine.INF_REPEAT:
       Halting_Lib.set_not_halting(bb_status, sim.inf_reason)
 

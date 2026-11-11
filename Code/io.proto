@@ -210,6 +210,10 @@ message OverStepsInMacroInfo {
   bool macro_dir_is_right = 3;
 }
 
+message ExpressionTooComplexInfo {
+  string detail = 1;
+}
+
 message UnknownInfo {
   oneof reason {
     OverLoopsInfo over_loops = 1;
@@ -217,6 +221,7 @@ message UnknownInfo {
     OverTimeInfo over_time = 3;
     OverStepsInMacroInfo over_steps_in_macro = 4;
     bool threw_exception = 5;
+    ExpressionTooComplexInfo over_expression_too_complex = 6;
   }
 }
 
