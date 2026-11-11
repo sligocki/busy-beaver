@@ -849,6 +849,7 @@ class Proof_System:
     if len(matching_rules) > 1:
       matching_rules.sort(key=self._rule_priority, reverse=True)
 
+    has_matching_rule = False
     for rule in matching_rules:
       is_good, res = self.apply_rule(rule, full_config)
       if is_good:
@@ -865,6 +866,11 @@ class Proof_System:
         rule.num_uses += 1
         assert isinstance(result, ProverResult), result
         return result
+      has_matching_rule = True
+
+    if has_matching_rule:
+      return ProverResult(NOTHING_TO_DO)
+    return None
 
   def add_rule(self, rule, stripped_config):
     """Add a proven rule"""
@@ -984,7 +990,7 @@ class Proof_System:
           self.print_this("[PROVER FAILURE] Exponent below min **")
           self.print_this(gen_sim.tape.print_with_state(gen_sim.state))
           print()
-        return False
+        return None
 
       gen_sim.step()
       self.num_loops += 1
@@ -994,7 +1000,7 @@ class Proof_System:
           print()
           self.print_this("[PROVER FAILURE] Machine stopped running:", gen_sim.op_state)
           print()
-        return False
+        return None
       # Update min_val for each expression.
       # TODO: We only need to update for the blocks on each side of head.
       # TODO: Better yet, build these checks into the data type!
@@ -1007,7 +1013,7 @@ class Proof_System:
               self.print_this("[PROVER FAILURE] Multiple vars in one term **")
               self.print_this(gen_sim.tape)
               print()
-            return False
+            return None
           elif len(vars) == 1:
             x = list(vars)[0]
             min_val[x] = min(min_val[x], ae.min_val(block.num))
@@ -1022,7 +1028,7 @@ class Proof_System:
         self.print_this(gen_stripped_config)
         self.print_this(stripped_config)
         print()
-      return False
+      return None
 
     # Compute the rule level: 1 + the highest level of any rule used in the proof.
     # Level 1 = proven from raw simulation; Level N = uses Level N-1 rules in proof.

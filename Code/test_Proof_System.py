@@ -378,6 +378,7 @@ class ProofSystemTest(unittest.TestCase):
     self.options.exp_linear_rules = True
     self.options.exp_meta_linear_rules = True
     self.options.compute_steps = False
+    self.options.limited_rules = False
     # Only allow General_Rules to be applied once so that we can see the result directly.
     self.options.max_num_reps = 1
     prover = Proof_System.Proof_System(tm, self.options, "")
@@ -544,6 +545,7 @@ class ProofSystemTest(unittest.TestCase):
     self.options.exp_linear_rules = True
     self.options.exp_meta_linear_rules = True
     self.options.compute_steps = True
+    self.options.limited_rules = False
     self.options.max_num_reps = 3
     prover = Proof_System.Proof_System(tm, self.options, "")
 
