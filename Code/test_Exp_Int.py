@@ -170,6 +170,17 @@ class ExpIntTest(unittest.TestCase):
     with self.assertRaises(Exp_Int.ExpIntGaveUp):
       exp_int(2, x)
 
+  def test_lazy_formula_str(self):
+    x = exp_int(2, 500)
+    # formula_str should not be computed initially in __dict__
+    self.assertNotIn("formula_str", x.__dict__)
+    self.assertNotIn("formula_str", x.terms[0].__dict__)
+    # Accessing formula_str computes and caches it
+    expected = "(2^500)"
+    self.assertEqual(x.formula_str, expected)
+    self.assertEqual(str(x), expected)
+    self.assertIn("formula_str", x.__dict__)
+
   def test_legacy_unpickle_eval(self):
     import pickle
 

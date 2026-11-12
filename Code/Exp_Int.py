@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import math
 from fractions import Fraction
-from functools import lru_cache
+from functools import cached_property, lru_cache
 
 from Algebraic_Expression import Expression, min_val, substitute, variables
 from Big_Interval import BigInterval
@@ -206,10 +206,6 @@ class ExpTerm:
     self.normalize()
     self.sign = sign(self.coef)
     self.eval()
-    self.formula_str = f"{self.base}^{self.exponent}"
-    if self.coef != 1:
-      self.formula_str = f"{self.coef} * {self.formula_str}"
-
     self.depth = exp_int_depth(self.exponent) + 1
 
   def normalize(self):
@@ -297,6 +293,19 @@ class ExpTerm:
     assert self.base == other.base
     return ExpTerm(self.base, self.coef * other.coef, self.exponent + other.exponent)
 
+  @cached_property
+  def formula_str(self) -> str:
+    res = f"{self.base}^{self.exponent}"
+    if self.coef != 1:
+      res = f"{self.coef} * {res}"
+    return res
+
+  def __repr__(self):
+    return self.formula_str
+
+  def __str__(self):
+    return self.formula_str
+
 
 def normalize_terms(terms):
   """Simplify sum of ExpTerms by combining ones that we can."""
@@ -363,12 +372,6 @@ class ExpInt(NatExpr):
     if self.depth > MAX_DEPTH:
       raise ExpIntGaveUp(f"Too many layers of ExpInt: {self.depth}")
 
-    self.formula_str = " + ".join(term.formula_str for term in self.terms)
-    if self.const != 0:
-      self.formula_str = f"{self.const} + {self.formula_str}"
-    if self.denom != 1:
-      self.formula_str = f"({self.formula_str})/{self.denom}"
-    self.formula_str = f"({self.formula_str})"
     self.eval()
 
     bases = frozenset(term.base for term in terms)
@@ -476,6 +479,15 @@ class ExpInt(NatExpr):
 
   def tex_formula(self):
     return tex_formula(self)
+
+  @cached_property
+  def formula_str(self) -> str:
+    res = " + ".join(term.formula_str for term in self.terms)
+    if self.const != 0:
+      res = f"{self.const} + {res}"
+    if self.denom != 1:
+      res = f"({res})/{self.denom}"
+    return f"({res})"
 
   def __repr__(self):
     return self.formula_str
