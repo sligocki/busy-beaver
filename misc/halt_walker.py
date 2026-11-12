@@ -346,19 +346,57 @@ class Fract24(Sim):
     return ([0, 0, 2 * h, 0, 0], h)
 
 
+# The Rounding Game (by AlephSquirrel):
+#   A program is a reduced fraction n/d with d > 1 odd
+#   State is (h_k, w_k) in Z
+#   Start: (h_0, w_0) = (1, 0)
+#   Step: h_{k+1} = round(h_k * n/d)
+#         w_{k+1} = w_k + d (h_k * n/d - h_{k+1}) = w_k + n h_k - d h_{k+1}
+#   Halts the moment that w has visited both negative and positive numbers.
+#     aka Halt: min {k | exists 0 < j < k, w_j * w_k < 0}
+#             = min {k | w_k * w_1 < 0}  (since w_1 is never 0 since d doesn't divide n)
+# See: https://discord.com/channels/960643023006490684/1570504987346472960
+class RoundingGame(Sim):
+  def __init__(self, numer: int, denom: int):
+    self.mod_in = mpz(denom)
+    self.mod_out = mpz(numer)
+    self.mod_time = 0
+    # First step always moves in one direction or the other!
+    self.sign = 1 if 2 * (numer % denom) < denom else -1
+    super().__init__(Config(1, 0), 0)
+
+  def divround(self, a, b):
+    k, r = divmod(a, b)
+    if 2 * r > b:
+      # Round up
+      k += 1
+      r -= b
+    # print(f"divround({a}, {b}) = ({k}, {r})")
+    return (k, int(r))
+
+  def try_sim_step(self, h: mpz, w: int) -> StepResult | None:
+    h_new, r = self.divround(h * self.mod_out, int(self.mod_in))
+    # h_new d + r = h n  -> r = h n - h_new d
+    w += r
+    if w * self.sign < 0:
+      # Sign flip -> Halt
+      return None
+    return StepResult(Config(h_new, w), 1)
+
+  def apply_halt_step(self, h: mpz) -> tuple[list[mpz], mpz]:
+    return ([], 1)
+
+
 def main():
   parser = argparse.ArgumentParser()
-  parser.add_argument("start_value", type=int, nargs="?", default=1)
-  parser.add_argument("start_offset", type=int, nargs="?", default=2)
-  parser.add_argument("init_runtime", type=int, nargs="?", default=3, help="TM steps until start config")
+  parser.add_argument("numer", type=int)
+  parser.add_argument("denom", type=int)
   parser.add_argument(
     "--plot", type=int, metavar="STEP_POW", help="Generate a plot of w over time with resolution 2**STEP_POW"
   )
   args = parser.parse_args()
 
-  start_config = Config(args.start_value, args.start_offset)
-
-  sim = Fract24(start_config, args.init_runtime)
+  sim = RoundingGame(args.numer, args.denom)
   if args.plot is not None:
     sim.plot_walk(step_pow=args.plot)
   else:
