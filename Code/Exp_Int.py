@@ -13,7 +13,7 @@ from functools import cached_property, lru_cache
 from Algebraic_Expression import Expression, min_val, substitute, variables
 from Big_Interval import BigInterval
 from Math import exp_mod, gcd, int_pow, lcm, prec_add, prec_mult
-from NatExpr import ConstInt, NatExpr, is_const
+from NatExpr import ConstInt, NatExpr, is_const, to_BigInterval
 
 # If x < 10^EXP_THRESHOLD, evaluate it as an int
 # if x > 10^EXP_THRESHOLD, only consider as formula
@@ -188,11 +188,11 @@ class ExpTerm:
       return self.sign * top
     return None
 
-  def to_BigInterval(self):
-    b = BigInterval(self.base)
-    n = self.exponent.to_BigInterval() if isinstance(self.exponent, NatExpr) else BigInterval(self.exponent)
-    c = BigInterval(self.coef)
-    return (b**n) * c
+  def _pow_bi(self, env=None):
+    return to_BigInterval(self.base, env) ** to_BigInterval(self.exponent, env)
+
+  def to_BigInterval(self, env=None):
+    return self._pow_bi(env) * to_BigInterval(self.coef, env)
 
   def __init__(self, base: int, coef: int, exponent):
     assert isinstance(base, int), base
@@ -346,15 +346,30 @@ class ExpInt(NatExpr):
       return self.sign * top
     return None
 
-  def to_BigInterval(self):
-    return self._to_big_interval()
+  def to_BigInterval(self, env=None):
+    if env is None:
+      return self._to_big_interval()
+    return self._eval_big_interval(env)
 
   @lru_cache
   def _to_big_interval(self):
-    res = BigInterval(0)
+    return self._eval_big_interval(None)
+
+  def _eval_big_interval(self, env):
+    pos_bi = BigInterval(0)
+    neg_bi = BigInterval(0)
     for term in self.terms:
-      res = res + term.to_BigInterval()
-    res = (res + BigInterval(self.const)) / BigInterval(self.denom)
+      if isinstance(term.coef, int) and term.coef < 0:
+        neg_bi = neg_bi + term._pow_bi(env) * BigInterval(-term.coef)
+      else:
+        pos_bi = pos_bi + term.to_BigInterval(env)
+    if isinstance(self.const, int) and self.const < 0:
+      neg_bi = neg_bi + BigInterval(-self.const)
+    else:
+      pos_bi = pos_bi + to_BigInterval(self.const, env)
+    res = pos_bi - neg_bi
+    if self.denom != 1:
+      res = res / to_BigInterval(self.denom, env)
     return res
 
   def __init__(self, terms: list[ExpTerm], const: int, denom: int):

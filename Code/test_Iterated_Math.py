@@ -152,6 +152,35 @@ class TestIteratedMath(unittest.TestCase):
     self.assertEqual(nonzeros2.uparrow_size_approx, ei_arr4.uparrow_size_approx)
     self.assertEqual(nonzeros2.approx_str(), ei_arr4.approx_str())
 
+  def test_to_big_interval(self):
+    bi1 = self.it1.to_BigInterval()
+    self.assertEqual(bi1.lower.args, (101,))
+    self.assertEqual(bi1.upper.args, (101,))
+
+    bi2 = self.it2.to_BigInterval()
+    self.assertEqual(str(bi2), str((self.expr_x.to_BigInterval({self.x: 2}) ** 200)))
+
+    bi_math = (3 * self.it1 + 5).to_BigInterval()
+    self.assertEqual(bi_math.lower.args, (308,))
+    self.assertEqual(bi_math.upper.args, (308,))
+
+    bi_sub = (self.it2 - self.it1).to_BigInterval()
+    self.assertTrue(bi_sub.lower >= bi2.lower.div10())
+
+    # Exponential step with negative offset and nested hyper-exponential step
+    f_exp = exp_int(2, self.expr_x) - 3
+    it_exp = Iterated_Expression(f_exp, self.x, 10, 100)
+    bi_exp = it_exp.to_BigInterval()
+    self.assertEqual(bi_exp.lower.args[1:], (98,))
+
+    f_hyper = Iterated_Expression(exp_int(2, self.expr_x), self.x, 2, self.expr_x)
+    it_hyper = Iterated_Expression(f_hyper, self.x, 10, 5)
+    bi_hyper = it_hyper.to_BigInterval()
+    self.assertEqual(len(bi_hyper.lower.args), 3)
+    self.assertEqual(len(bi_hyper.upper.args), 3)
+    self.assertEqual(bi_hyper.lower.args[2], bi_hyper.upper.args[2])
+    self.assertGreaterEqual(bi_hyper.lower.args[2], 3)
+
 
 if __name__ == "__main__":
   unittest.main()

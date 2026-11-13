@@ -10,7 +10,7 @@ from fractions import Fraction
 from functools import reduce
 
 from Big_Interval import BigInterval
-from NatExpr import NatExpr, is_const
+from NatExpr import NatExpr, is_const, to_BigInterval
 
 
 class BadOperation(Exception):
@@ -278,11 +278,26 @@ class Expression(NatExpr):
       return self.const.try_eval()
     return self.const
 
-  def to_BigInterval(self):
-    assert self.is_const, self
-    if isinstance(self.const, NatExpr):
-      return self.const.to_BigInterval()
-    return BigInterval(self.const)
+  def to_BigInterval(self, env=None):
+    if self.is_const:
+      return to_BigInterval(self.const, env)
+    assert env is not None, self
+    pos_bi = BigInterval(0)
+    neg_bi = BigInterval(0)
+    for term in self.terms:
+      term_val = BigInterval(1)
+      for vp in term.vars:
+        base_bi = to_BigInterval(env[vp.var], env)
+        term_val = term_val * (base_bi if vp.pow == 1 else (base_bi ** BigInterval(vp.pow)))
+      if isinstance(term.coef, int) and term.coef < 0:
+        neg_bi = neg_bi + term_val * BigInterval(-term.coef)
+      else:
+        pos_bi = pos_bi + term_val * to_BigInterval(term.coef, env)
+    if isinstance(self.const, int) and self.const < 0:
+      neg_bi = neg_bi + BigInterval(-self.const)
+    else:
+      pos_bi = pos_bi + to_BigInterval(self.const, env)
+    return pos_bi - neg_bi
 
   @property
   def uparrow_size_approx(self):

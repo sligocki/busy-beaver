@@ -4,6 +4,8 @@ import abc
 import fractions
 import math
 
+from Big_Interval import BigInterval
+
 
 def is_scalar(value) -> bool:
   return isinstance(value, (int, float, fractions.Fraction))
@@ -15,6 +17,39 @@ def is_const(value) -> bool:
   return value.is_const
 
 
+def to_BigInterval(value, env=None):
+  """Convert a BigInterval, NatExpr, Variable, or int into a BigInterval."""
+  if isinstance(value, BigInterval):
+    return value
+  if isinstance(value, NatExpr):
+    return value.to_BigInterval(env)
+  if type(value).__name__ == "Variable":
+    assert env is not None and value in env, f"Unbound variable {value}"
+    return to_BigInterval(env[value], env)
+  return BigInterval(value)
+
+
+def big_interval_str(value) -> str:
+  if value is None:
+    return "N/A"
+  if type(value).__name__ == "Variable":
+    return str(value)
+  expr = NatExpr.wrap(value)
+  if expr.is_inf or not expr.is_const:
+    return expr.approx_str()
+  val_int = expr.try_eval()
+  if val_int is not None and abs(val_int) < 10**10:
+    return f"{val_int:_}"
+  try:
+    bi = expr.to_BigInterval()
+  except (NotImplementedError, AssertionError, ValueError):
+    return expr.approx_str()
+  s = str(bi)
+  if len(s) <= 80:
+    return s
+  return bi.approx_str()
+
+
 def approx_str(value) -> str:
   if value is None:
     return "N/A"
@@ -23,12 +58,12 @@ def approx_str(value) -> str:
   return NatExpr.wrap(value).approx_str()
 
 
-def approx_and_full_str(value, max_chars: int = 100) -> str:
+def approx_and_full_str(value, max_chars: int = 100, use_big_interval: bool = True) -> str:
   if value is None:
     return "N/A"
   if type(value).__name__ == "Variable":
     return str(value)
-  approx = approx_str(value)
+  approx = big_interval_str(value) if use_big_interval else approx_str(value)
   full = str(value)
   if approx == full:
     return approx
@@ -38,12 +73,12 @@ def approx_and_full_str(value, max_chars: int = 100) -> str:
     return f"{approx} ({full})"
 
 
-def approx_or_full_str(value, max_chars: int = 100) -> str:
+def approx_or_full_str(value, max_chars: int = 100, use_big_interval: bool = True) -> str:
   if value is None:
     return "N/A"
   if type(value).__name__ == "Variable":
     return str(value)
-  approx = approx_str(value)
+  approx = big_interval_str(value) if use_big_interval else approx_str(value)
   full = str(value)
   if not max_chars or len(full) <= max_chars:
     return full
@@ -126,7 +161,7 @@ class NatExpr(abc.ABC):
     height = height - 1 + top
     return f"~ 10^^{height:_.1f}"
 
-  def to_BigInterval(self):
+  def to_BigInterval(self, env=None):
     raise NotImplementedError(f"to_BigInterval not implemented for {type(self)}")
 
 
@@ -161,9 +196,7 @@ class ConstInt(NatExpr):
       return f"{self.val:_}"
     return super().approx_str()
 
-  def to_BigInterval(self):
-    from Big_Interval import BigInterval
-
+  def to_BigInterval(self, env=None):
     return BigInterval(self.val)
 
   # Standard Magic Methods

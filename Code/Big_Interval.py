@@ -84,6 +84,8 @@ class Knuth10:
       for i in range(1, len(a)):
         if a[i] > 0:
           a[i] -= 1
+          if i >= 2:
+            a[i - 1] = self.MAX_A
           return Knuth10(*a)
       return Knuth10(0)
 
@@ -94,14 +96,16 @@ class Knuth10:
         return Knuth10.lower_bound_from_int(10 ** a[0])
       a.append(1)
       return Knuth10(*a)
-    a[1] += 1
-    if a[1] > self.MAX_A:
-      a[1] = 0
-      if len(a) == 2:
-        a.append(0)
-      a[2] += 1
-      a[0] = self.C
-    return Knuth10(*a)
+    if len(a) == 2:
+      a[1] += 1
+      if a[1] > self.MAX_A:
+        if a[0] >= 10**10:
+          return Knuth10(self.C, 0, 1)
+        return Knuth10(10 ** (self.C - 1), self.MAX_A)
+      return Knuth10(*a)
+    if len(a) == 3 and a[1] == 0 and a[2] == 1:
+      return self.safe_upper_bound()
+    return self
 
   def apply_g1_upper(self):
     a = list(self.args)
@@ -110,15 +114,45 @@ class Knuth10:
         return Knuth10.upper_bound_from_int(10 ** a[0])
       a.append(1)
       return Knuth10(*a)
-    a[1] += 1
-    for i in range(1, len(a)):
-      if a[i] > self.MAX_A:
-        a[i] = 0
-        if len(a) == i + 1:
-          a.append(0)
-        a[i + 1] += 1
-        a[0] = self.C + 1
-    return Knuth10(*a)
+    if len(a) == 2:
+      a[1] += 1
+      if a[1] > self.MAX_A:
+        return Knuth10(self.C + 1, 0, 1)
+      return Knuth10(*a)
+    return self.safe_upper_bound()
+
+  def apply_gk(self, k: int, is_upper: bool = False) -> Knuth10:
+    """Apply g_k(x) = 10 ↑^k x to this Knuth10 value."""
+    if k == 1:
+      return self.apply_g1_upper() if is_upper else self.apply_g1()
+    a = list(self.args)
+    if len(a) == 1 and a[0] < self.C:
+      n = a[0]
+      if n == 0:
+        return Knuth10(1)
+      if n == 1:
+        return Knuth10(10)
+      cur = Knuth10(10)
+      for _ in range(n - 1):
+        cur = cur.apply_gk(k - 1, is_upper=is_upper)
+      return cur
+    if len(a) <= k:
+      while len(a) < k:
+        a.append(0)
+      a.append(1)
+      return Knuth10(*a)
+    if len(a) == k + 1:
+      a[k] += 1
+      if a[k] > self.MAX_A:
+        if is_upper:
+          return Knuth10(*([self.C + 1] + [0] * k + [1]))
+        if a[0] >= 10**10 or any(a[1:k]):
+          return Knuth10(*([self.C] + [0] * k + [1]))
+        return Knuth10(*([10 ** (self.C - 1)] + [0] * (k - 1) + [self.MAX_A]))
+      return Knuth10(*a)
+    if len(a) == k + 2 and all(x == 0 for x in a[1 : k + 1]) and a[k + 1] == 1:
+      return self.safe_upper_bound()
+    return self.safe_upper_bound() if is_upper else self
 
   def __lt__(self, other):
     if not isinstance(other, Knuth10):
@@ -217,10 +251,10 @@ class BigInterval:
   def __init__(self, lower, upper=None):
     if upper is None:
       upper = lower
-    if isinstance(lower, int):
-      lower = Knuth10.lower_bound_from_int(lower)
-    if isinstance(upper, int):
-      upper = Knuth10.upper_bound_from_int(upper)
+    if not isinstance(lower, Knuth10):
+      lower = Knuth10.lower_bound_from_int(int(lower))
+    if not isinstance(upper, Knuth10):
+      upper = Knuth10.upper_bound_from_int(int(upper))
 
     self.lower: Knuth10 = lower
     self.upper: Knuth10 = upper
@@ -241,6 +275,10 @@ class BigInterval:
   def __add__(self, other):
     if not isinstance(other, BigInterval):
       other = BigInterval(other)
+    if other.lower == Knuth10(0) and other.upper == Knuth10(0):
+      return self
+    if self.lower == Knuth10(0) and self.upper == Knuth10(0):
+      return other
 
     v_self_l = self.lower.try_eval()
     v_other_l = other.lower.try_eval()
@@ -257,6 +295,36 @@ class BigInterval:
       new_upper = max(self.upper, other.upper).safe_upper_bound()
 
     return BigInterval(new_lower, new_upper)
+
+  def __sub__(self, other):
+    if not isinstance(other, BigInterval):
+      other = BigInterval(other)
+    if other.lower == Knuth10(0) and other.upper == Knuth10(0):
+      return self
+    if self.upper < other.lower:
+      raise ValueError(f"Subtraction would be negative: {self} - {other}")
+
+    v_self_l = self.lower.try_eval()
+    v_other_u = other.upper.try_eval()
+    if v_self_l is not None and v_other_u is not None:
+      new_lower = Knuth10.lower_bound_from_int(max(0, v_self_l - v_other_u))
+    elif other.upper <= self.lower.div10():
+      new_lower = self.lower.div10()
+    else:
+      new_lower = Knuth10(0)
+
+    v_self_u = self.upper.try_eval()
+    v_other_l = other.lower.try_eval()
+    if v_self_u is not None and v_other_l is not None:
+      new_upper = Knuth10.upper_bound_from_int(max(0, v_self_u - v_other_l))
+    else:
+      new_upper = self.upper
+
+    return BigInterval(new_lower, new_upper)
+
+  def apply_uparrow(self, k: int) -> BigInterval:
+    """Apply g_k(x) = 10 ↑^k x to this interval."""
+    return BigInterval(self.lower.apply_gk(k, is_upper=False), self.upper.apply_gk(k, is_upper=True))
 
   def __mul__(self, other):
     if not isinstance(other, BigInterval):
@@ -337,6 +405,9 @@ class BigInterval:
         new_lower = self.lower
       elif self.lower >= Knuth10(10):
         new_lower = other.lower.apply_g1()
+      elif self.lower >= Knuth10(2) and len(other.lower.args) >= 3:
+        # For b >= 2 and X >= 10^^C, b^X > 10^(X/4) > X
+        new_lower = other.lower
       else:
         if len(other.lower.args) == 1 and len(self.lower.args) == 1:
           l_b = self.lower.args[0]
@@ -388,8 +459,14 @@ class BigInterval:
     if v_self_l is not None and v_other_u is not None:
       new_lower = Knuth10.lower_bound_from_int(v_self_l / v_other_u)
     else:
-      if v_other_u is not None and v_other_u <= 10:
-        new_lower = self.lower.div10()
+      if v_other_u is not None and v_other_u >= 1:
+        num_divs = 1 if v_other_u <= 10 else len(str(int(math.ceil(v_other_u))))
+        cur = self.lower
+        for _ in range(num_divs):
+          cur = cur.div10()
+          if cur == Knuth10(0):
+            break
+        new_lower = cur
       else:
         return NotImplemented
 

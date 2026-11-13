@@ -13,7 +13,7 @@ from optparse import OptionGroup, OptionParser
 import io_pb2
 from Algebraic_Expression import Algebraic_Expression
 from Exp_Int import ExpIntGaveUp
-from NatExpr import approx_and_full_str, approx_str
+from NatExpr import approx_and_full_str, big_interval_str
 from Macro import Proof_System, Tape, Turing_Machine
 from Macro.Turing_Machine import LEFT, RIGHT
 
@@ -365,7 +365,7 @@ class Simulator:
 def template(title, steps, loops):
   """Pretty print row of the steps table."""
   if steps is not None:
-    steps_str = approx_str(steps)
+    steps_str = big_interval_str(steps)
   else:
     steps_str = "N/A"
   return "%-8s %-20s %20d" % (title, steps_str, loops)
