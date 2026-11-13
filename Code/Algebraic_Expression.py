@@ -194,6 +194,10 @@ class Expression(NatExpr):
     self.const = constant
     self.is_const = len(self.terms) == 0 and is_const(self.const)
 
+  def __setstate__(self, state):
+    self.__dict__.update(state)
+    self.is_const = len(self.terms) == 0 and is_const(self.const)
+
   def __repr__(self):
     if len(self.terms) == 0:
       return repr(self.const)

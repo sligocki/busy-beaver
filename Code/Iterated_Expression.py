@@ -103,6 +103,10 @@ class Iterated_Expression(NatExpr):
     expr_vars = variables(self.step_expr)
     assert expr_vars.issubset({self.var}), f"step_expr {self.step_expr} contains other variables: {expr_vars}"
 
+  def __setstate__(self, state):
+    self.__dict__.update(state)
+    self.is_const = is_const(self.start_val) and is_const(self.num_reps)
+
   def __repr__(self):
     return f"((λ{self.var} → {self.step_expr})^({self.num_reps}) ({self.start_val}))"
 
@@ -769,6 +773,14 @@ class Iterated_Math(NatExpr):
 
     self.terms = normalize_terms(terms)
     self.const = actual_const
+    self.is_const = all(is_const(t.it_expr) and is_const(t.coef) for t in self.terms) and is_const(self.const)
+
+  def __setstate__(self, state):
+    self.__dict__.update(state)
+    if "terms" not in self.__dict__:
+      it_expr = self.__dict__.pop("it_expr", None)
+      coef = self.__dict__.pop("coef", 1)
+      self.terms = [Iterated_Term(it_expr, coef)] if it_expr is not None and coef != 0 else []
     self.is_const = all(is_const(t.it_expr) and is_const(t.coef) for t in self.terms) and is_const(self.const)
 
   @property

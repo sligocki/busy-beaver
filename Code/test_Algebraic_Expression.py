@@ -3,9 +3,11 @@
 Unit test for "Numbers/Algebraic_Expression.py"
 """
 
+import pickle
 import unittest
 
 import Algebraic_Expression
+from Exp_Int import exp_int
 
 
 def expr(expr_str):
@@ -88,6 +90,25 @@ class SystemTest(unittest.TestCase):
     self.assertEqual(int(Algebraic_Expression.min_val(wrapped)), 32)
     subbed = Algebraic_Expression.substitute(wrapped, {x_var: 1})
     self.assertEqual(int(subbed), 64)
+
+  def test_legacy_unpickle_is_const(self):
+    const_expr = Algebraic_Expression.ConstantToExpression(42)
+    nested_const = Algebraic_Expression.ConstantToExpression(exp_int(2, 500))
+    non_const = expr("x + 1")
+
+    for e in (const_expr, nested_const, non_const):
+      e.__dict__.pop("is_const", None)
+
+    loaded_const = pickle.loads(pickle.dumps(const_expr))
+    self.assertTrue(loaded_const.is_const)
+    self.assertEqual(loaded_const.try_eval(), 42)
+
+    loaded_nested = pickle.loads(pickle.dumps(nested_const))
+    self.assertTrue(loaded_nested.is_const)
+    self.assertEqual(loaded_nested.uparrow_size_approx, exp_int(2, 500).uparrow_size_approx)
+
+    loaded_non_const = pickle.loads(pickle.dumps(non_const))
+    self.assertFalse(loaded_non_const.is_const)
 
 
 if __name__ == "__main__":

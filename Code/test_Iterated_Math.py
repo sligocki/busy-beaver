@@ -1,3 +1,4 @@
+import pickle
 import unittest
 
 from Algebraic_Expression import Variable, VariableToExpression
@@ -180,6 +181,46 @@ class TestIteratedMath(unittest.TestCase):
     self.assertEqual(len(bi_hyper.upper.args), 3)
     self.assertEqual(bi_hyper.lower.args[2], bi_hyper.upper.args[2])
     self.assertGreaterEqual(bi_hyper.lower.args[2], 3)
+
+  def test_legacy_unpickle_is_const(self):
+    # Simulate pickles created before is_const was stored as an instance attribute.
+    const_it = Iterated_Expression(self.f1, self.x, 1, 100)
+    const_it.__dict__.pop("is_const", None)
+    loaded_it = pickle.loads(pickle.dumps(const_it))
+    self.assertTrue(loaded_it.is_const)
+    self.assertTrue(loaded_it > 10)
+    self.assertEqual(loaded_it.to_BigInterval().lower.args, (101,))
+
+    y = Variable(1)
+    non_const_it = Iterated_Expression(self.f1, self.x, VariableToExpression(y), 100)
+    non_const_it.start_val.__dict__.pop("is_const", None)
+    non_const_it.__dict__.pop("is_const", None)
+    loaded_non_const_it = pickle.loads(pickle.dumps(non_const_it))
+    self.assertFalse(loaded_non_const_it.is_const)
+
+    const_math = 3 * self.it1 + 5
+    const_math.terms[0].it_expr.__dict__.pop("is_const", None)
+    const_math.__dict__.pop("is_const", None)
+    loaded_math = pickle.loads(pickle.dumps(const_math))
+    self.assertTrue(loaded_math.is_const)
+    self.assertTrue(loaded_math > 10)
+    self.assertEqual(loaded_math.to_BigInterval().lower.args, (308,))
+
+    non_const_math = 3 * non_const_it + 5
+    non_const_math.terms[0].it_expr.__dict__.pop("is_const", None)
+    non_const_math.__dict__.pop("is_const", None)
+    loaded_non_const_math = pickle.loads(pickle.dumps(non_const_math))
+    self.assertFalse(loaded_non_const_math.is_const)
+
+    # Legacy Iterated_Math format with (it_expr, coef, const) instead of terms.
+    legacy_math = Iterated_Math(self.it1, 5, coef=3)
+    del legacy_math.__dict__["terms"]
+    del legacy_math.__dict__["is_const"]
+    legacy_math.__dict__["it_expr"] = self.it1
+    legacy_math.__dict__["coef"] = 3
+    loaded_legacy = pickle.loads(pickle.dumps(legacy_math))
+    self.assertTrue(loaded_legacy.is_const)
+    self.assertEqual(loaded_legacy, const_math)
 
 
 if __name__ == "__main__":

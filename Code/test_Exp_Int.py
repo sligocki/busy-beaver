@@ -1,12 +1,16 @@
 #! /usr/bin/env python3
 
+import pickle
 import sys
 import unittest
 
 import Exp_Int
 import io_pb2
+from Algebraic_Expression import ConstantToExpression, Variable, VariableToExpression
 from Exp_Int import exp_int, sign, try_eval
 from Halting_Lib import get_big_int, set_big_int
+from Iterated_Expression import Iterated_Expression
+from NatExpr import approx_and_full_str
 
 
 class ExpIntTest(unittest.TestCase):
@@ -196,6 +200,36 @@ class ExpIntTest(unittest.TestCase):
 
     self.assertTrue(hasattr(loaded, "_uparrow_size_approx"))
     self.assertTrue(loaded > 100)
+
+  def test_legacy_unpickle_nested_iterated(self):
+    # Regression test for ExpInt containing Expression / Iterated_Expression / Iterated_Math
+    # pickled before is_const became an instance attribute (commit 782328e).
+    x = Variable(10)
+    expr_x = VariableToExpression(x)
+    step = exp_int(2, expr_x) + 1
+    it_expr = Iterated_Expression(step, x, 10, exp_int(2, 200))
+    it_math = it_expr + ConstantToExpression(7)
+    outer = 3 * exp_int(2, it_math) + 6
+
+    # Strip is_const from nested Expression / Iterated_Expression / Iterated_Math objects
+    # and simulate stale ExpInt/ExpTerm state without _uparrow_size_approx.
+    for obj in (
+      it_expr,
+      it_math,
+      it_math.const,
+      step,
+      step.terms[0].exponent,
+      outer,
+      outer.terms[0],
+      outer.terms[0].exponent,
+    ):
+      obj.__dict__.pop("is_const", None)
+      obj.__dict__.pop("_uparrow_size_approx", None)
+
+    loaded = pickle.loads(pickle.dumps(outer))
+    self.assertTrue(loaded.is_const)
+    self.assertTrue(loaded > 100)
+    self.assertIn("10↑↑", approx_and_full_str(loaded))
 
   def todo_test_bug_normalize(self):
     # Simplified version of issue
