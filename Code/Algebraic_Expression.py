@@ -10,7 +10,7 @@ from fractions import Fraction
 from functools import reduce
 
 from Big_Interval import BigInterval
-from NatExpr import NatExpr, is_const, to_BigInterval
+from NatExpr import NatExpr, expr_str, is_const, to_BigInterval
 
 
 class BadOperation(Exception):
@@ -153,14 +153,18 @@ class Term:
     self.vars = var_powers  # Always assumed to be a non-empty tuple
     self.coef = coefficient
 
-  def __repr__(self):
+  def _str_tokens(self):
     r = " ".join([repr(v) for v in self.vars])
     if self.coef == 1:
-      return r
+      return (r,)
     elif self.coef == -1:
-      return "-" + r
+      return ("-" + r,)
     else:
-      return repr(self.coef) + " " + r
+      coef_tok = self.coef if isinstance(self.coef, (int, NatExpr)) else repr(self.coef)
+      return (coef_tok, " " + r)
+
+  def __repr__(self):
+    return expr_str(self)
 
   def substitute(self, subs):
     """Substitute values from dict 'subs' to get an int."""
@@ -198,14 +202,23 @@ class Expression(NatExpr):
     self.__dict__.update(state)
     self.is_const = len(self.terms) == 0 and is_const(self.const)
 
-  def __repr__(self):
+  def _str_tokens(self):
     if len(self.terms) == 0:
-      return repr(self.const)
-    r = " + ".join([repr(t) for t in self.terms])
-    if self.const == 0:
-      return "(" + r + ")"
-    else:
-      return "(" + r + " + " + repr(self.const) + ")"
+      c_tok = self.const if isinstance(self.const, (int, NatExpr)) else repr(self.const)
+      return (c_tok,)
+    tokens = ["("]
+    for i, t in enumerate(self.terms):
+      if i > 0:
+        tokens.append(" + ")
+      tokens.append(t)
+    if self.const != 0:
+      c_tok = self.const if isinstance(self.const, (int, NatExpr)) else repr(self.const)
+      tokens.extend((" + ", c_tok))
+    tokens.append(")")
+    return tokens
+
+  def __repr__(self):
+    return expr_str(self)
 
   def __add__(self, other):
     if is_expr(other):
@@ -283,24 +296,39 @@ class Expression(NatExpr):
     return self.const
 
   def to_BigInterval(self, env=None):
+    return to_BigInterval(self, env)
+
+  def _bi_children(self, env):
     if self.is_const:
-      return to_BigInterval(self.const, env)
+      yield self.const
+      return
     assert env is not None, self
+    for term in self.terms:
+      for vp in term.vars:
+        yield vp.var
+      if not (isinstance(term.coef, int) and term.coef < 0):
+        yield term.coef
+    if not (isinstance(self.const, int) and self.const < 0):
+      yield self.const
+
+  def _bi_combine(self, resolve, env):
+    if self.is_const:
+      return resolve(self.const)
     pos_bi = BigInterval(0)
     neg_bi = BigInterval(0)
     for term in self.terms:
       term_val = BigInterval(1)
       for vp in term.vars:
-        base_bi = to_BigInterval(env[vp.var], env)
+        base_bi = resolve(vp.var)
         term_val = term_val * (base_bi if vp.pow == 1 else (base_bi ** BigInterval(vp.pow)))
       if isinstance(term.coef, int) and term.coef < 0:
         neg_bi = neg_bi + term_val * BigInterval(-term.coef)
       else:
-        pos_bi = pos_bi + term_val * to_BigInterval(term.coef, env)
+        pos_bi = pos_bi + term_val * resolve(term.coef)
     if isinstance(self.const, int) and self.const < 0:
       neg_bi = neg_bi + BigInterval(-self.const)
     else:
-      pos_bi = pos_bi + to_BigInterval(self.const, env)
+      pos_bi = pos_bi + resolve(self.const)
     return pos_bi - neg_bi
 
   @property

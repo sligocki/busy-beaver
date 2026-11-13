@@ -8,12 +8,12 @@ from __future__ import annotations
 
 import math
 from fractions import Fraction
-from functools import cached_property, lru_cache
+from functools import cached_property
 
 from Algebraic_Expression import Expression, min_val, substitute, variables
 from Big_Interval import BigInterval
 from Math import exp_mod, gcd, int_pow, lcm, prec_add, prec_mult
-from NatExpr import ConstInt, NatExpr, is_const, to_BigInterval
+from NatExpr import ConstInt, NatExpr, expr_str, is_const, to_BigInterval
 
 # If x < 10^EXP_THRESHOLD, evaluate it as an int
 # if x > 10^EXP_THRESHOLD, only consider as formula
@@ -188,11 +188,14 @@ class ExpTerm:
       return self.sign * top
     return None
 
-  def _pow_bi(self, env=None):
-    return to_BigInterval(self.base, env) ** to_BigInterval(self.exponent, env)
+  def _bi_children(self, env):
+    return (self.base, self.exponent, self.coef)
+
+  def _bi_combine(self, resolve, env):
+    return (resolve(self.base) ** resolve(self.exponent)) * resolve(self.coef)
 
   def to_BigInterval(self, env=None):
-    return self._pow_bi(env) * to_BigInterval(self.coef, env)
+    return to_BigInterval(self, env)
 
   def __init__(self, base: int, coef: int, exponent):
     assert isinstance(base, int), base
@@ -293,12 +296,14 @@ class ExpTerm:
     assert self.base == other.base
     return ExpTerm(self.base, self.coef * other.coef, self.exponent + other.exponent)
 
+  def _str_tokens(self):
+    if self.coef != 1:
+      return (f"{self.coef} * {self.base}^", self.exponent)
+    return (f"{self.base}^", self.exponent)
+
   @cached_property
   def formula_str(self) -> str:
-    res = f"{self.base}^{self.exponent}"
-    if self.coef != 1:
-      res = f"{self.coef} * {res}"
-    return res
+    return expr_str(self)
 
   def __repr__(self):
     return self.formula_str
@@ -347,29 +352,35 @@ class ExpInt(NatExpr):
     return None
 
   def to_BigInterval(self, env=None):
-    if env is None:
-      return self._to_big_interval()
-    return self._eval_big_interval(env)
+    return to_BigInterval(self, env)
 
-  @lru_cache
-  def _to_big_interval(self):
-    return self._eval_big_interval(None)
+  def _bi_children(self, env):
+    for term in self.terms:
+      yield term.base
+      yield term.exponent
+      if not (isinstance(term.coef, int) and term.coef < 0):
+        yield term.coef
+    if not (isinstance(self.const, int) and self.const < 0):
+      yield self.const
+    if self.denom != 1:
+      yield self.denom
 
-  def _eval_big_interval(self, env):
+  def _bi_combine(self, resolve, env):
     pos_bi = BigInterval(0)
     neg_bi = BigInterval(0)
     for term in self.terms:
+      pow_bi = resolve(term.base) ** resolve(term.exponent)
       if isinstance(term.coef, int) and term.coef < 0:
-        neg_bi = neg_bi + term._pow_bi(env) * BigInterval(-term.coef)
+        neg_bi = neg_bi + pow_bi * BigInterval(-term.coef)
       else:
-        pos_bi = pos_bi + term.to_BigInterval(env)
+        pos_bi = pos_bi + pow_bi * resolve(term.coef)
     if isinstance(self.const, int) and self.const < 0:
       neg_bi = neg_bi + BigInterval(-self.const)
     else:
-      pos_bi = pos_bi + to_BigInterval(self.const, env)
+      pos_bi = pos_bi + resolve(self.const)
     res = pos_bi - neg_bi
     if self.denom != 1:
-      res = res / to_BigInterval(self.denom, env)
+      res = res / resolve(self.denom)
     return res
 
   def __init__(self, terms: list[ExpTerm], const: int, denom: int):
@@ -495,14 +506,24 @@ class ExpInt(NatExpr):
   def tex_formula(self):
     return tex_formula(self)
 
+  def _str_tokens(self):
+    tokens = ["("]
+    if self.denom != 1:
+      tokens.append("(")
+    if self.const != 0:
+      tokens.append(f"{self.const} + ")
+    for i, term in enumerate(self.terms):
+      if i > 0:
+        tokens.append(" + ")
+      tokens.append(term)
+    if self.denom != 1:
+      tokens.append(f")/{self.denom}")
+    tokens.append(")")
+    return tokens
+
   @cached_property
   def formula_str(self) -> str:
-    res = " + ".join(term.formula_str for term in self.terms)
-    if self.const != 0:
-      res = f"{self.const} + {res}"
-    if self.denom != 1:
-      res = f"({res})/{self.denom}"
-    return f"({res})"
+    return expr_str(self)
 
   def __repr__(self):
     return self.formula_str

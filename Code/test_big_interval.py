@@ -150,6 +150,16 @@ class TestBigInterval(unittest.TestCase):
     C = A / BigInterval(100)
     self.assertEqual(C.lower.args, (10**500 - 3, 1))
 
+  def test_truediv_large_exact_int(self):
+    A = BigInterval(10**500)
+    C = A / BigInterval(2)
+    self.assertEqual(C.lower.try_eval(), (10**500) // 2)
+    self.assertEqual(C.upper.try_eval(), (10**500) // 2)
+
+    D = BigInterval(10**500 + 1) / BigInterval(3)
+    self.assertEqual(D.lower.try_eval(), (10**500 + 1) // 3)
+    self.assertEqual(D.upper.try_eval(), (10**500 + 3) // 3)
+
   def test_exp_int_negative_terms(self):
     e1 = exp_int(2, 10000) - exp_int(2, 5000)
     bi1 = e1.to_BigInterval()
@@ -228,6 +238,45 @@ class TestBigInterval(unittest.TestCase):
     self.assertEqual(big_interval_str(e), "[10↑ 3010, 10↑ 3012]")
     self.assertEqual(approx_or_full_str(e, max_chars=5), "[10↑ 3010, 10↑ 3012]")
     self.assertTrue(approx_and_full_str(e, max_chars=5).startswith("[10↑ 3010, 10↑ 3012] (_"))
+
+  def test_deep_nested_exp_and_iterated_no_recursion_error(self):
+    import sys
+    from Algebraic_Expression import Variable, VariableToExpression
+    from Iterated_Expression import Iterated_Expression
+    from NatExpr import approx_and_full_str, approx_or_full_str
+
+    v = Variable()
+    step = exp_int(2, VariableToExpression(v) + 1)
+    old_limit = sys.getrecursionlimit()
+    try:
+      sys.setrecursionlimit(200)
+      cur = exp_int(2, 1000)
+      for _ in range(100):
+        it = Iterated_Expression(step, v, cur, 3)
+        cur = exp_int(2, it + 1)
+      bi = cur.to_BigInterval()
+      self.assertTrue(len(bi.lower.args) >= 2)
+      s = str(cur)
+      self.assertGreater(len(s), 1000)
+      self.assertTrue(approx_or_full_str(cur, max_chars=100).startswith("["))
+      self.assertIn(f"(_{len(s)} chars_)", approx_and_full_str(cur, max_chars=100))
+    finally:
+      sys.setrecursionlimit(old_limit)
+
+  def test_branching_dag_approx_and_full_str(self):
+    from Algebraic_Expression import Variable, VariableToExpression
+    from Iterated_Expression import Iterated_Expression
+    from NatExpr import approx_and_full_str, approx_or_full_str, expr_str_len
+
+    v = Variable()
+    step = 2 * VariableToExpression(v) + 1
+    cur = exp_int(2, 1000)
+    for _ in range(80):
+      cur = Iterated_Expression(step, v, cur, cur) + 1
+    # Expanded string length is > 2^80, but DAG length/interval eval must not OOM or recurse.
+    self.assertGreater(expr_str_len(cur), 2**80)
+    self.assertTrue(approx_or_full_str(cur, max_chars=100).startswith("["))
+    self.assertIn("chars_)", approx_and_full_str(cur, max_chars=100))
 
 
 if __name__ == "__main__":

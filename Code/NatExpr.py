@@ -18,15 +18,140 @@ def is_const(value) -> bool:
 
 
 def to_BigInterval(value, env=None):
-  """Convert a BigInterval, NatExpr, Variable, or int into a BigInterval."""
-  if isinstance(value, BigInterval):
-    return value
-  if isinstance(value, NatExpr):
-    return value.to_BigInterval(env)
-  if type(value).__name__ == "Variable":
-    assert env is not None and value in env, f"Unbound variable {value}"
-    return to_BigInterval(env[value], env)
-  return BigInterval(value)
+  """Convert a BigInterval, NatExpr, Variable, or int into a BigInterval iteratively."""
+
+  def resolve_leaf(v):
+    if isinstance(v, BigInterval):
+      return v
+    if isinstance(v, ConstInt):
+      return BigInterval(v.val)
+    if is_scalar(v):
+      return BigInterval(v)
+    return None
+
+  def unwrap_var(v):
+    while type(v).__name__ == "Variable":
+      assert env is not None and v in env, f"Unbound variable {v}"
+      v = env[v]
+    return v
+
+  def get_cached(v):
+    if getattr(v, "is_const", False):
+      return getattr(v, "__dict__", {}).get("_cached_big_interval")
+    return None
+
+  root = unwrap_var(value)
+  leaf = resolve_leaf(root)
+  if leaf is not None:
+    return leaf
+  cached = get_cached(root)
+  if cached is not None:
+    return cached
+
+  memo: dict[int, BigInterval] = {}
+  stack: list[tuple[object, bool]] = [(root, False)]
+
+  def resolve(x):
+    x = unwrap_var(x)
+    res = resolve_leaf(x)
+    if res is not None:
+      return res
+    return memo[id(x)]
+
+  while stack:
+    node, visited = stack.pop()
+    nid = id(node)
+    if nid in memo:
+      continue
+    cached = get_cached(node)
+    if cached is not None:
+      memo[nid] = cached
+      continue
+    if visited:
+      res = node._bi_combine(resolve, env)
+      memo[nid] = res
+      if getattr(node, "is_const", False) and hasattr(node, "__dict__"):
+        node._cached_big_interval = res
+    else:
+      if not hasattr(node, "_bi_children"):
+        if isinstance(node, NatExpr):
+          raise NotImplementedError(f"to_BigInterval not implemented for {type(node)}")
+        memo[nid] = BigInterval(node)
+        continue
+      stack.append((node, True))
+      for child in node._bi_children(env):
+        c = unwrap_var(child)
+        if resolve_leaf(c) is not None:
+          continue
+        cid = id(c)
+        if cid in memo:
+          continue
+        cached = get_cached(c)
+        if cached is not None:
+          memo[cid] = cached
+          continue
+        stack.append((c, False))
+
+  return memo[id(root)]
+
+
+def _str_or_len(value, compute_len: bool):
+  """Iteratively compute str(value) or len(str(value)) over expression DAGs."""
+
+  def cached_or_leaf(v):
+    d = getattr(v, "__dict__", None)
+    if d is not None and "formula_str" in d:
+      s = d["formula_str"]
+      return len(s) if compute_len else s
+    if not hasattr(v, "_str_tokens"):
+      s = str(v)
+      return len(s) if compute_len else s
+    return None
+
+  leaf = cached_or_leaf(value)
+  if leaf is not None:
+    return leaf
+
+  memo = {}
+  stack = [(value, False, None)]
+  while stack:
+    node, visited, tokens = stack.pop()
+    nid = id(node)
+    if nid in memo:
+      continue
+    leaf = cached_or_leaf(node)
+    if leaf is not None:
+      memo[nid] = leaf
+      continue
+    if visited:
+      if compute_len:
+        memo[nid] = sum(len(part) if isinstance(part, str) else memo[id(part)] for part in tokens)
+      else:
+        memo[nid] = "".join(part if isinstance(part, str) else memo[id(part)] for part in tokens)
+    else:
+      tokens = node._str_tokens()
+      stack.append((node, True, tokens))
+      for part in tokens:
+        if isinstance(part, str):
+          continue
+        pid = id(part)
+        if pid in memo:
+          continue
+        p_leaf = cached_or_leaf(part)
+        if p_leaf is not None:
+          memo[pid] = p_leaf
+        else:
+          stack.append((part, False, None))
+
+  return memo[id(value)]
+
+
+def expr_str(value) -> str:
+  return _str_or_len(value, compute_len=False)
+
+
+def expr_str_len(value) -> int:
+  return _str_or_len(value, compute_len=True)
 
 
 def big_interval_str(value) -> str:
@@ -64,13 +189,13 @@ def approx_and_full_str(value, max_chars: int = 100, use_big_interval: bool = Tr
   if type(value).__name__ == "Variable":
     return str(value)
   approx = big_interval_str(value) if use_big_interval else approx_str(value)
-  full = str(value)
+  full_len = expr_str_len(value)
+  if max_chars and full_len > max_chars:
+    return f"{approx} (_{full_len} chars_)"
+  full = expr_str(value)
   if approx == full:
     return approx
-  elif max_chars and len(full) > max_chars:
-    return f"{approx} (_{len(full)} chars_)"
-  else:
-    return f"{approx} ({full})"
+  return f"{approx} ({full})"
 
 
 def approx_or_full_str(value, max_chars: int = 100, use_big_interval: bool = True) -> str:
@@ -78,12 +203,9 @@ def approx_or_full_str(value, max_chars: int = 100, use_big_interval: bool = Tru
     return "N/A"
   if type(value).__name__ == "Variable":
     return str(value)
-  approx = big_interval_str(value) if use_big_interval else approx_str(value)
-  full = str(value)
-  if not max_chars or len(full) <= max_chars:
-    return full
-  else:
-    return approx
+  if max_chars and expr_str_len(value) > max_chars:
+    return big_interval_str(value) if use_big_interval else approx_str(value)
+  return expr_str(value)
 
 
 class NatExpr(abc.ABC):

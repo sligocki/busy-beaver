@@ -457,7 +457,9 @@ class BigInterval:
     v_self_l = self.lower.try_eval()
     v_other_u = other.upper.try_eval()
     if v_self_l is not None and v_other_u is not None:
-      new_lower = Knuth10.lower_bound_from_int(v_self_l / v_other_u)
+      if v_other_u == 0:
+        raise ZeroDivisionError
+      new_lower = Knuth10.lower_bound_from_int(v_self_l // v_other_u)
     else:
       if v_other_u is not None and v_other_u >= 1:
         num_divs = 1 if v_other_u <= 10 else len(str(int(math.ceil(v_other_u))))
@@ -473,7 +475,9 @@ class BigInterval:
     v_self_u = self.upper.try_eval()
     v_other_l = other.lower.try_eval()
     if v_self_u is not None and v_other_l is not None:
-      new_upper = Knuth10.upper_bound_from_int(v_self_u / v_other_l)
+      if v_other_l == 0:
+        raise ZeroDivisionError
+      new_upper = Knuth10.upper_bound_from_int((v_self_u + v_other_l - 1) // v_other_l)
     else:
       new_upper = self.upper.safe_upper_bound()
 

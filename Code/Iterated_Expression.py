@@ -1,10 +1,11 @@
 from fractions import Fraction
+from functools import cached_property
 import math
 
 from Algebraic_Expression import Expression, Variable, min_val, substitute, variables
 from Big_Interval import BigInterval, Knuth10
 from Exp_Int import ExpInt, ExpTerm, is_simple, sign, struct_eq, uparrow_size_approx
-from NatExpr import NatExpr, is_const, to_BigInterval
+from NatExpr import NatExpr, expr_str, is_const, to_BigInterval
 
 
 def get_step_growth(expr, var):
@@ -107,8 +108,11 @@ class Iterated_Expression(NatExpr):
     self.__dict__.update(state)
     self.is_const = is_const(self.start_val) and is_const(self.num_reps)
 
+  def _str_tokens(self):
+    return (f"((λ{self.var} → ", self.step_expr, ")^(", self.num_reps, ") (", self.start_val, "))")
+
   def __repr__(self):
-    return f"((λ{self.var} → {self.step_expr})^({self.num_reps}) ({self.start_val}))"
+    return expr_str(self)
 
   __str__ = __repr__
 
@@ -156,7 +160,7 @@ class Iterated_Expression(NatExpr):
   def __abs__(self):
     return self
 
-  @property
+  @cached_property
   def uparrow_size_approx(self):
     g_step = get_step_growth(self.step_expr, self.var)
     if g_step is None or g_step == (1, 0):
@@ -240,8 +244,14 @@ class Iterated_Expression(NatExpr):
   def __rsub__(self, other):
     return (-self) + other
 
+  def _bi_children(self, env):
+    return (self.start_val, self.num_reps)
+
+  def _bi_combine(self, resolve, env):
+    return _iterated_to_big_interval_from_bounds(self, resolve(self.start_val), resolve(self.num_reps), env)
+
   def to_BigInterval(self, env=None):
-    return _iterated_to_big_interval(self, env)
+    return to_BigInterval(self, env)
 
 
 def _ceil_log10_bi(bi):
@@ -601,6 +611,10 @@ def _tower_lower(expr, var, level_k: int, x_min_bi, env=None):
 def _iterated_to_big_interval(it_expr: Iterated_Expression, env=None):
   start_bi = to_BigInterval(it_expr.start_val, env)
   reps_bi = to_BigInterval(it_expr.num_reps, env)
+  return _iterated_to_big_interval_from_bounds(it_expr, start_bi, reps_bi, env)
+
+
+def _iterated_to_big_interval_from_bounds(it_expr: Iterated_Expression, start_bi, reps_bi, env=None):
   base_env = {} if env is None else dict(env)
 
   n_hi = reps_bi.upper.try_eval()
@@ -612,7 +626,7 @@ def _iterated_to_big_interval(it_expr: Iterated_Expression, env=None):
     hi_res = cur.upper if n_lo == 0 else None
     for i in range(1, n_hi + 1):
       base_env[it_expr.var] = cur
-      cur = it_expr.step_expr.to_BigInterval(base_env)
+      cur = to_BigInterval(it_expr.step_expr, base_env)
       if i >= n_lo:
         lo_res = cur.lower if lo_res is None else min(lo_res, cur.lower)
         hi_res = cur.upper if hi_res is None else max(hi_res, cur.upper)
@@ -647,7 +661,7 @@ def _iterated_to_big_interval(it_expr: Iterated_Expression, env=None):
   n_lo = reps_bi.lower.try_eval()
   while start_bi.lower < Knuth10(100) and (n_lo is None or n_lo > 4):
     base_env[it_expr.var] = start_bi
-    start_bi = it_expr.step_expr.to_BigInterval(base_env)
+    start_bi = to_BigInterval(it_expr.step_expr, base_env)
     reps_bi = reps_bi - BigInterval(1)
     n_lo = reps_bi.lower.try_eval()
 
@@ -721,10 +735,13 @@ class Iterated_Term:
   def __eq__(self, other):
     return isinstance(other, Iterated_Term) and self.coef == other.coef and self.it_expr == other.it_expr
 
-  def __repr__(self):
+  def _str_tokens(self):
     if self.coef == 1:
-      return f"{self.it_expr}"
-    return f"{self.coef} * {self.it_expr}"
+      return (self.it_expr,)
+    return (self.coef, " * ", self.it_expr)
+
+  def __repr__(self):
+    return expr_str(self)
 
   __str__ = __repr__
 
@@ -807,29 +824,30 @@ class Iterated_Math(NatExpr):
   def _copy_terms(self):
     return [t.copy() for t in self.terms]
 
-  def __repr__(self):
-    parts = []
-    for term in self.terms:
+  def _str_tokens(self):
+    if not self.terms:
+      return (self.const,)
+    tokens = []
+    for i, term in enumerate(self.terms):
+      if i > 0:
+        tokens.append(" + ")
       if term.coef == 1:
-        parts.append(f"{term.it_expr}")
+        tokens.append(term.it_expr)
       elif term.coef == -1:
-        parts.append(f"-{term.it_expr}")
+        tokens.extend(("-", term.it_expr))
       else:
-        parts.append(f"{term.coef} * {term.it_expr}")
-
-    if not parts:
-      return repr(self.const)
-
-    s = " + ".join(parts)
+        tokens.extend((term.coef, " * ", term.it_expr))
     if self.const != 0:
       is_neg_const = (isinstance(self.const, int) and self.const < 0) or getattr(self.const, "sign", 1) < 0
       if is_neg_const:
-        s = f"({s} - {-self.const})"
-      else:
-        s = f"({s} + {self.const})"
-    elif len(self.terms) > 1 or (len(self.terms) == 1 and self.terms[0].coef != 1):
-      s = f"({s})"
-    return s
+        return ["(", *tokens, " - ", -self.const, ")"]
+      return ["(", *tokens, " + ", self.const, ")"]
+    if len(self.terms) > 1 or (len(self.terms) == 1 and self.terms[0].coef != 1):
+      return ["(", *tokens, ")"]
+    return tokens
+
+  def __repr__(self):
+    return expr_str(self)
 
   __str__ = __repr__
 
@@ -903,19 +921,30 @@ class Iterated_Math(NatExpr):
     return (-self) + other
 
   def to_BigInterval(self, env=None):
+    return to_BigInterval(self, env)
+
+  def _bi_children(self, env):
+    for term in self.terms:
+      yield term.it_expr
+      if not (isinstance(term.coef, int) and term.coef < 0):
+        yield term.coef
+    if not (isinstance(self.const, int) and self.const < 0):
+      yield self.const
+
+  def _bi_combine(self, resolve, env):
     pos_bi = BigInterval(0)
     neg_bi = BigInterval(0)
     for term in self.terms:
-      term_bi = term.it_expr.to_BigInterval(env)
+      term_bi = resolve(term.it_expr)
       coef_val = term.coef
       if isinstance(coef_val, int) and coef_val < 0:
         neg_bi = neg_bi + term_bi * BigInterval(-coef_val)
       else:
-        pos_bi = pos_bi + term_bi * to_BigInterval(coef_val, env)
+        pos_bi = pos_bi + term_bi * resolve(coef_val)
     if isinstance(self.const, int) and self.const < 0:
       neg_bi = neg_bi + BigInterval(-self.const)
     else:
-      pos_bi = pos_bi + to_BigInterval(self.const, env)
+      pos_bi = pos_bi + resolve(self.const)
     return pos_bi - neg_bi
 
   def __neg__(self):
@@ -956,7 +985,7 @@ class Iterated_Math(NatExpr):
   def __abs__(self):
     return self
 
-  @property
+  @cached_property
   def uparrow_size_approx(self):
     sizes = [t.it_expr.uparrow_size_approx for t in self.terms]
     if self.const:

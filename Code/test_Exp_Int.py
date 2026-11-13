@@ -152,7 +152,9 @@ class ExpIntTest(unittest.TestCase):
 
   def test_deep_tower(self):
     # Tests that deep towers (depth > recursion limit) do not cause
-    # RecursionError for is_const, struct_eq, and tex_formula.
+    # RecursionError for is_const, struct_eq, tex_formula, to_BigInterval, and str.
+    from NatExpr import approx_or_full_str
+
     old_limit = sys.getrecursionlimit()
     try:
       sys.setrecursionlimit(200)
@@ -164,6 +166,11 @@ class ExpIntTest(unittest.TestCase):
       self.assertTrue(Exp_Int.struct_eq(x, x))
       latex = Exp_Int.tex_formula(x)
       self.assertTrue(len(latex) > 1000)
+      bi = x.to_BigInterval()
+      self.assertEqual(bi.lower.args, (19432, 297))
+      self.assertTrue(len(str(x)) > 1000)
+      self.assertIn("chars_)", approx_and_full_str(x, max_chars=100))
+      self.assertTrue(approx_or_full_str(x, max_chars=100).startswith("["))
     finally:
       sys.setrecursionlimit(old_limit)
 
