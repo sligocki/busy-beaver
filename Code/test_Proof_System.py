@@ -1142,8 +1142,8 @@ class ProofSystemTest(unittest.TestCase):
 
     # Rule 1: Level 1, rule_num 1
     init_tape = tape.copy()
-    init_tape.tape[0] = [Tape.Repeated_Symbol(1, 1)]
-    init_tape.tape[1] = [Tape.Repeated_Symbol(2, 1)]
+    init_tape.tape[0] = [Tape.Repeated_Symbol(1, Algebraic_Expression.Expression_from_string("(a+1)"))]
+    init_tape.tape[1] = [Tape.Repeated_Symbol(2, Algebraic_Expression.Expression_from_string("(b+1)"))]
     r1 = Proof_System.Diff_Rule(
       init_tape.copy(),
       diff_tape1,
@@ -1199,6 +1199,162 @@ class ProofSystemTest(unittest.TestCase):
     self.assertEqual(r3.num_uses, 1)
     self.assertEqual(r2.num_uses, 1)
     self.assertEqual(r1.num_uses, 0)
+
+  def test_const_non_one_block_diff_rule_and_coexistence(self):
+    # Machine reads two 1s one-by-one (via A->B->C) before incrementing 2s counter on left:
+    # 0^inf 2^5 1^2 <A 0^inf -> ... -> 0^inf 2^4 1^2 <A 0^inf
+    tm = IO.parse_tm("0LA0LB1RC_---0LA---_1RD------_1RE------_0LF------_---0LA---")
+    state_A = Turing_Machine.Simple_Machine_State(0)
+
+    for limited_rules in (False, True):
+      with self.subTest(limited_rules=limited_rules):
+        self.options.limited_rules = limited_rules
+        prover = Proof_System.Proof_System(tm, self.options, "")
+
+        tape2 = Tape.Chain_Tape()
+        tape2.init(0, Turing_Machine.LEFT, self.options)
+        tape2.tape[0] = [Tape.Repeated_Symbol(0, InfNat()), Tape.Repeated_Symbol(2, 5), Tape.Repeated_Symbol(1, 2)]
+        tape2.tape[1] = [Tape.Repeated_Symbol(0, InfNat())]
+
+        stripped_config = Proof_System.strip_config(state_A, Turing_Machine.LEFT, tape2.tape)
+        full_config2 = (state_A, tape2, 0)
+
+        # Without const_blocks, 1^(x+2) depletes to x and fails with Exponent below min.
+        self.assertIsNone(prover.prove_rule(stripped_config, full_config2, delta_loop=7))
+
+        # Pinning (0, 2) keeps 1^2 constant and proves a valid Diff_Rule.
+        rule_const2 = prover.prove_rule(stripped_config, full_config2, delta_loop=7, const_blocks={(0, 2)})
+        self.assertIsInstance(rule_const2, Proof_System.Diff_Rule)
+        prover.add_rule(rule_const2, stripped_config)
+
+        # Same stripped_config with 1^3 must NOT match rule_const2, and returns None (not NOTHING_TO_DO).
+        tape3 = tape2.copy()
+        tape3.tape[0][2].num = 3
+        full_config3 = (state_A, tape3, 10)
+        self.assertEqual(prover.apply_rule(rule_const2, full_config3), (False, Proof_System.CONST_MISMATCH))
+        if limited_rules:
+          self.assertIsNone(prover.try_apply_a_limited_rule(stripped_config, full_config3))
+        self.assertIsNone(prover.try_apply_a_rule(stripped_config, full_config3))
+
+        # A second rule (e.g., for 1^3) coexists without overwriting rule_const2.
+        tape3_alt = tape3.copy()
+        init3 = Tape.Chain_Tape()
+        init3.init(0, Turing_Machine.LEFT, self.options)
+        init3.tape[0] = [
+          Tape.Repeated_Symbol(0, InfNat()),
+          Tape.Repeated_Symbol(2, Algebraic_Expression.Expression_from_string("(a+2)")),
+          Tape.Repeated_Symbol(1, 3),
+        ]
+        init3.tape[1] = [Tape.Repeated_Symbol(0, InfNat())]
+        diff3 = Tape.Chain_Tape()
+        diff3.init(0, Turing_Machine.LEFT, self.options)
+        diff3.tape[0] = [Tape.Repeated_Symbol(0, InfNat()), Tape.Repeated_Symbol(2, -1), Tape.Repeated_Symbol(1, 0)]
+        diff3.tape[1] = [Tape.Repeated_Symbol(0, InfNat())]
+        if limited_rules:
+          for d, dist in ((0, rule_const2.left_dist), (1, rule_const2.right_dist)):
+            init3.tape[d] = Proof_System._slice_tape_tail(init3.tape[d], dist)
+            diff3.tape[d] = Proof_System._slice_tape_tail(diff3.tape[d], dist)
+        rule_const3 = Proof_System.Diff_Rule(
+          init3,
+          diff3,
+          state_A,
+          Algebraic_Expression.ConstantToExpression(7),
+          num_loops=7,
+          rule_num=1,
+          level=1,
+          states_last_seen={},
+          left_dist=rule_const2.left_dist if limited_rules else None,
+          right_dist=rule_const2.right_dist if limited_rules else None,
+        )
+        prover.add_rule(rule_const3, stripped_config)
+        if not limited_rules:
+          self.assertEqual(len(prover.rules[stripped_config]), 2)
+
+        res2 = prover.try_apply_a_rule(stripped_config, (state_A, tape2.copy(), 20))
+        self.assertEqual(res2.condition, Proof_System.APPLY_RULE)
+        self.assertEqual(res2.new_tape.tape[0][1].num, 1)
+        self.assertEqual(res2.new_tape.tape[0][2].num, 2)
+
+        res3 = prover.try_apply_a_rule(stripped_config, (state_A, tape3_alt, 30))
+        self.assertEqual(res3.condition, Proof_System.APPLY_RULE)
+        self.assertEqual(res3.new_tape.tape[0][1].num, 1)
+        self.assertEqual(res3.new_tape.tape[0][2].num, 3)
+
+  def test_const_non_one_block_iterated_exp_and_general_rules(self):
+    tm = IO.parse_tm("1RB---_---0LA")
+    prover = Proof_System.Proof_System(tm, self.options, "")
+    state_A = Turing_Machine.Simple_Machine_State(0)
+
+    def make_tape(a_val, c_val):
+      t = Tape.Chain_Tape()
+      t.init(0, Turing_Machine.RIGHT, self.options)
+      t.tape[0] = [Tape.Repeated_Symbol(0, InfNat()), Tape.Repeated_Symbol(1, c_val)]
+      t.tape[1] = [Tape.Repeated_Symbol(0, InfNat()), Tape.Repeated_Symbol(1, a_val)]
+      return t
+
+    # Unchanged constant c=2 -> Iterated_Rule & Exponential_Rule accept and enforce == 2.
+    a_expr = Algebraic_Expression.Expression_from_string("(a+2)")
+    var_a = a_expr.variable_restricted()
+    var_list = [None, None, None, var_a]
+    min_list = [InfNat(), 2, InfNat(), 1]
+
+    lin_result_tape = make_tape(2 * Algebraic_Expression.VariableToExpression(var_a) + 1, 2)
+    iter_rule, err = Proof_System.Iterated_Rule.try_gen(
+      var_list, min_list, lin_result_tape, Algebraic_Expression.ConstantToExpression(1), 1, 0, {}, 1
+    )
+    self.assertIsNone(err)
+    self.assertIsNotNone(iter_rule)
+    self.assertEqual(prover.apply_rule(iter_rule, (state_A, make_tape(3, 4), 0)), (False, Proof_System.CONST_MISMATCH))
+    ok, _ = prover.apply_rule(iter_rule, (state_A, make_tape(3, 2), 0))
+    self.assertTrue(ok)
+
+    exp_result_tape = make_tape(2 * Algebraic_Expression.VariableToExpression(var_a) + 1, 2)
+    exp_rule, exp_err = Proof_System.Exponential_Rule.try_gen(
+      var_list, min_list, exp_result_tape, Algebraic_Expression.ConstantToExpression(1), 1, 1, {}, 1
+    )
+    self.assertIsNone(exp_err)
+    self.assertIsNotNone(exp_rule)
+    self.assertEqual(exp_rule.min_list[1], 2)
+    self.assertEqual(prover.apply_rule(exp_rule, (state_A, make_tape(3, 4), 0)), (False, Proof_System.CONST_MISMATCH))
+
+    # Changed constant 2 -> 3: Iterated_Rule, Exponential_Rule, General_Rule, and prove_rule all reject.
+    changed_tape = make_tape(Algebraic_Expression.VariableToExpression(var_a) + 1, 3)
+    bad_lin, lin_err = Proof_System.Iterated_Rule.try_gen(
+      var_list, min_list, changed_tape, Algebraic_Expression.ConstantToExpression(1), 1, 2, {}, 1
+    )
+    self.assertIsNone(bad_lin)
+    self.assertIn("Constant mismatch", lin_err)
+
+    bad_exp, bad_exp_err = Proof_System.Exponential_Rule.try_gen(
+      var_list, min_list, changed_tape, Algebraic_Expression.ConstantToExpression(1), 1, 3, {}, 1
+    )
+    self.assertIsNone(bad_exp)
+    self.assertIn("Constant mismatch", bad_exp_err)
+
+    with self.assertRaises(AssertionError):
+      Proof_System.General_Rule(
+        var_list, min_list, changed_tape, Algebraic_Expression.ConstantToExpression(1), 1, 4, {}, 1
+      )
+
+    # Unchanged constant c=2 with finite General_Rule succeeds and enforces == 2.
+    min_list_finite = [InfNat(), 2, InfNat(), 2]
+    unchanged_gen_tape = make_tape(Algebraic_Expression.VariableToExpression(var_a) - 1, 2)
+    gen_rule = Proof_System.General_Rule(
+      var_list, min_list_finite, unchanged_gen_tape, Algebraic_Expression.ConstantToExpression(1), 1, 4, {}, 1
+    )
+    self.assertFalse(gen_rule.infinite)
+    self.assertEqual(prover.apply_rule(gen_rule, (state_A, make_tape(5, 3), 0)), (False, Proof_System.CONST_MISMATCH))
+
+    # prove_rule returns None if a pinned constant block changes value (1^2 -> 1^4 over 2 steps).
+    inc_tm = IO.parse_tm("---1RB_---1RA")
+    inc_prover = Proof_System.Proof_System(inc_tm, self.options, "")
+    inc_tape = Tape.Chain_Tape()
+    inc_tape.init(0, Turing_Machine.RIGHT, self.options)
+    inc_tape.tape[0] = [Tape.Repeated_Symbol(0, InfNat()), Tape.Repeated_Symbol(1, 2)]
+    inc_tape.tape[1] = [Tape.Repeated_Symbol(0, InfNat()), Tape.Repeated_Symbol(1, 6)]
+    inc_stripped = Proof_System.strip_config(state_A, Turing_Machine.RIGHT, inc_tape.tape)
+    self.assertIsNone(inc_prover.prove_rule(inc_stripped, (state_A, inc_tape, 0), delta_loop=2, const_blocks={(0, 1)}))
+    self.assertEqual(inc_prover.last_prove_fail_reason, Proof_System.CONST_MISMATCH)
 
   def test_exp_const_blocks_dynamic_specialization(self):
     # Without --exp-const-blocks, proving fails on depleted 1^(x+2); with it, x=0 is discovered mid-proof.

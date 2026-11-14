@@ -66,6 +66,12 @@ def add_option_group(parser):
     help="Allow using Iterated_Rules in Meta Rules [Experimental]",
   )
   group.add_option(
+    "--exp-const-blocks",
+    action="store_true",
+    default=False,
+    help="Specialize depleted variable blocks to fixed constants during proofs [Experimental]",
+  )
+  group.add_option(
     "--only-record-configs",
     action="store_true",
     default=False,
@@ -95,6 +101,7 @@ def add_option_group(parser):
 
 
 UNPROVEN_PARITY = "Unproven parity"
+CONST_MISMATCH = "Const_Mismatch"
 
 
 class Rule:
@@ -239,7 +246,12 @@ class Iterated_Rule(Rule):
     func_list = []
     for i, result_block in enumerate(result_tape.tape[0] + result_tape.tape[1]):
       if not var_list[i]:
-        # Constant run_length (1 or inf)
+        # Constant run_length (1, inf, or pinned constant c).
+        if result_block.num != min_list[i]:
+          return (
+            None,
+            f"Constant mismatch for block {i}: expected {min_list[i]}, got {result_block.num}",
+          )
         func_list.append(None)
 
       else:
@@ -348,7 +360,7 @@ class Exponential_Rule(Rule):
     self.states_last_seen = states_last_seen
 
     self.var_list = [(func.var if func else None) for func in self.func_list]
-    self.min_list = [(func.min if func else None) for func in self.func_list]
+    self.min_list = [(func.min if func else const) for func, const in zip(self.func_list, self.const_list)]
     assert len(func_list) == len(self.var_list) == len(self.min_list)
     self.level = level
     self.gen_rule = General_Rule(
@@ -393,7 +405,12 @@ class Exponential_Rule(Rule):
     const_list = []
     for i, result_block in enumerate(result_tape.tape[0] + result_tape.tape[1]):
       if not var_list[i]:
-        # Constant run_length (1 or inf)
+        # Constant run_length (1, inf, or pinned constant c).
+        if result_block.num != min_list[i]:
+          return (
+            None,
+            f"Constant mismatch for block {i}: expected {min_list[i]}, got {result_block.num}",
+          )
         func_list.append(None)
         const_list.append(min_list[i])
 
@@ -538,6 +555,11 @@ class General_Rule(Rule):
     result_vars = frozenset().union(*[variables(x) for x in self.result_list])
     invalid_vars = result_vars - valid_vars
     assert not invalid_vars, (invalid_vars, result_vars, valid_vars, self)
+    assert _consts_match(self.var_list, self.min_list, self.result_list), (
+      self.min_list,
+      self.result_list,
+      self,
+    )
 
     self.num_uses = 0
 
@@ -726,6 +748,7 @@ class Proof_System:
     self.num_collatz_rules = 0
     self.num_failed_proofs = 0
     self.num_loops = 0
+    self.last_prove_fail_reason = None
     # Tracks the highest level of any rule applied during the current inner
     # simulation (used only by frozen inner provers in prove_rule).
     self.max_rule_level_used = 0
@@ -766,7 +789,7 @@ class Proof_System:
     if found_rule:
       print()
 
-  def log_and_apply(self, tape, state, loop_num, remaining_loops=None):
+  def log_and_apply(self, tape, state, loop_num, remaining_loops=None, allow_log=True):
     """
     Log this configuration into the memory and check if it is similar to a
     past one. Apply rule if possible.
@@ -783,7 +806,7 @@ class Proof_System:
       return result
 
     # self.past_configs is only None if we have disabled prover.
-    if self.past_configs is None or self.frozen:
+    if self.past_configs is None or self.frozen or not allow_log:
       return ProverResult(NOTHING_TO_DO)
 
     # Otherwise log it into past_configs and see if we should try and prove
@@ -812,27 +835,41 @@ class Proof_System:
 
     return ProverResult(NOTHING_TO_DO)
 
-  def try_apply_a_rule(self, stripped_config, full_config):
-    if self.options.limited_rules:
-      result = self.try_apply_a_limited_rule(stripped_config, full_config)
-      if result:
-        return result
-    if stripped_config in self.rules:
-      rule = self.rules[stripped_config]
+  def _apply_rule_list(self, rules, full_config):
+    """Try candidate rules in priority order and apply the first one that matches."""
+    has_below_min = False
+    for rule in rules:
       is_good, res = self.apply_rule(rule, full_config)
       if is_good:
         result, large_delta = res
         self.max_rule_level_used = max(self.max_rule_level_used, rule.level)
         # Optimization: If we apply a rule and we are not trying to perform
         # recursive proofs, clear past configuration memory.
+        # Likewise, even normal recursive proofs cannot use every subrule
+        # as a step (e.g. rules with large negative deltas).
         if not self.recursive or large_delta:
           if self.past_configs is not None:
             self.past_configs.clear()
         rule.num_uses += 1
         assert isinstance(result, ProverResult), result
         return result
-      if res != UNPROVEN_PARITY:
-        return ProverResult(NOTHING_TO_DO)
+      # TODO: When running inside prove_rule (frozen prover), surface CONST_MISMATCH / UNPROVEN_PARITY
+      # back to prove_rule so it can specialize variables using the concrete value (x = 0 or parity)
+      # and apply the exact same subrules as concrete simulation.
+      if res not in (UNPROVEN_PARITY, CONST_MISMATCH):
+        has_below_min = True
+
+    if has_below_min:
+      return ProverResult(NOTHING_TO_DO)
+    return None
+
+  def try_apply_a_rule(self, stripped_config, full_config):
+    if self.options.limited_rules:
+      result = self.try_apply_a_limited_rule(stripped_config, full_config)
+      if result:
+        return result
+    if stripped_config in self.rules:
+      return self._apply_rule_list(self.rules[stripped_config], full_config)
 
   @staticmethod
   def _rule_priority(rule):
@@ -863,28 +900,7 @@ class Proof_System:
     if len(matching_rules) > 1:
       matching_rules.sort(key=self._rule_priority, reverse=True)
 
-    has_matching_rule = False
-    for rule in matching_rules:
-      is_good, res = self.apply_rule(rule, full_config)
-      if is_good:
-        result, large_delta = res
-        self.max_rule_level_used = max(self.max_rule_level_used, rule.level)
-        # Optimization: If we apply a rule and we are not trying to perform
-        # recursive proofs, clear past configuration memory.
-        # Likewise, even normal recursive proofs cannot use every subrule
-        # as a step. Specifically, if there are any negative deltas other
-        # than -1, we cannot apply the rule in a proof because
-        if not self.recursive or large_delta:
-          if self.past_configs is not None:
-            self.past_configs.clear()
-        rule.num_uses += 1
-        assert isinstance(result, ProverResult), result
-        return result
-      has_matching_rule = True
-
-    if has_matching_rule:
-      return ProverResult(NOTHING_TO_DO)
-    return None
+    return self._apply_rule_list(matching_rules, full_config)
 
   def add_rule(self, rule, stripped_config):
     """Add a proven rule"""
@@ -903,7 +919,9 @@ class Proof_System:
 
       self.rules[rule.num] = rule
     else:
-      self.rules[stripped_config] = rule
+      rule_list = self.rules.setdefault(stripped_config, [])
+      rule_list.append(rule)
+      rule_list.sort(key=self._rule_priority, reverse=True)
 
     self.num_rules += 1
     self.num_rules_by_level[rule.level] += 1
@@ -920,13 +938,14 @@ class Proof_System:
     saved.last_loop_num = None
     self.past_configs[stripped_config] = saved
 
-  def prove_rule(self, stripped_config, full_config, delta_loop):
+  def prove_rule(self, stripped_config, full_config, delta_loop, const_blocks=None):
     """Try to prove a general rule based upon specific example.
 
     Returns rule if successful or None.
     """
     # Unpack configurations
     new_state, new_tape, new_loop_num = full_config
+    self.last_prove_fail_reason = None
 
     if self.verbose:
       print()
@@ -961,19 +980,22 @@ class Proof_System:
       gen_sim.prover.verbose_prefix = gen_sim.verbose_prefix + "  "
 
     # Create a new tape which we will use to simulate general situation.
+    const_blocks = const_blocks or set()
+    capped_vars = set()
     gen_sim.tape = new_tape.copy()
     min_val = {}  # Notes the minimum value exponents with each unknown take.
     for direction in range(2):
-      for block in gen_sim.tape.tape[direction]:
+      for i, block in enumerate(gen_sim.tape.tape[direction]):
         # Generalize, eg. (abc)^5 -> (abc)^(n+5)
-        # Blocks with one rep are not generalized, eg. (abc)^1 -> (abc)^1
-        if not block.num.is_inf and block.num != 1:
+        # Blocks with one rep or explicitly pinned in const_blocks stay constant.
+        if not block.num.is_inf and block.num != 1 and (direction, i) not in const_blocks:
           x = Variable()
           init_count = Exp_Int.try_eval(block.num)
           # Avoid proving rules with ridiculously huge initial values (like ExpInt).
           if not init_count or init_count > 2**20:
             init_count = 2**20
             assert block.num > init_count, block.num
+            capped_vars.add(x)
           assert isinstance(init_count, int)
           x_init = VarPlusConstExpression(x, init_count)
           block.num = x_init
@@ -990,27 +1012,36 @@ class Proof_System:
     gen_sim.verbose_print()
     while gen_sim.num_loops < delta_loop:
       block = gen_sim.tape.get_top_block()
-      if ae.min_val(block.num) <= 0:
+      while ae.min_val(block.num) <= 0:
         # This corresponds to a block which looks like (abc)^(n+0).
-        # In this situation, we can no longer generalize over all n >= 0.
-        # Instead the simulator will act differently if n == 0 or n > 0.
-        #
-        # TODO(shawn): We could force this block to be fixed size (force n == 0).
-        # This would also allow us to avoid treating rep count 1 as special in
-        # the stripped config.
-        #
-        # For now we just fail. It may not be worth implementing this anyway.
-        if self.verbose:
-          print()
-          self.print_this("[PROVER FAILURE] Exponent below min **")
-          self.print_this(gen_sim.tape.print_with_state(gen_sim.state))
-          print()
-        return None
+        # With --exp-const-blocks, try forcing n = 0 across the in-flight proof state
+        # so the depleted block becomes a fixed constant and collapses here.
+        specialized = False
+        block_vars = variables(block.num)
+        if getattr(self.options, "exp_const_blocks", False) and len(block_vars) == 1:
+          x = next(iter(block_vars))
+          if x not in capped_vars and _subst_var_zero(block.num, {x: ConstantToExpression(0)}) == 0:
+            if self.verbose:
+              self.print_this(f"[PROVER] Specializing depleted variable {x} = 0 at loop {gen_sim.num_loops}")
+            _specialize_var_zero(x, initial_tape, gen_sim, min_val)
+            block = gen_sim.tape.get_top_block()
+            specialized = True
+        if not specialized:
+          self.last_prove_fail_reason = "Exponent below min"
+          if self.verbose:
+            print()
+            self.print_this("[PROVER FAILURE] Exponent below min **")
+            self.print_this(gen_sim.tape.print_with_state(gen_sim.state))
+            print()
+          return None
 
+      # TODO: Specialize variables using concrete values (x = 0 or parity) if a recursive rule inside
+      # gen_sim misses with CONST_MISMATCH or UNPROVEN_PARITY, so gen_sim mirrors concrete simulation.
       gen_sim.step()
       self.num_loops += 1
 
       if gen_sim.op_state is not Turing_Machine.RUNNING:
+        self.last_prove_fail_reason = f"Machine stopped running: {gen_sim.op_state}"
         if self.verbose:
           print()
           self.print_this("[PROVER FAILURE] Machine stopped running:", gen_sim.op_state)
@@ -1023,6 +1054,7 @@ class Proof_System:
         for block in gen_sim.tape.tape[dir]:
           vars = variables(block.num)
           if len(vars) > 1:
+            self.last_prove_fail_reason = "Multiple vars in one term"
             if self.verbose:
               print()
               self.print_this("[PROVER FAILURE] Multiple vars in one term **")
@@ -1036,6 +1068,7 @@ class Proof_System:
     # Make sure finishing tape has the same stripped config as original.
     gen_stripped_config = strip_config(gen_sim.state, gen_sim.tape.dir, gen_sim.tape.tape)
     if gen_stripped_config != stripped_config:
+      self.last_prove_fail_reason = "Config mismatch"
       if self.verbose:
         print()
         self.print_this("[PROVER FAILURE] Config mismatch **")
@@ -1084,6 +1117,16 @@ class Proof_System:
             diff_block.num = diff_block.num.const
           elif not is_const(diff_block.num):
             is_diff_rule = False
+          if not isinstance(initial_block.num, Algebraic_Expression) and diff_block.num != 0:
+            # Fixed constant block changed value; cannot be repeated at all.
+            self.last_prove_fail_reason = CONST_MISMATCH
+            if self.verbose:
+              print()
+              self.print_this("[PROVER FAILURE] Constant block changed value **")
+              self.print_this("Initial:", initial_tape)
+              self.print_this("Result:", gen_sim.tape)
+              print()
+            return None
 
     if not is_diff_rule:
       # TODO: Don't do all the work above if we're not going to use it
@@ -1411,6 +1454,11 @@ class Proof_System:
                   self.print_this("Rule diff tape:", rule.diff_tape)
                   self.print_this("")
                 return False, None
+        elif getattr(init_block.num, "is_inf", False):
+          if not getattr(new_block.num, "is_inf", False):
+            return False, CONST_MISMATCH
+        elif new_block.num != init_block.num or diff_block.num != 0:
+          return False, CONST_MISMATCH
 
     # If none of the diffs are negative, this will repeat forever.
     if num_reps is None:
@@ -1512,6 +1560,8 @@ class Proof_System:
     else:
       disallow_in_meta_rule = True
 
+    if not _consts_match(rule.var_list, rule.min_list, current_list):
+      return False, CONST_MISMATCH
     if not config_fits_min(rule.var_list, rule.min_list, current_list):
       if self.verbose:
         self.print_this("++ Rule cannot apply: Below min")
@@ -1588,6 +1638,8 @@ class Proof_System:
     current_list = [block.num for block in start_tape.tape[0] + start_tape.tape[1]]
     assert len(current_list) == len(rule.var_list)
 
+    if not _consts_match(rule.var_list, rule.min_list, current_list):
+      return False, CONST_MISMATCH
     if not config_fits_min(rule.var_list, rule.min_list, current_list):
       if self.verbose:
         self.print_this("++ Rule cannot apply: Below min")
@@ -1624,6 +1676,9 @@ class Proof_System:
     # Current list of all block exponents. We will update it in place repeatedly
     # rather than creating new tapes.
     current_list = [block.num for block in start_tape.tape[0] + start_tape.tape[1]]
+
+    if not _consts_match(rule.var_list, rule.min_list, current_list):
+      return False, CONST_MISMATCH
 
     # If this general rule is infinite.
     if rule.infinite and config_fits_min(rule.var_list, rule.min_list, current_list):
@@ -1717,6 +1772,63 @@ class Proof_System:
       return False, None
 
 
+def _subst_var_zero(expr, zero_sub):
+  if isinstance(expr, Algebraic_Expression):
+    return Exp_Int.try_simplify(substitute(expr, zero_sub))
+  return expr
+
+
+def _specialize_var_zero(x, initial_tape, gen_sim, min_val):
+  """Force variable `x = 0` across in-flight proof state and collapse any zeroed blocks."""
+  zero_sub = {x: ConstantToExpression(0)}
+
+  for dir in range(2):
+    for block in initial_tape.tape[dir]:
+      block.num = _subst_var_zero(block.num, zero_sub)
+
+  for dir in range(2):
+    new_half = []
+    prefix = gen_sim.min_untouched_prefix[dir] if gen_sim.min_untouched_prefix is not None else None
+    for idx, block in enumerate(gen_sim.tape.tape[dir]):
+      block.num = _subst_var_zero(block.num, zero_sub)
+      if block.num == 0:
+        if prefix is not None and idx < prefix:
+          prefix = idx
+        continue
+      if new_half and new_half[-1].symbol == block.symbol:
+        new_half[-1].num += block.num
+        if prefix is not None:
+          prefix = min(prefix, len(new_half) - 1)
+      else:
+        new_half.append(block)
+    gen_sim.tape.tape[dir] = new_half
+    if prefix is not None:
+      gen_sim.min_untouched_prefix[dir] = min(prefix, len(new_half))
+
+  if isinstance(gen_sim.step_num, Algebraic_Expression):
+    gen_sim.step_num = substitute(gen_sim.step_num, zero_sub)
+  if gen_sim.states_last_seen:
+    for state, last_seen in gen_sim.states_last_seen.items():
+      if isinstance(last_seen, Algebraic_Expression):
+        gen_sim.states_last_seen[state] = substitute(last_seen, zero_sub)
+  min_val.pop(x, None)
+
+
+def _const_matches(min_val, current_val):
+  if getattr(min_val, "is_inf", False):
+    return bool(getattr(current_val, "is_inf", False))
+  return current_val == min_val
+
+
+def _consts_match(var_list, min_list, current_list):
+  """Check that all fixed constant blocks (var is None) exactly match `min_list`."""
+  return all(
+    _const_matches(min_val, current_val)
+    for var, min_val, current_val in zip(var_list, min_list, current_list)
+    if not var
+  )
+
+
 def config_fits_min(var_list, min_list, current_list, assignment=None):
   """Does `current_list` attain the minimum values (in `min_list`)?
   sets `assignment` along the way."""
@@ -1726,6 +1838,8 @@ def config_fits_min(var_list, min_list, current_list, assignment=None):
         return False
       if assignment is not None:
         assignment[var] = current_val
+    elif not _const_matches(min_val, current_val):
+      return False
   return True
 
 
