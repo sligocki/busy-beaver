@@ -1200,6 +1200,128 @@ class ProofSystemTest(unittest.TestCase):
     self.assertEqual(r2.num_uses, 1)
     self.assertEqual(r1.num_uses, 0)
 
+  def test_exp_const_blocks_dynamic_specialization(self):
+    # Without --exp-const-blocks, proving fails on depleted 1^(x+2); with it, x=0 is discovered mid-proof.
+    tm = IO.parse_tm("0LA0LB1RC_---0LA---_1RD------_1RE------_0LF------_---0LA---")
+    state_A = Turing_Machine.Simple_Machine_State(0)
+
+    for limited_rules in (False, True):
+      with self.subTest(limited_rules=limited_rules):
+        self.options.limited_rules = limited_rules
+        self.options.exp_const_blocks = False
+        prover_off = Proof_System.Proof_System(tm, self.options, "")
+
+        tape2 = Tape.Chain_Tape()
+        tape2.init(0, Turing_Machine.LEFT, self.options)
+        tape2.tape[0] = [Tape.Repeated_Symbol(0, InfNat()), Tape.Repeated_Symbol(2, 5), Tape.Repeated_Symbol(1, 2)]
+        tape2.tape[1] = [Tape.Repeated_Symbol(0, InfNat())]
+        stripped_config = Proof_System.strip_config(state_A, Turing_Machine.LEFT, tape2.tape)
+        full_config2 = (state_A, tape2, 0)
+
+        self.assertIsNone(prover_off.prove_rule(stripped_config, full_config2, delta_loop=7))
+
+        self.options.exp_const_blocks = True
+        prover_on = Proof_System.Proof_System(tm, self.options, "")
+        rule = prover_on.prove_rule(stripped_config, full_config2, delta_loop=7)
+        self.assertIsInstance(rule, Proof_System.Diff_Rule)
+        const_block = rule.initial_tape.tape[0][-1]
+        self.assertEqual(const_block.symbol, 1)
+        self.assertEqual(const_block.num, 2)
+        self.assertEqual(rule.num_steps, 7)
+        prover_on.add_rule(rule, stripped_config)
+
+        res_ok = prover_on.try_apply_a_rule(stripped_config, (state_A, tape2.copy(), 0))
+        self.assertEqual(res_ok.condition, Proof_System.APPLY_RULE)
+        self.assertEqual(res_ok.new_tape.tape[0][1].num, 1)
+        self.assertEqual(res_ok.new_tape.tape[0][2].num, 2)
+
+        tape3 = tape2.copy()
+        tape3.tape[0][2].num = 3
+        self.assertIsNone(prover_on.try_apply_a_rule(stripped_config, (state_A, tape3, 0)))
+
+  def test_specialize_var_zero_merges_and_updates_state(self):
+    # Verify _specialize_var_zero collapses zeroed interior blocks, merges adjacent identical symbols,
+    # updates min_untouched_prefix, and substitutes x=0 into step_num and states_last_seen.
+    tm = IO.parse_tm("1RB---_---0LA")
+    prover = Proof_System.Proof_System(tm, self.options, "")
+    sim = Simulator.Simulator(tm, self.options, init_tape=False, is_base_simulator=False)
+    x = Algebraic_Expression.Variable()
+    y = Algebraic_Expression.Variable()
+    x_expr = Algebraic_Expression.VariableToExpression(x)
+    y_expr = Algebraic_Expression.VariableToExpression(y)
+
+    init_tape = Tape.Chain_Tape()
+    init_tape.init(0, Turing_Machine.LEFT, self.options)
+    init_tape.tape[0] = [
+      Tape.Repeated_Symbol(0, InfNat()),
+      Tape.Repeated_Symbol(2, 4),
+      Tape.Repeated_Symbol(1, Algebraic_Expression.VarPlusConstExpression(x, 2)),
+    ]
+    init_tape.tape[1] = [Tape.Repeated_Symbol(0, InfNat())]
+
+    sim.tape = Tape.Chain_Tape()
+    sim.tape.init(0, Turing_Machine.LEFT, self.options)
+    sim.tape.tape[0] = [
+      Tape.Repeated_Symbol(0, InfNat()),
+      Tape.Repeated_Symbol(2, 4),
+      Tape.Repeated_Symbol(1, x_expr),
+      Tape.Repeated_Symbol(2, y_expr + 3),
+    ]
+    sim.tape.tape[1] = [Tape.Repeated_Symbol(0, InfNat())]
+    sim.min_untouched_prefix = {Turing_Machine.LEFT: 2, Turing_Machine.RIGHT: 1}
+    sim.step_num = 3 * x_expr + y_expr + 5
+    state_A = Turing_Machine.Simple_Machine_State(0)
+    sim.states_last_seen = {state_A: 2 * x_expr + 1}
+    min_val = {x: 0, y: 1}
+
+    Proof_System._specialize_var_zero(x, init_tape, sim, min_val)
+
+    self.assertEqual(init_tape.tape[0][2].num, 2)
+    self.assertNotIsInstance(init_tape.tape[0][2].num, Algebraic_Expression.Expression)
+    self.assertEqual(len(sim.tape.tape[0]), 2)
+    self.assertEqual(sim.tape.tape[0][1].symbol, 2)
+    self.assertEqual(sim.tape.tape[0][1].num, y_expr + 7)
+    self.assertEqual(sim.min_untouched_prefix[Turing_Machine.LEFT], 1)
+    self.assertEqual(sim.step_num, y_expr + 5)
+    self.assertEqual(sim.states_last_seen[state_A], 1)
+    self.assertNotIn(x, min_val)
+    self.assertIn(y, min_val)
+    _ = prover
+
+  def test_only_record_configs(self):
+    # Default must be False.
+    self.assertFalse(Simulator.create_default_options().only_record_configs)
+
+    # With --only-record-configs, Simulator tracks finite macro tape size accurately,
+    # skips saving non-record configs, still applies proven rules, and proves 10x2-Green cleanly.
+    tm = IO.parse_tm("1LB1RZ_0LC1LC_0LD0LC_1LE1RA_0LF0LE_1LG1RD_0LH0LG_1LI1RF_0LJ0LI_1RJ1RH")
+    tm = Turing_Machine.Block_Macro_Machine(tm, 2)
+    self.options.recursive = True
+    self.options.limited_rules = True
+    self.options.exp_linear_rules = True
+    self.options.exp_meta_linear_rules = True
+    self.options.compute_steps = False
+    self.options.only_record_configs = True
+
+    sim = Simulator.Simulator(tm, self.options)
+    self.assertTrue(sim.only_record_configs)
+    max_past = 0
+    while sim.op_state == Turing_Machine.RUNNING:
+      was_rec = sim._last_step_was_record
+      prev_len = len(sim.prover.past_configs)
+      sim.step()
+      macro_size = sim.tape.get_macro_size()
+      self.assertFalse(sim._cur_tape_size > macro_size or macro_size > sim._cur_tape_size)
+      # A non-record step must never grow past_configs (can only stay equal or clear if a rule applied).
+      if not was_rec:
+        self.assertLessEqual(len(sim.prover.past_configs), prev_len)
+      max_past = max(max_past, len(sim.prover.past_configs))
+
+    self.assertEqual(sim.op_state, Turing_Machine.HALT)
+    self.assertEqual(sim.prover.num_rules, 3)
+    self.assertEqual(sim.prover.num_failed_proofs, 0)
+    self.assertLess(max_past, 100)
+
 
 if __name__ == "__main__":
   unittest.main()

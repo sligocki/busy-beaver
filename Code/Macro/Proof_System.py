@@ -65,6 +65,12 @@ def add_option_group(parser):
     default=False,
     help="Allow using Iterated_Rules in Meta Rules [Experimental]",
   )
+  group.add_option(
+    "--only-record-configs",
+    action="store_true",
+    default=False,
+    help="Only save past configs to prover memory on record-breaking tape expansion steps [Experimental]",
+  )
 
   # A quick experiment shows that 100k past_configs -> 100MB, 1M -> 1GB RAM.
   group.add_option(

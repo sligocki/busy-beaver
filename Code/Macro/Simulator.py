@@ -105,6 +105,12 @@ class Simulator:
     # Optional tracking of untouched prefix lengths on each side of the tape
     # (used by Proof_System.prove_rule).
     self.min_untouched_prefix = None
+    self.only_record_configs = (
+      is_base_simulator and bool(self.prover) and getattr(options, "only_record_configs", False)
+    )
+    self._cur_tape_size = self.tape.get_macro_size() if init_tape else 0
+    self._max_tape_size = self._cur_tape_size
+    self._last_step_was_record = False
 
     # Stats
     self.start_time = time.time()
@@ -177,6 +183,23 @@ class Simulator:
       self.op_details = (str(e),)
       self.verbose_print()
 
+  def _update_tape_size_record(self, delta=None, recompute=False):
+    """Update tracked finite macro cell count and flag new record-breaking sizes."""
+    if not self.only_record_configs:
+      return
+    if recompute:
+      new_size = self.tape.get_macro_size()
+      grew = new_size > self._cur_tape_size
+      self._cur_tape_size = new_size
+    elif delta:
+      self._cur_tape_size += delta
+      grew = delta > 0
+    else:
+      return
+    if grew and self._cur_tape_size > self._max_tape_size:
+      self._max_tape_size = self._cur_tape_size
+      self._last_step_was_record = True
+
   def _step(self, max_loops=None):
     if self.compute_steps:
       self.old_step_num = self.step_num
@@ -184,10 +207,12 @@ class Simulator:
     # places step() could early-return.
     self.num_loops += 1
     if self.prover:
+      allow_log = self._last_step_was_record if self.only_record_configs else True
+      self._last_step_was_record = False
       remaining_loops = max(0, max_loops - self.total_loops) if max_loops else None
       # Log the configuration in the prover and apply rule if possible.
       prover_result = self.prover.log_and_apply(
-        self.tape, self.state, self.num_loops - 1, remaining_loops=remaining_loops
+        self.tape, self.state, self.num_loops - 1, remaining_loops=remaining_loops, allow_log=allow_log
       )
 
       # Proof system says that machine will repeat forever
@@ -228,6 +253,7 @@ class Simulator:
             )
 
         self.tape = prover_result.new_tape
+        self._update_tape_size_record(recompute=True)
         self.num_rule_moves += 1
         if prover_result.num_base_steps is None:
           self.cancel_step_counting()
@@ -264,12 +290,17 @@ class Simulator:
           self.min_untouched_prefix[self.dir],
           len(self.tape.tape[self.dir]) - 1,
         )
+      if self.only_record_configs:
+        dest_top = self.tape.tape[not self.dir][-1]
+        absorbed_to_inf = dest_top.num.is_inf and trans.symbol_out == dest_top.symbol
       num_reps = self.tape.apply_chain_move(trans.symbol_out)
       if num_reps.is_inf:
         self.op_state = Turing_Machine.INF_REPEAT
         self.inf_reason = io_pb2.INF_CHAIN_STEP
         self.inf_recur_states = list(trans.states_last_seen.keys())
         return
+      if self.only_record_configs and absorbed_to_inf:
+        self._update_tape_size_record(delta=-num_reps)
       if self.min_untouched_prefix is not None:
         back_dir = Turing_Machine.other_dir(self.dir)
         self.min_untouched_prefix[back_dir] = min(
@@ -294,9 +325,16 @@ class Simulator:
           self.min_untouched_prefix[self.dir],
           len(self.tape.tape[self.dir]) - 1,
         )
+      if self.only_record_configs:
+        pop_inf = self.tape.tape[self.dir][-1].num.is_inf
+        dest_top = self.tape.tape[not trans.dir_out][-1]
+        push_inf = dest_top.num.is_inf and trans.symbol_out == dest_top.symbol
+        size_delta = int(pop_inf) - int(push_inf)
       self.tape.apply_single_move(trans.symbol_out, trans.dir_out)
       self.state = trans.state_out
       self.dir = trans.dir_out
+      if self.only_record_configs and size_delta:
+        self._update_tape_size_record(delta=size_delta)
       if self.min_untouched_prefix is not None:
         back_dir = Turing_Machine.other_dir(self.dir)
         self.min_untouched_prefix[back_dir] = min(

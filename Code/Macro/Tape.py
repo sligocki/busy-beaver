@@ -77,6 +77,10 @@ class Chain_Tape:
     """Get compressed length of tape."""
     return len(self.tape[0]) + len(self.tape[1])
 
+  def get_macro_size(self):
+    """Get total number of finite macro cells on the tape."""
+    return sum((block.num for block in self.tape[0][1:]), 0) + sum((block.num for block in self.tape[1][1:]), 0)
+
   def __eq__(self, other):
     return isinstance(other, self.__class__) and other.dir == self.dir and other.tape == self.tape
 
