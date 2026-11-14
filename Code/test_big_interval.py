@@ -223,7 +223,7 @@ class TestBigInterval(unittest.TestCase):
     bi_green = self._run_tm_nonzeros_bi("Machines/11x2-Green", 2)
     self.assertEqual(bi_green.approx_str(), "[10↑↑↑ 10^15, 10↑↑↑ 10^16]")
 
-    bi_ack = self._run_tm_nonzeros_bi("1RB3LB1RZ2RA_2LC3RB1LC2RA_3RB1LB3LC2RC", 2, max_loops=10000, max_steps_back=250)
+    bi_ack = self._run_tm_nonzeros_bi("1RB3LB1RZ2RA_2LC3RB1LC2RA_3RB1LB3LC2RC", 2, max_loops=21000, max_steps_back=250)
     self.assertEqual(len(bi_ack.lower.args), 4)
     self.assertEqual(len(bi_ack.upper.args), 4)
     self.assertEqual(bi_ack.lower.args[1:], (0, 1, 1))

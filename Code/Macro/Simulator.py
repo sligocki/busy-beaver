@@ -144,15 +144,19 @@ class Simulator:
     while self.step_num < cutoff and self.op_state == Turing_Machine.RUNNING:
       self.step()
 
-  def loop_run(self, loops):
-    """Loop through the step algorithm n times."""
-    self.loop_seek(self.num_loops + loops)
+  @property
+  def total_loops(self) -> int:
+    """Total simulation loops including proof-system simulation loops."""
+    return self.num_loops + (self.prover.num_loops if self.prover else 0)
 
-  def loop_seek(self, cutoff):
-    while self.num_loops < cutoff and self.op_state == Turing_Machine.RUNNING:
-      self.step()
+  def loop_run(self, loops, max_loops=None):
+    """Loop through the step algorithm until total_loops advances by `loops`."""
+    self.loop_seek(self.total_loops + loops, max_loops=max_loops or 0)
 
-  # TODO: true_loop_run which captures cost of prover, etc. also.
+  def loop_seek(self, cutoff, max_loops=None):
+    effective_max = cutoff if max_loops is None else max_loops
+    while self.total_loops < cutoff and self.op_state == Turing_Machine.RUNNING:
+      self.step(max_loops=effective_max)
 
   def init_touch_tracking(self):
     """Initialize tracking of the untouched tape prefix on each side."""
@@ -161,27 +165,30 @@ class Simulator:
       RIGHT: len(self.tape.tape[RIGHT]),
     }
 
-  def step(self):
+  def step(self, max_loops=None):
     """Perform an atomic transition or chain step."""
     if self.op_state != Turing_Machine.RUNNING:
       return
 
     try:
-      self._step()
+      self._step(max_loops=max_loops)
     except ExpIntGaveUp as e:
       self.op_state = Turing_Machine.EXPRESSION_TOO_COMPLEX
       self.op_details = (str(e),)
       self.verbose_print()
 
-  def _step(self):
+  def _step(self, max_loops=None):
     if self.compute_steps:
       self.old_step_num = self.step_num
     # Note: We increment the number of loops early to take care of all the
     # places step() could early-return.
     self.num_loops += 1
     if self.prover:
+      remaining_loops = max(0, max_loops - self.total_loops) if max_loops else None
       # Log the configuration in the prover and apply rule if possible.
-      prover_result = self.prover.log_and_apply(self.tape, self.state, self.num_loops - 1)
+      prover_result = self.prover.log_and_apply(
+        self.tape, self.state, self.num_loops - 1, remaining_loops=remaining_loops
+      )
 
       # Proof system says that machine will repeat forever
       if prover_result.condition == Proof_System.INF_REPEAT:
@@ -191,6 +198,11 @@ class Simulator:
           self.inf_recur_states = list(prover_result.states_last_seen.keys())
         else:
           self.inf_recur_states = None
+        self.verbose_print()
+        return
+      elif prover_result.condition == Proof_System.OVER_LOOPS:
+        self.op_state = Turing_Machine.OVER_LOOPS
+        self.op_details = (prover_result.delta_loop, prover_result.remaining_loops)
         self.verbose_print()
         return
       # Proof system says that we can apply a rule
@@ -319,7 +331,10 @@ class Simulator:
   def print_steps(self):
     print()
     print("         Steps:                     Times Applied:")
-    print(template("Total:", self.step_num, self.num_loops))
+    print(template("Total:", self.step_num, self.total_loops))
+    if self.prover:
+      print(template("Outer:", None, self.num_loops))
+      print(template("Prover:", None, self.prover.num_loops))
     print(template("Macro:", self.steps_from_macro, self.num_macro_moves))
     print(template("Chain:", self.steps_from_chain, self.num_chain_moves))
     if self.prover:

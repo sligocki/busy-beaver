@@ -47,22 +47,17 @@ def run(machine, block_size, back, prover, recursive, options):
       if options.verbose:
         sim.verbose_print()
 
-      total_loops = 0
-
-      while sim.op_state == Turing_Machine.RUNNING and (options.max_loops == 0 or total_loops < options.max_loops):
-        sim.step()
-        total_loops += 1
+      while sim.op_state == Turing_Machine.RUNNING and (options.max_loops == 0 or sim.total_loops < options.max_loops):
+        sim.step(max_loops=options.max_loops)
     else:
-      total_loops = 0
       last_print_time = time.time()
       sim.print_self()
 
-      while sim.op_state == Turing_Machine.RUNNING and (options.max_loops == 0 or total_loops < options.max_loops):
+      while sim.op_state == Turing_Machine.RUNNING and (options.max_loops == 0 or sim.total_loops < options.max_loops):
         chunk = 1_000
         if options.max_loops:
-          chunk = min(chunk, options.max_loops - total_loops)
-        sim.loop_run(chunk)
-        total_loops += chunk
+          chunk = min(chunk, options.max_loops - sim.total_loops)
+        sim.loop_run(chunk, max_loops=options.max_loops)
 
         cur_time = time.time()
         if cur_time - last_print_time >= options.print_time:
@@ -109,12 +104,19 @@ def run(machine, block_size, back, prover, recursive, options):
     print()
     print("Expression too complex")
     print("Info:", sim.op_details[0] if sim.op_details else "")
-  elif total_loops >= options.max_loops:
+  elif sim.op_state == Turing_Machine.OVER_LOOPS:
     print()
-    if total_loops == options.max_loops:
+    delta_loop, remaining_loops = sim.op_details
+    print(
+      "Maximum number of loops (%d) would be exceeded (used %d, proof needs %d)"
+      % (options.max_loops, sim.total_loops, delta_loop)
+    )
+  elif options.max_loops and sim.total_loops >= options.max_loops:
+    print()
+    if sim.total_loops == options.max_loops:
       print("Maximum number of loops (%d) reached" % (options.max_loops,))
     else:
-      print("Maximum number of loops (%d) exceeded (%d)" % (options.max_loops, total_loops))
+      print("Maximum number of loops (%d) exceeded (%d)" % (options.max_loops, sim.total_loops))
   else:
     print()
     print("Unexpected sim exit condition:", sim.op_state, sim.op_details)

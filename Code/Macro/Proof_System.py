@@ -651,6 +651,7 @@ class Past_Config:
 NOTHING_TO_DO = "Nothing_To_Do"  # No rule applies, nothing to do.
 APPLY_RULE = "Apply_Rule"  # Rule applies, but only finitely many times.
 INF_REPEAT = "Inf_Repeat"  # Rule applies infinitely.
+OVER_LOOPS = "Over_Loops"  # Proving rule would exceed remaining loop budget.
 
 
 class ProverResult:
@@ -663,6 +664,8 @@ class ProverResult:
     states_last_seen=None,
     left_dist=None,
     right_dist=None,
+    delta_loop=None,
+    remaining_loops=None,
   ):
     self.condition = condition
     self.new_tape = new_tape
@@ -670,6 +673,8 @@ class ProverResult:
     self.states_last_seen = states_last_seen
     self.left_dist = left_dist
     self.right_dist = right_dist
+    self.delta_loop = delta_loop
+    self.remaining_loops = remaining_loops
 
 
 class Proof_System:
@@ -755,7 +760,7 @@ class Proof_System:
     if found_rule:
       print()
 
-  def log_and_apply(self, tape, state, loop_num):
+  def log_and_apply(self, tape, state, loop_num, remaining_loops=None):
     """
     Log this configuration into the memory and check if it is similar to a
     past one. Apply rule if possible.
@@ -780,7 +785,10 @@ class Proof_System:
     past_config = self.past_configs[stripped_config]
     if past_config.log_config(loop_num):
       # We see enough of a pattern to try and prove a rule.
-      rule = self.prove_rule(stripped_config, full_config, loop_num - past_config.last_loop_num)
+      delta_loop = loop_num - past_config.last_loop_num
+      if remaining_loops is not None and delta_loop > remaining_loops:
+        return ProverResult(OVER_LOOPS, delta_loop=delta_loop, remaining_loops=remaining_loops)
+      rule = self.prove_rule(stripped_config, full_config, delta_loop)
       if not rule:
         self.num_failed_proofs += 1
       else:
@@ -922,6 +930,7 @@ class Proof_System:
 
     # Create the limited simulator with limited or no prover.
     new_options = copy.copy(self.options)
+    new_options.max_loops = 0
     new_options.recursive = False
     new_options.prover = False  # We'll create our own prover if needed.
     new_options.verbose_prover = False

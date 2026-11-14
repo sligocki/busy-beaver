@@ -198,18 +198,18 @@ def simulate_machine(
       timeout = False
 
       while (
-        (sim_info.parameters.max_loops == 0 or sim.num_loops < sim_info.parameters.max_loops)
+        (sim_info.parameters.max_loops == 0 or sim.total_loops < sim_info.parameters.max_loops)
         and sim.op_state == Turing_Machine.RUNNING
         and sim.tape.compressed_size() <= sim_info.parameters.max_tape_blocks
       ):
-        sim.step()
+        sim.step(max_loops=sim_info.parameters.max_loops)
         if machine.time_limit.timed_out:
           timeout = True
           break
 
     finally:
       # Set these stats even if timeout (exception) is raised.
-      sim_info.result.num_loops = sim.num_loops
+      sim_info.result.num_loops = sim.total_loops
       sim_info.result.num_macro_moves = sim.num_macro_moves
       sim_info.result.num_chain_moves = sim.num_chain_moves
       sim_info.result.num_rule_moves = sim.num_rule_moves
@@ -246,8 +246,8 @@ def simulate_machine(
     elif sim.tape.compressed_size() > sim_info.parameters.max_tape_blocks:
       sim_info.result.unknown_info.over_tape.compressed_tape_size = sim.tape.compressed_size()
 
-    elif sim.op_state == Turing_Machine.RUNNING:
-      sim_info.result.unknown_info.over_loops.num_loops = sim.num_loops
+    elif sim.op_state in (Turing_Machine.RUNNING, Turing_Machine.OVER_LOOPS):
+      sim_info.result.unknown_info.over_loops.num_loops = sim.total_loops
 
     elif sim.op_state == Turing_Machine.OVER_STEPS_IN_MACRO:
       over_steps_in_macro_info = sim_info.result.unknown_info.over_steps_in_macro

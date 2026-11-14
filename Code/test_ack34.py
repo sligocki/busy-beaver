@@ -28,7 +28,7 @@ class TestAck34(unittest.TestCase):
         self.exp_linear_rules = True
         self.exp_meta_linear_rules = True
         self.print_loops = 0
-        self.max_loops = 10000
+        self.max_loops = 25000
         self.verbose_prefix = ""
         self.max_steps_in_backsymbol = 250
         self.max_num_reps = 10
@@ -42,8 +42,8 @@ class TestAck34(unittest.TestCase):
     machine = Turing_Machine.Backsymbol_Macro_Machine(machine, max_sim_steps_per_symbol=options.max_steps_in_backsymbol)
     sim = Simulator.Simulator(machine, options)
 
-    # Run for up to 10000 loops
-    sim.loop_seek(10000)
+    # Run for up to 25000 total loops
+    sim.loop_seek(25000)
 
     # Verify that higher-level rules were proven
     print("\nRules proven by level:", sim.prover.num_rules_by_level)
