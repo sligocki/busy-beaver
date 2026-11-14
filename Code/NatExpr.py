@@ -208,6 +208,63 @@ def approx_or_full_str(value, max_chars: int = 100, use_big_interval: bool = Tru
   return expr_str(value)
 
 
+def _expr_sign(x) -> int:
+  while type(x).__name__ == "Expression":
+    x = x.const
+  if isinstance(x, (int, float)):
+    return (x > 0) - (x < 0)
+  if isinstance(x, ConstInt):
+    return (x.val > 0) - (x.val < 0)
+  if getattr(x, "is_inf", False):
+    return 1
+  if hasattr(x, "sign"):
+    return x.sign
+  if type(x).__name__ == "Iterated_Math" and not x.terms:
+    return _expr_sign(x.const)
+  return 1
+
+
+def cmp_expr(a, b) -> int:
+  """Compare two constant values/NatExprs iteratively (-1, 0, or 1)."""
+  stack = [(a, b, False)]
+  while stack:
+    x, y, flip = stack.pop()
+    if x is y:
+      continue
+    if isinstance(x, (int, float, ConstInt)) and isinstance(y, (int, float, ConstInt)):
+      vx = x.val if isinstance(x, ConstInt) else x
+      vy = y.val if isinstance(y, ConstInt) else y
+      if vx != vy:
+        res = -1 if vx < vy else 1
+        return -res if flip else res
+      continue
+
+    x_inf = getattr(x, "is_inf", False)
+    y_inf = getattr(y, "is_inf", False)
+    if x_inf or y_inf:
+      if x_inf and y_inf:
+        continue
+      res = 1 if x_inf else -1
+      return -res if flip else res
+
+    sx = _expr_sign(x)
+    sy = _expr_sign(y)
+    if sx != sy:
+      res = -1 if sx < sy else 1
+      return -res if flip else res
+    if sx < 0:
+      flip = not flip
+
+    tx = x.uparrow_size_approx if hasattr(x, "uparrow_size_approx") else (2, 0, abs(x))
+    ty = y.uparrow_size_approx if hasattr(y, "uparrow_size_approx") else (2, 0, abs(y))
+    n = min(len(tx), len(ty))
+    if len(tx) != len(ty):
+      stack.append((len(tx), len(ty), flip))
+    for i in range(n - 1, -1, -1):
+      stack.append((tx[i], ty[i], flip))
+  return 0
+
+
 class NatExpr(abc.ABC):
   """Abstract base class for all symbolic counts and expressions."""
 

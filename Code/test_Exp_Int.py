@@ -238,6 +238,71 @@ class ExpIntTest(unittest.TestCase):
     self.assertTrue(loaded > 100)
     self.assertIn("10↑↑", approx_and_full_str(loaded))
 
+  def test_deep_nonconst_substitute_variables_min_val(self):
+    from Algebraic_Expression import min_val, substitute, variables
+    from Iterated_Expression import Iterated_Expression
+
+    n_var = Variable(20)
+    y_var = Variable(21)
+    v = Variable(22)
+    expr_n = VariableToExpression(n_var)
+    step = -6 + exp_int(2, 2 * VariableToExpression(v) + 11)
+
+    # Mirror the alternating ExpInt <-> Iterated_Math <-> Iterated_Expression
+    # chain from deep iterated proofs (exceeds default/10k recursion limits when
+    # walked recursively via substitute).
+    cur = expr_n + 3
+    for _ in range(900):
+      it = Iterated_Expression(step, v, 2, cur)
+      cur = -3 + exp_int(2, exp_int(2, 2 * it + 12))
+
+    self.assertFalse(cur.is_const)
+    self.assertEqual(variables(cur), {n_var})
+    self.assertEqual(min_val(cur), cur.min_val())
+
+    old_limit = sys.getrecursionlimit()
+    try:
+      sys.setrecursionlimit(200)
+      sub_var = substitute(cur, {n_var: VariableToExpression(y_var) + 1})
+      self.assertEqual(variables(sub_var), {y_var})
+
+      sub_const = substitute(cur, {n_var: 5})
+      self.assertTrue(sub_const.is_const)
+      self.assertEqual(variables(sub_const), frozenset())
+      self.assertTrue(sub_const > 100)
+      self.assertFalse(sub_const < 100)
+    finally:
+      sys.setrecursionlimit(old_limit)
+
+  def test_branching_dag_nonconst_substitute_and_exact_int_div(self):
+    from fractions import Fraction
+    from Algebraic_Expression import min_val, substitute, variables
+    from Iterated_Expression import Iterated_Expression
+
+    n_var = Variable(23)
+    y_var = Variable(24)
+    v = Variable(25)
+    step = 2 * VariableToExpression(v) + 1
+
+    cur = VariableToExpression(n_var) + 2
+    for _ in range(80):
+      cur = Iterated_Expression(step, v, cur, cur) + 1
+
+    self.assertEqual(variables(cur), {n_var})
+    self.assertGreaterEqual(min_val(cur), 2)
+
+    sub_dag = substitute(cur, {n_var: VariableToExpression(y_var) + 4})
+    self.assertEqual(variables(sub_dag), {y_var})
+    self.assertGreaterEqual(min_val(sub_dag), 6)
+
+    # Exact rational/int division when substituted ExpInt collapses to an int.
+    halved = exp_int(2, VariableToExpression(n_var)) / 2
+    res_zero = substitute(halved, {n_var: 0})
+    self.assertIsInstance(res_zero, Fraction)
+    self.assertEqual(res_zero, Fraction(1, 2))
+    res_three = substitute(halved, {n_var: 3})
+    self.assertEqual(Exp_Int.try_eval(res_three), 4)
+
   def todo_test_bug_normalize(self):
     # Simplified version of issue
     x = exp_int(7, exp_int(7, exp_int(7, 7))) + exp_int(7, 1 + exp_int(7, exp_int(7, 7)))

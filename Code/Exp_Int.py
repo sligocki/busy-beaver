@@ -10,10 +10,10 @@ import math
 from fractions import Fraction
 from functools import cached_property
 
-from Algebraic_Expression import Expression, min_val, substitute, variables
+from Algebraic_Expression import Expression, div, min_val, substitute, variables
 from Big_Interval import BigInterval
 from Math import exp_mod, gcd, int_pow, lcm, prec_add, prec_mult
-from NatExpr import ConstInt, NatExpr, expr_str, is_const, to_BigInterval
+from NatExpr import ConstInt, NatExpr, cmp_expr, expr_str, is_const, to_BigInterval
 
 # If x < 10^EXP_THRESHOLD, evaluate it as an int
 # if x > 10^EXP_THRESHOLD, only consider as formula
@@ -496,12 +496,30 @@ class ExpInt(NatExpr):
   def variables(self):
     return self.vars
 
+  def _sub_children(self):
+    for term in self.terms:
+      if not term.is_const:
+        yield term.exponent
+    yield self.const
+    yield self.denom
+
+  def _sub_combine(self, resolve, assignment):
+    numer = 0
+    for term in self.terms:
+      if term.is_const:
+        numer = numer + term.coef * exp_int(term.base, term.exponent)
+      else:
+        numer = numer + term.coef * exp_int(term.base, resolve(term.exponent))
+    numer = numer + resolve(self.const)
+    denom = resolve(self.denom)
+    if denom == 1:
+      return numer
+    if isinstance(numer, int) and isinstance(denom, int):
+      return div(numer, denom)
+    return numer / denom
+
   def substitute(self, assignment):
-    if self.is_const:
-      return self
-    numer = sum(term.substitute(assignment) for term in self.terms)
-    numer += substitute(self.const, assignment)
-    return numer / substitute(self.denom, assignment)
+    return substitute(self, assignment)
 
   def tex_formula(self):
     return tex_formula(self)
@@ -655,30 +673,14 @@ class ExpInt(NatExpr):
     other = NatExpr.wrap(other)
     if other.is_inf:
       return False
-
-    if self.sign < 0:
-      return not (-self >= -other)
-    if sign(other) < 0:
-      # self > 0 > other
-      return True
-
-    return self.uparrow_size_approx > uparrow_size_approx(other)
-    # TODO: return self.to_BigInterval().cmp(other.to_BigInterval()) > 0
+    return cmp_expr(self, other) > 0
 
   def __ge__(self, other):
     assert self.is_const, self
     other = NatExpr.wrap(other)
     if other.is_inf:
       return False
-
-    if self.sign < 0:
-      return not (-self > -other)
-    if sign(other) < 0:
-      # self > 0 > other
-      return True
-
-    return self.uparrow_size_approx >= uparrow_size_approx(other)
-    # TODO: return self.to_BigInterval().cmp(other.to_BigInterval()) >= 0
+    return cmp_expr(self, other) >= 0
 
   # Boilerplate
   def __neg__(self):
@@ -691,10 +693,18 @@ class ExpInt(NatExpr):
     return (-self) + other
 
   def __lt__(self, other):
-    return not (self >= other)
+    assert self.is_const, self
+    other = NatExpr.wrap(other)
+    if other.is_inf:
+      return True
+    return cmp_expr(self, other) < 0
 
   def __le__(self, other):
-    return not (self > other)
+    assert self.is_const, self
+    other = NatExpr.wrap(other)
+    if other.is_inf:
+      return True
+    return cmp_expr(self, other) <= 0
 
   __radd__ = __add__
   __rmul__ = __mul__

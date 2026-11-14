@@ -45,11 +45,59 @@ def as_const(x):
     return x
 
 
+def _eval_dag(root, fast_leaf, get_children, combine):
+  """Iteratively evaluate an expression DAG post-order without recursion."""
+  hit, val = fast_leaf(root)
+  if hit:
+    return val
+
+  memo = {}
+  stack = [(root, False)]
+
+  def resolve(node):
+    h, v = fast_leaf(node)
+    if h:
+      return v
+    return memo[id(node)]
+
+  while stack:
+    node, visited = stack.pop()
+    nid = id(node)
+    if nid in memo:
+      continue
+    h, v = fast_leaf(node)
+    if h:
+      memo[nid] = v
+      continue
+    if visited:
+      memo[nid] = combine(node, resolve)
+    else:
+      stack.append((node, True))
+      for child in get_children(node):
+        ch, _ = fast_leaf(child)
+        if not ch and id(child) not in memo:
+          stack.append((child, False))
+
+  return memo[id(root)]
+
+
+def _min_fast_leaf(v):
+  if is_const(v):
+    return (True, as_const(v))
+  if type(v).__name__ in ("ExpInt", "ExpTerm") and "min_value" in v.__dict__:
+    return (True, v.min_value)
+  if not hasattr(v, "_min_children"):
+    return (True, v.min_val() if hasattr(v, "min_val") else v)
+  return (False, None)
+
+
 def min_val(x):
-  if is_const(x):
-    return as_const(x)
-  else:
-    return x.min_val()
+  return _eval_dag(
+    x,
+    _min_fast_leaf,
+    lambda node: node._min_children(),
+    lambda node, resolve: node._min_combine(resolve),
+  )
 
 
 def always_ge(a, b):
@@ -60,18 +108,43 @@ def always_gt(a, b):
   return min_val(a - b) > 0
 
 
+def _var_fast_leaf(v):
+  if isinstance(v, Variable):
+    return (True, frozenset((v,)))
+  if is_const(v):
+    return (True, frozenset())
+  if type(v).__name__ in ("ExpInt", "ExpTerm") and "vars" in v.__dict__:
+    return (True, v.vars)
+  if not hasattr(v, "_var_children"):
+    return (True, v.variables() if hasattr(v, "variables") else frozenset())
+  return (False, None)
+
+
 def variables(x):
-  if is_const(x):
-    return frozenset()
-  else:
-    return x.variables()
+  return _eval_dag(
+    x,
+    _var_fast_leaf,
+    lambda node: node._var_children(),
+    lambda node, resolve: node._var_combine(resolve),
+  )
 
 
 def substitute(x, assignment):
-  if is_const(x):
-    return as_const(x)
-  else:
-    return x.substitute(assignment)
+  def fast_leaf(v):
+    if isinstance(v, Variable):
+      return (True, assignment.get(v, v))
+    if is_const(v):
+      return (True, as_const(v))
+    if not hasattr(v, "_sub_children"):
+      return (True, v.substitute(assignment) if hasattr(v, "substitute") else v)
+    return (False, None)
+
+  return _eval_dag(
+    x,
+    fast_leaf,
+    lambda node: node._sub_children(),
+    lambda node, resolve: node._sub_combine(resolve, assignment),
+  )
 
 
 class Variable:
@@ -338,17 +411,37 @@ class Expression(NatExpr):
       return self.const.uparrow_size_approx
     return (2, 0, abs(self.const))
 
+  def _sub_children(self):
+    for term in self.terms:
+      yield term.coef
+    yield self.const
+
+  def _sub_combine(self, resolve, subs):
+    val = 0
+    for term in self.terms:
+      term_val = reduce(operator.mul, [vp.substitute(subs) for vp in term.vars]) * resolve(term.coef)
+      val = val + term_val
+    val = val + resolve(self.const)
+    return simp_frac(val)
+
   def substitute(self, subs):
     """Substitute values from dict 'subs' to get an int."""
-    val = sum([t.substitute(subs) for t in self.terms]) + substitute(self.const, subs)
-    return simp_frac(val)
+    return substitute(self, subs)
+
+  def _min_children(self):
+    for term in self.terms:
+      yield term.coef
+    yield self.const
+
+  def _min_combine(self, resolve):
+    for term in self.terms:
+      if resolve(term.coef) < 0:
+        return -math.inf
+    return resolve(self.const)
 
   def min_val(self):
     """Minimum value over all non-negative variable assignment."""
-    for term in self.terms:
-      if min_val(term.coef) < 0:
-        return -math.inf
-    return min_val(self.const)
+    return min_val(self)
 
   def __eq__(self, other):
     other = NatExpr.wrap(other)
@@ -395,14 +488,22 @@ class Expression(NatExpr):
     else:
       raise BadOperation("Expression %s is not of correct form" % self)
 
-  def variables(self):
-    vars = set()
+  def _var_children(self):
     for term in self.terms:
-      vars.update(vp.var for vp in term.vars)
-      vars.update(variables(term.coef))
-    vars.update(variables(self.const))
-    assert all(isinstance(v, Variable) for v in vars)
-    return frozenset(vars)
+      yield term.coef
+    yield self.const
+
+  def _var_combine(self, resolve):
+    vars_set = set()
+    for term in self.terms:
+      vars_set.update(vp.var for vp in term.vars)
+      vars_set.update(resolve(term.coef))
+    vars_set.update(resolve(self.const))
+    assert all(isinstance(v, Variable) for v in vars_set)
+    return frozenset(vars_set)
+
+  def variables(self):
+    return variables(self)
 
   def variable(self):
     """Returns the single variable in this expression if it exists."""

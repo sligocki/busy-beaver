@@ -5,7 +5,7 @@ import math
 from Algebraic_Expression import Expression, Variable, min_val, substitute, variables
 from Big_Interval import BigInterval, Knuth10
 from Exp_Int import ExpInt, ExpTerm, is_simple, sign, struct_eq, uparrow_size_approx
-from NatExpr import NatExpr, expr_str, is_const, to_BigInterval
+from NatExpr import NatExpr, cmp_expr, expr_str, is_const, to_BigInterval
 
 
 def get_step_growth(expr, var):
@@ -134,20 +134,38 @@ class Iterated_Expression(NatExpr):
     # This is a hack so Expression(..., const=Iterated_Expression) doesn't break
     return self
 
+  def _min_children(self):
+    return (self.start_val,)
+
+  def _min_combine(self, resolve):
+    return resolve(self.start_val)
+
   def min_val(self):
     # Assuming f(x) >= x, min(f^N(x)) >= min(x)
-    return min_val(self.start_val)
+    return min_val(self)
+
+  def _var_children(self):
+    return (self.start_val, self.num_reps)
+
+  def _var_combine(self, resolve):
+    return resolve(self.start_val) | resolve(self.num_reps)
 
   def variables(self):
-    return variables(self.start_val) | variables(self.num_reps)
+    return variables(self)
 
-  def substitute(self, assignment):
+  def _sub_children(self):
+    return (self.start_val, self.num_reps)
+
+  def _sub_combine(self, resolve, assignment):
     return Iterated_Expression(
       self.step_expr,
       self.var,
-      substitute(self.start_val, assignment),
-      substitute(self.num_reps, assignment),
+      resolve(self.start_val),
+      resolve(self.num_reps),
     )
+
+  def substitute(self, assignment):
+    return substitute(self, assignment)
 
   def __divmod__(self, other):
     if other == 1:
@@ -193,28 +211,28 @@ class Iterated_Expression(NatExpr):
     other = NatExpr.wrap(other)
     if other.is_inf:
       return True
-    return self.uparrow_size_approx < uparrow_size_approx(other)
+    return cmp_expr(self, other) < 0
 
   def __gt__(self, other):
     assert self.is_const, self
     other = NatExpr.wrap(other)
     if other.is_inf:
       return False
-    return self.uparrow_size_approx > uparrow_size_approx(other)
+    return cmp_expr(self, other) > 0
 
   def __le__(self, other):
     assert self.is_const, self
     other = NatExpr.wrap(other)
     if other.is_inf:
       return True
-    return self.uparrow_size_approx <= uparrow_size_approx(other)
+    return cmp_expr(self, other) <= 0
 
   def __ge__(self, other):
     assert self.is_const, self
     other = NatExpr.wrap(other)
     if other.is_inf:
       return False
-    return self.uparrow_size_approx >= uparrow_size_approx(other)
+    return cmp_expr(self, other) >= 0
 
   def __mul__(self, other):
     if other == 0:
@@ -863,25 +881,50 @@ class Iterated_Math(NatExpr):
   def try_eval(self):
     return None
 
-  def min_val(self):
-    res = min_val(self.const) if hasattr(self.const, "min_val") else self.const
+  def _min_children(self):
     for term in self.terms:
-      res = res + term.coef * min_val(term.it_expr)
+      yield term.it_expr
+      yield term.coef
+    yield self.const
+
+  def _min_combine(self, resolve):
+    res = resolve(self.const)
+    for term in self.terms:
+      res = res + resolve(term.coef) * resolve(term.it_expr)
     return res
 
-  def variables(self):
+  def min_val(self):
+    return min_val(self)
+
+  def _var_children(self):
+    for term in self.terms:
+      yield term.it_expr
+      yield term.coef
+    yield self.const
+
+  def _var_combine(self, resolve):
     vars_set = set()
     for term in self.terms:
-      vars_set.update(variables(term.it_expr))
-    if hasattr(self.const, "variables"):
-      vars_set.update(self.const.variables())
-    elif hasattr(self.const, "vars"):
-      vars_set.update(self.const.vars)
-    return vars_set
+      vars_set.update(resolve(term.it_expr))
+      vars_set.update(resolve(term.coef))
+    vars_set.update(resolve(self.const))
+    return frozenset(vars_set)
+
+  def variables(self):
+    return variables(self)
+
+  def _sub_children(self):
+    for term in self.terms:
+      yield term.it_expr
+      yield term.coef
+    yield self.const
+
+  def _sub_combine(self, resolve, assignment):
+    new_terms = [Iterated_Term(resolve(t.it_expr), resolve(t.coef)) for t in self.terms]
+    return Iterated_Math(new_terms, resolve(self.const))
 
   def substitute(self, assignment):
-    new_terms = [Iterated_Term(substitute(t.it_expr, assignment), substitute(t.coef, assignment)) for t in self.terms]
-    return Iterated_Math(new_terms, substitute(self.const, assignment))
+    return substitute(self, assignment)
 
   def __add__(self, other):
     if is_simple(other) or isinstance(other, (ExpInt, Expression)):
@@ -1003,25 +1046,25 @@ class Iterated_Math(NatExpr):
     other = NatExpr.wrap(other)
     if other.is_inf:
       return True
-    return uparrow_size_approx(self) < uparrow_size_approx(other)
+    return cmp_expr(self, other) < 0
 
   def __gt__(self, other):
     assert self.is_const, self
     other = NatExpr.wrap(other)
     if other.is_inf:
       return False
-    return uparrow_size_approx(self) > uparrow_size_approx(other)
+    return cmp_expr(self, other) > 0
 
   def __le__(self, other):
     assert self.is_const, self
     other = NatExpr.wrap(other)
     if other.is_inf:
       return True
-    return uparrow_size_approx(self) <= uparrow_size_approx(other)
+    return cmp_expr(self, other) <= 0
 
   def __ge__(self, other):
     assert self.is_const, self
     other = NatExpr.wrap(other)
     if other.is_inf:
       return False
-    return uparrow_size_approx(self) >= uparrow_size_approx(other)
+    return cmp_expr(self, other) >= 0
