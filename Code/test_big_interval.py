@@ -295,6 +295,28 @@ class TestBigInterval(unittest.TestCase):
     self.assertTrue(approx_or_full_str(cur, max_chars=100).startswith("["))
     self.assertIn("chars_)", approx_and_full_str(cur, max_chars=100))
 
+  def test_deep_iterated_tower_bounds_no_recursion_error(self):
+    import sys
+    from Algebraic_Expression import Variable, VariableToExpression
+    from Iterated_Expression import Iterated_Expression
+
+    v = Variable()
+    inner_v = Variable()
+    inner_step = exp_int(2, VariableToExpression(inner_v) + 1)
+    old_limit = sys.getrecursionlimit()
+    try:
+      sys.setrecursionlimit(200)
+      cur = VariableToExpression(v) + 1
+      for _ in range(150):
+        it = Iterated_Expression(inner_step, inner_v, 2, cur)
+        cur = exp_int(2, exp_int(2, it + 1))
+      outer = Iterated_Expression(cur, v, 10, 100)
+      bi = outer.to_BigInterval()
+      self.assertGreaterEqual(len(bi.lower.args), 3)
+      self.assertGreaterEqual(len(bi.upper.args), 3)
+    finally:
+      sys.setrecursionlimit(old_limit)
+
 
 if __name__ == "__main__":
   unittest.main()
