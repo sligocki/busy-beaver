@@ -87,7 +87,6 @@ class BacktrackingTest(unittest.TestCase):
   def test_halt_bb4(self):
     # BB(4) champion
     result = backtrack(parse_tm("1RB1LB_1LA0LC_1RZ1LD_1RD0RA"), steps=1000, max_width=100)
-    print(result)
     self.assertFalse(result.success)
     # We cannot go deep enough to prove halting b/c tree grows too big.
     # self.assertTrue(result.halted)

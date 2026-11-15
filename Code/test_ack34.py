@@ -46,10 +46,6 @@ class TestAck34(unittest.TestCase):
     sim.loop_seek(25000)
 
     # Verify that higher-level rules were proven
-    print("\nRules proven by level:", sim.prover.num_rules_by_level)
-    print("Total Rules:", sim.prover.num_rules)
-    print("Iterated Rules:", sim.prover.num_linear_rules)
-    print("General Rules:", sim.prover.num_gen_rules)
     self.assertGreaterEqual(sim.prover.num_rules_by_level.get(4, 0), 1)
     self.assertEqual(sim.get_nonzeros().approx_str(), "~ 10 ↑↑↑ ~ 10^^65_533.6")
 

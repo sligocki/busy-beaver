@@ -6,6 +6,8 @@
 Unit test for "Enumerate.py".
 """
 
+import contextlib
+import io
 import os
 import shutil
 import subprocess
@@ -41,17 +43,20 @@ class GoldTest(unittest.TestCase):
       outfile_pb = os.path.join(test_dir, "out.pb")
       outfile_txt = os.path.join(test_dir, "out.txt")
       goldfile = os.path.join(self.root_dir, "Testdata/Enum.%d.%d.out.gold" % (states, symbols))
-      Enumerate.main(
-        [
-          "--states=%d" % states,
-          "--symbols=%d" % symbols,
-          "--outfile=%s" % outfile_pb,
-          # Makes tests deterministic
-          "--max-loops=10_000",
-          "--time=0",
-          "--force",
-        ]
-      )
+      stderr_buf = io.StringIO()
+      with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(stderr_buf):
+        Enumerate.main(
+          [
+            "--states=%d" % states,
+            "--symbols=%d" % symbols,
+            "--outfile=%s" % outfile_pb,
+            # Makes tests deterministic
+            "--max-loops=10_000",
+            "--time=0",
+            "--force",
+          ]
+        )
+      self.assertEqual(stderr_buf.getvalue(), "")
       # For now, use old style text so that we have extra info.
       subprocess.call(
         [
@@ -60,7 +65,8 @@ class GoldTest(unittest.TestCase):
           outfile_pb,
           outfile_txt,
           "--outformat=text_old",
-        ]
+        ],
+        stdout=subprocess.DEVNULL,
       )
       if regold:
         subprocess.call(["mv", outfile_txt, goldfile])
@@ -88,8 +94,15 @@ class GoldTest(unittest.TestCase):
       record.proto.status.halt_status.is_halting = True
       raise RuntimeError("boom")
 
-    with mock.patch.object(Macro_Simulator, "run_options", side_effect=failing_run):
+    stderr_buf = io.StringIO()
+    with (
+      mock.patch.object(Macro_Simulator, "run_options", side_effect=failing_run),
+      contextlib.redirect_stderr(stderr_buf),
+    ):
       enumerator.run(tm_record)
+
+    self.assertIn("ERROR: Exception raised while simulating TM:", stderr_buf.getvalue())
+    self.assertIn("RuntimeError: boom", stderr_buf.getvalue())
 
     self.assertTrue(tm_record.proto.filter.simulator.result.unknown_info.threw_exception)
     self.assertFalse(tm_record.proto.status.halt_status.is_decided)
