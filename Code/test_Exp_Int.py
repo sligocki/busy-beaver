@@ -303,6 +303,29 @@ class ExpIntTest(unittest.TestCase):
     res_three = substitute(halved, {n_var: 3})
     self.assertEqual(Exp_Int.try_eval(res_three), 4)
 
+  def test_nonconst_expint_with_const_term_and_neg_min_exp(self):
+    from Algebraic_Expression import min_val, variables
+
+    u = Variable(26)
+    expr_u = VariableToExpression(u)
+
+    # Non-const ExpInt whose ExpTerm is constant (const is non-const).
+    mixed = exp_int(2, 5) + expr_u
+    self.assertFalse(mixed.is_const)
+    self.assertEqual(Exp_Int.try_eval(min_val(mixed)), 32)
+    self.assertEqual(variables(mixed), {u})
+
+    # Non-const ExpTerm whose exponent min_val is negative.
+    nested = exp_int(2, -3 + 3 * exp_int(2, 2 * expr_u - 1))
+    self.assertFalse(nested.is_const)
+    self.assertEqual(min_val(nested), 1)
+
+    # Const ExpTerm with zero exponent.
+    zero_exp = Exp_Int.ExpTerm(2, 3, 0)
+    self.assertEqual(Exp_Int.try_eval(zero_exp), 3)
+    self.assertEqual(zero_exp.min_val(), 3)
+    self.assertEqual(zero_exp.variables(), frozenset())
+
   def todo_test_bug_normalize(self):
     # Simplified version of issue
     x = exp_int(7, exp_int(7, exp_int(7, 7))) + exp_int(7, 1 + exp_int(7, exp_int(7, 7)))

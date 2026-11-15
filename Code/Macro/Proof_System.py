@@ -1277,8 +1277,12 @@ class Proof_System:
           states_last_seen = None
 
       else:  # rule_level > 1
-        num_steps = gen_sim.step_num
-        states_last_seen = gen_sim.states_last_seen
+        if self.compute_steps:
+          num_steps = gen_sim.step_num
+          states_last_seen = gen_sim.states_last_seen
+        else:
+          num_steps = 0
+          states_last_seen = None
 
       # Cast num_steps as an Algebraic Expression (if it somehow got through
       # as simply an int)

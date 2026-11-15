@@ -225,9 +225,10 @@ class ExpTerm:
     self.is_const = is_const(self.exponent)
     # Is this a constant? Or an expression?
     if self.is_const:
+      self.vars = frozenset()
       exp_as_int = try_eval(self.exponent)
 
-      if not exp_as_int:
+      if exp_as_int is None:
         assert hasattr(self.exponent, "uparrow_size_approx"), self.exponent
         # For large enough exponent, the coefficient and even base don't have much effect.
         val = self.exponent.uparrow_size_approx
@@ -258,11 +259,16 @@ class ExpTerm:
         # Not guaranteed ... but not sure it's worth tracking max_val ...
         self.min_value = -math.inf
       else:
-        self.min_value = min_coef * exp_int(self.base, min_val(self.exponent))
+        min_exp = min_val(self.exponent)
+        min_exp = max(0, min_exp)
+        self.min_value = min_coef * exp_int(self.base, min_exp)
       assert is_const(self.min_value), self
       self.vars = variables(self.coef) | variables(self.exponent)
 
   def min_val(self):
+    if self.is_const:
+      val = try_eval(self)
+      return val if val is not None else ExpInt([self], const=0, denom=1)
     return self.min_value
 
   def variables(self):
@@ -437,7 +443,7 @@ class ExpInt(NatExpr):
     self.is_const = all(term.is_const for term in self.terms)
     if self.is_const:
       term_values = [try_eval(term) for term in self.terms]
-      if all(term_values):
+      if all(v is not None for v in term_values):
         # All terms are small enough to fit in `int`s. We can represent the sum
         # precisely here.
         value = (sum(term_values) + self.const) // self.denom
@@ -473,7 +479,7 @@ class ExpInt(NatExpr):
 
     else:  # not self.is_const
       assert is_const(self.denom), self
-      min_terms = [term.min_value for term in self.terms]
+      min_terms = [term.min_val() for term in self.terms]
       if -math.inf in min_terms:
         self.min_value = -math.inf
       else:
