@@ -4,6 +4,7 @@ import pickle
 
 import io_pb2
 from Exp_Int import ExpInt, ExpTerm
+from Iterated_Expression import Iterated_Expression, Iterated_Math
 from NatExpr import ConstInt
 
 
@@ -24,7 +25,7 @@ def set_big_int(field: io_pb2.BigInt, value):
       # For "big" integers, store them as serialized text.
       # Store as hex to avoid https://docs.python.org/3/library/stdtypes.html#integer-string-conversion-length-limitation
       field.hex_str = hex(value)
-  elif isinstance(value, ExpInt):
+  elif isinstance(value, (ExpInt, Iterated_Expression, Iterated_Math)):
     field.exp_int_pickle = pickle.dumps(value)
   else:
     raise TypeError(f"Unexpected type {type(value)}")
@@ -95,8 +96,6 @@ def set_halting(
   from_symbol: int | None = None,
 ):
   """Specify that we know that this machine halts."""
-  tm_status.halt_status.is_decided = True
-  tm_status.halt_status.is_halting = True
   set_big_int(tm_status.halt_status.halt_steps, halt_steps)
   if halt_score is not None:
     set_big_int(tm_status.halt_status.halt_score, halt_score)
@@ -104,6 +103,8 @@ def set_halting(
     tm_status.halt_status.from_state = from_state
   if from_symbol is not None:
     tm_status.halt_status.from_symbol = from_symbol
+  tm_status.halt_status.is_decided = True
+  tm_status.halt_status.is_halting = True
 
   # NOTE: We are treating Halting machines as Not Quasihalting.
   # Technically, Aaronson's definition calls Halting machines Quasihalting also.

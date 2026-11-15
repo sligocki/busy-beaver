@@ -164,6 +164,7 @@ class Enumerator:
         file=sys.stderr,
       )
       traceback.print_exc(file=sys.stderr)
+      tm_record.proto.ClearField("status")
       tm_record.proto.filter.simulator.result.unknown_info.threw_exception = True
       # raise
 

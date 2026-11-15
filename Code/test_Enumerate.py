@@ -12,8 +12,14 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest import mock
 
 import Enumerate
+import IO
+import Macro_Simulator
+import TM_Enum
+import Work_Queue
+from IO.TM_Record import TM_Record
 
 regold = False
 
@@ -63,6 +69,36 @@ class GoldTest(unittest.TestCase):
         self.assertEqual(0, proc.returncode)
     # Clean up after ourselves.
     shutil.rmtree(test_dir)
+
+  def test_exception_clears_status_and_preserves_ttable(self):
+    ttable = "1RB1RG_1LC0LF_0RE1LD_0LB1LC_1RE1RA_0LE0LB_1RZ1LF"
+    tm_record = TM_Record(tm_enum=TM_Enum.TM_Enum(IO.parse_tm(ttable), allow_no_halt=False))
+    options = Enumerate.get_options_parser().parse_args(
+      ["--states=7", "--symbols=2", "--outfile=/dev/null", "--force"]
+    )[0]
+    enumerator = Enumerate.Enumerator(
+      options,
+      writer=mock.MagicMock(),
+      stack=mock.MagicMock(spec=Work_Queue.Work_Queue),
+      pout=None,
+    )
+
+    def failing_run(record, _options, _time_limit):
+      record.proto.status.halt_status.is_decided = True
+      record.proto.status.halt_status.is_halting = True
+      raise RuntimeError("boom")
+
+    with mock.patch.object(Macro_Simulator, "run_options", side_effect=failing_run):
+      enumerator.run(tm_record)
+
+    self.assertTrue(tm_record.proto.filter.simulator.result.unknown_info.threw_exception)
+    self.assertFalse(tm_record.proto.status.halt_status.is_decided)
+    self.assertFalse(tm_record.proto.status.halt_status.is_halting)
+
+    enumerator.add_result(tm_record)
+    self.assertEqual(enumerator.num_unknown, 1)
+    self.assertEqual(enumerator.num_halt, 0)
+    self.assertEqual(tm_record.ttable_str(), ttable)
 
 
 if __name__ == "__main__":
