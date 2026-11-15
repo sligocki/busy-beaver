@@ -91,8 +91,9 @@ class Chain_Tape:
   def __repr__(self):
     return self.print_with_state(None)
 
-  def print_with_state(self, state):
-    use_big_interval = getattr(self.options, "use_big_interval", True)
+  def print_with_state(self, state, use_big_interval=None):
+    if use_big_interval is None:
+      use_big_interval = getattr(self.options, "use_big_interval", True)
     left_tape = " ".join(
       sym.to_string(self.options.html_format, self.options.full_reps, use_big_interval=use_big_interval)
       for sym in self.tape[0]

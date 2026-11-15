@@ -370,7 +370,7 @@ class Simulator:
   def print_self(self):
     self.print_steps()
     print("Elapsed time:", time.time() - self.start_time)
-    print(self.tape.print_with_state(self.state))
+    print(self.tape.print_with_state(self.state, use_big_interval=self.use_big_interval))
     print("Num Nonzeros:", approx_and_full_str(self.get_nonzeros(), use_big_interval=self.use_big_interval))
     print("Span:", approx_and_full_str(self.get_span(), use_big_interval=self.use_big_interval))
 
@@ -404,7 +404,7 @@ class Simulator:
           % (
             self.verbose_prefix,
             self.step_num,
-            self.tape.print_with_state(self.state),
+            self.tape.print_with_state(self.state, use_big_interval=self.use_big_interval),
           )
         )
       else:
@@ -413,7 +413,7 @@ class Simulator:
           % (
             self.verbose_prefix,
             self.num_loops,
-            self.tape.print_with_state(self.state),
+            self.tape.print_with_state(self.state, use_big_interval=self.use_big_interval),
           ),
           end=" ",
         )

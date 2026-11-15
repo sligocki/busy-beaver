@@ -42,6 +42,8 @@ def run(machine, block_size, back, prover, recursive, options):
 
   if options.manual:
     return  # Lets us run the machine manually. Must be run as python -i Quick_Sim.py
+  use_big_interval = getattr(options, "use_big_interval", True)
+  sim.use_big_interval = False
   try:
     if options.quiet or options.verbose:  # Note verbose prints inside sim.step()
       if options.verbose:
@@ -66,6 +68,7 @@ def run(machine, block_size, back, prover, recursive, options):
           if options.freeze_prover:
             sim.prover.frozen = True
   finally:
+    sim.use_big_interval = use_big_interval
     sim.print_self()
 
   print()
