@@ -22,6 +22,9 @@ def _arrows_str(num_arrows: int) -> str:
   return "↑" + str(num_arrows).translate(_SUPERSCRIPT_DIGITS)
 
 
+_GK_10_CACHE: dict[tuple[int, int, bool], Knuth10] = {}
+
+
 class Knuth10:
   BASE = 10
   # a0 in [C, 10^C)
@@ -141,8 +144,25 @@ class Knuth10:
         return Knuth10(1)
       if n == 1:
         return Knuth10(10)
-      cur = Knuth10(10)
-      for _ in range(n - 1):
+      cache_key = (self.C, k, is_upper)
+      cur = _GK_10_CACHE.get(cache_key)
+      if cur is None:
+        cur = Knuth10(10).apply_gk(k - 1, is_upper=is_upper)
+        _GK_10_CACHE[cache_key] = cur
+      rem = n - 2
+      if rem == 0:
+        return cur
+      if len(cur.args) == 1:
+        cur = cur.apply_gk(k - 1, is_upper=is_upper)
+        rem -= 1
+      if rem > 0 and len(cur.args) == k and cur.args[k - 1] <= self.MAX_A:
+        can_add = min(rem, self.MAX_A - cur.args[k - 1])
+        if can_add > 0:
+          ca = list(cur.args)
+          ca[k - 1] += can_add
+          cur = Knuth10(*ca)
+          rem -= can_add
+      for _ in range(rem):
         cur = cur.apply_gk(k - 1, is_upper=is_upper)
       return cur
     if len(a) <= k:

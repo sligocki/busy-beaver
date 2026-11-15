@@ -111,21 +111,38 @@ def always_gt(a, b):
 def _var_fast_leaf(v):
   if isinstance(v, Variable):
     return (True, frozenset((v,)))
+  d = getattr(v, "__dict__", None)
+  if d is not None:
+    if "_cached_vars" in d:
+      return (True, d["_cached_vars"])
+    if "vars" in d and type(v).__name__ in ("ExpInt", "ExpTerm"):
+      return (True, d["vars"])
   if is_const(v):
     return (True, frozenset())
-  if type(v).__name__ in ("ExpInt", "ExpTerm") and "vars" in v.__dict__:
-    return (True, v.vars)
   if not hasattr(v, "_var_children"):
     return (True, v.variables() if hasattr(v, "variables") else frozenset())
   return (False, None)
 
 
+def _var_combine_cached(node, resolve):
+  res = node._var_combine(resolve)
+  d = getattr(node, "__dict__", None)
+  if d is not None:
+    d["_cached_vars"] = res
+  return res
+
+
 def variables(x):
+  d = getattr(x, "__dict__", None)
+  if d is not None and "_cached_vars" in d:
+    return d["_cached_vars"]
+  if isinstance(x, int):
+    return frozenset()
   return _eval_dag(
     x,
     _var_fast_leaf,
     lambda node: node._var_children(),
-    lambda node, resolve: node._var_combine(resolve),
+    _var_combine_cached,
   )
 
 

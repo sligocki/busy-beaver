@@ -277,14 +277,25 @@ def _ceil_log10_bi(bi):
   return BigInterval(bi.upper)
 
 
+_CONST_TOWER_CACHE: dict[tuple[int, int], list[Knuth10]] = {}
+
+
 def _const_tower_height(c_bi, level_k: int) -> int:
   """Return small t >= 1 such that c_bi <= g_{level_k}^t(10)."""
-  cur = BigInterval(10)
-  for t in range(1, 20):
-    cur = cur.apply_uparrow(level_k)
-    if c_bi.upper <= cur.lower:
+  key = (Knuth10.C, level_k)
+  thresholds = _CONST_TOWER_CACHE.get(key)
+  if thresholds is None:
+    thresholds = []
+    cur = Knuth10(10)
+    for _ in range(1, 20):
+      cur = cur.apply_gk(level_k, is_upper=False)
+      thresholds.append(cur)
+    _CONST_TOWER_CACHE[key] = thresholds
+  u = c_bi.upper
+  for t, thresh in enumerate(thresholds, 1):
+    if u <= thresh:
       return t
-  a = c_bi.upper.args
+  a = u.args
   if level_k == 1 and len(a) <= 2:
     return (a[1] if len(a) == 2 else 0) + 4
   return 100
@@ -381,11 +392,25 @@ def _mul_upper(u1, u2, level_k: int):
   return (h, m_max, a_max + BigInterval(1))
 
 
+_ACTIVE_TU_MEMO: dict | None = None
+_ACTIVE_TL_MEMO: dict | None = None
+
+
+def _env_cache_key(env):
+  if not env:
+    return ()
+  return tuple(
+    sorted(
+      (id(k), v.lower.args, v.upper.args) if isinstance(v, BigInterval) else (id(k), id(v)) for k, v in env.items()
+    )
+  )
+
+
 def _tower_upper(expr, var, level_k: int, x_min_bi, env=None, _memo=None):
   """Return (h, M_bi, A_bi) such that expr(x) <= g_{level_k}^h(M_bi * x + A_bi) for all x >= x_min_bi."""
   if _memo is None:
-    _memo = {}
-  key = (id(expr), id(var), level_k, x_min_bi.lower.args, x_min_bi.upper.args, id(env))
+    _memo = _ACTIVE_TU_MEMO if _ACTIVE_TU_MEMO is not None else {}
+  key = (id(expr), id(var), level_k, x_min_bi.lower.args, x_min_bi.upper.args, _env_cache_key(env))
   if key in _memo:
     return _memo[key]
   res = _tower_upper_impl(expr, var, level_k, x_min_bi, env, _memo)
@@ -493,10 +518,10 @@ def _eval_tower_lower_bi(bound, level_k: int, x_bi):
 def _tower_lower(expr, var, level_k: int, x_min_bi, env=None, _memo=None, _upper_memo=None):
   """Return (h, m_frac, a) such that expr(x) >= tower_{level_k}(h, m_frac * x + a) for all x >= x_min_bi."""
   if _memo is None:
-    _memo = {}
+    _memo = _ACTIVE_TL_MEMO if _ACTIVE_TL_MEMO is not None else {}
   if _upper_memo is None:
-    _upper_memo = {}
-  key = (id(expr), id(var), level_k, x_min_bi.lower.args, x_min_bi.upper.args, id(env))
+    _upper_memo = _ACTIVE_TU_MEMO if _ACTIVE_TU_MEMO is not None else {}
+  key = (id(expr), id(var), level_k, x_min_bi.lower.args, x_min_bi.upper.args, _env_cache_key(env))
   if key in _memo:
     return _memo[key]
   res = _tower_lower_impl(expr, var, level_k, x_min_bi, env, _memo, _upper_memo)
@@ -657,6 +682,20 @@ def _iterated_to_big_interval(it_expr: Iterated_Expression, env=None):
 
 
 def _iterated_to_big_interval_from_bounds(it_expr: Iterated_Expression, start_bi, reps_bi, env=None):
+  global _ACTIVE_TU_MEMO, _ACTIVE_TL_MEMO
+  owns_memos = _ACTIVE_TU_MEMO is None
+  if owns_memos:
+    _ACTIVE_TU_MEMO = {}
+    _ACTIVE_TL_MEMO = {}
+  try:
+    return _iterated_to_big_interval_from_bounds_impl(it_expr, start_bi, reps_bi, env)
+  finally:
+    if owns_memos:
+      _ACTIVE_TU_MEMO = None
+      _ACTIVE_TL_MEMO = None
+
+
+def _iterated_to_big_interval_from_bounds_impl(it_expr: Iterated_Expression, start_bi, reps_bi, env=None):
   base_env = {} if env is None else dict(env)
 
   n_hi = reps_bi.upper.try_eval()
@@ -708,8 +747,8 @@ def _iterated_to_big_interval_from_bounds(it_expr: Iterated_Expression, start_bi
     n_lo = reps_bi.lower.try_eval()
 
   x_min_bi = BigInterval(1) if start_bi.lower < Knuth10(1) else BigInterval(start_bi.lower, start_bi.lower)
-  tu_memo = {}
-  tl_memo = {}
+  tu_memo = _ACTIVE_TU_MEMO
+  tl_memo = _ACTIVE_TL_MEMO
   h_u, m_u, a_u = _tower_upper(it_expr.step_expr, it_expr.var, step_arrows, x_min_bi, env, tu_memo)
   h_l, m_l, a_l = _tower_lower(it_expr.step_expr, it_expr.var, step_arrows, x_min_bi, env, tl_memo, tu_memo)
 
