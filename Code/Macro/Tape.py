@@ -40,11 +40,15 @@ class Repeated_Symbol:
   def __hash__(self):
     return hash((self.symbol, self.num))
 
-  def to_string(self, html_format, full_reps):
+  def to_string(self, html_format, full_reps, use_big_interval=True):
     if hasattr(self.symbol, "is_embedded"):
       return str(self.symbol)
 
-    num_str = approx_or_full_str(self.num, max_chars=0 if full_reps else 100)
+    num_str = approx_or_full_str(
+      self.num,
+      max_chars=0 if full_reps else 100,
+      use_big_interval=use_big_interval,
+    )
     if num_str.startswith("~"):
       num_str = f"({num_str})"
 
@@ -88,9 +92,14 @@ class Chain_Tape:
     return self.print_with_state(None)
 
   def print_with_state(self, state):
-    left_tape = " ".join(sym.to_string(self.options.html_format, self.options.full_reps) for sym in self.tape[0])
+    use_big_interval = getattr(self.options, "use_big_interval", True)
+    left_tape = " ".join(
+      sym.to_string(self.options.html_format, self.options.full_reps, use_big_interval=use_big_interval)
+      for sym in self.tape[0]
+    )
     right_tape = " ".join(
-      sym.to_string(self.options.html_format, self.options.full_reps) for sym in reverse(self.tape[1])
+      sym.to_string(self.options.html_format, self.options.full_reps, use_big_interval=use_big_interval)
+      for sym in reverse(self.tape[1])
     )
 
     if state is None:

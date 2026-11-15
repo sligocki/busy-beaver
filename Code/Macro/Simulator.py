@@ -13,7 +13,7 @@ from optparse import OptionGroup, OptionParser
 import io_pb2
 from Algebraic_Expression import Algebraic_Expression
 from Exp_Int import ExpIntGaveUp
-from NatExpr import approx_and_full_str, big_interval_str
+from NatExpr import approx_and_full_str, approx_str, big_interval_str
 from Macro import Proof_System, Tape, Turing_Machine
 from Macro.Turing_Machine import LEFT, RIGHT
 
@@ -49,6 +49,13 @@ def add_option_group(parser: OptionParser):
     action="store_true",
     help="Print full rep counts on tape even for very large reps.",
   )
+  group.add_option(
+    "--no-big-interval",
+    dest="use_big_interval",
+    action="store_false",
+    default=True,
+    help="Don't use BigInterval for printing approximate values (uses approx_str instead).",
+  )
 
   parser.add_option_group(group)
 
@@ -81,6 +88,7 @@ class Simulator:
     # True for normal Simulators. False for those run inside of a Proof_System.
     self.is_base_simulator = is_base_simulator
     self.compute_steps = options.compute_steps
+    self.use_big_interval = getattr(options, "use_big_interval", True)
 
     self.state = machine.init_state
     self.dir = machine.init_dir
@@ -363,20 +371,20 @@ class Simulator:
     self.print_steps()
     print("Elapsed time:", time.time() - self.start_time)
     print(self.tape.print_with_state(self.state))
-    print("Num Nonzeros:", approx_and_full_str(self.get_nonzeros()))
-    print("Span:", approx_and_full_str(self.get_span()))
+    print("Num Nonzeros:", approx_and_full_str(self.get_nonzeros(), use_big_interval=self.use_big_interval))
+    print("Span:", approx_and_full_str(self.get_span(), use_big_interval=self.use_big_interval))
 
   def print_steps(self):
     print()
     print("         Steps:                     Times Applied:")
-    print(template("Total:", self.step_num, self.total_loops))
+    print(template("Total:", self.step_num, self.total_loops, use_big_interval=self.use_big_interval))
     if self.prover:
-      print(template("Outer:", None, self.num_loops))
-      print(template("Prover:", None, self.prover.num_loops))
-    print(template("Macro:", self.steps_from_macro, self.num_macro_moves))
-    print(template("Chain:", self.steps_from_chain, self.num_chain_moves))
+      print(template("Outer:", None, self.num_loops, use_big_interval=self.use_big_interval))
+      print(template("Prover:", None, self.prover.num_loops, use_big_interval=self.use_big_interval))
+    print(template("Macro:", self.steps_from_macro, self.num_macro_moves, use_big_interval=self.use_big_interval))
+    print(template("Chain:", self.steps_from_chain, self.num_chain_moves, use_big_interval=self.use_big_interval))
     if self.prover:
-      print(template("Rule:", self.steps_from_rule, self.num_rule_moves))
+      print(template("Rule:", self.steps_from_rule, self.num_rule_moves, use_big_interval=self.use_big_interval))
       print("Rules proven:", self.prover.num_rules)
       for level in sorted(self.prover.num_rules_by_level):
         print(f"  Level {level} rules:", self.prover.num_rules_by_level[level])
@@ -415,10 +423,10 @@ class Simulator:
           print()
 
 
-def template(title, steps, loops):
+def template(title, steps, loops, use_big_interval=True):
   """Pretty print row of the steps table."""
   if steps is not None:
-    steps_str = big_interval_str(steps)
+    steps_str = big_interval_str(steps) if use_big_interval else approx_str(steps)
   else:
     steps_str = "N/A"
   return "%-8s %-20s %20d" % (title, steps_str, loops)
