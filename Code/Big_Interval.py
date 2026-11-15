@@ -13,6 +13,15 @@ class NotComparable(Exception):
   pass
 
 
+_SUPERSCRIPT_DIGITS = str.maketrans("0123456789", "⁰¹²³⁴⁵⁶⁷⁸⁹")
+
+
+def _arrows_str(num_arrows: int) -> str:
+  if num_arrows < 4:
+    return "↑" * num_arrows
+  return "↑" + str(num_arrows).translate(_SUPERSCRIPT_DIGITS)
+
+
 class Knuth10:
   BASE = 10
   # a0 in [C, 10^C)
@@ -188,7 +197,7 @@ class Knuth10:
       ak = self.args[i]
       if ak == 0:
         continue
-      arrows = "↑" * i
+      arrows = _arrows_str(i)
       if ak == 1:
         s = f"10{arrows} {s}"
       else:
@@ -201,7 +210,7 @@ class Knuth10:
       ak = self.args[i]
       if ak == 0:
         continue
-      arrows = "↑" * i
+      arrows = _arrows_str(i)
       if i == 1:
         # H is the additional height needed to be added to a1 based on a0 (which we will ignore)
         a0 = self.args[0]

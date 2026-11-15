@@ -35,6 +35,23 @@ class TestKnuth10(unittest.TestCase):
     self.assertTrue(Knuth10(10**10 - 1, 8) < Knuth10(10, 0, 1))
     self.assertTrue(Knuth10(10, 0, 1) == Knuth10(10, 0, 1))
 
+  def test_uparrow_str_formatting(self):
+    k3 = Knuth10(1000, 0, 0, 1)
+    self.assertEqual(str(k3), "10↑↑↑ 1000")
+    self.assertEqual(k3.approx_str(), "10↑↑↑ 1000")
+
+    k4 = Knuth10(1000, 0, 0, 0, 1)
+    self.assertEqual(str(k4), "10↑⁴ 1000")
+    self.assertEqual(k4.approx_str(), "10↑⁴ 1000")
+
+    k6_rep = Knuth10(1000, 0, 0, 0, 0, 0, 3)
+    self.assertEqual(str(k6_rep), "(10↑⁶)^3 1000")
+    self.assertEqual(k6_rep.approx_str(), "(10↑⁶)^3 1000")
+
+    k11 = Knuth10(1000, *([0] * 10), 1)
+    self.assertEqual(str(k11), "10↑¹¹ 1000")
+    self.assertEqual(k11.approx_str(), "10↑¹¹ 1000")
+
 
 class TestBigInterval(unittest.TestCase):
   def test_small_add(self):
