@@ -8,71 +8,69 @@ from Exp_Int import ExpInt, ExpTerm, is_simple, sign, struct_eq, uparrow_size_ap
 from NatExpr import NatExpr, cmp_expr, expr_str, is_const, to_BigInterval
 
 
-def get_step_growth(expr, var):
+def get_step_growth(expr, var, _memo=None):
   """
   Returns `(arrows, count)` describing how `expr(var)` grows per application:
   `(arrows, count)` means `expr(var) ≈ (10 ↑^arrows)^count (var)`.
   Returns `None` if `var` is not found in `expr`.
   """
-  if type(expr).__name__ == "Iterated_Math":
-    growths = [get_step_growth(term.it_expr, var) for term in expr.terms]
+  if _memo is None:
+    _memo = {}
+  key = (id(expr), id(var))
+  if key in _memo:
+    return _memo[key]
+
+  res = None
+  tname = type(expr).__name__
+  if tname == "Iterated_Math":
+    growths = [get_step_growth(term.it_expr, var, _memo) for term in expr.terms]
     if hasattr(expr, "const") and not isinstance(expr.const, int) and expr.const is not expr:
-      growths.append(get_step_growth(expr.const, var))
+      growths.append(get_step_growth(expr.const, var, _memo))
     valid = [g for g in growths if g is not None]
     if valid:
-      return max(valid)
-    return None
-  elif type(expr).__name__ == "Iterated_Term":
-    return get_step_growth(expr.it_expr, var)
+      res = max(valid)
+  elif tname == "Iterated_Term":
+    res = get_step_growth(expr.it_expr, var, _memo)
   elif hasattr(expr, "terms"):
-    growths = [get_step_growth(term, var) for term in expr.terms]
+    growths = [get_step_growth(term, var, _memo) for term in expr.terms]
     if hasattr(expr, "const") and not isinstance(expr.const, int) and expr.const is not expr:
-      growths.append(get_step_growth(expr.const, var))
+      growths.append(get_step_growth(expr.const, var, _memo))
     valid = [g for g in growths if g is not None]
     if valid:
-      return max(valid)
-    return None
+      res = max(valid)
   elif hasattr(expr, "vars") and isinstance(expr.vars, (list, tuple)):
-    growths = [get_step_growth(vp, var) for vp in expr.vars]
+    growths = [get_step_growth(vp, var, _memo) for vp in expr.vars]
     if hasattr(expr, "coef") and not isinstance(expr.coef, int):
-      growths.append(get_step_growth(expr.coef, var))
+      growths.append(get_step_growth(expr.coef, var, _memo))
     valid = [g for g in growths if g is not None]
     if valid:
-      return max(valid)
-    return None
+      res = max(valid)
   elif hasattr(expr, "var") and not hasattr(expr, "step_expr"):
     v = expr.var
     if v == var:
-      return (1, 0)
+      res = (1, 0)
     elif hasattr(v, "exponent"):
-      g = get_step_growth(v.exponent, var)
+      g = get_step_growth(v.exponent, var, _memo)
       if g is not None:
-        return (1, g[1] + 1) if g[0] == 1 else g
+        res = (1, g[1] + 1) if g[0] == 1 else g
   elif hasattr(expr, "exponent"):
-    g = get_step_growth(expr.exponent, var)
+    g = get_step_growth(expr.exponent, var, _memo)
     if g is not None:
-      return (1, g[1] + 1) if g[0] == 1 else g
-  elif type(expr).__name__ == "Iterated_Math":
-    growths = [get_step_growth(term.it_expr, var) for term in expr.terms]
-    if hasattr(expr, "const") and not isinstance(expr.const, int) and expr.const is not expr:
-      growths.append(get_step_growth(expr.const, var))
-    valid = [g for g in growths if g is not None]
-    if valid:
-      return max(valid)
-    return None
-  elif type(expr).__name__ == "Iterated_Expression":
-    g_reps = get_step_growth(expr.num_reps, var)
+      res = (1, g[1] + 1) if g[0] == 1 else g
+  elif tname == "Iterated_Expression":
+    g_reps = get_step_growth(expr.num_reps, var, _memo)
     if g_reps is not None:
-      g_step = get_step_growth(expr.step_expr, expr.var) or (1, 1)
+      g_step = get_step_growth(expr.step_expr, expr.var, _memo) or (1, 1)
       arr_f = g_step[0] + 1
       arr_N, count_N = g_reps
       if arr_f > arr_N:
-        return (arr_f, 1)
+        res = (arr_f, 1)
       elif arr_f == arr_N:
-        return (arr_N, count_N + 1)
+        res = (arr_N, count_N + 1)
       else:
-        return g_reps
-  return None
+        res = g_reps
+  _memo[key] = res
+  return res
 
 
 def get_depth(expr, var):
@@ -383,8 +381,19 @@ def _mul_upper(u1, u2, level_k: int):
   return (h, m_max, a_max + BigInterval(1))
 
 
-def _tower_upper(expr, var, level_k: int, x_min_bi, env=None):
+def _tower_upper(expr, var, level_k: int, x_min_bi, env=None, _memo=None):
   """Return (h, M_bi, A_bi) such that expr(x) <= g_{level_k}^h(M_bi * x + A_bi) for all x >= x_min_bi."""
+  if _memo is None:
+    _memo = {}
+  key = (id(expr), id(var), level_k, x_min_bi.lower.args, x_min_bi.upper.args, id(env))
+  if key in _memo:
+    return _memo[key]
+  res = _tower_upper_impl(expr, var, level_k, x_min_bi, env, _memo)
+  _memo[key] = res
+  return res
+
+
+def _tower_upper_impl(expr, var, level_k: int, x_min_bi, env, _memo):
   zero = BigInterval(0)
   one = BigInterval(1)
   if isinstance(expr, int):
@@ -404,7 +413,9 @@ def _tower_upper(expr, var, level_k: int, x_min_bi, env=None):
   if isinstance(expr, (Expression, ExpInt, Iterated_Math)):
     c_val = expr.const
     acc = (
-      (0, zero, zero) if (isinstance(c_val, int) and c_val <= 0) else _tower_upper(c_val, var, level_k, x_min_bi, env)
+      (0, zero, zero)
+      if (isinstance(c_val, int) and c_val <= 0)
+      else _tower_upper(c_val, var, level_k, x_min_bi, env, _memo)
     )
     for term in expr.terms:
       if isinstance(term.coef, int) and term.coef <= 0:
@@ -412,12 +423,12 @@ def _tower_upper(expr, var, level_k: int, x_min_bi, env=None):
       if isinstance(expr, Expression):
         cur = (0, zero, one)
         for vp in term.vars:
-          bu = _tower_upper(vp.var, var, level_k, x_min_bi, env)
+          bu = _tower_upper(vp.var, var, level_k, x_min_bi, env, _memo)
           for _ in range(vp.pow):
             cur = _mul_upper(cur, bu, level_k)
       elif isinstance(expr, ExpInt):
         b_log = _ceil_log10_bi(to_BigInterval(term.base, env))
-        exp_u = _tower_upper(term.exponent, var, level_k, x_min_bi, env)
+        exp_u = _tower_upper(term.exponent, var, level_k, x_min_bi, env, _memo)
         if level_k == 1:
           h_e, m_e, a_e = _bump_upper(exp_u, b_log, 1)
           cur = (h_e + 1, m_e, a_e)
@@ -430,7 +441,7 @@ def _tower_upper(expr, var, level_k: int, x_min_bi, env=None):
           else:
             cur = (h_e, m_e, a_e + BigInterval(1 if le_1 else 2))
       else:
-        cur = _tower_upper(term.it_expr, var, level_k, x_min_bi, env)
+        cur = _tower_upper(term.it_expr, var, level_k, x_min_bi, env, _memo)
       acc = _add_upper(acc, _bump_upper(cur, coef_bi(term.coef), level_k), level_k, x_min_bi)
     if isinstance(expr, ExpInt) and expr.denom != 1 and acc[0] == 0:
       d_bi = to_BigInterval(expr.denom, env)
@@ -441,7 +452,7 @@ def _tower_upper(expr, var, level_k: int, x_min_bi, env=None):
 
   if isinstance(expr, Iterated_Expression):
     g_in = get_step_growth(expr.step_expr, expr.var)
-    r_u = _tower_upper(expr.num_reps, var, level_k, x_min_bi, env)
+    r_u = _tower_upper(expr.num_reps, var, level_k, x_min_bi, env, _memo)
     if g_in is None or g_in == (1, 0):
       return r_u
     k_in, m_in = g_in
@@ -451,7 +462,7 @@ def _tower_upper(expr, var, level_k: int, x_min_bi, env=None):
       if var not in variables(expr.start_val)
       else 10
     )
-    in_u = _tower_upper(expr.step_expr, expr.var, k_in, BigInterval(100), env)
+    in_u = _tower_upper(expr.step_expr, expr.var, k_in, BigInterval(100), env, _memo)
     t_in = _const_tower_height(in_u[1] + in_u[2], k_in) + 2
     h_r, m_r, a_r = r_u
     if k_in + 1 == level_k:
@@ -479,8 +490,21 @@ def _eval_tower_lower_bi(bound, level_k: int, x_bi):
   return arg
 
 
-def _tower_lower(expr, var, level_k: int, x_min_bi, env=None):
+def _tower_lower(expr, var, level_k: int, x_min_bi, env=None, _memo=None, _upper_memo=None):
   """Return (h, m_frac, a) such that expr(x) >= tower_{level_k}(h, m_frac * x + a) for all x >= x_min_bi."""
+  if _memo is None:
+    _memo = {}
+  if _upper_memo is None:
+    _upper_memo = {}
+  key = (id(expr), id(var), level_k, x_min_bi.lower.args, x_min_bi.upper.args, id(env))
+  if key in _memo:
+    return _memo[key]
+  res = _tower_lower_impl(expr, var, level_k, x_min_bi, env, _memo, _upper_memo)
+  _memo[key] = res
+  return res
+
+
+def _tower_lower_impl(expr, var, level_k: int, x_min_bi, env, _memo, _upper_memo):
   if isinstance(expr, int):
     return (0, Fraction(0), Fraction(max(0, expr)))
   if isinstance(expr, Variable):
@@ -511,7 +535,7 @@ def _tower_lower(expr, var, level_k: int, x_min_bi, env=None):
         return (0, Fraction(0), (a_p - BigInterval(neg_c)) / BigInterval(denom))
       a_p -= neg_c
       for nt in neg_terms:
-        nu = _tower_upper(nt, var, level_k, x_min_bi, env)
+        nu = _tower_upper(nt, var, level_k, x_min_bi, env, _upper_memo)
         nu_m, nu_a = nu[1].upper.try_eval(), nu[2].upper.try_eval()
         if nu[0] != 0 or nu_m is None or nu_a is None:
           return (0, Fraction(0), Fraction(0))
@@ -527,7 +551,7 @@ def _tower_lower(expr, var, level_k: int, x_min_bi, env=None):
     pos_at_min = _eval_tower_lower_bi(pos_l, level_k, x_min_bi)
     neg_ub = BigInterval(neg_c)
     for nt in neg_terms:
-      nu = _tower_upper(nt, var, level_k, x_min_bi, env)
+      nu = _tower_upper(nt, var, level_k, x_min_bi, env, _upper_memo)
       if nu[0] >= h_p:
         return (0, Fraction(0), Fraction(0))
       neg_ub = neg_ub + _eval_tower_upper_bi(nu, level_k, x_min_bi)
@@ -558,7 +582,7 @@ def _tower_lower(expr, var, level_k: int, x_min_bi, env=None):
         continue
       cur = (0, Fraction(0), Fraction(1))
       for vp in term.vars:
-        tl = _tower_lower(vp.var, var, level_k, x_min_bi, env)
+        tl = _tower_lower(vp.var, var, level_k, x_min_bi, env, _memo, _upper_memo)
         if tl[0] > cur[0] or (tl[0] == 0 and tl[1] > cur[1]):
           cur = tl
       if cur[0] == 0:
@@ -579,7 +603,7 @@ def _tower_lower(expr, var, level_k: int, x_min_bi, env=None):
         neg_exprs.append(ExpInt([ExpTerm(term.base, term.exponent, -term.coef)], 0, 1))
         continue
       if var in variables(term.exponent):
-        h_e, m_e, a_e = _tower_lower(term.exponent, var, level_k, x_min_bi, env)
+        h_e, m_e, a_e = _tower_lower(term.exponent, var, level_k, x_min_bi, env, _memo, _upper_memo)
         best = pick_better(best, (h_e + 1 if level_k == 1 else max(1, h_e), m_e, a_e))
       else:
         c_bi = BigInterval(max(1, term.coef)) if isinstance(term.coef, int) else BigInterval(1)
@@ -598,13 +622,13 @@ def _tower_lower(expr, var, level_k: int, x_min_bi, env=None):
       if isinstance(t.coef, int) and t.coef < 0:
         neg_exprs.append(Iterated_Math([Iterated_Term(t.it_expr, -t.coef)], 0))
         continue
-      best = pick_better(best, _tower_lower(t.it_expr, var, level_k, x_min_bi, env))
+      best = pick_better(best, _tower_lower(t.it_expr, var, level_k, x_min_bi, env, _memo, _upper_memo))
     neg_c = -expr.const if isinstance(expr.const, int) and expr.const < 0 else 0
     return apply_sub_and_div(best, neg_exprs, neg_c, 1)
 
   if isinstance(expr, Iterated_Expression):
     g_in = get_step_growth(expr.step_expr, expr.var)
-    r_l = _tower_lower(expr.num_reps, var, level_k, x_min_bi, env)
+    r_l = _tower_lower(expr.num_reps, var, level_k, x_min_bi, env, _memo, _upper_memo)
     if g_in is None or g_in == (1, 0):
       return r_l
     k_in, m_in = g_in
@@ -612,7 +636,7 @@ def _tower_lower(expr, var, level_k: int, x_min_bi, env=None):
       s_bi = to_BigInterval(expr.start_val, env) if var not in variables(expr.start_val) else BigInterval(0)
       in_x_min = max(BigInterval(20 if level_k == 2 else 10), s_bi)
       unroll_loss = 2 if s_bi.lower < in_x_min.lower else 0
-      in_l = _tower_lower(expr.step_expr, expr.var, k_in, in_x_min, env)
+      in_l = _tower_lower(expr.step_expr, expr.var, k_in, in_x_min, env, _memo, _upper_memo)
       in_min_v = in_x_min.lower.try_eval()
       ge_x = in_l[1] >= 1 and (
         isinstance(in_l[2], BigInterval)
@@ -684,8 +708,10 @@ def _iterated_to_big_interval_from_bounds(it_expr: Iterated_Expression, start_bi
     n_lo = reps_bi.lower.try_eval()
 
   x_min_bi = BigInterval(1) if start_bi.lower < Knuth10(1) else BigInterval(start_bi.lower, start_bi.lower)
-  h_u, m_u, a_u = _tower_upper(it_expr.step_expr, it_expr.var, step_arrows, x_min_bi, env)
-  h_l, m_l, a_l = _tower_lower(it_expr.step_expr, it_expr.var, step_arrows, x_min_bi, env)
+  tu_memo = {}
+  tl_memo = {}
+  h_u, m_u, a_u = _tower_upper(it_expr.step_expr, it_expr.var, step_arrows, x_min_bi, env, tu_memo)
+  h_l, m_l, a_l = _tower_lower(it_expr.step_expr, it_expr.var, step_arrows, x_min_bi, env, tl_memo, tu_memo)
 
   m_val, a_val, x_min_val = m_u.upper.try_eval(), a_u.upper.try_eval(), x_min_bi.lower.try_eval()
   if m_val is not None and a_val is not None:
