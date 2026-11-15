@@ -116,8 +116,10 @@ class Simulator:
     self.only_record_configs = (
       is_base_simulator and bool(self.prover) and getattr(options, "only_record_configs", False)
     )
+    self.on_record_span = None
     self._cur_tape_size = self.tape.get_macro_size() if init_tape else 0
     self._max_tape_size = self._cur_tape_size
+    self._max_effective_tape_size = (self._cur_tape_size + self._backsymbol_extra()) if init_tape else 0
     self._last_step_was_record = False
 
     # Stats
@@ -191,22 +193,38 @@ class Simulator:
       self.op_details = (str(e),)
       self.verbose_print()
 
+  def _backsymbol_extra(self) -> int:
+    if not hasattr(self.state, "back_symbol"):
+      return 0
+    back_half = self.tape.tape[not self.dir]
+    if len(back_half) == 1 and self.state.back_symbol == back_half[0].symbol:
+      return 0
+    return 1
+
   def _update_tape_size_record(self, delta=None, recompute=False):
     """Update tracked finite macro cell count and flag new record-breaking sizes."""
-    if not self.only_record_configs:
+    if not self.is_base_simulator:
       return
     if recompute:
       new_size = self.tape.get_macro_size()
       grew = new_size > self._cur_tape_size
       self._cur_tape_size = new_size
-    elif delta:
-      self._cur_tape_size += delta
+    elif delta is not None:
+      if delta:
+        self._cur_tape_size += delta
       grew = delta > 0
     else:
       return
     if grew and self._cur_tape_size > self._max_tape_size:
       self._max_tape_size = self._cur_tape_size
-      self._last_step_was_record = True
+      if self.only_record_configs:
+        self._last_step_was_record = True
+    if grew or self._max_effective_tape_size == 0:
+      eff_size = self._cur_tape_size + self._backsymbol_extra()
+      if eff_size > self._max_effective_tape_size:
+        self._max_effective_tape_size = eff_size
+        if self.on_record_span is not None:
+          self.on_record_span(self)
 
   def _step(self, max_loops=None):
     if self.compute_steps:
@@ -298,7 +316,7 @@ class Simulator:
           self.min_untouched_prefix[self.dir],
           len(self.tape.tape[self.dir]) - 1,
         )
-      if self.only_record_configs:
+      if self.is_base_simulator:
         dest_top = self.tape.tape[not self.dir][-1]
         absorbed_to_inf = dest_top.num.is_inf and trans.symbol_out == dest_top.symbol
       num_reps = self.tape.apply_chain_move(trans.symbol_out)
@@ -307,7 +325,7 @@ class Simulator:
         self.inf_reason = io_pb2.INF_CHAIN_STEP
         self.inf_recur_states = list(trans.states_last_seen.keys())
         return
-      if self.only_record_configs and absorbed_to_inf:
+      if self.is_base_simulator and absorbed_to_inf:
         self._update_tape_size_record(delta=-num_reps)
       if self.min_untouched_prefix is not None:
         back_dir = Turing_Machine.other_dir(self.dir)
@@ -333,7 +351,7 @@ class Simulator:
           self.min_untouched_prefix[self.dir],
           len(self.tape.tape[self.dir]) - 1,
         )
-      if self.only_record_configs:
+      if self.is_base_simulator:
         pop_inf = self.tape.tape[self.dir][-1].num.is_inf
         dest_top = self.tape.tape[not trans.dir_out][-1]
         push_inf = dest_top.num.is_inf and trans.symbol_out == dest_top.symbol
@@ -341,7 +359,7 @@ class Simulator:
       self.tape.apply_single_move(trans.symbol_out, trans.dir_out)
       self.state = trans.state_out
       self.dir = trans.dir_out
-      if self.only_record_configs and size_delta:
+      if self.is_base_simulator and (size_delta or self._max_effective_tape_size == 0):
         self._update_tape_size_record(delta=size_delta)
       if self.min_untouched_prefix is not None:
         back_dir = Turing_Machine.other_dir(self.dir)
@@ -366,6 +384,10 @@ class Simulator:
   def get_span(self):
     """Get number of symbols from the first non-zero to the last."""
     return self.tape.get_span(self.machine, self.state)
+
+  def get_max_span(self):
+    """Get maximum base-symbol tape span reached during simulation."""
+    return Turing_Machine.block_size(self.machine.init_symbol) * self._max_effective_tape_size
 
   def print_self(self):
     self.print_steps()
