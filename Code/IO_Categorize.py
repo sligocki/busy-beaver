@@ -1,6 +1,7 @@
 #! /usr/bin/env python3
 
 import argparse
+import contextlib
 from pathlib import Path
 
 import IO
@@ -69,26 +70,29 @@ def categorize(infilenames, outdir):
 
 
 def split_unknown(infilenames: list[Path], outdir: Path) -> None:
-  out = {
-    "over_loops": IO.Proto.Writer(outdir / "unknown_over_loops.pb"),
-    "over_tape": IO.Proto.Writer(outdir / "unknown_over_tape.pb"),
-    "over_time": IO.Proto.Writer(outdir / "unknown_over_time.pb"),
-    "over_steps_in_macro": IO.Proto.Writer(outdir / "unknown_over_steps_in_macro.pb"),
-    "threw_exception": IO.Proto.Writer(outdir / "unknown_threw_exception.pb"),
-  }
-  for writer in out.values():
-    writer.__enter__()
-  num_written = 0
-  for infilename in infilenames:
-    with IO.Proto.Reader(infilename) as reader:
-      for tm_record in reader:
-        reason = tm_record.proto.filter.simulator.result.unknown_info.WhichOneof("reason")
-        if reason:
-          out[reason].write_record(tm_record)
-          num_written += 1
-          if num_written % 1_000_000 == 0:
-            print(f" ... categorized {num_written:_} records ...")
-    print(f"Categorized {num_written:_} records total")
+  reasons = [
+    "over_loops",
+    "over_tape",
+    "over_time",
+    "over_steps_in_macro",
+    "threw_exception",
+    "over_expression_too_complex",
+  ]
+  with contextlib.ExitStack() as stack:
+    out = {reason: stack.enter_context(IO.Proto.Writer(outdir / f"unknown_{reason}.pb")) for reason in reasons}
+    num_written = 0
+    for infilename in infilenames:
+      with IO.Proto.Reader(infilename) as reader:
+        for tm_record in reader:
+          reason = tm_record.proto.filter.simulator.result.unknown_info.WhichOneof("reason")
+          if reason:
+            if reason not in out:
+              out[reason] = stack.enter_context(IO.Proto.Writer(outdir / f"unknown_{reason}.pb"))
+            out[reason].write_record(tm_record)
+            num_written += 1
+            if num_written % 1_000_000 == 0:
+              print(f" ... categorized {num_written:_} records ...")
+      print(f"Categorized {num_written:_} records total")
 
 
 def main():

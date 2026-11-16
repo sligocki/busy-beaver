@@ -6,6 +6,7 @@ import zipfile
 
 import Halting_Lib
 import IO
+import IO_Categorize
 from IO.TM_Record import TM_Record, parse_tm
 from IO.StdText import Writer
 import TM_Enum
@@ -152,6 +153,32 @@ class IOTest(unittest.TestCase):
     self.assertIsNone(transitions["A"][1])
     self.assertEqual(transitions["B"][0], (1, "R", "ZZ"))
     self.assertIsNone(transitions["B"][1])
+
+  def test_split_unknown_over_expression_too_complex(self):
+    tm_obj = parse_tm("1RB1LC_1RC1RB_1RD0LE_1LA1LD_1RZ0LA")
+    tm = TM_Enum.TM_Enum(tm_obj, allow_no_halt=False)
+    record = TM_Record(tm_enum=tm)
+    record.proto.filter.simulator.result.unknown_info.over_expression_too_complex.detail = "Too many layers"
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+      tmp = Path(tmpdir)
+      in_pb = tmp / "in.pb"
+      outdir = tmp / "out"
+      outdir.mkdir()
+      with IO.Proto.Writer(in_pb) as writer:
+        writer.write_record(record)
+
+      IO_Categorize.split_unknown([in_pb], outdir)
+
+      out_pb = outdir / "unknown_over_expression_too_complex.pb"
+      self.assertTrue(out_pb.exists())
+      with IO.Proto.Reader(out_pb) as reader:
+        records = list(reader)
+      self.assertEqual(len(records), 1)
+      self.assertEqual(
+        records[0].proto.filter.simulator.result.unknown_info.WhichOneof("reason"),
+        "over_expression_too_complex",
+      )
 
 
 if __name__ == "__main__":
