@@ -1159,6 +1159,7 @@ def compare_runs(
 
   coverage_summary: dict[str, Any] = {}
   newly_decided_details: list[str] = []
+  lost_decision_details: list[str] = []
   exception_details: list[str] = []
   for run_name, _, run_map in all_runs:
     n_halt = sum(1 for r in run_map.values() if r["status"] == "halt")
@@ -1188,6 +1189,14 @@ def compare_runs(
         )
       elif b_dec and not c_dec:
         lost_decisions.append(r["name"])
+        exc_info = f", exception: {r.get('exception_str')}" if r.get("threw_exception") else ""
+        lost_decision_details.append(
+          f"- **[{run_name}]** `{r['name']}` (`{tm_str}`, category=`{r.get('category')}`): "
+          f"**{br['status'].upper()}** (`{br['reason']}`, loops={br['total_loops']:_}, "
+          f"L{br.get('max_rule_level', 0)}) -> "
+          f"**{r['status'].upper()}** (`{r['reason']}`, loops={r['total_loops']:_}, "
+          f"L{r.get('max_rule_level', 0)}{exc_info})"
+        )
 
     coverage_summary[run_name] = {
       "decided": n_halt + n_inf,
@@ -1211,6 +1220,13 @@ def compare_runs(
       lines.append(detail)
     if len(newly_decided_details) > 30:
       lines.append(f"- ... and {len(newly_decided_details) - 30} more newly decided TMs.")
+    lines.append("")
+  if lost_decision_details:
+    lines.append("### Lost Decisions (vs Baseline)\n")
+    for detail in lost_decision_details[:30]:
+      lines.append(detail)
+    if len(lost_decision_details) > 30:
+      lines.append(f"- ... and {len(lost_decision_details) - 30} more lost decisions.")
     lines.append("")
   if exception_details:
     lines.append("### Coverage Exceptions / Unimplemented Paths\n")

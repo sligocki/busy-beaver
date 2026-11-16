@@ -303,6 +303,42 @@ class BenchmarkTest(unittest.TestCase):
       self.assertEqual(rmeta["config_name"], "default")
       self.assertEqual(len(rres), 1)
 
+  def test_compare_lists_lost_decisions_with_exception(self):
+    base_meta = {"config_name": "base", "git_sha": "abc1234"}
+    cand_meta = {"config_name": "cand", "git_sha": "def5678"}
+    base_rec = {
+      "tm": "1RB1LB_1LA1RZ",
+      "name": "2x2-6-4",
+      "category": "inf",
+      "status": "inf",
+      "reason": "INF_PROOF_SYSTEM",
+      "sim_time_us": 100,
+      "eval_time_us": 10,
+      "total_loops": 50,
+      "max_rule_level": 2,
+      "halt_score": encode_knuth10_interval(None),
+      "max_span": encode_knuth10_interval(10),
+      "milestone_reached": False,
+      "milestone_loops": None,
+      "milestone_time_us": None,
+      "threw_exception": False,
+      "exception_str": "",
+    }
+    cand_rec = {
+      **base_rec,
+      "status": "unknown",
+      "reason": "threw_exception",
+      "sim_time_us": 200,
+      "total_loops": 30,
+      "max_rule_level": 1,
+      "threw_exception": True,
+      "exception_str": "ValueError: boom",
+    }
+    _, report = compare_runs(base_meta, [base_rec], [(cand_meta, [cand_rec])])
+    self.assertIn("### Lost Decisions (vs Baseline)", report)
+    self.assertIn("**[cand]** `2x2-6-4`", report)
+    self.assertIn("exception: ValueError: boom", report)
+
 
 if __name__ == "__main__":
   unittest.main()
