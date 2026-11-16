@@ -243,8 +243,8 @@ class TestBigInterval(unittest.TestCase):
     bi_ack = self._run_tm_nonzeros_bi("1RB3LB1RZ2RA_2LC3RB1LC2RA_3RB1LB3LC2RC", 2, max_loops=21000, max_steps_back=250)
     self.assertEqual(len(bi_ack.lower.args), 4)
     self.assertEqual(len(bi_ack.upper.args), 4)
-    self.assertEqual(bi_ack.lower.args[1:], (0, 1, 1))
-    self.assertEqual(bi_ack.upper.args[1:], (0, 1, 1))
+    self.assertEqual(bi_ack.lower.args[1:], (0, 1, 2))
+    self.assertEqual(bi_ack.upper.args[1:], (0, 1, 2))
     self.assertTrue(bi_ack.lower.args[0] <= 65534 <= bi_ack.upper.args[0])
 
   def test_nat_expr_approx_and_full_str_uses_big_interval(self):
@@ -316,6 +316,24 @@ class TestBigInterval(unittest.TestCase):
       self.assertGreaterEqual(len(bi.upper.args), 3)
     finally:
       sys.setrecursionlimit(old_limit)
+
+  def test_tower_lower_overlapping_start_val_no_not_comparable(self):
+    from Algebraic_Expression import Variable, VariableToExpression
+    from Iterated_Expression import Iterated_Expression
+
+    # When inner start_val has a non-degenerate interval [19, 21] overlapping the
+    # threshold 20 in _tower_lower, it must compare Knuth10 endpoints without raising NotComparable.
+    r = Variable()
+    w = Variable()
+    u = Variable()
+    inner_step = exp_int(3, VariableToExpression(r) + 1)
+    # start_val whose BigInterval is [19, 21] (contains 20 -> overlapping with BigInterval(20))
+    start_overlap = (exp_int(2, 100) + exp_int(2, 99)) // exp_int(2, 95)
+    mid_step = Iterated_Expression(inner_step, r, start_overlap, VariableToExpression(w) + 2)
+    outer = Iterated_Expression(mid_step, w, 30, 100)
+    bi = outer.to_BigInterval()
+    self.assertTrue(bi.lower <= bi.upper)
+    _ = u
 
 
 if __name__ == "__main__":

@@ -77,6 +77,12 @@ def add_option_group(parser):
     default=False,
     help="Only save past configs to prover memory on record-breaking tape expansion steps [Experimental]",
   )
+  group.add_option(
+    "--exp-zero-exponents",
+    action="store_true",
+    default=False,
+    help="Allow rules to start or end with 0-repetition blocks when safe [Experimental]",
+  )
 
   # A quick experiment shows that 100k past_configs -> 100MB, 1M -> 1GB RAM.
   group.add_option(
@@ -598,6 +604,117 @@ Steps {self.num_steps} Loops {self.num_loops}
 Level: {self.level}"""
 
 
+def _rule_expected_symbols(rule):
+  """Return `(left_symbols, right_symbols)` expected by `rule`."""
+  if isinstance(rule, Diff_Rule):
+    return (
+      tuple(b.symbol for b in rule.initial_tape.tape[0]),
+      tuple(b.symbol for b in rule.initial_tape.tape[1]),
+    )
+  return (
+    tuple(rule.block_list[: rule.left_size]),
+    tuple(rule.block_list[rule.left_size :]),
+  )
+
+
+def _rule_zero_min_slots(rule):
+  """Return tuple of `(dir, idx, symbol)` for blocks in `rule` that allow 0 repetitions."""
+  slots = []
+  if isinstance(rule, Diff_Rule):
+    for dir in range(2):
+      for idx, block in enumerate(rule.initial_tape.tape[dir]):
+        if isinstance(block.num, Algebraic_Expression) and block.num.const == 0:
+          slots.append((dir, idx, block.symbol))
+  elif hasattr(rule, "var_list") and hasattr(rule, "min_list") and hasattr(rule, "block_list"):
+    for flat_idx, (var, min_val, sym) in enumerate(zip(rule.var_list, rule.min_list, rule.block_list)):
+      if var is not None and min_val == 0:
+        if flat_idx < rule.left_size:
+          slots.append((0, flat_idx, sym))
+        else:
+          slots.append((1, flat_idx - rule.left_size, sym))
+  return tuple(slots)
+
+
+def _insert_tuple_at(tup, idx, val):
+  return tup[:idx] + (val,) + tup[idx:]
+
+
+def _remove_tuple_at(tup, idx):
+  return tup[:idx] + tup[idx + 1 :]
+
+
+def _prepare_tape_for_rule(rule, start_tape):
+  """Prepare `start_tape` for `rule`, slicing if limited and inserting any omitted 0-min blocks."""
+  exp_syms = _rule_expected_symbols(rule)
+  zero_slots = _rule_zero_min_slots(rule)
+  slots_by_dir = {0: [], 1: []}
+  for slot_dir, slot_idx, sym in zero_slots:
+    slots_by_dir[slot_dir].append((slot_idx, sym))
+
+  prepared = start_tape.copy()
+  save = [[], []]
+  eff_dist = [rule.left_dist, rule.right_dist]
+
+  for dir, dist in ((0, rule.left_dist), (1, rule.right_dist)):
+    half = prepared.tape[dir]
+    exp = exp_syms[dir]
+    if rule.is_limited:
+      if len(half) >= dist and tuple(b.symbol for b in _slice_tape_tail(half, dist)) == exp:
+        save[dir] = _slice_tape_head(half, dist)
+        prepared.tape[dir] = _slice_tape_tail(half, dist)
+        eff_dist[dir] = dist
+        continue
+      matched_slot = False
+      if dist > 0 and len(half) >= dist - 1:
+        tail = _slice_tape_tail(half, dist - 1)
+        tail_syms = tuple(b.symbol for b in tail)
+        for slot_idx, sym in slots_by_dir[dir]:
+          if _insert_tuple_at(tail_syms, slot_idx, sym) == exp:
+            save[dir] = _slice_tape_head(half, dist - 1)
+            prepared.tape[dir] = tail[:slot_idx] + [Simulator.Tape.Repeated_Symbol(sym, 0)] + tail[slot_idx:]
+            eff_dist[dir] = dist - 1
+            matched_slot = True
+            break
+      if not matched_slot:
+        save[dir] = _slice_tape_head(half, dist)
+        prepared.tape[dir] = _slice_tape_tail(half, dist)
+        eff_dist[dir] = dist
+    else:
+      cur_syms = tuple(b.symbol for b in half)
+      if cur_syms != exp and len(half) == len(exp) - 1:
+        for slot_idx, sym in slots_by_dir[dir]:
+          if _insert_tuple_at(cur_syms, slot_idx, sym) == exp:
+            prepared.tape[dir] = half[:slot_idx] + [Simulator.Tape.Repeated_Symbol(sym, 0)] + half[slot_idx:]
+            break
+
+  return prepared, save[0], save[1], eff_dist[0], eff_dist[1]
+
+
+def _normalize_half_tape(half_tape):
+  """Remove zero-count blocks and merge adjacent blocks with the same symbol."""
+  result = []
+  for block in half_tape:
+    if block.num == 0:
+      continue
+    if result and result[-1].symbol == block.symbol:
+      result[-1].num += block.num
+    else:
+      result.append(block)
+  return result
+
+
+def _splice_limited_half_tape(save_prefix, rule_tail, dist):
+  """Splice `save_prefix` and `rule_tail`, normalizing zero blocks and merging at the boundary."""
+  norm_tail = _normalize_half_tape(rule_tail)
+  if not save_prefix:
+    return norm_tail, dist
+  if norm_tail and save_prefix[-1].symbol == norm_tail[0].symbol:
+    merged = save_prefix[-1].copy()
+    merged.num += norm_tail[0].num
+    return save_prefix[:-1] + [merged] + norm_tail[1:], dist + 1
+  return save_prefix + norm_tail, dist
+
+
 # TODO: Try out some other stripped_configs
 def _slice_tape_tail(seq, dist):
   """Return the last `dist` elements of `seq` (handling dist == 0 safely)."""
@@ -720,6 +837,7 @@ class Proof_System:
     self.recursive = options.recursive
     self.exp_linear_rules = options.exp_linear_rules
     self.exp_meta_linear_rules = options.exp_meta_linear_rules
+    self.exp_zero_exponents = getattr(options, "exp_zero_exponents", False)
     self.compute_steps = options.compute_steps
     self.verbose = options.verbose_prover  # Step-by-step state printing
     self.verbose_prefix = verbose_prefix
@@ -752,6 +870,7 @@ class Proof_System:
     # Tracks the highest level of any rule applied during the current inner
     # simulation (used only by frozen inner provers in prove_rule).
     self.max_rule_level_used = 0
+    self.last_rule_var_info = None
     # TODO: Record how many steps are taken by recursive rules in simulator.
 
   def print_this(self, *args):
@@ -904,6 +1023,7 @@ class Proof_System:
 
   def add_rule(self, rule, stripped_config):
     """Add a proven rule"""
+    zero_slots = _rule_zero_min_slots(rule)
     # Remember rule.
     if rule.is_limited:
       (state, dir, stripped_tape_left, stripped_tape_right) = stripped_config
@@ -917,11 +1037,38 @@ class Proof_System:
       rule_list.append(rule)
       rule_list.sort(key=self._rule_priority, reverse=True)
 
+      # Also register variant keys where a 0-minimum block is missing from the tape.
+      for slot_dir, slot_idx, _ in zero_slots:
+        if slot_dir == 0 and rule.left_dist > 0:
+          alt_dist = (rule.left_dist - 1, rule.right_dist)
+          alt_sub = (_remove_tuple_at(sub_left, slot_idx), sub_right)
+        elif slot_dir == 1 and rule.right_dist > 0:
+          alt_dist = (rule.left_dist, rule.right_dist - 1)
+          alt_sub = (sub_left, _remove_tuple_at(sub_right, slot_idx))
+        else:
+          continue
+        alt_by_sub = by_dist.setdefault(alt_dist, {})
+        alt_list = alt_by_sub.setdefault(alt_sub, [])
+        if rule not in alt_list:
+          alt_list.append(rule)
+          alt_list.sort(key=self._rule_priority, reverse=True)
+
       self.rules[rule.num] = rule
     else:
       rule_list = self.rules.setdefault(stripped_config, [])
       rule_list.append(rule)
       rule_list.sort(key=self._rule_priority, reverse=True)
+
+      (state, dir, stripped_tape_left, stripped_tape_right) = stripped_config
+      for slot_dir, slot_idx, _ in zero_slots:
+        if slot_dir == 0:
+          alt_stripped = (state, dir, _remove_tuple_at(stripped_tape_left, slot_idx), stripped_tape_right)
+        else:
+          alt_stripped = (state, dir, stripped_tape_left, _remove_tuple_at(stripped_tape_right, slot_idx))
+        alt_list = self.rules.setdefault(alt_stripped, [])
+        if rule not in alt_list:
+          alt_list.append(rule)
+          alt_list.sort(key=self._rule_priority, reverse=True)
 
     self.num_rules += 1
     self.num_rules_by_level[rule.level] += 1
@@ -977,6 +1124,7 @@ class Proof_System:
       gen_sim.prover.frozen = True
       gen_sim.prover.past_configs = None
       gen_sim.prover.max_rule_level_used = 0
+      gen_sim.prover.last_rule_var_info = None
       gen_sim.prover.verbose_prefix = gen_sim.verbose_prefix + "  "
 
     # Create a new tape which we will use to simulate general situation.
@@ -984,6 +1132,8 @@ class Proof_System:
     capped_vars = set()
     gen_sim.tape = new_tape.copy()
     min_val = {}  # Notes the minimum value exponents with each unknown take.
+    can_deplete_to_zero = {}  # Whether variable can safely deplete to 0 on its final touch.
+    can_start_at_zero = {}  # Whether variable is only ever consumed by chain moves.
     for direction in range(2):
       for i, block in enumerate(gen_sim.tape.tape[direction]):
         # Generalize, eg. (abc)^5 -> (abc)^(n+5)
@@ -1000,6 +1150,13 @@ class Proof_System:
           x_init = VarPlusConstExpression(x, init_count)
           block.num = x_init
           min_val[x] = block.num.const
+          can_deplete_to_zero[x] = False
+          left_sym = gen_sim.tape.tape[direction][i - 1].symbol if i > 0 else None
+          if i + 1 < len(gen_sim.tape.tape[direction]):
+            right_sym = gen_sim.tape.tape[direction][i + 1].symbol
+          else:
+            right_sym = None  # Adjacent to head
+          can_start_at_zero[x] = left_sym != right_sym
     initial_tape = gen_sim.tape.copy()
     gen_sim.dir = gen_sim.tape.dir
     gen_sim.init_touch_tracking()
@@ -1024,6 +1181,8 @@ class Proof_System:
             if self.verbose:
               self.print_this(f"[PROVER] Specializing depleted variable {x} = 0 at loop {gen_sim.num_loops}")
             _specialize_var_zero(x, initial_tape, gen_sim, min_val)
+            can_deplete_to_zero.pop(x, None)
+            can_start_at_zero.pop(x, None)
             block = gen_sim.tape.get_top_block()
             specialized = True
         if not specialized:
@@ -1034,6 +1193,14 @@ class Proof_System:
             self.print_this(gen_sim.tape.print_with_state(gen_sim.state))
             print()
           return None
+
+      prev_dir = gen_sim.dir
+      prev_top_vars = variables(block.num)
+      prev_top_var = next(iter(prev_top_vars)) if len(prev_top_vars) == 1 else None
+      prev_top_min = ae.min_val(block.num) if prev_top_var is not None else None
+      prev_num_rule_moves = gen_sim.num_rule_moves
+      prev_num_macro_moves = gen_sim.num_macro_moves
+      prev_num_chain_moves = gen_sim.num_chain_moves
 
       # TODO: Specialize variables using concrete values (x = 0 or parity) if a recursive rule inside
       # gen_sim misses with CONST_MISMATCH or UNPROVEN_PARITY, so gen_sim mirrors concrete simulation.
@@ -1047,6 +1214,28 @@ class Proof_System:
           self.print_this("[PROVER FAILURE] Machine stopped running:", gen_sim.op_state)
           print()
         return None
+
+      # Any variable touched by a step after reaching its minimum cannot have depleted to 0 earlier.
+      if gen_sim.num_rule_moves > prev_num_rule_moves and gen_sim.prover and gen_sim.prover.last_rule_var_info:
+        for v, (req_cur_min, is_lim, req_min) in gen_sim.prover.last_rule_var_info.items():
+          if v in min_val:
+            if not is_lim and req_min > 0 and req_cur_min - 1 < min_val[v]:
+              can_start_at_zero[v] = False
+            if req_cur_min < min_val[v]:
+              min_val[v] = req_cur_min
+              can_deplete_to_zero[v] = is_lim
+            elif not is_lim:
+              can_deplete_to_zero[v] = False
+        gen_sim.prover.last_rule_var_info = None
+      elif gen_sim.num_rule_moves == prev_num_rule_moves and prev_top_var in can_deplete_to_zero:
+        can_deplete_to_zero[prev_top_var] = False
+      if gen_sim.num_macro_moves > prev_num_macro_moves:
+        for v in prev_top_vars:
+          can_start_at_zero[v] = False
+      elif gen_sim.num_chain_moves > prev_num_chain_moves and prev_top_var in can_start_at_zero:
+        if prev_top_min < min_val[prev_top_var]:
+          can_start_at_zero[prev_top_var] = False
+
       # Update min_val for each expression.
       # TODO: We only need to update for the blocks on each side of head.
       # TODO: Better yet, build these checks into the data type!
@@ -1061,9 +1250,24 @@ class Proof_System:
               self.print_this(gen_sim.tape)
               print()
             return None
-          elif len(vars) == 1:
+          elif len(vars) == 1 and isinstance(block.num, Algebraic_Expression):
             x = list(vars)[0]
-            min_val[x] = min(min_val[x], ae.min_val(block.num))
+            cur_min = ae.min_val(block.num)
+            if cur_min < min_val[x]:
+              min_val[x] = cur_min
+              # If a single move consumed 1 symbol from the top block and turned away,
+              # or a subrule depleted it to its new minimum, it can deplete to 0 unless touched again.
+              if gen_sim.num_rule_moves > prev_num_rule_moves:
+                can_deplete_to_zero[x] = True
+              elif (
+                x == prev_top_var
+                and cur_min == prev_top_min - 1
+                and gen_sim.dir != prev_dir
+                and block is gen_sim.tape.tape[prev_dir][-2]
+              ):
+                can_deplete_to_zero[x] = True
+              else:
+                can_deplete_to_zero[x] = False
 
     # Make sure finishing tape has the same stripped config as original.
     gen_stripped_config = strip_config(gen_sim.state, gen_sim.tape.dir, gen_sim.tape.tape)
@@ -1134,11 +1338,29 @@ class Proof_System:
       var_list = []
       min_list = []
       assignment = {}
-      for init_block in initial_tape.tape[0] + initial_tape.tape[1]:
+      for init_block, diff_block, final_block in zip(
+        initial_tape.tape[0] + initial_tape.tape[1],
+        diff_tape.tape[0] + diff_tape.tape[1],
+        gen_sim.tape.tape[0] + gen_sim.tape.tape[1],
+      ):
         if isinstance(init_block.num, Algebraic_Expression):
           x = init_block.num.variable_restricted()
           var_list.append(x)
-          min_list.append(init_block.num.const - min_val[x] + 1)
+          deplete_zero = (
+            self.exp_zero_exponents
+            and can_deplete_to_zero.get(x, False)
+            and is_const(diff_block.num)
+            and diff_block.num < 0
+            and isinstance(final_block.num, Algebraic_Expression)
+            and ae.min_val(final_block.num) == min_val[x]
+          )
+          start_zero = (
+            self.exp_zero_exponents
+            and can_start_at_zero.get(x, False)
+            and min_val[x] == init_block.num.const
+            and (not isinstance(final_block.num, Algebraic_Expression) or ae.min_val(final_block.num) > min_val[x])
+          )
+          min_list.append(init_block.num.const - min_val[x] + (0 if (deplete_zero or start_zero) else 1))
           # Hackish: If exponent was x + 5 we want to replace all x with x - 5.
           # TODO: Make nicer.
           assignment[x] = init_block.num - 2 * init_block.num.const
@@ -1254,10 +1476,25 @@ class Proof_System:
         # This is only safe for basic rules (not meta rules. See Issue 4).
         replaces = {}
         for dir in range(2):
-          for init_block in initial_tape.tape[dir]:
+          for init_block, diff_block, final_block in zip(
+            initial_tape.tape[dir], diff_tape.tape[dir], gen_sim.tape.tape[dir]
+          ):
             if isinstance(init_block.num, Algebraic_Expression):
               x = init_block.num.variable_restricted()
-              new_value = VariableToExpression(x) - min_val[x] + 1
+              deplete_zero = (
+                self.exp_zero_exponents
+                and can_deplete_to_zero.get(x, False)
+                and is_const(diff_block.num)
+                and diff_block.num < 0
+                and ae.min_val(final_block.num) == min_val[x]
+              )
+              start_zero = (
+                self.exp_zero_exponents
+                and can_start_at_zero.get(x, False)
+                and min_val[x] == init_block.num.const
+                and ae.min_val(final_block.num) > min_val[x]
+              )
+              new_value = VariableToExpression(x) - min_val[x] + (0 if (deplete_zero or start_zero) else 1)
               init_block.num = init_block.num.substitute({x: new_value})
               replaces[x] = new_value
             else:
@@ -1315,22 +1552,17 @@ class Proof_System:
 
   def apply_rule(self, rule, start_config):
     """Try to apply a rule to a given configuration."""
+    start_state, start_tape, start_loop_num = start_config
     if self.verbose:
-      start_state, start_tape, start_loop_num = start_config
       print()
       self.print_this("++ Applying Rule ++")
       self.print_this("Loop:", start_loop_num, "Rule ID:", rule.num)
       self.print_this("Rule:", str(rule).replace("\n", "\n" + self.verbose_prefix + "       "))
       self.print_this("Config:", start_tape.print_with_state(start_state))
 
-    if rule.is_limited:
-      start_state, start_tape, start_loop_num = start_config
-      limited_start_tape = start_tape.copy()
-      save_left = _slice_tape_head(limited_start_tape.tape[0], rule.left_dist)
-      save_right = _slice_tape_head(limited_start_tape.tape[1], rule.right_dist)
-      limited_start_tape.tape[0] = _slice_tape_tail(limited_start_tape.tape[0], rule.left_dist)
-      limited_start_tape.tape[1] = _slice_tape_tail(limited_start_tape.tape[1], rule.right_dist)
-      start_config = (start_state, limited_start_tape, start_loop_num)
+    if rule.is_limited or _rule_zero_min_slots(rule):
+      prepared_tape, save_left, save_right, eff_left_dist, eff_right_dist = _prepare_tape_for_rule(rule, start_tape)
+      start_config = (start_state, prepared_tape, start_loop_num)
 
     if isinstance(rule, Diff_Rule):
       success, other = self.apply_diff_rule(rule, start_config)
@@ -1348,10 +1580,12 @@ class Proof_System:
       if prover_result.condition == APPLY_RULE:
         # If we are applying this rule, add back on the saved part of the
         # tape that was not part of this limited rule.
-        prover_result.new_tape.tape[0] = save_left + prover_result.new_tape.tape[0]
-        prover_result.new_tape.tape[1] = save_right + prover_result.new_tape.tape[1]
-        prover_result.left_dist = rule.left_dist
-        prover_result.right_dist = rule.right_dist
+        prover_result.new_tape.tape[0], prover_result.left_dist = _splice_limited_half_tape(
+          save_left, prover_result.new_tape.tape[0], eff_left_dist
+        )
+        prover_result.new_tape.tape[1], prover_result.right_dist = _splice_limited_half_tape(
+          save_right, prover_result.new_tape.tape[1], eff_right_dist
+        )
       return success, (prover_result, large_delta)
 
     return success, other
@@ -1509,10 +1743,24 @@ class Proof_System:
       states_last_seen = None
 
     ## Alter the tape to account for applying rule.
+    self.last_rule_var_info = {}
     return_tape = new_tape.copy()
     for dir in range(2):
-      for i, (diff_block, return_block) in enumerate(zip(rule.diff_tape.tape[dir], return_tape.tape[dir])):
+      for i, (init_block, diff_block, return_block) in enumerate(
+        zip(rule.initial_tape.tape[dir], rule.diff_tape.tape[dir], return_tape.tape[dir])
+      ):
         if not return_block.num.is_inf:
+          if isinstance(init_block.num, Algebraic_Expression) and isinstance(return_block.num, Algebraic_Expression):
+            in_vars = variables(return_block.num)
+            if len(in_vars) == 1:
+              in_var = next(iter(in_vars))
+              req_min = init_block.num.const
+              is_lim = dir == limit_dir and i == limit_index
+              self.last_rule_var_info[in_var] = (
+                ae.min_val(return_block.num) - req_min + (0 if is_lim else 1),
+                is_lim,
+                req_min,
+              )
           if dir == limit_dir and i == limit_index:
             return_block.num = limit_final
           else:
@@ -1527,7 +1775,7 @@ class Proof_System:
                 raise
           if isinstance(return_block.num, Algebraic_Expression) and return_block.num.is_const:
             return_block.num = return_block.num.const
-      return_tape.tape[dir] = [x for x in return_tape.tape[dir] if x.num != 0]
+      return_tape.tape[dir] = _normalize_half_tape(return_tape.tape[dir])
 
     ## Return the pertinent info
     if self.verbose:
@@ -1615,15 +1863,29 @@ class Proof_System:
           return False, None
 
     assert always_ge(num_reps, 0), num_reps
+    self.last_rule_var_info = {}
     # Apply rule a finite number of times.
     new_tape = start_tape.copy()
     for i, new_block in enumerate(new_tape.tape[0] + new_tape.tape[1]):
+      if rule.var_list[i] is not None and isinstance(new_block.num, Algebraic_Expression):
+        in_vars = variables(new_block.num)
+        if len(in_vars) == 1:
+          in_var = next(iter(in_vars))
+          req_min = rule.min_list[i]
+          is_lim = i == limit_index
+          self.last_rule_var_info[in_var] = (
+            ae.min_val(new_block.num) - req_min + (0 if is_lim else 1),
+            is_lim,
+            req_min,
+          )
       if i == limit_index:
         # Directly set the decreasing exponent that reached minimum to avoid
         # subtracting two giant ExpInts.
         new_block.num = limit_final
       elif rule.func_list[i]:
         new_block.num = rule.func_list[i].apply_rep(new_block.num, num_reps)
+    for dir in range(2):
+      new_tape.tape[dir] = _normalize_half_tape(new_tape.tape[dir])
 
     if self.verbose:
       self.print_this("++ Iterated rule applied ++")
@@ -1741,7 +2003,7 @@ class Proof_System:
         block.num = current_val
       # TODO: Perhaps do this in one step?
       for dir in range(2):
-        tape.tape[dir] = [x for x in tape.tape[dir] if x.num != 0]
+        tape.tape[dir] = _normalize_half_tape(tape.tape[dir])
       if self.verbose:
         self.print_this("++ General rule applied ++")
         self.print_this("Times applied", num_reps)

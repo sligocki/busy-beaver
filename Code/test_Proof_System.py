@@ -1478,6 +1478,52 @@ class ProofSystemTest(unittest.TestCase):
     self.assertEqual(sim.prover.num_failed_proofs, 0)
     self.assertLess(max_past, 100)
 
+  def test_green20_zero_min_and_deplete_to_zero(self):
+    # Verify that on Green(20), Level 1 Diff_Rule 0 is proven with d>=0 (omitted block allowed)
+    # and c>=1 (depletes to 0 and merges surrounding 1s), allowing Level 2 Iterated_Rule 1
+    # to be proven in 10 loops (instead of 21) with l|0 and j|1.
+    import Green
+
+    tm = Green.green_machine(20)
+    tm = Turing_Machine.Block_Macro_Machine(tm, 1)
+    tm = Turing_Machine.Backsymbol_Macro_Machine(tm)
+    self.options.recursive = True
+    self.options.limited_rules = True
+    self.options.exp_linear_rules = True
+    self.options.exp_meta_linear_rules = True
+    self.options.exp_const_blocks = True
+    self.options.only_record_configs = True
+    self.options.exp_zero_exponents = True
+    self.options.compute_steps = True
+
+    sim = Simulator.Simulator(tm, self.options)
+    while sim.op_state == Turing_Machine.RUNNING and sim.total_loops < 200:
+      sim.step()
+
+    self.assertIn(0, sim.prover.rules)
+    rule0 = sim.prover.rules[0]
+    self.assertIsInstance(rule0, Proof_System.Diff_Rule)
+    self.assertEqual(rule0.num_loops, 6)
+    # Initial tape of Diff Rule 0 has 0^(d) (min 0) and 0^(c + 1) (min 1).
+    self.assertEqual(rule0.initial_tape.tape[1][-1].num.const, 0)
+    self.assertEqual(rule0.initial_tape.tape[1][-3].num.const, 1)
+
+    self.assertIn(1, sim.prover.rules)
+    rule1 = sim.prover.rules[1]
+    self.assertIsInstance(rule1, Proof_System.Iterated_Rule)
+    self.assertEqual(rule1.level, 2)
+    self.assertEqual(rule1.num_loops, 10)
+    self.assertEqual(rule1.min_list, [InfNat(), 1, 2, 0])
+    var_l = Algebraic_Expression.VariableToExpression(rule1.var_list[3])
+    self.assertEqual(rule1.num_steps, 3 * var_l**2 + 37 * var_l + 112)
+
+    self.assertIn(2, sim.prover.rules)
+    rule2 = sim.prover.rules[2]
+    self.assertIsInstance(rule2, Proof_System.Iterated_Rule)
+    self.assertEqual(rule2.level, 3)
+    self.assertEqual(rule2.num_loops, 18)
+    self.assertEqual(rule2.min_list, [InfNat(), 1, 3, 0])
+
 
 if __name__ == "__main__":
   unittest.main()

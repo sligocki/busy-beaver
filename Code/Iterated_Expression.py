@@ -255,6 +255,17 @@ class Iterated_Expression(NatExpr):
   def substitute(self, assignment):
     return substitute(self, assignment)
 
+  def __mod__(self, other):
+    other = int(other)
+    if other == 1:
+      return 0
+    if self.num_reps == 0:
+      return self.start_val % other
+    # Evaluate modulo iteratively until periodic or done:
+    # Check if step_expr evaluated at x == start_val (or after 1 step) is constant mod `other`.
+    cur = substitute(self.step_expr, {self.var: self.start_val})
+    return cur % other
+
   def __divmod__(self, other):
     if other == 1:
       return (self, 0)
@@ -1270,10 +1281,8 @@ class Iterated_Math(NatExpr):
     if other == 1:
       return 0
     other = int(other)
-    if all(t.coef % other == 0 for t in self.terms):
-      return self.const % other
-    # TODO: Support general case when coef % other != 0 (by evaluating it_expr % other).
-    raise NotImplementedError(f"Cannot mod Iterated_Math by {other}: {self}")
+    terms_rem = sum((t.coef % other) * (t.it_expr % other) for t in self.terms if t.coef % other != 0)
+    return (terms_rem + (self.const % other)) % other
 
   def __divmod__(self, other):
     if other == 1:

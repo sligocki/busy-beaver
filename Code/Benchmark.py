@@ -66,6 +66,7 @@ class BenchConfig:
   limited_rules: bool = True
   exp_const_blocks: bool = False
   only_record_configs: bool = False
+  exp_zero_exponents: bool = False
   use_big_interval: bool = True
   compute_steps: bool = False
 
@@ -98,6 +99,7 @@ class BenchConfig:
     options.exp_meta_linear_rules = self.exp_meta_linear_rules
     options.exp_const_blocks = self.exp_const_blocks if self.prover else False
     options.only_record_configs = self.only_record_configs if self.prover else False
+    options.exp_zero_exponents = self.exp_zero_exponents if self.prover else False
     options.use_big_interval = self.use_big_interval
     options.compute_steps = self.compute_steps and not self.exp_linear_rules
     options.verbose_simulator = False
@@ -203,6 +205,13 @@ CONFIG_PRESETS: dict[str, BenchConfig] = {
     exp_const_blocks=False,
     only_record_configs=True,
   ),
+  "plus_zero_exponents": BenchConfig(
+    name="plus_zero_exponents",
+    prover_level=4,
+    backsymbol=True,
+    limited_rules=True,
+    exp_zero_exponents=True,
+  ),
   # Leave-one-out Ablations from all_on
   "ablate_backsymbol": BenchConfig(
     name="ablate_backsymbol",
@@ -261,6 +270,7 @@ PRESET_GROUPS: dict[str, list[str]] = {
     "prover_4_meta_linear",
     "plus_const_blocks",
     "plus_only_record",
+    "plus_zero_exponents",
     "all_on",
   ],
   "ablation": [
@@ -810,6 +820,7 @@ def run_one(entry):
   options.exp_meta_linear_rules = prover_level >= 4
   options.exp_const_blocks = bool(config.get("exp_const_blocks", False)) if options.prover else False
   options.only_record_configs = bool(config.get("only_record_configs", False)) if options.prover else False
+  options.exp_zero_exponents = bool(config.get("exp_zero_exponents", False)) if options.prover else False
   options.use_big_interval = bool(config.get("use_big_interval", True))
   options.compute_steps = False
   options.verbose_simulator = False
@@ -848,6 +859,7 @@ def run_one(entry):
   threw_exception = False
   exception_str = ""
   timed_out = False
+  max_tape_compressed = sim.tape.compressed_size()
 
   def get_total_loops(s):
     if hasattr(s, "total_loops"):
@@ -866,6 +878,9 @@ def run_one(entry):
         sim.step(max_loops=max_loops)
       except TypeError:
         sim.step()
+      cur_tape_comp = sim.tape.compressed_size()
+      if cur_tape_comp > max_tape_compressed:
+        max_tape_compressed = cur_tape_comp
       if not has_native_max_span:
         cur_sp = get_sim_span(sim, block_size)
         if cur_sp > tracked_max_span:
@@ -1341,7 +1356,9 @@ def main(argv: list[str] | None = None) -> int:
   p_mat.add_argument("--dataset", default="fast", help="Dataset name ('fast', 'full') or path to .jsonl")
   p_mat.add_argument("--config", help="Comma-separated config names")
   p_mat.add_argument(
-    "--preset-group", default="core", help=f"Preset group [default: core]: {list(PRESET_GROUPS.keys())}"
+    "--preset-group",
+    default=None,
+    help=f"Preset group [default: core if --config omitted]: {list(PRESET_GROUPS.keys())}",
   )
   p_mat.add_argument("--git-refs", help="Optional comma-separated git refs to include in comparison")
   p_mat.add_argument("--baseline-config", default=None, help="Which config to use as baseline (defaults to first)")
@@ -1394,7 +1411,8 @@ def main(argv: list[str] | None = None) -> int:
   elif args.subcommand == "matrix":
     dataset_path, entries = load_dataset(args.dataset)
     dataset_name = dataset_path.stem.removesuffix(".jsonl")
-    configs = _resolve_config_names(args.config, args.preset_group)
+    preset_group = args.preset_group if (args.preset_group is not None or args.config is not None) else "core"
+    configs = _resolve_config_names(args.config, preset_group)
 
     runs: list[tuple[dict[str, Any], list[dict[str, Any]]]] = []
     for cfg in configs:
@@ -1424,12 +1442,16 @@ def main(argv: list[str] | None = None) -> int:
             time_limit_sec=args.time_limit,
             jobs=args.jobs,
           )
+          meta["git_ref"] = ref
           runs.append((meta, res))
 
     base_idx = 0
     if args.baseline_config:
       for i, (m, _) in enumerate(runs):
-        if m.get("config_name") == args.baseline_config:
+        cfg_name = m.get("config_name", "")
+        base_cfg = m.get("config", {}).get("name", "")
+        git_ref = m.get("git_ref", "")
+        if args.baseline_config in (cfg_name, f"{base_cfg}@{git_ref}", git_ref):
           base_idx = i
           break
 
