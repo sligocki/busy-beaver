@@ -8,9 +8,11 @@ import io
 import os
 import unittest
 from optparse import OptionParser
+from unittest import mock
 
 import Algebraic_Expression
 import IO
+from Iterated_Expression import Iterated_Expression
 from Macro import Proof_System, Simulator, Tape, Turing_Machine
 from Macro.Turing_Machine import Block_Symbol
 from NatExpr import InfNat
@@ -1523,6 +1525,53 @@ class ProofSystemTest(unittest.TestCase):
     self.assertEqual(rule2.level, 3)
     self.assertEqual(rule2.num_loops, 18)
     self.assertEqual(rule2.min_list, [InfNat(), 1, 3, 0])
+
+  def test_not_implemented_error_in_apply_and_prove_rule(self):
+    tm = IO.parse_tm("1RB1RC_1LC0RA_1RA1RD_---0RE_1RF1RE_1LG0LB_0LB0LF")
+    self.options.recursive = True
+    self.options.exp_linear_rules = True
+    self.options.exp_meta_linear_rules = True
+    prover = Proof_System.Proof_System(tm, self.options, "")
+    state_A = Turing_Machine.Simple_Machine_State(0)
+
+    # 1. apply_rule returns (False, None) when mod/divmod raises NotImplementedError.
+    a_expr = Algebraic_Expression.Expression_from_string("(a+2)")
+    var_a = a_expr.variable_restricted()
+    var_list = [None, var_a]
+    min_list = [InfNat(), 2]
+    res_tape = Tape.Chain_Tape()
+    res_tape.init(0, Turing_Machine.RIGHT, self.options)
+    res_tape.tape[0] = [Tape.Repeated_Symbol(0, InfNat())]
+    res_tape.tape[1] = [Tape.Repeated_Symbol(1, Algebraic_Expression.VariableToExpression(var_a) - 2)]
+
+    iter_rule, err = Proof_System.Iterated_Rule.try_gen(
+      var_list, min_list, res_tape, Algebraic_Expression.ConstantToExpression(1), 1, 0, {}, 1
+    )
+    self.assertIsNone(err)
+    self.assertIsNotNone(iter_rule)
+
+    x_var = Algebraic_Expression.Variable()
+    x_expr = Algebraic_Expression.VariableToExpression(x_var)
+    it_val = Iterated_Expression(2 * x_expr + 1, x_var, 3, 5)
+    apply_tape = Tape.Chain_Tape()
+    apply_tape.init(0, Turing_Machine.RIGHT, self.options)
+    apply_tape.tape[0] = [Tape.Repeated_Symbol(0, InfNat())]
+    apply_tape.tape[1] = [Tape.Repeated_Symbol(1, it_val)]
+    self.assertEqual(prover.apply_rule(iter_rule, (state_A, apply_tape, 0)), (False, None))
+
+    # 2. prove_rule returns None and records failure reason on NotImplementedError.
+    stripped = Proof_System.strip_config(state_A, Turing_Machine.RIGHT, apply_tape.tape)
+    with mock.patch.object(prover, "_prove_rule", side_effect=NotImplementedError("Cannot mod")):
+      self.assertIsNone(prover.prove_rule(stripped, (state_A, apply_tape, 0), delta_loop=1))
+    self.assertEqual(prover.last_prove_fail_reason, "Cannot mod")
+
+    # 3. Full simulation of the TM from errors.txt continues past the divmod NotImplementedError.
+    macro_tm = Turing_Machine.Block_Macro_Machine(tm, 2)
+    macro_tm = Turing_Machine.Backsymbol_Macro_Machine(macro_tm)
+    sim = Simulator.Simulator(macro_tm, self.options)
+    sim.loop_run(5000)
+    self.assertEqual(sim.op_state, Turing_Machine.RUNNING)
+    self.assertEqual(sim.total_loops, 5000)
 
 
 if __name__ == "__main__":

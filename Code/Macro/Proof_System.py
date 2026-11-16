@@ -1090,6 +1090,17 @@ class Proof_System:
 
     Returns rule if successful or None.
     """
+    try:
+      return self._prove_rule(stripped_config, full_config, delta_loop, const_blocks=const_blocks)
+    except NotImplementedError as e:
+      self.last_prove_fail_reason = str(e)
+      if self.verbose:
+        print()
+        self.print_this(f"[PROVER FAILURE] {e}")
+        print()
+      return None
+
+  def _prove_rule(self, stripped_config, full_config, delta_loop, const_blocks=None):
     # Unpack configurations
     new_state, new_tape, new_loop_num = full_config
     self.last_prove_fail_reason = None
@@ -1565,15 +1576,22 @@ class Proof_System:
       start_config = (start_state, prepared_tape, start_loop_num)
 
     if isinstance(rule, Diff_Rule):
-      success, other = self.apply_diff_rule(rule, start_config)
+      apply_fn = self.apply_diff_rule
     elif isinstance(rule, Iterated_Rule):
-      success, other = self.apply_linear_rule(rule, start_config)
+      apply_fn = self.apply_linear_rule
     elif isinstance(rule, Exponential_Rule):
-      success, other = self.apply_exponential_rule(rule, start_config)
+      apply_fn = self.apply_exponential_rule
     elif isinstance(rule, General_Rule):
-      success, other = self.apply_general_rule(rule, start_config)
+      apply_fn = self.apply_general_rule
     else:
       raise NotImplementedError(f"Cannot apply rule of type {type(rule)}")
+
+    try:
+      success, other = apply_fn(rule, start_config)
+    except NotImplementedError as e:
+      if self.verbose:
+        self.print_this(f"++ Rule cannot apply: {e}")
+      return False, None
 
     if rule.is_limited and success:
       prover_result, large_delta = other
