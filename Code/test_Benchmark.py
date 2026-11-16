@@ -214,7 +214,7 @@ class BenchmarkTest(unittest.TestCase):
       },
     ]
 
-    # Valid candidate run: faster and reaches larger span on undecided TM
+    # Valid candidate run: faster and decides a holdout TM (celebrated coverage improvement!)
     good_meta = {"config_name": "all_on", "git_sha": "abc1234"}
     good_results = [
       {
@@ -223,15 +223,17 @@ class BenchmarkTest(unittest.TestCase):
       },
       {
         **base_results[1],
-        "max_span": encode_knuth10_interval(1000),
-        "milestone_time_us": 1000,
+        "status": "inf",
+        "reason": "INF_PROOF_SYSTEM",
       },
     ]
     summary_ok, report_ok = compare_runs(base_meta, base_results, [(good_meta, good_results)])
     self.assertTrue(summary_ok["correctness_passed"])
     self.assertIn("0 correctness errors", report_ok)
+    self.assertEqual(summary_ok["coverage"]["all_on"]["newly_decided"], ["Holdout-1"])
+    self.assertIn("Newly Decided TMs", report_ok)
 
-    # Bad candidate run: flips Halt -> Inf AND decides a known holdout
+    # Bad candidate run: flips Halt -> Inf
     bad_meta = {"config_name": "buggy", "git_sha": "def5678"}
     bad_results = [
       {
@@ -241,8 +243,6 @@ class BenchmarkTest(unittest.TestCase):
       },
       {
         **base_results[1],
-        "status": "inf",
-        "reason": "INF_PROOF_SYSTEM",
       },
     ]
     summary_bad, _ = compare_runs(base_meta, base_results, [(bad_meta, bad_results)])

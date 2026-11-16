@@ -429,7 +429,9 @@ def run_single_tm(
         milestone_reached = True
         milestone_loops = s.total_loops
         milestone_time_us = int((time.perf_counter() - start_sim) * 1e6)
-        if undecided_mode == "milestone" and entry.get("category") in ("holdout", "unknown"):
+        if undecided_mode == "milestone" and (
+          entry.get("baseline_status") == "unknown" or entry.get("category") in ("holdout", "unknown")
+        ):
           stop_at_milestone = True
 
     sim.on_record_span = _on_record
@@ -845,7 +847,9 @@ def run_one(entry):
           milestone_reached = True
           milestone_loops = get_total_loops(sim)
           milestone_time_us = int((time.perf_counter() - start_sim) * 1e6)
-          if undecided_mode == "milestone" and entry.get("category") in ("holdout", "unknown"):
+          if undecided_mode == "milestone" and (
+            entry.get("baseline_status") == "unknown" or entry.get("category") in ("holdout", "unknown")
+          ):
             stop_at_milestone = True
       if machine.time_limit.timed_out:
         timed_out = True
@@ -1067,10 +1071,6 @@ def compare_runs(
         )
       elif cat == "inf" and status == "halt":
         correctness_errors.append(f"[{run_name}] Ground-truth INF machine {res['name']} ({tm_str}) decided HALT!")
-      elif cat == "holdout" and status in ("halt", "inf"):
-        correctness_errors.append(
-          f"[{run_name}] Known HOLDOUT machine {res['name']} ({tm_str}) decided as {status.upper()} ({res['reason']})!"
-        )
 
       # 1c. Cross-run contradiction against baseline (Halt <-> Inf or halt_score mismatch)
       if base_res and run_name != base_name:
@@ -1090,7 +1090,7 @@ def compare_runs(
   if not correctness_errors:
     lines.append(
       "PASS: **0 correctness errors** "
-      "(no `Halt <-> Inf` flips, score mismatches, holdout false positives, or exceptions).\n"
+      "(no `Halt <-> Inf` flips, ground-truth contradictions, score mismatches, or exceptions).\n"
     )
   else:
     lines.append(f"FAIL: **{len(correctness_errors)} correctness errors detected!**\n")
@@ -1111,6 +1111,7 @@ def compare_runs(
   lines.append("| :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |")
 
   coverage_summary: dict[str, Any] = {}
+  newly_decided_details: list[str] = []
   for run_name, _, run_map in all_runs:
     n_halt = sum(1 for r in run_map.values() if r["status"] == "halt")
     n_inf = sum(1 for r in run_map.values() if r["status"] == "inf")
@@ -1130,6 +1131,10 @@ def compare_runs(
       c_dec = r["status"] in ("halt", "inf")
       if c_dec and not b_dec:
         newly_decided.append(r["name"])
+        newly_decided_details.append(
+          f"- **[{run_name}]** `{r['name']}` (`{tm_str}`, category=`{r.get('category')}`) -> "
+          f"**{r['status'].upper()}** (`{r['reason']}`, loops={r['total_loops']:_}, L{r.get('max_rule_level', 0)})"
+        )
       elif b_dec and not c_dec:
         lost_decisions.append(r["name"])
 
@@ -1148,6 +1153,13 @@ def compare_runs(
       f"+{len(newly_decided):_} | -{len(lost_decisions):_} | L{max_lvl} |"
     )
   lines.append("")
+  if newly_decided_details:
+    lines.append("### Newly Decided TMs (vs Baseline)\n")
+    for detail in newly_decided_details[:30]:
+      lines.append(detail)
+    if len(newly_decided_details) > 30:
+      lines.append(f"- ... and {len(newly_decided_details) - 30} more newly decided TMs.")
+    lines.append("")
 
   # =========================================================================
   # PILLAR 3: RUNTIME & UNDECIDED PROGRESS

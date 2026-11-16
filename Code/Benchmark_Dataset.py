@@ -78,7 +78,7 @@ KNOWN_BLOCK_SIZES: dict[str, int] = {
   "Machines/2x6-e9866": 2,
   "Machines/2x6-p3": 4,
   "Machines/2x6-t24": 2,
-  "Machines/2x6-t91": 2,
+  "Machines/2x6-t91": 4,
   "Machines/2x5-e38033": 2,
   "Machines/3x3-e17": 1,
   "Machines/3x3-Surprise": 8,
@@ -89,7 +89,7 @@ KNOWN_BLOCK_SIZES: dict[str, int] = {
   "Machines/4x3-e14072": 2,
   "Machines/4x3-e1426": 2,
   "Machines/6x2-e1762": 2,
-  "Machines/6x2-e2879": 2,
+  "Machines/6x2-e2879": 4,
   "Machines/6x2-e36534-Pavel": 6,
   "Machines/6x2-e646M-Pavel": 2,
   "Machines/6x2-e78913": 4,
@@ -97,49 +97,144 @@ KNOWN_BLOCK_SIZES: dict[str, int] = {
   "Machines/6x2-r": 2,
   "Machines/6x2-t5": 3,
   "Machines/6x2-t15-Pavel": 3,
+  "Machines/Lafitte.Papazian.complex:0": 1,
+  "Machines/Lafitte.Papazian.complex:1": 1,
+  "Machines/Lafitte.Papazian.complex:3": 1,
+  "Machines/Lafitte.Papazian.complex:7": 2,
+  "Machines/Lafitte.Papazian.peculiar:0": 4,
+  "Machines/Lafitte.Papazian.peculiar:1": 2,
+}
+
+# Known exact halting total_loops for known halters (or None if > 1,000,000 loops).
+# Fast halters (<= ~250k loops / <= ~2.5s) use a max_loops budget above their halt_loops
+# so they halt during normal benchmark runs; ultra-long halters (> 250k loops) keep
+# category="halt" and halt_loops recorded, while running with a fast milestone budget
+# (baseline_status="unknown") during normal benchmarks.
+KNOWN_HALT_LOOPS: dict[str, int | None] = {
+  "Green-6": 54,
+  "Green-7": 278,
+  "Green-8": 144,
+  "Green-9": 1_641,
+  "Green-10": 333,
+  "Green-11": 5_156,
+  "Green-12": 720,
+  "Green-13": 22_302,
+  "Green-14": 1_848,
+  "Green-15": 124_304,
+  "Green-16": 4_818,
+  "Green-17": None,  # > 210,000 loops
+  "Green-18": 12_606,
+  "Green-19": None,  # > 210,000 loops
+  "Green-20": 33_006,
+  "Machines/2x5-e704": 29_518,
+  "Machines/2x6-e9866": 787,
+  "Machines/2x6-p3": 10_695,
+  "Machines/2x6-t70": 10_498,
+  "Machines/2x6-t91": 35_011,
+  "Machines/3x3-Surprise": 18_039,
+  "Machines/3x3-e17": 1_156,
+  "Machines/3x4-t2048": 883,
+  "Machines/4x3-e12068": 499_536,
+  "Machines/4x3-e14072": 583_281,
+  "Machines/4x3-e1426": 75_726,
+  "Machines/6x2-e1762": 49_563,
+  "Machines/6x2-e2879": 207_138,
+  "Machines/6x2-e36534-Pavel": 3_401,
+  "Machines/6x2-e646M-Pavel": 312,
+  "Machines/6x2-e78913": 1_570,
+  "Machines/6x2-n": 14_798,
+  "Machines/6x2-p": 8_628,
+  "Machines/6x2-q": 796,
+  "Machines/6x2-r": 69_008,
+  "Machines/6x2-t15-Pavel": 2_110,
+  "Machines/6x2-t5": 1_545,
+  "Machines/7x2-Wythagoras": 8_166,
+  "Machines/2x5-e38033": None,  # > 350,000 loops
+  "Machines/2x6-t24": None,  # > 22,000 loops (>7.5s ExpInt tower evaluation)
+  "Machines/3x4-a14": None,  # > 100,000 loops
+  "Machines/7x2-a11-Pavel": None,  # > 200,000 loops
+  "Machines/7x2-a19": None,  # > 200,000 loops
 }
 
 # Known special per-TM parameter overrides (e.g. max_steps_in_backsymbol or max_loops).
 KNOWN_PARAM_OVERRIDES: dict[str, dict[str, int]] = {
+  "Green-13": {"max_loops": 25_000, "tape_limit": 100},
+  "Green-15": {"max_loops": 130_000, "tape_limit": 100},
+  "Green-20": {"max_loops": 36_000, "tape_limit": 100},
   "Machines/3x4-a14": {"max_steps_in_backsymbol": 250, "max_loops": 25_000},
   "1RB3LB1RZ2RA_2LC3RB1LC2RA_3RB1LB3LC2RC": {"max_steps_in_backsymbol": 250, "max_loops": 25_000},
   "Machines/2x5-e704": {"max_loops": 35_000},
   "Machines/2x6-p3": {"max_loops": 15_000},
   "Machines/2x6-t70": {"max_loops": 15_000},
+  "Machines/2x6-t91": {"max_loops": 40_000, "tape_limit": 100},
   "Machines/3x3-Surprise": {"max_loops": 25_000},
-  "Machines/4x3-e1426": {"max_loops": 80_000},
-  "Machines/6x2-e1762": {"max_loops": 55_000},
+  "Machines/4x3-e1426": {"max_loops": 80_000, "tape_limit": 150},
+  "Machines/6x2-e1762": {"max_loops": 55_000, "tape_limit": 150},
+  "Machines/6x2-e2879": {"max_loops": 220_000, "tape_limit": 250},
   "Machines/6x2-n": {"max_loops": 20_000},
   "Machines/6x2-r": {"max_loops": 75_000},
   "Machines/7x2-Wythagoras": {"max_loops": 12_000},
+  # Ultra-long halters kept at fast milestone loop budgets so they don't bottleneck the suite:
+  "Machines/4x3-e12068": {"max_loops": 20_000, "tape_limit": 150},
+  "Machines/4x3-e14072": {"max_loops": 20_000, "tape_limit": 150},
+  "Machines/2x5-e38033": {"max_loops": 10_000, "tape_limit": 100},
+  "Machines/2x6-t24": {"max_loops": 2_500, "tape_limit": 100},
   "Machines/7x2-a11-Pavel": {"max_loops": 30_000, "tape_limit": 100},
   "Machines/7x2-a19": {"max_loops": 30_000, "tape_limit": 100},
 }
 
-# Known non-halting / holdout / long-running milestone machines in Machines/*
+# Ground-truth categories ("halt", "inf", "holdout") for Machines/*
 KNOWN_MACHINES_CATEGORIES: dict[str, str] = {
   "Machines/2x2-Counter": "inf",
   "Machines/2x2-Tree": "inf",
-  "Machines/2x3-Wolfram_Prize": "unknown",
+  "Machines/2x3-Wolfram_Prize": "inf",
   "Machines/2x5-Hydra": "holdout",
-  "Machines/2x5-e38033": "unknown",
-  "Machines/2x6-t24": "unknown",
-  "Machines/2x6-t91": "unknown",
+  "Machines/2x5-e38033": "halt",
+  "Machines/2x6-t24": "halt",
+  "Machines/2x6-t91": "halt",
   "Machines/3x2-LR-9-10": "inf",
   "Machines/3x3-Bigfoot": "holdout",
-  "Machines/3x4-a14": "unknown",
+  "Machines/3x4-a14": "halt",
   "Machines/4x2-LR-158491-17620": "inf",
   "Machines/4x2-LR-28812-5588": "inf",
   "Machines/4x2-LR-7170-29117": "inf",
   "Machines/4x2-LR-73906-88381": "inf",
-  "Machines/4x3-e12068": "unknown",
-  "Machines/4x3-e14072": "unknown",
+  "Machines/4x3-e12068": "halt",
+  "Machines/4x3-e14072": "halt",
   "Machines/5x2-Chaos": "inf",
   "Machines/6x2-Antihydra": "holdout",
-  "Machines/6x2-e2879": "unknown",
-  "Machines/7x2-a11-Pavel": "unknown",
-  "Machines/7x2-a19": "unknown",
+  "Machines/6x2-e2879": "halt",
+  "Machines/7x2-Wythagoras": "halt",
+  "Machines/7x2-a11-Pavel": "halt",
+  "Machines/7x2-a19": "halt",
+  "Machines/Lafitte.Papazian.complex:0": "halt",
+  "Machines/Lafitte.Papazian.complex:1": "inf",
+  "Machines/Lafitte.Papazian.complex:2": "inf",
+  "Machines/Lafitte.Papazian.complex:3": "inf",
+  "Machines/Lafitte.Papazian.complex:4": "inf",
+  "Machines/Lafitte.Papazian.complex:5": "inf",
+  "Machines/Lafitte.Papazian.complex:6": "inf",
+  "Machines/Lafitte.Papazian.complex:7": "inf",
+  "Machines/Lafitte.Papazian.peculiar:0": "inf",
+  "Machines/Lafitte.Papazian.peculiar:1": "inf",
+  "Machines/Lafitte.Papazian.peculiar:2": "inf",
 }
+
+# Set of known halters that are intentionally configured with a milestone loop budget
+# smaller than their full halting loop count (so baseline_status == "unknown" is expected).
+MILESTONE_HALTERS: frozenset[str] = frozenset(
+  {
+    "Green-17",
+    "Green-19",
+    "Machines/2x5-e38033",
+    "Machines/2x6-t24",
+    "Machines/3x4-a14",
+    "Machines/4x3-e12068",
+    "Machines/4x3-e14072",
+    "Machines/7x2-a11-Pavel",
+    "Machines/7x2-a19",
+  }
+)
 
 
 STD_TM_RE = re.compile(r"^[0-9LRS_A-Z-]+$")
@@ -342,8 +437,8 @@ def resolve_block_size_and_profile(
   else:
     bs_list = find_block_finder_candidates(tm_obj)
 
-  # If this is a known halter or champion, prepare fallback block sizes in case Block_Finder's pick fails
-  if cand.category == "halt" or cand.source == "machines":
+  # If this is a known halter/inf or custom/champion, prepare fallback block sizes in case Block_Finder's pick fails
+  if cand.block_size is None and (cand.category in ("halt", "inf") or cand.source in ("machines", "custom")):
     base_cands = list(bs_list)
     for b in base_cands:
       for mult in (2, 3, 4):
@@ -392,6 +487,13 @@ def resolve_block_size_and_profile(
         chosen_bs = bs
         chosen_res = res
         break
+    elif cand.source in ("machines", "custom") and cand.category == "unknown":
+      # When evaluating a custom or champion TM without an explicit block_size,
+      # prefer a block_size that decides (halt/inf) the machine if one exists.
+      if res["status"] in ("halt", "inf"):
+        chosen_bs = bs
+        chosen_res = res
+        break
     else:
       # For holdouts/unknowns, accept the first non-exception block_size from Block_Finder
       if not res.get("threw_exception"):
@@ -402,14 +504,19 @@ def resolve_block_size_and_profile(
   if chosen_res is None:
     return None, set()
 
-  # Hard guarantee: if category == "halt", it MUST halt with chosen_bs!
-  if cand.category == "halt" and chosen_res["status"] != "halt":
+  # Hard guarantee: if category == "halt" (and not an intentional ultra-long milestone halter),
+  # it MUST halt with chosen_bs!
+  is_milestone_halter = cand.name in MILESTONE_HALTERS or cand.tm in MILESTONE_HALTERS
+  if cand.category == "halt" and not is_milestone_halter and chosen_res["status"] != "halt":
     return None, set()
 
-  # Update category if unknown and proven halt/inf
+  # Ensure every TM is categorized into strictly ("halt", "inf", "holdout") — never "unknown"
   final_category = cand.category
-  if final_category == "unknown" and chosen_res["status"] in ("halt", "inf"):
-    final_category = chosen_res["status"]
+  if final_category == "unknown":
+    if chosen_res["status"] in ("halt", "inf"):
+      final_category = chosen_res["status"]
+    else:
+      final_category = "holdout"
 
   # Collect coverage under CoverageProfiler on the chosen block_size
   cov_features: set[tuple[Any, ...]] = set()
@@ -419,30 +526,32 @@ def resolve_block_size_and_profile(
       "name": cand.name,
       "category": final_category,
       "block_size": chosen_bs,
-      "max_loops": min(cand.max_loops, 15_000),
+      "max_loops": min(cand.max_loops, 20_000),
       "tape_limit": cand.tape_limit,
       "max_steps_in_block": cand.max_steps_in_block,
       "max_steps_in_backsymbol": cand.max_steps_in_backsymbol,
       "target_max_span_bi": None,
     }
     with CoverageProfiler() as prof:
-      _ = run_single_tm(entry_final, CONFIG_PRESETS["all_on"].to_dict(), undecided_mode="full", time_limit_sec=3.0)
+      _ = run_single_tm(entry_final, ref_config, undecided_mode="full", time_limit_sec=3.0)
     cov_features = set(prof.features)
 
   cov_features |= extract_behavioral_features(cand, chosen_res)
 
   # Build dataset entry
   target_max_span_bi: list[int] | None = None
-  if final_category in ("holdout", "unknown"):
+  if chosen_res["status"] == "unknown":
     span_bi = chosen_res.get("max_span", {}).get("bi")
     if span_bi and span_bi[0]:
       target_max_span_bi = list(span_bi[0])
 
   expected_score_exact = None
   expected_score_bi = None
+  halt_loops: int | None = KNOWN_HALT_LOOPS.get(cand.name, KNOWN_HALT_LOOPS.get(cand.tm))
   if final_category == "halt" and chosen_res["status"] == "halt":
     expected_score_exact = chosen_res["halt_score"].get("exact")
     expected_score_bi = chosen_res["halt_score"].get("bi")
+    halt_loops = chosen_res["total_loops"]
 
   dataset_entry = {
     "tm": cand.tm,
@@ -455,6 +564,7 @@ def resolve_block_size_and_profile(
     "tape_limit": cand.tape_limit,
     "max_steps_in_block": cand.max_steps_in_block,
     "max_steps_in_backsymbol": cand.max_steps_in_backsymbol,
+    "halt_loops": halt_loops,
     "expected_score_exact": expected_score_exact,
     "expected_score_bi": expected_score_bi,
     "target_max_span_bi": target_max_span_bi,
@@ -479,15 +589,12 @@ def iter_green_candidates(max_states: int = 20) -> list[CandidateTM]:
     tm_str = Green.green_machine_str(n)
     is_even = n % 2 == 0
     block_size = 1 if is_even else 2
-    # Even Green machines up to n=18 and odd Green machines up to n=11 halt within 20k loops;
-    # higher n serve as deep Ackermann milestone tests (Level 5-7 rules).
-    halts_in_budget = (is_even and n <= 18) or (not is_even and n <= 11)
     cands.append(
       CandidateTM(
         tm=tm_str,
         name=f"Green-{n}",
         source="green",
-        category="halt" if halts_in_budget else "unknown",
+        category="halt",
         mandatory=True,
         block_size=block_size,
         max_loops=20_000,
@@ -513,13 +620,15 @@ def iter_machines_dir_candidates(rng: random.Random) -> list[CandidateTM]:
         for idx, line in enumerate(f):
           tok = line.strip().split()[0] if line.strip() else ""
           if is_valid_std_tm(tok):
+            lp_name = f"Machines/{p.name}:{idx}"
             cands.append(
               CandidateTM(
                 tm=tok,
-                name=f"Machines/{p.name}:{idx}",
+                name=lp_name,
                 source="machines",
-                category="unknown",
+                category=KNOWN_MACHINES_CATEGORIES.get(lp_name, "holdout"),
                 mandatory=True,
+                block_size=KNOWN_BLOCK_SIZES.get(lp_name),
               )
             )
       continue
@@ -966,6 +1075,147 @@ def build_datasets(
   return fast_path, full_path, {"fast": fast_stats, "full": full_stats}
 
 
+def evaluate_candidates_against_dataset(
+  dataset_arg: str,
+  cand_specs: list[str],
+  add_to_dataset: bool = False,
+  force_Add: bool = False,
+  block_size: int | None = None,
+  category: str = "unknown",
+  name_override: str | None = None,
+  max_loops: int = 20_000,
+  tape_limit: int = 50,
+) -> list[dict[str, Any]]:
+  """Evaluate one or more candidate TMs (or files of TMs) against an existing dataset's coverage.
+
+  Reports for each candidate:
+  - Its resolved block_size, status, reason, max_rule_level, and sim_time_us.
+  - How many NEW code lines, branches, and behavioral features it covers that the
+    existing dataset never hits (or hits < 3 times).
+  - A recommendation ("ADD: new coverage", "ADD: high rule level", or "SKIP: redundant").
+  """
+  ds_path, existing_entries = load_dataset(dataset_arg)
+  existing_tms = {e["tm"] for e in existing_entries}
+  ref_config = CONFIG_PRESETS["prover_4_meta_linear"].to_dict()
+
+  print(f"Profiling existing dataset '{ds_path.name}' ({len(existing_entries)} TMs) to build baseline coverage map...")
+  baseline_counts: collections.Counter = collections.Counter()
+  for e in existing_entries:
+    cand_e = CandidateTM(
+      tm=e["tm"],
+      name=e["name"],
+      source=e.get("source", "existing"),
+      category=e.get("category", "unknown"),
+      block_size=e["block_size"],
+      max_loops=min(int(e.get("max_loops", 10_000)), 20_000),
+      tape_limit=int(e.get("tape_limit", 50)),
+    )
+    with CoverageProfiler() as prof:
+      res = run_single_tm(e, ref_config, undecided_mode="full", time_limit_sec=2.0)
+    feats = set(prof.features) | extract_behavioral_features(cand_e, res)
+    for f in feats:
+      baseline_counts[f] += 1
+
+  # Parse candidate specs (can be a TM string or a file path)
+  candidates: list[CandidateTM] = []
+  for spec in cand_specs:
+    p = Path(spec)
+    if p.is_file():
+      with IO.Common.open_file(p, "rt") as f:
+        for idx, line in enumerate(f):
+          tok, custom_id = _extract_tm_token_from_line(line)
+          if tok:
+            tag = custom_id if custom_id else str(idx)
+            candidates.append(
+              CandidateTM(
+                tm=tok,
+                name=f"{p.name}:{tag}",
+                source="custom",
+                category=category,
+                block_size=block_size,
+                max_loops=max_loops,
+                tape_limit=tape_limit,
+              )
+            )
+    elif is_valid_std_tm(spec):
+      candidates.append(
+        CandidateTM(
+          tm=spec,
+          name=name_override if (name_override and len(cand_specs) == 1) else spec,
+          source="custom",
+          category=category,
+          block_size=block_size,
+          max_loops=max_loops,
+          tape_limit=tape_limit,
+        )
+      )
+    else:
+      print(f"Warning: Skipping unrecognized TM or file '{spec}'")
+
+  reports: list[dict[str, Any]] = []
+  added_entries: list[dict[str, Any]] = []
+
+  print(f"\nEvaluating {len(candidates)} candidate TM(s)...\n")
+  for cand in candidates:
+    already_in = cand.tm in existing_tms
+    entry, feats = resolve_block_size_and_profile(cand, profile_coverage=True, time_limit_sec=5.0)
+    if entry is None:
+      print(f"- {cand.name} ({cand.tm}): FAILED to resolve block_size")
+      continue
+
+    new_lines = [f for f in feats if f[0] == "line" and baseline_counts[f] == 0]
+    new_branches = [f for f in feats if f[0] == "branch" and baseline_counts[f] == 0]
+    new_behav = [f for f in feats if str(f[0]).startswith("behav_") and baseline_counts[f] == 0]
+    rare_feats = [f for f in feats if 0 < baseline_counts[f] < 3]
+
+    max_lvl = entry.get("baseline_max_level", 0)
+    if already_in and not force_Add:
+      verdict = "SKIP (already in dataset)"
+    elif new_lines or new_branches or new_behav:
+      verdict = "RECOMMEND ADD (covers brand-new code/behavior)"
+    elif len(rare_feats) >= 5 or max_lvl >= 3:
+      verdict = "RECOMMEND ADD (reinforces rare paths / L3+ rules)"
+    else:
+      verdict = "SKIP (redundant with existing TMs; pass --force-add to add anyway)"
+
+    print(
+      f"- {cand.name} ({cand.tm})\n"
+      f"  Status: {entry['baseline_status']} ({entry['baseline_reason']}) | "
+      f"category={entry['category']} | block_size={entry['block_size']} | max_level=L{max_lvl} | "
+      f"loops={entry['baseline_loops']} | time={entry['baseline_sim_time_us'] / 1000:.1f}ms\n"
+      f"  Coverage delta: +{len(new_lines)} new lines, +{len(new_branches)} new branches, "
+      f"+{len(new_behav)} new behavioral tags, +{len(rare_feats)} rare features (<3 hits)\n"
+      f"  Verdict: {verdict}\n"
+    )
+
+    rep = {
+      "entry": entry,
+      "already_in_dataset": already_in,
+      "new_lines": len(new_lines),
+      "new_branches": len(new_branches),
+      "new_behav": len(new_behav),
+      "rare_feats": len(rare_feats),
+      "verdict": verdict,
+    }
+    reports.append(rep)
+
+    should_add = force_Add or (add_to_dataset and not already_in and verdict.startswith("RECOMMEND ADD"))
+    if should_add:
+      if already_in:
+        existing_entries = [e for e in existing_entries if e["tm"] != cand.tm]
+      existing_entries.append(entry)
+      existing_tms.add(cand.tm)
+      added_entries.append(entry)
+      for f in feats:
+        baseline_counts[f] += 1
+
+  if added_entries:
+    write_dataset_jsonl(ds_path, existing_entries)
+    print(f"Saved {len(added_entries)} TM(s) to {ds_path} (total: {len(existing_entries)} TMs).")
+
+  return reports
+
+
 def main(argv: list[str] | None = None) -> int:
   parser = argparse.ArgumentParser(description="Build and analyze curated Macro Simulator benchmark datasets")
   sub = parser.add_subparsers(dest="subcommand", required=True)
@@ -980,6 +1230,27 @@ def main(argv: list[str] | None = None) -> int:
 
   p_stats = sub.add_parser("stats", help="Print breakdown of an existing dataset .jsonl file")
   p_stats.add_argument("dataset", help="Dataset name ('fast', 'full') or path")
+
+  p_eval = sub.add_parser(
+    "eval-candidate",
+    help="Check if new candidate TM(s) add new code/behavioral coverage to a dataset (and optionally add them)",
+  )
+  p_eval.add_argument("--dataset", default="fast", help="Dataset name ('fast', 'full') or path [default: fast]")
+  p_eval.add_argument("-n", "--block-size", type=int, default=None, help="Explicit fixed block_size (e.g. -n 4)")
+  p_eval.add_argument(
+    "--category",
+    choices=["halt", "inf", "holdout", "unknown"],
+    default="unknown",
+    help="Expected ground-truth category (sweeps block sizes to satisfy halt/inf if -n is omitted)",
+  )
+  p_eval.add_argument("--name", default=None, help="Optional human-readable name for the TM")
+  p_eval.add_argument("--max-loops", type=int, default=20_000, help="Per-TM max_loops [default: 20000]")
+  p_eval.add_argument("--tape-limit", type=int, default=50, help="Per-TM tape_limit [default: 50]")
+  p_eval.add_argument("--add", action="store_true", help="Append recommended TMs to the dataset file")
+  p_eval.add_argument(
+    "--force-add", action="store_true", help="Append (or update) TM in the dataset regardless of recommendation"
+  )
+  p_eval.add_argument("candidates", nargs="+", help="One or more TM strings (e.g. 1RB...) or file paths")
 
   args = parser.parse_args(argv)
   if args.subcommand == "build":
@@ -997,6 +1268,19 @@ def main(argv: list[str] | None = None) -> int:
     print("  By source:  ", dict(collections.Counter(e["source"] for e in entries)))
     print("  By block_size:", dict(collections.Counter(e["block_size"] for e in entries)))
     print("  By baseline_max_level:", dict(collections.Counter(e.get("baseline_max_level", 0) for e in entries)))
+    return 0
+  elif args.subcommand == "eval-candidate":
+    evaluate_candidates_against_dataset(
+      args.dataset,
+      args.candidates,
+      add_to_dataset=args.add,
+      force_Add=args.force_add,
+      block_size=args.block_size,
+      category=args.category,
+      name_override=args.name,
+      max_loops=args.max_loops,
+      tape_limit=args.tape_limit,
+    )
     return 0
   return 0
 
