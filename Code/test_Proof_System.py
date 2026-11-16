@@ -1573,6 +1573,67 @@ class ProofSystemTest(unittest.TestCase):
     self.assertEqual(sim.op_state, Turing_Machine.RUNNING)
     self.assertEqual(sim.total_loops, 5000)
 
+  def test_prove_higher_level_rule_on_same_stripped_config(self):
+    # Even when a lower-level rule already matches and applies to a stripped_config,
+    # recursive proving should continue logging that stripped_config so higher-level
+    # rules can be proven and prioritized over the lower-level rule.
+    tm = IO.parse_tm("1RB1LC_1RC1RB_1RD0LE_1LA1LD_1RZ0LA")
+    self.options.recursive = True
+    self.options.limited_rules = False
+    prover = Proof_System.Proof_System(tm, self.options, "")
+    state_A = Turing_Machine.Simple_Machine_State(0)
+
+    def make_tape(left_ones, right_ones):
+      t = Tape.Chain_Tape()
+      t.init(0, Turing_Machine.RIGHT, self.options)
+      t.tape[0] = [Tape.Repeated_Symbol(0, InfNat()), Tape.Repeated_Symbol(1, left_ones)]
+      t.tape[1] = [Tape.Repeated_Symbol(0, InfNat()), Tape.Repeated_Symbol(1, right_ones)]
+      return t
+
+    a_expr = Algebraic_Expression.Expression_from_string("(a+1)")
+    b_expr = Algebraic_Expression.Expression_from_string("(b+1)")
+    rule_l1 = Proof_System.Diff_Rule(
+      make_tape(a_expr, b_expr),
+      make_tape(1, -1),
+      state_A,
+      Algebraic_Expression.ConstantToExpression(1),
+      num_loops=1,
+      rule_num=0,
+      level=1,
+      states_last_seen={},
+    )
+    rule_l2 = Proof_System.Diff_Rule(
+      make_tape(a_expr, b_expr),
+      make_tape(2, -1),
+      state_A,
+      Algebraic_Expression.ConstantToExpression(2),
+      num_loops=10,
+      rule_num=1,
+      level=2,
+      states_last_seen={},
+    )
+
+    sample_tape = make_tape(3, 4)
+    stripped = Proof_System.strip_config(state_A, Turing_Machine.RIGHT, sample_tape.tape)
+    prover.add_rule(rule_l1, stripped)
+
+    with mock.patch.object(prover, "prove_rule", return_value=rule_l2) as mock_prove:
+      res1 = prover.log_and_apply(make_tape(3, 4), state_A, 10)
+      self.assertEqual(res1.condition, Proof_System.APPLY_RULE)
+      self.assertEqual(res1.new_tape.tape[0][1].num, 7)  # +4 from rule_l1
+
+      res2 = prover.log_and_apply(make_tape(3, 4), state_A, 20)
+      self.assertEqual(res2.condition, Proof_System.APPLY_RULE)
+      mock_prove.assert_not_called()
+
+      res3 = prover.log_and_apply(make_tape(3, 4), state_A, 30)
+      mock_prove.assert_called_once()
+      self.assertEqual(res3.condition, Proof_System.APPLY_RULE)
+      self.assertEqual(res3.new_tape.tape[0][1].num, 11)  # +8 from rule_l2
+
+    # Subsequent calls prioritize rule_l2 over rule_l1.
+    self.assertEqual(prover.rules[stripped][0], rule_l2)
+
 
 if __name__ == "__main__":
   unittest.main()

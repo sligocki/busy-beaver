@@ -919,38 +919,35 @@ class Proof_System:
     stripped_config = strip_config(state, tape.dir, tape.tape)
     full_config = (state, tape, loop_num)
 
-    # Try to apply an already proven rule.
+    # Log into past_configs and try to prove a new rule if it has recurred
+    # 3 times in arithmetic progression.
+    if self.past_configs is not None and not self.frozen and allow_log:
+      past_config = self.past_configs[stripped_config]
+      if past_config.log_config(loop_num):
+        # We see enough of a pattern to try and prove a rule.
+        delta_loop = loop_num - past_config.last_loop_num
+        if remaining_loops is not None and delta_loop > remaining_loops:
+          return ProverResult(OVER_LOOPS, delta_loop=delta_loop, remaining_loops=remaining_loops)
+        rule = self.prove_rule(stripped_config, full_config, delta_loop)
+        if not rule:
+          self.num_failed_proofs += 1
+        else:
+          self.add_rule(rule, stripped_config)
+
+          # Try to apply transition
+          is_good, res = self.apply_rule(rule, full_config)
+          if is_good:
+            result, _ = res
+            rule.num_uses += 1
+            assert isinstance(result, ProverResult), result
+            return result
+      elif len(self.past_configs) > self.options.max_prover_configs:
+        self.past_configs.clear()
+
+    # Otherwise (or if proving failed), try to apply an already proven rule.
     result = self.try_apply_a_rule(stripped_config, full_config)
     if result:
       return result
-
-    # self.past_configs is only None if we have disabled prover.
-    if self.past_configs is None or self.frozen or not allow_log:
-      return ProverResult(NOTHING_TO_DO)
-
-    # Otherwise log it into past_configs and see if we should try and prove
-    # a new rule.
-    past_config = self.past_configs[stripped_config]
-    if past_config.log_config(loop_num):
-      # We see enough of a pattern to try and prove a rule.
-      delta_loop = loop_num - past_config.last_loop_num
-      if remaining_loops is not None and delta_loop > remaining_loops:
-        return ProverResult(OVER_LOOPS, delta_loop=delta_loop, remaining_loops=remaining_loops)
-      rule = self.prove_rule(stripped_config, full_config, delta_loop)
-      if not rule:
-        self.num_failed_proofs += 1
-      else:
-        self.add_rule(rule, stripped_config)
-
-        # Try to apply transition
-        is_good, res = self.apply_rule(rule, full_config)
-        if is_good:
-          result, large_delta = res
-          rule.num_uses += 1
-          assert isinstance(result, ProverResult), result
-          return result
-    elif len(self.past_configs) > self.options.max_prover_configs:
-      self.past_configs.clear()
 
     return ProverResult(NOTHING_TO_DO)
 
