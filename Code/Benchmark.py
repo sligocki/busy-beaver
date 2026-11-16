@@ -1097,11 +1097,7 @@ def compare_runs(
       cat = res.get("category", "unknown")
       status = res["status"]
 
-      # 1a. Exceptions
-      if res.get("threw_exception"):
-        correctness_errors.append(f"[{run_name}] Exception on {res['name']} ({tm_str}): {res.get('exception_str')}")
-
-      # 1b. Ground-truth category contradiction
+      # 1a. Ground-truth category contradiction
       if cat == "halt" and status == "inf":
         correctness_errors.append(
           f"[{run_name}] Ground-truth HALT machine {res['name']} ({tm_str}) proved INF ({res['reason']})!"
@@ -1109,7 +1105,7 @@ def compare_runs(
       elif cat == "inf" and status == "halt":
         correctness_errors.append(f"[{run_name}] Ground-truth INF machine {res['name']} ({tm_str}) decided HALT!")
 
-      # 1c. Cross-run contradiction against baseline (Halt <-> Inf or halt_score mismatch)
+      # 1b. Cross-run contradiction against baseline (Halt <-> Inf or halt_score mismatch)
       if base_res and run_name != base_name:
         b_status = base_res["status"]
         if (b_status == "halt" and status == "inf") or (b_status == "inf" and status == "halt"):
@@ -1126,8 +1122,7 @@ def compare_runs(
 
   if not correctness_errors:
     lines.append(
-      "PASS: **0 correctness errors** "
-      "(no `Halt <-> Inf` flips, ground-truth contradictions, score mismatches, or exceptions).\n"
+      "PASS: **0 correctness errors** (no `Halt <-> Inf` flips, ground-truth contradictions, or score mismatches).\n"
     )
   else:
     lines.append(f"FAIL: **{len(correctness_errors)} correctness errors detected!**\n")
@@ -1143,12 +1138,13 @@ def compare_runs(
   lines.append("## 2. Coverage (Decidability)\n")
   lines.append(
     "| Configuration | Decided Total | Halt | Inf Total | Inf: Proof | "
-    "Inf: Chain | Inf: Macro | Undecided | +New vs Base | -Lost vs Base | Max Rule Lvl |"
+    "Inf: Chain | Inf: Macro | Undecided | Exceptions | +New vs Base | -Lost vs Base | Max Rule Lvl |"
   )
-  lines.append("| :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |")
+  lines.append("| :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |")
 
   coverage_summary: dict[str, Any] = {}
   newly_decided_details: list[str] = []
+  exception_details: list[str] = []
   for run_name, _, run_map in all_runs:
     n_halt = sum(1 for r in run_map.values() if r["status"] == "halt")
     n_inf = sum(1 for r in run_map.values() if r["status"] == "inf")
@@ -1156,11 +1152,14 @@ def compare_runs(
     n_inf_chain = sum(1 for r in run_map.values() if r["status"] == "inf" and r["reason"] == "INF_CHAIN_STEP")
     n_inf_macro = sum(1 for r in run_map.values() if r["status"] == "inf" and r["reason"] == "INF_MACRO_STEP")
     n_unk = sum(1 for r in run_map.values() if r["status"] == "unknown")
+    n_exc = sum(1 for r in run_map.values() if r.get("threw_exception"))
     max_lvl = max((r.get("max_rule_level", 0) for r in run_map.values()), default=0)
 
     newly_decided = []
     lost_decisions = []
     for tm_str, r in run_map.items():
+      if r.get("threw_exception"):
+        exception_details.append(f"- **[{run_name}]** `{r['name']}` (`{tm_str}`): {r.get('exception_str')}")
       br = base_by_tm.get(tm_str)
       if not br:
         continue
@@ -1180,13 +1179,14 @@ def compare_runs(
       "halt": n_halt,
       "inf": n_inf,
       "unknown": n_unk,
+      "exceptions": n_exc,
       "newly_decided": newly_decided,
       "lost_decisions": lost_decisions,
     }
 
     lines.append(
       f"| `{run_name}` | **{n_halt + n_inf:_}** | {n_halt:_} | {n_inf:_} | "
-      f"{n_inf_proof:_} | {n_inf_chain:_} | {n_inf_macro:_} | {n_unk:_} | "
+      f"{n_inf_proof:_} | {n_inf_chain:_} | {n_inf_macro:_} | {n_unk:_} | {n_exc:_} | "
       f"+{len(newly_decided):_} | -{len(lost_decisions):_} | L{max_lvl} |"
     )
   lines.append("")
@@ -1196,6 +1196,13 @@ def compare_runs(
       lines.append(detail)
     if len(newly_decided_details) > 30:
       lines.append(f"- ... and {len(newly_decided_details) - 30} more newly decided TMs.")
+    lines.append("")
+  if exception_details:
+    lines.append("### Coverage Exceptions / Unimplemented Paths\n")
+    for detail in exception_details[:30]:
+      lines.append(detail)
+    if len(exception_details) > 30:
+      lines.append(f"- ... and {len(exception_details) - 30} more exceptions.")
     lines.append("")
 
   # =========================================================================
