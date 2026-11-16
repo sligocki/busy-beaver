@@ -714,7 +714,7 @@ def _tower_lower(expr, var, level_k: int, x_min_bi, env=None, _memo=None, _upper
       neg_ub = neg_ub + _eval_tower_upper_bi(nu, cur_k, cur_x_min)
     loss = 0
     if neg_ub.upper > Knuth10(0):
-      if BigInterval(2) * neg_ub <= pos_at_min:
+      if (BigInterval(2) * neg_ub).upper <= pos_at_min.lower:
         loss += 1
       else:
         return (0, Fraction(0), Fraction(0))
@@ -723,7 +723,7 @@ def _tower_lower(expr, var, level_k: int, x_min_bi, env=None, _memo=None, _upper
       d_val = d_bi.upper.try_eval()
       if cur_k == 1 and h_p == 1 and d_val is not None:
         loss += (d_val - 1).bit_length() if d_val > 1 else 0
-      elif BigInterval(2) * d_bi <= pos_at_min:
+      elif (BigInterval(2) * d_bi).upper <= pos_at_min.lower:
         loss += 1
       else:
         return (0, Fraction(0), Fraction(0))
@@ -788,7 +788,10 @@ def _tower_lower(expr, var, level_k: int, x_min_bi, env=None, _memo=None, _upper
           s_bi = (
             to_BigInterval(cur_expr.start_val, env) if cur_var not in variables(cur_expr.start_val) else BigInterval(0)
           )
-          in_x_min = max(BigInterval(20 if cur_k == 2 else 10), s_bi)
+          min_thresh = 20 if cur_k == 2 else 10
+          in_x_min = (
+            BigInterval(min_thresh) if s_bi.lower < Knuth10(min_thresh) else BigInterval(s_bi.lower, s_bi.lower)
+          )
           unroll_loss = 2 if s_bi.lower < in_x_min.lower else 0
           stack.append((cur_expr, cur_var, cur_k, cur_x_min, True, (g_in, in_x_min, unroll_loss)))
           if make_key(cur_expr.step_expr, cur_expr.var, k_in, in_x_min) not in _memo:

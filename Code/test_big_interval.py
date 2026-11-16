@@ -325,15 +325,13 @@ class TestBigInterval(unittest.TestCase):
     # threshold 20 in _tower_lower, it must compare Knuth10 endpoints without raising NotComparable.
     r = Variable()
     w = Variable()
-    u = Variable()
     inner_step = exp_int(3, VariableToExpression(r) + 1)
     # start_val whose BigInterval is [19, 21] (contains 20 -> overlapping with BigInterval(20))
     start_overlap = (exp_int(2, 100) + exp_int(2, 99)) // exp_int(2, 95)
     mid_step = Iterated_Expression(inner_step, r, start_overlap, VariableToExpression(w) + 2)
-    outer = Iterated_Expression(mid_step, w, 30, 100)
+    outer = Iterated_Expression(mid_step, w, 100, 100)
     bi = outer.to_BigInterval()
     self.assertTrue(bi.lower <= bi.upper)
-    _ = u
 
 
 if __name__ == "__main__":
