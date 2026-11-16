@@ -253,24 +253,39 @@ class BenchmarkTest(unittest.TestCase):
     with tempfile.TemporaryDirectory() as tmp:
       tmp_dir = Path(tmp)
       ds_path = tmp_dir / "tiny.jsonl"
+      truth_path = tmp_dir / "truth.jsonl"
       out_path = tmp_dir / "res.jsonl.gz"
 
-      entries = [
+      truth_entries = [
         {
           "tm": "1RB1LB_1LA1RZ",
           "name": "2x2-6-4",
           "source": "test",
           "category": "halt",
           "block_size": 1,
+          "max_steps_in_block": 100_000,
+          "max_steps_in_backsymbol": 1_000,
+          "sim_decidable": True,
+          "decision_loops": 4,
+          "expected_score_exact": 4,
+        }
+      ]
+      suite_entries = [
+        {
+          "tm": "1RB1LB_1LA1RZ",
+          "name": "2x2-6-4",
           "max_loops": 100,
           "tape_limit": 50,
           "target_max_span_bi": None,
         }
       ]
-      write_dataset_jsonl(ds_path, entries)
-      loaded_path, loaded_entries = load_dataset(ds_path)
+      write_dataset_jsonl(truth_path, truth_entries)
+      write_dataset_jsonl(ds_path, suite_entries)
+      loaded_path, loaded_entries = load_dataset(ds_path, truth_path=truth_path)
       self.assertEqual(loaded_path, ds_path)
       self.assertEqual(len(loaded_entries), 1)
+      self.assertEqual(loaded_entries[0]["category"], "halt")
+      self.assertEqual(loaded_entries[0]["block_size"], 1)
 
       _, meta, results = run_benchmark_config(
         entries=loaded_entries,

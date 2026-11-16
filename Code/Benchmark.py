@@ -43,6 +43,7 @@ from Time_Limit import TimeLimit
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
 BENCH_DIR = ROOT_DIR / "benchmarks"
+TRUTH_FILE = BENCH_DIR / "truth.jsonl"
 DATASETS_DIR = BENCH_DIR / "datasets"
 RESULTS_DIR = BENCH_DIR / "results"
 
@@ -439,6 +440,7 @@ def run_single_tm(
   threw_exception = False
   exception_str = ""
   timed_out = False
+  max_tape_compressed = sim.tape.compressed_size()
 
   time_limit.start(time_limit_sec)
   try:
@@ -449,6 +451,9 @@ def run_single_tm(
       and not stop_at_milestone
     ):
       sim.step(max_loops=max_loops)
+      cur_tape_comp = sim.tape.compressed_size()
+      if cur_tape_comp > max_tape_compressed:
+        max_tape_compressed = cur_tape_comp
       if machine.time_limit.timed_out:
         timed_out = True
         break
@@ -548,6 +553,7 @@ def run_single_tm(
     "max_rule_level": max_level,
     "halt_score": score_encoded,
     "max_span": max_span_encoded,
+    "max_tape_compressed": max_tape_compressed,
     "milestone_reached": milestone_reached,
     "milestone_loops": milestone_loops,
     "milestone_time_us": milestone_time_us,
@@ -560,8 +566,26 @@ def _worker_run_tm(args_tuple):
   return run_single_tm(*args_tuple)
 
 
-def load_dataset(dataset_arg: str | Path) -> tuple[Path, list[dict[str, Any]]]:
-  """Load a JSONL dataset by preset name ('fast', 'full') or file path."""
+def load_truth(truth_path: Path = TRUTH_FILE) -> dict[str, dict[str, Any]]:
+  """Load canonical TM truth records from benchmarks/truth.jsonl keyed by TM string."""
+  if not truth_path.exists():
+    return {}
+  truth_by_tm: dict[str, dict[str, Any]] = {}
+  open_fn = gzip.open if truth_path.suffix == ".gz" else open
+  with open_fn(truth_path, "rt", encoding="utf-8") as f:
+    for line in f:
+      line = line.strip()
+      if line:
+        rec = json.loads(line)
+        truth_by_tm[rec["tm"]] = rec
+  return truth_by_tm
+
+
+def load_dataset(
+  dataset_arg: str | Path,
+  truth_path: Path = TRUTH_FILE,
+) -> tuple[Path, list[dict[str, Any]]]:
+  """Load a JSONL suite dataset by preset name ('fast', 'full') or file path, merged with truth.jsonl."""
   p = Path(dataset_arg)
   if not p.exists():
     candidate = DATASETS_DIR / f"{dataset_arg}.jsonl"
@@ -570,13 +594,20 @@ def load_dataset(dataset_arg: str | Path) -> tuple[Path, list[dict[str, Any]]]:
     else:
       raise FileNotFoundError(f"Dataset not found: {dataset_arg} (checked {p} and {candidate})")
 
+  truth_by_tm = load_truth(truth_path)
   entries = []
   open_fn = gzip.open if p.suffix == ".gz" else open
   with open_fn(p, "rt", encoding="utf-8") as f:
     for line in f:
       line = line.strip()
       if line:
-        entries.append(json.loads(line))
+        suite_entry = json.loads(line)
+        truth_rec = truth_by_tm.get(suite_entry["tm"])
+        if truth_rec:
+          merged = {**truth_rec, **suite_entry}
+        else:
+          merged = suite_entry
+        entries.append(merged)
   return p, entries
 
 
@@ -923,6 +954,7 @@ def run_one(entry):
     "max_rule_level": max(rules_by_level.keys(), default=0),
     "halt_score": score_encoded,
     "max_span": max_span_encoded,
+    "max_tape_compressed": max_tape_compressed,
     "milestone_reached": milestone_reached,
     "milestone_loops": milestone_loops,
     "milestone_time_us": milestone_time_us,
@@ -988,7 +1020,12 @@ def run_git_snapshot(
   worktree_dir.mkdir(parents=True, exist_ok=True)
   worker_file = tmpdir / "snapshot_worker.py"
   tar_file = tmpdir / "snapshot.tar"
+  resolved_dataset_file = tmpdir / "resolved_dataset.jsonl"
   try:
+    _, merged_entries = load_dataset(dataset_path)
+    with open(resolved_dataset_file, "wt", encoding="utf-8") as df:
+      for e in merged_entries:
+        df.write(json.dumps(e) + "\n")
     with open(tar_file, "wb") as tf:
       subprocess.run(
         ["git", "archive", "--format=tar", short_sha, "Code"],
@@ -1003,7 +1040,7 @@ def run_git_snapshot(
       sys.executable,
       str(worker_file),
       str(worktree_dir / "Code"),
-      str(dataset_path.resolve()),
+      str(resolved_dataset_file),
       json.dumps(config.to_dict()),
       str(out_path.resolve()),
       undecided_mode,

@@ -1,23 +1,17 @@
 #!/usr/bin/env python3
 """
-Dataset curation pipeline and code/behavioral coverage profiler for the
-Macro Simulator regression & benchmark testing system.
+Truth database management, coverage-guided dataset selection, and candidate evaluation
+for the Macro Simulator regression & benchmark testing system.
 
-Features:
-1. Ingests candidate TMs from:
-   - Green.py (even states -> block_size=1, odd states -> block_size=2)
-   - Machines/* (champions, bb, bbi, beep, lin_recur_period, Lafitte.Papazian)
-   - top_level_TMs.txt
-   - holdouts/ (BB6_holdouts_608, 3x3_holdout_6, BB2x5_Rocq_holdouts_37,
-     BLC_holdouts, 2x6_holdouts_412086.txt.zip, 7x2_holdouts_15743264.txt.zip)
-   - holdouts/BB2..BB5_verified_enumeration_augmented.csv[.gz]
-2. Resolves and verifies a fixed block_size for every TM so that Block_Finder
-   does not run during benchmarks, and guarantees all included Halters halt
-   with their assigned block_size.
-3. Profiles per-TM code coverage (lines + branches in Macro/ and math modules)
-   using Python 3.14's sys.monitoring alongside behavioral Proof_System tags.
-4. Uses weighted greedy k-set-cover + stratified sampling to select diverse,
-   non-redundant 'fast' and 'full' benchmark suites.
+Architecture:
+1. Canonical Truth File (benchmarks/truth.jsonl):
+   Stores intrinsic per-TM facts (category: halt/inf/holdout, fixed block_size,
+   max_steps_in_block, max_steps_in_backsymbol, sim_decidable, decision_loops,
+   max_rule_level, expected_score) independent of any benchmark time budget.
+2. Suite Run Files (benchmarks/datasets/fast.jsonl, full.jsonl):
+   Store subsets of truth.jsonl paired with suite-appropriate practical limits
+   (max_loops, tape_limit), baseline outcomes at that limit, and target_max_span_bi
+   milestones for undecided/slow TMs.
 """
 
 from __future__ import annotations
@@ -41,7 +35,9 @@ from Benchmark import (
   CONFIG_PRESETS,
   DATASETS_DIR,
   ROOT_DIR,
+  TRUTH_FILE,
   load_dataset,
+  load_truth,
   run_single_tm,
 )
 import Green
@@ -66,177 +62,6 @@ TARGET_COVERAGE_MODULES = frozenset(
   }
 )
 
-# Explicit block_size overrides for TMs where Block_Finder heuristics are suboptimal.
-KNOWN_BLOCK_SIZES: dict[str, int] = {
-  "Machines/7x2-a11-Pavel": 6,
-  "1RB0RA_1LC1LF_1RD0LB_1RA1LE_1RZ0LC_1RG1LD_0RG0RF": 6,
-  "Machines/7x2-a19": 6,
-  "1RB0RG_1RC1RB_0RD1RZ_0LE0LD_0LF1LE_1RA1LF_1LC0RB": 6,
-  "Machines/7x2-Wythagoras": 6,
-  "Machines/2x6-t70": 2,
-  "1RB2LA1RA4LA5RA0LB_1LA3RA2RB1RZ3RB4LA": 2,
-  "Machines/2x6-e9866": 2,
-  "Machines/2x6-p3": 4,
-  "Machines/2x6-t24": 2,
-  "Machines/2x6-t91": 4,
-  "Machines/2x5-e38033": 2,
-  "Machines/3x3-e17": 1,
-  "Machines/3x3-Surprise": 8,
-  "Machines/3x4-a14": 2,
-  "1RB3LB1RZ2RA_2LC3RB1LC2RA_3RB1LB3LC2RC": 2,
-  "Machines/3x4-t2048": 2,
-  "Machines/4x3-e12068": 2,
-  "Machines/4x3-e14072": 2,
-  "Machines/4x3-e1426": 2,
-  "Machines/6x2-e1762": 2,
-  "Machines/6x2-e2879": 4,
-  "Machines/6x2-e36534-Pavel": 6,
-  "Machines/6x2-e646M-Pavel": 2,
-  "Machines/6x2-e78913": 4,
-  "Machines/6x2-q": 3,
-  "Machines/6x2-r": 2,
-  "Machines/6x2-t5": 3,
-  "Machines/6x2-t15-Pavel": 3,
-  "Machines/Lafitte.Papazian.complex:0": 1,
-  "Machines/Lafitte.Papazian.complex:1": 1,
-  "Machines/Lafitte.Papazian.complex:3": 1,
-  "Machines/Lafitte.Papazian.complex:7": 2,
-  "Machines/Lafitte.Papazian.peculiar:0": 4,
-  "Machines/Lafitte.Papazian.peculiar:1": 2,
-}
-
-# Known exact halting total_loops for known halters (or None if > 1,000,000 loops).
-# Fast halters (<= ~250k loops / <= ~2.5s) use a max_loops budget above their halt_loops
-# so they halt during normal benchmark runs; ultra-long halters (> 250k loops) keep
-# category="halt" and halt_loops recorded, while running with a fast milestone budget
-# (baseline_status="unknown") during normal benchmarks.
-KNOWN_HALT_LOOPS: dict[str, int | None] = {
-  "Green-6": 54,
-  "Green-7": 278,
-  "Green-8": 144,
-  "Green-9": 1_641,
-  "Green-10": 333,
-  "Green-11": 5_156,
-  "Green-12": 720,
-  "Green-13": 22_302,
-  "Green-14": 1_848,
-  "Green-15": 124_304,
-  "Green-16": 4_818,
-  "Green-17": None,  # > 210,000 loops
-  "Green-18": 12_606,
-  "Green-19": None,  # > 210,000 loops
-  "Green-20": 33_006,
-  "Machines/2x5-e704": 29_518,
-  "Machines/2x6-e9866": 787,
-  "Machines/2x6-p3": 10_695,
-  "Machines/2x6-t70": 10_498,
-  "Machines/2x6-t91": 35_011,
-  "Machines/3x3-Surprise": 18_039,
-  "Machines/3x3-e17": 1_156,
-  "Machines/3x4-t2048": 883,
-  "Machines/4x3-e12068": 499_536,
-  "Machines/4x3-e14072": 583_281,
-  "Machines/4x3-e1426": 75_726,
-  "Machines/6x2-e1762": 49_563,
-  "Machines/6x2-e2879": 207_138,
-  "Machines/6x2-e36534-Pavel": 3_401,
-  "Machines/6x2-e646M-Pavel": 312,
-  "Machines/6x2-e78913": 1_570,
-  "Machines/6x2-n": 14_798,
-  "Machines/6x2-p": 8_628,
-  "Machines/6x2-q": 796,
-  "Machines/6x2-r": 69_008,
-  "Machines/6x2-t15-Pavel": 2_110,
-  "Machines/6x2-t5": 1_545,
-  "Machines/7x2-Wythagoras": 8_166,
-  "Machines/2x5-e38033": None,  # > 350,000 loops
-  "Machines/2x6-t24": None,  # > 22,000 loops (>7.5s ExpInt tower evaluation)
-  "Machines/3x4-a14": None,  # > 100,000 loops
-  "Machines/7x2-a11-Pavel": None,  # > 200,000 loops
-  "Machines/7x2-a19": None,  # > 200,000 loops
-}
-
-# Known special per-TM parameter overrides (e.g. max_steps_in_backsymbol or max_loops).
-KNOWN_PARAM_OVERRIDES: dict[str, dict[str, int]] = {
-  "Green-13": {"max_loops": 25_000, "tape_limit": 100},
-  "Green-15": {"max_loops": 130_000, "tape_limit": 100},
-  "Green-20": {"max_loops": 36_000, "tape_limit": 100},
-  "Machines/3x4-a14": {"max_steps_in_backsymbol": 250, "max_loops": 25_000},
-  "1RB3LB1RZ2RA_2LC3RB1LC2RA_3RB1LB3LC2RC": {"max_steps_in_backsymbol": 250, "max_loops": 25_000},
-  "Machines/2x5-e704": {"max_loops": 35_000},
-  "Machines/2x6-p3": {"max_loops": 15_000},
-  "Machines/2x6-t70": {"max_loops": 15_000},
-  "Machines/2x6-t91": {"max_loops": 40_000, "tape_limit": 100},
-  "Machines/3x3-Surprise": {"max_loops": 25_000},
-  "Machines/4x3-e1426": {"max_loops": 80_000, "tape_limit": 150},
-  "Machines/6x2-e1762": {"max_loops": 55_000, "tape_limit": 150},
-  "Machines/6x2-e2879": {"max_loops": 220_000, "tape_limit": 250},
-  "Machines/6x2-n": {"max_loops": 20_000},
-  "Machines/6x2-r": {"max_loops": 75_000},
-  "Machines/7x2-Wythagoras": {"max_loops": 12_000},
-  # Ultra-long halters kept at fast milestone loop budgets so they don't bottleneck the suite:
-  "Machines/4x3-e12068": {"max_loops": 20_000, "tape_limit": 150},
-  "Machines/4x3-e14072": {"max_loops": 20_000, "tape_limit": 150},
-  "Machines/2x5-e38033": {"max_loops": 10_000, "tape_limit": 100},
-  "Machines/2x6-t24": {"max_loops": 2_500, "tape_limit": 100},
-  "Machines/7x2-a11-Pavel": {"max_loops": 30_000, "tape_limit": 100},
-  "Machines/7x2-a19": {"max_loops": 30_000, "tape_limit": 100},
-}
-
-# Ground-truth categories ("halt", "inf", "holdout") for Machines/*
-KNOWN_MACHINES_CATEGORIES: dict[str, str] = {
-  "Machines/2x2-Counter": "inf",
-  "Machines/2x2-Tree": "inf",
-  "Machines/2x3-Wolfram_Prize": "inf",
-  "Machines/2x5-Hydra": "holdout",
-  "Machines/2x5-e38033": "halt",
-  "Machines/2x6-t24": "halt",
-  "Machines/2x6-t91": "halt",
-  "Machines/3x2-LR-9-10": "inf",
-  "Machines/3x3-Bigfoot": "holdout",
-  "Machines/3x4-a14": "halt",
-  "Machines/4x2-LR-158491-17620": "inf",
-  "Machines/4x2-LR-28812-5588": "inf",
-  "Machines/4x2-LR-7170-29117": "inf",
-  "Machines/4x2-LR-73906-88381": "inf",
-  "Machines/4x3-e12068": "halt",
-  "Machines/4x3-e14072": "halt",
-  "Machines/5x2-Chaos": "inf",
-  "Machines/6x2-Antihydra": "holdout",
-  "Machines/6x2-e2879": "halt",
-  "Machines/7x2-Wythagoras": "halt",
-  "Machines/7x2-a11-Pavel": "halt",
-  "Machines/7x2-a19": "halt",
-  "Machines/Lafitte.Papazian.complex:0": "halt",
-  "Machines/Lafitte.Papazian.complex:1": "inf",
-  "Machines/Lafitte.Papazian.complex:2": "inf",
-  "Machines/Lafitte.Papazian.complex:3": "inf",
-  "Machines/Lafitte.Papazian.complex:4": "inf",
-  "Machines/Lafitte.Papazian.complex:5": "inf",
-  "Machines/Lafitte.Papazian.complex:6": "inf",
-  "Machines/Lafitte.Papazian.complex:7": "inf",
-  "Machines/Lafitte.Papazian.peculiar:0": "inf",
-  "Machines/Lafitte.Papazian.peculiar:1": "inf",
-  "Machines/Lafitte.Papazian.peculiar:2": "inf",
-}
-
-# Set of known halters that are intentionally configured with a milestone loop budget
-# smaller than their full halting loop count (so baseline_status == "unknown" is expected).
-MILESTONE_HALTERS: frozenset[str] = frozenset(
-  {
-    "Green-17",
-    "Green-19",
-    "Machines/2x5-e38033",
-    "Machines/2x6-t24",
-    "Machines/3x4-a14",
-    "Machines/4x3-e12068",
-    "Machines/4x3-e14072",
-    "Machines/7x2-a11-Pavel",
-    "Machines/7x2-a19",
-  }
-)
-
-
 STD_TM_RE = re.compile(r"^[0-9LRS_A-Z-]+$")
 
 
@@ -255,11 +80,11 @@ class CandidateTM:
   tm: str
   name: str
   source: str
-  category: str  # "halt" | "inf" | "holdout" | "unknown"
+  category: str  # "halt" | "inf" | "holdout" | "unknown" (auto-resolved during truth discovery)
   mandatory: bool = False
   block_size: int | None = None
-  max_loops: int = 10_000
-  tape_limit: int = 50
+  max_loops: int = 20_000
+  tape_limit: int = 100
   max_steps_in_block: int = 100_000
   max_steps_in_backsymbol: int = 1_000
 
@@ -287,14 +112,12 @@ class CoverageProfiler:
     mod = self._resolve_mod(code)
     if mod is not None:
       self.features.add(("line", mod, line_number))
-      return sys.monitoring.DISABLE
     return sys.monitoring.DISABLE
 
   def _on_branch(self, code, instruction_offset: int, destination_offset: int):
     mod = self._resolve_mod(code)
     if mod is not None:
       self.features.add(("branch", mod, instruction_offset, destination_offset))
-      return sys.monitoring.DISABLE
     return sys.monitoring.DISABLE
 
   def __enter__(self):
@@ -340,9 +163,11 @@ def _span_tier_tag(enc_span: dict[str, Any]) -> str:
   return "span_unknown"
 
 
-def extract_behavioral_features(cand: CandidateTM, run_res: dict[str, Any]) -> set[tuple[Any, ...]]:
+def extract_behavioral_features(
+  tm_str: str, source: str, category: str, run_res: dict[str, Any]
+) -> set[tuple[Any, ...]]:
   """Extract high-level Proof_System and simulator behavioral features from a run."""
-  tm_obj = IO.parse_tm(cand.tm)
+  tm_obj = IO.parse_tm(tm_str)
   dim_str = f"{tm_obj.num_states}x{tm_obj.num_symbols}"
   status = run_res["status"]
   reason = run_res["reason"]
@@ -356,7 +181,7 @@ def extract_behavioral_features(cand: CandidateTM, run_res: dict[str, Any]) -> s
     ("behav_max_level", lvl_bucket),
     ("behav_class_level", dim_str, lvl_bucket),
     ("behav_span_tier", status, span_tier),
-    ("behav_source_cat", cand.source, cand.category),
+    ("behav_source_cat", source, category),
   }
   if run_res.get("num_meta_diff_rules", 0) > 0:
     b_feats.add(("behav_rule_type", "meta_diff"))
@@ -370,7 +195,7 @@ def extract_behavioral_features(cand: CandidateTM, run_res: dict[str, Any]) -> s
     b_feats.add(("behav_rule_type", "collatz"))
 
   for lvl_str in run_res.get("rules_by_level", {}):
-    b_feats.add(("behav_ rule_level_present", min(int(lvl_str), 6)))
+    b_feats.add(("behav_rule_level_present", min(int(lvl_str), 6)))
 
   return b_feats
 
@@ -403,55 +228,28 @@ def find_block_finder_candidates(tm: Turing_Machine.Simple_Machine) -> list[int]
   return cands
 
 
-def resolve_block_size_and_profile(
+def discover_truth_record(
   cand: CandidateTM,
-  profile_coverage: bool = True,
   time_limit_sec: float = 5.0,
-) -> tuple[dict[str, Any] | None, set[tuple[Any, ...]]]:
-  """Determine a verified fixed block_size for `cand`, run baseline simulation, and collect coverage.
-
-  For Halters (`cand.category == "halt"`), if the initial block_size fails to halt,
-  sweeps alternative block sizes (and both `prover_4_meta_linear` and `all_on`)
-  to guarantee that the chosen `block_size` actually halts the machine.
-  """
-  if cand.name in KNOWN_PARAM_OVERRIDES:
-    overrides = KNOWN_PARAM_OVERRIDES[cand.name]
-    cand.max_loops = overrides.get("max_loops", cand.max_loops)
-    cand.tape_limit = overrides.get("tape_limit", cand.tape_limit)
-    cand.max_steps_in_backsymbol = overrides.get("max_steps_in_backsymbol", cand.max_steps_in_backsymbol)
-  elif cand.tm in KNOWN_PARAM_OVERRIDES:
-    overrides = KNOWN_PARAM_OVERRIDES[cand.tm]
-    cand.max_loops = overrides.get("max_loops", cand.max_loops)
-    cand.tape_limit = overrides.get("tape_limit", cand.tape_limit)
-    cand.max_steps_in_backsymbol = overrides.get("max_steps_in_backsymbol", cand.max_steps_in_backsymbol)
-
+) -> dict[str, Any] | None:
+  """Discover and verify a canonical truth.jsonl record for `cand`."""
   tm_obj = IO.parse_tm(cand.tm)
 
-  # 1. Determine candidate block sizes
   if cand.block_size is not None:
     bs_list = [cand.block_size]
-  elif cand.name in KNOWN_BLOCK_SIZES:
-    bs_list = [KNOWN_BLOCK_SIZES[cand.name]]
-  elif cand.tm in KNOWN_BLOCK_SIZES:
-    bs_list = [KNOWN_BLOCK_SIZES[cand.tm]]
   else:
     bs_list = find_block_finder_candidates(tm_obj)
+    if cand.category in ("halt", "inf") or cand.source in ("machines", "custom"):
+      base_cands = list(bs_list)
+      for b in base_cands:
+        for mult in (2, 3, 4):
+          if b * mult <= 24 and (b * mult) not in bs_list:
+            bs_list.append(b * mult)
+      for b in (1, 2, 3, 4, 5, 6, 8, 9, 10, 12):
+        if b not in bs_list:
+          bs_list.append(b)
 
-  # If this is a known halter/inf or custom/champion, prepare fallback block sizes in case Block_Finder's pick fails
-  if cand.block_size is None and (cand.category in ("halt", "inf") or cand.source in ("machines", "custom")):
-    base_cands = list(bs_list)
-    for b in base_cands:
-      for mult in (2, 3, 4):
-        if b * mult <= 24 and (b * mult) not in bs_list:
-          bs_list.append(b * mult)
-    for b in (1, 2, 3, 4, 5, 6, 8, 9, 10, 12):
-      if b not in bs_list:
-        bs_list.append(b)
-
-  # We use prover_4_meta_linear (full config logging) as our primary reference config
-  # because only_record_configs can skip mid-tape rules on some machines.
   ref_config = CONFIG_PRESETS["prover_4_meta_linear"].to_dict()
-
   chosen_bs = bs_list[0]
   chosen_res: dict[str, Any] | None = None
 
@@ -488,93 +286,168 @@ def resolve_block_size_and_profile(
         chosen_res = res
         break
     elif cand.source in ("machines", "custom") and cand.category == "unknown":
-      # When evaluating a custom or champion TM without an explicit block_size,
-      # prefer a block_size that decides (halt/inf) the machine if one exists.
       if res["status"] in ("halt", "inf"):
         chosen_bs = bs
         chosen_res = res
         break
     else:
-      # For holdouts/unknowns, accept the first non-exception block_size from Block_Finder
       if not res.get("threw_exception"):
         chosen_bs = bs
         chosen_res = res
         break
 
   if chosen_res is None:
-    return None, set()
+    return None
 
-  # Hard guarantee: if category == "halt" (and not an intentional ultra-long milestone halter),
-  # it MUST halt with chosen_bs!
-  is_milestone_halter = cand.name in MILESTONE_HALTERS or cand.tm in MILESTONE_HALTERS
-  if cand.category == "halt" and not is_milestone_halter and chosen_res["status"] != "halt":
-    return None, set()
-
-  # Ensure every TM is categorized into strictly ("halt", "inf", "holdout") — never "unknown"
   final_category = cand.category
   if final_category == "unknown":
-    if chosen_res["status"] in ("halt", "inf"):
-      final_category = chosen_res["status"]
-    else:
-      final_category = "holdout"
+    final_category = chosen_res["status"] if chosen_res["status"] in ("halt", "inf") else "holdout"
 
-  # Collect coverage under CoverageProfiler on the chosen block_size
-  cov_features: set[tuple[Any, ...]] = set()
-  if profile_coverage:
-    entry_final = {
-      "tm": cand.tm,
-      "name": cand.name,
-      "category": final_category,
-      "block_size": chosen_bs,
-      "max_loops": min(cand.max_loops, 20_000),
-      "tape_limit": cand.tape_limit,
-      "max_steps_in_block": cand.max_steps_in_block,
-      "max_steps_in_backsymbol": cand.max_steps_in_backsymbol,
-      "target_max_span_bi": None,
-    }
-    with CoverageProfiler() as prof:
-      _ = run_single_tm(entry_final, ref_config, undecided_mode="full", time_limit_sec=3.0)
-    cov_features = set(prof.features)
-
-  cov_features |= extract_behavioral_features(cand, chosen_res)
-
-  # Build dataset entry
-  target_max_span_bi: list[int] | None = None
-  if chosen_res["status"] == "unknown":
-    span_bi = chosen_res.get("max_span", {}).get("bi")
-    if span_bi and span_bi[0]:
-      target_max_span_bi = list(span_bi[0])
-
+  sim_decidable = chosen_res["status"] in ("halt", "inf")
   expected_score_exact = None
   expected_score_bi = None
-  halt_loops: int | None = KNOWN_HALT_LOOPS.get(cand.name, KNOWN_HALT_LOOPS.get(cand.tm))
   if final_category == "halt" and chosen_res["status"] == "halt":
     expected_score_exact = chosen_res["halt_score"].get("exact")
     expected_score_bi = chosen_res["halt_score"].get("bi")
-    halt_loops = chosen_res["total_loops"]
 
-  dataset_entry = {
+  return {
     "tm": cand.tm,
     "name": cand.name,
     "source": cand.source,
     "category": final_category,
     "mandatory": cand.mandatory,
     "block_size": chosen_bs,
-    "max_loops": cand.max_loops,
-    "tape_limit": cand.tape_limit,
     "max_steps_in_block": cand.max_steps_in_block,
     "max_steps_in_backsymbol": cand.max_steps_in_backsymbol,
-    "halt_loops": halt_loops,
+    "sim_decidable": sim_decidable,
+    "decision_reason": chosen_res["reason"] if sim_decidable else None,
+    "decision_loops": chosen_res["total_loops"] if sim_decidable else None,
+    "decision_tape_compressed": chosen_res.get("max_tape_compressed") if sim_decidable else None,
+    "decision_time_us": chosen_res["sim_time_us"] if sim_decidable else None,
+    "max_rule_level": chosen_res.get("max_rule_level", 0),
     "expected_score_exact": expected_score_exact,
     "expected_score_bi": expected_score_bi,
-    "target_max_span_bi": target_max_span_bi,
-    "baseline_status": chosen_res["status"],
-    "baseline_reason": chosen_res["reason"],
-    "baseline_max_level": chosen_res.get("max_rule_level", 0),
-    "baseline_sim_time_us": chosen_res["sim_time_us"],
-    "baseline_loops": chosen_res["total_loops"],
   }
-  return dataset_entry, cov_features
+
+
+def compute_suite_budget(truth_rec: dict[str, Any], suite_name: str) -> tuple[int, int]:
+  """Determine practical (max_loops, tape_limit) for a TM in `fast` or `full`."""
+  is_full = suite_name == "full"
+  max_decidable_loops = 750_000 if is_full else 225_000
+  max_decidable_time_us = 5_000_000 if is_full else 2_500_000
+
+  dec_loops = truth_rec.get("decision_loops")
+  dec_time_us = truth_rec.get("decision_time_us")
+  dec_tape = truth_rec.get("decision_tape_compressed")
+  source = truth_rec.get("source", "")
+  max_lvl = int(truth_rec.get("max_rule_level", 0))
+
+  default_tape = 100 if (source == "green" or max_lvl >= 3) else 50
+
+  if truth_rec.get("sim_decidable") and dec_loops is not None:
+    within_loops = int(dec_loops) <= max_decidable_loops
+    within_time = dec_time_us is None or int(dec_time_us) <= max_decidable_time_us
+    if within_loops and within_time:
+      budget_loops = max(10_000, int(int(dec_loops) * 1.15) + 500)
+      tape_lim = max(default_tape, 250 if int(dec_loops) > 100_000 else default_tape)
+      if dec_tape is not None:
+        tape_lim = max(tape_lim, int(dec_tape) + 25)
+      return budget_loops, tape_lim
+
+  # Milestone / undecided budget for holdouts or ultra-long halters
+  if truth_rec.get("name") == "Machines/2x6-t24":
+    return (5_000 if is_full else 2_500), 100
+  if truth_rec.get("name") in ("Machines/7x2-a11-Pavel", "Machines/7x2-a19"):
+    return 30_000, 100
+  if truth_rec.get("name") == "Machines/3x4-a14":
+    return 25_000, 100
+  if max_lvl >= 4 or source == "green":
+    return 20_000, 100
+  return 10_000, default_tape
+
+
+def build_suite_entry(
+  truth_rec: dict[str, Any],
+  suite_name: str,
+  profile_coverage: bool = True,
+  max_loops_override: int | None = None,
+  tape_limit_override: int | None = None,
+) -> tuple[dict[str, Any], set[tuple[Any, ...]]]:
+  """Run a truth record under its suite-specific practical budget and collect coverage."""
+  max_loops, tape_limit = compute_suite_budget(truth_rec, suite_name)
+  if max_loops_override is not None:
+    max_loops = max_loops_override
+  if tape_limit_override is not None:
+    tape_limit = tape_limit_override
+
+  run_input = {
+    **truth_rec,
+    "max_loops": max_loops,
+    "tape_limit": tape_limit,
+    "target_max_span_bi": None,
+  }
+  ref_config = CONFIG_PRESETS["prover_4_meta_linear"].to_dict()
+
+  if profile_coverage:
+    with CoverageProfiler() as prof:
+      res = run_single_tm(run_input, ref_config, undecided_mode="full", time_limit_sec=5.0)
+    cov_features = set(prof.features)
+  else:
+    res = run_single_tm(run_input, ref_config, undecided_mode="full", time_limit_sec=5.0)
+    cov_features = set()
+
+  cov_features |= extract_behavioral_features(
+    truth_rec["tm"],
+    truth_rec.get("source", "unknown"),
+    truth_rec["category"],
+    res,
+  )
+
+  target_max_span_bi: list[int] | None = None
+  if res["status"] == "unknown":
+    span_bi = res.get("max_span", {}).get("bi")
+    if span_bi and span_bi[0]:
+      target_max_span_bi = list(span_bi[0])
+
+  suite_entry = {
+    "tm": truth_rec["tm"],
+    "name": truth_rec["name"],
+    "max_loops": max_loops,
+    "tape_limit": tape_limit,
+    "baseline_status": res["status"],
+    "baseline_reason": res["reason"],
+    "baseline_max_level": res.get("max_rule_level", 0),
+    "baseline_loops": res["total_loops"],
+    "baseline_sim_time_us": res["sim_time_us"],
+    "target_max_span_bi": target_max_span_bi,
+  }
+  return suite_entry, cov_features
+
+
+# =============================================================================
+# Compatibility wrapper for unit tests & external callers
+# =============================================================================
+
+
+def resolve_block_size_and_profile(
+  cand: CandidateTM,
+  profile_coverage: bool = True,
+  time_limit_sec: float = 5.0,
+) -> tuple[dict[str, Any] | None, set[tuple[Any, ...]]]:
+  """Discover truth for `cand` and build a merged suite entry + coverage features."""
+  truth_rec = discover_truth_record(cand, time_limit_sec=time_limit_sec)
+  if truth_rec is None:
+    return None, set()
+  if cand.category == "halt" and not truth_rec["sim_decidable"]:
+    return None, set()
+  suite_entry, cov_features = build_suite_entry(
+    truth_rec,
+    suite_name="fast",
+    profile_coverage=profile_coverage,
+    max_loops_override=cand.max_loops,
+    tape_limit_override=cand.tape_limit,
+  )
+  return {**truth_rec, **suite_entry}, cov_features
 
 
 # =============================================================================
@@ -587,8 +460,7 @@ def iter_green_candidates(max_states: int = 20) -> list[CandidateTM]:
   cands: list[CandidateTM] = []
   for n in range(6, max_states + 1):
     tm_str = Green.green_machine_str(n)
-    is_even = n % 2 == 0
-    block_size = 1 if is_even else 2
+    block_size = 1 if (n % 2 == 0) else 2
     cands.append(
       CandidateTM(
         tm=tm_str,
@@ -597,7 +469,7 @@ def iter_green_candidates(max_states: int = 20) -> list[CandidateTM]:
         category="halt",
         mandatory=True,
         block_size=block_size,
-        max_loops=20_000,
+        max_loops=150_000,
         tape_limit=100,
       )
     )
@@ -609,7 +481,6 @@ def iter_machines_dir_candidates(rng: random.Random) -> list[CandidateTM]:
   machines_dir = ROOT_DIR / "Machines"
   cands: list[CandidateTM] = []
 
-  # 1. Top-level champion files in Machines/
   for p in sorted(machines_dir.iterdir()):
     if not p.is_file():
       continue
@@ -620,15 +491,13 @@ def iter_machines_dir_candidates(rng: random.Random) -> list[CandidateTM]:
         for idx, line in enumerate(f):
           tok = line.strip().split()[0] if line.strip() else ""
           if is_valid_std_tm(tok):
-            lp_name = f"Machines/{p.name}:{idx}"
             cands.append(
               CandidateTM(
                 tm=tok,
-                name=lp_name,
+                name=f"Machines/{p.name}:{idx}",
                 source="machines",
-                category=KNOWN_MACHINES_CATEGORIES.get(lp_name, "holdout"),
+                category="inf",
                 mandatory=True,
-                block_size=KNOWN_BLOCK_SIZES.get(lp_name),
               )
             )
       continue
@@ -642,7 +511,7 @@ def iter_machines_dir_candidates(rng: random.Random) -> list[CandidateTM]:
       continue
 
     rel_name = f"Machines/{p.name}"
-    cat = KNOWN_MACHINES_CATEGORIES.get(rel_name, "halt")
+    cat = "inf" if "-LR-" in p.name else "unknown"
     cands.append(
       CandidateTM(
         tm=tok,
@@ -650,11 +519,9 @@ def iter_machines_dir_candidates(rng: random.Random) -> list[CandidateTM]:
         source="machines",
         category=cat,
         mandatory=True,
-        block_size=KNOWN_BLOCK_SIZES.get(rel_name),
       )
     )
 
-  # 2. Subdirectory: Machines/lin_recur_period/*
   lr_dir = machines_dir / "lin_recur_period"
   if lr_dir.is_dir():
     for p in sorted(lr_dir.iterdir()):
@@ -672,13 +539,11 @@ def iter_machines_dir_candidates(rng: random.Random) -> list[CandidateTM]:
                 )
               )
 
-  # 3. Subdirectory: Machines/bb/*.txt (Halters)
   bb_dir = machines_dir / "bb"
   if bb_dir.is_dir():
     for p in sorted(bb_dir.glob("*.txt")):
       with open(p, "rt", encoding="utf-8") as f:
         lines = [line.strip() for line in f if line.strip()]
-      # Take top 25 + random 25 from each file
       selected = lines[:25]
       if len(lines) > 25:
         selected += rng.sample(lines[25:], min(25, len(lines) - 25))
@@ -706,7 +571,6 @@ def iter_top_level_candidates(max_count: int = 400, rng: random.Random | None = 
     lines = [line.strip().split()[0] for line in f if line.strip()]
   valid = [(i, t) for i, t in enumerate(lines) if is_valid_std_tm(t)]
   if max_count and len(valid) > max_count and rng is not None:
-    # Keep first 100 + sample rest
     valid = valid[:100] + rng.sample(valid[100:], max_count - 100)
   return [
     CandidateTM(
@@ -766,7 +630,6 @@ def iter_holdout_candidates(
             )
           )
 
-  # Reservoir / stride sampling from 2x6_holdouts_412086.txt.zip
   zip_2x6 = holdouts_dir / "2x6_holdouts_412086.txt.zip"
   if zip_2x6.exists() and sample_2x6 > 0:
     stride = max(1, 412_086 // sample_2x6)
@@ -786,10 +649,8 @@ def iter_holdout_candidates(
             if len([c for c in cands if c.source == "holdout_2x6"]) >= sample_2x6:
               break
 
-  # Stride sampling from 7x2_holdouts_15743264.txt.zip (read prefix stream fast)
   zip_7x2 = holdouts_dir / "7x2_holdouts_15743264.txt.zip"
   if zip_7x2.exists() and sample_7x2 > 0:
-    # Read first 200,000 lines with stride so dataset build takes seconds, not minutes
     stride = max(1, 200_000 // sample_7x2)
     with IO.Common.open_file(zip_7x2, "rt") as f:
       for idx, line in enumerate(f):
@@ -880,20 +741,12 @@ def select_diverse_subset(
   target_count: int,
   min_k_coverage: int = 3,
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
-  """Select up to `target_count` TMs maximizing code + behavioral coverage with k-redundancy.
-
-  1. Includes all mandatory TMs first.
-  2. Runs weighted greedy k-set-cover where rare features and behavioral features
-     receive higher weights, normalized by sqrt(sim_time).
-  3. Fills any remaining budget up to `target_count` via round-robin stratified sampling
-     across (category, source, baseline_max_level).
-  """
+  """Select up to `target_count` TMs maximizing code + behavioral coverage with k-redundancy."""
   if len(profiled_items) <= target_count:
     entries = [e for e, _ in profiled_items]
     all_feats = set().union(*(f for _, f in profiled_items)) if profiled_items else set()
     return entries, {"total_features": len(all_feats), "covered_features": len(all_feats)}
 
-  # Compute global feature frequencies for inverse-frequency rarity weighting
   feat_freq: collections.Counter = collections.Counter()
   for _, feats in profiled_items:
     for f in feats:
@@ -947,10 +800,13 @@ def select_diverse_subset(
     strata: dict[tuple[str, str, int], list[int]] = collections.defaultdict(list)
     for i, (entry, _) in enumerate(profiled_items):
       if i not in selected_indices:
-        key = (entry["category"], entry["source"], int(entry.get("baseline_max_level", 0)))
+        key = (
+          entry.get("category", "unknown"),
+          entry.get("source", "unknown"),
+          int(entry.get("baseline_max_level", 0)),
+        )
         strata[key].append(i)
 
-    # Sort each stratum to prefer higher rule levels and complex runs
     for key in strata:
       strata[key].sort(key=lambda idx: profiled_items[idx][0].get("baseline_loops", 0), reverse=True)
 
@@ -983,8 +839,8 @@ def select_diverse_subset(
     "lines_covered": f"{covered_lines}/{total_lines}",
     "branches_covered": f"{covered_branches}/{total_branches}",
     "behavioral_buckets_covered": f"{covered_behav}/{total_behav}",
-    "by_category": dict(collections.Counter(e["category"] for e in selected_entries)),
-    "by_source": dict(collections.Counter(e["source"] for e in selected_entries)),
+    "by_category": dict(collections.Counter(e.get("category", "unknown") for e in selected_entries)),
+    "by_source": dict(collections.Counter(e.get("source", "unknown") for e in selected_entries)),
     "by_max_level": dict(collections.Counter(e.get("baseline_max_level", 0) for e in selected_entries)),
   }
   return selected_entries, stats
@@ -997,15 +853,91 @@ def write_dataset_jsonl(out_path: Path, entries: list[dict[str, Any]]) -> None:
       f.write(json.dumps(e) + "\n")
 
 
+def write_truth_file(truth_by_tm: dict[str, dict[str, Any]], out_path: Path = TRUTH_FILE) -> None:
+  write_dataset_jsonl(out_path, list(truth_by_tm.values()))
+
+
+def _strip_to_suite_entry(merged_entry: dict[str, Any]) -> dict[str, Any]:
+  """Keep only suite-specific execution budget & baseline fields in fast.jsonl/full.jsonl."""
+  return {
+    "tm": merged_entry["tm"],
+    "name": merged_entry["name"],
+    "max_loops": merged_entry["max_loops"],
+    "tape_limit": merged_entry["tape_limit"],
+    "baseline_status": merged_entry["baseline_status"],
+    "baseline_reason": merged_entry["baseline_reason"],
+    "baseline_max_level": merged_entry["baseline_max_level"],
+    "baseline_loops": merged_entry["baseline_loops"],
+    "baseline_sim_time_us": merged_entry["baseline_sim_time_us"],
+    "target_max_span_bi": merged_entry["target_max_span_bi"],
+  }
+
+
+def select_datasets_from_truth(
+  fast_size: int = 500,
+  full_size: int = 2000,
+  truth_path: Path = TRUTH_FILE,
+) -> tuple[Path, Path, dict[str, Any]]:
+  """Build fast.jsonl and full.jsonl by profiling truth.jsonl entries under suite budgets."""
+  truth_by_tm = load_truth(truth_path)
+  if not truth_by_tm:
+    raise FileNotFoundError(f"Truth file is empty or missing: {truth_path}")
+
+  print(f"Profiling {len(truth_by_tm)} truth records under 'fast' budgets...")
+  t0 = time.time()
+  fast_pool: list[tuple[dict[str, Any], set[tuple[Any, ...]]]] = []
+  for idx, truth_rec in enumerate(truth_by_tm.values()):
+    suite_e, feats = build_suite_entry(truth_rec, suite_name="fast", profile_coverage=True)
+    # Attach category/source/mandatory temporarily so select_diverse_subset can stratify
+    merged = {
+      **suite_e,
+      "category": truth_rec["category"],
+      "source": truth_rec["source"],
+      "mandatory": truth_rec.get("mandatory", False),
+    }
+    fast_pool.append((merged, feats))
+    if (idx + 1) % max(1, len(truth_by_tm) // 10) == 0:
+      print(f"  Profiled {idx + 1}/{len(truth_by_tm)} ({time.time() - t0:.1f}s)")
+
+  fast_selected, fast_stats = select_diverse_subset(fast_pool, target_count=fast_size, min_k_coverage=3)
+  fast_entries = [_strip_to_suite_entry(e) for e in fast_selected]
+
+  print(f"Selecting 'full' dataset ({full_size} TMs) and computing full-suite budgets...")
+  full_selected, full_stats = select_diverse_subset(fast_pool, target_count=full_size, min_k_coverage=12)
+  full_entries: list[dict[str, Any]] = []
+  for merged_e in full_selected:
+    truth_rec = truth_by_tm[merged_e["tm"]]
+    fast_budget = compute_suite_budget(truth_rec, "fast")
+    full_budget = compute_suite_budget(truth_rec, "full")
+    if full_budget != fast_budget:
+      suite_full, _ = build_suite_entry(truth_rec, suite_name="full", profile_coverage=False)
+      full_entries.append(suite_full)
+    else:
+      full_entries.append(_strip_to_suite_entry(merged_e))
+
+  fast_path = DATASETS_DIR / "fast.jsonl"
+  full_path = DATASETS_DIR / "full.jsonl"
+  write_dataset_jsonl(fast_path, fast_entries)
+  write_dataset_jsonl(full_path, full_entries)
+
+  print(f"\nWrote 'fast' dataset ({len(fast_entries)} TMs) to {fast_path}:")
+  print(json.dumps(fast_stats, indent=2))
+  print(f"\nWrote 'full' dataset ({len(full_entries)} TMs) to {full_path}:")
+  print(json.dumps(full_stats, indent=2))
+
+  return fast_path, full_path, {"fast": fast_stats, "full": full_stats}
+
+
 def build_datasets(
   fast_size: int = 500,
-  full_size: int = 3000,
+  full_size: int = 2000,
   seed: int = 42,
   max_candidates: int = 1500,
 ) -> tuple[Path, Path, dict[str, Any]]:
-  """Build both 'fast' and 'full' curated benchmark datasets."""
+  """Ingest candidates, discover truth for any new TMs into truth.jsonl, then select suites."""
   rng = random.Random(seed)
-  print("Collecting candidate TMs from all sources...")
+  truth_by_tm = load_truth(TRUTH_FILE)
+  print(f"Loaded {len(truth_by_tm)} existing truth records from {TRUTH_FILE}.")
 
   raw_candidates: list[CandidateTM] = []
   raw_candidates.extend(iter_green_candidates(max_states=20))
@@ -1025,151 +957,225 @@ def build_datasets(
     )
   )
 
-  # Deduplicate by TM ttable string (preserving mandatory flag and earliest source)
   deduped: list[CandidateTM] = []
-  seen_tm: set[str] = set()
-  # Put mandatory candidates first
+  seen_tm: set[str] = set(truth_by_tm.keys())
   raw_candidates.sort(key=lambda c: (not c.mandatory, c.source))
   for c in raw_candidates:
     if c.tm not in seen_tm:
       seen_tm.add(c.tm)
       deduped.append(c)
 
-  if len(deduped) > max_candidates:
+  new_budget = max(0, max_candidates - len(truth_by_tm))
+  if len(deduped) > new_budget:
     mandatory = [c for c in deduped if c.mandatory]
     optional = [c for c in deduped if not c.mandatory]
     rng.shuffle(optional)
-    deduped = mandatory + optional[: max(0, max_candidates - len(mandatory))]
+    deduped = mandatory + optional[: max(0, new_budget - len(mandatory))]
 
-  print(f"Profiling {len(deduped)} unique candidate TMs (resolving fixed block_size + sys.monitoring coverage)...")
-  profiled: list[tuple[dict[str, Any], set[tuple[Any, ...]]]] = []
-  skipped_halters: list[str] = []
-  t0 = time.time()
+  if deduped:
+    print(f"Discovering truth for {len(deduped)} new candidate TMs...")
+    t0 = time.time()
+    for idx, cand in enumerate(deduped):
+      rec = discover_truth_record(cand, time_limit_sec=4.0)
+      if rec is not None:
+        truth_by_tm[rec["tm"]] = rec
+      if (idx + 1) % max(1, len(deduped) // 10) == 0:
+        print(f"  Discovered {idx + 1}/{len(deduped)} ({time.time() - t0:.1f}s)")
+    write_truth_file(truth_by_tm, TRUTH_FILE)
+    print(f"Updated {TRUTH_FILE} (total: {len(truth_by_tm)} truth records).")
 
-  for idx, cand in enumerate(deduped):
-    entry, feats = resolve_block_size_and_profile(cand, profile_coverage=True, time_limit_sec=4.0)
-    if entry is None:
-      if cand.category == "halt":
-        skipped_halters.append(cand.name)
+  return select_datasets_from_truth(fast_size=fast_size, full_size=full_size, truth_path=TRUTH_FILE)
+
+
+def _parse_candidate_specs(
+  cand_specs: list[str],
+  block_size: int | None,
+  category: str,
+  name_override: str | None,
+  max_loops: int,
+  tape_limit: int,
+  mandatory: bool = False,
+  truth_by_tm: dict[str, dict[str, Any]] | None = None,
+) -> list[CandidateTM]:
+  by_name = {rec["name"]: rec for rec in truth_by_tm.values()} if truth_by_tm else {}
+  candidates: list[CandidateTM] = []
+  for spec in cand_specs:
+    p = Path(spec)
+    if spec in by_name:
+      rec = by_name[spec]
+      candidates.append(
+        CandidateTM(
+          tm=rec["tm"],
+          name=name_override or rec["name"],
+          source=rec.get("source", "custom"),
+          category=category if category != "unknown" else rec["category"],
+          mandatory=mandatory or bool(rec.get("mandatory", False)),
+          block_size=block_size if block_size is not None else rec.get("block_size"),
+          max_loops=max_loops,
+          tape_limit=tape_limit,
+          max_steps_in_block=int(rec.get("max_steps_in_block", 100_000)),
+          max_steps_in_backsymbol=int(rec.get("max_steps_in_backsymbol", 1_000)),
+        )
+      )
+    elif p.is_file():
+      with IO.Common.open_file(p, "rt") as f:
+        for idx, line in enumerate(f):
+          tok, custom_id = _extract_tm_token_from_line(line)
+          if tok:
+            existing = truth_by_tm.get(tok) if truth_by_tm else None
+            tag = custom_id if custom_id else str(idx)
+            candidates.append(
+              CandidateTM(
+                tm=tok,
+                name=name_override or (existing["name"] if existing else f"{p.name}:{tag}"),
+                source=existing.get("source", "custom") if existing else "custom",
+                category=category if category != "unknown" else (existing["category"] if existing else "unknown"),
+                mandatory=mandatory or (bool(existing.get("mandatory", False)) if existing else False),
+                block_size=block_size if block_size is not None else (existing.get("block_size") if existing else None),
+                max_loops=max_loops,
+                tape_limit=tape_limit,
+                max_steps_in_block=int(existing.get("max_steps_in_block", 100_000)) if existing else 100_000,
+                max_steps_in_backsymbol=int(existing.get("max_steps_in_backsymbol", 1_000)) if existing else 1_000,
+              )
+            )
+    elif is_valid_std_tm(spec):
+      existing = truth_by_tm.get(spec) if truth_by_tm else None
+      candidates.append(
+        CandidateTM(
+          tm=spec,
+          name=name_override or (existing["name"] if existing else spec),
+          source=existing.get("source", "custom") if existing else "custom",
+          category=category if category != "unknown" else (existing["category"] if existing else "unknown"),
+          mandatory=mandatory or (bool(existing.get("mandatory", False)) if existing else False),
+          block_size=block_size if block_size is not None else (existing.get("block_size") if existing else None),
+          max_loops=max_loops,
+          tape_limit=tape_limit,
+          max_steps_in_block=int(existing.get("max_steps_in_block", 100_000)) if existing else 100_000,
+          max_steps_in_backsymbol=int(existing.get("max_steps_in_backsymbol", 1_000)) if existing else 1_000,
+        )
+      )
+    else:
+      print(f"Warning: Skipping unrecognized TM, name, or file '{spec}'")
+  return candidates
+
+
+def add_truth_command(
+  cand_specs: list[str],
+  block_size: int | None = None,
+  category: str = "unknown",
+  name_override: str | None = None,
+  max_loops: int = 1_000_000,
+  tape_limit: int = 200,
+  time_limit_sec: float = 30.0,
+  mandatory: bool = False,
+) -> list[dict[str, Any]]:
+  """Step 1: Discover/verify ground truth for candidate TM(s) and save to benchmarks/truth.jsonl."""
+  truth_by_tm = load_truth(TRUTH_FILE)
+  candidates = _parse_candidate_specs(
+    cand_specs,
+    block_size,
+    category,
+    name_override,
+    max_loops,
+    tape_limit,
+    mandatory,
+    truth_by_tm=truth_by_tm,
+  )
+  added_or_updated: list[dict[str, Any]] = []
+
+  for cand in candidates:
+    rec = discover_truth_record(cand, time_limit_sec=time_limit_sec)
+    if rec is None:
+      print(f"- {cand.name} ({cand.tm}): FAILED truth discovery")
       continue
-    profiled.append((entry, feats))
-    if (idx + 1) % max(1, len(deduped) // 10) == 0:
-      print(f"  Profiled {idx + 1}/{len(deduped)} candidates ({len(profiled)} valid, {time.time() - t0:.1f}s)")
+    action = "Updated" if cand.tm in truth_by_tm else "Added"
+    truth_by_tm[cand.tm] = rec
+    added_or_updated.append(rec)
+    print(
+      f"- {action} truth for {rec['name']} ({rec['tm']}): "
+      f"category={rec['category']}, block_size={rec['block_size']}, "
+      f"sim_decidable={rec['sim_decidable']}, decision_loops={rec['decision_loops']}, "
+      f"max_rule_level=L{rec['max_rule_level']}"
+    )
 
-  if skipped_halters:
-    print(f"Note: Skipped {len(skipped_halters)} halters that exceeded curation loop/time cap: {skipped_halters[:10]}")
-
-  fast_entries, fast_stats = select_diverse_subset(profiled, target_count=fast_size, min_k_coverage=3)
-  full_entries, full_stats = select_diverse_subset(profiled, target_count=full_size, min_k_coverage=12)
-
-  fast_path = DATASETS_DIR / "fast.jsonl"
-  full_path = DATASETS_DIR / "full.jsonl"
-  write_dataset_jsonl(fast_path, fast_entries)
-  write_dataset_jsonl(full_path, full_entries)
-
-  print(f"\nWrote 'fast' dataset ({len(fast_entries)} TMs) to {fast_path}:")
-  print(json.dumps(fast_stats, indent=2))
-  print(f"\nWrote 'full' dataset ({len(full_entries)} TMs) to {full_path}:")
-  print(json.dumps(full_stats, indent=2))
-
-  return fast_path, full_path, {"fast": fast_stats, "full": full_stats}
+  if added_or_updated:
+    write_truth_file(truth_by_tm, TRUTH_FILE)
+    print(f"Saved {len(truth_by_tm)} total records to {TRUTH_FILE}.")
+  return added_or_updated
 
 
 def evaluate_candidates_against_dataset(
   dataset_arg: str,
   cand_specs: list[str],
   add_to_dataset: bool = False,
-  force_Add: bool = False,
+  force_add: bool = False,
+  save_truth: bool = False,
   block_size: int | None = None,
   category: str = "unknown",
   name_override: str | None = None,
-  max_loops: int = 20_000,
-  tape_limit: int = 50,
+  max_loops: int | None = None,
+  tape_limit: int | None = None,
 ) -> list[dict[str, Any]]:
-  """Evaluate one or more candidate TMs (or files of TMs) against an existing dataset's coverage.
-
-  Reports for each candidate:
-  - Its resolved block_size, status, reason, max_rule_level, and sim_time_us.
-  - How many NEW code lines, branches, and behavioral features it covers that the
-    existing dataset never hits (or hits < 3 times).
-  - A recommendation ("ADD: new coverage", "ADD: high rule level", or "SKIP: redundant").
-  """
+  """Step 2: Evaluate candidate TM(s) against a suite dataset's coverage & practical budget."""
   ds_path, existing_entries = load_dataset(dataset_arg)
+  suite_name = "full" if "full" in ds_path.stem else "fast"
+  truth_by_tm = load_truth(TRUTH_FILE)
   existing_tms = {e["tm"] for e in existing_entries}
   ref_config = CONFIG_PRESETS["prover_4_meta_linear"].to_dict()
 
   print(f"Profiling existing dataset '{ds_path.name}' ({len(existing_entries)} TMs) to build baseline coverage map...")
   baseline_counts: collections.Counter = collections.Counter()
   for e in existing_entries:
-    cand_e = CandidateTM(
-      tm=e["tm"],
-      name=e["name"],
-      source=e.get("source", "existing"),
-      category=e.get("category", "unknown"),
-      block_size=e["block_size"],
-      max_loops=min(int(e.get("max_loops", 10_000)), 20_000),
-      tape_limit=int(e.get("tape_limit", 50)),
-    )
     with CoverageProfiler() as prof:
       res = run_single_tm(e, ref_config, undecided_mode="full", time_limit_sec=2.0)
-    feats = set(prof.features) | extract_behavioral_features(cand_e, res)
+    feats = set(prof.features) | extract_behavioral_features(
+      e["tm"], e.get("source", "existing"), e.get("category", "unknown"), res
+    )
     for f in feats:
       baseline_counts[f] += 1
 
-  # Parse candidate specs (can be a TM string or a file path)
-  candidates: list[CandidateTM] = []
-  for spec in cand_specs:
-    p = Path(spec)
-    if p.is_file():
-      with IO.Common.open_file(p, "rt") as f:
-        for idx, line in enumerate(f):
-          tok, custom_id = _extract_tm_token_from_line(line)
-          if tok:
-            tag = custom_id if custom_id else str(idx)
-            candidates.append(
-              CandidateTM(
-                tm=tok,
-                name=f"{p.name}:{tag}",
-                source="custom",
-                category=category,
-                block_size=block_size,
-                max_loops=max_loops,
-                tape_limit=tape_limit,
-              )
-            )
-    elif is_valid_std_tm(spec):
-      candidates.append(
-        CandidateTM(
-          tm=spec,
-          name=name_override if (name_override and len(cand_specs) == 1) else spec,
-          source="custom",
-          category=category,
-          block_size=block_size,
-          max_loops=max_loops,
-          tape_limit=tape_limit,
-        )
-      )
-    else:
-      print(f"Warning: Skipping unrecognized TM or file '{spec}'")
+  candidates = _parse_candidate_specs(
+    cand_specs,
+    block_size,
+    category,
+    name_override,
+    max_loops if max_loops is not None else 20_000,
+    tape_limit if tape_limit is not None else 100,
+  )
 
   reports: list[dict[str, Any]] = []
-  added_entries: list[dict[str, Any]] = []
+  added_suite_entries: list[dict[str, Any]] = []
+  truth_dirty = False
 
-  print(f"\nEvaluating {len(candidates)} candidate TM(s)...\n")
+  print(f"\nEvaluating {len(candidates)} candidate TM(s) for '{suite_name}'...\n")
   for cand in candidates:
     already_in = cand.tm in existing_tms
-    entry, feats = resolve_block_size_and_profile(cand, profile_coverage=True, time_limit_sec=5.0)
-    if entry is None:
-      print(f"- {cand.name} ({cand.tm}): FAILED to resolve block_size")
-      continue
+    if cand.tm in truth_by_tm and block_size is None and category == "unknown":
+      truth_rec = truth_by_tm[cand.tm]
+    else:
+      truth_rec = discover_truth_record(cand, time_limit_sec=5.0)
+      if truth_rec is None:
+        print(f"- {cand.name} ({cand.tm}): FAILED to resolve block_size")
+        continue
+      if save_truth or add_to_dataset or force_add:
+        truth_by_tm[cand.tm] = truth_rec
+        truth_dirty = True
+
+    suite_entry, feats = build_suite_entry(
+      truth_rec,
+      suite_name=suite_name,
+      profile_coverage=True,
+      max_loops_override=max_loops,
+      tape_limit_override=tape_limit,
+    )
 
     new_lines = [f for f in feats if f[0] == "line" and baseline_counts[f] == 0]
     new_branches = [f for f in feats if f[0] == "branch" and baseline_counts[f] == 0]
     new_behav = [f for f in feats if str(f[0]).startswith("behav_") and baseline_counts[f] == 0]
     rare_feats = [f for f in feats if 0 < baseline_counts[f] < 3]
 
-    max_lvl = entry.get("baseline_max_level", 0)
-    if already_in and not force_Add:
+    max_lvl = suite_entry.get("baseline_max_level", 0)
+    if already_in and not force_add:
       verdict = "SKIP (already in dataset)"
     elif new_lines or new_branches or new_behav:
       verdict = "RECOMMEND ADD (covers brand-new code/behavior)"
@@ -1179,78 +1185,94 @@ def evaluate_candidates_against_dataset(
       verdict = "SKIP (redundant with existing TMs; pass --force-add to add anyway)"
 
     print(
-      f"- {cand.name} ({cand.tm})\n"
-      f"  Status: {entry['baseline_status']} ({entry['baseline_reason']}) | "
-      f"category={entry['category']} | block_size={entry['block_size']} | max_level=L{max_lvl} | "
-      f"loops={entry['baseline_loops']} | time={entry['baseline_sim_time_us'] / 1000:.1f}ms\n"
+      f"- {truth_rec['name']} ({cand.tm})\n"
+      f"  Truth: category={truth_rec['category']} | block_size={truth_rec['block_size']} | "
+      f"sim_decidable={truth_rec['sim_decidable']} (decision_loops={truth_rec['decision_loops']})\n"
+      f"  Suite ({suite_name}) budget: max_loops={suite_entry['max_loops']} | "
+      f"tape_limit={suite_entry['tape_limit']} -> "
+      f"{suite_entry['baseline_status']} ({suite_entry['baseline_reason']}), "
+      f"L{max_lvl}, {suite_entry['baseline_loops']} loops, {suite_entry['baseline_sim_time_us'] / 1000:.1f}ms\n"
       f"  Coverage delta: +{len(new_lines)} new lines, +{len(new_branches)} new branches, "
       f"+{len(new_behav)} new behavioral tags, +{len(rare_feats)} rare features (<3 hits)\n"
       f"  Verdict: {verdict}\n"
     )
 
-    rep = {
-      "entry": entry,
-      "already_in_dataset": already_in,
-      "new_lines": len(new_lines),
-      "new_branches": len(new_branches),
-      "new_behav": len(new_behav),
-      "rare_feats": len(rare_feats),
-      "verdict": verdict,
-    }
-    reports.append(rep)
+    reports.append(
+      {
+        "truth": truth_rec,
+        "entry": {**truth_rec, **suite_entry},
+        "already_in_dataset": already_in,
+        "new_lines": len(new_lines),
+        "new_branches": len(new_branches),
+        "new_behav": len(new_behav),
+        "rare_feats": len(rare_feats),
+        "verdict": verdict,
+      }
+    )
 
-    should_add = force_Add or (add_to_dataset and not already_in and verdict.startswith("RECOMMEND ADD"))
+    should_add = force_add or (add_to_dataset and not already_in and verdict.startswith("RECOMMEND ADD"))
     if should_add:
       if already_in:
         existing_entries = [e for e in existing_entries if e["tm"] != cand.tm]
-      existing_entries.append(entry)
+      existing_entries.append(suite_entry)
       existing_tms.add(cand.tm)
-      added_entries.append(entry)
+      added_suite_entries.append(suite_entry)
       for f in feats:
         baseline_counts[f] += 1
 
-  if added_entries:
-    write_dataset_jsonl(ds_path, existing_entries)
-    print(f"Saved {len(added_entries)} TM(s) to {ds_path} (total: {len(existing_entries)} TMs).")
+  if truth_dirty:
+    write_truth_file(truth_by_tm, TRUTH_FILE)
+    print(f"Updated truth records in {TRUTH_FILE}.")
+
+  if added_suite_entries:
+    slim_entries = [_strip_to_suite_entry(e) for e in existing_entries]
+    write_dataset_jsonl(ds_path, slim_entries)
+    print(f"Saved {len(added_suite_entries)} TM(s) to {ds_path} (total: {len(slim_entries)} TMs).")
 
   return reports
 
 
 def main(argv: list[str] | None = None) -> int:
-  parser = argparse.ArgumentParser(description="Build and analyze curated Macro Simulator benchmark datasets")
+  parser = argparse.ArgumentParser(description="Truth database & curated Macro Simulator dataset manager")
   sub = parser.add_subparsers(dest="subcommand", required=True)
 
-  p_build = sub.add_parser("build", help="Curate and build fast.jsonl and full.jsonl datasets")
+  p_build = sub.add_parser("build", help="Discover any new truth records and rebuild fast.jsonl and full.jsonl")
   p_build.add_argument("--fast-size", type=int, default=500, help="Target TM count for fast.jsonl [default: 500]")
-  p_build.add_argument("--full-size", type=int, default=2500, help="Target TM count for full.jsonl [default: 2500]")
-  p_build.add_argument(
-    "--max-candidates", type=int, default=1500, help="Candidate pool size to profile [default: 1500]"
-  )
+  p_build.add_argument("--full-size", type=int, default=2000, help="Target TM count for full.jsonl [default: 2000]")
+  p_build.add_argument("--max-candidates", type=int, default=2200, help="Max total truth pool size [default: 2200]")
   p_build.add_argument("--seed", type=int, default=42)
 
-  p_stats = sub.add_parser("stats", help="Print breakdown of an existing dataset .jsonl file")
-  p_stats.add_argument("dataset", help="Dataset name ('fast', 'full') or path")
+  p_select = sub.add_parser("select", help="Rebuild fast.jsonl and full.jsonl from existing benchmarks/truth.jsonl")
+  p_select.add_argument("--fast-size", type=int, default=500)
+  p_select.add_argument("--full-size", type=int, default=2000)
+
+  p_truth = sub.add_parser("add-truth", help="Step 1: Discover and record ground truth for TM(s) in truth.jsonl")
+  p_truth.add_argument("-n", "--block-size", type=int, default=None, help="Explicit fixed block_size (e.g. -n 4)")
+  p_truth.add_argument("--category", choices=["halt", "inf", "holdout", "unknown"], default="unknown")
+  p_truth.add_argument("--name", default=None, help="Optional human-readable name")
+  p_truth.add_argument("--max-loops", type=int, default=1_000_000, help="Discovery max_loops [default: 1000000]")
+  p_truth.add_argument("--tape-limit", type=int, default=200, help="Discovery tape_limit [default: 200]")
+  p_truth.add_argument("--time-limit", type=float, default=30.0, help="Discovery timeout in seconds [default: 30.0]")
+  p_truth.add_argument("--mandatory", action="store_true", help="Mark as mandatory anchor TM")
+  p_truth.add_argument("candidates", nargs="+", help="TM name(s) in truth.jsonl (e.g. Green-17), TM strings, or files")
 
   p_eval = sub.add_parser(
     "eval-candidate",
-    help="Check if new candidate TM(s) add new code/behavioral coverage to a dataset (and optionally add them)",
+    help="Step 2: Evaluate candidate TM(s) against a suite dataset and optionally add them",
   )
   p_eval.add_argument("--dataset", default="fast", help="Dataset name ('fast', 'full') or path [default: fast]")
   p_eval.add_argument("-n", "--block-size", type=int, default=None, help="Explicit fixed block_size (e.g. -n 4)")
-  p_eval.add_argument(
-    "--category",
-    choices=["halt", "inf", "holdout", "unknown"],
-    default="unknown",
-    help="Expected ground-truth category (sweeps block sizes to satisfy halt/inf if -n is omitted)",
-  )
+  p_eval.add_argument("--category", choices=["halt", "inf", "holdout", "unknown"], default="unknown")
   p_eval.add_argument("--name", default=None, help="Optional human-readable name for the TM")
-  p_eval.add_argument("--max-loops", type=int, default=20_000, help="Per-TM max_loops [default: 20000]")
-  p_eval.add_argument("--tape-limit", type=int, default=50, help="Per-TM tape_limit [default: 50]")
+  p_eval.add_argument("--max-loops", type=int, default=None, help="Override suite max_loops")
+  p_eval.add_argument("--tape-limit", type=int, default=None, help="Override suite tape_limit")
+  p_eval.add_argument("--save-truth", action="store_true", help="Also save discovered truth record to truth.jsonl")
   p_eval.add_argument("--add", action="store_true", help="Append recommended TMs to the dataset file")
-  p_eval.add_argument(
-    "--force-add", action="store_true", help="Append (or update) TM in the dataset regardless of recommendation"
-  )
-  p_eval.add_argument("candidates", nargs="+", help="One or more TM strings (e.g. 1RB...) or file paths")
+  p_eval.add_argument("--force-add", action="store_true", help="Append/update TM regardless of recommendation")
+  p_eval.add_argument("candidates", nargs="+", help="One or more TM strings or file paths")
+
+  p_stats = sub.add_parser("stats", help="Print breakdown of truth.jsonl or a suite dataset ('fast', 'full')")
+  p_stats.add_argument("dataset", help="'truth', 'fast', 'full', or path to .jsonl")
 
   args = parser.parse_args(argv)
   if args.subcommand == "build":
@@ -1261,26 +1283,53 @@ def main(argv: list[str] | None = None) -> int:
       max_candidates=args.max_candidates,
     )
     return 0
-  elif args.subcommand == "stats":
-    path, entries = load_dataset(args.dataset)
-    print(f"Dataset: {path} ({len(entries)} TMs)")
-    print("  By category:", dict(collections.Counter(e["category"] for e in entries)))
-    print("  By source:  ", dict(collections.Counter(e["source"] for e in entries)))
-    print("  By block_size:", dict(collections.Counter(e["block_size"] for e in entries)))
-    print("  By baseline_max_level:", dict(collections.Counter(e.get("baseline_max_level", 0) for e in entries)))
+  elif args.subcommand == "select":
+    select_datasets_from_truth(fast_size=args.fast_size, full_size=args.full_size)
+    return 0
+  elif args.subcommand == "add-truth":
+    add_truth_command(
+      args.candidates,
+      block_size=args.block_size,
+      category=args.category,
+      name_override=args.name,
+      max_loops=args.max_loops,
+      tape_limit=args.tape_limit,
+      time_limit_sec=args.time_limit,
+      mandatory=args.mandatory,
+    )
     return 0
   elif args.subcommand == "eval-candidate":
     evaluate_candidates_against_dataset(
       args.dataset,
       args.candidates,
       add_to_dataset=args.add,
-      force_Add=args.force_add,
+      force_add=args.force_add,
+      save_truth=args.save_truth,
       block_size=args.block_size,
       category=args.category,
       name_override=args.name,
       max_loops=args.max_loops,
       tape_limit=args.tape_limit,
     )
+    return 0
+  elif args.subcommand == "stats":
+    if args.dataset == "truth":
+      truth_by_tm = load_truth(TRUTH_FILE)
+      entries = list(truth_by_tm.values())
+      print(f"Truth DB: {TRUTH_FILE} ({len(entries)} TMs)")
+      print("  By category:", dict(collections.Counter(e["category"] for e in entries)))
+      print("  By sim_decidable:", dict(collections.Counter(e["sim_decidable"] for e in entries)))
+      print("  By source:  ", dict(collections.Counter(e["source"] for e in entries)))
+      print("  By block_size:", dict(collections.Counter(e["block_size"] for e in entries)))
+      print("  By max_rule_level:", dict(collections.Counter(e.get("max_rule_level", 0) for e in entries)))
+    else:
+      path, entries = load_dataset(args.dataset)
+      print(f"Dataset: {path} ({len(entries)} TMs)")
+      print("  By category:", dict(collections.Counter(e.get("category", "unknown") for e in entries)))
+      print("  By baseline_status:", dict(collections.Counter(e.get("baseline_status", "unknown") for e in entries)))
+      print("  By source:  ", dict(collections.Counter(e.get("source", "unknown") for e in entries)))
+      print("  By block_size:", dict(collections.Counter(e.get("block_size", 1) for e in entries)))
+      print("  By baseline_max_level:", dict(collections.Counter(e.get("baseline_max_level", 0) for e in entries)))
     return 0
   return 0
 
