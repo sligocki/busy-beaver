@@ -1143,6 +1143,7 @@ class Proof_System:
     min_val = {}  # Notes the minimum value exponents with each unknown take.
     can_deplete_to_zero = {}  # Whether variable can safely deplete to 0 on its final touch.
     can_start_at_zero = {}  # Whether variable is only ever consumed by chain moves.
+    init_var_pos = {}
     for direction in range(2):
       for i, block in enumerate(gen_sim.tape.tape[direction]):
         # Generalize, eg. (abc)^5 -> (abc)^(n+5)
@@ -1160,6 +1161,7 @@ class Proof_System:
           block.num = x_init
           min_val[x] = block.num.const
           can_deplete_to_zero[x] = False
+          init_var_pos[x] = (direction, i)
           left_sym = gen_sim.tape.tape[direction][i - 1].symbol if i > 0 else None
           if i + 1 < len(gen_sim.tape.tape[direction]):
             right_sym = gen_sim.tape.tape[direction][i + 1].symbol
@@ -1180,28 +1182,29 @@ class Proof_System:
       block = gen_sim.tape.get_top_block()
       while ae.min_val(block.num) <= 0:
         # This corresponds to a block which looks like (abc)^(n+0).
-        # With --exp-const-blocks, try forcing n = 0 across the in-flight proof state
-        # so the depleted block becomes a fixed constant and collapses here.
-        specialized = False
+        # With --exp-const-blocks, try forcing n = 0 by pinning the block as constant
+        # from the start and reproving so any resulting block merges happen in sync.
         block_vars = variables(block.num)
         if getattr(self.options, "exp_const_blocks", False) and len(block_vars) == 1:
           x = next(iter(block_vars))
           if x not in capped_vars and _subst_var_zero(block.num, {x: ConstantToExpression(0)}) == 0:
             if self.verbose:
-              self.print_this(f"[PROVER] Specializing depleted variable {x} = 0 at loop {gen_sim.num_loops}")
-            _specialize_var_zero(x, initial_tape, gen_sim, min_val)
-            can_deplete_to_zero.pop(x, None)
-            can_start_at_zero.pop(x, None)
-            block = gen_sim.tape.get_top_block()
-            specialized = True
-        if not specialized:
-          self.last_prove_fail_reason = "Exponent below min"
-          if self.verbose:
-            print()
-            self.print_this("[PROVER FAILURE] Exponent below min **")
-            self.print_this(gen_sim.tape.print_with_state(gen_sim.state))
-            print()
-          return None
+              self.print_this(
+                f"[PROVER] Reproving with constant block {init_var_pos[x]} ({x} = 0) at loop {gen_sim.num_loops}"
+              )
+            return self._prove_rule(
+              stripped_config,
+              full_config,
+              delta_loop,
+              const_blocks=const_blocks | {init_var_pos[x]},
+            )
+        self.last_prove_fail_reason = "Exponent below min"
+        if self.verbose:
+          print()
+          self.print_this("[PROVER FAILURE] Exponent below min **")
+          self.print_this(gen_sim.tape.print_with_state(gen_sim.state))
+          print()
+        return None
 
       prev_dir = gen_sim.dir
       prev_top_vars = variables(block.num)
@@ -1282,6 +1285,23 @@ class Proof_System:
     # Make sure finishing tape has the same stripped config as original.
     gen_stripped_config = strip_config(gen_sim.state, gen_sim.tape.dir, gen_sim.tape.tape)
     if gen_stripped_config != stripped_config:
+      if getattr(self.options, "exp_const_blocks", False):
+        new_const_blocks = set(const_blocks)
+        for dir in range(2):
+          for block in gen_sim.tape.tape[dir]:
+            block_vars = variables(block.num)
+            if len(block_vars) == 1:
+              x = next(iter(block_vars))
+              if (
+                x in init_var_pos
+                and x not in capped_vars
+                and _subst_var_zero(block.num, {x: ConstantToExpression(0)}) == 0
+              ):
+                new_const_blocks.add(init_var_pos[x])
+        if new_const_blocks != const_blocks:
+          if self.verbose:
+            self.print_this(f"[PROVER] Reproving with constant blocks {sorted(new_const_blocks)} after config mismatch")
+          return self._prove_rule(stripped_config, full_config, delta_loop, const_blocks=new_const_blocks)
       self.last_prove_fail_reason = "Config mismatch"
       if self.verbose:
         print()

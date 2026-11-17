@@ -1640,7 +1640,7 @@ class ProofSystemTest(unittest.TestCase):
     # and the second variable's block ends up constant, prove_rule pins that block
     # as constant and recovers to prove a repeatable rule.
     tm = IO.parse_tm("1RB0LG_1LC0RE_1LD1LB_1LA0RF_1RC1RB_1LB1RD_1LD---")
-    macro_tm = Turing_Machine.Block_Macro_Machine(tm, 4)
+    macro_tm = Turing_Machine.Backsymbol_Macro_Machine(Turing_Machine.Block_Macro_Machine(tm, 4))
     self.options.prover = True
     self.options.recursive = True
     self.options.exp_linear_rules = True
@@ -1689,6 +1689,24 @@ class ProofSystemTest(unittest.TestCase):
     res = prover.prove_rule(stripped, (state_A, sample_tape, 0), delta_loop=1)
     self.assertIsNone(res)
     self.assertEqual(prover.last_prove_fail_reason, "Multiple vars in one term")
+
+  def test_exp_const_blocks_reproof_avoids_desync(self):
+    # Reproving with const_blocks when --exp-const-blocks specializes a depleted block
+    # prevents the 1-loop merge desync and avoids failed proofs on intermediate phases.
+    tm = IO.parse_tm("1RB0LG_1LC0RE_1LD1LB_1LA0RF_1RC1RB_1LB1RD_1LD---")
+    macro_tm = Turing_Machine.Backsymbol_Macro_Machine(Turing_Machine.Block_Macro_Machine(tm, 4))
+    self.options.prover = True
+    self.options.recursive = True
+    self.options.exp_linear_rules = True
+    self.options.exp_meta_linear_rules = True
+    self.options.exp_const_blocks = True
+    self.options.compute_steps = False
+    sim = Simulator.Simulator(macro_tm, self.options)
+    while sim.op_state == Turing_Machine.RUNNING and sim.total_loops < 10000:
+      sim.step()
+    self.assertEqual(sim.op_state, Turing_Machine.INF_REPEAT)
+    self.assertEqual(sim.inf_reason, io_pb2.INF_PROOF_SYSTEM)
+    self.assertEqual(sim.prover.num_failed_proofs, 0)
 
 
 if __name__ == "__main__":
