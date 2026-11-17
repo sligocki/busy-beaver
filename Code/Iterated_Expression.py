@@ -5,7 +5,15 @@ import math
 from Algebraic_Expression import Expression, Variable, min_val, substitute, variables
 from Big_Interval import BigInterval, Knuth10
 from Exp_Int import ExpInt, ExpTerm, is_simple, sign, struct_eq, uparrow_size_approx
-from NatExpr import NatExpr, cmp_expr, expr_str, is_const, to_BigInterval
+from NatExpr import ConstInt, NatExpr, cmp_expr, expr_str, is_const, to_BigInterval
+
+
+def _int_val(x):
+  if isinstance(x, int):
+    return x
+  if isinstance(x, ConstInt):
+    return x.val
+  return None
 
 
 def get_step_growth(expr, var, _memo=None):
@@ -521,7 +529,8 @@ def _tower_upper(expr, var, level_k: int, x_min_bi, env=None, _memo=None):
     return (id(e), id(v), lk, xm.lower.args, xm.upper.args, env_key)
 
   def coef_bi(c):
-    return BigInterval(c) if isinstance(c, int) else BigInterval(to_BigInterval(c, env).upper)
+    c_int = _int_val(c)
+    return BigInterval(c_int) if c_int is not None else BigInterval(to_BigInterval(c, env).upper)
 
   root_key = make_key(expr, var, level_k, x_min_bi)
   if root_key in _memo:
@@ -553,11 +562,13 @@ def _tower_upper(expr, var, level_k: int, x_min_bi, env=None, _memo=None):
       if isinstance(cur_expr, (Expression, ExpInt, Iterated_Math)):
         stack.append((cur_expr, cur_var, cur_k, cur_x_min, True, None))
         c_val = cur_expr.const
-        if not (isinstance(c_val, int) and c_val <= 0):
+        c_int = _int_val(c_val)
+        if not (c_int is not None and c_int <= 0):
           if make_key(c_val, cur_var, cur_k, cur_x_min) not in _memo:
             stack.append((c_val, cur_var, cur_k, cur_x_min, False, None))
         for term in cur_expr.terms:
-          if isinstance(term.coef, int) and term.coef <= 0:
+          t_c = _int_val(term.coef)
+          if t_c is not None and t_c <= 0:
             continue
           if isinstance(cur_expr, Expression):
             for vp in term.vars:
@@ -584,13 +595,13 @@ def _tower_upper(expr, var, level_k: int, x_min_bi, env=None, _memo=None):
     else:
       if isinstance(cur_expr, (Expression, ExpInt, Iterated_Math)):
         c_val = cur_expr.const
+        c_int = _int_val(c_val)
         acc = (
-          (0, zero, zero)
-          if (isinstance(c_val, int) and c_val <= 0)
-          else _memo[make_key(c_val, cur_var, cur_k, cur_x_min)]
+          (0, zero, zero) if (c_int is not None and c_int <= 0) else _memo[make_key(c_val, cur_var, cur_k, cur_x_min)]
         )
         for term in cur_expr.terms:
-          if isinstance(term.coef, int) and term.coef <= 0:
+          t_c = _int_val(term.coef)
+          if t_c is not None and t_c <= 0:
             continue
           if isinstance(cur_expr, Expression):
             cur = (0, zero, one)
@@ -615,7 +626,7 @@ def _tower_upper(expr, var, level_k: int, x_min_bi, env=None, _memo=None):
           else:
             cur = _memo[make_key(term.it_expr, cur_var, cur_k, cur_x_min)]
           acc = _add_upper(acc, _bump_upper(cur, coef_bi(term.coef), cur_k), cur_k, cur_x_min)
-        if isinstance(cur_expr, ExpInt) and cur_expr.denom != 1 and acc[0] == 0:
+        if isinstance(cur_expr, ExpInt) and _int_val(cur_expr.denom) != 1 and acc[0] == 0:
           d_bi = to_BigInterval(cur_expr.denom, env)
           m_div = zero if acc[1].upper == Knuth10(0) else acc[1] / d_bi
           a_div = zero if acc[2].upper == Knuth10(0) else acc[2] / d_bi
@@ -685,11 +696,12 @@ def _tower_lower(expr, var, level_k: int, x_min_bi, env=None, _memo=None, _upper
 
   def apply_sub_and_div(pos_l, neg_terms, neg_c, denom, cur_var, cur_k, cur_x_min):
     h_p, m_p, a_p = pos_l
+    denom_int = _int_val(denom)
     if h_p == 0:
       if not isinstance(a_p, Fraction):
-        if neg_terms or not isinstance(denom, int):
+        if neg_terms or denom_int is None:
           return (0, Fraction(0), Fraction(0))
-        return (0, Fraction(0), (a_p - BigInterval(neg_c)) / BigInterval(denom))
+        return (0, Fraction(0), (a_p - BigInterval(neg_c)) / BigInterval(denom_int))
       a_p -= neg_c
       for nt in neg_terms:
         nu = _tower_upper(nt, cur_var, cur_k, cur_x_min, env, _upper_memo)
@@ -698,11 +710,11 @@ def _tower_lower(expr, var, level_k: int, x_min_bi, env=None, _memo=None, _upper
           return (0, Fraction(0), Fraction(0))
         m_p -= nu_m
         a_p -= nu_a
-      if denom != 1:
-        if not isinstance(denom, int):
+      if denom_int != 1:
+        if denom_int is None:
           return (0, Fraction(0), Fraction(0))
-        m_p /= denom
-        a_p /= denom
+        m_p /= denom_int
+        a_p /= denom_int
       return (0, max(Fraction(0), m_p), a_p)
 
     pos_at_min = _eval_tower_lower_bi(pos_l, cur_k, cur_x_min)
@@ -761,7 +773,8 @@ def _tower_lower(expr, var, level_k: int, x_min_bi, env=None, _memo=None, _upper
       if isinstance(cur_expr, Expression):
         stack.append((cur_expr, cur_var, cur_k, cur_x_min, True, None))
         for term in cur_expr.terms:
-          if isinstance(term.coef, int) and term.coef < 0:
+          t_c = _int_val(term.coef)
+          if t_c is not None and t_c < 0:
             continue
           for vp in term.vars:
             if make_key(vp.var, cur_var, cur_k, cur_x_min) not in _memo:
@@ -769,7 +782,8 @@ def _tower_lower(expr, var, level_k: int, x_min_bi, env=None, _memo=None, _upper
       elif isinstance(cur_expr, ExpInt):
         stack.append((cur_expr, cur_var, cur_k, cur_x_min, True, None))
         for term in cur_expr.terms:
-          if isinstance(term.coef, int) and term.coef < 0:
+          t_c = _int_val(term.coef)
+          if t_c is not None and t_c < 0:
             continue
           if cur_var in variables(term.exponent):
             if make_key(term.exponent, cur_var, cur_k, cur_x_min) not in _memo:
@@ -777,7 +791,8 @@ def _tower_lower(expr, var, level_k: int, x_min_bi, env=None, _memo=None, _upper
       elif isinstance(cur_expr, Iterated_Math):
         stack.append((cur_expr, cur_var, cur_k, cur_x_min, True, None))
         for t in cur_expr.terms:
-          if isinstance(t.coef, int) and t.coef < 0:
+          t_c = _int_val(t.coef)
+          if t_c is not None and t_c < 0:
             continue
           if make_key(t.it_expr, cur_var, cur_k, cur_x_min) not in _memo:
             stack.append((t.it_expr, cur_var, cur_k, cur_x_min, False, None))
@@ -789,10 +804,18 @@ def _tower_lower(expr, var, level_k: int, x_min_bi, env=None, _memo=None, _upper
             to_BigInterval(cur_expr.start_val, env) if cur_var not in variables(cur_expr.start_val) else BigInterval(0)
           )
           min_thresh = 20 if cur_k == 2 else 10
+          unroll_loss = 0
+          if cur_var not in variables(cur_expr.start_val):
+            step_env = {} if env is None else dict(env)
+            while s_bi.lower < Knuth10(min_thresh) and unroll_loss < 2:
+              step_env[cur_expr.var] = s_bi
+              s_bi = to_BigInterval(cur_expr.step_expr, step_env)
+              unroll_loss += 1
+          else:
+            unroll_loss = 2
           in_x_min = (
             BigInterval(min_thresh) if s_bi.lower < Knuth10(min_thresh) else BigInterval(s_bi.lower, s_bi.lower)
           )
-          unroll_loss = 2 if s_bi.lower < in_x_min.lower else 0
           stack.append((cur_expr, cur_var, cur_k, cur_x_min, True, (g_in, in_x_min, unroll_loss)))
           if make_key(cur_expr.step_expr, cur_expr.var, k_in, in_x_min) not in _memo:
             stack.append((cur_expr.step_expr, cur_expr.var, k_in, in_x_min, False, None))
@@ -806,11 +829,13 @@ def _tower_lower(expr, var, level_k: int, x_min_bi, env=None, _memo=None, _upper
       if isinstance(cur_expr, Expression):
         best = (0, Fraction(0), Fraction(0))
         lin_m = Fraction(0)
-        lin_a = Fraction(cur_expr.const) if isinstance(cur_expr.const, int) and cur_expr.const > 0 else Fraction(0)
+        c_int = _int_val(cur_expr.const)
+        lin_a = Fraction(c_int) if c_int is not None and c_int > 0 else Fraction(0)
         neg_exprs = []
         for term in cur_expr.terms:
-          if isinstance(term.coef, int) and term.coef < 0:
-            neg_exprs.append(Expression(terms=(term.__class__(term.vars, -term.coef),), constant=0))
+          t_c = _int_val(term.coef)
+          if t_c is not None and t_c < 0:
+            neg_exprs.append(Expression(terms=(term.__class__(term.vars, -t_c),), constant=0))
             continue
           cur = (0, Fraction(0), Fraction(1))
           for vp in term.vars:
@@ -818,13 +843,13 @@ def _tower_lower(expr, var, level_k: int, x_min_bi, env=None, _memo=None, _upper
             if tl[0] > cur[0] or (tl[0] == 0 and tl[1] > cur[1]):
               cur = tl
           if cur[0] == 0:
-            c_val = term.coef if isinstance(term.coef, int) else 1
+            c_val = t_c if t_c is not None else 1
             lin_m += c_val * cur[1]
             lin_a += c_val * (cur[2] if isinstance(cur[2], Fraction) else 0)
           else:
             best = pick_better(best, cur)
         best = pick_better(best, (0, lin_m, lin_a))
-        neg_c = -cur_expr.const if isinstance(cur_expr.const, int) and cur_expr.const < 0 else 0
+        neg_c = -c_int if c_int is not None and c_int < 0 else 0
         _memo[key] = (
           best
           if (not neg_exprs and neg_c == 0)
@@ -834,30 +859,34 @@ def _tower_lower(expr, var, level_k: int, x_min_bi, env=None, _memo=None, _upper
         best = (0, Fraction(0), Fraction(0))
         neg_exprs = []
         for term in cur_expr.terms:
-          if isinstance(term.coef, int) and term.coef < 0:
-            neg_exprs.append(ExpInt([ExpTerm(term.base, term.exponent, -term.coef)], 0, 1))
+          t_c = _int_val(term.coef)
+          if t_c is not None and t_c < 0:
+            neg_exprs.append(ExpInt([ExpTerm(term.base, term.exponent, -t_c)], 0, 1))
             continue
           if cur_var in variables(term.exponent):
             h_e, m_e, a_e = _memo[make_key(term.exponent, cur_var, cur_k, cur_x_min)]
             best = pick_better(best, (h_e + 1 if cur_k == 1 else max(1, h_e), m_e, a_e))
           else:
-            c_bi = BigInterval(max(1, term.coef)) if isinstance(term.coef, int) else BigInterval(1)
+            c_bi = BigInterval(max(1, t_c)) if t_c is not None else BigInterval(1)
             term_bi = c_bi * (to_BigInterval(term.base, env) ** to_BigInterval(term.exponent, env))
             v = term_bi.lower.try_eval()
             best = pick_better(best, (0, Fraction(0), Fraction(v) if v is not None else BigInterval(term_bi.lower)))
-        if best[0] == 0 and isinstance(cur_expr.const, int) and cur_expr.const > 0 and isinstance(best[2], Fraction):
-          best = (0, best[1], best[2] + cur_expr.const)
-        neg_c = -cur_expr.const if isinstance(cur_expr.const, int) and cur_expr.const < 0 else 0
+        c_int = _int_val(cur_expr.const)
+        if best[0] == 0 and c_int is not None and c_int > 0 and isinstance(best[2], Fraction):
+          best = (0, best[1], best[2] + c_int)
+        neg_c = -c_int if c_int is not None and c_int < 0 else 0
         _memo[key] = apply_sub_and_div(best, neg_exprs, neg_c, cur_expr.denom, cur_var, cur_k, cur_x_min)
       elif isinstance(cur_expr, Iterated_Math):
         best = (0, Fraction(0), Fraction(0))
         neg_exprs = []
         for t in cur_expr.terms:
-          if isinstance(t.coef, int) and t.coef < 0:
-            neg_exprs.append(Iterated_Math([Iterated_Term(t.it_expr, -t.coef)], 0))
+          t_c = _int_val(t.coef)
+          if t_c is not None and t_c < 0:
+            neg_exprs.append(Iterated_Math([Iterated_Term(t.it_expr, -t_c)], 0))
             continue
           best = pick_better(best, _memo[make_key(t.it_expr, cur_var, cur_k, cur_x_min)])
-        neg_c = -cur_expr.const if isinstance(cur_expr.const, int) and cur_expr.const < 0 else 0
+        c_int = _int_val(cur_expr.const)
+        neg_c = -c_int if c_int is not None and c_int < 0 else 0
         _memo[key] = apply_sub_and_div(best, neg_exprs, neg_c, 1, cur_var, cur_k, cur_x_min)
       else:  # Iterated_Expression
         g_in, in_x_min, unroll_loss = payload
@@ -870,7 +899,13 @@ def _tower_lower(expr, var, level_k: int, x_min_bi, env=None, _memo=None, _upper
           in_min_v = in_x_min.lower.try_eval()
           ge_x = in_l[1] >= 1 and (
             isinstance(in_l[2], BigInterval)
+            or in_l[2] >= 0
             or (in_min_v is not None and in_l[1] * in_min_v + int(math.floor(in_l[2])) >= in_min_v)
+            or (
+              in_min_v is None
+              and in_l[1] > 1
+              and in_x_min.lower >= BigInterval(int(math.ceil(-in_l[2] / (in_l[1] - 1))) + 1).lower
+            )
           )
           if in_l[0] == m_in and ge_x:
             h_r, m_r, a_r = r_l

@@ -333,6 +333,39 @@ class TestBigInterval(unittest.TestCase):
     bi = outer.to_BigInterval()
     self.assertTrue(bi.lower <= bi.upper)
 
+  def test_tower_lower_constint_unroll_and_large_start(self):
+    from Algebraic_Expression import Variable, VariableToExpression
+    from Iterated_Expression import Iterated_Expression, _tower_lower
+    from NatExpr import ConstInt
+
+    # 1) ConstInt in Expression.const + 1-step unroll reaching threshold 20
+    x = Variable()
+    w = Variable()
+    # -4 + 2^(x + ConstInt(4))
+    step1 = exp_int(2, VariableToExpression(x) + ConstInt(4)) - 4
+    it1 = Iterated_Expression(step1, x, 12, VariableToExpression(w) + ConstInt(1))
+    tl = _tower_lower(it1, w, 2, BigInterval(65532))
+    self.assertEqual(tl[0], 1)
+    self.assertGreaterEqual(tl[1], 1)
+    self.assertGreaterEqual(tl[2], 0)
+
+    outer = Iterated_Expression(it1, w, 65532, 100)
+    bi = outer.to_BigInterval()
+    self.assertGreaterEqual(len(bi.lower.args), 3)
+    self.assertTrue(bi.lower <= bi.upper)
+
+    # 2) Large start_val (>= 10^1000, so try_eval() is None) with non-negative additive offset
+    y = Variable()
+    z = Variable()
+    big_start = Iterated_Expression(exp_int(2, VariableToExpression(y)), y, 10, 10000)
+    inner = Iterated_Expression(
+      exp_int(2, VariableToExpression(y)) + ConstInt(5), y, 10, VariableToExpression(y) + ConstInt(3)
+    )
+    mid = Iterated_Expression(inner, y, big_start, VariableToExpression(z) + ConstInt(7))
+    tl_mid = _tower_lower(mid, z, 3, BigInterval(big_start.to_BigInterval().lower, big_start.to_BigInterval().lower))
+    self.assertEqual(tl_mid[0], 1)
+    self.assertGreaterEqual(tl_mid[1], 1)
+
 
 if __name__ == "__main__":
   unittest.main()
