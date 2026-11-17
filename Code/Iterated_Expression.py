@@ -865,7 +865,7 @@ def _tower_lower(expr, var, level_k: int, x_min_bi, env=None, _memo=None, _upper
             continue
           if cur_var in variables(term.exponent):
             h_e, m_e, a_e = _memo[make_key(term.exponent, cur_var, cur_k, cur_x_min)]
-            best = pick_better(best, (h_e + 1 if cur_k == 1 else max(1, h_e), m_e, a_e))
+            best = pick_better(best, (h_e + 1 if cur_k == 1 else h_e, m_e, a_e))
           else:
             c_bi = BigInterval(max(1, t_c)) if t_c is not None else BigInterval(1)
             term_bi = c_bi * (to_BigInterval(term.base, env) ** to_BigInterval(term.exponent, env))

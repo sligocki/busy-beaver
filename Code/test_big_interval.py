@@ -368,6 +368,16 @@ class TestBigInterval(unittest.TestCase):
     self.assertEqual(tl_mid[0], 1)
     self.assertGreaterEqual(tl_mid[1], 1)
 
+  def test_tower_lower_expint_at_level_ge_2_is_sound(self):
+    from Algebraic_Expression import Variable, VariableToExpression
+    from Iterated_Expression import _tower_lower
+
+    x = Variable()
+    # 3^(6*x + 19) is exponential (level 1), so at level_k=2 it must have h=0 (not h=1).
+    e = exp_int(3, 6 * VariableToExpression(x) + 19)
+    tl = _tower_lower(e, x, 2, BigInterval(100))
+    self.assertEqual(tl[0], 0)
+
 
 if __name__ == "__main__":
   unittest.main()
