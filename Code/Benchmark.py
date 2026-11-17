@@ -64,7 +64,7 @@ class BenchConfig:
   prover_level: int = 1
   backsymbol: bool = True
   limited_rules: bool = True
-  exp_const_blocks: bool = False
+  exp_const_blocks: bool = True
   only_record_configs: bool = False
   exp_zero_exponents: bool = False
   use_big_interval: bool = True
@@ -823,7 +823,7 @@ def run_one(entry):
   options.recursive = prover_level >= 2
   options.exp_linear_rules = prover_level >= 3
   options.exp_meta_linear_rules = prover_level >= 4
-  options.exp_const_blocks = bool(config.get("exp_const_blocks", False)) if options.prover else False
+  options.exp_const_blocks = bool(config.get("exp_const_blocks", True)) if options.prover else False
   options.only_record_configs = bool(config.get("only_record_configs", False)) if options.prover else False
   options.exp_zero_exponents = bool(config.get("exp_zero_exponents", False)) if options.prover else False
   options.use_big_interval = bool(config.get("use_big_interval", True))

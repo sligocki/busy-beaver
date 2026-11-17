@@ -66,10 +66,11 @@ def add_option_group(parser):
     help="Allow using Iterated_Rules in Meta Rules [Experimental]",
   )
   group.add_option(
-    "--exp-const-blocks",
-    action="store_true",
-    default=False,
-    help="Specialize depleted variable blocks to fixed constants during proofs [Experimental]",
+    "--no-const-blocks",
+    dest="exp_const_blocks",
+    action="store_false",
+    default=True,
+    help="Disable specializing depleted variable blocks to fixed constants during proofs.",
   )
   group.add_option(
     "--only-record-configs",
@@ -1182,10 +1183,10 @@ class Proof_System:
       block = gen_sim.tape.get_top_block()
       while ae.min_val(block.num) <= 0:
         # This corresponds to a block which looks like (abc)^(n+0).
-        # With --exp-const-blocks, try forcing n = 0 by pinning the block as constant
-        # from the start and reproving so any resulting block merges happen in sync.
+        # With --exp-const-blocks (enabled by default), try forcing n = 0 by pinning the block
+        # as constant from the start and reproving so any resulting block merges happen in sync.
         block_vars = variables(block.num)
-        if getattr(self.options, "exp_const_blocks", False) and len(block_vars) == 1:
+        if getattr(self.options, "exp_const_blocks", True) and len(block_vars) == 1:
           x = next(iter(block_vars))
           if x not in capped_vars and _subst_var_zero(block.num, {x: ConstantToExpression(0)}) == 0:
             if self.verbose:
@@ -1285,7 +1286,7 @@ class Proof_System:
     # Make sure finishing tape has the same stripped config as original.
     gen_stripped_config = strip_config(gen_sim.state, gen_sim.tape.dir, gen_sim.tape.tape)
     if gen_stripped_config != stripped_config:
-      if getattr(self.options, "exp_const_blocks", False):
+      if getattr(self.options, "exp_const_blocks", True):
         new_const_blocks = set(const_blocks)
         for dir in range(2):
           for block in gen_sim.tape.tape[dir]:

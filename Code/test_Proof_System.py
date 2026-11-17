@@ -1212,6 +1212,7 @@ class ProofSystemTest(unittest.TestCase):
     for limited_rules in (False, True):
       with self.subTest(limited_rules=limited_rules):
         self.options.limited_rules = limited_rules
+        self.options.exp_const_blocks = False
         prover = Proof_System.Proof_System(tm, self.options, "")
 
         tape2 = Tape.Chain_Tape()
