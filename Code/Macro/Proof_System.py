@@ -1138,6 +1138,7 @@ class Proof_System:
     # Create a new tape which we will use to simulate general situation.
     const_blocks = const_blocks or set()
     capped_vars = set()
+    saw_multi_vars = False
     gen_sim.tape = new_tape.copy()
     min_val = {}  # Notes the minimum value exponents with each unknown take.
     can_deplete_to_zero = {}  # Whether variable can safely deplete to 0 on its final touch.
@@ -1251,13 +1252,14 @@ class Proof_System:
         for block in gen_sim.tape.tape[dir]:
           vars = variables(block.num)
           if len(vars) > 1:
-            self.last_prove_fail_reason = "Multiple vars in one term"
-            if self.verbose:
-              print()
-              self.print_this("[PROVER FAILURE] Multiple vars in one term **")
-              self.print_this(gen_sim.tape)
-              print()
-            return None
+            # Allow simulation to continue; we'll recover at the end if the extra
+            # variables come from blocks that end up as constants.
+            saw_multi_vars = True
+            cur_min = ae.min_val(block.num)
+            for x in vars:
+              if x in min_val and cur_min < min_val[x]:
+                min_val[x] = cur_min
+                can_deplete_to_zero[x] = False
           elif len(vars) == 1 and isinstance(block.num, Algebraic_Expression):
             x = list(vars)[0]
             cur_min = ae.min_val(block.num)
@@ -1289,6 +1291,34 @@ class Proof_System:
         self.print_this(stripped_config)
         print()
       return None
+
+    if saw_multi_vars:
+      # Any initial variable block whose final exponent became constant must start at
+      # that constant for the rule to be repeatable. Specialize its variable to 0.
+      while True:
+        vars_to_zero = []
+        for dir in range(2):
+          for init_block, final_block in zip(initial_tape.tape[dir], gen_sim.tape.tape[dir]):
+            if isinstance(init_block.num, Algebraic_Expression) and is_const(final_block.num):
+              x = init_block.num.variable_restricted()
+              if x not in capped_vars and x not in vars_to_zero:
+                vars_to_zero.append(x)
+        if not vars_to_zero:
+          break
+        for x in vars_to_zero:
+          if self.verbose:
+            self.print_this(f"[PROVER] Specializing {x} = 0 after multiple vars in one term")
+          _specialize_var_zero(x, initial_tape, gen_sim, min_val)
+          can_deplete_to_zero.pop(x, None)
+          can_start_at_zero.pop(x, None)
+      if any(len(variables(block.num)) > 1 for dir in range(2) for block in gen_sim.tape.tape[dir]):
+        self.last_prove_fail_reason = "Multiple vars in one term"
+        if self.verbose:
+          print()
+          self.print_this("[PROVER FAILURE] Multiple vars in one term **")
+          self.print_this(gen_sim.tape)
+          print()
+        return None
 
     # Compute the rule level: 1 + the highest level of any rule used in the proof.
     # Level 1 = proven from raw simulation; Level N = uses Level N-1 rules in proof.
@@ -2054,8 +2084,12 @@ class Proof_System:
 
 
 def _subst_var_zero(expr, zero_sub):
-  if isinstance(expr, Algebraic_Expression):
-    return Exp_Int.try_simplify(substitute(expr, zero_sub))
+  if isinstance(expr, (Algebraic_Expression, Exp_Int.ExpInt)):
+    res = Exp_Int.try_simplify(substitute(expr, zero_sub))
+    if isinstance(res, Algebraic_Expression):
+      new_terms = [ae.Term(term.vars, Exp_Int.try_simplify(term.coef)) for term in res.terms]
+      return Algebraic_Expression(new_terms, Exp_Int.try_simplify(res.const))
+    return res
   return expr
 
 

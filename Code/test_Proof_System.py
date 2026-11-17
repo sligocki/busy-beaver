@@ -12,6 +12,7 @@ from unittest import mock
 
 import Algebraic_Expression
 import IO
+import io_pb2
 from Iterated_Expression import Iterated_Expression
 from Macro import Proof_System, Simulator, Tape, Turing_Machine
 from Macro.Turing_Machine import Block_Symbol
@@ -1633,6 +1634,61 @@ class ProofSystemTest(unittest.TestCase):
 
     # Subsequent calls prioritize rule_l2 over rule_l1.
     self.assertEqual(prover.rules[stripped][0], rule_l2)
+
+  def test_multiple_vars_in_one_term_recovery(self):
+    # Verify that when a subrule introduces a second variable into a block's exponent
+    # and the second variable's block ends up constant, prove_rule pins that block
+    # as constant and recovers to prove a repeatable rule.
+    tm = IO.parse_tm("1RB0LG_1LC0RE_1LD1LB_1LA0RF_1RC1RB_1LB1RD_1LD---")
+    macro_tm = Turing_Machine.Block_Macro_Machine(tm, 4)
+    self.options.prover = True
+    self.options.recursive = True
+    self.options.exp_linear_rules = True
+    self.options.exp_meta_linear_rules = True
+    self.options.exp_zero_exponents = True
+    self.options.compute_steps = False
+    sim = Simulator.Simulator(macro_tm, self.options)
+    while sim.op_state == Turing_Machine.RUNNING and sim.total_loops < 10000:
+      sim.step()
+    self.assertEqual(sim.op_state, Turing_Machine.INF_REPEAT)
+    self.assertEqual(sim.inf_reason, io_pb2.INF_PROOF_SYSTEM)
+    self.assertGreaterEqual(sim.prover.num_rules_by_level[3], 1)
+
+  def test_multiple_vars_in_one_term_unrecoverable_fails(self):
+    # When multiple variables end up in one term and no variable block became constant,
+    # prove_rule should fail with "Multiple vars in one term".
+    tm = IO.parse_tm("1RB---_---0LA")
+    self.options.recursive = True
+    prover = Proof_System.Proof_System(tm, self.options, "")
+    state_A = Turing_Machine.Simple_Machine_State(0)
+
+    def make_tape(left_ones, right_ones):
+      t = Tape.Chain_Tape()
+      t.init(0, Turing_Machine.RIGHT, self.options)
+      t.tape[0] = [Tape.Repeated_Symbol(0, InfNat()), Tape.Repeated_Symbol(1, left_ones)]
+      t.tape[1] = [Tape.Repeated_Symbol(0, InfNat()), Tape.Repeated_Symbol(1, right_ones)]
+      return t
+
+    x_var = Algebraic_Expression.Variable()
+    y_var = Algebraic_Expression.Variable()
+    x_e = Algebraic_Expression.VariableToExpression(x_var)
+    y_e = Algebraic_Expression.VariableToExpression(y_var)
+    gen_subrule = Proof_System.General_Rule(
+      [None, x_var, None, y_var],
+      [InfNat(), 1, InfNat(), 2],
+      make_tape(x_e + y_e, y_e - 1),
+      Algebraic_Expression.ConstantToExpression(1),
+      num_loops=1,
+      rule_num=0,
+      states_last_seen={},
+      level=1,
+    )
+    sample_tape = make_tape(2, 3)
+    stripped = Proof_System.strip_config(state_A, Turing_Machine.RIGHT, sample_tape.tape)
+    prover.add_rule(gen_subrule, stripped)
+    res = prover.prove_rule(stripped, (state_A, sample_tape, 0), delta_loop=1)
+    self.assertIsNone(res)
+    self.assertEqual(prover.last_prove_fail_reason, "Multiple vars in one term")
 
 
 if __name__ == "__main__":
