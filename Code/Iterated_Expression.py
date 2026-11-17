@@ -4,7 +4,7 @@ import math
 
 from Algebraic_Expression import Expression, Variable, min_val, substitute, variables
 from Big_Interval import BigInterval, Knuth10
-from Exp_Int import ExpInt, ExpTerm, is_simple, sign, struct_eq, uparrow_size_approx
+from Exp_Int import ExpInt, ExpTerm, is_simple, sign, struct_eq, try_eval, uparrow_size_approx
 from NatExpr import ConstInt, NatExpr, cmp_expr, expr_str, is_const, to_BigInterval
 
 
@@ -295,12 +295,12 @@ class Iterated_Expression(NatExpr):
     val_start = uparrow_size_approx(self.start_val)
     top_start = val_start[-1]
     arr = step_arrows + 1
-    try:
-      n_val = int(self.num_reps)
+    n_val = try_eval(self.num_reps)
+    if n_val is not None:
       if val_start[0] == arr and isinstance(val_start[1], (int, float)):
         return (arr, val_start[1] + n_val * step_count, *val_start[2:])
-    except Exception:
-      pass
+      total_reps = n_val * step_count if step_count > 1 else n_val
+      return (arr, total_reps, top_start)
 
     val_reps = uparrow_size_approx(self.num_reps)
     if val_reps[0] > arr:

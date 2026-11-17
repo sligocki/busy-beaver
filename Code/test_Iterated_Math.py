@@ -222,6 +222,16 @@ class TestIteratedMath(unittest.TestCase):
     self.assertTrue(loaded_legacy.is_const)
     self.assertEqual(loaded_legacy, const_math)
 
+  def test_uparrow_size_approx_const_expression_reps(self):
+    from Algebraic_Expression import ConstantToExpression
+
+    reps_expr = ConstantToExpression(3066)
+    it = Iterated_Expression(exp_int(2, self.expr_x), self.x, 8, reps_expr)
+    approx = it.uparrow_size_approx
+    self.assertIsInstance(approx[1], (int, float))
+    m = Iterated_Math([Iterated_Term(it, 1)], 100)
+    self.assertEqual(m.uparrow_size_approx, approx)
+
 
 if __name__ == "__main__":
   unittest.main()

@@ -472,8 +472,7 @@ class Exponential_Rule(Rule):
           )
 
         else:
-          assert isinstance(result_block.num, Expression), result_block.num
-          res = result_block.num.as_strictly_linear()
+          res = result_block.num.as_strictly_linear() if hasattr(result_block.num, "as_strictly_linear") else None
           if not res:
             # Don't allow rules like: x -> x^2
             return (
