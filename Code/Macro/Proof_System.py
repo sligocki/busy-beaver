@@ -933,15 +933,20 @@ class Proof_System:
         if not rule:
           self.num_failed_proofs += 1
         else:
-          self.add_rule(rule, stripped_config)
-
           # Try to apply transition
           is_good, res = self.apply_rule(rule, full_config)
           if is_good:
+            self.add_rule(rule, stripped_config)
             result, _ = res
             rule.num_uses += 1
             assert isinstance(result, ProverResult), result
             return result
+          self.last_prove_fail_reason = f"Newly proven rule could not apply ({res})"
+          if self.verbose:
+            print()
+            self.print_this(f"[PROVER FAILURE] Newly proven rule could not apply: {res}")
+            print()
+          self.num_failed_proofs += 1
       elif len(self.past_configs) > self.options.max_prover_configs:
         self.past_configs.clear()
 
@@ -1397,6 +1402,7 @@ class Proof_System:
       var_list = []
       min_list = []
       assignment = {}
+      new_const_blocks = set(const_blocks)
       for init_block, diff_block, final_block in zip(
         initial_tape.tape[0] + initial_tape.tape[1],
         diff_tape.tape[0] + diff_tape.tape[1],
@@ -1419,13 +1425,21 @@ class Proof_System:
             and min_val[x] == init_block.num.const
             and (not isinstance(final_block.num, Algebraic_Expression) or ae.min_val(final_block.num) > min_val[x])
           )
-          min_list.append(init_block.num.const - min_val[x] + (0 if (deplete_zero or start_zero) else 1))
+          req_min = init_block.num.const - min_val[x] + (0 if (deplete_zero or start_zero) else 1)
+          if req_min > init_block.num.const and x in init_var_pos:
+            new_const_blocks.add(init_var_pos[x])
+          min_list.append(req_min)
           # Hackish: If exponent was x + 5 we want to replace all x with x - 5.
           # TODO: Make nicer.
           assignment[x] = init_block.num - 2 * init_block.num.const
         else:
           var_list.append(None)
           min_list.append(init_block.num)
+
+      if getattr(self.options, "exp_const_blocks", True) and new_const_blocks != const_blocks:
+        if self.verbose:
+          self.print_this(f"[PROVER] Reproving with constant blocks {sorted(new_const_blocks)} (min_val reached 0)")
+        return self._prove_rule(stripped_config, full_config, delta_loop, const_blocks=new_const_blocks)
 
       # TODO: result_list = []
       result_tape = gen_sim.tape
@@ -1534,6 +1548,7 @@ class Proof_System:
         # (e.g. by replacing x+5 with x+1 if the rule holds for 1).
         # This is only safe for basic rules (not meta rules. See Issue 4).
         replaces = {}
+        new_const_blocks = set(const_blocks)
         for dir in range(2):
           for init_block, diff_block, final_block in zip(
             initial_tape.tape[dir], diff_tape.tape[dir], gen_sim.tape.tape[dir]
@@ -1553,11 +1568,18 @@ class Proof_System:
                 and min_val[x] == init_block.num.const
                 and ae.min_val(final_block.num) > min_val[x]
               )
-              new_value = VariableToExpression(x) - min_val[x] + (0 if (deplete_zero or start_zero) else 1)
+              offset = 0 if (deplete_zero or start_zero) else 1
+              if min_val[x] - offset < 0 and x in init_var_pos:
+                new_const_blocks.add(init_var_pos[x])
+              new_value = VariableToExpression(x) - min_val[x] + offset
               init_block.num = init_block.num.substitute({x: new_value})
               replaces[x] = new_value
             else:
               assert is_const(init_block.num), init_block
+        if getattr(self.options, "exp_const_blocks", True) and new_const_blocks != const_blocks:
+          if self.verbose:
+            self.print_this(f"[PROVER] Reproving with constant blocks {sorted(new_const_blocks)} (min_val reached 0)")
+          return self._prove_rule(stripped_config, full_config, delta_loop, const_blocks=new_const_blocks)
         # Fix diff_tape.  # TODO: rm, only happens for recursive_rules
         for dir in range(2):
           for diff_block in diff_tape.tape[dir]:
