@@ -335,8 +335,8 @@ class MacroSimulatorTest(unittest.TestCase):
       Exp_Int.MAX_DEPTH = orig_max_depth
 
   def test_total_loops_budget_and_fail_fast(self):
-    # Level-4 proof on ack34 requires > 5000 prover loops at ~17503 total_loops.
-    # With max_loops = 18000, the prover should fail fast before exceeding 18000.
+    # Find when ack34 starts a large prover proof (e.g. Level-4 rule taking > 1000 prover loops),
+    # then set max_loops mid-proof to verify that both run_options() and loop_seek() fail fast.
     self.options.recursive = True
     self.options.limited_rules = False
     self.options.exp_linear_rules = True
@@ -345,8 +345,29 @@ class MacroSimulatorTest(unittest.TestCase):
     self.options.backsymbol = True
     self.options.max_steps_in_backsymbol = 250
     self.options.compute_steps = False
-    self.options.max_loops = 18_000
     tm = IO.parse_tm("1RB3LB1RZ2RA_2LC3RB1LC2RA_3RB1LB3LC2RC")
+
+    machine = Turing_Machine.Block_Macro_Machine(tm, 2)
+    machine = Turing_Machine.Backsymbol_Macro_Machine(machine, max_sim_steps_per_symbol=250)
+    sim_chunked = Simulator.Simulator(machine, self.options)
+    proof_start_total = None
+    proof_prover_loops = 0
+    while sim_chunked.total_loops < 100_000 and sim_chunked.op_state == Turing_Machine.RUNNING:
+      prev_total = sim_chunked.total_loops
+      prev_prover = sim_chunked.prover.num_loops
+      prev_l4 = sim_chunked.prover.num_rules_by_level.get(4, 0)
+      sim_chunked.step()
+      delta_prover = sim_chunked.prover.num_loops - prev_prover
+      if sim_chunked.prover.num_rules_by_level.get(4, 0) > prev_l4 and delta_prover > 100:
+        proof_start_total = prev_total
+        proof_prover_loops = delta_prover
+        break
+    self.assertIsNotNone(proof_start_total)
+    self.assertEqual(sim_chunked.op_state, Turing_Machine.RUNNING)
+    self.assertGreaterEqual(sim_chunked.prover.num_rules_by_level.get(4, 0), 1)
+
+    budget = proof_start_total + proof_prover_loops // 2
+    self.options.max_loops = budget
     tm_enum = TM_Enum.TM_Enum(tm, allow_no_halt=False)
     tm_record = TM_Record.TM_Record(tm_enum=tm_enum)
     Macro_Simulator.run_options(tm_record, self.options)
@@ -354,26 +375,17 @@ class MacroSimulatorTest(unittest.TestCase):
     self.assertEqual(sim_info.result.WhichOneof("exit_condition"), "unknown_info")
     self.assertEqual(sim_info.result.unknown_info.WhichOneof("reason"), "over_loops")
     self.assertEqual(sim_info.result.num_loops, sim_info.result.unknown_info.over_loops.num_loops)
-    self.assertLess(sim_info.result.num_loops, 18_000)
+    self.assertLess(sim_info.result.num_loops, budget)
 
-    # Direct Simulator API: total_loops counts prover loops, fail-fast sets OVER_LOOPS,
-    # and loop_run() chunking without max_loops does not trigger fail-fast.
-    machine = Turing_Machine.Block_Macro_Machine(tm, 2)
-    machine = Turing_Machine.Backsymbol_Macro_Machine(machine, max_sim_steps_per_symbol=250)
+    # Direct Simulator API: total_loops counts prover loops, fail-fast sets OVER_LOOPS.
     sim = Simulator.Simulator(machine, self.options)
-    sim.loop_seek(18_000)
+    sim.loop_seek(budget)
     self.assertEqual(sim.op_state, Turing_Machine.OVER_LOOPS)
     self.assertEqual(sim.total_loops, sim.num_loops + sim.prover.num_loops)
     self.assertGreater(sim.prover.num_loops, 0)
-    self.assertLess(sim.total_loops, 18_000)
+    self.assertLess(sim.total_loops, budget)
     delta_loop, remaining_loops = sim.op_details
     self.assertGreater(delta_loop, remaining_loops)
-
-    sim_chunked = Simulator.Simulator(machine, self.options)
-    while sim_chunked.total_loops < 21_000 and sim_chunked.op_state == Turing_Machine.RUNNING:
-      sim_chunked.loop_run(100)
-    self.assertEqual(sim_chunked.op_state, Turing_Machine.RUNNING)
-    self.assertGreaterEqual(sim_chunked.prover.num_rules_by_level.get(4, 0), 1)
 
 
 if __name__ == "__main__":

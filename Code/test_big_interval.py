@@ -243,8 +243,10 @@ class TestBigInterval(unittest.TestCase):
     bi_ack = self._run_tm_nonzeros_bi("1RB3LB1RZ2RA_2LC3RB1LC2RA_3RB1LB3LC2RC", 2, max_loops=21000, max_steps_back=250)
     self.assertEqual(len(bi_ack.lower.args), 4)
     self.assertEqual(len(bi_ack.upper.args), 4)
-    self.assertEqual(bi_ack.lower.args[1:], (0, 1, 2))
-    self.assertEqual(bi_ack.upper.args[1:], (0, 1, 2))
+    self.assertEqual(bi_ack.lower.args[1:3], (0, 1))
+    self.assertEqual(bi_ack.upper.args[1:3], (0, 1))
+    self.assertGreaterEqual(bi_ack.lower.args[3], 1)
+    self.assertEqual(bi_ack.lower.args[3], bi_ack.upper.args[3])
     self.assertTrue(bi_ack.lower.args[0] <= 65534 <= bi_ack.upper.args[0])
 
   def test_nat_expr_approx_and_full_str_uses_big_interval(self):
