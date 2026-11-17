@@ -392,6 +392,7 @@ def run_single_tm(
   undecided_mode: str = "both",
   max_loops_override: int | None = None,
   time_limit_sec: float = 15.0,
+  loop_multiplier: float = 1.0,
 ) -> dict[str, Any]:
   """Simulate a single dataset TM entry under the given BenchConfig."""
   config = BenchConfig.from_dict(config_dict)
@@ -399,7 +400,8 @@ def run_single_tm(
 
   tm_str = entry["tm"]
   block_size = int(entry.get("block_size", 1))
-  max_loops = int(max_loops_override if max_loops_override is not None else entry.get("max_loops", 10_000))
+  base_max_loops = int(max_loops_override if max_loops_override is not None else entry.get("max_loops", 10_000))
+  max_loops = max(1, int(round(base_max_loops * loop_multiplier))) if base_max_loops > 0 else 0
   tape_limit = int(entry.get("tape_limit", 50))
   max_steps_in_block = int(entry.get("max_steps_in_block", 100_000))
   max_steps_in_backsymbol = int(entry.get("max_steps_in_backsymbol", 1_000))
@@ -675,11 +677,14 @@ def run_benchmark_config(
   jobs: int = 1,
   out_path: Path | None = None,
   quiet: bool = False,
+  loop_multiplier: float = 1.0,
 ) -> tuple[Path, dict[str, Any], list[dict[str, Any]]]:
   """Run a benchmark configuration across all dataset entries."""
   start_wall = time.time()
   config_dict = config.to_dict()
-  tasks = [(entry, config_dict, undecided_mode, max_loops_override, time_limit_sec) for entry in entries]
+  tasks = [
+    (entry, config_dict, undecided_mode, max_loops_override, time_limit_sec, loop_multiplier) for entry in entries
+  ]
 
   results_by_idx: dict[int, dict[str, Any]] = {}
   if jobs <= 1:
@@ -1357,6 +1362,12 @@ def main(argv: list[str] | None = None) -> int:
   p_run.add_argument("--git-ref", help="Optional git commit/tag/branch to benchmark via git worktree")
   p_run.add_argument("--undecided-mode", choices=["both", "milestone", "full"], default="both")
   p_run.add_argument("--max-loops", type=int, default=None, help="Override per-TM max_loops")
+  p_run.add_argument(
+    "--loop-multiplier",
+    type=float,
+    default=1.0,
+    help="Multiply per-TM max_loops budget by this factor [default: 1.0]",
+  )
   p_run.add_argument("--time-limit", type=float, default=15.0, help="Per-TM timeout in seconds [default: 15.0]")
   p_run.add_argument("-j", "--jobs", type=int, default=default_jobs, help="Parallel worker processes")
   p_run.add_argument("--out", type=Path, help="Explicit output .jsonl.gz path (when running a single config)")
@@ -1380,6 +1391,12 @@ def main(argv: list[str] | None = None) -> int:
   p_mat.add_argument("--baseline-config", default=None, help="Which config to use as baseline (defaults to first)")
   p_mat.add_argument("--undecided-mode", choices=["both", "milestone", "full"], default="both")
   p_mat.add_argument("--max-loops", type=int, default=None, help="Override per-TM max_loops")
+  p_mat.add_argument(
+    "--loop-multiplier",
+    type=float,
+    default=1.0,
+    help="Multiply per-TM max_loops budget by this factor [default: 1.0]",
+  )
   p_mat.add_argument("--time-limit", type=float, default=15.0, help="Per-TM timeout in seconds")
   p_mat.add_argument("-j", "--jobs", type=int, default=default_jobs, help="Parallel worker processes")
   p_mat.add_argument("--markdown", type=Path, help="Optional path to save Markdown report")
@@ -1411,6 +1428,7 @@ def main(argv: list[str] | None = None) -> int:
           time_limit_sec=args.time_limit,
           jobs=args.jobs,
           out_path=args.out if len(configs) == 1 else None,
+          loop_multiplier=args.loop_multiplier,
         )
     return 0
 
@@ -1441,6 +1459,7 @@ def main(argv: list[str] | None = None) -> int:
         max_loops_override=args.max_loops,
         time_limit_sec=args.time_limit,
         jobs=args.jobs,
+        loop_multiplier=args.loop_multiplier,
       )
       runs.append((meta, res))
 

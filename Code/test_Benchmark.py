@@ -339,6 +339,26 @@ class BenchmarkTest(unittest.TestCase):
     self.assertIn("**[cand]** `2x2-6-4`", report)
     self.assertIn("exception: ValueError: boom", report)
 
+  def test_loop_multiplier_scales_max_loops(self):
+    with open(Path(__file__).resolve().parent.parent / "Machines" / "2x2-Counter", "rt") as f:
+      counter_tm = f.readline().strip().split()[0]
+
+    entry = {
+      "tm": counter_tm,
+      "name": "2x2-Counter",
+      "category": "holdout",
+      "block_size": 1,
+      "max_loops": 20,
+      "tape_limit": 50,
+    }
+    cfg = CONFIG_PRESETS["prover_0_off"].to_dict()
+    res_1x = run_single_tm(entry, cfg, undecided_mode="full", loop_multiplier=1.0)
+    res_5x = run_single_tm(entry, cfg, undecided_mode="full", loop_multiplier=5.0)
+    self.assertEqual(res_1x["status"], "unknown")
+    self.assertEqual(res_5x["status"], "unknown")
+    self.assertEqual(res_1x["total_loops"], 20)
+    self.assertEqual(res_5x["total_loops"], 100)
+
 
 if __name__ == "__main__":
   unittest.main()
