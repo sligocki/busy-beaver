@@ -275,6 +275,13 @@ def discover_truth_record(
       chosen_bs = bs
       chosen_res = res
 
+    if cand.category != "unknown" and res["status"] in ("halt", "inf") and res["status"] != cand.category:
+      print(
+        f"Error: {cand.name} ({cand.tm}) was decided as '{res['status']}' (block_size={bs}), "
+        f"which contradicts category='{cand.category}'"
+      )
+      return None
+
     if cand.category == "halt":
       if res["status"] == "halt":
         chosen_bs = bs
@@ -297,6 +304,13 @@ def discover_truth_record(
         break
 
   if chosen_res is None:
+    return None
+
+  if cand.category != "unknown" and chosen_res["status"] in ("halt", "inf") and chosen_res["status"] != cand.category:
+    print(
+      f"Error: {cand.name} ({cand.tm}) was decided as '{chosen_res['status']}', "
+      f"which contradicts category='{cand.category}'"
+    )
     return None
 
   final_category = cand.category
@@ -987,6 +1001,14 @@ def build_datasets(
   return select_datasets_from_truth(fast_size=fast_size, full_size=full_size, truth_path=TRUTH_FILE)
 
 
+def _resolve_existing_category(category: str, existing: dict[str, Any] | None) -> str:
+  if category != "unknown":
+    return category
+  if existing and existing.get("category") in ("halt", "inf"):
+    return existing["category"]
+  return "unknown"
+
+
 def _parse_candidate_specs(
   cand_specs: list[str],
   block_size: int | None,
@@ -1008,7 +1030,7 @@ def _parse_candidate_specs(
           tm=rec["tm"],
           name=name_override or rec["name"],
           source=rec.get("source", "custom"),
-          category=category if category != "unknown" else rec["category"],
+          category=_resolve_existing_category(category, rec),
           mandatory=mandatory or bool(rec.get("mandatory", False)),
           block_size=block_size if block_size is not None else rec.get("block_size"),
           max_loops=max_loops,
@@ -1029,7 +1051,7 @@ def _parse_candidate_specs(
                 tm=tok,
                 name=name_override or (existing["name"] if existing else f"{p.name}:{tag}"),
                 source=existing.get("source", "custom") if existing else "custom",
-                category=category if category != "unknown" else (existing["category"] if existing else "unknown"),
+                category=_resolve_existing_category(category, existing),
                 mandatory=mandatory or (bool(existing.get("mandatory", False)) if existing else False),
                 block_size=block_size if block_size is not None else (existing.get("block_size") if existing else None),
                 max_loops=max_loops,
@@ -1045,7 +1067,7 @@ def _parse_candidate_specs(
           tm=spec,
           name=name_override or (existing["name"] if existing else spec),
           source=existing.get("source", "custom") if existing else "custom",
-          category=category if category != "unknown" else (existing["category"] if existing else "unknown"),
+          category=_resolve_existing_category(category, existing),
           mandatory=mandatory or (bool(existing.get("mandatory", False)) if existing else False),
           block_size=block_size if block_size is not None else (existing.get("block_size") if existing else None),
           max_loops=max_loops,
@@ -1287,7 +1309,7 @@ def main(argv: list[str] | None = None) -> int:
     select_datasets_from_truth(fast_size=args.fast_size, full_size=args.full_size)
     return 0
   elif args.subcommand == "add-truth":
-    add_truth_command(
+    added_or_updated = add_truth_command(
       args.candidates,
       block_size=args.block_size,
       category=args.category,
@@ -1297,7 +1319,7 @@ def main(argv: list[str] | None = None) -> int:
       time_limit_sec=args.time_limit,
       mandatory=args.mandatory,
     )
-    return 0
+    return 0 if added_or_updated else 1
   elif args.subcommand == "eval-candidate":
     evaluate_candidates_against_dataset(
       args.dataset,

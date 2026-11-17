@@ -1448,6 +1448,17 @@ def main(argv: list[str] | None = None) -> int:
     preset_group = args.preset_group if (args.preset_group is not None or args.config is not None) else "core"
     configs = _resolve_config_names(args.config, preset_group)
 
+    if args.baseline_config:
+      valid_baselines = [cfg.name for cfg in configs]
+      if args.git_refs:
+        snap_cfg = configs[-1]
+        for ref in args.git_refs.split(","):
+          ref = ref.strip()
+          if ref:
+            valid_baselines.extend([ref, f"{snap_cfg.name}@{ref}"])
+      if args.baseline_config not in valid_baselines:
+        raise ValueError(f"Invalid --baseline-config '{args.baseline_config}'. Choices: {valid_baselines}")
+
     runs: list[tuple[dict[str, Any], list[dict[str, Any]]]] = []
     for cfg in configs:
       print(f"Running config '{cfg.name}' on {len(entries)} TMs (jobs={args.jobs})...")
@@ -1489,6 +1500,8 @@ def main(argv: list[str] | None = None) -> int:
         if args.baseline_config in (cfg_name, f"{base_cfg}@{git_ref}", git_ref):
           base_idx = i
           break
+      else:
+        raise ValueError(f"Invalid --baseline-config '{args.baseline_config}': no matching run")
 
     base_meta, base_res = runs[base_idx]
     cand_runs = [r for i, r in enumerate(runs) if i != base_idx]

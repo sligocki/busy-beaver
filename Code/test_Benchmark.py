@@ -359,6 +359,22 @@ class BenchmarkTest(unittest.TestCase):
     self.assertEqual(res_1x["total_loops"], 20)
     self.assertEqual(res_5x["total_loops"], 100)
 
+  def test_matrix_invalid_baseline_config_raises(self):
+    import Benchmark
+
+    with self.assertRaises(ValueError):
+      Benchmark.main(
+        [
+          "matrix",
+          "--dataset",
+          "fast",
+          "--baseline-config",
+          "prover_4_meta_linear,ablate_const_blocks",
+          "--config",
+          "prover_4_meta_linear",
+        ]
+      )
+
 
 if __name__ == "__main__":
   unittest.main()
