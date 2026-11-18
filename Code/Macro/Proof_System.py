@@ -1145,8 +1145,12 @@ class Proof_System:
     capped_vars = set()
     saw_multi_vars = False
     gen_sim.tape = new_tape.copy()
-    min_val = {}  # Notes the minimum value exponents with each unknown take.
-    can_deplete_to_zero = {}  # Whether variable can safely deplete to 0 on its final touch.
+    # Minimum value reached by Algebraic_Expression exponents containing each variable:
+    # - Without --exp-zero-exponents: min between full steps (kept >= 1 via offset=1).
+    # - With --exp-zero-exponents: sub-transition min (also decremented by 1 on macro
+    #   moves to reflect popping before pushing), allowing exponents to reach >= 0
+    #   unless the block never drops below its initial value and !can_start_at_zero.
+    min_val = {}
     can_start_at_zero = {}  # Whether variable is only ever consumed by chain moves.
     init_var_pos = {}
     for direction in range(2):
@@ -1165,7 +1169,6 @@ class Proof_System:
           x_init = VarPlusConstExpression(x, init_count)
           block.num = x_init
           min_val[x] = block.num.const
-          can_deplete_to_zero[x] = False
           init_var_pos[x] = (direction, i)
           left_sym = gen_sim.tape.tape[direction][i - 1].symbol if i > 0 else None
           if i + 1 < len(gen_sim.tape.tape[direction]):
@@ -1211,10 +1214,11 @@ class Proof_System:
           print()
         return None
 
-      prev_dir = gen_sim.dir
       prev_top_vars = variables(block.num)
       prev_top_var = next(iter(prev_top_vars)) if len(prev_top_vars) == 1 else None
-      prev_top_min = ae.min_val(block.num) if prev_top_var is not None else None
+      prev_top_min = (
+        ae.min_val(block.num) if (prev_top_var is not None and isinstance(block.num, Algebraic_Expression)) else None
+      )
       prev_num_rule_moves = gen_sim.num_rule_moves
       prev_num_macro_moves = gen_sim.num_macro_moves
       prev_num_chain_moves = gen_sim.num_chain_moves
@@ -1232,7 +1236,6 @@ class Proof_System:
           print()
         return None
 
-      # Any variable touched by a step after reaching its minimum cannot have depleted to 0 earlier.
       if gen_sim.num_rule_moves > prev_num_rule_moves and gen_sim.prover and gen_sim.prover.last_rule_var_info:
         for v, (req_cur_min, is_lim, req_min) in gen_sim.prover.last_rule_var_info.items():
           if v in min_val:
@@ -1240,17 +1243,14 @@ class Proof_System:
               can_start_at_zero[v] = False
             if req_cur_min < min_val[v]:
               min_val[v] = req_cur_min
-              can_deplete_to_zero[v] = is_lim
-            elif not is_lim:
-              can_deplete_to_zero[v] = False
         gen_sim.prover.last_rule_var_info = None
-      elif gen_sim.num_rule_moves == prev_num_rule_moves and prev_top_var in can_deplete_to_zero:
-        can_deplete_to_zero[prev_top_var] = False
       if gen_sim.num_macro_moves > prev_num_macro_moves:
         for v in prev_top_vars:
           can_start_at_zero[v] = False
+        if self.exp_zero_exponents and prev_top_var in min_val and prev_top_min is not None:
+          min_val[prev_top_var] = min(min_val[prev_top_var], prev_top_min - 1)
       elif gen_sim.num_chain_moves > prev_num_chain_moves and prev_top_var in can_start_at_zero:
-        if prev_top_min < min_val[prev_top_var]:
+        if prev_top_min is not None and prev_top_min < min_val[prev_top_var]:
           can_start_at_zero[prev_top_var] = False
 
       # Update min_val for each expression.
@@ -1267,25 +1267,11 @@ class Proof_System:
             for x in vars:
               if x in min_val and cur_min < min_val[x]:
                 min_val[x] = cur_min
-                can_deplete_to_zero[x] = False
           elif len(vars) == 1 and isinstance(block.num, Algebraic_Expression):
             x = list(vars)[0]
             cur_min = ae.min_val(block.num)
             if cur_min < min_val[x]:
               min_val[x] = cur_min
-              # If a single move consumed 1 symbol from the top block and turned away,
-              # or a subrule depleted it to its new minimum, it can deplete to 0 unless touched again.
-              if gen_sim.num_rule_moves > prev_num_rule_moves:
-                can_deplete_to_zero[x] = True
-              elif (
-                x == prev_top_var
-                and cur_min == prev_top_min - 1
-                and gen_sim.dir != prev_dir
-                and block is gen_sim.tape.tape[prev_dir][-2]
-              ):
-                can_deplete_to_zero[x] = True
-              else:
-                can_deplete_to_zero[x] = False
 
     # Make sure finishing tape has the same stripped config as original.
     gen_stripped_config = strip_config(gen_sim.state, gen_sim.tape.dir, gen_sim.tape.tape)
@@ -1334,7 +1320,6 @@ class Proof_System:
           if self.verbose:
             self.print_this(f"[PROVER] Specializing {x} = 0 after multiple vars in one term")
           _specialize_var_zero(x, initial_tape, gen_sim, min_val)
-          can_deplete_to_zero.pop(x, None)
           can_start_at_zero.pop(x, None)
       if any(len(variables(block.num)) > 1 for dir in range(2) for block in gen_sim.tape.tape[dir]):
         self.last_prove_fail_reason = "Multiple vars in one term"
@@ -1402,29 +1387,14 @@ class Proof_System:
       min_list = []
       assignment = {}
       new_const_blocks = set(const_blocks)
-      for init_block, diff_block, final_block in zip(
-        initial_tape.tape[0] + initial_tape.tape[1],
-        diff_tape.tape[0] + diff_tape.tape[1],
-        gen_sim.tape.tape[0] + gen_sim.tape.tape[1],
-      ):
+      for init_block in initial_tape.tape[0] + initial_tape.tape[1]:
         if isinstance(init_block.num, Algebraic_Expression):
           x = init_block.num.variable_restricted()
           var_list.append(x)
-          deplete_zero = (
-            self.exp_zero_exponents
-            and can_deplete_to_zero.get(x, False)
-            and is_const(diff_block.num)
-            and diff_block.num < 0
-            and isinstance(final_block.num, Algebraic_Expression)
-            and ae.min_val(final_block.num) == min_val[x]
+          allow_zero = self.exp_zero_exponents and (
+            min_val[x] < init_block.num.const or can_start_at_zero.get(x, False)
           )
-          start_zero = (
-            self.exp_zero_exponents
-            and can_start_at_zero.get(x, False)
-            and min_val[x] == init_block.num.const
-            and (not isinstance(final_block.num, Algebraic_Expression) or ae.min_val(final_block.num) > min_val[x])
-          )
-          req_min = init_block.num.const - min_val[x] + (0 if (deplete_zero or start_zero) else 1)
+          req_min = init_block.num.const - min_val[x] + (0 if allow_zero else 1)
           if req_min > init_block.num.const and x in init_var_pos:
             new_const_blocks.add(init_var_pos[x])
           min_list.append(req_min)
@@ -1549,25 +1519,13 @@ class Proof_System:
         replaces = {}
         new_const_blocks = set(const_blocks)
         for dir in range(2):
-          for init_block, diff_block, final_block in zip(
-            initial_tape.tape[dir], diff_tape.tape[dir], gen_sim.tape.tape[dir]
-          ):
+          for init_block in initial_tape.tape[dir]:
             if isinstance(init_block.num, Algebraic_Expression):
               x = init_block.num.variable_restricted()
-              deplete_zero = (
-                self.exp_zero_exponents
-                and can_deplete_to_zero.get(x, False)
-                and is_const(diff_block.num)
-                and diff_block.num < 0
-                and ae.min_val(final_block.num) == min_val[x]
+              allow_zero = self.exp_zero_exponents and (
+                min_val[x] < init_block.num.const or can_start_at_zero.get(x, False)
               )
-              start_zero = (
-                self.exp_zero_exponents
-                and can_start_at_zero.get(x, False)
-                and min_val[x] == init_block.num.const
-                and ae.min_val(final_block.num) > min_val[x]
-              )
-              offset = 0 if (deplete_zero or start_zero) else 1
+              offset = 0 if allow_zero else 1
               if min_val[x] - offset < 0 and x in init_var_pos:
                 new_const_blocks.add(init_var_pos[x])
               new_value = VariableToExpression(x) - min_val[x] + offset

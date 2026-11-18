@@ -1709,6 +1709,29 @@ class ProofSystemTest(unittest.TestCase):
     self.assertEqual(sim.inf_reason, io_pb2.INF_PROOF_SYSTEM)
     self.assertEqual(sim.prover.num_failed_proofs, 0)
 
+  def test_green17_iterated_expr_does_not_lower_min_val(self):
+    # Regression test: macro moves on an Iterated_Expression block must not use
+    # ae.min_val(Iterated_Expression) to lower min_val, which previously inflated
+    # Rule 8's min_list[2] from 1 to 2**20 - 3 and caused a ~3x slowdown.
+    import Green
+
+    tm = Green.green_machine(17)
+    macro_tm = Turing_Machine.Backsymbol_Macro_Machine(Turing_Machine.Block_Macro_Machine(tm, 2))
+    self.options.prover = True
+    self.options.recursive = True
+    self.options.limited_rules = True
+    self.options.exp_linear_rules = True
+    self.options.exp_meta_linear_rules = True
+    self.options.exp_const_blocks = True
+    self.options.exp_zero_exponents = True
+    self.options.compute_steps = False
+    sim = Simulator.Simulator(macro_tm, self.options)
+    while sim.op_state == Turing_Machine.RUNNING and sim.total_loops < 10000:
+      sim.step()
+    self.assertEqual(sim.op_state, Turing_Machine.HALT)
+    self.assertIn(8, sim.prover.rules)
+    self.assertEqual(sim.prover.rules[8].min_list[2], 1)
+
 
 if __name__ == "__main__":
   unittest.main()
