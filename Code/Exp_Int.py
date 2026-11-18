@@ -120,6 +120,27 @@ def struct_eq(a, b) -> bool:
         return False
       for tx, ty in zip(x.terms, y.terms):
         stack.append((tx, ty))
+    elif isinstance(x, Expression) and isinstance(y, Expression):
+      if x != y:
+        return False
+    elif type(x).__name__ == type(y).__name__:
+      tname = type(x).__name__
+      if tname == "Iterated_Expression":
+        if x.var != y.var or x.step_expr != y.step_expr:
+          return False
+        stack.append((x.start_val, y.start_val))
+        stack.append((x.num_reps, y.num_reps))
+      elif tname == "Iterated_Term":
+        stack.append((x.coef, y.coef))
+        stack.append((x.it_expr, y.it_expr))
+      elif tname == "Iterated_Math":
+        if len(x.terms) != len(y.terms):
+          return False
+        stack.append((x.const, y.const))
+        for tx, ty in zip(x.terms, y.terms):
+          stack.append((tx, ty))
+      else:
+        return False
     else:
       return False
   return True

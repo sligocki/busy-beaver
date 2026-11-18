@@ -2,7 +2,7 @@ import pickle
 import unittest
 
 from Algebraic_Expression import Variable, VariableToExpression
-from Exp_Int import exp_int
+from Exp_Int import exp_int, struct_eq
 from Iterated_Expression import Iterated_Expression, Iterated_Math, Iterated_Term
 from Macro import Tape
 
@@ -29,7 +29,7 @@ class TestIteratedMath(unittest.TestCase):
     self.assertEqual(sum1.uparrow_size_approx, sum2.uparrow_size_approx)
     # Both should format identically because terms are normalized and sorted by size
     self.assertEqual(str(sum1), str(sum2))
-    self.assertEqual(sum1, sum2)
+    self.assertTrue(struct_eq(sum1, sum2))
 
   def test_combine_like_terms(self):
     # Adding the same Iterated_Expression combines coefficients
@@ -51,7 +51,7 @@ class TestIteratedMath(unittest.TestCase):
 
     self.assertIsInstance(sum1, Iterated_Math)
     self.assertIsInstance(sum2, Iterated_Math)
-    self.assertEqual(sum1, sum2)
+    self.assertTrue(struct_eq(sum1, sum2))
     self.assertEqual(str(sum1), str(sum2))
 
   def test_size_dominated_by_const_or_term(self):
@@ -220,7 +220,7 @@ class TestIteratedMath(unittest.TestCase):
     legacy_math.__dict__["coef"] = 3
     loaded_legacy = pickle.loads(pickle.dumps(legacy_math))
     self.assertTrue(loaded_legacy.is_const)
-    self.assertEqual(loaded_legacy, const_math)
+    self.assertTrue(struct_eq(loaded_legacy, const_math))
 
   def test_uparrow_size_approx_const_expression_reps(self):
     from Algebraic_Expression import ConstantToExpression
@@ -231,6 +231,65 @@ class TestIteratedMath(unittest.TestCase):
     self.assertIsInstance(approx[1], (int, float))
     m = Iterated_Math([Iterated_Term(it, 1)], 100)
     self.assertEqual(m.uparrow_size_approx, approx)
+
+  def test_mul_with_exp_int_and_expression(self):
+    ei = exp_int(2, 1000)
+    m = self.it1 + 3
+
+    prod1 = m * ei
+    prod2 = ei * m
+    self.assertIsInstance(prod1, Iterated_Math)
+    self.assertTrue(struct_eq(prod1, prod2))
+    self.assertTrue(struct_eq(prod1.terms[0].coef, ei))
+    self.assertTrue(struct_eq(prod1.const, 3 * ei))
+
+    y = Variable(1)
+    expr_y = VariableToExpression(y)
+    prod_expr1 = m * expr_y
+    self.assertIsInstance(prod_expr1, Iterated_Math)
+    self.assertEqual(prod_expr1.terms[0].coef, expr_y)
+    self.assertEqual(prod_expr1.const, 3 * expr_y)
+    self.assertEqual(prod_expr1.variables(), {y})
+
+    prod_expr2 = expr_y * m
+    self.assertEqual(prod_expr2.variables(), {y})
+
+  def test_truediv(self):
+    ei = exp_int(3, 1000)
+    m = (2 * ei) * self.it1 + (3 * ei - 1)
+    q = m / 2
+    self.assertIsInstance(q, Iterated_Math)
+    self.assertTrue(struct_eq(q.terms[0].coef, (2 * ei) / 2))
+    self.assertTrue(struct_eq(q.const, (3 * ei - 1) / 2))
+    self.assertTrue(struct_eq(m / 1, m))
+
+  def test_mult_func_apply_rep_with_iterated_math(self):
+    from Macro.Rule_Func import Mult_Func
+
+    # x -> 2x + 1 (m = 1)
+    func2 = Mult_Func(self.x, min=1, coef=2, const=1)
+    res2 = func2.apply_rep(self.it1 + 3, 1000)
+    self.assertIsInstance(res2, Iterated_Math)
+    ei2 = exp_int(2, 1000)
+    self.assertTrue(struct_eq(res2.terms[0].coef, ei2))
+    self.assertTrue(struct_eq(res2.const, 4 * ei2 - 1))
+    self.assertIsNotNone(res2.to_BigInterval())
+
+    # x -> 3x + 2 (m = 2)
+    func3 = Mult_Func(self.x, min=1, coef=3, const=2)
+    res3 = func3.apply_rep(self.it1 + 3, 1000)
+    self.assertIsInstance(res3, Iterated_Math)
+    ei3 = exp_int(3, 1000)
+    self.assertTrue(struct_eq(res3.terms[0].coef, (2 * ei3) / 2))
+    self.assertTrue(struct_eq(res3.const, (8 * ei3 - 2) / 2))
+    self.assertIsNotNone(res3.to_BigInterval())
+
+    # Also test starting directly from Iterated_Expression and num_reps=0
+    res_it = func3.apply_rep(self.it1, 1000)
+    self.assertIsInstance(res_it, Iterated_Math)
+    res_zero = func3.apply_rep(5, 0)
+    self.assertEqual(res_zero, 5)
+    self.assertIsInstance(res_zero, int)
 
 
 if __name__ == "__main__":

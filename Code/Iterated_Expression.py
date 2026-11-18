@@ -2,7 +2,7 @@ from fractions import Fraction
 from functools import cached_property
 import math
 
-from Algebraic_Expression import Expression, Variable, min_val, substitute, variables
+from Algebraic_Expression import Expression, Variable, div, min_val, substitute, variables
 from Big_Interval import BigInterval, Knuth10
 from Exp_Int import ExpInt, ExpTerm, is_simple, sign, struct_eq, try_eval, uparrow_size_approx
 from NatExpr import ConstInt, NatExpr, cmp_expr, expr_str, is_const, to_BigInterval
@@ -211,16 +211,6 @@ class Iterated_Expression(NatExpr):
     return expr_str(self)
 
   __str__ = __repr__
-
-  def __eq__(self, other):
-    if not isinstance(other, Iterated_Expression):
-      return False
-    return (
-      self.step_expr == other.step_expr
-      and self.var == other.var
-      and struct_eq(self.start_val, other.start_val)
-      and struct_eq(self.num_reps, other.num_reps)
-    )
 
   def try_eval(self):
     return None
@@ -1060,9 +1050,6 @@ class Iterated_Term:
   def copy(self):
     return Iterated_Term(self.it_expr, self.coef)
 
-  def __eq__(self, other):
-    return isinstance(other, Iterated_Term) and self.coef == other.coef and self.it_expr == other.it_expr
-
   def _str_tokens(self):
     if self.coef == 1:
       return (self.it_expr,)
@@ -1081,7 +1068,7 @@ def normalize_terms(terms: list[Iterated_Term]) -> list[Iterated_Term]:
       continue
     found = False
     for c in combined:
-      if c.it_expr == term.it_expr:
+      if struct_eq(c.it_expr, term.it_expr):
         c.coef += term.coef
         found = True
         break
@@ -1178,15 +1165,6 @@ class Iterated_Math(NatExpr):
     return expr_str(self)
 
   __str__ = __repr__
-
-  def __eq__(self, other):
-    if not isinstance(other, Iterated_Math):
-      return False
-    if len(self.terms) != len(other.terms):
-      return False
-    if not struct_eq(self.const, other.const):
-      return False
-    return all(t1 == t2 for t1, t2 in zip(self.terms, other.terms))
 
   def try_eval(self):
     return None
@@ -1307,13 +1285,23 @@ class Iterated_Math(NatExpr):
   def __mul__(self, other):
     if other == 0:
       return 0
-    if is_simple(other):
+    if is_simple(other) or isinstance(other, (ExpInt, Expression)):
       new_terms = [Iterated_Term(t.it_expr, t.coef * other) for t in self.terms]
       return Iterated_Math(new_terms, self.const * other)
     return NotImplemented
 
   def __rmul__(self, other):
     return self.__mul__(other)
+
+  def __truediv__(self, other):
+    other = int(other) if isinstance(other, NatExpr) else other
+    assert isinstance(other, int), (self, other, type(other))
+    if other == 0:
+      raise ZeroDivisionError("Cannot divide Iterated_Math by 0")
+    if other == 1:
+      return self
+    new_terms = [Iterated_Term(t.it_expr, div(t.coef, other)) for t in self.terms]
+    return Iterated_Math(new_terms, div(self.const, other))
 
   def __mod__(self, other):
     if other == 1:

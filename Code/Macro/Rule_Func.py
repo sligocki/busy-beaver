@@ -6,7 +6,7 @@ import math
 
 from Algebraic_Expression import Expression, VariableToExpression, variables
 from Exp_Int import ExpInt, exp_int
-from Iterated_Expression import Iterated_Expression
+from Iterated_Expression import Iterated_Expression, Iterated_Math
 
 
 def ceil_div(a, b):
@@ -123,7 +123,11 @@ class Mult_Func(Func):
     # be very large!
     m_n = exp_int(base=self.coef, exponent=num_reps)
     numer = (a * m + self.const) * m_n - self.const
-    assert isinstance(numer, (ExpInt, Expression)), numer
+    assert isinstance(numer, (int, ExpInt, Expression, Iterated_Math)), numer
+    if isinstance(numer, int):
+      q, r = divmod(numer, m)
+      assert r == 0, (numer, m, r)
+      return q
     return numer / m
 
 
