@@ -165,6 +165,43 @@ Transition table:
     t.tape[0].append(Tape.Repeated_Symbol(Turing_Machine.Block_Symbol((0, 1, 0)), 2))
     self.assertEqual(t.get_span(b3_tm, None), 6)
 
+  def test_block_timeout(self):
+    """Test that Block_Macro_Machine handles an expired TimeLimit without IndexError."""
+    tm = IO.parse_tm("1RB0LG_0RC1RA_1LD0LF_1LE---_1RE1LC_0LG0LC_0RA0RG")
+    tm.time_limit.expire()
+    b_tm = Turing_Machine.Block_Macro_Machine(tm, 2)
+
+    trans = b_tm.get_trans_object(b_tm.init_symbol, b_tm.init_state, b_tm.init_dir)
+    self.assertEqual(trans.condition, Turing_Machine.TIME_OUT)
+    self.assertEqual(trans.condition_details, (0,))
+
+  def test_backsymbol_block_timeout_race(self):
+    """Test timeout firing inside Backsymbol_Macro_Machine before Block_Macro_Machine.get_trans_object."""
+    from optparse import OptionParser
+
+    import Macro_Simulator
+    from Macro import Simulator
+
+    tm = IO.parse_tm("1RB0LG_0RC1RA_1LD0LF_1LE---_1RE1LC_0LG0LC_0RA0RG")
+    b_tm = Turing_Machine.Block_Macro_Machine(tm, 2)
+    bs_tm = Turing_Machine.Backsymbol_Macro_Machine(b_tm)
+
+    orig_get_trans = b_tm.get_trans_object
+
+    def expire_and_get_trans(*args):
+      tm.time_limit.expire()
+      return orig_get_trans(*args)
+
+    b_tm.get_trans_object = expire_and_get_trans
+
+    parser = OptionParser()
+    Macro_Simulator.add_option_group(parser)
+    options, _ = parser.parse_args([])
+    options.time = 0
+    sim = Simulator.Simulator(bs_tm, options)
+    sim.step()
+    self.assertEqual(sim.op_state, Turing_Machine.TIME_OUT)
+
 
 if __name__ == "__main__":
   unittest.main()

@@ -345,7 +345,7 @@ class Simulator:
         self.step_num += trans.num_base_steps * num_reps
         self.steps_from_chain += trans.num_base_steps * num_reps
     # Simple move
-    elif self.op_state != Turing_Machine.OVER_STEPS_IN_MACRO:
+    elif self.op_state in (Turing_Machine.RUNNING, Turing_Machine.HALT, Turing_Machine.UNDEFINED):
       if self.min_untouched_prefix is not None:
         self.min_untouched_prefix[self.dir] = min(
           self.min_untouched_prefix[self.dir],

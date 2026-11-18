@@ -168,7 +168,12 @@ def sim_limited(tm, state, start_tape, pos: int, dir: Dir, max_loops: int) -> Tr
   next_config_save = 128
 
   # Simulate Machine on macro symbol
-  while not tm.time_limit.timed_out:
+  while True:
+    if tm.time_limit.timed_out:
+      condition = TIME_OUT
+      condition_details = (pos,)
+      break
+
     symbol = tape[pos]
     trans = tm.get_trans_object(symbol, state, dir)
     for state, base_last_seen in trans.states_last_seen.items():
@@ -214,10 +219,6 @@ def sim_limited(tm, state, start_tape, pos: int, dir: Dir, max_loops: int) -> Tr
       condition = RUNNING
       condition_details = tuple()
       break
-
-  if tm.time_limit.timed_out:
-    condition = TIME_OUT
-    condition_details = tuple()
 
   return Transition(
     condition=condition,
@@ -572,7 +573,7 @@ class Block_Macro_Machine(Macro_Machine):
 
     # Convert symbol into the correct format.
     if trans.condition != RUNNING:
-      pos = trans.condition_details[-1]
+      pos = trans.condition_details[-1] if trans.condition_details else pos
       symbol_out = Tape_Head_Symbol(trans.symbol_out, trans.state_out, trans.dir_out, pos)
       state_out = Hidden_State()
       return trans.replace(symbol_out=symbol_out, state_out=state_out)
