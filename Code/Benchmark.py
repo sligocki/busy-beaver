@@ -67,6 +67,7 @@ class BenchConfig:
   exp_const_blocks: bool = True
   only_record_configs: bool = False
   exp_zero_exponents: bool = False
+  debug_reprove: bool = False
   use_big_interval: bool = True
   compute_steps: bool = False
 
@@ -100,6 +101,7 @@ class BenchConfig:
     options.exp_const_blocks = self.exp_const_blocks if self.prover else False
     options.only_record_configs = self.only_record_configs if self.prover else False
     options.exp_zero_exponents = self.exp_zero_exponents if self.prover else False
+    options.debug_reprove = self.debug_reprove if self.prover else False
     options.use_big_interval = self.use_big_interval
     options.compute_steps = self.compute_steps and not self.exp_linear_rules
     options.verbose_simulator = False
@@ -826,6 +828,7 @@ def run_one(entry):
   options.exp_const_blocks = bool(config.get("exp_const_blocks", True)) if options.prover else False
   options.only_record_configs = bool(config.get("only_record_configs", False)) if options.prover else False
   options.exp_zero_exponents = bool(config.get("exp_zero_exponents", False)) if options.prover else False
+  options.debug_reprove = bool(config.get("debug_reprove", False)) if options.prover else False
   options.use_big_interval = bool(config.get("use_big_interval", True))
   options.compute_steps = False
   options.verbose_simulator = False
@@ -1370,6 +1373,7 @@ def main(argv: list[str] | None = None) -> int:
   )
   p_run.add_argument("--time-limit", type=float, default=15.0, help="Per-TM timeout in seconds [default: 15.0]")
   p_run.add_argument("-j", "--jobs", type=int, default=default_jobs, help="Parallel worker processes")
+  p_run.add_argument("--debug-reprove", action="store_true", default=False, help="Enable --debug-reprove in prover")
   p_run.add_argument("--out", type=Path, help="Explicit output .jsonl.gz path (when running a single config)")
 
   # Subcommand: compare
@@ -1399,6 +1403,7 @@ def main(argv: list[str] | None = None) -> int:
   )
   p_mat.add_argument("--time-limit", type=float, default=15.0, help="Per-TM timeout in seconds")
   p_mat.add_argument("-j", "--jobs", type=int, default=default_jobs, help="Parallel worker processes")
+  p_mat.add_argument("--debug-reprove", action="store_true", default=False, help="Enable --debug-reprove in prover")
   p_mat.add_argument("--markdown", type=Path, help="Optional path to save Markdown report")
 
   args = parser.parse_args(argv)
@@ -1407,6 +1412,8 @@ def main(argv: list[str] | None = None) -> int:
     dataset_path, entries = load_dataset(args.dataset)
     dataset_name = dataset_path.stem.removesuffix(".jsonl")
     configs = _resolve_config_names(args.config, args.preset_group)
+    if args.debug_reprove:
+      configs = [dataclasses.replace(cfg, debug_reprove=True) for cfg in configs]
     for cfg in configs:
       if args.git_ref:
         run_git_snapshot(
@@ -1447,6 +1454,8 @@ def main(argv: list[str] | None = None) -> int:
     dataset_name = dataset_path.stem.removesuffix(".jsonl")
     preset_group = args.preset_group if (args.preset_group is not None or args.config is not None) else "core"
     configs = _resolve_config_names(args.config, preset_group)
+    if args.debug_reprove:
+      configs = [dataclasses.replace(cfg, debug_reprove=True) for cfg in configs]
 
     if args.baseline_config:
       valid_baselines = [cfg.name for cfg in configs]

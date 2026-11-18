@@ -1732,6 +1732,47 @@ class ProofSystemTest(unittest.TestCase):
     self.assertIn(8, sim.prover.rules)
     self.assertEqual(sim.prover.rules[8].min_list[2], 1)
 
+  def test_debug_reprove(self):
+    # Verify --debug-reprove passes on Green-17 and raises AssertionError on a bad rule.
+    import Green
+
+    tm = Green.green_machine(17)
+    macro_tm = Turing_Machine.Backsymbol_Macro_Machine(Turing_Machine.Block_Macro_Machine(tm, 2))
+    self.options.prover = True
+    self.options.recursive = True
+    self.options.limited_rules = True
+    self.options.exp_linear_rules = True
+    self.options.exp_meta_linear_rules = True
+    self.options.exp_const_blocks = True
+    self.options.exp_zero_exponents = True
+    self.options.debug_reprove = True
+    self.options.compute_steps = False
+    sim = Simulator.Simulator(macro_tm, self.options)
+    while sim.op_state == Turing_Machine.RUNNING and sim.total_loops < 10000:
+      sim.step()
+    self.assertEqual(sim.op_state, Turing_Machine.HALT)
+
+    # Corrupt a proven rule's diff_tape and verify _debug_reprove_rule raises AssertionError.
+    rule0 = sim.prover.rules[0]
+    bad_diff = rule0.diff_tape.copy()
+    bad_diff.tape[0][-1].num += 1
+    bad_rule = Proof_System.Diff_Rule(
+      rule0.initial_tape.copy(),
+      bad_diff,
+      rule0.initial_state,
+      rule0.num_steps,
+      rule0.num_loops,
+      rule0.num,
+      rule0.level,
+      rule0.states_last_seen,
+      left_dist=rule0.left_dist,
+      right_dist=rule0.right_dist,
+    )
+    bad_tape = rule0.initial_tape.copy()
+    bad_tape.tape[1].insert(0, Tape.Repeated_Symbol(rule0.initial_tape.tape[0][0].symbol, InfNat()))
+    with self.assertRaises(AssertionError):
+      sim.prover._debug_reprove_rule(bad_rule, (rule0.initial_state, bad_tape, 0))
+
 
 if __name__ == "__main__":
   unittest.main()

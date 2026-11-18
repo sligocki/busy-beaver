@@ -84,6 +84,12 @@ def add_option_group(parser):
     default=False,
     help="Allow rules to start or end with 0-repetition blocks when safe [Experimental]",
   )
+  group.add_option(
+    "--debug-reprove",
+    action="store_true",
+    default=False,
+    help="Verify each newly proven rule by simulating it from its tightest minimum exponents [Debug]",
+  )
 
   # A quick experiment shows that 100k past_configs -> 100MB, 1M -> 1GB RAM.
   group.add_option(
@@ -838,6 +844,7 @@ class Proof_System:
     self.exp_linear_rules = options.exp_linear_rules
     self.exp_meta_linear_rules = options.exp_meta_linear_rules
     self.exp_zero_exponents = getattr(options, "exp_zero_exponents", False)
+    self.debug_reprove = getattr(options, "debug_reprove", False)
     self.compute_steps = options.compute_steps
     self.verbose = options.verbose_prover  # Step-by-step state printing
     self.verbose_prefix = verbose_prefix
@@ -1508,6 +1515,9 @@ class Proof_System:
           self.print_this(str(rule).replace("\n", "\n " + self.verbose_prefix))
           print()
 
+      if self.debug_reprove:
+        self._debug_reprove_rule(rule, full_config)
+
       return rule
 
     else:  # Diff Rule
@@ -1586,7 +1596,102 @@ class Proof_System:
         self.print_this(str(rule).replace("\n", "\n " + self.verbose_prefix))
         print()
 
+      if self.debug_reprove:
+        self._debug_reprove_rule(rule, full_config)
+
       return rule
+
+  def _debug_reprove_rule(self, rule, full_config):
+    """Verify a newly proven rule by simulating it from its tightest minimum exponents."""
+    start_state, start_tape, _ = full_config
+    tight_tape = start_tape.copy()
+    expected_tape = start_tape.copy()
+
+    expected_state = start_state
+    if isinstance(rule, Diff_Rule):
+      for dir in range(2):
+        init_blocks = rule.initial_tape.tape[dir]
+        diff_blocks = rule.diff_tape.tape[dir]
+        offset = len(tight_tape.tape[dir]) - len(init_blocks)
+        assert offset >= 0, (len(tight_tape.tape[dir]), len(init_blocks))
+        for j, (init_b, diff_b) in enumerate(zip(init_blocks, diff_blocks)):
+          idx = offset + j
+          min_n = init_b.num.const if isinstance(init_b.num, Algebraic_Expression) else init_b.num
+          tight_tape.tape[dir][idx].num = min_n
+          expected_tape.tape[dir][idx].num = min_n + diff_b.num
+    else:
+      left_len = rule.left_dist if rule.is_limited else len(start_tape.tape[0])
+      right_len = rule.right_dist if rule.is_limited else len(start_tape.tape[1])
+      assert len(rule.min_list) == left_len + right_len
+      subs = {v: ConstantToExpression(m) for v, m in zip(rule.var_list, rule.min_list) if v is not None}
+      for i in range(len(rule.min_list)):
+        dir = 0 if i < left_len else 1
+        j = i if i < left_len else i - left_len
+        idx = (len(tight_tape.tape[dir]) - (left_len if dir == 0 else right_len)) + j
+        min_n = rule.min_list[i]
+        tight_tape.tape[dir][idx].num = min_n
+        if isinstance(rule, (Iterated_Rule, Exponential_Rule)):
+          func = rule.func_list[i]
+          if isinstance(func, Rule_Func.Iterated_Func):
+            out_n = substitute(func.step_expr, {func.var: ConstantToExpression(min_n)})
+          elif func:
+            out_n = func.apply_rep(min_n, 1)
+          else:
+            out_n = min_n
+        else:
+          out_n = substitute(rule.result_list[i], subs)
+          if isinstance(out_n, Algebraic_Expression) and out_n.is_const:
+            out_n = out_n.const
+        if not isinstance(out_n, int) and not getattr(out_n, "is_inf", False):
+          eval_n = Exp_Int.try_eval(out_n)
+          if eval_n is not None:
+            out_n = eval_n
+        expected_tape.tape[dir][idx].num = out_n
+
+    save_len = [
+      len(start_tape.tape[0]) - rule.left_dist if rule.is_limited else 0,
+      len(start_tape.tape[1]) - rule.right_dist if rule.is_limited else 0,
+    ]
+    for dir in range(2):
+      if save_len[dir] > 0:
+        sentinel = type(tight_tape.tape[dir][0])(-1, tight_tape.tape[dir][0].num)
+        tight_tape.tape[dir] = [sentinel] + tight_tape.tape[dir][save_len[dir] :]
+        expected_tape.tape[dir] = [sentinel.copy()] + expected_tape.tape[dir][save_len[dir] :]
+      tight_tape.tape[dir] = _normalize_half_tape(tight_tape.tape[dir])
+      expected_tape.tape[dir] = _normalize_half_tape(expected_tape.tape[dir])
+
+    check_sim = Simulator.Simulator(self.machine, self.options, init_tape=False, is_base_simulator=False)
+    check_sim.tape = tight_tape
+    check_sim.state = start_state
+    check_sim.dir = tight_tape.dir
+    if self.recursive:
+      check_sim.prover = copy.copy(self)
+      check_sim.prover.frozen = True
+      check_sim.prover.past_configs = None
+      check_sim.prover.verbose = False
+      check_sim.prover.debug_reprove = False
+    else:
+      check_sim.prover = None
+
+    max_loops = max(rule.num_loops * 2, rule.num_loops + 100)
+    while check_sim.op_state is Turing_Machine.RUNNING and check_sim.num_loops < max_loops:
+      if check_sim.tape.get_top_symbol() == -1:
+        raise AssertionError(f"--debug-reprove failed for rule {rule.num}: touched outside limited region\n{rule}")
+      check_sim.step()
+      if (
+        check_sim.state == expected_state
+        and check_sim.dir == expected_tape.dir
+        and _tapes_equal(check_sim.tape, expected_tape)
+      ):
+        return
+
+    raise AssertionError(
+      f"--debug-reprove failed for rule {rule.num} (state={check_sim.op_state}, "
+      f"loops={check_sim.num_loops}/{max_loops}):\n"
+      f"Rule:\n{rule}\n"
+      f"Expected: {expected_tape.print_with_state(expected_state)}\n"
+      f"Got:      {check_sim.tape.print_with_state(check_sim.state)}"
+    )
 
   def apply_rule(self, rule, start_config):
     """Try to apply a rule to a given configuration."""
@@ -2139,6 +2244,27 @@ def _const_matches(min_val, current_val):
   if getattr(min_val, "is_inf", False):
     return bool(getattr(current_val, "is_inf", False))
   return current_val == min_val
+
+
+def _tapes_equal(t1, t2):
+  if t1.dir != t2.dir:
+    return False
+  for dir in range(2):
+    if len(t1.tape[dir]) != len(t2.tape[dir]):
+      return False
+    for b1, b2 in zip(t1.tape[dir], t2.tape[dir]):
+      if b1.symbol != b2.symbol:
+        return False
+      if b1.num != b2.num:
+        if getattr(b1.num, "is_inf", False) or getattr(b2.num, "is_inf", False):
+          return False
+        try:
+          if not (always_ge(b1.num, b2.num) and always_ge(b2.num, b1.num)):
+            return False
+        except Exp_Int.ExpIntException:
+          if str(b1.num) != str(b2.num):
+            return False
+  return True
 
 
 def _consts_match(var_list, min_list, current_list):
