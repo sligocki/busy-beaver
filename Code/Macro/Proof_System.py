@@ -1801,6 +1801,11 @@ class Proof_System:
               in_var = next(iter(in_vars))
               req_min = init_block.num.const
               is_lim = dir == limit_dir and i == limit_index
+              # WARNING: Checking only the input block assumes any decreasing AE block is the
+              # limiting block (multiple decreasing exponents are only allowed for constants).
+              # If multi-decreasing rules are ever allowed with AEs, non-limiting decreasing
+              # blocks must also be checked at the start of their last iteration
+              # (ae.min_val(output) - diff - req_min).
               self.last_rule_var_info[in_var] = (
                 ae.min_val(return_block.num) - req_min + (0 if is_lim else 1),
                 is_lim,
@@ -1918,6 +1923,7 @@ class Proof_System:
           in_var = next(iter(in_vars))
           req_min = rule.min_list[i]
           is_lim = i == limit_index
+          # WARNING: See apply_diff_rule — assumes no non-limiting decreasing AE blocks.
           self.last_rule_var_info[in_var] = (
             ae.min_val(new_block.num) - req_min + (0 if is_lim else 1),
             is_lim,
