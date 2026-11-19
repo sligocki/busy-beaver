@@ -1607,28 +1607,34 @@ class Proof_System:
         assert offset >= 0, (len(tight_tape.tape[dir]), len(init_blocks))
         for j, (init_b, diff_b) in enumerate(zip(init_blocks, diff_blocks)):
           idx = offset + j
-          min_n = init_b.num.const if isinstance(init_b.num, Algebraic_Expression) else init_b.num
-          tight_tape.tape[dir][idx].num = min_n
-          expected_tape.tape[dir][idx].num = min_n + diff_b.num
+          if isinstance(init_b.num, Algebraic_Expression) and not init_b.num.is_const:
+            in_n = VariableToExpression(Variable()) + init_b.num.const
+          else:
+            in_n = init_b.num
+          tight_tape.tape[dir][idx].num = in_n
+          expected_tape.tape[dir][idx].num = in_n + diff_b.num
     else:
       left_len = rule.left_dist if rule.is_limited else len(start_tape.tape[0])
       right_len = rule.right_dist if rule.is_limited else len(start_tape.tape[1])
       assert len(rule.min_list) == left_len + right_len
-      subs = {v: ConstantToExpression(m) for v, m in zip(rule.var_list, rule.min_list) if v is not None}
+      in_exprs = [
+        VariableToExpression(Variable()) + m if v is not None else m for v, m in zip(rule.var_list, rule.min_list)
+      ]
+      subs = {v: expr for v, expr in zip(rule.var_list, in_exprs) if v is not None}
       for i in range(len(rule.min_list)):
         dir = 0 if i < left_len else 1
         j = i if i < left_len else i - left_len
         idx = (len(tight_tape.tape[dir]) - (left_len if dir == 0 else right_len)) + j
-        min_n = rule.min_list[i]
-        tight_tape.tape[dir][idx].num = min_n
+        in_n = in_exprs[i]
+        tight_tape.tape[dir][idx].num = in_n
         if isinstance(rule, (Iterated_Rule, Exponential_Rule)):
           func = rule.func_list[i]
           if isinstance(func, Rule_Func.Iterated_Func):
-            out_n = substitute(func.step_expr, {func.var: ConstantToExpression(min_n)})
+            out_n = substitute(func.step_expr, {func.var: in_n})
           elif func:
-            out_n = func.apply_rep(min_n, 1)
+            out_n = func.apply_rep(in_n, 1)
           else:
-            out_n = min_n
+            out_n = in_n
         else:
           out_n = substitute(rule.result_list[i], subs)
           if isinstance(out_n, Algebraic_Expression) and out_n.is_const:
@@ -1664,24 +1670,26 @@ class Proof_System:
     else:
       check_sim.prover = None
 
-    max_loops = max(rule.num_loops * 2, rule.num_loops + 100)
-    while check_sim.op_state is Turing_Machine.RUNNING and check_sim.num_loops < max_loops:
+    while check_sim.op_state is Turing_Machine.RUNNING and check_sim.num_loops < rule.num_loops:
       if check_sim.tape.get_top_symbol() == -1:
         raise AssertionError(
           f"--debug-reprove failed for rule {rule.num} (loops={check_sim.num_loops}/{rule.num_loops}): "
           f"touched outside limited region\n{rule}"
         )
       check_sim.step()
-      if (
-        check_sim.state == expected_state
-        and check_sim.dir == expected_tape.dir
-        and _tapes_equal(check_sim.tape, expected_tape)
-      ):
-        return
+
+    if (
+      check_sim.op_state is Turing_Machine.RUNNING
+      and check_sim.num_loops == rule.num_loops
+      and check_sim.state == expected_state
+      and check_sim.dir == expected_tape.dir
+      and _tapes_equal(check_sim.tape, expected_tape)
+    ):
+      return
 
     raise AssertionError(
       f"--debug-reprove failed for rule {rule.num} (state={check_sim.op_state}, "
-      f"loops={check_sim.num_loops}/{max_loops}):\n"
+      f"loops={check_sim.num_loops}/{rule.num_loops}):\n"
       f"Rule:\n{rule}\n"
       f"Expected: {expected_tape.print_with_state(expected_state)}\n"
       f"Got:      {check_sim.tape.print_with_state(check_sim.state)}"
@@ -2250,6 +2258,49 @@ def _ae_min_for_var(expr, x, delta=0):
   return c
 
 
+def _nums_equal(n1, n2):
+  """Compare two block counts (int, InfNat, Algebraic_Expression, or ExpInt)."""
+  if n1 == n2:
+    return True
+  if getattr(n1, "is_inf", False) or getattr(n2, "is_inf", False):
+    return False
+  try:
+    if always_ge(n1, n2) and always_ge(n2, n1):
+      return True
+  except (Exp_Int.ExpIntException, TypeError):
+    pass
+  if isinstance(n1, Algebraic_Expression) and isinstance(n2, Algebraic_Expression):
+    if (
+      _nums_equal(n1.const, n2.const)
+      and len(n1.terms) == len(n2.terms)
+      and all(t1.vars == t2.vars and _nums_equal(t1.coef, t2.coef) for t1, t2 in zip(n1.terms, n2.terms))
+    ):
+      return True
+  if isinstance(n1, Exp_Int.ExpInt) and isinstance(n2, Exp_Int.ExpInt):
+    if (
+      n1.const == n2.const
+      and n1.denom == n2.denom
+      and len(n1.terms) == len(n2.terms)
+      and all(
+        t1.base == t2.base and t1.coef == t2.coef and _nums_equal(t1.exponent, t2.exponent)
+        for t1, t2 in zip(n1.terms, n2.terms)
+      )
+    ):
+      return True
+  # ExpInt represents large towers via a float top; equivalent ASTs can differ slightly.
+  if isinstance(n1, Exp_Int.ExpInt):
+    try:
+      base = n1.terms[0].base
+      zero_exp = Exp_Int.ExpInt([Exp_Int.ExpTerm(base, 1, 1)], -base, 1)
+      u1 = n1.uparrow_size_approx
+      u2 = n2.uparrow_size_approx if isinstance(n2, Exp_Int.ExpInt) else (n2 + zero_exp).uparrow_size_approx
+      if u1[0] >= 2 and u1[0] == u2[0] and u1[1] == u2[1] and math.isclose(u1[2], u2[2], rel_tol=1e-6):
+        return True
+    except (AttributeError, NotImplementedError, Exp_Int.ExpIntException, AssertionError, TypeError):
+      pass
+  return False
+
+
 def _tapes_equal(t1, t2):
   """Compare two tapes for --debug-reprove, allowing float tolerance on large ExpInt towers."""
   if t1.dir != t2.dir:
@@ -2258,31 +2309,7 @@ def _tapes_equal(t1, t2):
     if len(t1.tape[dir]) != len(t2.tape[dir]):
       return False
     for b1, b2 in zip(t1.tape[dir], t2.tape[dir]):
-      if b1.symbol != b2.symbol:
-        return False
-      if b1.num != b2.num:
-        if getattr(b1.num, "is_inf", False) or getattr(b2.num, "is_inf", False):
-          return False
-        try:
-          if always_ge(b1.num, b2.num) and always_ge(b2.num, b1.num):
-            continue
-        except Exp_Int.ExpIntException:
-          pass
-        # ExpInt represents large towers via a float top; equivalent ASTs can differ slightly.
-        if isinstance(b1.num, Exp_Int.ExpInt):
-          try:
-            base = b1.num.terms[0].base
-            zero_exp = Exp_Int.ExpInt([Exp_Int.ExpTerm(base, 1, 1)], -base, 1)
-            u1 = b1.num.uparrow_size_approx
-            u2 = (
-              b2.num.uparrow_size_approx
-              if isinstance(b2.num, Exp_Int.ExpInt)
-              else (b2.num + zero_exp).uparrow_size_approx
-            )
-            if u1[0] >= 2 and u1[0] == u2[0] and u1[1] == u2[1] and math.isclose(u1[2], u2[2], rel_tol=1e-6):
-              continue
-          except (AttributeError, NotImplementedError, Exp_Int.ExpIntException, AssertionError):
-            pass
+      if b1.symbol != b2.symbol or not _nums_equal(b1.num, b2.num):
         return False
   return True
 
