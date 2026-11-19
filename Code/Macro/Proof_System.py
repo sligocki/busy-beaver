@@ -1223,9 +1223,10 @@ class Proof_System:
 
       prev_top_vars = variables(block.num)
       prev_top_var = next(iter(prev_top_vars)) if len(prev_top_vars) == 1 else None
-      prev_top_min = (
-        ae.min_val(block.num) if (prev_top_var is not None and isinstance(block.num, Algebraic_Expression)) else None
-      )
+      prev_top_is_ae = prev_top_var is not None and isinstance(block.num, Algebraic_Expression)
+      prev_top_min = _ae_min_for_var(block.num, prev_top_var) if prev_top_is_ae else None
+      # Sub-transition min after popping 1 symbol (before pushing), used for macro moves.
+      prev_top_sub_min = _ae_min_for_var(block.num, prev_top_var, delta=-1) if prev_top_is_ae else None
       prev_num_rule_moves = gen_sim.num_rule_moves
       prev_num_macro_moves = gen_sim.num_macro_moves
       prev_num_chain_moves = gen_sim.num_chain_moves
@@ -1254,8 +1255,8 @@ class Proof_System:
       if gen_sim.num_macro_moves > prev_num_macro_moves:
         for v in prev_top_vars:
           can_start_at_zero[v] = False
-        if self.exp_zero_exponents and prev_top_var in min_val and prev_top_min is not None:
-          min_val[prev_top_var] = min(min_val[prev_top_var], prev_top_min - 1)
+        if self.exp_zero_exponents and prev_top_var in min_val and prev_top_sub_min is not None:
+          min_val[prev_top_var] = min(min_val[prev_top_var], prev_top_sub_min)
       elif gen_sim.num_chain_moves > prev_num_chain_moves and prev_top_var in can_start_at_zero:
         if prev_top_min is not None and prev_top_min < min_val[prev_top_var]:
           can_start_at_zero[prev_top_var] = False
@@ -1276,7 +1277,7 @@ class Proof_System:
                 min_val[x] = cur_min
           elif len(vars) == 1 and isinstance(block.num, Algebraic_Expression):
             x = list(vars)[0]
-            cur_min = ae.min_val(block.num)
+            cur_min = _ae_min_for_var(block.num, x)
             if cur_min < min_val[x]:
               min_val[x] = cur_min
 
@@ -1676,7 +1677,10 @@ class Proof_System:
     max_loops = max(rule.num_loops * 2, rule.num_loops + 100)
     while check_sim.op_state is Turing_Machine.RUNNING and check_sim.num_loops < max_loops:
       if check_sim.tape.get_top_symbol() == -1:
-        raise AssertionError(f"--debug-reprove failed for rule {rule.num}: touched outside limited region\n{rule}")
+        raise AssertionError(
+          f"--debug-reprove failed for rule {rule.num} (loops={check_sim.num_loops}/{rule.num_loops}): "
+          f"touched outside limited region\n{rule}"
+        )
       check_sim.step()
       if (
         check_sim.state == expected_state
@@ -1912,7 +1916,7 @@ class Proof_System:
               # blocks must also be checked at the start of their last iteration
               # (ae.min_val(output) - diff - req_min).
               self.last_rule_var_info[in_var] = (
-                ae.min_val(return_block.num) - req_min + (0 if is_lim else 1),
+                _ae_min_for_var(return_block.num, in_var, delta=-req_min + (0 if is_lim else 1)),
                 is_lim,
                 req_min,
               )
@@ -2030,7 +2034,7 @@ class Proof_System:
           is_lim = i == limit_index
           # WARNING: See apply_diff_rule — assumes no non-limiting decreasing AE blocks.
           self.last_rule_var_info[in_var] = (
-            ae.min_val(new_block.num) - req_min + (0 if is_lim else 1),
+            _ae_min_for_var(new_block.num, in_var, delta=-req_min + (0 if is_lim else 1)),
             is_lim,
             req_min,
           )
@@ -2244,6 +2248,16 @@ def _const_matches(min_val, current_val):
   if getattr(min_val, "is_inf", False):
     return bool(getattr(current_val, "is_inf", False))
   return current_val == min_val
+
+
+def _ae_min_for_var(expr, x, delta=0):
+  """Effective min_val of `x` needed for `expr + delta >= 0`, accounting for linear coefs > 1."""
+  c = ae.min_val(expr) + delta
+  if len(expr.terms) == 1 and len(expr.terms[0].vars) == 1:
+    vp = expr.terms[0].vars[0]
+    if vp.var == x and vp.pow == 1 and is_const(expr.terms[0].coef) and expr.terms[0].coef > 1:
+      return c // expr.terms[0].coef
+  return c
 
 
 def _tapes_equal(t1, t2):

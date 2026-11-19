@@ -1773,6 +1773,32 @@ class ProofSystemTest(unittest.TestCase):
     with self.assertRaises(AssertionError):
       sim.prover._debug_reprove_rule(bad_rule, (rule0.initial_state, bad_tape, 0))
 
+  def test_linear_coef_gt_1_min_val(self):
+    # Regression test for _ae_min_for_var: 2x + c must divide by coef 2 when computing min_val.
+    x = Algebraic_Expression.Variable()
+    x_e = Algebraic_Expression.VariableToExpression(x)
+    self.assertEqual(Proof_System._ae_min_for_var(2 * x_e + 5, x), 2)
+    self.assertEqual(Proof_System._ae_min_for_var(2 * x_e + 5, x, delta=-1), 2)
+    self.assertEqual(Proof_System._ae_min_for_var(2 * x_e + 4, x, delta=-1), 1)
+
+    # On top_level:888, Rule 8 doubles x to 2x + c before decrementing; --debug-reprove
+    # must pass (requires min >= 2 on 01^(...)).
+    tm = IO.parse_tm("1RB0RE_1RC1RA_0LD1LA_1LE1LA_0RB0LF_1LC1LG_0LE---")
+    macro_tm = Turing_Machine.Backsymbol_Macro_Machine(Turing_Machine.Block_Macro_Machine(tm, 2))
+    self.options.prover = True
+    self.options.recursive = True
+    self.options.limited_rules = True
+    self.options.exp_linear_rules = True
+    self.options.exp_meta_linear_rules = True
+    self.options.exp_const_blocks = True
+    self.options.exp_zero_exponents = True
+    self.options.debug_reprove = True
+    self.options.compute_steps = False
+    sim = Simulator.Simulator(macro_tm, self.options)
+    while sim.op_state == Turing_Machine.RUNNING and sim.prover.num_rules <= 8 and sim.total_loops < 10000:
+      sim.step()
+    self.assertIn(8, sim.prover.rules)
+
 
 if __name__ == "__main__":
   unittest.main()
