@@ -1799,6 +1799,39 @@ class ProofSystemTest(unittest.TestCase):
       sim.step()
     self.assertIn(8, sim.prover.rules)
 
+  def test_meta_diff_rule_tightening_and_debug_reprove(self):
+    # Verify level-2+ Diff_Rules are tightened (1RB1RD_... proves Rule 2 with
+    # mins (1, 1, 3) instead of (17, 8, 16)), and --debug-reprove ignores peer-level rules.
+    tm = IO.parse_tm("1RB1RD_1LC1RA_1RB1LD_1RE0LC_0LC0RA")
+    macro_tm = Turing_Machine.Backsymbol_Macro_Machine(Turing_Machine.Block_Macro_Machine(tm, 2))
+    self.options.prover = True
+    self.options.recursive = True
+    self.options.limited_rules = True
+    self.options.exp_linear_rules = True
+    self.options.exp_meta_linear_rules = True
+    self.options.exp_const_blocks = True
+    self.options.exp_zero_exponents = True
+    self.options.debug_reprove = True
+    self.options.compute_steps = False
+    sim = Simulator.Simulator(macro_tm, self.options)
+    while sim.op_state == Turing_Machine.RUNNING and sim.prover.num_rules <= 2 and sim.total_loops < 2000:
+      sim.step()
+    self.assertIn(2, sim.prover.rules)
+    rule2 = sim.prover.rules[2]
+    self.assertEqual(rule2.level, 2)
+    self.assertEqual(rule2.initial_tape.tape[0][-3].num.const, 1)
+    self.assertEqual(rule2.initial_tape.tape[0][-1].num.const, 1)
+    self.assertEqual(rule2.initial_tape.tape[1][-1].num.const, 3)
+
+    # Re-running _debug_reprove_rule when peer level-2 rule2 is already in sim.prover.rules
+    # must still pass (verifying peer-level filtering in _debug_reprove_rule).
+    full_tape = rule2.initial_tape.copy()
+    for d in range(2):
+      for b in full_tape.tape[d]:
+        if isinstance(b.num, Algebraic_Expression.Algebraic_Expression):
+          b.num = b.num.const + 10
+    sim.prover._debug_reprove_rule(rule2, (rule2.initial_state, full_tape, 0))
+
 
 if __name__ == "__main__":
   unittest.main()

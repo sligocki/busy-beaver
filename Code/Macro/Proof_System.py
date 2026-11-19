@@ -1523,52 +1523,42 @@ class Proof_System:
 
     else:  # Diff Rule
       assert is_diff_rule
-      if rule_level == 1:
-        # Tighten up rule to be as general as possible
-        # (e.g. by replacing x+5 with x+1 if the rule holds for 1).
-        # This is only safe for basic rules (not meta rules. See Issue 4).
-        replaces = {}
-        new_const_blocks = set(const_blocks)
-        for dir in range(2):
-          for init_block in initial_tape.tape[dir]:
-            if isinstance(init_block.num, Algebraic_Expression):
-              x = init_block.num.variable_restricted()
-              allow_zero = self.exp_zero_exponents and (
-                min_val[x] < init_block.num.const or can_start_at_zero.get(x, False)
-              )
-              offset = 0 if allow_zero else 1
-              if min_val[x] - offset < 0 and x in init_var_pos:
-                new_const_blocks.add(init_var_pos[x])
-              new_value = VariableToExpression(x) - min_val[x] + offset
-              init_block.num = init_block.num.substitute({x: new_value})
-              replaces[x] = new_value
-            else:
-              assert is_const(init_block.num), init_block
-        if getattr(self.options, "exp_const_blocks", True) and new_const_blocks != const_blocks:
-          if self.verbose:
-            self.print_this(f"[PROVER] Reproving with constant blocks {sorted(new_const_blocks)} (min_val reached 0)")
-          return self._prove_rule(stripped_config, full_config, delta_loop, const_blocks=new_const_blocks)
-        # Fix diff_tape.  # TODO: rm, only happens for recursive_rules
-        for dir in range(2):
-          for diff_block in diff_tape.tape[dir]:
-            diff_block.num = substitute(diff_block.num, replaces)
-        # Fix num_steps.
-        if self.compute_steps:
-          num_steps = substitute(gen_sim.step_num, replaces)
-          states_last_seen = {
-            state: substitute(last_seen, replaces) for state, last_seen in gen_sim.states_last_seen.items()
-          }
-        else:
-          num_steps = 0
-          states_last_seen = None
-
-      else:  # rule_level > 1
-        if self.compute_steps:
-          num_steps = gen_sim.step_num
-          states_last_seen = gen_sim.states_last_seen
-        else:
-          num_steps = 0
-          states_last_seen = None
+      # Tighten up rule to be as general as possible
+      # (e.g. by replacing x+5 with x+1 if the rule holds for 1).
+      replaces = {}
+      new_const_blocks = set(const_blocks)
+      for dir in range(2):
+        for init_block in initial_tape.tape[dir]:
+          if isinstance(init_block.num, Algebraic_Expression):
+            x = init_block.num.variable_restricted()
+            allow_zero = self.exp_zero_exponents and (
+              min_val[x] < init_block.num.const or can_start_at_zero.get(x, False)
+            )
+            offset = 0 if allow_zero else 1
+            if min_val[x] - offset < 0 and x in init_var_pos:
+              new_const_blocks.add(init_var_pos[x])
+            new_value = VariableToExpression(x) - min_val[x] + offset
+            init_block.num = init_block.num.substitute({x: new_value})
+            replaces[x] = new_value
+          else:
+            assert is_const(init_block.num), init_block
+      if getattr(self.options, "exp_const_blocks", True) and new_const_blocks != const_blocks:
+        if self.verbose:
+          self.print_this(f"[PROVER] Reproving with constant blocks {sorted(new_const_blocks)} (min_val reached 0)")
+        return self._prove_rule(stripped_config, full_config, delta_loop, const_blocks=new_const_blocks)
+      # Fix diff_tape (needed for recursive meta diff rules).
+      for dir in range(2):
+        for diff_block in diff_tape.tape[dir]:
+          diff_block.num = substitute(diff_block.num, replaces)
+      # Fix num_steps.
+      if self.compute_steps:
+        num_steps = substitute(gen_sim.step_num, replaces)
+        states_last_seen = {
+          state: substitute(last_seen, replaces) for state, last_seen in gen_sim.states_last_seen.items()
+        }
+      else:
+        num_steps = 0
+        states_last_seen = None
 
       # Cast num_steps as an Algebraic Expression (if it somehow got through
       # as simply an int)
