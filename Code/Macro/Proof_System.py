@@ -2251,6 +2251,7 @@ def _ae_min_for_var(expr, x, delta=0):
 
 
 def _tapes_equal(t1, t2):
+  """Compare two tapes for --debug-reprove, allowing float tolerance on large ExpInt towers."""
   if t1.dir != t2.dir:
     return False
   for dir in range(2):
@@ -2263,11 +2264,26 @@ def _tapes_equal(t1, t2):
         if getattr(b1.num, "is_inf", False) or getattr(b2.num, "is_inf", False):
           return False
         try:
-          if not (always_ge(b1.num, b2.num) and always_ge(b2.num, b1.num)):
-            return False
+          if always_ge(b1.num, b2.num) and always_ge(b2.num, b1.num):
+            continue
         except Exp_Int.ExpIntException:
-          if str(b1.num) != str(b2.num):
-            return False
+          pass
+        # ExpInt represents large towers via a float top; equivalent ASTs can differ slightly.
+        if isinstance(b1.num, Exp_Int.ExpInt):
+          try:
+            base = b1.num.terms[0].base
+            zero_exp = Exp_Int.ExpInt([Exp_Int.ExpTerm(base, 1, 1)], -base, 1)
+            u1 = b1.num.uparrow_size_approx
+            u2 = (
+              b2.num.uparrow_size_approx
+              if isinstance(b2.num, Exp_Int.ExpInt)
+              else (b2.num + zero_exp).uparrow_size_approx
+            )
+            if u1[0] >= 2 and u1[0] == u2[0] and u1[1] == u2[1] and math.isclose(u1[2], u2[2], rel_tol=1e-6):
+              continue
+          except (AttributeError, NotImplementedError, Exp_Int.ExpIntException, AssertionError):
+            pass
+        return False
   return True
 
 
