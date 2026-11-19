@@ -1657,7 +1657,26 @@ class Proof_System:
       tight_tape.tape[dir] = _normalize_half_tape(tight_tape.tape[dir])
       expected_tape.tape[dir] = _normalize_half_tape(expected_tape.tape[dir])
 
-    check_sim = Simulator.Simulator(self.machine, self.options, init_tape=False, is_base_simulator=False)
+    if self.verbose:
+      print()
+      self.print_this("** Reproving rule **")
+      self.print_this("Start config:", tight_tape.print_with_state(start_state))
+      self.print_this("Expected config:", expected_tape.print_with_state(expected_state))
+      self.print_this("Loops:", rule.num_loops)
+
+    check_options = copy.copy(self.options)
+    check_options.max_loops = 0
+    check_options.recursive = False
+    check_options.prover = False
+    check_options.verbose_prover = False
+    check_options.verbose_simulator = self.verbose
+    check_sim = Simulator.Simulator(
+      self.machine,
+      check_options,
+      init_tape=False,
+      verbose_prefix=self.verbose_prefix + "  ",
+      is_base_simulator=False,
+    )
     check_sim.tape = tight_tape
     check_sim.state = start_state
     check_sim.dir = tight_tape.dir
@@ -1665,11 +1684,12 @@ class Proof_System:
       check_sim.prover = copy.copy(self)
       check_sim.prover.frozen = True
       check_sim.prover.past_configs = None
-      check_sim.prover.verbose = False
+      check_sim.prover.verbose_prefix = check_sim.verbose_prefix + "  "
       check_sim.prover.debug_reprove = False
     else:
       check_sim.prover = None
 
+    check_sim.verbose_print()
     while check_sim.op_state is Turing_Machine.RUNNING and check_sim.num_loops < rule.num_loops:
       if check_sim.tape.get_top_symbol() == -1:
         raise AssertionError(
@@ -1685,6 +1705,8 @@ class Proof_System:
       and check_sim.dir == expected_tape.dir
       and _tapes_equal(check_sim.tape, expected_tape)
     ):
+      if self.verbose:
+        self.print_this("** Reprove succeeded **")
       return
 
     raise AssertionError(
