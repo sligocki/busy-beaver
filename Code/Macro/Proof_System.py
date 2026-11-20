@@ -742,6 +742,10 @@ def stripped_info(block):
   """
   if getattr(block.num, "is_inf", False):
     return block.symbol, -1
+  # Note: We treat singleton blocks specially. It's quite common to have many singleton blocks
+  # in a rule that do not change. With const-block feature, we could re-discover this automatically.
+  # But it turns out that this has an unexpected positive side-effect as well. It means we never
+  # try to start proving a rule (for decreasing exponents) when that exponent is 1 which would fail.
   elif block.num == 1:
     return block.symbol, 1
   else:
