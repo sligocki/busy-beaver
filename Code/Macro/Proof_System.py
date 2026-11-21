@@ -1085,8 +1085,23 @@ class Proof_System:
 
     self.num_rules += 1
     self.num_rules_by_level[rule.level] += 1
-    if isinstance(rule, Diff_Rule) and rule.level > 1:
-      self.num_meta_diff_rules += 1
+    if isinstance(rule, Diff_Rule):
+      if rule.level > 1:
+        self.num_meta_diff_rules += 1
+      if rule.has_collatz_decrease:
+        self.num_collatz_rules += 1
+    elif isinstance(rule, Iterated_Rule):
+      self.num_linear_rules += 1
+      if not rule.infinite:
+        self.num_finite_linear_rules += 1
+      if rule.has_collatz_decrease:
+        self.num_collatz_rules += 1
+    elif isinstance(rule, Exponential_Rule):
+      self.num_exponential_rules += 1
+      if rule.has_collatz_decrease:
+        self.num_collatz_rules += 1
+    elif isinstance(rule, General_Rule):
+      self.num_gen_rules += 1
 
     # Clear our memory. We cannot use it for future rules because the
     # number of steps will be wrong now that we have proven this rule.
@@ -1452,11 +1467,6 @@ class Proof_System:
       if rule:
         if self.options.limited_rules:
           rule.make_limited(left_dist, right_dist)
-        self.num_linear_rules += 1
-        if not rule.infinite:
-          self.num_finite_linear_rules += 1
-        if rule.has_collatz_decrease:
-          self.num_collatz_rules += 1
 
         if self.verbose:
           print()
@@ -1481,9 +1491,6 @@ class Proof_System:
         if rule:
           if self.options.limited_rules:
             rule.make_limited(left_dist, right_dist)
-          self.num_exponential_rules += 1
-          if rule.has_collatz_decrease:
-            self.num_collatz_rules += 1
 
           if self.verbose:
             print()
@@ -1512,7 +1519,6 @@ class Proof_System:
         )
         if self.options.limited_rules:
           rule.make_limited(left_dist, right_dist)
-        self.num_gen_rules += 1
 
         if self.verbose:
           print()
@@ -1581,9 +1587,6 @@ class Proof_System:
         left_dist=left_dist if self.options.limited_rules else None,
         right_dist=right_dist if self.options.limited_rules else None,
       )
-
-      if rule.has_collatz_decrease:
-        self.num_collatz_rules += 1
 
       if self.verbose:
         print()
