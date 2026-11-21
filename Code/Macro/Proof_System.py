@@ -943,20 +943,15 @@ class Proof_System:
         if not rule:
           self.num_failed_proofs += 1
         else:
+          self.add_rule(rule, stripped_config)
+
           # Try to apply transition
           is_good, res = self.apply_rule(rule, full_config)
           if is_good:
-            self.add_rule(rule, stripped_config)
             result, _ = res
             rule.num_uses += 1
             assert isinstance(result, ProverResult), result
             return result
-          self.last_prove_fail_reason = f"Newly proven rule could not apply ({res})"
-          if self.verbose:
-            print()
-            self.print_this(f"[PROVER FAILURE] Newly proven rule could not apply: {res}")
-            print()
-          self.num_failed_proofs += 1
       elif len(self.past_configs) > self.options.max_prover_configs:
         self.past_configs.clear()
 

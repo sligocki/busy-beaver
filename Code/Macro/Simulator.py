@@ -13,6 +13,7 @@ from optparse import OptionGroup, OptionParser
 import io_pb2
 from Algebraic_Expression import Algebraic_Expression
 from Exp_Int import ExpIntGaveUp
+from Iterated_Expression import IteratedExprGaveUp
 from NatExpr import approx_and_full_str, approx_str, big_interval_str
 from Macro import Proof_System, Tape, Turing_Machine
 from Macro.Turing_Machine import LEFT, RIGHT
@@ -188,7 +189,7 @@ class Simulator:
 
     try:
       self._step(max_loops=max_loops)
-    except ExpIntGaveUp as e:
+    except (ExpIntGaveUp, IteratedExprGaveUp) as e:
       self.op_state = Turing_Machine.EXPRESSION_TOO_COMPLEX
       self.op_details = (str(e),)
       self.verbose_print()

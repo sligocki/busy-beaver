@@ -8,6 +8,12 @@ from Exp_Int import ExpInt, ExpTerm, is_simple, sign, struct_eq, try_eval, uparr
 from NatExpr import ConstInt, NatExpr, cmp_expr, expr_str, is_const, to_BigInterval
 
 
+class IteratedExprGaveUp(Exception):
+  """Raised when an operation on Iterated_Expression / Iterated_Math is unsupported."""
+
+  pass
+
+
 def _int_val(x):
   if isinstance(x, int):
     return x
@@ -267,7 +273,7 @@ class Iterated_Expression(NatExpr):
   def __divmod__(self, other):
     if other == 1:
       return (self, 0)
-    raise NotImplementedError("Cannot mod Iterated_Expression by non-1 value")
+    raise IteratedExprGaveUp(f"Cannot divmod Iterated_Expression by {other}: {self}")
 
   def __neg__(self):
     return Iterated_Math([Iterated_Term(self, -1)], 0)
@@ -1319,7 +1325,7 @@ class Iterated_Math(NatExpr):
       new_terms = [Iterated_Term(t.it_expr, t.coef // other) for t in self.terms]
       return (Iterated_Math(new_terms, q), r)
     # TODO: Support general case when coef % other != 0.
-    raise NotImplementedError(f"Cannot divmod Iterated_Math by {other}: {self}")
+    raise IteratedExprGaveUp(f"Cannot divmod Iterated_Math by {other}: {self}")
 
   def __abs__(self):
     return self

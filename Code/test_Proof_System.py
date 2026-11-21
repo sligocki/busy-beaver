@@ -13,7 +13,7 @@ from unittest import mock
 import Algebraic_Expression
 import IO
 import io_pb2
-from Iterated_Expression import Iterated_Expression
+from Iterated_Expression import Iterated_Expression, IteratedExprGaveUp
 from Macro import Proof_System, Simulator, Tape, Turing_Machine
 from Macro.Turing_Machine import Block_Symbol
 from NatExpr import InfNat
@@ -1536,7 +1536,7 @@ class ProofSystemTest(unittest.TestCase):
     prover = Proof_System.Proof_System(tm, self.options, "")
     state_A = Turing_Machine.Simple_Machine_State(0)
 
-    # 1. apply_rule returns (False, None) when mod/divmod raises NotImplementedError.
+    # 1. apply_rule lets IteratedExprGaveUp propagate when Iterated_Expression/Math divmod is unsupported.
     a_expr = Algebraic_Expression.Expression_from_string("(a+2)")
     var_a = a_expr.variable_restricted()
     var_list = [None, var_a]
@@ -1559,21 +1559,35 @@ class ProofSystemTest(unittest.TestCase):
     apply_tape.init(0, Turing_Machine.RIGHT, self.options)
     apply_tape.tape[0] = [Tape.Repeated_Symbol(0, InfNat())]
     apply_tape.tape[1] = [Tape.Repeated_Symbol(1, it_val)]
-    self.assertEqual(prover.apply_rule(iter_rule, (state_A, apply_tape, 0)), (False, None))
+    with self.assertRaises(IteratedExprGaveUp):
+      prover.apply_rule(iter_rule, (state_A, apply_tape, 0))
 
-    # 2. prove_rule returns None and records failure reason on NotImplementedError.
+    # 2. apply_rule returns (False, None) and prove_rule returns None on NotImplementedError.
+    with mock.patch.object(prover, "apply_linear_rule", side_effect=NotImplementedError("Cannot mod")):
+      self.assertEqual(prover.apply_rule(iter_rule, (state_A, apply_tape, 0)), (False, None))
     stripped = Proof_System.strip_config(state_A, Turing_Machine.RIGHT, apply_tape.tape)
     with mock.patch.object(prover, "_prove_rule", side_effect=NotImplementedError("Cannot mod")):
       self.assertIsNone(prover.prove_rule(stripped, (state_A, apply_tape, 0), delta_loop=1))
     self.assertEqual(prover.last_prove_fail_reason, "Cannot mod")
 
-    # 3. Full simulation of the TM from errors.txt continues past the divmod NotImplementedError.
+    # 3. Full simulation of the TM from errors.txt continues past symbolic NotImplementedError.
     macro_tm = Turing_Machine.Block_Macro_Machine(tm, 2)
     macro_tm = Turing_Machine.Backsymbol_Macro_Machine(macro_tm)
     sim = Simulator.Simulator(macro_tm, self.options)
     sim.loop_run(5000)
     self.assertEqual(sim.op_state, Turing_Machine.RUNNING)
     self.assertEqual(sim.total_loops, 5000)
+
+    # 4. Concrete IteratedExprGaveUp during rule application ends simulation with EXPRESSION_TOO_COMPLEX.
+    tm2 = IO.parse_tm("1RB0LC_0RC---_1LD0RG_0LE1LB_0LA0LF_1LE1LD_1RC1RF")
+    macro_tm2 = Turing_Machine.Block_Macro_Machine(tm2, 12)
+    macro_tm2 = Turing_Machine.Backsymbol_Macro_Machine(macro_tm2)
+    self.options.exp_zero_exponents = True
+    sim2 = Simulator.Simulator(macro_tm2, self.options)
+    sim2.loop_run(10_000)
+    self.assertEqual(sim2.op_state, Turing_Machine.EXPRESSION_TOO_COMPLEX)
+    self.assertEqual(sim2.prover.num_rules, 6)
+    self.assertEqual(sim2.prover.num_linear_rules, 4)
 
   def test_prove_higher_level_rule_on_same_stripped_config(self):
     # Even when a lower-level rule already matches and applies to a stripped_config,
