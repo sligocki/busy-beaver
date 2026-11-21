@@ -2,9 +2,10 @@ from fractions import Fraction
 from functools import cached_property
 import math
 
-from Algebraic_Expression import Expression, Variable, div, min_val, substitute, variables
+from Algebraic_Expression import Expression, Variable, VariableToExpression, div, min_val, substitute, variables
 from Big_Interval import BigInterval, Knuth10
 from Exp_Int import ExpInt, ExpTerm, is_simple, sign, struct_eq, try_eval, uparrow_size_approx
+from Math import carmichael
 from NatExpr import ConstInt, NatExpr, cmp_expr, expr_str, is_const, to_BigInterval
 
 
@@ -188,6 +189,219 @@ def get_depth(expr, var):
   return g[1] if g[0] == 1 else g[0]
 
 
+def _unwrap_const_expr(x):
+  while isinstance(x, Expression) and x.is_const:
+    x = x.const
+  return x
+
+
+def _expr_frac_denom(expr: Expression) -> int:
+  d = 1
+  if isinstance(expr.const, Fraction):
+    d = math.lcm(d, expr.const.denominator)
+  for term in expr.terms:
+    if isinstance(term.coef, Fraction):
+      d = math.lcm(d, term.coef.denominator)
+  return d
+
+
+def _req_mod(expr, var, m: int, max_mod: int = 100_000) -> int:
+  """Return modulus k on `var` sufficient to determine `expr(var) % m` (above Carmichael tails)."""
+  if m <= 1:
+    return 1
+  expr = _unwrap_const_expr(expr)
+  if var not in variables(expr):
+    return 1
+  if isinstance(expr, Variable):
+    assert expr == var
+    return m
+  if isinstance(expr, Expression):
+    d = _expr_frac_denom(expr)
+    m_num = m * d
+    if m_num > max_mod * 100:
+      raise IteratedExprGaveUp(f"Modulus too large in _req_mod: {m_num}")
+    res = 1
+    for term in expr.terms:
+      has_var_in_vars = any(vp.var == var for vp in term.vars)
+      has_var_in_coef = var in variables(term.coef)
+      if not has_var_in_vars and not has_var_in_coef:
+        continue
+      if isinstance(term.coef, (int, Fraction)):
+        c = int(term.coef * d)
+        g = math.gcd(m_num, abs(c))
+        m_term = m_num // g
+        if m_term == 1:
+          continue
+        if has_var_in_vars:
+          res = math.lcm(res, m_term)
+      else:
+        if has_var_in_vars:
+          res = math.lcm(res, m_num)
+        if has_var_in_coef:
+          res = math.lcm(res, _req_mod(term.coef, var, m_num, max_mod))
+    if var in variables(expr.const):
+      res = math.lcm(res, _req_mod(expr.const, var, m_num, max_mod))
+    return res
+  if isinstance(expr, ExpInt):
+    m_num = m * expr.denom
+    if m_num > max_mod * 100:
+      raise IteratedExprGaveUp(f"Modulus too large in _req_mod: {m_num}")
+    res = 1
+    for term in expr.terms:
+      if var not in term.vars:
+        continue
+      if isinstance(term.coef, int):
+        g = math.gcd(m_num, abs(term.coef))
+        m_term = m_num // g
+        if m_term == 1:
+          continue
+      else:
+        m_term = m_num
+        if var in variables(term.coef):
+          res = math.lcm(res, _req_mod(term.coef, var, m_num, max_mod))
+      kp, _k0 = carmichael(m_term)
+      res = math.lcm(res, _req_mod(term.exponent, var, kp, max_mod))
+    if var in variables(expr.const):
+      res = math.lcm(res, _req_mod(expr.const, var, m_num, max_mod))
+    return res
+  raise IteratedExprGaveUp(f"Unsupported expression type in _req_mod: {type(expr).__name__}")
+
+
+def _closure_mod(step_expr, var, target_mod: int, max_mod: int = 100_000) -> int:
+  L = target_mod
+  while True:
+    req = _req_mod(step_expr, var, L, max_mod=max_mod)
+    new_L = math.lcm(L, req)
+    if new_L == L:
+      return L
+    if new_L > max_mod:
+      raise IteratedExprGaveUp(f"Closure modulus exceeded {max_mod} for mod {target_mod}")
+    L = new_L
+
+
+def _exponents_above_tail(expr, var, m: int, x_lb: int) -> bool:
+  """Check whether all ExpTerm exponents in `expr` are >= Carmichael tail k0 for all var >= x_lb."""
+  if m <= 1:
+    return True
+  expr = _unwrap_const_expr(expr)
+  if var not in variables(expr):
+    return True
+  if isinstance(expr, Variable):
+    return True
+  if isinstance(expr, Expression):
+    d = _expr_frac_denom(expr)
+    m_num = m * d
+    for term in expr.terms:
+      if var in variables(term.coef):
+        if not _exponents_above_tail(term.coef, var, m_num, x_lb):
+          return False
+    if var in variables(expr.const):
+      if not _exponents_above_tail(expr.const, var, m_num, x_lb):
+        return False
+    return True
+  if isinstance(expr, ExpInt):
+    m_num = m * expr.denom
+    for term in expr.terms:
+      if var not in term.vars:
+        continue
+      if isinstance(term.coef, int):
+        g = math.gcd(m_num, abs(term.coef))
+        m_term = m_num // g
+        if m_term == 1:
+          continue
+      else:
+        m_term = m_num
+        if var in variables(term.coef):
+          if not _exponents_above_tail(term.coef, var, m_num, x_lb):
+            return False
+      kp, k0 = carmichael(m_term)
+      shifted_exp = term.exponent if x_lb == 0 else substitute(term.exponent, {var: VariableToExpression(var) + x_lb})
+      if _unwrap_const_expr(min_val(shifted_exp)) < k0:
+        return False
+      if not _exponents_above_tail(term.exponent, var, kp, x_lb):
+        return False
+    if var in variables(expr.const):
+      if not _exponents_above_tail(expr.const, var, m_num, x_lb):
+        return False
+    return True
+  return False
+
+
+def _eval_mod(expr, var, x_mod: int, m: int) -> int:
+  """Evaluate `expr(x) % m` given `x ≡ x_mod (mod L)` (assuming all exponents >= Carmichael tails)."""
+  if m <= 1:
+    return 0
+  expr = _unwrap_const_expr(expr)
+  if var not in variables(expr):
+    return int(expr % m)
+  if isinstance(expr, Variable):
+    assert expr == var
+    return x_mod % m
+  if isinstance(expr, Expression):
+    d = _expr_frac_denom(expr)
+    m_num = m * d
+    if isinstance(expr.const, Fraction):
+      total = int(expr.const * d) % m_num
+    else:
+      total = (_eval_mod(expr.const, var, x_mod, m_num) * d) % m_num
+    for term in expr.terms:
+      var_part = 1
+      for vp in term.vars:
+        v_mod = _eval_mod(vp.var, var, x_mod, m_num)
+        var_part = (var_part * pow(v_mod, vp.pow, m_num)) % m_num
+      if isinstance(term.coef, Fraction):
+        c_mod = int(term.coef * d) % m_num
+      else:
+        c_mod = (_eval_mod(term.coef, var, x_mod, m_num) * d) % m_num
+      total = (total + c_mod * var_part) % m_num
+    q, rem = divmod(total, d)
+    if rem != 0:
+      raise IteratedExprGaveUp(f"Non-integer Expression in _eval_mod: {expr}")
+    return q % m
+  if isinstance(expr, ExpInt):
+    m_num = m * expr.denom
+    total = _eval_mod(expr.const, var, x_mod, m_num)
+    for term in expr.terms:
+      if var not in term.vars:
+        total = (total + term.mod(m_num)) % m_num
+      elif isinstance(term.coef, int):
+        g = math.gcd(m_num, abs(term.coef))
+        m_term = m_num // g
+        if m_term == 1:
+          continue
+        kp, k0 = carmichael(m_term)
+        e_mod = _eval_mod(term.exponent, var, x_mod, kp)
+        kn = (e_mod - k0) % kp + k0
+        p_mod = pow(term.base, kn, m_term)
+        total = (total + term.coef * p_mod) % m_num
+      else:
+        kp, k0 = carmichael(m_num)
+        c_mod = _eval_mod(term.coef, var, x_mod, m_num)
+        e_mod = _eval_mod(term.exponent, var, x_mod, kp)
+        kn = (e_mod - k0) % kp + k0
+        p_mod = pow(term.base, kn, m_num)
+        total = (total + c_mod * p_mod) % m_num
+    q, rem = divmod(total, expr.denom)
+    if rem != 0:
+      raise IteratedExprGaveUp(f"Non-integer ExpInt in _eval_mod: {expr}")
+    return q % m
+  raise IteratedExprGaveUp(f"Unsupported expression type in _eval_mod: {type(expr).__name__}")
+
+
+def _lower_bound_int(val, cap: int = 1000) -> int:
+  val = _unwrap_const_expr(val)
+  v = try_eval(val)
+  if v is not None:
+    return v
+  if val >= cap:
+    return cap
+  mv = _unwrap_const_expr(min_val(val))
+  mv_int = try_eval(mv)
+  if mv_int is not None:
+    return mv_int
+  return 0
+
+
 class Iterated_Expression(NatExpr):
   """An expression representing `f^n(x)`."""
 
@@ -263,12 +477,89 @@ class Iterated_Expression(NatExpr):
     other = int(other)
     if other == 1:
       return 0
-    if self.num_reps == 0:
-      return self.start_val % other
-    # Evaluate modulo iteratively until periodic or done:
-    # Check if step_expr evaluated at x == start_val (or after 1 step) is constant mod `other`.
-    cur = substitute(self.step_expr, {self.var: self.start_val})
-    return cur % other
+    if not self.is_const:
+      raise IteratedExprGaveUp(f"Cannot mod non-const Iterated_Expression: {self}")
+
+    cache = self.__dict__.get("_mod_cache")
+    if cache is not None and other in cache:
+      return cache[other]
+
+    res = self._compute_mod(other)
+    if cache is None:
+      cache = {}
+      self._mod_cache = cache
+    cache[other] = res
+    return res
+
+  def _compute_mod(self, other: int) -> int:
+    start_val = _unwrap_const_expr(self.start_val)
+    num_reps = _unwrap_const_expr(self.num_reps)
+    n_int = try_eval(num_reps)
+    if n_int == 0:
+      return int(start_val % other)
+    if n_int == 1:
+      return int(_unwrap_const_expr(substitute(self.step_expr, {self.var: start_val})) % other)
+
+    L = _closure_mod(self.step_expr, self.var, other)
+
+    # Advance concrete steps until all ExpTerm exponents are guaranteed >= their Carmichael tails.
+    cur_val = start_val
+    rem_reps = num_reps
+    x_lb = _lower_bound_int(cur_val)
+    warmup_seen = {}
+    warmup_seq = []
+    max_warmup = 50
+    while not _exponents_above_tail(self.step_expr, self.var, L, x_lb):
+      rem_int = try_eval(rem_reps)
+      if rem_int == 0:
+        return int(cur_val % other)
+      v_cur = try_eval(cur_val)
+      if v_cur is not None:
+        if v_cur in warmup_seen:
+          c_start = warmup_seen[v_cur]
+          c_len = len(warmup_seq) - c_start
+          if c_len == 1:
+            return warmup_seq[c_start] % other
+          idx = c_start + int(rem_reps % c_len)
+          return warmup_seq[idx] % other
+        warmup_seen[v_cur] = len(warmup_seq)
+        warmup_seq.append(v_cur)
+      if len(warmup_seq) >= max_warmup:
+        raise IteratedExprGaveUp(f"Warmup exceeded {max_warmup} steps for {self} % {other}")
+      cur_val = _unwrap_const_expr(substitute(self.step_expr, {self.var: cur_val}))
+      rem_reps = rem_reps - 1
+      x_lb = _lower_bound_int(cur_val)
+
+    # Ensure future iterates remain >= x_lb (trivial if x_lb <= 0).
+    if x_lb > 0:
+      shifted_step = substitute(self.step_expr, {self.var: VariableToExpression(self.var) + x_lb})
+      if _unwrap_const_expr(min_val(shifted_step)) < x_lb:
+        raise IteratedExprGaveUp(f"Step expression may drop below tail threshold {x_lb}: {self}")
+
+    rem_int = try_eval(rem_reps)
+    if rem_int == 0:
+      return int(cur_val % other)
+
+    r = int(cur_val % L)
+    seen = {}
+    seq = []
+    while r not in seen:
+      if rem_int is not None and len(seq) == rem_int:
+        return r % other
+      seen[r] = len(seq)
+      seq.append(r)
+      r = _eval_mod(self.step_expr, self.var, r, L)
+
+    cycle_start = seen[r]
+    cycle_len = len(seq) - cycle_start
+    if rem_int is not None and rem_int < cycle_start:
+      return seq[rem_int] % other
+    if rem_int is None and rem_reps < cycle_start:
+      return seq[int(rem_reps)] % other
+    if cycle_len == 1:
+      return seq[cycle_start] % other
+    idx = cycle_start + int((rem_reps - cycle_start) % cycle_len)
+    return seq[idx] % other
 
   def __divmod__(self, other):
     if other == 1:

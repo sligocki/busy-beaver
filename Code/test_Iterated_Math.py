@@ -291,6 +291,71 @@ class TestIteratedMath(unittest.TestCase):
     self.assertEqual(res_zero, 5)
     self.assertIsInstance(res_zero, int)
 
+  def test_mod_linear_cycle(self):
+    # f(x) = x + 1, start=2: f^N(2) = 2 + N
+    f = self.expr_x + 1
+    for n in range(10):
+      it = Iterated_Expression(f, self.x, 2, n)
+      self.assertEqual(it % 6, (2 + n) % 6)
+    # Huge ExpInt num_reps: 2^100 % 6 == 4 -> (2 + 4) % 6 == 0
+    it_big = Iterated_Expression(f, self.x, 2, exp_int(2, 100))
+    self.assertEqual(it_big % 6, (2 + pow(2, 100, 6)) % 6)
+    self.assertEqual(it_big % 1, 0)
+
+  def test_mod_exp_with_small_start_warmup(self):
+    # f(x) = 2^x starting at 0: 0, 1, 2, 4, 16, 65536, ...
+    f = exp_int(2, self.expr_x)
+    exact = [0, 1, 2, 4, 16, 65536]
+    for m in (2, 3, 5, 7, 10, 18):
+      for n, val in enumerate(exact):
+        it = Iterated_Expression(f, self.x, 0, n)
+        self.assertEqual(it % m, val % m, f"n={n}, m={m}")
+    # For N >= 4, 2^^N % 10 == 6
+    self.assertEqual(Iterated_Expression(f, self.x, 0, exp_int(2, 200)) % 10, 6)
+
+  def test_mod_closure_modulus_larger_than_target(self):
+    # f(x) = 2^x + 1 mod 7 requires closure modulus L = lcm(7, 3, 2) = 42
+    f = exp_int(2, self.expr_x) + 1
+    vals = [1]
+    for _ in range(4):
+      vals.append(2 ** vals[-1] + 1)
+    for n, val in enumerate(vals):
+      it = Iterated_Expression(f, self.x, 1, n)
+      self.assertEqual(it % 7, val % 7, f"n={n}")
+    # Check stability for large N (for n >= 3, 2^x + 1 mod 7 is fixed at 2)
+    # Wait: vals = [1, 3, 9, 513, 2^513+1, ...]
+    # 513 % 7 == 2; 513 % 3 == 0 -> (2^513 + 1) % 7 = 2^0 + 1 = 2; 513 % 2 == 1
+    # -> 2^513+1 ≡ 1 (mod 2) -> (2^1+1)%3=0 -> fixed at 2!
+    self.assertEqual(Iterated_Expression(f, self.x, 1, 100) % 7, 2)
+    self.assertEqual(Iterated_Expression(f, self.x, 1, exp_int(2, 200)) % 7, 2)
+
+  def test_mod_tower_with_period_3_orbit(self):
+    # Regression test for Iterated_Expression.__mod__ assuming period 1.
+    # Build the 12-level tower from 1RB0LD_1RC1RF_1LA1RG_0LC1LE_0RA0LA_1RE0RC_1RB1RZ_------:
+    # q -> (-16 + 7*2^((-4 + 7*2^((-4 + 7*2^(... (8q+40) ...))/3))/3))/3
+    # Mod 6, this has a 3-cycle: 4 -> 0 -> 2 -> 4.
+    cur = 8 * self.expr_x + 40
+    for c in [-4, 5, -8] * 3 + [-4, -4, -16]:
+      cur = (c + 7 * exp_int(2, cur)) / 3
+
+    expected_mod6 = [4, 0, 2]
+    for n in range(9):
+      it = Iterated_Expression(cur, self.x, 4, n)
+      self.assertEqual(it % 6, expected_mod6[n % 3], f"n={n}")
+
+    # Test with huge ExpInt num_reps for all residues mod 3
+    for offset in range(3):
+      reps = exp_int(2, 100) + offset  # 2^100 % 3 == 1
+      it = Iterated_Expression(cur, self.x, 4, reps)
+      self.assertEqual(it % 6, expected_mod6[(1 + offset) % 3], f"offset={offset}")
+
+    # Test with nested Iterated_Expression as num_reps
+    inner_reps = Iterated_Expression(
+      cur, self.x, 4, exp_int(2, 100)
+    )  # 2^100 % 3 == 1 -> inner ≡ 0 (mod 6) -> 0 (mod 3)
+    outer = Iterated_Expression(cur, self.x, 4, inner_reps)
+    self.assertEqual(outer % 6, expected_mod6[0])
+
 
 if __name__ == "__main__":
   unittest.main()
