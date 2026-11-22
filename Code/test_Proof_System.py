@@ -700,10 +700,12 @@ class ProofSystemTest(unittest.TestCase):
     output = buf.getvalue()
     self.assertIn("\nNew Rule:\n  Diff Rule 0\n  Level: 1\n", output)
     self.assertIn("  Start Config: ", output)
-    self.assertIn("  Single Iter:  ", output)
+    self.assertIn("  Single Iter:\n    ", output)
+    self.assertIn(" -> ", output)
     self.assertIn(" ≥ ", output)
     self.assertIn("  Loops: ", output)
     self.assertIn("  Steps: ", output)
+    self.assertNotIn("  Steps: (", output)
     self.assertNotIn("** Testing new rule **", output)
     self.assertNotIn("++ Applying Rule ++", output)
 

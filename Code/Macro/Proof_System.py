@@ -125,6 +125,25 @@ UNPROVEN_PARITY = "Unproven parity"
 CONST_MISMATCH = "Const_Mismatch"
 
 
+def _strip_outer_parens(s: str) -> str:
+  while len(s) >= 2 and s[0] == "(" and s[-1] == ")":
+    depth = 0
+    matches_outer = True
+    for i, ch in enumerate(s):
+      if ch == "(":
+        depth += 1
+      elif ch == ")":
+        depth -= 1
+        if depth == 0 and i < len(s) - 1:
+          matches_outer = False
+          break
+    if matches_outer and depth == 0:
+      s = s[1:-1]
+    else:
+      break
+  return s
+
+
 def _format_config(left_blocks, state, dir, right_blocks):
   parts = []
   if left_blocks:
@@ -138,7 +157,7 @@ def _format_config(left_blocks, state, dir, right_blocks):
 def _format_steps(num_steps):
   if not num_steps:
     return "N/A"
-  return str(num_steps)
+  return _strip_outer_parens(str(num_steps))
 
 
 class Rule:
@@ -155,12 +174,13 @@ class Rule:
     self.right_dist = right_dist
     return self
 
-  def _format_rule(self, rule_type: str, start_config: str, single_iter: str) -> str:
+  def _format_rule(self, rule_type: str, start_config: str, transitions: list[tuple[str, str]]) -> str:
+    iter_lines = "\n".join(f"  {lhs} -> {rhs}" for lhs, rhs in transitions)
     return (
       f"{rule_type} {self.num}\n"
       f"Level: {self.level}\n"
       f"Start Config: {start_config}\n"
-      f"Single Iter:  {single_iter}\n"
+      f"Single Iter:\n{iter_lines}\n"
       f"Loops: {self.num_loops}\n"
       f"Steps: {_format_steps(self.num_steps)}"
     )
@@ -211,43 +231,34 @@ class Diff_Rule(Rule):
           self.has_collatz_decrease = True
 
   def __repr__(self):
-    def format_pair(init_block, diff_block):
+    transitions = []
+
+    def format_start_and_collect(init_block, diff_block):
       sym = init_block.symbol
       num = init_block.num
       diff = diff_block.num
       if isinstance(num, Algebraic_Expression) and not num.is_const:
         var = num.variable_restricted()
-        start_str = f"{sym}^({var} ≥ {num.const})"
         if is_const(diff):
           diff_val = diff.const if isinstance(diff, Algebraic_Expression) else int(diff)
           if diff_val > 0:
-            end_str = f"{sym}^({var} + {diff_val})"
+            transitions.append((str(var), f"{var} + {diff_val}"))
           elif diff_val < 0:
-            end_str = f"{sym}^({var} - {-diff_val})"
-          else:
-            end_str = f"{sym}^{var}"
+            transitions.append((str(var), f"{var} - {-diff_val}"))
         else:
-          end_str = f"{sym}^({VariableToExpression(var) + diff})"
+          transitions.append((str(var), _strip_outer_parens(str(VariableToExpression(var) + diff))))
+        return f"{sym}^({var} ≥ {num.const})"
       else:
         val = num.const if isinstance(num, Algebraic_Expression) else num
-        start_str = f"{sym}^{val}"
-        if getattr(val, "is_inf", False) or (is_const(diff) and diff == 0):
-          end_str = f"{sym}^{val}"
-        else:
-          end_str = f"{sym}^{val + diff}"
-      return start_str, end_str
+        return f"{sym}^{val}"
 
-    left_pairs = [format_pair(ib, db) for ib, db in zip(self.initial_tape.tape[0], self.diff_tape.tape[0])]
-    right_pairs = [
-      format_pair(ib, db) for ib, db in zip(reversed(self.initial_tape.tape[1]), reversed(self.diff_tape.tape[1]))
+    left_start = [format_start_and_collect(ib, db) for ib, db in zip(self.initial_tape.tape[0], self.diff_tape.tape[0])]
+    right_start = [
+      format_start_and_collect(ib, db)
+      for ib, db in zip(reversed(self.initial_tape.tape[1]), reversed(self.diff_tape.tape[1]))
     ]
-    start_config = _format_config(
-      [p[0] for p in left_pairs], self.initial_state, self.initial_tape.dir, [p[0] for p in right_pairs]
-    )
-    single_iter = _format_config(
-      [p[1] for p in left_pairs], self.initial_state, self.initial_tape.dir, [p[1] for p in right_pairs]
-    )
-    return self._format_rule("Diff Rule", start_config, single_iter)
+    start_config = _format_config(left_start, self.initial_state, self.initial_tape.dir, right_start)
+    return self._format_rule("Diff Rule", start_config, transitions)
 
 
 class Iterated_Rule(Rule):
@@ -400,21 +411,21 @@ class Iterated_Rule(Rule):
       else:
         return f"{self.block_list[i]}^{self.min_list[i]}"
 
-    def end_block(i):
+    left_indices = list(range(self.left_size))
+    right_indices = list(reversed(range(self.left_size, len(self.block_list))))
+    left_start = [start_block(i) for i in left_indices]
+    right_start = [start_block(i) for i in right_indices]
+
+    transitions = []
+    for i in left_indices + right_indices:
       if self.var_list[i]:
-        return f"{self.block_list[i]}^({self.func_list[i]})"
-      else:
-        return f"{self.block_list[i]}^{self.min_list[i]}"
-
-    left_start = [start_block(i) for i in range(self.left_size)]
-    right_start = list(reversed([start_block(i) for i in range(self.left_size, len(self.block_list))]))
-
-    left_end = [end_block(i) for i in range(self.left_size)]
-    right_end = list(reversed([end_block(i) for i in range(self.left_size, len(self.block_list))]))
+        func = self.func_list[i]
+        if isinstance(func, Rule_Func.Add_Func) and func.const == 0:
+          continue
+        transitions.append((str(self.var_list[i]), _strip_outer_parens(str(func))))
 
     start_config = _format_config(left_start, self.initial_state, self.dir, right_start)
-    single_iter = _format_config(left_end, self.initial_state, self.dir, right_end)
-    return self._format_rule("Iterated Rule", start_config, single_iter)
+    return self._format_rule("Iterated Rule", start_config, transitions)
 
 
 class Exponential_Rule(Rule):
@@ -588,22 +599,22 @@ class Exponential_Rule(Rule):
         assert self.func_list[i]
         return f"{self.block_list[i]}^({self.func_list[i].var} ≥ {self.func_list[i].min})"
 
-    def end_block(i):
-      if self.const_list[i] is not None:
-        return f"{self.block_list[i]}^{self.const_list[i]}"
-      else:
-        assert self.func_list[i]
-        return f"{self.block_list[i]}^({self.func_list[i]})"
+    left_indices = list(range(self.left_size))
+    right_indices = list(reversed(range(self.left_size, len(self.block_list))))
+    left_start = [start_block(i) for i in left_indices]
+    right_start = [start_block(i) for i in right_indices]
 
-    left_start = [start_block(i) for i in range(self.left_size)]
-    right_start = list(reversed([start_block(i) for i in range(self.left_size, len(self.block_list))]))
-
-    left_end = [end_block(i) for i in range(self.left_size)]
-    right_end = list(reversed([end_block(i) for i in range(self.left_size, len(self.block_list))]))
+    transitions = []
+    for i in left_indices + right_indices:
+      if self.const_list[i] is None:
+        func = self.func_list[i]
+        assert func
+        if isinstance(func, Rule_Func.Add_Func) and func.const == 0:
+          continue
+        transitions.append((str(func.var), _strip_outer_parens(str(func))))
 
     start_config = _format_config(left_start, self.initial_state, self.dir, right_start)
-    single_iter = _format_config(left_end, self.initial_state, self.dir, right_end)
-    return self._format_rule("Exponential Rule", start_config, single_iter)
+    return self._format_rule("Exponential Rule", start_config, transitions)
 
 
 class General_Rule(Rule):
@@ -667,18 +678,20 @@ class General_Rule(Rule):
       else:
         return f"{self.block_list[i]}^{self.min_list[i]}"
 
-    def end_block(i):
-      return f"{self.block_list[i]}^{self.result_list[i]}"
+    left_indices = list(range(self.left_size))
+    right_indices = list(reversed(range(self.left_size, len(self.block_list))))
+    left_start = [start_block(i) for i in left_indices]
+    right_start = [start_block(i) for i in right_indices]
 
-    left_start = [start_block(i) for i in range(self.left_size)]
-    right_start = list(reversed([start_block(i) for i in range(self.left_size, len(self.block_list))]))
-
-    left_end = [end_block(i) for i in range(self.left_size)]
-    right_end = list(reversed([end_block(i) for i in range(self.left_size, len(self.block_list))]))
+    transitions = []
+    for i in left_indices + right_indices:
+      if self.var_list[i]:
+        rhs = _strip_outer_parens(str(self.result_list[i]))
+        if rhs != str(self.var_list[i]):
+          transitions.append((str(self.var_list[i]), rhs))
 
     start_config = _format_config(left_start, self.initial_state, self.dir, right_start)
-    single_iter = _format_config(left_end, self.initial_state, self.dir, right_end)
-    return self._format_rule("General Rule", start_config, single_iter)
+    return self._format_rule("General Rule", start_config, transitions)
 
 
 def _rule_expected_symbols(rule):
