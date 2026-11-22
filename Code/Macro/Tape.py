@@ -64,6 +64,26 @@ class Repeated_Symbol:
     return Repeated_Symbol(self.symbol, self.num)
 
 
+def format_state_dir(state, dir, html_format=False):
+  if state is None:
+    state_str = "-"
+  else:
+    state_str = state.print_with_dir(dir)
+
+  if getattr(state, "is_embedded_in_tape", False):
+    dir_str = state_str
+  else:
+    if dir:
+      dir_str = "%s>" % state_str
+    else:
+      dir_str = "<%s" % state_str
+
+  if html_format:
+    dir_str = "<b>%s</b>" % dir_str
+
+  return dir_str
+
+
 class Chain_Tape:
   """Stores the turing machine tape with repetition compression."""
 
@@ -103,21 +123,7 @@ class Chain_Tape:
       for sym in reverse(self.tape[1])
     )
 
-    if state is None:
-      state_str = "-"
-    else:
-      state_str = state.print_with_dir(self.dir)
-
-    if getattr(state, "is_embedded_in_tape", False):
-      dir_str = state_str
-    else:
-      if self.dir:
-        dir_str = "%s>" % state_str
-      else:
-        dir_str = "<%s" % state_str
-
-    if self.options.html_format:
-      dir_str = "<b>%s</b>" % dir_str
+    dir_str = format_state_dir(state, self.dir, self.options.html_format)
 
     return left_tape + " " + dir_str + " " + right_tape
 

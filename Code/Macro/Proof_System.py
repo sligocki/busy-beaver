@@ -24,7 +24,7 @@ from Algebraic_Expression import (
   variables,
 )
 from Exp_Int import ExpInt
-from Macro import Rule_Func, Simulator, Turing_Machine
+from Macro import Rule_Func, Simulator, Tape, Turing_Machine
 from Macro.Turing_Machine import LEFT, RIGHT
 from NatExpr import ConstInt, NatExpr, is_const
 
@@ -125,6 +125,22 @@ UNPROVEN_PARITY = "Unproven parity"
 CONST_MISMATCH = "Const_Mismatch"
 
 
+def _format_config(left_blocks, state, dir, right_blocks):
+  parts = []
+  if left_blocks:
+    parts.append(" ".join(left_blocks))
+  parts.append(Tape.format_state_dir(state, dir))
+  if right_blocks:
+    parts.append(" ".join(right_blocks))
+  return " ".join(parts)
+
+
+def _format_steps(num_steps):
+  if not num_steps:
+    return "N/A"
+  return str(num_steps)
+
+
 class Rule:
   """Base type for Proof_System rules."""
 
@@ -138,6 +154,16 @@ class Rule:
     self.left_dist = left_dist
     self.right_dist = right_dist
     return self
+
+  def _format_rule(self, rule_type: str, start_config: str, single_iter: str) -> str:
+    return (
+      f"{rule_type} {self.num}\n"
+      f"Level: {self.level}\n"
+      f"Start Config: {start_config}\n"
+      f"Single Iter:  {single_iter}\n"
+      f"Loops: {self.num_loops}\n"
+      f"Steps: {_format_steps(self.num_steps)}"
+    )
 
 
 class Diff_Rule(Rule):
@@ -185,12 +211,43 @@ class Diff_Rule(Rule):
           self.has_collatz_decrease = True
 
   def __repr__(self):
-    return f"""Diff Rule {self.num}
-Initial Config: {self.initial_tape.print_with_state(self.initial_state)}
-Diff Config:    {self.diff_tape.print_with_state(self.initial_state)}
-Steps: {self.num_steps}, Loops: {self.num_loops}
-Level: {self.level}
-States last seen: {self.states_last_seen!r}"""
+    def format_pair(init_block, diff_block):
+      sym = init_block.symbol
+      num = init_block.num
+      diff = diff_block.num
+      if isinstance(num, Algebraic_Expression) and not num.is_const:
+        var = num.variable_restricted()
+        start_str = f"{sym}^({var} ≥ {num.const})"
+        if is_const(diff):
+          diff_val = diff.const if isinstance(diff, Algebraic_Expression) else int(diff)
+          if diff_val > 0:
+            end_str = f"{sym}^({var} + {diff_val})"
+          elif diff_val < 0:
+            end_str = f"{sym}^({var} - {-diff_val})"
+          else:
+            end_str = f"{sym}^{var}"
+        else:
+          end_str = f"{sym}^({VariableToExpression(var) + diff})"
+      else:
+        val = num.const if isinstance(num, Algebraic_Expression) else num
+        start_str = f"{sym}^{val}"
+        if getattr(val, "is_inf", False) or (is_const(diff) and diff == 0):
+          end_str = f"{sym}^{val}"
+        else:
+          end_str = f"{sym}^{val + diff}"
+      return start_str, end_str
+
+    left_pairs = [format_pair(ib, db) for ib, db in zip(self.initial_tape.tape[0], self.diff_tape.tape[0])]
+    right_pairs = [
+      format_pair(ib, db) for ib, db in zip(reversed(self.initial_tape.tape[1]), reversed(self.diff_tape.tape[1]))
+    ]
+    start_config = _format_config(
+      [p[0] for p in left_pairs], self.initial_state, self.initial_tape.dir, [p[0] for p in right_pairs]
+    )
+    single_iter = _format_config(
+      [p[1] for p in left_pairs], self.initial_state, self.initial_tape.dir, [p[1] for p in right_pairs]
+    )
+    return self._format_rule("Diff Rule", start_config, single_iter)
 
 
 class Iterated_Rule(Rule):
@@ -207,12 +264,15 @@ class Iterated_Rule(Rule):
     rule_num,
     states_last_seen,
     level: int,
+    initial_state=None,
   ):
     assert len(var_list) == len(min_list) == len(func_list)
     self.var_list = var_list
     self.func_list = func_list
     self.block_list = [block.symbol for block in result_tape.tape[0] + result_tape.tape[1]]
     self.left_size = len(result_tape.tape[0])
+    self.initial_state = initial_state
+    self.dir = result_tape.dir
     self.num_steps = num_steps
     self.num_loops = num_loops
     self.num = rule_num
@@ -234,6 +294,7 @@ class Iterated_Rule(Rule):
       rule_num,
       states_last_seen,
       level=level,
+      initial_state=initial_state,
     )
 
     self.level = level
@@ -263,6 +324,7 @@ class Iterated_Rule(Rule):
     rule_num,
     states_last_seen,
     level: int,
+    initial_state=None,
   ):
     func_list = []
     for i, result_block in enumerate(result_tape.tape[0] + result_tape.tape[1]):
@@ -328,12 +390,13 @@ class Iterated_Rule(Rule):
       rule_num,
       states_last_seen,
       level,
+      initial_state=initial_state,
     ), None
 
   def __repr__(self):
     def start_block(i):
       if self.var_list[i]:
-        return f"{self.block_list[i]}^({self.var_list[i]}|{self.min_list[i]})"
+        return f"{self.block_list[i]}^({self.var_list[i]} ≥ {self.min_list[i]})"
       else:
         return f"{self.block_list[i]}^{self.min_list[i]}"
 
@@ -343,18 +406,15 @@ class Iterated_Rule(Rule):
       else:
         return f"{self.block_list[i]}^{self.min_list[i]}"
 
-    left_start_str = " ".join(start_block(i) for i in range(self.left_size))
-    right_start_str = " ".join(reversed([start_block(i) for i in range(self.left_size, len(self.block_list))]))
+    left_start = [start_block(i) for i in range(self.left_size)]
+    right_start = list(reversed([start_block(i) for i in range(self.left_size, len(self.block_list))]))
 
-    left_end_str = " ".join(end_block(i) for i in range(self.left_size))
-    right_end_str = " ".join(reversed([end_block(i) for i in range(self.left_size, len(self.block_list))]))
+    left_end = [end_block(i) for i in range(self.left_size)]
+    right_end = list(reversed([end_block(i) for i in range(self.left_size, len(self.block_list))]))
 
-    # TODO: Replace `<>` with state/dir, like `<A`
-    return f"""Iterated Rule {self.num}
-Start Tape: {left_start_str} <> {right_start_str}
-End Tape: {left_end_str} <> {right_end_str}
-Steps {self.num_steps} Loops {self.num_loops}
-Level: {self.level}"""
+    start_config = _format_config(left_start, self.initial_state, self.dir, right_start)
+    single_iter = _format_config(left_end, self.initial_state, self.dir, right_end)
+    return self._format_rule("Iterated Rule", start_config, single_iter)
 
 
 class Exponential_Rule(Rule):
@@ -370,11 +430,14 @@ class Exponential_Rule(Rule):
     rule_num,
     states_last_seen,
     level: int,
+    initial_state=None,
   ):
     self.func_list = func_list
     self.const_list = const_list
     self.block_list = [block.symbol for block in result_tape.tape[0] + result_tape.tape[1]]
     self.left_size = len(result_tape.tape[0])
+    self.initial_state = initial_state
+    self.dir = result_tape.dir
     self.num_steps = num_steps
     self.num_loops = num_loops
     self.num = rule_num
@@ -393,6 +456,7 @@ class Exponential_Rule(Rule):
       rule_num,
       states_last_seen,
       level=level,
+      initial_state=initial_state,
     )
 
     self.num_uses = 0
@@ -421,6 +485,7 @@ class Exponential_Rule(Rule):
     rule_num,
     states_last_seen,
     level: int,
+    initial_state=None,
   ):
     func_list = []
     const_list = []
@@ -512,6 +577,7 @@ class Exponential_Rule(Rule):
       rule_num,
       states_last_seen,
       level,
+      initial_state=initial_state,
     ), None
 
   def __repr__(self):
@@ -520,7 +586,7 @@ class Exponential_Rule(Rule):
         return f"{self.block_list[i]}^{self.const_list[i]}"
       else:
         assert self.func_list[i]
-        return f"{self.block_list[i]}^({self.func_list[i].var}|{self.func_list[i].min})"
+        return f"{self.block_list[i]}^({self.func_list[i].var} ≥ {self.func_list[i].min})"
 
     def end_block(i):
       if self.const_list[i] is not None:
@@ -529,18 +595,15 @@ class Exponential_Rule(Rule):
         assert self.func_list[i]
         return f"{self.block_list[i]}^({self.func_list[i]})"
 
-    left_start_str = " ".join(start_block(i) for i in range(self.left_size))
-    right_start_str = " ".join(reversed([start_block(i) for i in range(self.left_size, len(self.block_list))]))
+    left_start = [start_block(i) for i in range(self.left_size)]
+    right_start = list(reversed([start_block(i) for i in range(self.left_size, len(self.block_list))]))
 
-    left_end_str = " ".join(end_block(i) for i in range(self.left_size))
-    right_end_str = " ".join(reversed([end_block(i) for i in range(self.left_size, len(self.block_list))]))
+    left_end = [end_block(i) for i in range(self.left_size)]
+    right_end = list(reversed([end_block(i) for i in range(self.left_size, len(self.block_list))]))
 
-    # TODO: Replace `<>` with state/dir, like `<A`
-    return f"""Exponential Rule {self.num}
-Start Tape: {left_start_str} <> {right_start_str}
-End Tape: {left_end_str} <> {right_end_str}
-Steps {self.num_steps} Loops {self.num_loops}
-Level: {self.level}"""
+    start_config = _format_config(left_start, self.initial_state, self.dir, right_start)
+    single_iter = _format_config(left_end, self.initial_state, self.dir, right_end)
+    return self._format_rule("Exponential Rule", start_config, single_iter)
 
 
 class General_Rule(Rule):
@@ -556,6 +619,7 @@ class General_Rule(Rule):
     rule_num,
     states_last_seen,
     level: int,
+    initial_state=None,
   ):
     assert len(var_list) == len(min_list)
     self.var_list = var_list  # List of variables (or None) to assign repetition counts to.
@@ -565,6 +629,8 @@ class General_Rule(Rule):
     self.result_list = [block.num for block in result_tape.tape[0] + result_tape.tape[1]]
     self.block_list = [block.symbol for block in result_tape.tape[0] + result_tape.tape[1]]
     self.left_size = len(result_tape.tape[0])
+    self.initial_state = initial_state
+    self.dir = result_tape.dir
     self.num_steps = num_steps
     self.num_loops = num_loops
     self.num = rule_num
@@ -597,25 +663,22 @@ class General_Rule(Rule):
   def __repr__(self):
     def start_block(i):
       if self.var_list[i]:
-        return f"{self.block_list[i]}^({self.var_list[i]}|{self.min_list[i]})"
+        return f"{self.block_list[i]}^({self.var_list[i]} ≥ {self.min_list[i]})"
       else:
         return f"{self.block_list[i]}^{self.min_list[i]}"
 
     def end_block(i):
       return f"{self.block_list[i]}^{self.result_list[i]}"
 
-    left_start_str = " ".join(start_block(i) for i in range(self.left_size))
-    right_start_str = " ".join(reversed([start_block(i) for i in range(self.left_size, len(self.block_list))]))
+    left_start = [start_block(i) for i in range(self.left_size)]
+    right_start = list(reversed([start_block(i) for i in range(self.left_size, len(self.block_list))]))
 
-    left_end_str = " ".join(end_block(i) for i in range(self.left_size))
-    right_end_str = " ".join(reversed([end_block(i) for i in range(self.left_size, len(self.block_list))]))
+    left_end = [end_block(i) for i in range(self.left_size)]
+    right_end = list(reversed([end_block(i) for i in range(self.left_size, len(self.block_list))]))
 
-    # TODO: Replace `<>` with state/dir, like `<A`
-    return f"""General Rule {self.num}
-Start Tape: {left_start_str} <> {right_start_str}
-End Tape: {left_end_str} <> {right_end_str}
-Steps {self.num_steps} Loops {self.num_loops}
-Level: {self.level}"""
+    start_config = _format_config(left_start, self.initial_state, self.dir, right_start)
+    single_iter = _format_config(left_end, self.initial_state, self.dir, right_end)
+    return self._format_rule("General Rule", start_config, single_iter)
 
 
 def _rule_expected_symbols(rule):
@@ -900,6 +963,12 @@ class Proof_System:
       print(arg, end=" ")
     print()
 
+  def _print_new_rule(self, rule):
+    print()
+    print("New Rule:")
+    for line in str(rule).splitlines():
+      print("  " + line)
+
   def print_rules(self, args=None):
     all_rules = {}
     for val in self.rules.values():
@@ -915,14 +984,8 @@ class Proof_System:
         continue
       found_rule = True
       print()
-      self.print_this("Rule", rule.num)
-      if hasattr(rule, "initial_state"):
-        state = rule.initial_state
-        self.print_this("Initial:", rule.initial_tape.print_with_state(state))
-        self.print_this("Diff:", rule.diff_tape)
-      else:
-        self.print_this(str(rule).replace("\n", "\n " + self.verbose_prefix))
-      self.print_this("Loops:", rule.num_loops, "Steps:", rule.num_steps)
+      for line in str(rule).splitlines():
+        self.print_this(line)
       self.print_this("Num uses:", rule.num_uses)
 
     if found_rule:
@@ -1449,13 +1512,13 @@ class Proof_System:
         result_block.num = substitute(result_block.num, assignment)
 
       # Fix num_steps.
-      if self.compute_steps:
+      if self.compute_steps and gen_sim.compute_steps:
         num_steps = substitute(gen_sim.step_num, assignment)
         states_last_seen = {
           state: substitute(last_seen, assignment) for state, last_seen in gen_sim.states_last_seen.items()
         }
       else:
-        num_steps = 0
+        num_steps = None
         states_last_seen = None
 
       # Figure out if this is a Iterated_Rule
@@ -1468,16 +1531,14 @@ class Proof_System:
         self.num_rules,
         states_last_seen,
         rule_level,
+        initial_state=new_state,
       )
       if rule:
         if self.options.limited_rules:
           rule.make_limited(left_dist, right_dist)
 
         if self.verbose or self.print_new_rules:
-          print()
-          self.print_this("** New iterated rule proven **")
-          self.print_this(str(rule).replace("\n", "\n " + self.verbose_prefix))
-          print()
+          self._print_new_rule(rule)
 
       if not rule:
         if self.verbose:
@@ -1492,16 +1553,14 @@ class Proof_System:
           self.num_rules,
           states_last_seen,
           rule_level,
+          initial_state=new_state,
         )
         if rule:
           if self.options.limited_rules:
             rule.make_limited(left_dist, right_dist)
 
           if self.verbose or self.print_new_rules:
-            print()
-            self.print_this("** New exponential rule proven **")
-            self.print_this(str(rule).replace("\n", "\n " + self.verbose_prefix))
-            print()
+            self._print_new_rule(rule)
 
       if not rule:
         if self.verbose:
@@ -1521,15 +1580,13 @@ class Proof_System:
           self.num_rules,
           states_last_seen=states_last_seen,
           level=rule_level,
+          initial_state=new_state,
         )
         if self.options.limited_rules:
           rule.make_limited(left_dist, right_dist)
 
         if self.verbose or self.print_new_rules:
-          print()
-          self.print_this("** New general rule proven **")
-          self.print_this(str(rule).replace("\n", "\n " + self.verbose_prefix))
-          print()
+          self._print_new_rule(rule)
 
       if self.debug_reprove:
         self._debug_reprove_rule(rule, full_config)
@@ -1566,18 +1623,18 @@ class Proof_System:
         for diff_block in diff_tape.tape[dir]:
           diff_block.num = substitute(diff_block.num, replaces)
       # Fix num_steps.
-      if self.compute_steps:
+      if self.compute_steps and gen_sim.compute_steps:
         num_steps = substitute(gen_sim.step_num, replaces)
         states_last_seen = {
           state: substitute(last_seen, replaces) for state, last_seen in gen_sim.states_last_seen.items()
         }
       else:
-        num_steps = 0
+        num_steps = None
         states_last_seen = None
 
       # Cast num_steps as an Algebraic Expression (if it somehow got through
       # as simply an int)
-      if not isinstance(num_steps, Algebraic_Expression):
+      if num_steps is not None and not isinstance(num_steps, Algebraic_Expression):
         num_steps = ConstantToExpression(num_steps)
 
       rule = Diff_Rule(
@@ -1594,10 +1651,7 @@ class Proof_System:
       )
 
       if self.verbose or self.print_new_rules:
-        print()
-        self.print_this("** New rule proven **")
-        self.print_this(str(rule).replace("\n", "\n " + self.verbose_prefix))
-        print()
+        self._print_new_rule(rule)
 
       if self.debug_reprove:
         self._debug_reprove_rule(rule, full_config)

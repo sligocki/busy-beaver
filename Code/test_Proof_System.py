@@ -698,16 +698,29 @@ class ProofSystemTest(unittest.TestCase):
       self.assertTrue(success)
 
     output = buf.getvalue()
-    self.assertIn("** New rule proven **", output)
-    self.assertIn("Diff Rule 0", output)
+    self.assertIn("\nNew Rule:\n  Diff Rule 0\n  Level: 1\n", output)
+    self.assertIn("  Start Config: ", output)
+    self.assertIn("  Single Iter:  ", output)
+    self.assertIn(" ≥ ", output)
+    self.assertIn("  Loops: ", output)
+    self.assertIn("  Steps: ", output)
     self.assertNotIn("** Testing new rule **", output)
     self.assertNotIn("++ Applying Rule ++", output)
+
+    # Verify unknown steps print as N/A and Iterated_Rule prints actual state instead of <>.
+    self.options.compute_steps = False
+    prover_no_steps = Proof_System.Proof_System(tm, self.options, "")
+    buf_no_steps = io.StringIO()
+    with contextlib.redirect_stdout(buf_no_steps):
+      no_steps_rule = prover_no_steps.prove_rule(base_stripped, base_config, delta_loop=5)
+      self.assertIsNotNone(no_steps_rule)
+    self.assertIn("  Steps: N/A", buf_no_steps.getvalue())
 
     # Ensure prover.print_rules() method is not shadowed by the flag attribute.
     buf2 = io.StringIO()
     with contextlib.redirect_stdout(buf2):
       prover.print_rules()
-    self.assertIn("Rule 0", buf2.getvalue())
+    self.assertIn("Diff Rule 0", buf2.getvalue())
 
   def test_verbose_mode(self):
     """Test that verbose_prover=True doesn't crash and covers verbose print paths."""
