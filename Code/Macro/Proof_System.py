@@ -40,6 +40,14 @@ def add_option_group(parser):
 
   group.add_option("--verbose-prover", action="store_true")
   group.add_option(
+    "--print-rules",
+    "--rules",
+    dest="print_rules",
+    action="store_true",
+    default=False,
+    help="Print each newly proven rule (without step-by-step prover output).",
+  )
+  group.add_option(
     "-r",
     "--recursive",
     action="store_true",
@@ -851,6 +859,7 @@ class Proof_System:
     self.debug_reprove = getattr(options, "debug_reprove", False)
     self.compute_steps = options.compute_steps
     self.verbose = options.verbose_prover  # Step-by-step state printing
+    self.print_new_rules = getattr(options, "print_rules", False)
     self.verbose_prefix = verbose_prefix
     # Memory of past stripped configurations with enough extra information to
     # try to prove rules. Set to None to disable proving new rules (for example
@@ -1140,6 +1149,7 @@ class Proof_System:
     new_options.recursive = False
     new_options.prover = False  # We'll create our own prover if needed.
     new_options.verbose_prover = False
+    new_options.print_rules = False
     new_options.verbose_simulator = self.verbose
     gen_sim = Simulator.Simulator(
       self.machine,
@@ -1463,7 +1473,7 @@ class Proof_System:
         if self.options.limited_rules:
           rule.make_limited(left_dist, right_dist)
 
-        if self.verbose:
+        if self.verbose or self.print_new_rules:
           print()
           self.print_this("** New iterated rule proven **")
           self.print_this(str(rule).replace("\n", "\n " + self.verbose_prefix))
@@ -1487,7 +1497,7 @@ class Proof_System:
           if self.options.limited_rules:
             rule.make_limited(left_dist, right_dist)
 
-          if self.verbose:
+          if self.verbose or self.print_new_rules:
             print()
             self.print_this("** New exponential rule proven **")
             self.print_this(str(rule).replace("\n", "\n " + self.verbose_prefix))
@@ -1515,7 +1525,7 @@ class Proof_System:
         if self.options.limited_rules:
           rule.make_limited(left_dist, right_dist)
 
-        if self.verbose:
+        if self.verbose or self.print_new_rules:
           print()
           self.print_this("** New general rule proven **")
           self.print_this(str(rule).replace("\n", "\n " + self.verbose_prefix))
@@ -1583,7 +1593,7 @@ class Proof_System:
         right_dist=right_dist if self.options.limited_rules else None,
       )
 
-      if self.verbose:
+      if self.verbose or self.print_new_rules:
         print()
         self.print_this("** New rule proven **")
         self.print_this(str(rule).replace("\n", "\n " + self.verbose_prefix))
@@ -1671,6 +1681,7 @@ class Proof_System:
     check_options.recursive = False
     check_options.prover = False
     check_options.verbose_prover = False
+    check_options.print_rules = False
     check_options.verbose_simulator = self.verbose
     check_sim = Simulator.Simulator(
       self.machine,

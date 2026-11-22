@@ -661,6 +661,54 @@ class ProofSystemTest(unittest.TestCase):
     self.assertEqual(result_inf.condition, Proof_System.INF_REPEAT)
     rule_linear.gen_rule.infinite = False  # restore
 
+  def test_print_rules_mode(self):
+    """Test --print-rules/--rules prints only newly proven rules without verbose prover steps."""
+    for flag in ("--print-rules", "--rules"):
+      parser = OptionParser()
+      Simulator.add_option_group(parser)
+      opts, _ = parser.parse_args([flag])
+      self.assertTrue(opts.print_rules)
+      self.assertFalse(opts.verbose_prover)
+
+    tm = IO.parse_tm("1RB------_0RB0LC1LD_0LC1RA---_1LD0LE---_1RA0LE---")
+    self.options.print_rules = True
+    self.options.verbose_prover = False
+    prover = Proof_System.Proof_System(tm, self.options, "")
+
+    tape = Tape.Chain_Tape()
+    tape.init(0, 0, self.options)
+    tape.dir = Turing_Machine.RIGHT
+    tape.tape[0] = [Tape.Repeated_Symbol(0, InfNat()), Tape.Repeated_Symbol(1, 10)]
+    tape.tape[1] = [
+      Tape.Repeated_Symbol(0, InfNat()),
+      Tape.Repeated_Symbol(2, 40),
+      Tape.Repeated_Symbol(1, 30),
+      Tape.Repeated_Symbol(0, 20),
+    ]
+    state_A = Turing_Machine.Simple_Machine_State(0)
+    base_config = (state_A, tape, None)
+    base_stripped = Proof_System.strip_config(state_A, Turing_Machine.RIGHT, tape.tape)
+
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+      base_rule = prover.prove_rule(base_stripped, base_config, delta_loop=5)
+      self.assertIsNotNone(base_rule)
+      prover.add_rule(base_rule, base_stripped)
+      success, _ = prover.apply_rule(base_rule, base_config)
+      self.assertTrue(success)
+
+    output = buf.getvalue()
+    self.assertIn("** New rule proven **", output)
+    self.assertIn("Diff Rule 0", output)
+    self.assertNotIn("** Testing new rule **", output)
+    self.assertNotIn("++ Applying Rule ++", output)
+
+    # Ensure prover.print_rules() method is not shadowed by the flag attribute.
+    buf2 = io.StringIO()
+    with contextlib.redirect_stdout(buf2):
+      prover.print_rules()
+    self.assertIn("Rule 0", buf2.getvalue())
+
   def test_verbose_mode(self):
     """Test that verbose_prover=True doesn't crash and covers verbose print paths."""
     tm = IO.parse_tm("1RB------_0RB0LC1LD_0LC1RA---_1LD0LE---_1RA0LE---")
