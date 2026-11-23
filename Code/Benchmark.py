@@ -554,8 +554,6 @@ def run_single_tm(
     "num_rules_proven": sim.prover.num_rules if sim.prover else 0,
     "num_meta_diff_rules": sim.prover.num_meta_diff_rules if sim.prover else 0,
     "num_linear_rules": sim.prover.num_linear_rules if sim.prover else 0,
-    "num_exponential_rules": sim.prover.num_exponential_rules if sim.prover else 0,
-    "num_gen_rules": sim.prover.num_gen_rules if sim.prover else 0,
     "num_collatz_rules": sim.prover.num_collatz_rules if sim.prover else 0,
     "num_failed_proofs": sim.prover.num_failed_proofs if sim.prover else 0,
     "rules_by_level": rules_by_level,

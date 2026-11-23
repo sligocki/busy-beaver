@@ -187,10 +187,6 @@ def extract_behavioral_features(
     b_feats.add(("behav_rule_type", "meta_diff"))
   if run_res.get("num_linear_rules", 0) > 0:
     b_feats.add(("behav_rule_type", "linear"))
-  if run_res.get("num_exponential_rules", 0) > 0:
-    b_feats.add(("behav_rule_type", "exponential"))
-  if run_res.get("num_gen_rules", 0) > 0:
-    b_feats.add(("behav_rule_type", "general"))
   if run_res.get("num_collatz_rules", 0) > 0:
     b_feats.add(("behav_rule_type", "collatz"))
 

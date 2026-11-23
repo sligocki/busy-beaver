@@ -2,8 +2,6 @@
 Func types used by Rules in Proof_System.
 """
 
-import math
-
 from Algebraic_Expression import Expression, VariableToExpression, variables
 from Exp_Int import ExpInt, exp_int
 from Iterated_Expression import Iterated_Expression, Iterated_Math
@@ -129,47 +127,3 @@ class Mult_Func(Func):
       assert r == 0, (numer, m, r)
       return q
     return numer / m
-
-
-class Pow_Func(Func):
-  """Represents a function like: `x -> (a b^{u x + v} + c)/d`"""
-
-  def __init__(self, var, min, base, coef_base, const_base, denom, coef_exp, const_exp):
-    assert base > 1, base
-    assert coef_base > 0, coef_base
-    assert coef_exp > 0, coef_exp
-    self.var = var
-    self.base = base
-    self.coef_base = coef_base
-    self.const_base = const_base
-    self.denom = denom
-    self.coef_exp = coef_exp
-    self.const_exp = const_exp
-    self.min = self.compute_min(min)
-    self.is_decreasing = False
-
-    exp = self.coef_exp * VariableToExpression(self.var) + self.const_exp
-    self.expr = (self.coef_base * exp_int(self.base, exp) + self.const_base) / self.denom
-
-  def __repr__(self):
-    return f"{self.expr}"
-
-  __str__ = __repr__
-
-  def compute_min(self, min):
-    # Increase min enough to guarantee that this is an increasing function.
-    #   (a b^{u x + v} + c)/d > x
-    #   ux + v > log_b(dx-c) - log_b(a)
-    #   x > (log_b(dx-c) - log_b(a) - v) / u
-    av = self.const_exp + math.log(self.coef_base, self.base)
-    while True:
-      dxc = self.denom * min - self.const_base
-      if dxc <= 0:
-        return min
-      else:
-        x_bound = (math.log(dxc, self.base) - av) / self.coef_exp
-        if min > x_bound:
-          return min
-        else:
-          # TODO: Add tests that actually use this logic.
-          min = math.ceil(x_bound)

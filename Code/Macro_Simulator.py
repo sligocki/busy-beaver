@@ -228,8 +228,6 @@ def simulate_machine(
       sim_info.result.num_meta_diff_rules_proven = sim.prover.num_meta_diff_rules
       sim_info.result.num_linear_rules_proven = sim.prover.num_linear_rules
       sim_info.result.num_finite_linear_rules_proven = sim.prover.num_finite_linear_rules
-      sim_info.result.num_exponential_rules_proven = sim.prover.num_exponential_rules
-      sim_info.result.num_gen_rules_proven = sim.prover.num_gen_rules
       sim_info.result.num_collatz_rules = sim.prover.num_collatz_rules
       sim_info.result.num_proofs_failed = sim.prover.num_failed_proofs
       del sim_info.result.num_rules_by_level[:]

@@ -28,7 +28,6 @@ class TestAck34(unittest.TestCase):
         self.max_loops = 25000
         self.verbose_prefix = ""
         self.max_steps_in_backsymbol = 250
-        self.max_num_reps = 10
         self.limited_rules = False
         self.allow_collatz = False
         self.max_prover_configs = 100000
@@ -63,7 +62,6 @@ class TestAck34(unittest.TestCase):
         self.max_loops = 100000
         self.verbose_prefix = ""
         self.max_steps_in_backsymbol = 1000
-        self.max_num_reps = 10
         self.limited_rules = False
         self.allow_collatz = False
         self.max_prover_configs = 100000
@@ -94,7 +92,6 @@ class TestAck34(unittest.TestCase):
         self.max_loops = 10000
         self.verbose_prefix = ""
         self.max_steps_in_backsymbol = 1000
-        self.max_num_reps = 10
         self.limited_rules = False
         self.allow_collatz = False
         self.max_prover_configs = 100000

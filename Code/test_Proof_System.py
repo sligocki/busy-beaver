@@ -380,8 +380,6 @@ class ProofSystemTest(unittest.TestCase):
     self.options.prover_level = Proof_System.ProverLevel.ITERATED
     self.options.compute_steps = False
     self.options.limited_rules = False
-    # Only allow General_Rules to be applied once so that we can see the result directly.
-    self.options.max_num_reps = 1
     prover = Proof_System.Proof_System(tm, self.options, "")
 
     # Diff Rule 1:
@@ -471,7 +469,6 @@ class ProofSystemTest(unittest.TestCase):
     self.assertTrue(isinstance(rule_linear, Proof_System.Iterated_Rule))
     self.assertIn("Iterated Rule", repr(rule_linear))
     self.assertIn("Level:", repr(rule_linear))
-    self.assertIn("General Rule", repr(rule_linear.gen_rule))
     prover.add_rule(rule_linear, stripped_config)
     self.assertEqual(len(prover.rules), 3)
     # Test rule on an example:
@@ -518,34 +515,14 @@ class ProofSystemTest(unittest.TestCase):
     result_inf, _ = rest_inf
     self.assertEqual(result_inf.condition, Proof_System.INF_REPEAT)
 
-    # Test that rule_meta has used substitution correctly!
-    # Note: This is an infinite rule, so we must monkey with things a bit to
-    # allow us to apply it only once.
-    rule_meta.infinite = False
-    rule_meta.gen_rule.infinite = False
-    # Test rule on an example:
-    #   $ <E 11^10 10 00 11 10 $ -> $ <E 11^(-6 + 5 * 2^(20 + 8)) 10 00 11 10 $
-    success, rest = prover.apply_rule(rule_meta.gen_rule, full_config)
-    self.assertTrue(success)
-    result, _ = rest
-    self.assertEqual(result.condition, Proof_System.APPLY_RULE)
-    self.assertEqual(
-      str(result.new_tape),
-      "00^inf <- 11^(-6 + 5 * 2^28) 10^1 00^1 11^1 10^1 00^inf",
-    )
-
-  def test_apply_linear_rule_exp_disabled(self):
-    """Test apply_linear_rule fallback to apply_general_rule when exp_linear_rules=False.
-
-    Also exercises apply_general_rule finite loop and infinite paths.
-    """
+  def test_apply_linear_rule_modes(self):
+    """Test apply_linear_rule with prover_level=EXP and below-min configs."""
     # Setup same TM as test_meta_linear_rule
     tm = IO.parse_tm("1RB1RA_0LC1RF_1LE1LD_0LB1LC_0RA---_0RD0LF")
     tm = Turing_Machine.Block_Macro_Machine(tm, 2)
     self.options.prover_level = Proof_System.ProverLevel.ITERATED
     self.options.compute_steps = True
     self.options.limited_rules = False
-    self.options.max_num_reps = 3
     prover = Proof_System.Proof_System(tm, self.options, "")
 
     state_E = Turing_Machine.Simple_Machine_State(4)
@@ -605,23 +582,7 @@ class ProofSystemTest(unittest.TestCase):
     rule_linear = prover.prove_rule(stripped_config, full_config, delta_loop=28)
     self.assertIsNotNone(rule_linear)
     self.assertIsInstance(rule_linear, Proof_System.Iterated_Rule)
-    # rule_linear.gen_rule is the embedded General_Rule with infinite=False
-    self.assertFalse(rule_linear.gen_rule.infinite)
-
-    # Test apply_linear_rule with prover_level < EXP (fallback to apply_general_rule).
-    # This exercises the apply_general_rule finite loop path (and compute_steps=True path).
-    prover2 = Proof_System.Proof_System(tm, self.options, "")
-    prover2.prover_level = Proof_System.ProverLevel.BASE
-    success, rest = prover2.apply_linear_rule(rule_linear, full_config)
-    self.assertTrue(success)
-    result, _ = rest
-    self.assertEqual(result.condition, Proof_System.APPLY_RULE)
-
-    # Test apply_rule dispatching directly to apply_general_rule (line 1061).
-    success_gr, rest_gr = prover2.apply_rule(rule_linear.gen_rule, full_config)
-    self.assertTrue(success_gr)
-    result_gr, _ = rest_gr
-    self.assertEqual(result_gr.condition, Proof_System.APPLY_RULE)
+    self.assertFalse(rule_linear.infinite)
 
     # Test prover_level < ITERATED path in apply_linear_rule.
     prover3 = Proof_System.Proof_System(tm, self.options, "")
@@ -647,15 +608,6 @@ class ProofSystemTest(unittest.TestCase):
     bad_config = (state_E, bad_tape, None)
     success_bad, _ = prover.apply_linear_rule(rule_linear, bad_config)
     self.assertFalse(success_bad)
-
-    # Test apply_general_rule with infinite=True (monkey-patch).
-    # This exercises the INF_REPEAT path in apply_general_rule.
-    rule_linear.gen_rule.infinite = True
-    success_inf, rest_inf = prover2.apply_general_rule(rule_linear.gen_rule, full_config)
-    self.assertTrue(success_inf)
-    result_inf, _ = rest_inf
-    self.assertEqual(result_inf.condition, Proof_System.INF_REPEAT)
-    rule_linear.gen_rule.infinite = False  # restore
 
   def test_print_rules_mode(self):
     """Test --print-rules/--rules prints only newly proven rules without verbose prover steps."""
@@ -1045,16 +997,6 @@ class ProofSystemTest(unittest.TestCase):
       "00^inf <- 11^(-6 + 13 * 2^5) 10^1 00^1 11^1 10^7 01^42 00^inf",
     )
 
-    # Also test fallback to apply_general_rule on the limited Iterated_Rule when prover_level < EXP
-    prover.prover_level = Proof_System.ProverLevel.BASE
-    res_gen = prover.try_apply_a_rule(stripped_lin_extra, (state_E, tape_lin_extra, 300))
-    self.assertIsNotNone(res_gen)
-    self.assertEqual(res_gen.condition, Proof_System.APPLY_RULE)
-    self.assertEqual(
-      str(res_gen.new_tape),
-      "00^inf <- 11^410 10^1 00^1 11^1 10^7 01^42 00^inf",
-    )
-
     # Verify that print_rules outputs both limited rules cleanly.
     buf = io.StringIO()
     with contextlib.redirect_stdout(buf):
@@ -1339,7 +1281,7 @@ class ProofSystemTest(unittest.TestCase):
         self.assertEqual(res3.new_tape.tape[0][1].num, 1)
         self.assertEqual(res3.new_tape.tape[0][2].num, 3)
 
-  def test_const_non_one_block_iterated_exp_and_general_rules(self):
+  def test_const_non_one_block_iterated_rules(self):
     tm = IO.parse_tm("1RB---_---0LA")
     prover = Proof_System.Proof_System(tm, self.options, "")
     state_A = Turing_Machine.Simple_Machine_State(0)
@@ -1351,7 +1293,7 @@ class ProofSystemTest(unittest.TestCase):
       t.tape[1] = [Tape.Repeated_Symbol(0, InfNat()), Tape.Repeated_Symbol(1, a_val)]
       return t
 
-    # Unchanged constant c=2 -> Iterated_Rule & Exponential_Rule accept and enforce == 2.
+    # Unchanged constant c=2 -> Iterated_Rule accepts and enforces == 2.
     a_expr = Algebraic_Expression.Expression_from_string("(a+2)")
     var_a = a_expr.variable_restricted()
     var_list = [None, None, None, var_a]
@@ -1367,42 +1309,13 @@ class ProofSystemTest(unittest.TestCase):
     ok, _ = prover.apply_rule(iter_rule, (state_A, make_tape(3, 2), 0))
     self.assertTrue(ok)
 
-    exp_result_tape = make_tape(2 * Algebraic_Expression.VariableToExpression(var_a) + 1, 2)
-    exp_rule, exp_err = Proof_System.Exponential_Rule.try_gen(
-      var_list, min_list, exp_result_tape, Algebraic_Expression.ConstantToExpression(1), 1, 1, {}, 1
-    )
-    self.assertIsNone(exp_err)
-    self.assertIsNotNone(exp_rule)
-    self.assertEqual(exp_rule.min_list[1], 2)
-    self.assertEqual(prover.apply_rule(exp_rule, (state_A, make_tape(3, 4), 0)), (False, Proof_System.CONST_MISMATCH))
-
-    # Changed constant 2 -> 3: Iterated_Rule, Exponential_Rule, General_Rule, and prove_rule all reject.
+    # Changed constant 2 -> 3: Iterated_Rule and prove_rule reject.
     changed_tape = make_tape(Algebraic_Expression.VariableToExpression(var_a) + 1, 3)
     bad_lin, lin_err = Proof_System.Iterated_Rule.try_gen(
       var_list, min_list, changed_tape, Algebraic_Expression.ConstantToExpression(1), 1, 2, {}, 1
     )
     self.assertIsNone(bad_lin)
     self.assertIn("Constant mismatch", lin_err)
-
-    bad_exp, bad_exp_err = Proof_System.Exponential_Rule.try_gen(
-      var_list, min_list, changed_tape, Algebraic_Expression.ConstantToExpression(1), 1, 3, {}, 1
-    )
-    self.assertIsNone(bad_exp)
-    self.assertIn("Constant mismatch", bad_exp_err)
-
-    with self.assertRaises(AssertionError):
-      Proof_System.General_Rule(
-        var_list, min_list, changed_tape, Algebraic_Expression.ConstantToExpression(1), 1, 4, {}, 1
-      )
-
-    # Unchanged constant c=2 with finite General_Rule succeeds and enforces == 2.
-    min_list_finite = [InfNat(), 2, InfNat(), 2]
-    unchanged_gen_tape = make_tape(Algebraic_Expression.VariableToExpression(var_a) - 1, 2)
-    gen_rule = Proof_System.General_Rule(
-      var_list, min_list_finite, unchanged_gen_tape, Algebraic_Expression.ConstantToExpression(1), 1, 4, {}, 1
-    )
-    self.assertFalse(gen_rule.infinite)
-    self.assertEqual(prover.apply_rule(gen_rule, (state_A, make_tape(5, 3), 0)), (False, Proof_System.CONST_MISMATCH))
 
     # prove_rule returns None if a pinned constant block changes value (1^2 -> 1^4 over 2 steps).
     inc_tm = IO.parse_tm("---1RB_---1RA")
@@ -1715,14 +1628,8 @@ class ProofSystemTest(unittest.TestCase):
     self.assertEqual(sim.inf_reason, io_pb2.INF_PROOF_SYSTEM)
     self.assertGreaterEqual(sim.prover.num_rules_by_level[3], 1)
 
-  def test_multiple_vars_in_one_term_unrecoverable_fails(self):
-    # When multiple variables end up in one term and no variable block became constant,
-    # prove_rule should fail with "Multiple vars in one term".
-    tm = IO.parse_tm("1RB---_---0LA")
-    self.options.prover_level = Proof_System.ProverLevel.EXP
-    prover = Proof_System.Proof_System(tm, self.options, "")
-    state_A = Turing_Machine.Simple_Machine_State(0)
-
+  def test_cross_variable_rule_rejected(self):
+    # Cross-variable / swap rules fail Iterated_Rule.try_gen with a Variable mismatch note.
     def make_tape(left_ones, right_ones):
       t = Tape.Chain_Tape()
       t.init(0, Turing_Machine.RIGHT, self.options)
@@ -1734,22 +1641,18 @@ class ProofSystemTest(unittest.TestCase):
     y_var = Algebraic_Expression.Variable()
     x_e = Algebraic_Expression.VariableToExpression(x_var)
     y_e = Algebraic_Expression.VariableToExpression(y_var)
-    gen_subrule = Proof_System.General_Rule(
+    rule, err = Proof_System.Iterated_Rule.try_gen(
       [None, x_var, None, y_var],
       [InfNat(), 1, InfNat(), 2],
-      make_tape(x_e + y_e, y_e - 1),
+      make_tape(y_e + 2, x_e + 4),
       Algebraic_Expression.ConstantToExpression(1),
       num_loops=1,
       rule_num=0,
       states_last_seen={},
-      level=1,
+      level=2,
     )
-    sample_tape = make_tape(2, 3)
-    stripped = Proof_System.strip_config(state_A, Turing_Machine.RIGHT, sample_tape.tape)
-    prover.add_rule(gen_subrule, stripped)
-    res = prover.prove_rule(stripped, (state_A, sample_tape, 0), delta_loop=1)
-    self.assertIsNone(res)
-    self.assertEqual(prover.last_prove_fail_reason, "Multiple vars in one term")
+    self.assertIsNone(rule)
+    self.assertIn("Variable mismatch", err)
 
   def test_exp_const_blocks_reproof_avoids_desync(self):
     # Reproving with const_blocks when --exp-const-blocks specializes a depleted block
