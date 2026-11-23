@@ -350,6 +350,125 @@ class Diff_Rule(Rule):
     return self._format_rule("Diff Rule", start_config, transitions)
 
 
+MAX_PERM_COMPOSE_ORDER = 8
+
+
+def _try_compose_permutation_rule(var_list, min_list, result_tape):
+  """If `result_tape` permutes the variables in `var_list` (e.g. a swap rule),
+  compose the transition with itself `order` times (the LCM of cycle lengths)
+  until every variable returns to its original slot.
+
+  Returns `(composed_min_list, composed_tape, order)` on success, or `None`.
+  """
+  result_list = [block.num for block in result_tape.tape[0] + result_tape.tape[1]]
+  var_to_idx = {v: i for i, v in enumerate(var_list) if v is not None}
+  if len(var_to_idx) < 2:
+    return None
+
+  src = {}
+  for i, (var, min_val, res_expr) in enumerate(zip(var_list, min_list, result_list)):
+    if var is None:
+      if res_expr != min_val:
+        return None
+    else:
+      res_vars = variables(res_expr)
+      if len(res_vars) != 1:
+        return None
+      src_var = next(iter(res_vars))
+      if src_var not in var_to_idx:
+        return None
+      src[i] = var_to_idx[src_var]
+
+  # Must be a non-trivial bijection (permutation) on the variable indices.
+  if len(set(src.values())) != len(src):
+    return None
+  if all(src[i] == i for i in src):
+    return None
+
+  # Compute permutation order (LCM of cycle lengths).
+  visited = set()
+  order = 1
+  for start in src:
+    if start in visited:
+      continue
+    cur_idx = start
+    cycle_len = 0
+    while cur_idx not in visited:
+      visited.add(cur_idx)
+      cur_idx = src[cur_idx]
+      cycle_len += 1
+    order = math.lcm(order, cycle_len)
+    if order > MAX_PERM_COMPOSE_ORDER:
+      return None
+  if order < 2:
+    return None
+
+  req_min = list(min_list)
+  cur = [VariableToExpression(v) if v is not None else m for v, m in zip(var_list, min_list)]
+  cur_var_idx = {i: i for i in src}
+
+  for step in range(order):
+    # Ensure every variable slot satisfies min_list[i] before applying the next iteration.
+    if step > 0:
+      for i in src:
+        orig_idx = cur_var_idx[i]
+        orig_var = var_list[orig_idx]
+        expr = cur[i]
+        needed = min_list[i]
+        lin = expr.as_strictly_linear() if hasattr(expr, "as_strictly_linear") else None
+        if lin is not None:
+          _, coef, const = lin
+          if coef <= 0:
+            return None
+          if needed - const > 0:
+            min_needed = Rule_Func.ceil_div(needed - const, coef)
+            if min_needed > req_min[orig_idx]:
+              req_min[orig_idx] = min_needed
+        else:
+          try:
+            v0 = substitute(expr, {orig_var: req_min[orig_idx]})
+            v1 = substitute(expr, {orig_var: req_min[orig_idx] + 1})
+          except (Exp_Int.ExpIntGaveUp, Iterated_Expression.IteratedExprGaveUp, TypeError, ValueError):
+            return None
+          if v1 <= v0:
+            return None
+          bumps = 0
+          while v0 < needed and bumps < 100:
+            req_min[orig_idx] += 1
+            bumps += 1
+            try:
+              v0 = substitute(expr, {orig_var: req_min[orig_idx]})
+            except (Exp_Int.ExpIntGaveUp, Iterated_Expression.IteratedExprGaveUp, TypeError, ValueError):
+              return None
+          if v0 < needed:
+            return None
+
+    # Apply one iteration of the single-step rule.
+    next_cur = list(cur)
+    next_var_idx = {}
+    for i in src:
+      s = src[i]
+      try:
+        sub_val = substitute(result_list[i], {var_list[s]: cur[s]})
+      except (Exp_Int.ExpIntGaveUp, Iterated_Expression.IteratedExprGaveUp, TypeError, ValueError, AssertionError):
+        return None
+      next_cur[i] = sub_val
+      next_var_idx[i] = cur_var_idx[s]
+    cur = next_cur
+    cur_var_idx = next_var_idx
+
+  assert all(cur_var_idx[i] == i for i in src), cur_var_idx
+
+  composed_tape = result_tape.copy()
+  idx = 0
+  for d in range(2):
+    for block in composed_tape.tape[d]:
+      block.num = cur[idx]
+      idx += 1
+
+  return req_min, composed_tape, order
+
+
 class Iterated_Rule(Rule):
   """A rule where all run counts change like `x -> m x + b` for constants `m, b`."""
 
@@ -502,6 +621,43 @@ class Iterated_Rule(Rule):
 
     start_config = _format_config(left_start, self.initial_state, self.dir, right_start)
     return self._format_rule("Iterated Rule", start_config, transitions)
+
+
+def _rule_signature(rule):
+  """Canonical, variable-name-independent signature for deduplicating rules."""
+  left_syms, right_syms = _rule_expected_symbols(rule)
+  rule_dir = rule.initial_tape.dir if isinstance(rule, Diff_Rule) else rule.dir
+  base = (
+    type(rule).__name__,
+    rule.initial_state,
+    rule_dir,
+    rule.is_limited,
+    rule.left_dist,
+    rule.right_dist,
+    left_syms,
+    right_syms,
+  )
+  if isinstance(rule, Diff_Rule):
+    init_spec = []
+    diff_spec = []
+    for d in range(2):
+      for init_b, diff_b in zip(rule.initial_tape.tape[d], rule.diff_tape.tape[d]):
+        if isinstance(init_b.num, Algebraic_Expression):
+          init_spec.append(("var", init_b.num.const))
+        else:
+          init_spec.append(("const", init_b.num))
+        diff_spec.append(diff_b.num)
+    return base + (tuple(init_spec), tuple(diff_spec))
+  elif isinstance(rule, Iterated_Rule):
+    slot_spec = []
+    for i, (var, min_val, func) in enumerate(zip(rule.var_list, rule.min_list, rule.func_list)):
+      if var is None:
+        slot_spec.append(("const", min_val))
+      else:
+        f_str = str(func).replace(str(var), f"v{i}")
+        slot_spec.append(("var", min_val, type(func).__name__, f_str))
+    return base + (tuple(slot_spec),)
+  return base + (repr(rule),)
 
 
 def _rule_expected_symbols(rule):
@@ -756,9 +912,15 @@ class Proof_System:
     # Distance-indexed dictionary for limited rules:
     # (state, dir) -> {(left_dist, right_dist): {(sub_left, sub_right): [rules]}}
     self.limited_rules = {}
+    # Canonical rule signature -> existing Rule, for deduplication.
+    self._rule_signatures = {}
+    # (stripped_config, delta_loop) -> self.num_rules when a rule was proven,
+    # to avoid redundant re-proving when no new subrules have been learned.
+    self._proven_delta_loops = {}
 
     # Stats
     self.num_rules = 0
+    self.num_duplicate_rules = 0
     self.num_rules_by_level = defaultdict(int)  # Count of rules proven at each level.
     self.num_meta_diff_rules = 0  # Backward compat: Diff_Rules at level > 1.
     self.num_linear_rules = 0
@@ -810,6 +972,40 @@ class Proof_System:
     if found_rule:
       print()
 
+  def _can_use_in_meta_rule(self, rule) -> bool:
+    if self.prover_level < ProverLevel.EXP:
+      return False
+    if isinstance(rule, Iterated_Rule):
+      if self.prover_level < ProverLevel.ITERATED:
+        return False
+      if rule.has_collatz_decrease:
+        return False
+    elif isinstance(rule, Diff_Rule):
+      if rule.has_collatz_decrease:
+        return False
+    return True
+
+  def _matching_rules_for_config(self, stripped_config):
+    matching = []
+    if self.options.limited_rules:
+      (state, dir, stripped_tape_left, stripped_tape_right) = stripped_config
+      by_dist = self.limited_rules.get((state, dir))
+      if by_dist:
+        len_l = len(stripped_tape_left)
+        len_r = len(stripped_tape_right)
+        for (ld, rd), sub_table in by_dist.items():
+          if len_l >= ld and len_r >= rd:
+            sub_left = _slice_tape_tail(stripped_tape_left, ld)
+            sub_right = _slice_tape_tail(stripped_tape_right, rd)
+            rules = sub_table.get((sub_left, sub_right))
+            if rules:
+              matching.extend(rules)
+    if stripped_config in self.rules:
+      matching.extend(self.rules[stripped_config])
+    if len(matching) > 1:
+      matching.sort(key=self._rule_priority, reverse=True)
+    return matching
+
   def log_and_apply(self, tape, state, loop_num, remaining_loops=None, allow_log=True):
     """
     Log this configuration into the memory and check if it is similar to a
@@ -828,13 +1024,27 @@ class Proof_System:
       if past_config.log_config(loop_num):
         # We see enough of a pattern to try and prove a rule.
         delta_loop = loop_num - past_config.last_loop_num
+
+        # Avoid wasted re-proving if an existing rule already applies and either
+        # cannot be wrapped in a meta-rule (e.g. Collatz rule) or was already
+        # proven for this (stripped_config, delta_loop) with no new rules since.
+        already_proven_same = self._proven_delta_loops.get((stripped_config, delta_loop)) == self.num_rules
+        existing = self._matching_rules_for_config(stripped_config)
+        if existing:
+          preferred = existing if already_proven_same else [r for r in existing if not self._can_use_in_meta_rule(r)]
+          if preferred:
+            res = self._apply_rule_list(preferred, full_config)
+            if res and res.condition != NOTHING_TO_DO:
+              return res
+
         if remaining_loops is not None and delta_loop > remaining_loops:
           return ProverResult(OVER_LOOPS, delta_loop=delta_loop, remaining_loops=remaining_loops)
         rule = self.prove_rule(stripped_config, full_config, delta_loop)
         if not rule:
           self.num_failed_proofs += 1
         else:
-          self.add_rule(rule, stripped_config)
+          rule = self.add_rule(rule, stripped_config)
+          self._proven_delta_loops[(stripped_config, delta_loop)] = self.num_rules
 
           # Try to apply transition
           is_good, res = self.apply_rule(rule, full_config)
@@ -921,7 +1131,16 @@ class Proof_System:
     return self._apply_rule_list(matching_rules, full_config)
 
   def add_rule(self, rule, stripped_config):
-    """Add a proven rule"""
+    """Add a proven rule, deduplicating against existing rules. Returns the stored rule."""
+    sig = _rule_signature(rule)
+    if sig in self._rule_signatures:
+      existing = self._rule_signatures[sig]
+      self.num_duplicate_rules += 1
+      if self.verbose or self.print_new_rules:
+        print(f"\nDuplicate Rule (matches Rule {existing.num}) — not added.")
+      return existing
+    self._rule_signatures[sig] = rule
+
     zero_slots = _rule_zero_min_slots(rule)
     # Remember rule.
     if rule.is_limited:
@@ -992,6 +1211,7 @@ class Proof_System:
     self.past_configs.clear()
     saved.last_loop_num = None
     self.past_configs[stripped_config] = saved
+    return rule
 
   def prove_rule(self, stripped_config, full_config, delta_loop, const_blocks=None):
     """Try to prove a general rule based upon specific example.
@@ -1345,21 +1565,31 @@ class Proof_System:
         rule_level,
         initial_state=new_state,
       )
+      if not rule:
+        composed = _try_compose_permutation_rule(var_list, min_list, result_tape)
+        if composed is not None:
+          comp_min_list, comp_tape, perm_order = composed
+          rule, lin_err = Iterated_Rule.try_gen(
+            var_list,
+            comp_min_list,
+            comp_tape,
+            None,
+            gen_sim.num_loops * perm_order,
+            self.num_rules,
+            states_last_seen,
+            rule_level,
+            initial_state=new_state,
+          )
       if rule:
         if self.options.limited_rules:
           rule.make_limited(left_dist, right_dist)
 
-        if self.verbose or self.print_new_rules:
+        if (self.verbose or self.print_new_rules) and _rule_signature(rule) not in self._rule_signatures:
           self._print_new_rule(rule)
 
       if not rule:
         if self.verbose:
           self.print_this(f"[PROVER FAILURE] Iterated_Rule generation failed: {lin_err}")
-        # TODO: For variable-swap (permutation) rules like:
-        #   Start Tape: 000000^inf 111111^1 101101^(j|2) <C (011101) 111111^(k|1) 111100^1 000000^inf
-        #   End Tape:   000000^inf 111111^1 101101^(k + 4) <C (011101) 111111^(j + 2) 111100^1 000000^inf
-        # consider composing the rule with itself (running it 2+ times until variables
-        # return to their original positions) to produce a valid Iterated_Rule.
         return None
 
       if self.debug_reprove:
@@ -1424,7 +1654,7 @@ class Proof_System:
         right_dist=right_dist if self.options.limited_rules else None,
       )
 
-      if self.verbose or self.print_new_rules:
+      if (self.verbose or self.print_new_rules) and _rule_signature(rule) not in self._rule_signatures:
         self._print_new_rule(rule)
 
       if self.debug_reprove:

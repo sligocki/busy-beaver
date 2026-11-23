@@ -1629,7 +1629,7 @@ class ProofSystemTest(unittest.TestCase):
     self.assertGreaterEqual(sim.prover.num_rules_by_level[3], 1)
 
   def test_cross_variable_rule_rejected(self):
-    # Cross-variable / swap rules fail Iterated_Rule.try_gen with a Variable mismatch note.
+    # Non-bijective cross-variable rules fail both Iterated_Rule.try_gen and permutation composition.
     def make_tape(left_ones, right_ones):
       t = Tape.Chain_Tape()
       t.init(0, Turing_Machine.RIGHT, self.options)
@@ -1641,10 +1641,12 @@ class ProofSystemTest(unittest.TestCase):
     y_var = Algebraic_Expression.Variable()
     x_e = Algebraic_Expression.VariableToExpression(x_var)
     y_e = Algebraic_Expression.VariableToExpression(y_var)
+    # Non-bijective: both slots depend on y_var
+    non_bij_tape = make_tape(y_e + 2, y_e + 4)
     rule, err = Proof_System.Iterated_Rule.try_gen(
       [None, x_var, None, y_var],
       [InfNat(), 1, InfNat(), 2],
-      make_tape(y_e + 2, x_e + 4),
+      non_bij_tape,
       Algebraic_Expression.ConstantToExpression(1),
       num_loops=1,
       rule_num=0,
@@ -1653,6 +1655,96 @@ class ProofSystemTest(unittest.TestCase):
     )
     self.assertIsNone(rule)
     self.assertIn("Variable mismatch", err)
+    self.assertIsNone(
+      Proof_System._try_compose_permutation_rule(
+        [None, x_var, None, y_var],
+        [InfNat(), 1, InfNat(), 2],
+        non_bij_tape,
+      )
+    )
+
+    # Bijective swap rule: (x, y) -> (y + 2, x + 4) with mins (1, 5)
+    # Composed 2x: x -> x + 6, y -> y + 6.
+    # Step 1 requires x' = y + 2 >= 1 (y >= 0) and y' = x + 4 >= 5 (x >= 1), so mins stay (1, 5).
+    swap_tape = make_tape(y_e + 2, x_e + 4)
+    composed = Proof_System._try_compose_permutation_rule(
+      [None, x_var, None, y_var],
+      [InfNat(), 1, InfNat(), 5],
+      swap_tape,
+    )
+    self.assertIsNotNone(composed)
+    comp_min, comp_tape, order = composed
+    self.assertEqual(order, 2)
+    self.assertEqual(comp_min, [InfNat(), 1, InfNat(), 5])
+    comp_rule, comp_err = Proof_System.Iterated_Rule.try_gen(
+      [None, x_var, None, y_var],
+      comp_min,
+      comp_tape,
+      None,
+      num_loops=2,
+      rule_num=0,
+      states_last_seen={},
+      level=2,
+    )
+    self.assertIsNone(comp_err)
+    self.assertIsNotNone(comp_rule)
+    self.assertTrue(comp_rule.infinite)
+
+  def test_swap_rule_self_composition_end_to_end(self):
+    # 1RB0LE_0RC0LA_1LD0RF_0LA0LB_0LB0RD_0RG0RD_1RC--- hits a Level 3 swap rule
+    # (s -> -4 + 2^(v+3), v -> s+2, u -> u-1, t -> t-1) that composes 2x into a
+    # valid Level 3 Iterated_Rule verified by --debug-reprove, without re-proving duplicates.
+    tm = IO.parse_tm("1RB0LE_0RC0LA_1LD0RF_0LA0LB_0LB0RD_0RG0RD_1RC---")
+    macro_tm = Turing_Machine.Backsymbol_Macro_Machine(Turing_Machine.Block_Macro_Machine(tm, 3))
+    self.options.prover_level = Proof_System.ProverLevel.ITERATED
+    self.options.exp_mod_iterated = True
+    self.options.debug_reprove = True
+    self.options.compute_steps = False
+    sim = Simulator.Simulator(macro_tm, self.options)
+    sim.loop_seek(3000)
+    self.assertEqual(sim.prover.num_rules_by_level[3], 1)
+    self.assertEqual(sim.prover.num_duplicate_rules, 0)
+    self.assertEqual(sim.prover.num_failed_proofs, 0)
+
+  def test_duplicate_rule_rejected(self):
+    tm = IO.parse_tm("1RB---_---0LA")
+    prover = Proof_System.Proof_System(tm, self.options, "")
+    state_A = Turing_Machine.Simple_Machine_State(0)
+
+    def make_rule(rule_num):
+      var_a = Algebraic_Expression.Variable()
+      t = Tape.Chain_Tape()
+      t.init(0, Turing_Machine.RIGHT, self.options)
+      t.tape[0] = [Tape.Repeated_Symbol(0, InfNat())]
+      t.tape[1] = [
+        Tape.Repeated_Symbol(0, InfNat()),
+        Tape.Repeated_Symbol(1, 2 * Algebraic_Expression.VariableToExpression(var_a) + 1),
+      ]
+      rule, err = Proof_System.Iterated_Rule.try_gen(
+        [None, None, var_a],
+        [InfNat(), InfNat(), 1],
+        t,
+        None,
+        num_loops=5,
+        rule_num=rule_num,
+        states_last_seen={},
+        level=2,
+        initial_state=state_A,
+      )
+      self.assertIsNone(err)
+      return rule, Proof_System.strip_config(state_A, Turing_Machine.RIGHT, t.tape)
+
+    r1, stripped = make_rule(0)
+    r2, _ = make_rule(1)
+    stored1 = prover.add_rule(r1, stripped)
+    self.assertIs(stored1, r1)
+    self.assertEqual(prover.num_rules, 1)
+    self.assertEqual(prover.num_duplicate_rules, 0)
+
+    stored2 = prover.add_rule(r2, stripped)
+    self.assertIs(stored2, r1)
+    self.assertEqual(prover.num_rules, 1)
+    self.assertEqual(prover.num_duplicate_rules, 1)
 
   def test_exp_const_blocks_reproof_avoids_desync(self):
     # Reproving with const_blocks when --exp-const-blocks specializes a depleted block

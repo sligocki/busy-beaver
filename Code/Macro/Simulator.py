@@ -410,6 +410,8 @@ class Simulator:
         print(f"  Level {level} rules:", self.prover.num_rules_by_level[level])
       print("Iterated rules proven:", self.prover.num_linear_rules)
       print("Collatz rules:", self.prover.num_collatz_rules)
+      if self.prover.num_duplicate_rules:
+        print("Duplicate rules:", self.prover.num_duplicate_rules)
       print("Failed proofs:", self.prover.num_failed_proofs)
       print(f"Prover num past configs: {len(self.prover.past_configs):_}")
     print("Tape copies:", Tape.Chain_Tape.num_copies)
