@@ -9,7 +9,7 @@ from pathlib import Path
 
 import IO
 import Macro_Simulator
-from Macro import Simulator, Turing_Machine
+from Macro import Proof_System, Simulator, Turing_Machine
 
 
 def re_sim(tm_record):
@@ -28,12 +28,10 @@ def re_sim(tm_record):
   options.tape_limit = sim_params.max_tape_blocks
   # Time is non-deterministic ... also this is not actually used by simulate_machine
   options.time = 0.0
-  options.recursive = True
+  options.prover_level = Proof_System.ProverLevel.EXP
   options.compute_steps = True
-  # Only use experimental Linear Rule code if we actually proved a Linear Rule :)
+  # Only disable step counting if we actually proved a Linear Rule :)
   if sim_result.num_linear_rules_proven > 0:
-    options.recursive = True
-    options.exp_linear_rules = True
     options.compute_steps = False
   sim_result.Clear()
   tm_record.proto.status.Clear()

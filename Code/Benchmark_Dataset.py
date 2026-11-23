@@ -249,7 +249,7 @@ def discover_truth_record(
         if b not in bs_list:
           bs_list.append(b)
 
-  ref_config = CONFIG_PRESETS["prover_4_meta_linear"].to_dict()
+  ref_config = CONFIG_PRESETS["prover_3_iterated"].to_dict()
   chosen_bs = bs_list[0]
   chosen_res: dict[str, Any] | None = None
 
@@ -400,7 +400,7 @@ def build_suite_entry(
     "tape_limit": tape_limit,
     "target_max_span_bi": None,
   }
-  ref_config = CONFIG_PRESETS["prover_4_meta_linear"].to_dict()
+  ref_config = CONFIG_PRESETS["prover_3_iterated"].to_dict()
 
   if profile_coverage:
     with CoverageProfiler() as prof:
@@ -1143,7 +1143,7 @@ def evaluate_candidates_against_dataset(
   suite_name = "full" if "full" in ds_path.stem else "fast"
   truth_by_tm = load_truth(TRUTH_FILE)
   existing_tms = {e["tm"] for e in existing_entries}
-  ref_config = CONFIG_PRESETS["prover_4_meta_linear"].to_dict()
+  ref_config = CONFIG_PRESETS["prover_3_iterated"].to_dict()
 
   print(f"Profiling existing dataset '{ds_path.name}' ({len(existing_entries)} TMs) to build baseline coverage map...")
   baseline_counts: collections.Counter = collections.Counter()

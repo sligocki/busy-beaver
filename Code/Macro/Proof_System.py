@@ -4,10 +4,13 @@ Proof System which observes and attempts to prove patterns in computation.
 
 from NatExpr import approx_str
 import copy
+from enum import IntEnum
 import math
 import optparse
+import sys
 from collections import defaultdict
-from optparse import OptionGroup, OptionParser
+from optparse import OptionGroup, OptionParser, OptionValueError
+import weakref
 
 import Algebraic_Expression as ae
 import Exp_Int
@@ -33,12 +36,89 @@ from NatExpr import ConstInt, NatExpr, is_const
 Algebraic_Expression = Expression
 
 
-def add_option_group(parser):
+class ProverLevel(IntEnum):
+  """Hierarchy of proof system capabilities (each level enables all lower levels)."""
+
+  NONE = 0  # No prover
+  BASE = 1  # Level 1 Diff rules only (plain ints)
+  EXP = 2  # + Recursive proofs & exponential acceleration (ExpInt)
+  ITERATED = 3  # + Arbitrary iterated / meta-linear rules (Iterated_Expression)
+
+
+DEFAULT_PROVER_LEVEL = ProverLevel.BASE
+MAX_PROVER_LEVEL = ProverLevel.ITERATED
+
+# Track prover-level CLI flag state per optparse.Values instance without
+# polluting the parsed options object with private attributes.
+_PROVER_LEVEL_PARSE_STATE: dict[int, dict[str, bool]] = {}
+
+
+def parse_prover_level(value: str) -> ProverLevel:
+  """Parse a CLI prover level string ('0'-'4' or 'max', case-insensitive)."""
+  norm = value.strip().lower()
+  if norm == "max":
+    return MAX_PROVER_LEVEL
+  try:
+    level_int = int(norm)
+  except ValueError as e:
+    raise OptionValueError(
+      f"Invalid prover level {value!r}: expected an integer 0-{int(MAX_PROVER_LEVEL)} or 'max'."
+    ) from e
+  if not (int(ProverLevel.NONE) <= level_int <= int(MAX_PROVER_LEVEL)):
+    raise OptionValueError(f"Invalid prover level {value!r}: expected an integer 0-{int(MAX_PROVER_LEVEL)} or 'max'.")
+  return ProverLevel(level_int)
+
+
+def add_option_group(parser, default_prover_level: ProverLevel = DEFAULT_PROVER_LEVEL):
   """Add Proof_System options group to an OptParser parser object."""
   assert isinstance(parser, OptionParser)
+  default_prover_level = ProverLevel(default_prover_level)
+
+  def _get_state(values):
+    key = id(values)
+    state = _PROVER_LEVEL_PARSE_STATE.get(key)
+    if state is None:
+      state = {"used_level": False, "used_deprecated": False}
+      _PROVER_LEVEL_PARSE_STATE[key] = state
+      weakref.finalize(values, _PROVER_LEVEL_PARSE_STATE.pop, key, None)
+    return state
+
+  def _prover_level_callback(option, opt_str, value, parser):
+    state = _get_state(parser.values)
+    if state["used_deprecated"]:
+      raise OptionValueError(f"Cannot combine {opt_str} with deprecated prover flags.")
+    parser.values.prover_level = parse_prover_level(value)
+    state["used_level"] = True
+
+  def _deprecated_prover_flag_callback(option, opt_str, value, parser, level):
+    state = _get_state(parser.values)
+    if state["used_level"]:
+      raise OptionValueError(f"Cannot combine --prover-level/-l with deprecated flag {opt_str}.")
+    print(f"Warning: {opt_str} is deprecated; use --prover-level={int(level)}", file=sys.stderr)
+    if not state["used_deprecated"]:
+      parser.values.prover_level = level
+    else:
+      parser.values.prover_level = ProverLevel(max(parser.values.prover_level, level))
+    state["used_deprecated"] = True
 
   group = OptionGroup(parser, "Proof System options")
 
+  default_str = "max" if default_prover_level == MAX_PROVER_LEVEL else str(int(default_prover_level))
+  group.add_option(
+    "-l",
+    "--level",
+    "--prover-level",
+    dest="prover_level",
+    type="string",
+    action="callback",
+    callback=_prover_level_callback,
+    default=default_prover_level,
+    metavar="LEVEL",
+    help=(
+      f"Prover level (0=none, 1=base rules, 2=recursive + exponential rules, "
+      f"3/max=arbitrary iterated rules). [Default: {default_str}]"
+    ),
+  )
   group.add_option("--verbose-prover", action="store_true")
   group.add_option(
     "--print-rules",
@@ -49,11 +129,20 @@ def add_option_group(parser):
     help="Print each newly proven rule (without step-by-step prover output).",
   )
   group.add_option(
+    "-p",
+    "--no-prover",
+    action="callback",
+    callback=_deprecated_prover_flag_callback,
+    callback_args=(ProverLevel.NONE,),
+    help="[Deprecated: use --prover-level=0] Turn OFF proof system.",
+  )
+  group.add_option(
     "-r",
     "--recursive",
-    action="store_true",
-    default=False,
-    help="Allow meta/recursive rules. Rules that use other rules in their proofs.",
+    action="callback",
+    callback=_deprecated_prover_flag_callback,
+    callback_args=(ProverLevel.EXP,),
+    help="[Deprecated: use --prover-level=2] Allow meta/recursive rules.",
   )
   group.add_option(
     "--no-limited-rules",
@@ -64,15 +153,17 @@ def add_option_group(parser):
   )
   group.add_option(
     "--exp-linear-rules",
-    action="store_true",
-    default=False,
-    help="Allow accelerating Iterated_Rules [Experimental]",
+    action="callback",
+    callback=_deprecated_prover_flag_callback,
+    callback_args=(ProverLevel.EXP,),
+    help="[Deprecated: use --prover-level=2] Allow accelerating Iterated_Rules.",
   )
   group.add_option(
     "--exp-meta-linear-rules",
-    action="store_true",
-    default=False,
-    help="Allow using Iterated_Rules in Meta Rules [Experimental]",
+    action="callback",
+    callback=_deprecated_prover_flag_callback,
+    callback_args=(ProverLevel.ITERATED,),
+    help="[Deprecated: use --prover-level=3] Allow using Iterated_Rules in Meta Rules.",
   )
   group.add_option(
     "--no-const-blocks",
@@ -935,9 +1026,7 @@ class Proof_System:
     self.options = options
     # If self.frozen == True, no new rules will be proven.
     self.frozen = False
-    self.recursive = options.recursive
-    self.exp_linear_rules = options.exp_linear_rules
-    self.exp_meta_linear_rules = options.exp_meta_linear_rules
+    self.prover_level = ProverLevel(options.prover_level)
     self.exp_zero_exponents = getattr(options, "exp_zero_exponents", False)
     self.exp_mod_iterated = getattr(options, "exp_mod_iterated", False)
     Iterated_Expression.ALLOW_MOD_ITERATED = bool(self.exp_mod_iterated)
@@ -1068,7 +1157,7 @@ class Proof_System:
         # recursive proofs, clear past configuration memory.
         # Likewise, even normal recursive proofs cannot use every subrule
         # as a step (e.g. rules with large negative deltas).
-        if not self.recursive or large_delta:
+        if self.prover_level < ProverLevel.EXP or large_delta:
           if self.past_configs is not None:
             self.past_configs.clear()
         rule.num_uses += 1
@@ -1231,8 +1320,7 @@ class Proof_System:
     # Create the limited simulator with limited or no prover.
     new_options = copy.copy(self.options)
     new_options.max_loops = 0
-    new_options.recursive = False
-    new_options.prover = False  # We'll create our own prover if needed.
+    new_options.prover_level = ProverLevel.NONE  # We'll create our own prover if needed.
     new_options.verbose_prover = False
     new_options.print_rules = False
     new_options.verbose_simulator = self.verbose
@@ -1248,7 +1336,7 @@ class Proof_System:
 
     # If prover can run recursively, we let it simulate with a lazy prover.
     # That is, one that cannot prove new rules, only use already proven ones.
-    if self.recursive:
+    if self.prover_level >= ProverLevel.EXP:
       gen_sim.prover = copy.copy(self)
       gen_sim.prover.frozen = True
       gen_sim.prover.past_configs = None
@@ -1449,7 +1537,7 @@ class Proof_System:
 
     # Compute the rule level: 1 + the highest level of any rule used in the proof.
     # Level 1 = proven from raw simulation; Level N = uses Level N-1 rules in proof.
-    if self.recursive:
+    if self.prover_level >= ProverLevel.EXP:
       rule_level = gen_sim.prover.max_rule_level_used + 1
     else:
       rule_level = 1
@@ -1754,8 +1842,7 @@ class Proof_System:
 
     check_options = copy.copy(self.options)
     check_options.max_loops = 0
-    check_options.recursive = False
-    check_options.prover = False
+    check_options.prover_level = ProverLevel.NONE
     check_options.verbose_prover = False
     check_options.print_rules = False
     check_options.verbose_simulator = self.verbose
@@ -1769,7 +1856,7 @@ class Proof_System:
     check_sim.tape = tight_tape
     check_sim.state = start_state
     check_sim.dir = tight_tape.dir
-    if self.recursive:
+    if self.prover_level >= ProverLevel.EXP:
       check_sim.prover = copy.copy(self)
       check_sim.prover.frozen = True
       check_sim.prover.past_configs = None
@@ -2065,8 +2152,8 @@ class Proof_System:
   # Linear rules can be applied an arbitrary number of times in a single
   # evaluation (like Diff rules), but the expression is slightly more complicated.
   def apply_linear_rule(self, rule, start_config):
-    # Fallback if --exp-linear-rules flag is not set.
-    if not self.exp_linear_rules:
+    # Fallback if prover level is below EXP.
+    if self.prover_level < ProverLevel.EXP:
       return self.apply_general_rule(rule.gen_rule, start_config)
 
     # Unpack input
@@ -2074,7 +2161,7 @@ class Proof_System:
     current_list = [block.num for block in start_tape.tape[0] + start_tape.tape[1]]
     assert len(current_list) == len(rule.var_list)
 
-    if self.exp_meta_linear_rules:
+    if self.prover_level >= ProverLevel.ITERATED:
       # Don't try to use collatz rules inside meta rules ... we won't know the parity.
       disallow_in_meta_rule = rule.has_collatz_decrease
     else:

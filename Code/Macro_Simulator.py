@@ -15,7 +15,7 @@ import io_pb2
 import Lin_Recur_Detect
 import Reverse_Engineer_Filter
 from IO import TM_Record
-from Macro import Block_Finder, Simulator, Turing_Machine
+from Macro import Block_Finder, Proof_System, Simulator, Turing_Machine
 
 
 def add_option_group(parser):
@@ -183,12 +183,12 @@ def simulate_machine(
     sim_info.parameters.max_loops = options.max_loops
     sim_info.parameters.max_time_sec = options.time
     sim_info.parameters.max_tape_blocks = options.tape_limit
-    sim_info.parameters.use_prover = options.prover
+    sim_info.parameters.use_prover = options.prover_level >= Proof_System.ProverLevel.BASE
     sim_info.parameters.use_limited_rules = options.limited_rules
-    sim_info.parameters.use_recursive_rules = options.recursive
+    sim_info.parameters.use_recursive_rules = options.prover_level >= Proof_System.ProverLevel.EXP
 
     # TODO: For now, we can't compute steps when evaluating Iterated_Rules
-    if options.exp_linear_rules:
+    if options.prover_level >= Proof_System.ProverLevel.EXP:
       options.compute_steps = False
     sim = Simulator.Simulator(machine, options)
 

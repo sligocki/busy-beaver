@@ -3,7 +3,7 @@ import os
 import unittest
 
 import IO
-from Macro import Simulator, Turing_Machine
+from Macro import Proof_System, Simulator, Turing_Machine
 
 
 class TestAck34(unittest.TestCase):
@@ -19,14 +19,11 @@ class TestAck34(unittest.TestCase):
         super().__init__()
         self.block_size = 2
         self.backsymbol = True
-        self.prover = True
-        self.recursive = True
+        self.prover_level = Proof_System.ProverLevel.ITERATED
         self.compute_steps = False
         self.verbose_prover = False
         self.verbose_simulator = False
         self.verbose_prover_run = False
-        self.exp_linear_rules = True
-        self.exp_meta_linear_rules = True
         self.print_loops = 0
         self.max_loops = 25000
         self.verbose_prefix = ""
@@ -57,14 +54,11 @@ class TestAck34(unittest.TestCase):
         super().__init__()
         self.block_size = 2
         self.backsymbol = True
-        self.prover = True
-        self.recursive = True
+        self.prover_level = Proof_System.ProverLevel.ITERATED
         self.compute_steps = False
         self.verbose_prover = False
         self.verbose_simulator = False
         self.verbose_prover_run = False
-        self.exp_linear_rules = True
-        self.exp_meta_linear_rules = True
         self.print_loops = 0
         self.max_loops = 100000
         self.verbose_prefix = ""
@@ -91,14 +85,11 @@ class TestAck34(unittest.TestCase):
         super().__init__()
         self.block_size = 2
         self.backsymbol = True
-        self.prover = True
-        self.recursive = True
+        self.prover_level = Proof_System.ProverLevel.ITERATED
         self.compute_steps = False
         self.verbose_prover = False
         self.verbose_simulator = False
         self.verbose_prover_run = False
-        self.exp_linear_rules = True
-        self.exp_meta_linear_rules = True
         self.print_loops = 0
         self.max_loops = 10000
         self.verbose_prefix = ""

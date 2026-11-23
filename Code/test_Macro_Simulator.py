@@ -14,7 +14,7 @@ import io_pb2
 import Macro_Simulator
 import TM_Enum
 from IO import TM_Record
-from Macro import Simulator, Turing_Machine
+from Macro import Proof_System, Simulator, Turing_Machine
 
 
 class MacroSimulatorTest(unittest.TestCase):
@@ -59,8 +59,7 @@ class MacroSimulatorTest(unittest.TestCase):
     tm = IO.parse_tm("1RB1RD_1LC1RA_1RB1LD_1RE0LC_0LC0RA")
     tm = Turing_Machine.Block_Macro_Machine(tm, 2)
     tm = Turing_Machine.Backsymbol_Macro_Machine(tm)
-    self.options.recursive = True
-    self.options.exp_linear_rules = True
+    self.options.prover_level = Proof_System.ProverLevel.EXP
     sim = Simulator.Simulator(tm, self.options)
     # The failure happened at loop 919 on 7 Apr 2022.
     sim.loop_run(10_000)
@@ -75,8 +74,7 @@ class MacroSimulatorTest(unittest.TestCase):
     tm = IO.parse_tm("1RB0LC_0RC0RD_1LA1RE_1RC0LE_0LD0RC")
     tm = Turing_Machine.Block_Macro_Machine(tm, 2)
     tm = Turing_Machine.Backsymbol_Macro_Machine(tm)
-    self.options.recursive = True
-    self.options.exp_linear_rules = True
+    self.options.prover_level = Proof_System.ProverLevel.EXP
     sim = Simulator.Simulator(tm, self.options)
     # The failure happened at loop 123 on 7 Apr 2022 (before fix).
     # TM is proven infinite at loop 333 (after fix).
@@ -87,8 +85,7 @@ class MacroSimulatorTest(unittest.TestCase):
     # See: https://github.com/sligocki/busy-beaver/issues/4
     tm = IO.parse_tm("1RB1LA_1RC0LE_1RD1LC_1LA0RF_1RD0LA_1RZ0RE")
     tm = Turing_Machine.Backsymbol_Macro_Machine(tm)
-    self.options.recursive = True
-    self.options.exp_linear_rules = True
+    self.options.prover_level = Proof_System.ProverLevel.EXP
     sim = Simulator.Simulator(tm, self.options)
     # TM was declared Halting (incorrect) at loop 96 on 26 Apr 2022 (before fix).
     # Then, same issue at loop 164 after partial fix.
@@ -102,9 +99,7 @@ class MacroSimulatorTest(unittest.TestCase):
     tm = IO.parse_tm("1RB0LC_1LC0RA_1RE0LD_0LB0LC_1RC1RB")
     tm = Turing_Machine.Block_Macro_Machine(tm, 6)
     tm = Turing_Machine.Backsymbol_Macro_Machine(tm)
-    self.options.recursive = True
-    self.options.exp_linear_rules = True
-    self.options.exp_meta_linear_rules = True
+    self.options.prover_level = Proof_System.ProverLevel.ITERATED
     self.options.compute_steps = False
     sim = Simulator.Simulator(tm, self.options)
     # The rule is proven infinite very quickly (under 5000 loops).
@@ -181,8 +176,7 @@ class MacroSimulatorTest(unittest.TestCase):
       )
 
   def test_large_halting(self):
-    self.options.recursive = True
-    self.options.exp_linear_rules = True
+    self.options.prover_level = Proof_System.ProverLevel.EXP
     self.options.compute_steps = False
     self.options.max_loops = 1_000_000
     self.options.max_block_size = 100
@@ -215,8 +209,7 @@ class MacroSimulatorTest(unittest.TestCase):
       self.assertEqual(sum(sim_result.num_rules_by_level), sim_result.num_rules_proven)
 
   def test_giant_halting(self):
-    self.options.recursive = True
-    self.options.exp_linear_rules = True
+    self.options.prover_level = Proof_System.ProverLevel.EXP
     self.options.compute_steps = False
     self.options.max_loops = 1_000_000
     self.options.max_block_size = 100
@@ -266,8 +259,7 @@ class MacroSimulatorTest(unittest.TestCase):
       self.assertEqual(sum(sim_result.num_rules_by_level), sim_result.num_rules_proven)
 
   def test_non_halting(self):
-    self.options.recursive = True
-    self.options.exp_linear_rules = True
+    self.options.prover_level = Proof_System.ProverLevel.EXP
     tm = IO.parse_tm("1RB---2LA_2LB2RA0LB")
     tm_enum = TM_Enum.TM_Enum(tm, allow_no_halt=False)
     tm_record = TM_Record.TM_Record(tm_enum=tm_enum)
@@ -299,8 +291,7 @@ class MacroSimulatorTest(unittest.TestCase):
   def test_bug_exp_linear_rules_tape_int_is_inf(self):
     # This machine failed with AttributeError: 'int' object has no attribute 'is_inf'
     # when an exponent became an int instead of NatExpr ConstInt after apply_linear_rule.
-    self.options.recursive = True
-    self.options.exp_linear_rules = True
+    self.options.prover_level = Proof_System.ProverLevel.EXP
     self.options.max_loops = 3000
     self.options.block_size = 1
     tm = IO.parse_tm("1RB0LB5LA4LA5LB---_2LA3RB3RA1LB3RB2RB")
@@ -312,9 +303,7 @@ class MacroSimulatorTest(unittest.TestCase):
     orig_max_depth = Exp_Int.MAX_DEPTH
     try:
       Exp_Int.MAX_DEPTH = 5
-      self.options.recursive = True
-      self.options.exp_linear_rules = True
-      self.options.exp_meta_linear_rules = True
+      self.options.prover_level = Proof_System.ProverLevel.ITERATED
       self.options.block_size = 4
       self.options.max_loops = 50_000
       tm = IO.parse_tm("1RB0LE_0RC1RA_1RD1RB_0LD1LE_0LF1LA_1RG1LF_---0LC")
@@ -337,10 +326,8 @@ class MacroSimulatorTest(unittest.TestCase):
   def test_total_loops_budget_and_fail_fast(self):
     # Find when ack34 starts a large prover proof (e.g. Level-4 rule taking > 1000 prover loops),
     # then set max_loops mid-proof to verify that both run_options() and loop_seek() fail fast.
-    self.options.recursive = True
+    self.options.prover_level = Proof_System.ProverLevel.ITERATED
     self.options.limited_rules = False
-    self.options.exp_linear_rules = True
-    self.options.exp_meta_linear_rules = True
     self.options.block_size = 2
     self.options.backsymbol = True
     self.options.max_steps_in_backsymbol = 250

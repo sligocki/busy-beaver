@@ -13,7 +13,7 @@ from optparse import OptionGroup, OptionParser
 
 import IO
 import io_pb2
-from Macro import Turing_Machine
+from Macro import Proof_System, Turing_Machine
 from Macro.Simulator import Simulator
 
 
@@ -71,7 +71,7 @@ def block_finder(
     ## First find the minimum efficient tape compression size.
     new_options = copy.copy(options)
     new_options.compute_steps = True  # Even if --no-steps, we need steps here.
-    new_options.prover = False
+    new_options.prover_level = Proof_System.ProverLevel.NONE
     new_options.verbose_simulator = False
 
     if options.verbose_block_finder:

@@ -20,12 +20,14 @@ from Macro import Proof_System, Tape, Turing_Machine
 from Macro.Turing_Machine import LEFT, RIGHT
 
 
-def add_option_group(parser: OptionParser):
+def add_option_group(parser: OptionParser, default_prover_level=None):
   """Add Simulator options group to an OptParser parser object."""
   assert isinstance(parser, OptionParser)
 
   Turing_Machine.add_option_group(parser)
-  Proof_System.add_option_group(parser)
+  if default_prover_level is None:
+    default_prover_level = Proof_System.DEFAULT_PROVER_LEVEL
+  Proof_System.add_option_group(parser, default_prover_level=default_prover_level)
 
   group = OptionGroup(parser, "Simulator options")
 
@@ -36,14 +38,6 @@ def add_option_group(parser: OptionParser):
     action="store_false",
     default=True,
     help="Don't keep track of base step count (can be expensive to calculate especially with recursive proofs).",
-  )
-  group.add_option(
-    "-p",
-    "--no-prover",
-    dest="prover",
-    action="store_false",
-    default=True,
-    help="Turn OFF proof system.",
   )
   group.add_option("--html-format", action="store_true", help="Print tape in an HTML format.")
   group.add_option(
@@ -101,7 +95,7 @@ class Simulator:
     if init_tape:
       self.tape = Tape.Chain_Tape()
       self.tape.init(self.machine.init_symbol, self.machine.init_dir, options)
-    if options.prover:
+    if options.prover_level >= Proof_System.ProverLevel.BASE:
       self.prover = Proof_System.Proof_System(
         machine=self.machine,
         options=options,

@@ -29,44 +29,38 @@ from Benchmark_Dataset import (
 )
 import IO
 from Macro import Simulator, Turing_Machine
+from Macro.Proof_System import ProverLevel
 
 
 class BenchmarkTest(unittest.TestCase):
   def test_prover_level_hierarchy(self):
     # Level 0: prover off
-    c0 = BenchConfig(name="lvl0", prover_level=0)
+    c0 = BenchConfig(name="lvl0", prover_level=ProverLevel.NONE)
     self.assertFalse(c0.prover)
     self.assertFalse(c0.recursive)
     self.assertFalse(c0.exp_linear_rules)
     self.assertFalse(c0.exp_meta_linear_rules)
 
     # Level 1: base prover only
-    c1 = BenchConfig(name="lvl1", prover_level=1)
+    c1 = BenchConfig(name="lvl1", prover_level=ProverLevel.BASE)
     self.assertTrue(c1.prover)
     self.assertFalse(c1.recursive)
     self.assertFalse(c1.exp_linear_rules)
     self.assertFalse(c1.exp_meta_linear_rules)
 
-    # Level 2: prover + recursive
-    c2 = BenchConfig(name="lvl2", prover_level=2)
+    # Level 2: prover + recursive + exp_linear_rules (EXP)
+    c2 = BenchConfig(name="lvl2", prover_level=ProverLevel.EXP)
     self.assertTrue(c2.prover)
     self.assertTrue(c2.recursive)
-    self.assertFalse(c2.exp_linear_rules)
+    self.assertTrue(c2.exp_linear_rules)
     self.assertFalse(c2.exp_meta_linear_rules)
 
-    # Level 3: prover + recursive + exp_linear_rules
-    c3 = BenchConfig(name="lvl3", prover_level=3)
+    # Level 3: prover + recursive + exp_linear_rules + exp_meta_linear_rules (ITERATED)
+    c3 = BenchConfig(name="lvl3", prover_level=ProverLevel.ITERATED)
     self.assertTrue(c3.prover)
     self.assertTrue(c3.recursive)
     self.assertTrue(c3.exp_linear_rules)
-    self.assertFalse(c3.exp_meta_linear_rules)
-
-    # Level 4: prover + recursive + exp_linear_rules + exp_meta_linear_rules
-    c4 = BenchConfig(name="lvl4", prover_level=4)
-    self.assertTrue(c4.prover)
-    self.assertTrue(c4.recursive)
-    self.assertTrue(c4.exp_linear_rules)
-    self.assertTrue(c4.exp_meta_linear_rules)
+    self.assertTrue(c3.exp_meta_linear_rules)
 
     # Check preset groups reference valid presets
     for group_name, preset_names in PRESET_GROUPS.items():
@@ -79,7 +73,7 @@ class BenchmarkTest(unittest.TestCase):
     # and is invariant between backsymbol=True and backsymbol=False.
     tm_str = "1RB1LB_1LA1RZ"  # 2x2-6-4: halts at step 6 with score 4, span 4
     for backsymbol in (False, True):
-      cfg = BenchConfig(name="test", prover_level=0, backsymbol=backsymbol, only_record_configs=False)
+      cfg = BenchConfig(name="test", prover_level=ProverLevel.NONE, backsymbol=backsymbol, only_record_configs=False)
       opts = cfg.to_options()
       tm = IO.parse_tm(tm_str)
       if backsymbol:
@@ -97,7 +91,7 @@ class BenchmarkTest(unittest.TestCase):
     tm_str_3x2 = "1RB1RZ_1LB0RC_1LC1LA"  # 3x2-14-6
     spans = []
     for backsymbol in (False, True):
-      cfg = BenchConfig(name="test_b2", prover_level=1, backsymbol=backsymbol)
+      cfg = BenchConfig(name="test_b2", prover_level=ProverLevel.BASE, backsymbol=backsymbol)
       opts = cfg.to_options()
       m = Turing_Machine.Block_Macro_Machine(IO.parse_tm(tm_str_3x2), 2)
       if backsymbol:
@@ -122,8 +116,8 @@ class BenchmarkTest(unittest.TestCase):
       "tape_limit": 50,
       "target_max_span_bi": [6],  # Reach span >= 6 (happens around loop 25)
     }
-    # With prover_0_off, it won't prove infinity and will run as undecided
-    cfg_off = CONFIG_PRESETS["prover_0_off"].to_dict()
+    # With prover_0_none, it won't prove infinity and will run as undecided
+    cfg_off = CONFIG_PRESETS["prover_0_none"].to_dict()
 
     res_milestone = run_single_tm(entry, cfg_off, undecided_mode="milestone")
     self.assertEqual(res_milestone["status"], "unknown")
@@ -351,7 +345,7 @@ class BenchmarkTest(unittest.TestCase):
       "max_loops": 20,
       "tape_limit": 50,
     }
-    cfg = CONFIG_PRESETS["prover_0_off"].to_dict()
+    cfg = CONFIG_PRESETS["prover_0_none"].to_dict()
     res_1x = run_single_tm(entry, cfg, undecided_mode="full", loop_multiplier=1.0)
     res_5x = run_single_tm(entry, cfg, undecided_mode="full", loop_multiplier=5.0)
     self.assertEqual(res_1x["status"], "unknown")
@@ -369,9 +363,9 @@ class BenchmarkTest(unittest.TestCase):
           "--dataset",
           "fast",
           "--baseline-config",
-          "prover_4_meta_linear,ablate_const_blocks",
+          "prover_3_iterated,ablate_const_blocks",
           "--config",
-          "prover_4_meta_linear",
+          "prover_3_iterated",
         ]
       )
 

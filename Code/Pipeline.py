@@ -9,6 +9,7 @@ import io_pb2
 import Lin_Recur_Detect
 import Macro_Simulator
 import Reverse_Engineer_Filter
+from Macro.Proof_System import DEFAULT_PROVER_LEVEL, ProverLevel
 
 
 class Pipeline:
@@ -42,22 +43,22 @@ class Pipeline:
 
 
 class SimulatorDecider:
-  def __init__(self, max_loops, block_size=None, recursive=False, name=None):
+  def __init__(self, max_loops, block_size=None, prover_level: ProverLevel = DEFAULT_PROVER_LEVEL, name=None):
     self.max_loops = max_loops
     self.block_size = block_size
-    self.recursive = recursive
+    self.prover_level = ProverLevel(prover_level)
 
     self.name = name or f"Simulator_{max_loops}"
     if block_size:
       self.name += f"_b{block_size}"
-    if recursive:
-      self.name += "_rec"
+    if self.prover_level != DEFAULT_PROVER_LEVEL:
+      self.name += f"_l{int(self.prover_level)}"
 
   def apply(self, tm_record, options, time_limit=None):
     # Override options based on our decider's explicit config
     options.max_loops = self.max_loops
     options.block_size = self.block_size
-    options.recursive = self.recursive
+    options.prover_level = self.prover_level
 
     machine = tm_record.tm()
     if time_limit is not None:

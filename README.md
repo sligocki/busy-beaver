@@ -37,7 +37,7 @@ Top level directories:
 
 ## Simulators
 
-* `Code/Quick_Sim.py` - Simulate TM using tape compression and automated proof system. This is the standard simulator to run on machines you expect to halt (ex: record confirmations) or to see what patterns the computer can find. There are lots of options, but some of note are `--recursive` (allow level 2 proofs), `--block-size` (force a specific block size), `--verbose` (show everything it does), `--no-backsymbol` (turn off backsymbol-macro machine), `--no-steps` (turn off step calculation which is way faster for large TMs).
+* `Code/Quick_Sim.py` - Simulate TM using tape compression and automated proof system. This is the standard simulator to run on machines you expect to halt (ex: record confirmations) or to see what patterns the computer can find. There are lots of options, but some of note are `--prover-level` / `-l` (prover level 0-3 or `max`, default `max`), `--block-size` (force a specific block size), `--verbose` (show everything it does), `--no-backsymbol` (turn off backsymbol-macro machine), `--no-steps` (turn off step calculation which is way faster for large TMs).
 * `Code/Visual_Simulator` - Uses terminal graphics to visually simulate a TM.
 * `Code/Curses_Sim.py` - Uses "curses" library for better terminal graphics.
 * `Code/Direct_Simulator.py` - Directly simulate TM (no tape compression). This is rarely useful, but some TMs don't accelerate well, so useful to have.

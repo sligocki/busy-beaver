@@ -10,7 +10,7 @@ import argparse
 import sys
 
 import IO
-from Macro import Simulator, Turing_Machine
+from Macro import Proof_System, Simulator, Turing_Machine
 
 DIR_NAME = {
   Turing_Machine.LEFT: "L",
@@ -130,7 +130,7 @@ def test_CTL(base_tm, cutoff, block_size=1, offset=None, use_backsymbol=True, ve
   if use_backsymbol:
     m = Turing_Machine.Backsymbol_Macro_Machine(m)
   options = Simulator.create_default_options()
-  options.prover = False
+  options.prover_level = Proof_System.ProverLevel.NONE
   sim = Simulator.Simulator(m, options)
   sim.seek(cutoff)
   if sim.op_state != Turing_Machine.RUNNING:

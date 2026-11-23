@@ -96,7 +96,7 @@ class ProofSystemTest(unittest.TestCase):
   def test_bug_limited_diff_rule(self):
     # See: https://github.com/sligocki/busy-beaver/issues/2
     tm = IO.parse_tm("1RB3RB3LB0RB0LA_2LB3RA3RB4RA2LA")
-    self.options.recursive = True
+    self.options.prover_level = Proof_System.ProverLevel.EXP
     self.options.limited_rules = True
     prover = Proof_System.Proof_System(tm, self.options, "")
 
@@ -262,7 +262,7 @@ class ProofSystemTest(unittest.TestCase):
     """
     # Hand-built TM to demonstrate this situation simply.
     tm = IO.parse_tm("1RB------_0RB0LC1LD_0LC1RA---_1LD0LE---_1RA0LE---")
-    self.options.recursive = True
+    self.options.prover_level = Proof_System.ProverLevel.EXP
     prover = Proof_System.Proof_System(tm, self.options, "")
 
     # Base rule:
@@ -377,9 +377,7 @@ class ProofSystemTest(unittest.TestCase):
     # TM I found this bug in.
     tm = IO.parse_tm("1RB1RA_0LC1RF_1LE1LD_0LB1LC_0RA---_0RD0LF")
     tm = Turing_Machine.Block_Macro_Machine(tm, 2)
-    self.options.recursive = True
-    self.options.exp_linear_rules = True
-    self.options.exp_meta_linear_rules = True
+    self.options.prover_level = Proof_System.ProverLevel.ITERATED
     self.options.compute_steps = False
     self.options.limited_rules = False
     # Only allow General_Rules to be applied once so that we can see the result directly.
@@ -544,9 +542,7 @@ class ProofSystemTest(unittest.TestCase):
     # Setup same TM as test_meta_linear_rule
     tm = IO.parse_tm("1RB1RA_0LC1RF_1LE1LD_0LB1LC_0RA---_0RD0LF")
     tm = Turing_Machine.Block_Macro_Machine(tm, 2)
-    self.options.recursive = True
-    self.options.exp_linear_rules = True
-    self.options.exp_meta_linear_rules = True
+    self.options.prover_level = Proof_System.ProverLevel.ITERATED
     self.options.compute_steps = True
     self.options.limited_rules = False
     self.options.max_num_reps = 3
@@ -612,10 +608,10 @@ class ProofSystemTest(unittest.TestCase):
     # rule_linear.gen_rule is the embedded General_Rule with infinite=False
     self.assertFalse(rule_linear.gen_rule.infinite)
 
-    # Test apply_linear_rule with exp_linear_rules=False (fallback to apply_general_rule).
+    # Test apply_linear_rule with prover_level < EXP (fallback to apply_general_rule).
     # This exercises the apply_general_rule finite loop path (and compute_steps=True path).
     prover2 = Proof_System.Proof_System(tm, self.options, "")
-    prover2.exp_linear_rules = False
+    prover2.prover_level = Proof_System.ProverLevel.BASE
     success, rest = prover2.apply_linear_rule(rule_linear, full_config)
     self.assertTrue(success)
     result, _ = rest
@@ -627,9 +623,9 @@ class ProofSystemTest(unittest.TestCase):
     result_gr, _ = rest_gr
     self.assertEqual(result_gr.condition, Proof_System.APPLY_RULE)
 
-    # Test exp_meta_linear_rules=False path in apply_linear_rule (line 1278).
+    # Test prover_level < ITERATED path in apply_linear_rule.
     prover3 = Proof_System.Proof_System(tm, self.options, "")
-    prover3.exp_meta_linear_rules = False
+    prover3.prover_level = Proof_System.ProverLevel.EXP
     success_nml, rest_nml = prover3.apply_linear_rule(rule_linear, full_config)
     self.assertTrue(success_nml)
     result_nml, _ = rest_nml
@@ -727,7 +723,7 @@ class ProofSystemTest(unittest.TestCase):
   def test_verbose_mode(self):
     """Test that verbose_prover=True doesn't crash and covers verbose print paths."""
     tm = IO.parse_tm("1RB------_0RB0LC1LD_0LC1RA---_1LD0LE---_1RA0LE---")
-    self.options.recursive = True
+    self.options.prover_level = Proof_System.ProverLevel.EXP
     self.options.verbose_prover = True
     prover = Proof_System.Proof_System(tm, self.options, "")
 
@@ -969,10 +965,8 @@ class ProofSystemTest(unittest.TestCase):
     """
     tm = IO.parse_tm("1RB1RA_0LC1RF_1LE1LD_0LB1LC_0RA---_0RD0LF")
     tm = Turing_Machine.Block_Macro_Machine(tm, 2)
-    self.options.recursive = True
+    self.options.prover_level = Proof_System.ProverLevel.ITERATED
     self.options.limited_rules = True
-    self.options.exp_linear_rules = True
-    self.options.exp_meta_linear_rules = True
     self.options.compute_steps = False
     prover = Proof_System.Proof_System(tm, self.options, "")
 
@@ -1051,8 +1045,8 @@ class ProofSystemTest(unittest.TestCase):
       "00^inf <- 11^(-6 + 13 * 2^5) 10^1 00^1 11^1 10^7 01^42 00^inf",
     )
 
-    # Also test fallback to apply_general_rule on the limited Iterated_Rule when exp_linear_rules=False
-    prover.exp_linear_rules = False
+    # Also test fallback to apply_general_rule on the limited Iterated_Rule when prover_level < EXP
+    prover.prover_level = Proof_System.ProverLevel.BASE
     res_gen = prover.try_apply_a_rule(stripped_lin_extra, (state_E, tape_lin_extra, 300))
     self.assertIsNotNone(res_gen)
     self.assertEqual(res_gen.condition, Proof_System.APPLY_RULE)
@@ -1075,7 +1069,7 @@ class ProofSystemTest(unittest.TestCase):
     leaving untouched outer blocks out of the limited rule.
     """
     tm = IO.parse_tm("1RB------_0RB0LC1LD_0LC1RA---_1LD0LE---_1RA0LE---")
-    self.options.recursive = True
+    self.options.prover_level = Proof_System.ProverLevel.EXP
     self.options.limited_rules = True
     prover = Proof_System.Proof_System(tm, self.options, "")
 
@@ -1160,10 +1154,8 @@ class ProofSystemTest(unittest.TestCase):
     """
     tm = IO.parse_tm("1LB1RZ_0LC1LC_0LD0LC_1LE1RA_0LF0LE_1LG1RD_0LH0LG_1LI1RF_0LJ0LI_1RJ1RH")
     tm = Turing_Machine.Block_Macro_Machine(tm, 2)
-    self.options.recursive = True
+    self.options.prover_level = Proof_System.ProverLevel.ITERATED
     self.options.limited_rules = True
-    self.options.exp_linear_rules = True
-    self.options.exp_meta_linear_rules = True
     self.options.compute_steps = False
 
     sim = Simulator.Simulator(tm, self.options)
@@ -1180,7 +1172,7 @@ class ProofSystemTest(unittest.TestCase):
     and among same level, later proven rules first.
     """
     tm = IO.parse_tm("1RB3RB3LB0RB0LA_2LB3RA3RB4RA2LA")
-    self.options.recursive = True
+    self.options.prover_level = Proof_System.ProverLevel.EXP
     self.options.limited_rules = True
     prover = Proof_System.Proof_System(tm, self.options, "")
 
@@ -1519,10 +1511,8 @@ class ProofSystemTest(unittest.TestCase):
     # skips saving non-record configs, still applies proven rules, and proves 10x2-Green cleanly.
     tm = IO.parse_tm("1LB1RZ_0LC1LC_0LD0LC_1LE1RA_0LF0LE_1LG1RD_0LH0LG_1LI1RF_0LJ0LI_1RJ1RH")
     tm = Turing_Machine.Block_Macro_Machine(tm, 2)
-    self.options.recursive = True
+    self.options.prover_level = Proof_System.ProverLevel.ITERATED
     self.options.limited_rules = True
-    self.options.exp_linear_rules = True
-    self.options.exp_meta_linear_rules = True
     self.options.compute_steps = False
     self.options.only_record_configs = True
 
@@ -1554,10 +1544,8 @@ class ProofSystemTest(unittest.TestCase):
     tm = Green.green_machine(20)
     tm = Turing_Machine.Block_Macro_Machine(tm, 1)
     tm = Turing_Machine.Backsymbol_Macro_Machine(tm)
-    self.options.recursive = True
+    self.options.prover_level = Proof_System.ProverLevel.ITERATED
     self.options.limited_rules = True
-    self.options.exp_linear_rules = True
-    self.options.exp_meta_linear_rules = True
     self.options.exp_const_blocks = True
     self.options.only_record_configs = True
     self.options.exp_zero_exponents = True
@@ -1593,9 +1581,7 @@ class ProofSystemTest(unittest.TestCase):
 
   def test_not_implemented_error_in_apply_and_prove_rule(self):
     tm = IO.parse_tm("1RB1RC_1LC0RA_1RA1RD_---0RE_1RF1RE_1LG0LB_0LB0LF")
-    self.options.recursive = True
-    self.options.exp_linear_rules = True
-    self.options.exp_meta_linear_rules = True
+    self.options.prover_level = Proof_System.ProverLevel.ITERATED
     prover = Proof_System.Proof_System(tm, self.options, "")
     state_A = Turing_Machine.Simple_Machine_State(0)
 
@@ -1657,7 +1643,7 @@ class ProofSystemTest(unittest.TestCase):
     # recursive proving should continue logging that stripped_config so higher-level
     # rules can be proven and prioritized over the lower-level rule.
     tm = IO.parse_tm("1RB1LC_1RC1RB_1RD0LE_1LA1LD_1RZ0LA")
-    self.options.recursive = True
+    self.options.prover_level = Proof_System.ProverLevel.EXP
     self.options.limited_rules = False
     prover = Proof_System.Proof_System(tm, self.options, "")
     state_A = Turing_Machine.Simple_Machine_State(0)
@@ -1719,10 +1705,7 @@ class ProofSystemTest(unittest.TestCase):
     # as constant and recovers to prove a repeatable rule.
     tm = IO.parse_tm("1RB0LG_1LC0RE_1LD1LB_1LA0RF_1RC1RB_1LB1RD_1LD---")
     macro_tm = Turing_Machine.Backsymbol_Macro_Machine(Turing_Machine.Block_Macro_Machine(tm, 4))
-    self.options.prover = True
-    self.options.recursive = True
-    self.options.exp_linear_rules = True
-    self.options.exp_meta_linear_rules = True
+    self.options.prover_level = Proof_System.ProverLevel.ITERATED
     self.options.exp_zero_exponents = True
     self.options.compute_steps = False
     sim = Simulator.Simulator(macro_tm, self.options)
@@ -1736,7 +1719,7 @@ class ProofSystemTest(unittest.TestCase):
     # When multiple variables end up in one term and no variable block became constant,
     # prove_rule should fail with "Multiple vars in one term".
     tm = IO.parse_tm("1RB---_---0LA")
-    self.options.recursive = True
+    self.options.prover_level = Proof_System.ProverLevel.EXP
     prover = Proof_System.Proof_System(tm, self.options, "")
     state_A = Turing_Machine.Simple_Machine_State(0)
 
@@ -1773,10 +1756,7 @@ class ProofSystemTest(unittest.TestCase):
     # prevents the 1-loop merge desync and avoids failed proofs on intermediate phases.
     tm = IO.parse_tm("1RB0LG_1LC0RE_1LD1LB_1LA0RF_1RC1RB_1LB1RD_1LD---")
     macro_tm = Turing_Machine.Backsymbol_Macro_Machine(Turing_Machine.Block_Macro_Machine(tm, 4))
-    self.options.prover = True
-    self.options.recursive = True
-    self.options.exp_linear_rules = True
-    self.options.exp_meta_linear_rules = True
+    self.options.prover_level = Proof_System.ProverLevel.ITERATED
     self.options.exp_const_blocks = True
     self.options.compute_steps = False
     sim = Simulator.Simulator(macro_tm, self.options)
@@ -1794,11 +1774,8 @@ class ProofSystemTest(unittest.TestCase):
 
     tm = Green.green_machine(17)
     macro_tm = Turing_Machine.Backsymbol_Macro_Machine(Turing_Machine.Block_Macro_Machine(tm, 2))
-    self.options.prover = True
-    self.options.recursive = True
+    self.options.prover_level = Proof_System.ProverLevel.ITERATED
     self.options.limited_rules = True
-    self.options.exp_linear_rules = True
-    self.options.exp_meta_linear_rules = True
     self.options.exp_const_blocks = True
     self.options.exp_zero_exponents = True
     self.options.compute_steps = False
@@ -1815,11 +1792,8 @@ class ProofSystemTest(unittest.TestCase):
 
     tm = Green.green_machine(17)
     macro_tm = Turing_Machine.Backsymbol_Macro_Machine(Turing_Machine.Block_Macro_Machine(tm, 2))
-    self.options.prover = True
-    self.options.recursive = True
+    self.options.prover_level = Proof_System.ProverLevel.ITERATED
     self.options.limited_rules = True
-    self.options.exp_linear_rules = True
-    self.options.exp_meta_linear_rules = True
     self.options.exp_const_blocks = True
     self.options.exp_zero_exponents = True
     self.options.debug_reprove = True
@@ -1862,11 +1836,8 @@ class ProofSystemTest(unittest.TestCase):
     # must pass (requires min >= 2 on 01^(...)).
     tm = IO.parse_tm("1RB0RE_1RC1RA_0LD1LA_1LE1LA_0RB0LF_1LC1LG_0LE---")
     macro_tm = Turing_Machine.Backsymbol_Macro_Machine(Turing_Machine.Block_Macro_Machine(tm, 2))
-    self.options.prover = True
-    self.options.recursive = True
+    self.options.prover_level = Proof_System.ProverLevel.ITERATED
     self.options.limited_rules = True
-    self.options.exp_linear_rules = True
-    self.options.exp_meta_linear_rules = True
     self.options.exp_const_blocks = True
     self.options.exp_zero_exponents = True
     self.options.debug_reprove = True
@@ -1881,11 +1852,8 @@ class ProofSystemTest(unittest.TestCase):
     # mins (1, 1, 3) instead of (17, 8, 16)), and --debug-reprove ignores peer-level rules.
     tm = IO.parse_tm("1RB1RD_1LC1RA_1RB1LD_1RE0LC_0LC0RA")
     macro_tm = Turing_Machine.Backsymbol_Macro_Machine(Turing_Machine.Block_Macro_Machine(tm, 2))
-    self.options.prover = True
-    self.options.recursive = True
+    self.options.prover_level = Proof_System.ProverLevel.ITERATED
     self.options.limited_rules = True
-    self.options.exp_linear_rules = True
-    self.options.exp_meta_linear_rules = True
     self.options.exp_const_blocks = True
     self.options.exp_zero_exponents = True
     self.options.debug_reprove = True
@@ -1908,6 +1876,94 @@ class ProofSystemTest(unittest.TestCase):
         if isinstance(b.num, Algebraic_Expression.Algebraic_Expression):
           b.num = b.num.const + 10
     sim.prover._debug_reprove_rule(rule2, (rule2.initial_state, full_tape, 0))
+
+
+class TestProverLevelOptions(unittest.TestCase):
+  def _parse(self, args, default_prover_level=Proof_System.DEFAULT_PROVER_LEVEL):
+    import contextlib
+    import io
+
+    parser = OptionParser()
+    Simulator.add_option_group(parser, default_prover_level=default_prover_level)
+    stderr = io.StringIO()
+    with contextlib.redirect_stderr(stderr):
+      options, _ = parser.parse_args(args)
+    return options, stderr.getvalue()
+
+  def test_defaults_and_single_internal_option(self):
+    opts, err = self._parse([])
+    self.assertEqual(opts.prover_level, Proof_System.ProverLevel.BASE)
+    self.assertEqual(err, "")
+    for legacy in ("prover", "recursive", "exp_linear_rules", "exp_meta_linear_rules"):
+      self.assertFalse(hasattr(opts, legacy), f"Unexpected legacy attribute: {legacy}")
+
+    opts_max, err = self._parse([], default_prover_level=Proof_System.MAX_PROVER_LEVEL)
+    self.assertEqual(opts_max.prover_level, Proof_System.ProverLevel.ITERATED)
+    self.assertEqual(err, "")
+
+  def test_prover_level_flag_values(self):
+    cases = [
+      (["-l", "0"], Proof_System.ProverLevel.NONE),
+      (["-l", "1"], Proof_System.ProverLevel.BASE),
+      (["--level", "2"], Proof_System.ProverLevel.EXP),
+      (["--prover-level=3"], Proof_System.ProverLevel.ITERATED),
+      (["-l", "max"], Proof_System.ProverLevel.ITERATED),
+      (["--prover-level", "MAX"], Proof_System.ProverLevel.ITERATED),
+    ]
+    for args, expected in cases:
+      with self.subTest(args=args):
+        opts, err = self._parse(args)
+        self.assertEqual(opts.prover_level, expected)
+        self.assertEqual(err, "")
+
+  def test_prover_level_invalid_values(self):
+    for bad in ("-1", "4", "5", "all", "foo", ""):
+      with self.subTest(bad=bad):
+        with self.assertRaises(SystemExit):
+          self._parse(["-l", bad])
+
+  def test_deprecated_flags_and_max_semantics(self):
+    cases = [
+      (["-p"], Proof_System.ProverLevel.NONE),
+      (["--no-prover"], Proof_System.ProverLevel.NONE),
+      (["-r"], Proof_System.ProverLevel.EXP),
+      (["--recursive"], Proof_System.ProverLevel.EXP),
+      (["--exp-linear-rules"], Proof_System.ProverLevel.EXP),
+      (["--exp-meta-linear-rules"], Proof_System.ProverLevel.ITERATED),
+      (["-p", "-r"], Proof_System.ProverLevel.EXP),
+      (["-r", "-p"], Proof_System.ProverLevel.EXP),
+      (["-r", "--exp-linear-rules"], Proof_System.ProverLevel.EXP),
+      (["--exp-linear-rules", "--exp-meta-linear-rules", "--recursive"], Proof_System.ProverLevel.ITERATED),
+    ]
+    for args, expected in cases:
+      with self.subTest(args=args):
+        opts, err = self._parse(args)
+        self.assertEqual(opts.prover_level, expected)
+        self.assertIn("deprecated", err.lower())
+
+  def test_deprecated_flags_override_max_default(self):
+    # Even when default is max (as in Quick_Sim), -p -> 0 and -r -> 2.
+    opts_p, err_p = self._parse(["-p"], default_prover_level=Proof_System.MAX_PROVER_LEVEL)
+    self.assertEqual(opts_p.prover_level, Proof_System.ProverLevel.NONE)
+    self.assertIn("deprecated", err_p.lower())
+
+    opts_r, err_r = self._parse(["-r"], default_prover_level=Proof_System.MAX_PROVER_LEVEL)
+    self.assertEqual(opts_r.prover_level, Proof_System.ProverLevel.EXP)
+    self.assertIn("deprecated", err_r.lower())
+
+  def test_mixing_prover_level_and_deprecated_flags_fails(self):
+    bad_combos = [
+      ["-l", "2", "-r"],
+      ["-r", "-l", "2"],
+      ["--prover-level=0", "-p"],
+      ["-p", "--prover-level=0"],
+      ["--level", "max", "--exp-linear-rules"],
+      ["--exp-meta-linear-rules", "-l", "3"],
+    ]
+    for args in bad_combos:
+      with self.subTest(args=args):
+        with self.assertRaises(SystemExit):
+          self._parse(args)
 
 
 if __name__ == "__main__":

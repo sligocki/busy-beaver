@@ -5,7 +5,7 @@ import unittest
 import IO
 from Big_Interval import BigInterval, Knuth10, NotComparable
 from Exp_Int import exp_int
-from Macro import Simulator, Turing_Machine
+from Macro import Proof_System, Simulator, Turing_Machine
 from NatExpr import ConstInt
 
 
@@ -196,8 +196,7 @@ class TestBigInterval(unittest.TestCase):
     Macro_Simulator.add_option_group(parser)
     options, _ = parser.parse_args([])
     options.time = 0
-    options.recursive = True
-    options.exp_linear_rules = True
+    options.prover_level = Proof_System.ProverLevel.EXP
     options.compute_steps = True
     options.max_loops = 1_000_000
     options.max_block_size = 100
@@ -209,8 +208,7 @@ class TestBigInterval(unittest.TestCase):
   def _run_tm_nonzeros_bi(self, tm_or_path, block_size, max_loops=0, max_steps_back=1000):
     parser = optparse.OptionParser()
     Simulator.add_option_group(parser)
-    opts, _ = parser.parse_args(["--exp-linear-rules", "--exp-meta-linear-rules", "--recursive"])
-    opts.prover = True
+    opts, _ = parser.parse_args(["-l", "max"])
     opts.backsymbol = True
     if "_" in tm_or_path:
       tm = IO.parse_tm(tm_or_path)

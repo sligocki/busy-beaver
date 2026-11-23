@@ -36,7 +36,8 @@ from Big_Interval import BigInterval, Knuth10
 import Exp_Int
 import IO
 import io_pb2
-from Macro import Simulator, Turing_Machine
+from Macro import Proof_System, Simulator, Turing_Machine
+from Macro.Proof_System import ProverLevel
 from NatExpr import approx_str, big_interval_str, to_BigInterval
 from Time_Limit import TimeLimit
 
@@ -53,15 +54,14 @@ class BenchConfig:
   """Configuration for a Macro Simulator benchmark run.
 
   Prover hierarchy (each level enables all previous levels):
-    0: prover=False
-    1: prover=True (Level 1 Diff Rules)
-    2: prover=True, recursive=True (+ Meta-Diff Rules)
-    3: prover=True, recursive=True, exp_linear_rules=True (+ Iterated/Linear Rules)
-    4: prover=True, recursive=True, exp_linear_rules=True, exp_meta_linear_rules=True (+ Meta-Iterated Rules)
+    0 (NONE): prover off
+    1 (BASE): Level 1 Diff rules only (plain ints)
+    2 (EXP): + Recursive proofs & exponential acceleration (ExpInt)
+    3 (ITERATED): + Arbitrary iterated / meta-linear rules (Iterated_Expression)
   """
 
   name: str
-  prover_level: int = 1
+  prover_level: ProverLevel = ProverLevel.ITERATED
   backsymbol: bool = True
   limited_rules: bool = True
   exp_const_blocks: bool = True
@@ -73,32 +73,31 @@ class BenchConfig:
   compute_steps: bool = False
 
   def __post_init__(self):
-    assert 0 <= self.prover_level <= 4, f"Invalid prover_level: {self.prover_level}"
+    assert ProverLevel.NONE <= self.prover_level <= Proof_System.MAX_PROVER_LEVEL, (
+      f"Invalid prover_level: {self.prover_level}"
+    )
 
   @property
   def prover(self) -> bool:
-    return self.prover_level >= 1
+    return self.prover_level >= ProverLevel.BASE
 
   @property
   def recursive(self) -> bool:
-    return self.prover_level >= 2
+    return self.prover_level >= ProverLevel.EXP
 
   @property
   def exp_linear_rules(self) -> bool:
-    return self.prover_level >= 3
+    return self.prover_level >= ProverLevel.EXP
 
   @property
   def exp_meta_linear_rules(self) -> bool:
-    return self.prover_level >= 4
+    return self.prover_level >= ProverLevel.ITERATED
 
   def to_options(self) -> optparse.Values:
     options = Simulator.create_default_options()
     options.backsymbol = self.backsymbol
-    options.prover = self.prover
+    options.prover_level = self.prover_level
     options.limited_rules = self.limited_rules if self.prover else False
-    options.recursive = self.recursive
-    options.exp_linear_rules = self.exp_linear_rules
-    options.exp_meta_linear_rules = self.exp_meta_linear_rules
     options.exp_const_blocks = self.exp_const_blocks if self.prover else False
     options.only_record_configs = self.only_record_configs if self.prover else False
     options.exp_zero_exponents = self.exp_zero_exponents if self.prover else False
@@ -124,7 +123,7 @@ CONFIG_PRESETS: dict[str, BenchConfig] = {
   # Baseline extremes
   "all_off": BenchConfig(
     name="all_off",
-    prover_level=0,
+    prover_level=ProverLevel.NONE,
     backsymbol=False,
     limited_rules=False,
     exp_const_blocks=False,
@@ -133,16 +132,16 @@ CONFIG_PRESETS: dict[str, BenchConfig] = {
   ),
   "default": BenchConfig(
     name="default",
-    prover_level=1,
+    prover_level=ProverLevel.ITERATED,
     backsymbol=True,
     limited_rules=True,
-    exp_const_blocks=False,
+    exp_const_blocks=True,
     only_record_configs=False,
     use_big_interval=True,
   ),
   "all_on": BenchConfig(
     name="all_on",
-    prover_level=4,
+    prover_level=ProverLevel.ITERATED,
     backsymbol=True,
     limited_rules=True,
     exp_const_blocks=True,
@@ -150,52 +149,46 @@ CONFIG_PRESETS: dict[str, BenchConfig] = {
     use_big_interval=True,
   ),
   # Cumulative Prover Hierarchy Ladder (modifiers fixed at backsymbol=True, limited_rules=True)
-  "prover_0_off": BenchConfig(
-    name="prover_0_off",
-    prover_level=0,
+  "prover_0_none": BenchConfig(
+    name="prover_0_none",
+    prover_level=ProverLevel.NONE,
     backsymbol=True,
     limited_rules=False,
   ),
-  "prover_1_diff": BenchConfig(
-    name="prover_1_diff",
-    prover_level=1,
+  "prover_1_base": BenchConfig(
+    name="prover_1_base",
+    prover_level=ProverLevel.BASE,
     backsymbol=True,
     limited_rules=True,
   ),
-  "prover_2_rec": BenchConfig(
-    name="prover_2_rec",
-    prover_level=2,
+  "prover_2_exp": BenchConfig(
+    name="prover_2_exp",
+    prover_level=ProverLevel.EXP,
     backsymbol=True,
     limited_rules=True,
   ),
-  "prover_3_linear": BenchConfig(
-    name="prover_3_linear",
-    prover_level=3,
-    backsymbol=True,
-    limited_rules=True,
-  ),
-  "prover_4_meta_linear": BenchConfig(
-    name="prover_4_meta_linear",
-    prover_level=4,
+  "prover_3_iterated": BenchConfig(
+    name="prover_3_iterated",
+    prover_level=ProverLevel.ITERATED,
     backsymbol=True,
     limited_rules=True,
   ),
   # Single-feature / modifier additions
   "only_backsymbol": BenchConfig(
     name="only_backsymbol",
-    prover_level=0,
+    prover_level=ProverLevel.NONE,
     backsymbol=True,
     limited_rules=False,
   ),
   "only_base_prover": BenchConfig(
     name="only_base_prover",
-    prover_level=1,
+    prover_level=ProverLevel.BASE,
     backsymbol=False,
     limited_rules=False,
   ),
   "plus_const_blocks": BenchConfig(
     name="plus_const_blocks",
-    prover_level=4,
+    prover_level=ProverLevel.ITERATED,
     backsymbol=True,
     limited_rules=True,
     exp_const_blocks=True,
@@ -203,7 +196,7 @@ CONFIG_PRESETS: dict[str, BenchConfig] = {
   ),
   "plus_only_record": BenchConfig(
     name="plus_only_record",
-    prover_level=4,
+    prover_level=ProverLevel.ITERATED,
     backsymbol=True,
     limited_rules=True,
     exp_const_blocks=False,
@@ -211,7 +204,7 @@ CONFIG_PRESETS: dict[str, BenchConfig] = {
   ),
   "plus_zero_exponents": BenchConfig(
     name="plus_zero_exponents",
-    prover_level=4,
+    prover_level=ProverLevel.ITERATED,
     backsymbol=True,
     limited_rules=True,
     exp_zero_exponents=True,
@@ -219,7 +212,7 @@ CONFIG_PRESETS: dict[str, BenchConfig] = {
   # Leave-one-out Ablations from all_on
   "ablate_backsymbol": BenchConfig(
     name="ablate_backsymbol",
-    prover_level=4,
+    prover_level=ProverLevel.ITERATED,
     backsymbol=False,
     limited_rules=True,
     exp_const_blocks=True,
@@ -228,7 +221,7 @@ CONFIG_PRESETS: dict[str, BenchConfig] = {
   ),
   "ablate_limited_rules": BenchConfig(
     name="ablate_limited_rules",
-    prover_level=4,
+    prover_level=ProverLevel.ITERATED,
     backsymbol=True,
     limited_rules=False,
     exp_const_blocks=True,
@@ -237,7 +230,7 @@ CONFIG_PRESETS: dict[str, BenchConfig] = {
   ),
   "ablate_const_blocks": BenchConfig(
     name="ablate_const_blocks",
-    prover_level=4,
+    prover_level=ProverLevel.ITERATED,
     backsymbol=True,
     limited_rules=True,
     exp_const_blocks=False,
@@ -246,7 +239,7 @@ CONFIG_PRESETS: dict[str, BenchConfig] = {
   ),
   "ablate_only_record": BenchConfig(
     name="ablate_only_record",
-    prover_level=4,
+    prover_level=ProverLevel.ITERATED,
     backsymbol=True,
     limited_rules=True,
     exp_const_blocks=True,
@@ -255,7 +248,7 @@ CONFIG_PRESETS: dict[str, BenchConfig] = {
   ),
   "ablate_big_interval": BenchConfig(
     name="ablate_big_interval",
-    prover_level=4,
+    prover_level=ProverLevel.ITERATED,
     backsymbol=True,
     limited_rules=True,
     exp_const_blocks=True,
@@ -265,13 +258,13 @@ CONFIG_PRESETS: dict[str, BenchConfig] = {
 }
 
 PRESET_GROUPS: dict[str, list[str]] = {
-  "core": ["all_off", "default", "prover_2_rec", "prover_3_linear", "prover_4_meta_linear", "all_on"],
-  "ladder": ["prover_0_off", "prover_1_diff", "prover_2_rec", "prover_3_linear", "prover_4_meta_linear"],
+  "core": ["all_off", "prover_1_base", "prover_2_exp", "prover_3_iterated", "all_on"],
+  "ladder": ["prover_0_none", "prover_1_base", "prover_2_exp", "prover_3_iterated"],
   "modifiers": [
     "all_off",
     "only_backsymbol",
     "only_base_prover",
-    "prover_4_meta_linear",
+    "prover_3_iterated",
     "plus_const_blocks",
     "plus_only_record",
     "plus_zero_exponents",
@@ -757,7 +750,8 @@ sys.path.insert(0, code_dir)
 
 import IO
 import io_pb2
-from Macro import Simulator, Turing_Machine
+from Macro import Proof_System, Simulator, Turing_Machine
+from Macro.Proof_System import ProverLevel
 from Time_Limit import TimeLimit
 
 try:
@@ -820,18 +814,16 @@ def check_milestone(span_val, target_args):
 
 def run_one(entry):
   options = Simulator.create_default_options()
-  prover_level = int(config.get("prover_level", 1))
+  prover_level = Proof_System.ProverLevel(config.get("prover_level", Proof_System.ProverLevel.ITERATED))
   options.backsymbol = bool(config.get("backsymbol", True))
-  options.prover = prover_level >= 1
-  options.limited_rules = bool(config.get("limited_rules", True)) if options.prover else False
-  options.recursive = prover_level >= 2
-  options.exp_linear_rules = prover_level >= 3
-  options.exp_meta_linear_rules = prover_level >= 4
-  options.exp_const_blocks = bool(config.get("exp_const_blocks", True)) if options.prover else False
-  options.only_record_configs = bool(config.get("only_record_configs", False)) if options.prover else False
-  options.exp_zero_exponents = bool(config.get("exp_zero_exponents", False)) if options.prover else False
-  options.exp_mod_iterated = bool(config.get("exp_mod_iterated", False)) if options.prover else False
-  options.debug_reprove = bool(config.get("debug_reprove", False)) if options.prover else False
+  options.prover_level = prover_level
+  use_prover = prover_level >= Proof_System.ProverLevel.BASE
+  options.limited_rules = bool(config.get("limited_rules", True)) if use_prover else False
+  options.exp_const_blocks = bool(config.get("exp_const_blocks", True)) if use_prover else False
+  options.only_record_configs = bool(config.get("only_record_configs", False)) if use_prover else False
+  options.exp_zero_exponents = bool(config.get("exp_zero_exponents", False)) if use_prover else False
+  options.exp_mod_iterated = bool(config.get("exp_mod_iterated", False)) if use_prover else False
+  options.debug_reprove = bool(config.get("debug_reprove", False)) if use_prover else False
   options.use_big_interval = bool(config.get("use_big_interval", True))
   options.compute_steps = False
   options.verbose_simulator = False

@@ -3,6 +3,7 @@ import argparse
 from pathlib import Path
 
 from Enumerate import enumerate
+from Macro.Proof_System import ProverLevel
 from Pipeline import (
   CpsDecider,
   CTLDecider,
@@ -28,7 +29,7 @@ def main():
       CTLDecider(type="CTL4", max_block_size=6),
       CpsDecider(max_block_size=6, fixed_history=1),
       SimulatorDecider(10000),
-      SimulatorDecider(100000, recursive=True),
+      SimulatorDecider(100000, prover_level=ProverLevel.EXP),
       SimulatorDecider(1000000),
     ]
   )

@@ -12,6 +12,7 @@ import Macro_Simulator
 import NatExpr
 import TM_Enum
 from IO import TM_Record
+from Macro import Proof_System
 
 
 def evaluate_tm(name: str, tm_str: str, force_block_size: int = None):
@@ -26,8 +27,7 @@ def evaluate_tm(name: str, tm_str: str, force_block_size: int = None):
   Macro_Simulator.add_option_group(parser)
   options, args = parser.parse_args([])
   options.time = 0
-  options.recursive = True
-  options.exp_linear_rules = True
+  options.prover_level = Proof_System.ProverLevel.EXP
   options.compute_steps = True
   options.max_loops = 1_000_000
   if force_block_size:

@@ -12,10 +12,10 @@ import Halting_Lib
 import IO
 import io_pb2
 from NatExpr import approx_and_full_str
-from Macro import Block_Finder, Simulator, Turing_Machine
+from Macro import Block_Finder, Proof_System, Simulator, Turing_Machine
 
 
-def run(machine, block_size, back, prover, recursive, options):
+def run(machine, block_size, back, options):
   # Construct Machine (Backsymbol-k-Block-Macro-Machine)
 
   # If no explicit block-size given, use heuristics to find one.
@@ -269,7 +269,7 @@ if __name__ == "__main__":
     "run simulation.)",
   )
 
-  Simulator.add_option_group(parser)
+  Simulator.add_option_group(parser, default_prover_level=Proof_System.MAX_PROVER_LEVEL)
   Block_Finder.add_option_group(parser)
 
   (options, args) = parser.parse_args()
@@ -298,7 +298,5 @@ if __name__ == "__main__":
     machine,
     options.block_size,
     options.backsymbol,
-    options.prover,
-    options.recursive,
     options,
   )
