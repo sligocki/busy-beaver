@@ -1517,6 +1517,12 @@ class Proof_System:
       for init_block in initial_tape.tape[0] + initial_tape.tape[1]:
         if isinstance(init_block.num, Algebraic_Expression):
           x = init_block.num.variable_restricted()
+          if isinstance(min_val[x], float) and math.isinf(min_val[x]):
+            if getattr(self.options, "exp_const_blocks", True) and x in init_var_pos:
+              new_const_blocks.add(init_var_pos[x])
+              continue
+            self.last_prove_fail_reason = "Unbounded negative min_val"
+            return None
           var_list.append(x)
           allow_zero = self.exp_zero_exponents and (
             min_val[x] < init_block.num.const or can_start_at_zero.get(x, False)
@@ -1607,6 +1613,12 @@ class Proof_System:
         for init_block in initial_tape.tape[dir]:
           if isinstance(init_block.num, Algebraic_Expression):
             x = init_block.num.variable_restricted()
+            if isinstance(min_val[x], float) and math.isinf(min_val[x]):
+              if getattr(self.options, "exp_const_blocks", True) and x in init_var_pos:
+                new_const_blocks.add(init_var_pos[x])
+                continue
+              self.last_prove_fail_reason = "Unbounded negative min_val"
+              return None
             allow_zero = self.exp_zero_exponents and (
               min_val[x] < init_block.num.const or can_start_at_zero.get(x, False)
             )

@@ -380,6 +380,24 @@ class ExpIntTest(unittest.TestCase):
     for term in chain.terms:
       self.assertLessEqual(abs(term.coef).bit_length(), Exp_Int.MAX_COMBINE_BITS + 10)
 
+  def test_const_int_float_comparisons(self):
+    import math
+    from NatExpr import ConstInt
+
+    c = ConstInt(10)
+    self.assertTrue(-math.inf < c)
+    self.assertTrue(-math.inf <= c)
+    self.assertFalse(-math.inf > c)
+    self.assertFalse(-math.inf >= c)
+    self.assertTrue(c > -math.inf)
+    self.assertTrue(c >= -math.inf)
+    self.assertTrue(c < math.inf)
+    self.assertTrue(c <= math.inf)
+    self.assertTrue(c > 9.5)
+    self.assertTrue(c < 10.5)
+    self.assertTrue(9.5 < c)
+    self.assertTrue(10.5 > c)
+
 
 if __name__ == "__main__":
   unittest.main()

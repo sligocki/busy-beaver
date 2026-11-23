@@ -440,28 +440,28 @@ class ConstInt(NatExpr):
   def __lt__(self, other):
     if type(other) is ConstInt:
       return self.val < other.val
-    if type(other) is int:
+    if type(other) in (int, float):
       return self.val < other
     return NotImplemented
 
   def __le__(self, other):
     if type(other) is ConstInt:
       return self.val <= other.val
-    if type(other) is int:
+    if type(other) in (int, float):
       return self.val <= other
     return NotImplemented
 
   def __gt__(self, other):
     if type(other) is ConstInt:
       return self.val > other.val
-    if type(other) is int:
+    if type(other) in (int, float):
       return self.val > other
     return NotImplemented
 
   def __ge__(self, other):
     if type(other) is ConstInt:
       return self.val >= other.val
-    if type(other) is int:
+    if type(other) in (int, float):
       return self.val >= other
     return NotImplemented
 
