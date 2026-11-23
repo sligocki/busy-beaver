@@ -13,6 +13,7 @@ from optparse import OptionGroup, OptionParser
 import io_pb2
 from Algebraic_Expression import Algebraic_Expression
 from Exp_Int import ExpIntGaveUp
+import Iterated_Expression
 from Iterated_Expression import IteratedExprGaveUp
 from NatExpr import approx_and_full_str, approx_str, big_interval_str
 from Macro import Proof_System, Tape, Turing_Machine
@@ -88,6 +89,8 @@ class Simulator:
     self.verbose_prefix = verbose_prefix
     # True for normal Simulators. False for those run inside of a Proof_System.
     self.is_base_simulator = is_base_simulator
+    if is_base_simulator:
+      Iterated_Expression.ALLOW_MOD_ITERATED = bool(getattr(options, "exp_mod_iterated", False))
     self.compute_steps = options.compute_steps
     self.use_big_interval = getattr(options, "use_big_interval", True)
 

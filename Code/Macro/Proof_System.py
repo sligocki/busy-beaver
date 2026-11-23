@@ -11,6 +11,7 @@ from optparse import OptionGroup, OptionParser
 
 import Algebraic_Expression as ae
 import Exp_Int
+import Iterated_Expression
 from Algebraic_Expression import (
   ConstantToExpression,
   Expression,
@@ -91,6 +92,12 @@ def add_option_group(parser):
     action="store_true",
     default=False,
     help="Allow rules to start or end with 0-repetition blocks when safe [Experimental]",
+  )
+  group.add_option(
+    "--exp-mod-iterated",
+    action="store_true",
+    default=False,
+    help="Allow modular arithmetic on Iterated_Expression [Experimental]",
   )
   group.add_option(
     "--debug-reprove",
@@ -932,6 +939,8 @@ class Proof_System:
     self.exp_linear_rules = options.exp_linear_rules
     self.exp_meta_linear_rules = options.exp_meta_linear_rules
     self.exp_zero_exponents = getattr(options, "exp_zero_exponents", False)
+    self.exp_mod_iterated = getattr(options, "exp_mod_iterated", False)
+    Iterated_Expression.ALLOW_MOD_ITERATED = bool(self.exp_mod_iterated)
     self.debug_reprove = getattr(options, "debug_reprove", False)
     self.compute_steps = options.compute_steps
     self.verbose = options.verbose_prover  # Step-by-step state printing

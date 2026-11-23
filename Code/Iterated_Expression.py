@@ -15,6 +15,10 @@ class IteratedExprGaveUp(Exception):
   pass
 
 
+# Experimental gate for Iterated_Expression.__mod__ (controlled by --exp-mod-iterated).
+ALLOW_MOD_ITERATED = False
+
+
 def _int_val(x):
   if isinstance(x, int):
     return x
@@ -477,6 +481,10 @@ class Iterated_Expression(NatExpr):
     other = int(other)
     if other == 1:
       return 0
+    if not ALLOW_MOD_ITERATED:
+      raise IteratedExprGaveUp(
+        f"Iterated_Expression mod is disabled (pass --exp-mod-iterated to enable): {self} % {other}"
+      )
     if not self.is_const:
       raise IteratedExprGaveUp(f"Cannot mod non-const Iterated_Expression: {self}")
 
@@ -509,6 +517,7 @@ class Iterated_Expression(NatExpr):
     warmup_seen = {}
     warmup_seq = []
     max_warmup = 50
+    warmup_steps = 0
     while not _exponents_above_tail(self.step_expr, self.var, L, x_lb):
       rem_int = try_eval(rem_reps)
       if rem_int == 0:
@@ -524,11 +533,12 @@ class Iterated_Expression(NatExpr):
           return warmup_seq[idx] % other
         warmup_seen[v_cur] = len(warmup_seq)
         warmup_seq.append(v_cur)
-      if len(warmup_seq) >= max_warmup:
+      if warmup_steps >= max_warmup:
         raise IteratedExprGaveUp(f"Warmup exceeded {max_warmup} steps for {self} % {other}")
       cur_val = _unwrap_const_expr(substitute(self.step_expr, {self.var: cur_val}))
       rem_reps = rem_reps - 1
       x_lb = _lower_bound_int(cur_val)
+      warmup_steps += 1
 
     # Ensure future iterates remain >= x_lb (trivial if x_lb <= 0).
     if x_lb > 0:

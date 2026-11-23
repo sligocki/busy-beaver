@@ -67,6 +67,7 @@ class BenchConfig:
   exp_const_blocks: bool = True
   only_record_configs: bool = False
   exp_zero_exponents: bool = False
+  exp_mod_iterated: bool = False
   debug_reprove: bool = False
   use_big_interval: bool = True
   compute_steps: bool = False
@@ -101,6 +102,7 @@ class BenchConfig:
     options.exp_const_blocks = self.exp_const_blocks if self.prover else False
     options.only_record_configs = self.only_record_configs if self.prover else False
     options.exp_zero_exponents = self.exp_zero_exponents if self.prover else False
+    options.exp_mod_iterated = self.exp_mod_iterated if self.prover else False
     options.debug_reprove = self.debug_reprove if self.prover else False
     options.use_big_interval = self.use_big_interval
     options.compute_steps = self.compute_steps and not self.exp_linear_rules
@@ -828,6 +830,7 @@ def run_one(entry):
   options.exp_const_blocks = bool(config.get("exp_const_blocks", True)) if options.prover else False
   options.only_record_configs = bool(config.get("only_record_configs", False)) if options.prover else False
   options.exp_zero_exponents = bool(config.get("exp_zero_exponents", False)) if options.prover else False
+  options.exp_mod_iterated = bool(config.get("exp_mod_iterated", False)) if options.prover else False
   options.debug_reprove = bool(config.get("debug_reprove", False)) if options.prover else False
   options.use_big_interval = bool(config.get("use_big_interval", True))
   options.compute_steps = False

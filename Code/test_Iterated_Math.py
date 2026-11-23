@@ -3,7 +3,8 @@ import unittest
 
 from Algebraic_Expression import Variable, VariableToExpression
 from Exp_Int import exp_int, struct_eq
-from Iterated_Expression import Iterated_Expression, Iterated_Math, Iterated_Term
+import Iterated_Expression as IE
+from Iterated_Expression import Iterated_Expression, Iterated_Math, Iterated_Term, IteratedExprGaveUp
 from Macro import Tape
 
 
@@ -291,7 +292,21 @@ class TestIteratedMath(unittest.TestCase):
     self.assertEqual(res_zero, 5)
     self.assertIsInstance(res_zero, int)
 
+  def _enable_mod_iterated(self):
+    prev = IE.ALLOW_MOD_ITERATED
+    IE.ALLOW_MOD_ITERATED = True
+    self.addCleanup(setattr, IE, "ALLOW_MOD_ITERATED", prev)
+
+  def test_mod_disabled_by_default(self):
+    self.assertFalse(IE.ALLOW_MOD_ITERATED)
+    f = self.expr_x + 1
+    it = Iterated_Expression(f, self.x, 2, 10)
+    self.assertEqual(it % 1, 0)
+    with self.assertRaises(IteratedExprGaveUp):
+      _ = it % 6
+
   def test_mod_linear_cycle(self):
+    self._enable_mod_iterated()
     # f(x) = x + 1, start=2: f^N(2) = 2 + N
     f = self.expr_x + 1
     for n in range(10):
@@ -303,6 +318,7 @@ class TestIteratedMath(unittest.TestCase):
     self.assertEqual(it_big % 1, 0)
 
   def test_mod_exp_with_small_start_warmup(self):
+    self._enable_mod_iterated()
     # f(x) = 2^x starting at 0: 0, 1, 2, 4, 16, 65536, ...
     f = exp_int(2, self.expr_x)
     exact = [0, 1, 2, 4, 16, 65536]
@@ -314,6 +330,7 @@ class TestIteratedMath(unittest.TestCase):
     self.assertEqual(Iterated_Expression(f, self.x, 0, exp_int(2, 200)) % 10, 6)
 
   def test_mod_closure_modulus_larger_than_target(self):
+    self._enable_mod_iterated()
     # f(x) = 2^x + 1 mod 7 requires closure modulus L = lcm(7, 3, 2) = 42
     f = exp_int(2, self.expr_x) + 1
     vals = [1]
@@ -330,6 +347,7 @@ class TestIteratedMath(unittest.TestCase):
     self.assertEqual(Iterated_Expression(f, self.x, 1, exp_int(2, 200)) % 7, 2)
 
   def test_mod_tower_with_period_3_orbit(self):
+    self._enable_mod_iterated()
     # Regression test for Iterated_Expression.__mod__ assuming period 1.
     # Build the 12-level tower from 1RB0LD_1RC1RF_1LA1RG_0LC1LE_0RA0LA_1RE0RC_1RB1RZ_------:
     # q -> (-16 + 7*2^((-4 + 7*2^((-4 + 7*2^(... (8q+40) ...))/3))/3))/3
