@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import math
 from fractions import Fraction
-from functools import cached_property
+from functools import cached_property, cmp_to_key
 
 from Algebraic_Expression import Expression, div, min_val, substitute, variables
 from Big_Interval import BigInterval
@@ -339,6 +339,80 @@ class ExpTerm:
     return self.formula_str
 
 
+# Maximum bit length of a combined coefficient in normalize_terms (~10^1000).
+MAX_COMBINE_BITS = int(EXP_THRESHOLD * math.log2(10))
+
+
+def _const_exp_diff(e1, e2) -> int | None:
+  """If e1 - e2 is an exact integer constant, return it; otherwise return None."""
+  if e1 is e2:
+    return 0
+  v1 = try_eval(e1)
+  v2 = try_eval(e2)
+  if v1 is not None and v2 is not None:
+    return v1 - v2
+  if (v1 is None) != (v2 is None):
+    return None
+  if isinstance(e1, ExpInt) and isinstance(e2, ExpInt):
+    if len(e1.terms) != len(e2.terms) or e1.base != e2.base:
+      return None
+    if e1.denom == e2.denom:
+      if all(struct_eq(t1, t2) for t1, t2 in zip(e1.terms, e2.terms)):
+        diff, rem = divmod(e1.const - e2.const, e1.denom)
+        return diff if rem == 0 else None
+    else:
+      g = gcd(e1.denom, e2.denom)
+      ns = e2.denom // g
+      no = e1.denom // g
+      if all(
+        t1.base == t2.base and ns * t1.coef == no * t2.coef and struct_eq(t1.exponent, t2.exponent)
+        for t1, t2 in zip(e1.terms, e2.terms)
+      ):
+        common_denom = e1.denom * ns
+        diff, rem = divmod(ns * e1.const - no * e2.const, common_denom)
+        return diff if rem == 0 else None
+    return None
+  if type(e1).__name__ == "Iterated_Math" and type(e2).__name__ == "Iterated_Math":
+    if len(e1.terms) == len(e2.terms) and all(struct_eq(t1, t2) for t1, t2 in zip(e1.terms, e2.terms)):
+      return _const_exp_diff(e1.const, e2.const)
+    return None
+  if struct_eq(e1, e2):
+    return 0
+  return None
+
+
+def _cmp_abs_exp_terms(t1: ExpTerm, t2: ExpTerm) -> int:
+  """Compare |t1| vs |t2| for two constant ExpTerms with the same base."""
+  u1 = t1.uparrow_size_approx
+  u2 = t2.uparrow_size_approx
+  # Use exact comparison when both terms are close enough in uparrow_size_approx
+  # that float/truncation rounding could flip their order.
+  need_exact = u1 == u2 or (u1[0] == 2 and u1[1] == 1 and u2[0] == 2 and u2[1] == 1 and abs(u1[2] - u2[2]) <= 4)
+  if need_exact and t1.base == t2.base:
+    d = _const_exp_diff(t1.exponent, t2.exponent)
+    if d is not None:
+      c1 = abs(t1.coef)
+      c2 = abs(t2.coef)
+      if d == 0:
+        return (c1 > c2) - (c1 < c2)
+      flip = False
+      if d < 0:
+        d = -d
+        c1, c2 = c2, c1
+        flip = True
+      log2_b = math.log2(t1.base)
+      # Compare c1 * base^d vs c2
+      if (c1.bit_length() - 1) + d * log2_b > c2.bit_length() + 2:
+        res = 1
+      elif c1.bit_length() + d * log2_b < (c2.bit_length() - 1) - 2:
+        res = -1
+      else:
+        lhs = c1 * (t1.base**d)
+        res = (lhs > c2) - (lhs < c2)
+      return -res if flip else res
+  return (u1 > u2) - (u1 < u2)
+
+
 def normalize_terms(terms):
   """Simplify sum of ExpTerms by combining ones that we can."""
   assert len({term.base for term in terms}) == 1, terms
@@ -346,23 +420,102 @@ def normalize_terms(terms):
     # For expressions, don't attempt to normalize.
     return terms
 
-  new_terms = []
-  prev_exponent = None
-  prev_coef = None
-  prev_base = None
-  for term in sorted(terms, key=lambda t: uparrow_size_approx(t.exponent), reverse=True):
-    if struct_eq(term.exponent, prev_exponent):
-      assert term.base == prev_base
-      prev_coef += term.coef
+  base = terms[0].base
+  log2_base = math.log2(base)
+
+  int_terms = []
+  big_terms = []
+  for term in terms:
+    val = try_eval(term.exponent)
+    if val is not None:
+      int_terms.append((val, term))
     else:
-      if prev_coef:
-        # Don't add term if coef == 0 (or None)
-        new_terms.append(ExpTerm(prev_base, prev_coef, prev_exponent))
-      prev_base = term.base
-      prev_coef = term.coef
-      prev_exponent = term.exponent
-  if prev_coef:
-    new_terms.append(ExpTerm(prev_base, prev_coef, prev_exponent))
+      big_terms.append(term)
+
+  new_terms = []
+
+  # 1. Combine terms whose exponents are too large to evaluate as int.
+  if big_terms:
+    big_terms.sort(key=lambda t: uparrow_size_approx(t.exponent), reverse=True)
+    bucket_key = None
+    groups = []  # list of [exp, coef]
+
+    def flush_groups():
+      for g_exp, g_coef in groups:
+        if g_coef:
+          new_terms.append(ExpTerm(base, g_coef, g_exp))
+      groups.clear()
+
+    for term in big_terms:
+      key = uparrow_size_approx(term.exponent)
+      if key != bucket_key:
+        flush_groups()
+        bucket_key = key
+      merged = False
+      for idx, (g_exp, g_coef) in enumerate(groups):
+        d = _const_exp_diff(term.exponent, g_exp)
+        if d is None:
+          continue
+        if d == 0:
+          g_coef += term.coef
+          if g_coef == 0:
+            groups.pop(idx)
+          else:
+            groups[idx][1] = g_coef
+          merged = True
+          break
+        elif d > 0 and d <= EXP_THRESHOLD and abs(term.coef).bit_length() + d * log2_base <= MAX_COMBINE_BITS:
+          g_coef = term.coef * (base**d) + g_coef
+          if g_coef == 0:
+            groups.pop(idx)
+          else:
+            groups[idx][1] = g_coef
+          merged = True
+          break
+        elif d < 0 and -d <= EXP_THRESHOLD and abs(g_coef).bit_length() + (-d) * log2_base <= MAX_COMBINE_BITS:
+          g_coef = g_coef * (base ** (-d)) + term.coef
+          if g_coef == 0:
+            groups.pop(idx)
+          else:
+            groups[idx][0] = term.exponent
+            groups[idx][1] = g_coef
+          merged = True
+          break
+      if not merged:
+        groups.append([term.exponent, term.coef])
+    flush_groups()
+
+  # 2. Combine terms whose exponents evaluate to int.
+  if int_terms:
+    int_terms.sort(key=lambda pair: pair[0], reverse=True)
+    prev_val = None
+    prev_exp = None
+    prev_coef = None
+    for val, term in int_terms:
+      if prev_coef is None:
+        prev_val = val
+        prev_exp = term.exponent
+        prev_coef = term.coef
+        continue
+      d = prev_val - val
+      if d == 0:
+        prev_coef += term.coef
+        if prev_coef == 0:
+          prev_coef = None
+      elif d <= EXP_THRESHOLD and abs(prev_coef).bit_length() + d * log2_base <= MAX_COMBINE_BITS:
+        prev_coef = prev_coef * (base**d) + term.coef
+        prev_val = val
+        prev_exp = term.exponent
+        if prev_coef == 0:
+          prev_coef = None
+      else:
+        new_terms.append(ExpTerm(base, prev_coef, prev_exp))
+        prev_val = val
+        prev_exp = term.exponent
+        prev_coef = term.coef
+    if prev_coef:
+      new_terms.append(ExpTerm(base, prev_coef, prev_exp))
+
   return new_terms
 
 
@@ -473,21 +626,29 @@ class ExpInt(NatExpr):
 
       else:
         # At least one term is too large to fit in an `int`.
-        max_pos_tower = max(
-          (term.uparrow_size_approx for term in self.terms if term.sign > 0),
-          default=uparrow_size_approx(0),
-        )
-        max_neg_tower = max(
-          (term.uparrow_size_approx for term in self.terms if term.sign < 0),
-          default=uparrow_size_approx(0),
-        )
-        if max_pos_tower == max_neg_tower:
-          raise ExpIntException(f"Cannot evaluate sign of ExpInt: {self}    ({max_pos_tower} == {max_neg_tower})")
-        self._uparrow_size_approx = max(max_pos_tower, max_neg_tower)
-        if max_neg_tower > max_pos_tower:
+        pos_terms = [term for term in self.terms if term.sign > 0]
+        neg_terms = [term for term in self.terms if term.sign < 0]
+        max_pos_term = max(pos_terms, key=cmp_to_key(_cmp_abs_exp_terms)) if pos_terms else None
+        max_neg_term = max(neg_terms, key=cmp_to_key(_cmp_abs_exp_terms)) if neg_terms else None
+        if max_pos_term is None:
+          self._uparrow_size_approx = max_neg_term.uparrow_size_approx
           self.sign = -1
-        else:
+        elif max_neg_term is None:
+          self._uparrow_size_approx = max_pos_term.uparrow_size_approx
           self.sign = 1
+        else:
+          cmp_res = _cmp_abs_exp_terms(max_pos_term, max_neg_term)
+          if cmp_res == 0:
+            raise ExpIntException(
+              f"Cannot evaluate sign of ExpInt: {self}    "
+              f"({max_pos_term.uparrow_size_approx} == {max_neg_term.uparrow_size_approx})"
+            )
+          elif cmp_res < 0:
+            self._uparrow_size_approx = max_neg_term.uparrow_size_approx
+            self.sign = -1
+          else:
+            self._uparrow_size_approx = max_pos_term.uparrow_size_approx
+            self.sign = 1
 
         # Tweak tower value for denom
         if self.denom != 1:

@@ -326,7 +326,7 @@ class ExpIntTest(unittest.TestCase):
     self.assertEqual(zero_exp.min_val(), 3)
     self.assertEqual(zero_exp.variables(), frozenset())
 
-  def todo_test_bug_normalize(self):
+  def test_bug_normalize(self):
     # Simplified version of issue
     x = exp_int(7, exp_int(7, exp_int(7, 7))) + exp_int(7, 1 + exp_int(7, exp_int(7, 7)))
     self.assertEqual(sign(x - x), 0)
@@ -336,6 +336,49 @@ class ExpIntTest(unittest.TestCase):
     b = exp_int(2, -12 + 25 * exp_int(2, 5 * exp_int(2, 95)))
     x = a + b
     self.assertEqual(sign(x + (-x)), 0)
+
+  def test_combine_close_exponents_and_eval_sign(self):
+    # Regression test: exponents ~7.9e14 (bit_length 50) differing by 42 where
+    # prec_mult truncation previously inverted the relative magnitudes of the two terms.
+    e1 = Exp_Int.ExpInt([Exp_Int.ExpTerm(2, -51, 44)], 1688849860263924, 1)
+    e2 = Exp_Int.ExpInt([Exp_Int.ExpTerm(2, -51, 44)], 1688849860263882, 1)
+    t1 = Exp_Int.ExpTerm(2, 51, e1)
+    t2 = Exp_Int.ExpTerm(2, -211106232532979, e2)
+
+    # Via addition/subtraction (normalizes into a single term).
+    combined = 51 * exp_int(2, e1) - 211106232532979 * exp_int(2, e2) - 4
+    self.assertEqual(len(combined.terms), 1)
+    self.assertEqual(combined.terms[0].coef, 51 * 2**42 - 211106232532979)
+    self.assertEqual(sign(combined), 1)
+    self.assertGreater(combined, 2**20)
+    self.assertEqual(sign(-combined), -1)
+
+    # Via direct ExpInt construction (uncombined terms) uses exact comparison in eval().
+    direct = Exp_Int.ExpInt([t1, t2], -4, 1)
+    self.assertEqual(sign(direct), 1)
+    self.assertGreater(direct, 2**20)
+
+    # Negative dominant term with close exponents.
+    t2_bigger = Exp_Int.ExpTerm(2, -(51 * 2**42 + 1), e2)
+    direct_neg = Exp_Int.ExpInt([t1, t2_bigger], -4, 1)
+    self.assertEqual(sign(direct_neg), -1)
+    self.assertLess(direct_neg, 0)
+
+    # Huge non-int exponents differing by a small constant combine in a - b.
+    x = exp_int(7, exp_int(7, 7))
+    a = (7**10 + 1) * exp_int(7, x)
+    b = exp_int(7, x + 10)
+    self.assertEqual(sign(a - b), 1)
+    self.assertEqual(sign(b - a), -1)
+    self.assertEqual(len((a - b).terms), 1)
+
+    # Long chain of spaced-out terms respects MAX_COMBINE_BITS and stays bounded.
+    chain = exp_int(2, 2000)
+    for k in range(1, 10):
+      chain = chain + exp_int(2, 2000 + 500 * k)
+    self.assertGreater(len(chain.terms), 1)
+    for term in chain.terms:
+      self.assertLessEqual(abs(term.coef).bit_length(), Exp_Int.MAX_COMBINE_BITS + 10)
 
 
 if __name__ == "__main__":
