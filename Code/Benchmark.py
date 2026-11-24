@@ -184,15 +184,18 @@ CONFIG_PRESETS: dict[str, BenchConfig] = {
   "no_expint_add": BenchConfig(
     name="no_expint_add",
     expint_add=False,
+    compute_steps=False,
   ),
   "no_expint_mul": BenchConfig(
     name="no_expint_mul",
     expint_mul=False,
+    compute_steps=False,
   ),
   "no_expint_add_mul": BenchConfig(
     name="no_expint_add_mul",
     expint_add=False,
     expint_mul=False,
+    compute_steps=False,
   ),
   # Leave-one-out Ablations from all_on
   "ablate_backsymbol": BenchConfig(
