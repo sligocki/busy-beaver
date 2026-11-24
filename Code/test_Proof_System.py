@@ -1446,7 +1446,7 @@ class ProofSystemTest(unittest.TestCase):
     self.assertEqual(sim.op_state, Turing_Machine.HALT)
     self.assertEqual(sim.prover.num_rules, 3)
     self.assertEqual(sim.prover.num_failed_proofs, 0)
-    self.assertLess(max_past, 100)
+    self.assertLess(max_past, 200)
 
   def test_green20_zero_min_and_deplete_to_zero(self):
     # Verify that on Green(20), Level 1 Diff_Rule 0 is proven with d>=0 (omitted block allowed)

@@ -369,6 +369,49 @@ class BenchmarkTest(unittest.TestCase):
         ]
       )
 
+  def test_parse_candidate_specs_pb_file(self):
+    import Benchmark_Dataset
+    import IO
+    from IO import TM_Record
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+      pb_path = Path(tmpdir) / "sample.pb"
+      tm_str = "1RB1LB_1LA1RZ"
+      rec = TM_Record.TM_Record()
+      TM_Record.write_tm(IO.parse_tm(tm_str), rec.proto.tm)
+      rec.proto.filter.simulator.parameters.block_size = 3
+      rec.proto.status.halt_status.is_decided = True
+      rec.proto.status.halt_status.is_halting = True
+      with IO.Proto.Writer(pb_path) as writer:
+        writer.write_record(rec)
+
+      cands = Benchmark_Dataset._parse_candidate_specs(
+        [str(pb_path)],
+        block_size=None,
+        category="unknown",
+        name_override=None,
+        max_loops=1000,
+        tape_limit=50,
+      )
+      self.assertEqual(len(cands), 1)
+      self.assertEqual(cands[0].tm, tm_str)
+      self.assertEqual(cands[0].name, "sample.pb:0")
+      self.assertEqual(cands[0].block_size, 3)
+      self.assertEqual(cands[0].category, "halt")
+
+      # Explicit CLI block_size and category override protobuf metadata.
+      cands_override = Benchmark_Dataset._parse_candidate_specs(
+        [str(pb_path)],
+        block_size=4,
+        category="inf",
+        name_override="custom-name",
+        max_loops=1000,
+        tape_limit=50,
+      )
+      self.assertEqual(cands_override[0].name, "custom-name")
+      self.assertEqual(cands_override[0].block_size, 4)
+      self.assertEqual(cands_override[0].category, "inf")
+
 
 if __name__ == "__main__":
   unittest.main()

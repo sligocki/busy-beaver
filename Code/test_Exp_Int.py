@@ -64,7 +64,7 @@ class ExpIntTest(unittest.TestCase):
     self.assertEqual(sign(a - b), 1)
     self.assertEqual(sign(b - a), -1)
 
-  def todo_test_compare_closer(self):
+  def test_compare_closer(self):
     x = exp_int(7, exp_int(7, 7))
     a = (7**10 + 1) * exp_int(7, x)
     b = exp_int(7, x + 10)
@@ -379,6 +379,59 @@ class ExpIntTest(unittest.TestCase):
     self.assertGreater(len(chain.terms), 1)
     for term in chain.terms:
       self.assertLessEqual(abs(term.coef).bit_length(), Exp_Int.MAX_COMBINE_BITS + 10)
+
+  def test_nonconst_exp_diff_sign_and_min(self):
+    # Exponents differing by a huge ExpInt (not just a constant) still determine sign.
+    e_big = -4 + 2 * exp_int(5, -4 + 2 * exp_int(5, 14))
+    e_small = e_big - 31240 - 2 * exp_int(5, 31239)
+    diff = exp_int(5, e_big) - exp_int(5, e_small) - 15622
+    self.assertEqual(sign(diff), 1)
+    self.assertGreater(exp_int(5, e_big), exp_int(5, e_small))
+    self.assertLess(exp_int(5, e_small), exp_int(5, e_big))
+
+    # Equal-tower ExpInts compare accurately so min() never picks the larger one.
+    e_inner = exp_int(2, exp_int(2, 9) / 2)
+    g = (16 + exp_int(2, (4 + e_inner) / 2)) / 2
+    h = (-6 + exp_int(2, (2 + e_inner) / 2)) / 2
+    g2, h1 = g - 2, h - 1
+    self.assertGreater(g2, h1)
+    self.assertLess(h1, g2)
+    self.assertIs(min(g2, h1), h1)
+    self.assertIs(min(h1, g2), h1)
+    self.assertEqual(sign(g2 - h1), 1)
+
+  def test_mixed_base_add_mul_and_zero_eq(self):
+    # Small mixed-base addition evaluates cleanly; large mixed-base addition is supported.
+    small_sum = 40531158447265625 * exp_int(2, 110) + 1041 * exp_int(5, 22)
+    self.assertEqual(try_eval(small_sum), 40531158447265625 * 2**110 + 1041 * 5**22)
+
+    big_sum = exp_int(2, 2000) + exp_int(5, 2000)
+    self.assertEqual(len(big_sum.terms), 2)
+    self.assertEqual(sign(big_sum), 1)
+    self.assertGreater(big_sum, exp_int(2, 2000))
+
+    # Multiplying two large ExpInts with different bases raises ExpIntGaveUp.
+    with self.assertRaises(Exp_Int.ExpIntGaveUp):
+      _ = exp_int(2, 2000) * exp_int(5, 2000)
+
+    # ExpInt equal to 0 or 1 compares equal to int/ConstInt.
+    zero_exp = (-5103 + 7 * exp_int(3, 6)) / 2
+    self.assertEqual(zero_exp, 0)
+    self.assertEqual(0, zero_exp)
+    self.assertNotEqual(zero_exp, 1)
+    one_exp = (-5101 + 7 * exp_int(3, 6)) / 2
+    self.assertEqual(one_exp, 1)
+    self.assertEqual(hash(zero_exp), hash(0))
+    self.assertEqual(hash(one_exp), hash(1))
+
+    # Huge and non-const ExpInts are hashable (used in rule signature tuples).
+    big_a = exp_int(2, 2000)
+    big_b = exp_int(2, 2000) + 0
+    self.assertEqual(big_a, big_b)
+    self.assertEqual(hash(big_a), hash(big_b))
+    self.assertIn((big_a,), {(big_b,): True})
+    nonconst = exp_int(2, VariableToExpression(Variable(99)))
+    self.assertIn((nonconst,), {(nonconst,): True})
 
   def test_const_int_float_comparisons(self):
     import math

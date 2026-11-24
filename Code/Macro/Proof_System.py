@@ -1287,7 +1287,7 @@ class Proof_System:
           x = Variable()
           init_count = Exp_Int.try_eval(block.num)
           # Avoid proving rules with ridiculously huge initial values (like ExpInt).
-          if not init_count or init_count > 2**20:
+          if init_count is None or init_count > 2**20:
             init_count = 2**20
             assert block.num > init_count, block.num
             capped_vars.add(x)

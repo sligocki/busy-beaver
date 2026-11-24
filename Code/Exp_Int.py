@@ -205,7 +205,10 @@ class ExpTerm:
       return None
     val = uparrow_size_approx(self)
     top = val[-1]
-    if val[0] == 2 and val[1] == 0:
+    # Check isinstance(val[1], int) because val[1] can be a symbolic ExpInt height
+    # (from Iterated_Expression); calling val[1] == 0 on an ExpInt would recurse
+    # back into ExpInt.__eq__ -> try_eval().
+    if val[0] == 2 and isinstance(val[1], int) and val[1] == 0:
       return self.sign * top
     return None
 
@@ -354,7 +357,7 @@ def _const_exp_diff(e1, e2) -> int | None:
   if (v1 is None) != (v2 is None):
     return None
   if isinstance(e1, ExpInt) and isinstance(e2, ExpInt):
-    if len(e1.terms) != len(e2.terms) or e1.base != e2.base:
+    if len(e1.terms) != len(e2.terms) or e1.bases != e2.bases:
       return None
     if e1.denom == e2.denom:
       if all(struct_eq(t1, t2) for t1, t2 in zip(e1.terms, e2.terms)):
@@ -390,6 +393,30 @@ def _cmp_abs_exp_terms(t1: ExpTerm, t2: ExpTerm) -> int:
   need_exact = u1 == u2 or (u1[0] == 2 and u1[1] == 1 and u2[0] == 2 and u2[1] == 1 and abs(u1[2] - u2[2]) <= 4)
   if need_exact and t1.base == t2.base:
     d = _const_exp_diff(t1.exponent, t2.exponent)
+    if d is None and isinstance(t1.exponent, ExpInt) and isinstance(t2.exponent, ExpInt):
+      # Exponents can differ by a non-constant ExpInt (e.g. 5^(A) vs -5^(A - B) where
+      # A >> B >> 1), giving identical uparrow_size_approx. Subtracting them cancels
+      # matching leading terms at strictly lower depth to reveal the true sign.
+      try:
+        diff = t1.exponent - t2.exponent
+      except ExpIntGaveUp:
+        # ExpIntGaveUp signals a complexity/size limit (MAX_DEPTH / MAX_TERMS) and
+        # must propagate so Simulator.step can cleanly stop with EXPRESSION_TOO_COMPLEX.
+        raise
+      except ExpIntException:
+        # Other ExpIntExceptions (e.g. sign still undetermined) mean we couldn't
+        # resolve the tie; fall back to uparrow_size_approx below.
+        diff = None
+      if diff is not None:
+        if isinstance(diff, int):
+          d = diff
+        else:
+          d_int = try_eval(diff)
+          if d_int is not None:
+            d = d_int
+          else:
+            # |e1 - e2| >= 2^EXP_THRESHOLD, so base^|e1 - e2| dwarfs any int coefficients.
+            return diff.sign
     if d is not None:
       c1 = abs(t1.coef)
       c2 = abs(t2.coef)
@@ -415,11 +442,26 @@ def _cmp_abs_exp_terms(t1: ExpTerm, t2: ExpTerm) -> int:
 
 def normalize_terms(terms):
   """Simplify sum of ExpTerms by combining ones that we can."""
-  assert len({term.base for term in terms}) == 1, terms
+  if not terms:
+    return terms
   if not all(term.is_const for term in terms):
     # For expressions, don't attempt to normalize.
     return terms
 
+  # Allow mixed-base sums (e.g. Tape.get_macro_size() summing blocks built by rules
+  # with different bases) by normalizing each base group independently.
+  bases = {term.base for term in terms}
+  if len(bases) > 1:
+    by_base: dict[int, list[ExpTerm]] = {}
+    for term in terms:
+      by_base.setdefault(term.base, []).append(term)
+    combined = []
+    for base_terms in by_base.values():
+      combined.extend(normalize_terms(base_terms))
+    combined.sort(key=lambda t: t.uparrow_size_approx, reverse=True)
+    return combined
+
+  # All terms have same base
   base = terms[0].base
   log2_base = math.log2(base)
 
@@ -527,7 +569,10 @@ class ExpInt(NatExpr):
       return None
     val = uparrow_size_approx(self)
     top = val[-1]
-    if val[0] == 2 and val[1] == 0:
+    # Check isinstance(val[1], int) because val[1] can be a symbolic ExpInt height
+    # (from Iterated_Expression); calling val[1] == 0 on an ExpInt would recurse
+    # back into ExpInt.__eq__ -> try_eval().
+    if val[0] == 2 and isinstance(val[1], int) and val[1] == 0:
       return self.sign * top
     return None
 
@@ -581,8 +626,8 @@ class ExpInt(NatExpr):
     self.eval()
 
     bases = frozenset(term.base for term in terms)
-    assert len(bases) == 1, bases
-    self.base = list(bases)[0]
+    self.bases = bases
+    self.base = next(iter(bases)) if len(bases) == 1 else None
 
     # Number of ExpTerms (recursively) inside this one.
     # Once it gets too large, we give up to avoid OOM.
@@ -790,6 +835,12 @@ class ExpInt(NatExpr):
       )
 
     if isinstance(other, ExpInt):
+      other_int = try_eval(other)
+      if other_int is not None:
+        return self + other_int
+      self_int = try_eval(self)
+      if self_int is not None:
+        return other + self_int
       new_denom = lcm(self.denom, other.denom)
       ns = new_denom // self.denom
       no = new_denom // other.denom
@@ -825,7 +876,10 @@ class ExpInt(NatExpr):
       )
 
     if isinstance(other, ExpInt):
-      if self.base == other.base:
+      self_int = try_eval(self)
+      if self_int is not None:
+        return other * self_int
+      if self.base is not None and self.base == other.base:
         new_terms = []
         for term_s in self.terms:
           if other.const:
@@ -841,7 +895,9 @@ class ExpInt(NatExpr):
         else:
           return (self.const * other.const) // (self.denom * other.denom)
       else:
-        raise ExpIntException("ExpInt mul: base mismatch")
+        # Raise ExpIntGaveUp (not generic ExpIntException) so Simulator.step cleanly
+        # records EXPRESSION_TOO_COMPLEX when rules with different bases interact.
+        raise ExpIntGaveUp("ExpInt mul: base mismatch")
 
     if isinstance(other, Expression):
       return other * self
@@ -855,20 +911,64 @@ class ExpInt(NatExpr):
 
     return ExpInt(self.terms, self.const, self.denom * other_int)
 
-  # Basic comparison using tower notation.
+  # Basic comparison using tower notation, with exact fallback when towers tie.
+  # Without the fallback, two unequal ExpInts with the same uparrow_size_approx
+  # compare as neither < nor >, which can cause min(a, b) in rule application to
+  # pick the larger value and produce negative block counts.
+  def _cmp_other(self, other) -> int:
+    c = cmp_expr(self, other)
+    if c != 0:
+      return c
+    if isinstance(other, ExpInt):
+      if struct_eq(self, other):
+        return 0
+      try:
+        return sign(self - other)
+      except ExpIntException:
+        # If the difference's sign cannot be resolved (e.g. pentation/Iterated_Expression
+        # exponents), fall back to treating the towers as tied.
+        return 0
+    return 0
+
+  # Needed so small ExpInts that evaluate to 0 or 1 (e.g. (-5103 + 7 * 3^6)/2 == 0)
+  # match int/ConstInt checks such as removing zero-count blocks in _normalize_half_tape.
+  def __eq__(self, other):
+    if self is other:
+      return True
+    if not self.is_const:
+      return False
+    if isinstance(other, (int, float, ConstInt)):
+      val = try_eval(self)
+      if val is None:
+        return False
+      return val == (other.val if isinstance(other, ConstInt) else other)
+    if isinstance(other, ExpInt):
+      if not other.is_const:
+        return False
+      return self._cmp_other(other) == 0
+    return NotImplemented
+
+  def __hash__(self):
+    if not self.is_const:
+      return id(self)
+    val = try_eval(self)
+    if val is not None:
+      return hash(val)
+    return hash(self.sign)
+
   def __gt__(self, other):
     assert self.is_const, self
     other = NatExpr.wrap(other)
     if other.is_inf:
       return False
-    return cmp_expr(self, other) > 0
+    return self._cmp_other(other) > 0
 
   def __ge__(self, other):
     assert self.is_const, self
     other = NatExpr.wrap(other)
     if other.is_inf:
       return False
-    return cmp_expr(self, other) >= 0
+    return self._cmp_other(other) >= 0
 
   # Boilerplate
   def __neg__(self):
@@ -885,14 +985,14 @@ class ExpInt(NatExpr):
     other = NatExpr.wrap(other)
     if other.is_inf:
       return True
-    return cmp_expr(self, other) < 0
+    return self._cmp_other(other) < 0
 
   def __le__(self, other):
     assert self.is_const, self
     other = NatExpr.wrap(other)
     if other.is_inf:
       return True
-    return cmp_expr(self, other) <= 0
+    return self._cmp_other(other) <= 0
 
   __radd__ = __add__
   __rmul__ = __mul__
