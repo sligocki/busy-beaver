@@ -457,39 +457,67 @@ class ExpIntTest(unittest.TestCase):
     from Macro import Simulator, Tape, Turing_Machine
     import IO
 
-    prev = Exp_Int.ALLOW_ADD_MUL
-    self.addCleanup(setattr, Exp_Int, "ALLOW_ADD_MUL", prev)
+    prev_add = Exp_Int.ALLOW_ADD
+    prev_mul = Exp_Int.ALLOW_MUL
+    self.addCleanup(setattr, Exp_Int, "ALLOW_ADD", prev_add)
+    self.addCleanup(setattr, Exp_Int, "ALLOW_MUL", prev_mul)
 
-    # CLI option defaults to enabled and can be turned off via --no-expint-add-mul.
+    # CLI options default to enabled and can be turned off independently.
     parser = OptionParser()
     Simulator.add_option_group(parser)
     opts_default, _ = parser.parse_args([])
-    self.assertTrue(opts_default.expint_add_mul)
-    opts_off, _ = parser.parse_args(["--no-expint-add-mul"])
-    self.assertFalse(opts_off.expint_add_mul)
+    self.assertTrue(opts_default.expint_add)
+    self.assertTrue(opts_default.expint_mul)
 
-    # Simulator wires the option to Exp_Int.ALLOW_ADD_MUL.
+    opts_no_add, _ = parser.parse_args(["--no-expint-add"])
+    self.assertFalse(opts_no_add.expint_add)
+    self.assertTrue(opts_no_add.expint_mul)
+
+    opts_no_mul, _ = parser.parse_args(["--no-expint-mul"])
+    self.assertTrue(opts_no_mul.expint_add)
+    self.assertFalse(opts_no_mul.expint_mul)
+
+    opts_off, _ = parser.parse_args(["--no-expint-add", "--no-expint-mul"])
+    self.assertFalse(opts_off.expint_add)
+    self.assertFalse(opts_off.expint_mul)
+
     tm = IO.parse_tm("1RB1RZ_1LA1LB")
-    Simulator.Simulator(tm, opts_off)
-    self.assertFalse(Exp_Int.ALLOW_ADD_MUL)
-
     big_a = exp_int(2, 2000)
     big_b = exp_int(2, 2001)
     small = exp_int(2, 5)
     sym_a = exp_int(2, VariableToExpression(Variable(1)))
     sym_b = exp_int(2, VariableToExpression(Variable(2)))
 
-    # Adding, subtracting, or multiplying two large/symbolic ExpInts raises ExpIntGaveUp.
+    # --no-expint-add only disables add/sub, leaving mul enabled.
+    Simulator.Simulator(tm, opts_no_add)
+    self.assertFalse(Exp_Int.ALLOW_ADD)
+    self.assertTrue(Exp_Int.ALLOW_MUL)
     with self.assertRaises(Exp_Int.ExpIntGaveUp):
       _ = big_a + big_b
     with self.assertRaises(Exp_Int.ExpIntGaveUp):
       _ = big_a - big_b
     with self.assertRaises(Exp_Int.ExpIntGaveUp):
+      _ = sym_a + sym_b
+    self.assertEqual((big_a * big_b).terms[0].exponent, 4001)
+
+    # --no-expint-mul only disables mul, leaving add/sub enabled.
+    Simulator.Simulator(tm, opts_no_mul)
+    self.assertTrue(Exp_Int.ALLOW_ADD)
+    self.assertFalse(Exp_Int.ALLOW_MUL)
+    with self.assertRaises(Exp_Int.ExpIntGaveUp):
       _ = big_a * big_b
     with self.assertRaises(Exp_Int.ExpIntGaveUp):
-      _ = sym_a + sym_b
-    with self.assertRaises(Exp_Int.ExpIntGaveUp):
       _ = sym_a * sym_b
+    self.assertEqual(len((big_a + big_b).terms), 1)
+
+    # Both disabled.
+    Simulator.Simulator(tm, opts_off)
+    self.assertFalse(Exp_Int.ALLOW_ADD)
+    self.assertFalse(Exp_Int.ALLOW_MUL)
+    with self.assertRaises(Exp_Int.ExpIntGaveUp):
+      _ = big_a + big_b
+    with self.assertRaises(Exp_Int.ExpIntGaveUp):
+      _ = big_a * big_b
 
     # Scalar operations and small-ExpInt operations still work.
     self.assertEqual((big_a + 5).const, 5)
@@ -508,10 +536,12 @@ class ExpIntTest(unittest.TestCase):
     self.assertIsInstance(tape.get_nonzeros(lambda s: s, 0), BigInterval)
     self.assertIsInstance(tape.get_span(tm, None), BigInterval)
 
-    # Re-enabling via Simulator restores ALLOW_ADD_MUL.
+    # Re-enabling via Simulator restores ALLOW_ADD and ALLOW_MUL.
     Simulator.Simulator(tm, opts_default)
-    self.assertTrue(Exp_Int.ALLOW_ADD_MUL)
+    self.assertTrue(Exp_Int.ALLOW_ADD)
+    self.assertTrue(Exp_Int.ALLOW_MUL)
     self.assertEqual(len((big_a + big_b).terms), 1)
+    self.assertEqual((big_a * big_b).terms[0].exponent, 4001)
 
 
 if __name__ == "__main__":

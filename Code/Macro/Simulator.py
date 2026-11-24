@@ -86,7 +86,8 @@ class Simulator:
     self.is_base_simulator = is_base_simulator
     if is_base_simulator:
       Iterated_Expression.ALLOW_MOD_ITERATED = bool(getattr(options, "exp_mod_iterated", False))
-      Exp_Int.ALLOW_ADD_MUL = bool(getattr(options, "expint_add_mul", True))
+      Exp_Int.ALLOW_ADD = bool(getattr(options, "expint_add", True))
+      Exp_Int.ALLOW_MUL = bool(getattr(options, "expint_mul", True))
     self.compute_steps = options.compute_steps
     self.use_big_interval = getattr(options, "use_big_interval", True)
 

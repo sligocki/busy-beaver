@@ -22,8 +22,10 @@ EXP_THRESHOLD = 1000
 MAX_DEPTH = 500
 # Maximum (recursive) number of ExpTerms in a single ExpInt
 MAX_TERMS = 1_000_000
-# Experimental gate for adding/subtracting/multiplying two ExpInts (controlled by --no-expint-add-mul).
-ALLOW_ADD_MUL = True
+# Experimental gates for adding/subtracting or multiplying two ExpInts
+# (controlled by --no-expint-add and --no-expint-mul).
+ALLOW_ADD = True
+ALLOW_MUL = True
 
 
 # Standard way to create an ExpInt
@@ -843,8 +845,8 @@ class ExpInt(NatExpr):
       self_int = try_eval(self)
       if self_int is not None:
         return other + self_int
-      if not ALLOW_ADD_MUL:
-        raise ExpIntGaveUp("ExpInt add is disabled (remove --no-expint-add-mul to enable)")
+      if not ALLOW_ADD:
+        raise ExpIntGaveUp("ExpInt add is disabled (remove --no-expint-add to enable)")
       new_denom = lcm(self.denom, other.denom)
       ns = new_denom // self.denom
       no = new_denom // other.denom
@@ -883,8 +885,8 @@ class ExpInt(NatExpr):
       self_int = try_eval(self)
       if self_int is not None:
         return other * self_int
-      if not ALLOW_ADD_MUL:
-        raise ExpIntGaveUp("ExpInt mul is disabled (remove --no-expint-add-mul to enable)")
+      if not ALLOW_MUL:
+        raise ExpIntGaveUp("ExpInt mul is disabled (remove --no-expint-mul to enable)")
       if self.base is not None and self.base == other.base:
         new_terms = []
         for term_s in self.terms:

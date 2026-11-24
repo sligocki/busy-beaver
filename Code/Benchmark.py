@@ -68,7 +68,8 @@ class BenchConfig:
   only_record_configs: bool = False
   exp_zero_exponents: bool = False
   exp_mod_iterated: bool = False
-  expint_add_mul: bool = True
+  expint_add: bool = True
+  expint_mul: bool = True
   debug_reprove: bool = False
   use_big_interval: bool = True
   compute_steps: bool = False
@@ -103,7 +104,8 @@ class BenchConfig:
     options.only_record_configs = self.only_record_configs if self.prover else False
     options.exp_zero_exponents = self.exp_zero_exponents if self.prover else False
     options.exp_mod_iterated = self.exp_mod_iterated if self.prover else False
-    options.expint_add_mul = self.expint_add_mul
+    options.expint_add = self.expint_add
+    options.expint_mul = self.expint_mul
     options.debug_reprove = self.debug_reprove if self.prover else False
     options.use_big_interval = self.use_big_interval
     options.compute_steps = self.compute_steps and not self.exp_linear_rules
@@ -129,51 +131,34 @@ CONFIG_PRESETS: dict[str, BenchConfig] = {
     backsymbol=False,
     limited_rules=False,
     exp_const_blocks=False,
-    only_record_configs=False,
     use_big_interval=False,
   ),
   "default": BenchConfig(
     name="default",
-    prover_level=ProverLevel.ITERATED,
-    backsymbol=True,
-    limited_rules=True,
-    exp_const_blocks=True,
-    only_record_configs=False,
-    use_big_interval=True,
   ),
   "all_on": BenchConfig(
     name="all_on",
     prover_level=ProverLevel.ITERATED,
-    backsymbol=True,
-    limited_rules=True,
-    exp_const_blocks=True,
     only_record_configs=True,
-    use_big_interval=True,
+    exp_zero_exponents=True,
+    exp_mod_iterated=True,
   ),
   # Cumulative Prover Hierarchy Ladder (modifiers fixed at backsymbol=True, limited_rules=True)
   "prover_0_none": BenchConfig(
     name="prover_0_none",
     prover_level=ProverLevel.NONE,
-    backsymbol=True,
-    limited_rules=False,
   ),
   "prover_1_base": BenchConfig(
     name="prover_1_base",
     prover_level=ProverLevel.BASE,
-    backsymbol=True,
-    limited_rules=True,
   ),
   "prover_2_exp": BenchConfig(
     name="prover_2_exp",
     prover_level=ProverLevel.EXP,
-    backsymbol=True,
-    limited_rules=True,
   ),
   "prover_3_iterated": BenchConfig(
     name="prover_3_iterated",
     prover_level=ProverLevel.ITERATED,
-    backsymbol=True,
-    limited_rules=True,
   ),
   # Single-feature / modifier additions
   "only_backsymbol": BenchConfig(
@@ -188,38 +173,26 @@ CONFIG_PRESETS: dict[str, BenchConfig] = {
     backsymbol=False,
     limited_rules=False,
   ),
-  "plus_const_blocks": BenchConfig(
-    name="plus_const_blocks",
-    prover_level=ProverLevel.ITERATED,
-    backsymbol=True,
-    limited_rules=True,
-    exp_const_blocks=True,
-    only_record_configs=False,
-  ),
   "plus_only_record": BenchConfig(
     name="plus_only_record",
-    prover_level=ProverLevel.ITERATED,
-    backsymbol=True,
-    limited_rules=True,
-    exp_const_blocks=False,
     only_record_configs=True,
   ),
   "plus_zero_exponents": BenchConfig(
     name="plus_zero_exponents",
-    prover_level=ProverLevel.ITERATED,
-    backsymbol=True,
-    limited_rules=True,
     exp_zero_exponents=True,
+  ),
+  "no_expint_add": BenchConfig(
+    name="no_expint_add",
+    expint_add=False,
+  ),
+  "no_expint_mul": BenchConfig(
+    name="no_expint_mul",
+    expint_mul=False,
   ),
   "no_expint_add_mul": BenchConfig(
     name="no_expint_add_mul",
-    prover_level=ProverLevel.ITERATED,
-    backsymbol=True,
-    limited_rules=True,
-    exp_const_blocks=True,
-    only_record_configs=False,
-    use_big_interval=True,
-    expint_add_mul=False,
+    expint_add=False,
+    expint_mul=False,
   ),
   # Leave-one-out Ablations from all_on
   "ablate_backsymbol": BenchConfig(
@@ -833,7 +806,8 @@ def run_one(entry):
   options.only_record_configs = bool(config.get("only_record_configs", False)) if use_prover else False
   options.exp_zero_exponents = bool(config.get("exp_zero_exponents", False)) if use_prover else False
   options.exp_mod_iterated = bool(config.get("exp_mod_iterated", False)) if use_prover else False
-  options.expint_add_mul = bool(config.get("expint_add_mul", True))
+  options.expint_add = bool(config.get("expint_add", True))
+  options.expint_mul = bool(config.get("expint_mul", True))
   options.debug_reprove = bool(config.get("debug_reprove", False)) if use_prover else False
   options.use_big_interval = bool(config.get("use_big_interval", True))
   options.compute_steps = False
