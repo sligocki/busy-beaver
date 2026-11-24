@@ -24,7 +24,7 @@ def re_sim(tm_record):
 
   # TODO: Replace this all with a function that just takes sim_params and produces sim_results?
   options = Simulator.create_default_options()
-  options.max_loops = sim_params.max_loops
+  options.max_loops = sim_result.num_loops or sim_params.max_loops
   options.tape_limit = sim_params.max_tape_blocks
   # Time is non-deterministic ... also this is not actually used by simulate_machine
   options.time = 0.0
@@ -35,7 +35,7 @@ def re_sim(tm_record):
     options.compute_steps = False
   sim_result.Clear()
   tm_record.proto.status.Clear()
-  Macro_Simulator.simulate_machine(tm, options, tm_record.proto.filter.simulator, tm_record.proto.status, 0.0)
+  Macro_Simulator.simulate_machine(tm, options, tm_record.proto.filter.simulator, tm_record.proto.status)
   return tm_record
 
 
