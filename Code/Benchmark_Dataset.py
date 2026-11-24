@@ -1036,26 +1036,63 @@ def _parse_candidate_specs(
         )
       )
     elif p.is_file():
-      with IO.Common.open_file(p, "rt") as f:
-        for idx, line in enumerate(f):
-          tok, custom_id = _extract_tm_token_from_line(line)
-          if tok:
+      if IO.General.guess_module(p) is IO.Proto:
+        with IO.Proto.Reader(p) as reader:
+          for idx, tm_record in enumerate(reader):
+            tok = tm_record.tm().ttable_str()
             existing = truth_by_tm.get(tok) if truth_by_tm else None
-            tag = custom_id if custom_id else str(idx)
+            pb_bs = None
+            if (
+              tm_record.proto.filter.HasField("simulator")
+              and tm_record.proto.filter.simulator.parameters.block_size > 0
+            ):
+              pb_bs = tm_record.proto.filter.simulator.parameters.block_size
+            pb_cat = "unknown"
+            if tm_record.proto.status.halt_status.is_decided:
+              pb_cat = "halt" if tm_record.proto.status.halt_status.is_halting else "inf"
+            resolved_cat = category if category != "unknown" else _resolve_existing_category(pb_cat, existing)
+            resolved_bs = (
+              block_size
+              if block_size is not None
+              else (pb_bs if pb_bs is not None else (existing.get("block_size") if existing else None))
+            )
             candidates.append(
               CandidateTM(
                 tm=tok,
-                name=name_override or (existing["name"] if existing else f"{p.name}:{tag}"),
+                name=name_override or (existing["name"] if existing else f"{p.name}:{idx}"),
                 source=existing.get("source", "custom") if existing else "custom",
-                category=_resolve_existing_category(category, existing),
+                category=resolved_cat,
                 mandatory=mandatory or (bool(existing.get("mandatory", False)) if existing else False),
-                block_size=block_size if block_size is not None else (existing.get("block_size") if existing else None),
+                block_size=resolved_bs,
                 max_loops=max_loops,
                 tape_limit=tape_limit,
                 max_steps_in_block=int(existing.get("max_steps_in_block", 100_000)) if existing else 100_000,
                 max_steps_in_backsymbol=int(existing.get("max_steps_in_backsymbol", 1_000)) if existing else 1_000,
               )
             )
+      else:
+        with IO.Common.open_file(p, "rt") as f:
+          for idx, line in enumerate(f):
+            tok, custom_id = _extract_tm_token_from_line(line)
+            if tok:
+              existing = truth_by_tm.get(tok) if truth_by_tm else None
+              tag = custom_id if custom_id else str(idx)
+              candidates.append(
+                CandidateTM(
+                  tm=tok,
+                  name=name_override or (existing["name"] if existing else f"{p.name}:{tag}"),
+                  source=existing.get("source", "custom") if existing else "custom",
+                  category=_resolve_existing_category(category, existing),
+                  mandatory=mandatory or (bool(existing.get("mandatory", False)) if existing else False),
+                  block_size=block_size
+                  if block_size is not None
+                  else (existing.get("block_size") if existing else None),
+                  max_loops=max_loops,
+                  tape_limit=tape_limit,
+                  max_steps_in_block=int(existing.get("max_steps_in_block", 100_000)) if existing else 100_000,
+                  max_steps_in_backsymbol=int(existing.get("max_steps_in_backsymbol", 1_000)) if existing else 1_000,
+                )
+              )
     elif is_valid_std_tm(spec):
       existing = truth_by_tm.get(spec) if truth_by_tm else None
       candidates.append(
