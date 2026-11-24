@@ -4,10 +4,8 @@
 from __future__ import annotations
 
 import argparse
-import fcntl
-import struct
+import os
 import sys
-import termios
 from dataclasses import dataclass
 
 import IO
@@ -99,16 +97,25 @@ def ttable_with_colors(tm):
   return s
 
 
-def main():
-  # Get terminal width, this is surprisingly hard to do :(
-  # See: http://stackoverflow.com/questions/566746/how-to-get-console-window-width-in-python
+def get_terminal_width(default: int = 80) -> int:
   try:
-    # This will be fooled if you pipe in stdin from somewhere else, but I don't
-    # know why you would do that since this program doesn't read stdin.
-    fd = 0
-    term_height, term_width = struct.unpack("hh", fcntl.ioctl(fd, termios.TIOCGWINSZ, "1234"))
-  except Exception:
-    term_width = 80
+    cols = int(os.environ.get("COLUMNS", ""))
+    if cols > 0:
+      return cols
+  except ValueError:
+    pass
+  for stream in (sys.stdout, sys.stderr, sys.stdin):
+    try:
+      cols = os.get_terminal_size(stream.fileno()).columns
+      if cols > 0:
+        return cols
+    except (AttributeError, OSError, ValueError):
+      continue
+  return default
+
+
+def main():
+  term_width = get_terminal_width()
 
   parser = argparse.ArgumentParser()
   parser.add_argument("tm", help="Turing Machine or file or file:record_num (0-indexed).")
