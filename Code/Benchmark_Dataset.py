@@ -1014,6 +1014,7 @@ def _parse_candidate_specs(
   tape_limit: int,
   mandatory: bool = False,
   truth_by_tm: dict[str, dict[str, Any]] | None = None,
+  source_override: str | None = None,
 ) -> list[CandidateTM]:
   by_name = {rec["name"]: rec for rec in truth_by_tm.values()} if truth_by_tm else {}
   candidates: list[CandidateTM] = []
@@ -1025,7 +1026,7 @@ def _parse_candidate_specs(
         CandidateTM(
           tm=rec["tm"],
           name=name_override or rec["name"],
-          source=rec.get("source", "custom"),
+          source=source_override or rec.get("source", "custom"),
           category=_resolve_existing_category(category, rec),
           mandatory=mandatory or bool(rec.get("mandatory", False)),
           block_size=block_size if block_size is not None else rec.get("block_size"),
@@ -1060,7 +1061,7 @@ def _parse_candidate_specs(
               CandidateTM(
                 tm=tok,
                 name=name_override or (existing["name"] if existing else f"{p.name}:{idx}"),
-                source=existing.get("source", "custom") if existing else "custom",
+                source=source_override or (existing.get("source", "custom") if existing else "custom"),
                 category=resolved_cat,
                 mandatory=mandatory or (bool(existing.get("mandatory", False)) if existing else False),
                 block_size=resolved_bs,
@@ -1081,7 +1082,7 @@ def _parse_candidate_specs(
                 CandidateTM(
                   tm=tok,
                   name=name_override or (existing["name"] if existing else f"{p.name}:{tag}"),
-                  source=existing.get("source", "custom") if existing else "custom",
+                  source=source_override or (existing.get("source", "custom") if existing else "custom"),
                   category=_resolve_existing_category(category, existing),
                   mandatory=mandatory or (bool(existing.get("mandatory", False)) if existing else False),
                   block_size=block_size
@@ -1099,7 +1100,7 @@ def _parse_candidate_specs(
         CandidateTM(
           tm=spec,
           name=name_override or (existing["name"] if existing else spec),
-          source=existing.get("source", "custom") if existing else "custom",
+          source=source_override or (existing.get("source", "custom") if existing else "custom"),
           category=_resolve_existing_category(category, existing),
           mandatory=mandatory or (bool(existing.get("mandatory", False)) if existing else False),
           block_size=block_size if block_size is not None else (existing.get("block_size") if existing else None),
@@ -1123,6 +1124,7 @@ def add_truth_command(
   tape_limit: int = 200,
   time_limit_sec: float = 30.0,
   mandatory: bool = False,
+  source_override: str | None = None,
 ) -> list[dict[str, Any]]:
   """Step 1: Discover/verify ground truth for candidate TM(s) and save to benchmarks/truth.jsonl."""
   truth_by_tm = load_truth(TRUTH_FILE)
@@ -1135,6 +1137,7 @@ def add_truth_command(
     tape_limit,
     mandatory,
     truth_by_tm=truth_by_tm,
+    source_override=source_override,
   )
   added_or_updated: list[dict[str, Any]] = []
 
@@ -1148,7 +1151,7 @@ def add_truth_command(
     added_or_updated.append(rec)
     print(
       f"- {action} truth for {rec['name']} ({rec['tm']}): "
-      f"category={rec['category']}, block_size={rec['block_size']}, "
+      f"source={rec['source']}, category={rec['category']}, block_size={rec['block_size']}, "
       f"sim_decidable={rec['sim_decidable']}, decision_loops={rec['decision_loops']}, "
       f"max_rule_level=L{rec['max_rule_level']}"
     )
@@ -1305,6 +1308,11 @@ def main(argv: list[str] | None = None) -> int:
   p_truth.add_argument("-n", "--block-size", type=int, default=None, help="Explicit fixed block_size (e.g. -n 4)")
   p_truth.add_argument("--category", choices=["halt", "inf", "holdout", "unknown"], default="unknown")
   p_truth.add_argument("--name", default=None, help="Optional human-readable name")
+  p_truth.add_argument(
+    "--source",
+    default=None,
+    help="Optional source tag for truth.jsonl (default: existing source or 'custom')",
+  )
   p_truth.add_argument("--max-loops", type=int, default=1_000_000, help="Discovery max_loops [default: 1000000]")
   p_truth.add_argument("--tape-limit", type=int, default=200, help="Discovery tape_limit [default: 200]")
   p_truth.add_argument("--time-limit", type=float, default=30.0, help="Discovery timeout in seconds [default: 30.0]")
@@ -1351,6 +1359,7 @@ def main(argv: list[str] | None = None) -> int:
       tape_limit=args.tape_limit,
       time_limit_sec=args.time_limit,
       mandatory=args.mandatory,
+      source_override=args.source,
     )
     return 0 if added_or_updated else 1
   elif args.subcommand == "eval-candidate":
