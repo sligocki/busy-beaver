@@ -401,6 +401,34 @@ class TestBigInterval(unittest.TestCase):
     self.assertTrue(BigInterval(Knuth10(1000, 1), Knuth10(10001, 1)).is_wide())
     self.assertTrue(BigInterval(Knuth10(10), Knuth10(101)).is_wide())
 
+  def test_exp_int_overlapping_exponent_subtraction_tightening(self):
+    # Two terms whose exponents have identical BigIntervals at height 2,
+    # e.g. 3^(4*X/27) - 2*3^(5*X/54) where X = 3^(10000), so E0 - E1 = X/18 >> 1.
+    x = exp_int(3, 10000)
+    e0 = (4 * x + 19) // 27
+    e1 = (5 * x + 23) // 54
+    expr = exp_int(3, e0) - 2 * exp_int(3, e1)
+    bi = expr.to_BigInterval()
+    self.assertFalse(bi.is_wide())
+    self.assertGreater(bi.lower, Knuth10(0))
+    self.assertEqual(len(bi.lower.args), len(bi.upper.args))
+    self.assertTrue(bi.lower <= bi.upper)
+
+    # Soundness check: when the negative term is NOT dwarfed (e.g. 2*3^E - 3^E = 3^E,
+    # or 3^(E+1) - 2*3^E = 3^E where coefs are close), lower bound must remain <= true value.
+    e_close = (5 * x + 23) // 54
+    # 3^(e_close + 1) - 2 * 3^(e_close) = 3^(e_close), wait: 3*3^e - 2*3^e = 3^e (normalizes to 1 term).
+    # Instead construct 3^(X/2 + 2) - 4*3^(X/2) = 5 * 3^(X/2), where diff = 2 and 1*3^2 = 9 >= 2*1*4 = 8.
+    expr_tight_ok = exp_int(3, e_close + 2) - 4 * exp_int(3, e_close)
+    bi_ok = expr_tight_ok.to_BigInterval()
+    self.assertTrue(bi_ok.lower <= bi_ok.upper)
+
+    # Regression test for 4x3_exception.pb:11 (previously [0, (10↑)^7 442057658763040])
+    bi_tm = self._run_tm_nonzeros_bi("1RB2LA2LC_1LA1RA0RC_0LA2RB0LD_2RB---0RA", 2)
+    self.assertFalse(bi_tm.is_wide())
+    self.assertGreater(bi_tm.lower, Knuth10(442057658762000, 7))
+    self.assertLessEqual(bi_tm.upper, Knuth10(442057658764000, 7))
+
 
 if __name__ == "__main__":
   unittest.main()

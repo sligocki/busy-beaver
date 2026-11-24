@@ -11,7 +11,7 @@ from fractions import Fraction
 from functools import cached_property, cmp_to_key
 
 from Algebraic_Expression import Expression, div, min_val, substitute, variables
-from Big_Interval import BigInterval
+from Big_Interval import BigInterval, Knuth10
 from Math import exp_mod, gcd, int_pow, lcm, prec_add, prec_mult
 from NatExpr import ConstInt, NatExpr, cmp_expr, expr_str, is_const, to_BigInterval
 
@@ -597,20 +597,82 @@ class ExpInt(NatExpr):
   def _bi_combine(self, resolve, env):
     pos_bi = BigInterval(0)
     neg_bi = BigInterval(0)
+    pos_items = []
+    neg_items = []
     for term in self.terms:
       pow_bi = resolve(term.base) ** resolve(term.exponent)
       if isinstance(term.coef, int) and term.coef < 0:
-        neg_bi = neg_bi + pow_bi * BigInterval(-term.coef)
+        t_bi = pow_bi * BigInterval(-term.coef)
+        neg_bi = neg_bi + t_bi
+        neg_items.append((term, t_bi))
       else:
-        pos_bi = pos_bi + pow_bi * resolve(term.coef)
+        t_bi = pow_bi * resolve(term.coef)
+        pos_bi = pos_bi + t_bi
+        pos_items.append((term, t_bi))
     if isinstance(self.const, int) and self.const < 0:
-      neg_bi = neg_bi + BigInterval(-self.const)
+      c_bi = BigInterval(-self.const)
+      neg_bi = neg_bi + c_bi
+      neg_items.append((None, c_bi))
     else:
       pos_bi = pos_bi + resolve(self.const)
     res = pos_bi - neg_bi
+    if neg_items and pos_items and res.lower < pos_bi.lower.div10() and self.is_const and env is None:
+      tight_lower = self._tighten_sub_lower(pos_items, neg_items)
+      if tight_lower is not None and tight_lower > res.lower:
+        res = BigInterval(tight_lower, res.upper)
     if self.denom != 1:
       res = res / resolve(self.denom)
     return res
+
+  def _tighten_sub_lower(self, pos_items, neg_items):
+    """Prove a tighter lower bound for pos_bi - neg_bi when interval subtraction loses precision.
+
+    Finds the dominant positive term p* = a* * b^{e*} and verifies that every negative
+    summand t_j satisfies |t_j| <= (1 / (2 * M)) * p*, where M = len(neg_items).
+    If proven, sum(|t_j|) <= p* / 2, so pos_sum - neg_sum >= p* / 2.
+    """
+    p_star, p_star_bi = max(pos_items, key=lambda item: cmp_to_key(_cmp_abs_exp_terms)(item[0]))
+    if not (isinstance(p_star.coef, int) and p_star.coef > 0 and p_star.base >= 2):
+      return None
+
+    m = len(neg_items)
+    two_m_bi = BigInterval(2 * m)
+    for neg_term, neg_t_bi in neg_items:
+      # 1. Fast BigInterval dominance check: 2 * M * |t_j| <= p*
+      if (neg_t_bi * two_m_bi).upper <= p_star_bi.lower:
+        continue
+      # 2. Same-base symbolic exponent difference check: b^{e* - f_j} >= ceil(2 * M * d_j / a*)
+      if (
+        neg_term is None
+        or neg_term.base != p_star.base
+        or not isinstance(p_star.exponent, (int, ConstInt, ExpInt))
+        or not isinstance(neg_term.exponent, (int, ConstInt, ExpInt))
+      ):
+        return None
+      d_j = -neg_term.coef
+      need = (2 * m * d_j + p_star.coef - 1) // p_star.coef
+      need_bits = need.bit_length()  # 2^need_bits > need, so b^d >= 2^d >= need for all d >= need_bits
+      try:
+        diff = p_star.exponent - neg_term.exponent
+      except (ExpIntException, TypeError):
+        return None
+      diff_int = try_eval(diff)
+      if diff_int is not None:
+        if diff_int < 0:
+          return None
+        if diff_int < need_bits and p_star.coef * (p_star.base**diff_int) < 2 * m * d_j:
+          return None
+      else:
+        if sign(diff) <= 0:
+          return None
+        try:
+          diff_bi = to_BigInterval(diff)
+        except Exception:
+          return None
+        if diff_bi.lower < Knuth10.upper_bound_from_int(need_bits):
+          return None
+
+    return (p_star_bi / BigInterval(2)).lower
 
   def __init__(self, terms: list[ExpTerm], const: int, denom: int):
     assert terms

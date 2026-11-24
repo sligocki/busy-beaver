@@ -1344,7 +1344,7 @@ def compare_runs(
     zero_lo = (halt_wide and halt_bi.lower == Knuth10(0)) or (span_wide and span_bi.lower == Knuth10(0))
     return halt_wide, span_wide, zero_lo
 
-  for run_name, _, run_map in all_runs:
+  for run_idx, (run_name, _, run_map) in enumerate(all_runs):
     n_wide_tms = 0
     n_wide_halt = 0
     n_wide_span = 0
@@ -1364,7 +1364,7 @@ def compare_runs(
       if c_zero_lo:
         n_zero_lower += 1
 
-      if run_name == base_name:
+      if run_idx == 0:
         continue
       br = base_by_tm.get(tm_str)
       if not br:
