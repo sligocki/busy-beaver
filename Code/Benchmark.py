@@ -972,6 +972,7 @@ def run_one(entry):
     "num_chain_moves": sim.num_chain_moves,
     "num_rule_moves": sim.num_rule_moves,
     "num_rules_proven": sim.prover.num_rules if getattr(sim, "prover", None) else 0,
+    "num_failed_proofs": getattr(sim.prover, "num_failed_proofs", 0) if getattr(sim, "prover", None) else 0,
     "rules_by_level": rules_by_level,
     "max_rule_level": max(rules_by_level.keys(), default=0),
     "halt_score": score_encoded,
@@ -1419,12 +1420,116 @@ def compare_runs(
       lines.append(f"- ... and {len(new_wide_details) - 30} more newly wide intervals.")
     lines.append("")
 
+  # =========================================================================
+  # PILLAR 5: FAILED PROOFS
+  # =========================================================================
+  lines.append("## 5. Failed Proofs\n")
+  lines.append(
+    "| Configuration | Total Failed | Delta vs Base | TMs w/ Failures | "
+    "Max Failed (1 TM) | Rules Proven | Fail Rate | TMs Improved / Regressed |"
+  )
+  lines.append("| :--- | ---: | ---: | ---: | ---: | ---: | ---: | :---: |")
+
+  failed_proofs_summary: dict[str, Any] = {}
+  fewer_failed_details: list[tuple[int, str]] = []
+  more_failed_details: list[tuple[int, str]] = []
+
+  base_total_failed = sum(int(r.get("num_failed_proofs", 0) or 0) for r in base_by_tm.values())
+
+  for run_idx, (run_name, _, run_map) in enumerate(all_runs):
+    total_failed = 0
+    tms_with_failed = 0
+    max_failed = 0
+    total_proven = 0
+    fewer_failed_tms: list[tuple[int, str]] = []
+    more_failed_tms: list[tuple[int, str]] = []
+
+    for tm_str, r in run_map.items():
+      c_failed = int(r.get("num_failed_proofs", 0) or 0)
+      c_proven = int(r.get("num_rules_proven", 0) or 0)
+      total_failed += c_failed
+      total_proven += c_proven
+      if c_failed > 0:
+        tms_with_failed += 1
+      if c_failed > max_failed:
+        max_failed = c_failed
+
+      if run_idx == 0:
+        continue
+      br = base_by_tm.get(tm_str)
+      if not br:
+        continue
+      b_failed = int(br.get("num_failed_proofs", 0) or 0)
+      diff = c_failed - b_failed
+      if diff < 0:
+        fewer_failed_tms.append((-diff, r["name"]))
+        status_note = f", {br['status']}->{r['status']}" if br["status"] != r["status"] else ""
+        fewer_failed_details.append(
+          (
+            -diff,
+            f"- **[{run_name}]** `{r['name']}` (`{tm_str}`{status_note}): "
+            f"`{b_failed:_}` -> `{c_failed:_}` (`{diff:+_}`)",
+          )
+        )
+      elif diff > 0:
+        more_failed_tms.append((diff, r["name"]))
+        status_note = f", {br['status']}->{r['status']}" if br["status"] != r["status"] else ""
+        more_failed_details.append(
+          (
+            diff,
+            f"- **[{run_name}]** `{r['name']}` (`{tm_str}`{status_note}): "
+            f"`{b_failed:_}` -> `{c_failed:_}` (`{diff:+_}`)",
+          )
+        )
+
+    fewer_failed_tms.sort(key=lambda x: (-x[0], x[1]))
+    more_failed_tms.sort(key=lambda x: (-x[0], x[1]))
+
+    delta_failed = 0 if run_idx == 0 else (total_failed - base_total_failed)
+    total_attempts = total_failed + total_proven
+    fail_rate_str = f"{100.0 * total_failed / total_attempts:.1f}%" if total_attempts > 0 else "N/A"
+
+    failed_proofs_summary[run_name] = {
+      "total_failed_proofs": total_failed,
+      "delta_failed_proofs": delta_failed,
+      "tms_with_failed_proofs": tms_with_failed,
+      "max_failed_proofs": max_failed,
+      "total_rules_proven": total_proven,
+      "fewer_failed": [name for _, name in fewer_failed_tms],
+      "more_failed": [name for _, name in more_failed_tms],
+    }
+
+    lines.append(
+      f"| `{run_name}` | {total_failed:_} | {delta_failed:+_} | {tms_with_failed:_} | "
+      f"{max_failed:_} | {total_proven:_} | {fail_rate_str} | "
+      f"-{len(fewer_failed_tms):_} / +{len(more_failed_tms):_} |"
+    )
+  lines.append("")
+
+  if fewer_failed_details:
+    fewer_failed_details.sort(key=lambda x: -x[0])
+    lines.append("### Largest Failed-Proof Reductions (Improvements vs Baseline)\n")
+    for _, detail in fewer_failed_details[:30]:
+      lines.append(detail)
+    if len(fewer_failed_details) > 30:
+      lines.append(f"- ... and {len(fewer_failed_details) - 30} more TMs with fewer failed proofs.")
+    lines.append("")
+  if more_failed_details:
+    more_failed_details.sort(key=lambda x: -x[0])
+    lines.append("### Largest Failed-Proof Increases (Regressions vs Baseline)\n")
+    for _, detail in more_failed_details[:30]:
+      lines.append(detail)
+    if len(more_failed_details) > 30:
+      lines.append(f"- ... and {len(more_failed_details) - 30} more TMs with more failed proofs.")
+    lines.append("")
+
   report_md = "\n".join(lines)
   summary = {
     "correctness_passed": len(correctness_errors) == 0,
     "correctness_errors": correctness_errors,
     "coverage": coverage_summary,
     "wide_intervals": wide_summary,
+    "failed_proofs": failed_proofs_summary,
   }
   return summary, report_md
 

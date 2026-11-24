@@ -468,6 +468,67 @@ class BenchmarkTest(unittest.TestCase):
     self.assertEqual(summary["wide_intervals"]["cand"]["fixed_wide"], ["Fixed-TM"])
     self.assertEqual(summary["wide_intervals"]["cand"]["new_wide"], ["Regressed-TM"])
 
+  def test_compare_reports_failed_proofs_improvements_and_regressions(self):
+    base_meta = {"config_name": "base", "git_sha": "abc1234"}
+    cand_meta = {"config_name": "cand", "git_sha": "def5678"}
+
+    def _rec(tm, name, num_failed, num_proven):
+      return {
+        "tm": tm,
+        "name": name,
+        "category": "holdout",
+        "status": "unknown",
+        "reason": "over_loops",
+        "sim_time_us": 100,
+        "eval_time_us": 10,
+        "total_loops": 50,
+        "max_rule_level": 2,
+        "num_rules_proven": num_proven,
+        "num_failed_proofs": num_failed,
+        "halt_score": encode_knuth10_interval(None),
+        "max_span": encode_knuth10_interval(100),
+        "milestone_reached": False,
+        "milestone_loops": None,
+        "milestone_time_us": None,
+        "threw_exception": False,
+        "exception_str": "",
+      }
+
+    # TM1: fewer failed proofs (50 -> 10, delta -40)
+    # TM2: more failed proofs (5 -> 25, delta +20)
+    # TM3: unchanged (0 -> 0)
+    base_results = [
+      _rec("TM1", "Improved-TM", 50, 10),
+      _rec("TM2", "Regressed-TM", 5, 10),
+      _rec("TM3", "Same-TM", 0, 5),
+    ]
+    cand_results = [
+      _rec("TM1", "Improved-TM", 10, 15),
+      _rec("TM2", "Regressed-TM", 25, 10),
+      _rec("TM3", "Same-TM", 0, 5),
+    ]
+    summary, report = compare_runs(base_meta, base_results, [(cand_meta, cand_results)])
+    self.assertIn("## 5. Failed Proofs", report)
+    self.assertIn("### Largest Failed-Proof Reductions (Improvements vs Baseline)", report)
+    self.assertIn("### Largest Failed-Proof Increases (Regressions vs Baseline)", report)
+    self.assertIn("`50` -> `10` (`-40`)", report)
+    self.assertIn("`5` -> `25` (`+20`)", report)
+
+    fp_base = summary["failed_proofs"]["base"]
+    fp_cand = summary["failed_proofs"]["cand"]
+    self.assertEqual(fp_base["total_failed_proofs"], 55)
+    self.assertEqual(fp_base["delta_failed_proofs"], 0)
+    self.assertEqual(fp_base["tms_with_failed_proofs"], 2)
+    self.assertEqual(fp_base["max_failed_proofs"], 50)
+    self.assertEqual(fp_base["total_rules_proven"], 25)
+    self.assertEqual(fp_cand["total_failed_proofs"], 35)
+    self.assertEqual(fp_cand["delta_failed_proofs"], -20)
+    self.assertEqual(fp_cand["tms_with_failed_proofs"], 2)
+    self.assertEqual(fp_cand["max_failed_proofs"], 25)
+    self.assertEqual(fp_cand["total_rules_proven"], 30)
+    self.assertEqual(fp_cand["fewer_failed"], ["Improved-TM"])
+    self.assertEqual(fp_cand["more_failed"], ["Regressed-TM"])
+
 
 if __name__ == "__main__":
   unittest.main()
