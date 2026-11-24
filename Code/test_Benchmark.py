@@ -415,6 +415,59 @@ class BenchmarkTest(unittest.TestCase):
       self.assertEqual(cands_override[0].block_size, 4)
       self.assertEqual(cands_override[0].category, "inf")
 
+  def test_compare_reports_wide_intervals_improvements_and_regressions(self):
+    from Big_Interval import BigInterval, Knuth10
+
+    base_meta = {"config_name": "base", "git_sha": "abc1234"}
+    cand_meta = {"config_name": "cand", "git_sha": "def5678"}
+
+    tight_enc = encode_knuth10_interval(BigInterval(Knuth10(3010, 1), Knuth10(3012, 1)))
+    wide_zero_enc = encode_knuth10_interval(BigInterval(Knuth10(0), Knuth10(442057658763040, 7)))
+    wide_arrow_enc = encode_knuth10_interval(
+      BigInterval(Knuth10(2161856886993690, 0, 1, 7), Knuth10(2161856886993945, 0, 1, 0, 1))
+    )
+
+    def _rec(tm, name, halt_score, max_span):
+      return {
+        "tm": tm,
+        "name": name,
+        "category": "halt",
+        "status": "halt",
+        "reason": "HALT",
+        "sim_time_us": 100,
+        "eval_time_us": 10,
+        "total_loops": 50,
+        "max_rule_level": 2,
+        "halt_score": halt_score,
+        "max_span": max_span,
+        "milestone_reached": False,
+        "milestone_loops": None,
+        "milestone_time_us": None,
+        "threw_exception": False,
+        "exception_str": "",
+      }
+
+    # TM1: fixed wide interval (wide in base -> tight in cand)
+    # TM2: regressed wide interval (tight in base -> wide in cand)
+    base_results = [
+      _rec("TM1", "Fixed-TM", wide_zero_enc, wide_zero_enc),
+      _rec("TM2", "Regressed-TM", tight_enc, tight_enc),
+    ]
+    cand_results = [
+      _rec("TM1", "Fixed-TM", tight_enc, tight_enc),
+      _rec("TM2", "Regressed-TM", wide_arrow_enc, wide_arrow_enc),
+    ]
+    summary, report = compare_runs(base_meta, base_results, [(cand_meta, cand_results)])
+    self.assertIn("## 4. BigInterval Quality (Wide Interval Warnings)", report)
+    self.assertIn("### Fixed Wide Intervals (Improvements vs Baseline)", report)
+    self.assertIn("### Newly Wide Intervals (Regressions vs Baseline)", report)
+    self.assertEqual(summary["wide_intervals"]["base"]["wide_tms"], 1)
+    self.assertEqual(summary["wide_intervals"]["base"]["zero_lower"], 1)
+    self.assertEqual(summary["wide_intervals"]["cand"]["wide_tms"], 1)
+    self.assertEqual(summary["wide_intervals"]["cand"]["zero_lower"], 0)
+    self.assertEqual(summary["wide_intervals"]["cand"]["fixed_wide"], ["Fixed-TM"])
+    self.assertEqual(summary["wide_intervals"]["cand"]["new_wide"], ["Regressed-TM"])
+
 
 if __name__ == "__main__":
   unittest.main()

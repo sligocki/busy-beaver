@@ -376,6 +376,31 @@ class TestBigInterval(unittest.TestCase):
     tl = _tower_lower(e, x, 2, BigInterval(100))
     self.assertEqual(tl[0], 0)
 
+  def test_is_wide(self):
+    # Exact and tight intervals are not wide
+    self.assertFalse(BigInterval(42).is_wide())
+    self.assertFalse(BigInterval(Knuth10(33), Knuth10(34)).is_wide())
+    self.assertFalse(BigInterval(Knuth10(0), Knuth10(1)).is_wide())
+    self.assertFalse(BigInterval(Knuth10(3010, 1), Knuth10(3012, 1)).is_wide())
+    self.assertFalse(BigInterval(Knuth10(2161856886993798, 0, 0, 1), Knuth10(3242785330490752, 0, 0, 1)).is_wide())
+
+    # Grid rollovers are not wide
+    self.assertFalse(BigInterval(Knuth10(Knuth10.MAX_A0 - 1), Knuth10(Knuth10.C, 1)).is_wide())
+    self.assertFalse(BigInterval(Knuth10(5 * 10 ** (Knuth10.C - 1), 1), Knuth10(Knuth10.C, 2)).is_wide())
+    self.assertFalse(BigInterval(Knuth10(10 ** (Knuth10.C - 1), Knuth10.MAX_A), Knuth10(Knuth10.C, 0, 1)).is_wide())
+
+    # Zero lower bound with large upper bound is wide
+    self.assertTrue(BigInterval(Knuth10(0), Knuth10(100)).is_wide())
+    self.assertTrue(BigInterval(Knuth10(0), Knuth10(442057658763040, 7)).is_wide())
+
+    # Different arrow levels / tower heights are wide
+    self.assertTrue(BigInterval(Knuth10(1000, 1), Knuth10(1000, 2)).is_wide())
+    self.assertTrue(BigInterval(Knuth10(2161856886993690, 0, 1, 7), Knuth10(2161856886993945, 0, 1, 0, 1)).is_wide())
+
+    # Large gap in a0 (> 10x) is wide
+    self.assertTrue(BigInterval(Knuth10(1000, 1), Knuth10(10001, 1)).is_wide())
+    self.assertTrue(BigInterval(Knuth10(10), Knuth10(101)).is_wide())
+
 
 if __name__ == "__main__":
   unittest.main()

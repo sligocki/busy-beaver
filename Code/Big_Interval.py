@@ -301,6 +301,26 @@ class BigInterval:
   def approx_str(self):
     return f"[{self.lower.approx_str(is_lower=True)}, {self.upper.approx_str(is_lower=False)}]"
 
+  def is_wide(self, a0_factor: int = 10) -> bool:
+    """Return True if this interval is too wide to pin down the magnitude.
+
+    An interval [lower, upper] is considered wide if `upper` exceeds `lower`
+    with its innermost parameter `a0` scaled by `a0_factor` (handling Knuth10
+    grid rollovers cleanly, and treating `lower == 0` with `upper > a0_factor`
+    as wide).
+    """
+    if self.lower == self.upper:
+      return False
+    a0 = self.lower.args[0]
+    if a0 == 0 and len(self.lower.args) == 1:
+      return self.upper > Knuth10(a0_factor)
+    scaled_a0 = max(a0 + 1, a0 * a0_factor)
+    if scaled_a0 < Knuth10.MAX_A0:
+      limit = Knuth10(scaled_a0, *self.lower.args[1:])
+    else:
+      limit = Knuth10(Knuth10.MAX_A0 - 1, *self.lower.args[1:]).safe_upper_bound()
+    return self.upper > limit
+
   def __add__(self, other):
     if not isinstance(other, BigInterval):
       other = BigInterval(other)

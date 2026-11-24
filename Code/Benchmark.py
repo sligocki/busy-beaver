@@ -355,6 +355,22 @@ def compare_encoded_values(enc_a: dict[str, Any], enc_b: dict[str, Any]) -> int 
   return None
 
 
+def decode_encoded_big_interval(enc: dict[str, Any] | None) -> BigInterval | None:
+  """Reconstruct a BigInterval from an encoded benchmark value dict, or None if unavailable."""
+  if not enc:
+    return None
+  bi_args = enc.get("bi")
+  if not bi_args or len(bi_args) != 2:
+    return None
+  return BigInterval(Knuth10(*bi_args[0]), Knuth10(*bi_args[1]))
+
+
+def is_wide_encoded(enc: dict[str, Any] | None) -> bool:
+  """Return True if an encoded benchmark value has a BigInterval that is too wide."""
+  bi = decode_encoded_big_interval(enc)
+  return bi is not None and bi.is_wide()
+
+
 def scores_consistent(enc_a: dict[str, Any], enc_b: dict[str, Any]) -> bool:
   """Check whether two halting scores are consistent (identical exact value or overlapping BigIntervals)."""
   if enc_a.get("exact") is not None and enc_b.get("exact") is not None:
@@ -1304,11 +1320,111 @@ def compare_runs(
     )
   lines.append("")
 
+  # =========================================================================
+  # PILLAR 4: BIGINTERVAL QUALITY (WIDE INTERVAL WARNINGS)
+  # =========================================================================
+  lines.append("## 4. BigInterval Quality (Wide Interval Warnings)\n")
+  lines.append(
+    "| Configuration | Wide TMs | Wide Halt Score | Wide Max Span | "
+    "Zero Lower Bound | -Fixed vs Base | +New Wide vs Base |"
+  )
+  lines.append("| :--- | ---: | ---: | ---: | ---: | ---: | ---: |")
+
+  wide_summary: dict[str, Any] = {}
+  new_wide_details: list[str] = []
+  fixed_wide_details: list[str] = []
+
+  def _wide_info(rec: dict[str, Any] | None) -> tuple[bool, bool, bool]:
+    if not rec:
+      return False, False, False
+    halt_bi = decode_encoded_big_interval(rec.get("halt_score"))
+    span_bi = decode_encoded_big_interval(rec.get("max_span"))
+    halt_wide = halt_bi is not None and halt_bi.is_wide()
+    span_wide = span_bi is not None and span_bi.is_wide()
+    zero_lo = (halt_wide and halt_bi.lower == Knuth10(0)) or (span_wide and span_bi.lower == Knuth10(0))
+    return halt_wide, span_wide, zero_lo
+
+  for run_name, _, run_map in all_runs:
+    n_wide_tms = 0
+    n_wide_halt = 0
+    n_wide_span = 0
+    n_zero_lower = 0
+    fixed_wide: list[str] = []
+    new_wide: list[str] = []
+
+    for tm_str, r in run_map.items():
+      c_halt_w, c_span_w, c_zero_lo = _wide_info(r)
+      c_wide = c_halt_w or c_span_w
+      if c_wide:
+        n_wide_tms += 1
+      if c_halt_w:
+        n_wide_halt += 1
+      if c_span_w:
+        n_wide_span += 1
+      if c_zero_lo:
+        n_zero_lower += 1
+
+      if run_name == base_name:
+        continue
+      br = base_by_tm.get(tm_str)
+      if not br:
+        continue
+      b_halt_w, b_span_w, _ = _wide_info(br)
+      b_wide = b_halt_w or b_span_w
+      if c_wide and not b_wide:
+        new_wide.append(r["name"])
+        field = "halt_score" if c_halt_w else "max_span"
+        b_str = (br.get(field) or {}).get("str", "N/A")
+        c_str = (r.get(field) or {}).get("str", "N/A")
+        status_note = f", {br['status']}->{r['status']}" if br["status"] != r["status"] else ""
+        new_wide_details.append(
+          f"- **[{run_name}]** `{r['name']}` (`{tm_str}`, {field}{status_note}): `{b_str}` -> `{c_str}`"
+        )
+      elif b_wide and not c_wide:
+        fixed_wide.append(r["name"])
+        field = "halt_score" if (b_halt_w and r["status"] == "halt") else ("max_span" if b_span_w else "halt_score")
+        b_str = (br.get(field) or {}).get("str", "N/A")
+        c_str = (r.get(field) or {}).get("str", "N/A")
+        status_note = f", {br['status']}->{r['status']}" if br["status"] != r["status"] else ""
+        fixed_wide_details.append(
+          f"- **[{run_name}]** `{r['name']}` (`{tm_str}`, {field}{status_note}): `{b_str}` -> `{c_str}`"
+        )
+
+    wide_summary[run_name] = {
+      "wide_tms": n_wide_tms,
+      "wide_halt_score": n_wide_halt,
+      "wide_max_span": n_wide_span,
+      "zero_lower": n_zero_lower,
+      "fixed_wide": fixed_wide,
+      "new_wide": new_wide,
+    }
+
+    lines.append(
+      f"| `{run_name}` | {n_wide_tms:_} | {n_wide_halt:_} | {n_wide_span:_} | "
+      f"{n_zero_lower:_} | -{len(fixed_wide):_} | +{len(new_wide):_} |"
+    )
+  lines.append("")
+  if fixed_wide_details:
+    lines.append("### Fixed Wide Intervals (Improvements vs Baseline)\n")
+    for detail in fixed_wide_details[:30]:
+      lines.append(detail)
+    if len(fixed_wide_details) > 30:
+      lines.append(f"- ... and {len(fixed_wide_details) - 30} more fixed wide intervals.")
+    lines.append("")
+  if new_wide_details:
+    lines.append("### Newly Wide Intervals (Regressions vs Baseline)\n")
+    for detail in new_wide_details[:30]:
+      lines.append(detail)
+    if len(new_wide_details) > 30:
+      lines.append(f"- ... and {len(new_wide_details) - 30} more newly wide intervals.")
+    lines.append("")
+
   report_md = "\n".join(lines)
   summary = {
     "correctness_passed": len(correctness_errors) == 0,
     "correctness_errors": correctness_errors,
     "coverage": coverage_summary,
+    "wide_intervals": wide_summary,
   }
   return summary, report_md
 
