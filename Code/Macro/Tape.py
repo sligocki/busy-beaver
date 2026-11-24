@@ -8,7 +8,9 @@ Combined with an automated prover, this can prove Xmas Trees.
 import sys
 
 sys.path.append("..")
-from NatExpr import NatExpr, InfNat, approx_or_full_str
+from Big_Interval import BigInterval
+from Exp_Int import ExpIntGaveUp
+from NatExpr import NatExpr, InfNat, approx_or_full_str, to_BigInterval
 from Macro.Turing_Machine import block_size
 
 
@@ -103,7 +105,11 @@ class Chain_Tape:
 
   def get_macro_size(self):
     """Get total number of finite macro cells on the tape."""
-    return sum((block.num for block in self.tape[0][1:]), 0) + sum((block.num for block in self.tape[1][1:]), 0)
+    blocks = [block.num for block in self.tape[0][1:]] + [block.num for block in self.tape[1][1:]]
+    try:
+      return sum(blocks, 0)
+    except ExpIntGaveUp:
+      return max(blocks, default=0)
 
   def __eq__(self, other):
     return isinstance(other, self.__class__) and other.dir == self.dir and other.tape == self.tape
@@ -139,21 +145,27 @@ class Chain_Tape:
 
   def get_nonzeros(self, eval_symbol, state_value):
     """Return number of nonzero symbols on the tape."""
-    n = state_value
+    terms = [state_value]
     for dir in range(2):
       for block in self.tape[dir]:
         if val := eval_symbol(block.symbol):
-          n += val * block.num
-    return n
+          terms.append(val * block.num)
+    try:
+      return sum(terms, 0)
+    except ExpIntGaveUp:
+      return sum((to_BigInterval(t) for t in terms), BigInterval(0))
 
   def get_span(self, machine, state):
     """Return the number of base symbols from the first non-zero to the last."""
     # TODO: Tweak this by not counting leading 0s or trailing 0s
-    total = sum(block_size(block.symbol) * block.num for block in self.tape[0][1:])
-    total += sum(block_size(block.symbol) * block.num for block in self.tape[1][1:])
+    terms = [block_size(block.symbol) * block.num for block in self.tape[0][1:]]
+    terms.extend(block_size(block.symbol) * block.num for block in self.tape[1][1:])
     if state and hasattr(state, "back_symbol"):
-      total += block_size(state.back_symbol)
-    return total
+      terms.append(block_size(state.back_symbol))
+    try:
+      return sum(terms, 0)
+    except ExpIntGaveUp:
+      return sum((to_BigInterval(t) for t in terms), BigInterval(0))
 
   def get_top_block(self):
     return self.tape[self.dir][-1]

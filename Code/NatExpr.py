@@ -157,6 +157,9 @@ def expr_str_len(value) -> int:
 def big_interval_str(value) -> str:
   if value is None:
     return "N/A"
+  if isinstance(value, BigInterval):
+    s = str(value)
+    return s if len(s) <= 80 else value.approx_str()
   if type(value).__name__ == "Variable":
     return str(value)
   expr = NatExpr.wrap(value)
@@ -178,6 +181,8 @@ def big_interval_str(value) -> str:
 def approx_str(value) -> str:
   if value is None:
     return "N/A"
+  if isinstance(value, BigInterval):
+    return value.approx_str()
   if type(value).__name__ == "Variable":
     return str(value)
   return NatExpr.wrap(value).approx_str()
@@ -186,6 +191,8 @@ def approx_str(value) -> str:
 def approx_and_full_str(value, max_chars: int = 100, use_big_interval: bool = True) -> str:
   if value is None:
     return "N/A"
+  if isinstance(value, BigInterval):
+    return big_interval_str(value) if use_big_interval else value.approx_str()
   if type(value).__name__ == "Variable":
     return str(value)
   approx = big_interval_str(value) if use_big_interval else approx_str(value)

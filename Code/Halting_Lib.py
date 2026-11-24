@@ -3,6 +3,7 @@
 import pickle
 
 import io_pb2
+from Big_Interval import BigInterval
 from Exp_Int import ExpInt, ExpTerm
 from Iterated_Expression import Iterated_Expression, Iterated_Math
 from NatExpr import ConstInt
@@ -15,7 +16,7 @@ def set_big_int(field: io_pb2.BigInt, value):
   if isinstance(value, ConstInt):
     value = value.val
   field.Clear()
-  if value < 0:
+  if not isinstance(value, BigInterval) and value < 0:
     raise ValueError("set_big_int only supports non-negative values")
   if isinstance(value, int):
     if value <= _BIG_INT_MAX:
@@ -25,7 +26,7 @@ def set_big_int(field: io_pb2.BigInt, value):
       # For "big" integers, store them as serialized text.
       # Store as hex to avoid https://docs.python.org/3/library/stdtypes.html#integer-string-conversion-length-limitation
       field.hex_str = hex(value)
-  elif isinstance(value, (ExpInt, Iterated_Expression, Iterated_Math)):
+  elif isinstance(value, (ExpInt, Iterated_Expression, Iterated_Math, BigInterval)):
     field.exp_int_pickle = pickle.dumps(value)
   else:
     raise TypeError(f"Unexpected type {type(value)}")

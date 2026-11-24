@@ -12,6 +12,7 @@ from optparse import OptionGroup, OptionParser
 
 import io_pb2
 from Algebraic_Expression import Algebraic_Expression
+import Exp_Int
 from Exp_Int import ExpIntGaveUp
 import Iterated_Expression
 from Iterated_Expression import IteratedExprGaveUp
@@ -85,6 +86,7 @@ class Simulator:
     self.is_base_simulator = is_base_simulator
     if is_base_simulator:
       Iterated_Expression.ALLOW_MOD_ITERATED = bool(getattr(options, "exp_mod_iterated", False))
+      Exp_Int.ALLOW_ADD_MUL = bool(getattr(options, "expint_add_mul", True))
     self.compute_steps = options.compute_steps
     self.use_big_interval = getattr(options, "use_big_interval", True)
 
@@ -209,7 +211,10 @@ class Simulator:
       self._cur_tape_size = new_size
     elif delta is not None:
       if delta:
-        self._cur_tape_size += delta
+        try:
+          self._cur_tape_size += delta
+        except ExpIntGaveUp:
+          self._cur_tape_size = self.tape.get_macro_size()
       grew = delta > 0
     else:
       return

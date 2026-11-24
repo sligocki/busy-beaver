@@ -451,6 +451,68 @@ class ExpIntTest(unittest.TestCase):
     self.assertTrue(9.5 < c)
     self.assertTrue(10.5 > c)
 
+  def test_disable_expint_add_mul(self):
+    from optparse import OptionParser
+    from Big_Interval import BigInterval
+    from Macro import Simulator, Tape, Turing_Machine
+    import IO
+
+    prev = Exp_Int.ALLOW_ADD_MUL
+    self.addCleanup(setattr, Exp_Int, "ALLOW_ADD_MUL", prev)
+
+    # CLI option defaults to enabled and can be turned off via --no-expint-add-mul.
+    parser = OptionParser()
+    Simulator.add_option_group(parser)
+    opts_default, _ = parser.parse_args([])
+    self.assertTrue(opts_default.expint_add_mul)
+    opts_off, _ = parser.parse_args(["--no-expint-add-mul"])
+    self.assertFalse(opts_off.expint_add_mul)
+
+    # Simulator wires the option to Exp_Int.ALLOW_ADD_MUL.
+    tm = IO.parse_tm("1RB1RZ_1LA1LB")
+    Simulator.Simulator(tm, opts_off)
+    self.assertFalse(Exp_Int.ALLOW_ADD_MUL)
+
+    big_a = exp_int(2, 2000)
+    big_b = exp_int(2, 2001)
+    small = exp_int(2, 5)
+    sym_a = exp_int(2, VariableToExpression(Variable(1)))
+    sym_b = exp_int(2, VariableToExpression(Variable(2)))
+
+    # Adding, subtracting, or multiplying two large/symbolic ExpInts raises ExpIntGaveUp.
+    with self.assertRaises(Exp_Int.ExpIntGaveUp):
+      _ = big_a + big_b
+    with self.assertRaises(Exp_Int.ExpIntGaveUp):
+      _ = big_a - big_b
+    with self.assertRaises(Exp_Int.ExpIntGaveUp):
+      _ = big_a * big_b
+    with self.assertRaises(Exp_Int.ExpIntGaveUp):
+      _ = sym_a + sym_b
+    with self.assertRaises(Exp_Int.ExpIntGaveUp):
+      _ = sym_a * sym_b
+
+    # Scalar operations and small-ExpInt operations still work.
+    self.assertEqual((big_a + 5).const, 5)
+    self.assertEqual((big_a - 3).const, -3)
+    self.assertEqual((big_a * 3).terms[0].coef, 3)
+    self.assertEqual((big_a + small).const, 32)
+    self.assertEqual((big_a * small).terms[0].exponent, 2005)
+    self.assertEqual(big_a % 7, pow(2, 2000, 7))
+
+    # Tape metrics (get_macro_size, get_nonzeros, get_span) still work with multiple ExpInt blocks.
+    tape = Tape.Chain_Tape()
+    tape.init(0, Turing_Machine.RIGHT, opts_off)
+    tape.tape[0].append(Tape.Repeated_Symbol(1, big_a))
+    tape.tape[1].append(Tape.Repeated_Symbol(1, big_b))
+    self.assertEqual(tape.get_macro_size(), big_b)
+    self.assertIsInstance(tape.get_nonzeros(lambda s: s, 0), BigInterval)
+    self.assertIsInstance(tape.get_span(tm, None), BigInterval)
+
+    # Re-enabling via Simulator restores ALLOW_ADD_MUL.
+    Simulator.Simulator(tm, opts_default)
+    self.assertTrue(Exp_Int.ALLOW_ADD_MUL)
+    self.assertEqual(len((big_a + big_b).terms), 1)
+
 
 if __name__ == "__main__":
   unittest.main()

@@ -68,6 +68,7 @@ class BenchConfig:
   only_record_configs: bool = False
   exp_zero_exponents: bool = False
   exp_mod_iterated: bool = False
+  expint_add_mul: bool = True
   debug_reprove: bool = False
   use_big_interval: bool = True
   compute_steps: bool = False
@@ -102,6 +103,7 @@ class BenchConfig:
     options.only_record_configs = self.only_record_configs if self.prover else False
     options.exp_zero_exponents = self.exp_zero_exponents if self.prover else False
     options.exp_mod_iterated = self.exp_mod_iterated if self.prover else False
+    options.expint_add_mul = self.expint_add_mul
     options.debug_reprove = self.debug_reprove if self.prover else False
     options.use_big_interval = self.use_big_interval
     options.compute_steps = self.compute_steps and not self.exp_linear_rules
@@ -208,6 +210,16 @@ CONFIG_PRESETS: dict[str, BenchConfig] = {
     backsymbol=True,
     limited_rules=True,
     exp_zero_exponents=True,
+  ),
+  "no_expint_add_mul": BenchConfig(
+    name="no_expint_add_mul",
+    prover_level=ProverLevel.ITERATED,
+    backsymbol=True,
+    limited_rules=True,
+    exp_const_blocks=True,
+    only_record_configs=False,
+    use_big_interval=True,
+    expint_add_mul=False,
   ),
   # Leave-one-out Ablations from all_on
   "ablate_backsymbol": BenchConfig(
@@ -821,6 +833,7 @@ def run_one(entry):
   options.only_record_configs = bool(config.get("only_record_configs", False)) if use_prover else False
   options.exp_zero_exponents = bool(config.get("exp_zero_exponents", False)) if use_prover else False
   options.exp_mod_iterated = bool(config.get("exp_mod_iterated", False)) if use_prover else False
+  options.expint_add_mul = bool(config.get("expint_add_mul", True))
   options.debug_reprove = bool(config.get("debug_reprove", False)) if use_prover else False
   options.use_big_interval = bool(config.get("use_big_interval", True))
   options.compute_steps = False

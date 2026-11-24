@@ -190,6 +190,13 @@ def add_option_group(parser, default_prover_level: ProverLevel = DEFAULT_PROVER_
     help="Allow modular arithmetic on Iterated_Expression [Experimental]",
   )
   group.add_option(
+    "--no-expint-add-mul",
+    dest="expint_add_mul",
+    action="store_false",
+    default=True,
+    help="Disable adding, subtracting, or multiplying two ExpInts [Experimental]",
+  )
+  group.add_option(
     "--debug-reprove",
     action="store_true",
     default=False,
@@ -898,6 +905,8 @@ class Proof_System:
     self.exp_zero_exponents = getattr(options, "exp_zero_exponents", False)
     self.exp_mod_iterated = getattr(options, "exp_mod_iterated", False)
     Iterated_Expression.ALLOW_MOD_ITERATED = bool(self.exp_mod_iterated)
+    self.expint_add_mul = getattr(options, "expint_add_mul", True)
+    Exp_Int.ALLOW_ADD_MUL = bool(self.expint_add_mul)
     self.debug_reprove = getattr(options, "debug_reprove", False)
     self.compute_steps = options.compute_steps
     self.verbose = options.verbose_prover  # Step-by-step state printing

@@ -396,10 +396,11 @@ class BenchmarkTest(unittest.TestCase):
       self.assertEqual(len(cands), 1)
       self.assertEqual(cands[0].tm, tm_str)
       self.assertEqual(cands[0].name, "sample.pb:0")
+      self.assertEqual(cands[0].source, "custom")
       self.assertEqual(cands[0].block_size, 3)
       self.assertEqual(cands[0].category, "halt")
 
-      # Explicit CLI block_size and category override protobuf metadata.
+      # Explicit CLI block_size, category, name, and source override protobuf metadata.
       cands_override = Benchmark_Dataset._parse_candidate_specs(
         [str(pb_path)],
         block_size=4,
@@ -407,8 +408,10 @@ class BenchmarkTest(unittest.TestCase):
         name_override="custom-name",
         max_loops=1000,
         tape_limit=50,
+        source_override="exceptions",
       )
       self.assertEqual(cands_override[0].name, "custom-name")
+      self.assertEqual(cands_override[0].source, "exceptions")
       self.assertEqual(cands_override[0].block_size, 4)
       self.assertEqual(cands_override[0].category, "inf")
 
