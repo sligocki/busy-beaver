@@ -2271,7 +2271,7 @@ def _nums_equal(n1, n2):
       u2 = n2.uparrow_size_approx if isinstance(n2, Exp_Int.ExpInt) else (n2 + zero_exp).uparrow_size_approx
       if u1[0] >= 2 and u1[0] == u2[0] and u1[1] == u2[1] and math.isclose(u1[2], u2[2], rel_tol=1e-6):
         return True
-    except (AttributeError, NotImplementedError, Exp_Int.ExpIntException, AssertionError, TypeError):
+    except (AttributeError, NotImplementedError, Exp_Int.ExpIntException, AssertionError, TypeError, OverflowError):
       pass
   return False
 

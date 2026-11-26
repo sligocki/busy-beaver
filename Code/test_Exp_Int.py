@@ -543,6 +543,33 @@ class ExpIntTest(unittest.TestCase):
     self.assertEqual(len((big_a + big_b).terms), 1)
     self.assertEqual((big_a * big_b).terms[0].exponent, 4001)
 
+  def test_cmp_abs_exp_terms_huge_int_and_float_top(self):
+    # Regression test: prec_mult returns an arbitrary-precision int for exponents
+    # >= 2**50 (potentially > 10**308) and a float for smaller exponents. Comparing
+    # such terms in _cmp_abs_exp_terms must not raise OverflowError.
+    huge_exp = 10**400
+    small_exp = 2000
+    a = exp_int(2, huge_exp)
+    b = exp_int(3, small_exp)
+    self.assertIsInstance(a.terms[0].uparrow_size_approx[2], int)
+    self.assertIsInstance(b.terms[0].uparrow_size_approx[2], float)
+
+    s = a + b
+    self.assertEqual(sign(s), 1)
+    self.assertEqual(sign(a - b), 1)
+    self.assertEqual(sign(b - a), -1)
+    self.assertGreater(a, b)
+    self.assertLess(b, a)
+
+    # Also test same-base ExpInt exponents with tied uparrow_size_approx whose
+    # exact difference is a huge int (> 10**308).
+    base_tower = exp_int(2, exp_int(2, 2000))
+    t_big = exp_int(2, base_tower + huge_exp)
+    t_small = exp_int(2, base_tower)
+    self.assertEqual(t_big.terms[0].uparrow_size_approx, t_small.terms[0].uparrow_size_approx)
+    self.assertEqual(sign(t_big - t_small), 1)
+    self.assertEqual(sign(t_small - t_big), -1)
+
 
 if __name__ == "__main__":
   unittest.main()

@@ -394,7 +394,12 @@ def _cmp_abs_exp_terms(t1: ExpTerm, t2: ExpTerm) -> int:
   u2 = t2.uparrow_size_approx
   # Use exact comparison when both terms are close enough in uparrow_size_approx
   # that float/truncation rounding could flip their order.
-  need_exact = u1 == u2 or (u1[0] == 2 and u1[1] == 1 and u2[0] == 2 and u2[1] == 1 and abs(u1[2] - u2[2]) <= 4)
+  # Avoid subtracting u1[2] - u2[2] directly: prec_mult returns an arbitrary-precision
+  # int for large exponents and a float for smaller ones, so mixing a huge int (>10^308)
+  # with a float in `-` raises OverflowError, whereas `<=` handles int/float safely.
+  need_exact = u1 == u2 or (
+    u1[0] == 2 and u1[1] == 1 and u2[0] == 2 and u2[1] == 1 and u1[2] <= u2[2] + 4 and u2[2] <= u1[2] + 4
+  )
   if need_exact and t1.base == t2.base:
     d = _const_exp_diff(t1.exponent, t2.exponent)
     if d is None and isinstance(t1.exponent, ExpInt) and isinstance(t2.exponent, ExpInt):
@@ -432,8 +437,9 @@ def _cmp_abs_exp_terms(t1: ExpTerm, t2: ExpTerm) -> int:
         c1, c2 = c2, c1
         flip = True
       log2_b = math.log2(t1.base)
-      # Compare c1 * base^d vs c2
-      if (c1.bit_length() - 1) + d * log2_b > c2.bit_length() + 2:
+      # Compare c1 * base^d vs c2. Check d > c2.bit_length() + 2 first so huge int d
+      # never overflows when multiplied by float log2_b.
+      if d > c2.bit_length() + 2 or (c1.bit_length() - 1) + d * log2_b > c2.bit_length() + 2:
         res = 1
       elif c1.bit_length() + d * log2_b < (c2.bit_length() - 1) - 2:
         res = -1
